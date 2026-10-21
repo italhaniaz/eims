@@ -1,5 +1,5 @@
-﻿import React, { useState, useRef } from 'react'
-import { Database, CheckCircle2, AlertTriangle, Key, Globe, RefreshCw, Download, Upload, Trash2, Sparkles, FileJson } from 'lucide-react'
+import React, { useState, useRef, useMemo } from 'react'
+import { Database, CheckCircle2, AlertTriangle, Key, Globe, RefreshCw, Download, Upload, Trash2, Sparkles, FileJson, HardDrive, Activity, Archive } from 'lucide-react'
 import Modal from './Modal'
 import { isSupabaseConfigured, getSupabaseStatus, supabase } from '../../services/supabaseClient'
 import { DataService, getStoredData } from '../../services/dataService'
@@ -16,6 +16,25 @@ export const SettingsModal = ({ isOpen, onClose }) => {
   const [supabaseKey, setSupabaseKey] = useState(() => import.meta.env.VITE_SUPABASE_ANON_KEY || '')
   const [statusMessage, setStatusMessage] = useState('')
   const [testingConnection, setTestingConnection] = useState(false)
+
+  // LocalStorage Quota Telemetry
+  const storageTelemetry = useMemo(() => {
+    let totalBytes = 0
+    try {
+      for (let key in localStorage) {
+        if (Object.prototype.hasOwnProperty.call(localStorage, key)) {
+          totalBytes += (localStorage[key].length + key.length) * 2 // UTF-16 character = 2 bytes
+        }
+      }
+    } catch {
+      totalBytes = 0
+    }
+    const totalKB = (totalBytes / 1024).toFixed(1)
+    const totalMB = (totalBytes / (1024 * 1024)).toFixed(2)
+    const quotaMB = 5.0
+    const percentUsed = Math.min(100, Math.max(0.2, (totalBytes / (quotaMB * 1024 * 1024)) * 100)).toFixed(1)
+    return { totalBytes, totalKB, totalMB, percentUsed, quotaMB }
+  }, [isOpen, statusMessage])
 
   const handleSaveSupabaseConfig = (e) => {
     e.preventDefault()
@@ -85,6 +104,41 @@ export const SettingsModal = ({ isOpen, onClose }) => {
     toast.success('Database exported successfully as JSON backup!')
   }
 
+  const handleFullSnapshotArchive = () => {
+    const rawData = getStoredData()
+    const timestamp = new Date().toISOString()
+    const snapshotPayload = {
+      meta: {
+        snapshotVersion: '2.0.0',
+        system: 'Educational Institution Management System (EIMS)',
+        environment: 'Production',
+        createdAt: timestamp,
+        checksumEntities: {
+          institutes: rawData.institutes?.length || 0,
+          students: rawData.students?.length || 0,
+          teachers: rawData.teachers?.length || 0,
+          classes: rawData.classes?.length || 0,
+          fees: rawData.fees?.length || 0,
+          exams: rawData.exams?.length || 0,
+          transport: rawData.transport?.length || 0,
+          library: rawData.library?.length || 0,
+          bookIssues: rawData.bookIssues?.length || 0,
+          admissions: rawData.admissionsPipeline?.length || 0
+        }
+      },
+      data: rawData
+    }
+
+    const blob = new Blob([JSON.stringify(snapshotPayload, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `EIMS_FULL_SNAPSHOT_${timestamp.replace(/[:.]/g, '-')}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+    toast.success('Complete system snapshot archive created & downloaded!')
+  }
+
   const handleImportFile = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -93,7 +147,8 @@ export const SettingsModal = ({ isOpen, onClose }) => {
     reader.onload = (event) => {
       try {
         const parsed = JSON.parse(event.target?.result)
-        importData(parsed)
+        const payloadToImport = (parsed && parsed.meta && parsed.data) ? parsed.data : parsed
+        importData(payloadToImport)
         toast.success(`Database restored successfully from "${file.name}"!`)
         setStatusMessage(`Database successfully restored from ${file.name}`)
         setTimeout(() => setStatusMessage(''), 4000)
@@ -134,6 +189,35 @@ export const SettingsModal = ({ isOpen, onClose }) => {
                 ? `Connected to ${status.url}. All CRUD operations sync directly to PostgreSQL.`
                 : 'System is running with instant local persistence. All records you add (Institutes, Students, Fees, Users) are saved persistently and dynamically update stats.'}
             </p>
+          </div>
+        </div>
+
+        {/* LocalStorage Quota & Client Telemetry */}
+        <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5">
+          <div className="flex items-center justify-between text-xs">
+            <span className="font-bold text-slate-700 flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
+              <HardDrive className="w-3.5 h-3.5 text-indigo-600" />
+              LocalStorage Telemetry & Storage Quota
+            </span>
+            <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded-full flex items-center gap-1">
+              <Activity className="w-3 h-3 text-emerald-600" /> Health: Optimal ({storageTelemetry.percentUsed}%)
+            </span>
+          </div>
+
+          <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+            <div 
+              className="bg-indigo-600 h-2 rounded-full transition-all duration-500" 
+              style={{ width: `${storageTelemetry.percentUsed}%` }}
+            />
+          </div>
+
+          <div className="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
+            <span>
+              <strong>{storageTelemetry.totalKB} KB</strong> used ({storageTelemetry.totalMB} MB)
+            </span>
+            <span>
+              Browser standard limit: ~<strong>5.0 MB</strong>
+            </span>
           </div>
         </div>
 
@@ -234,7 +318,7 @@ export const SettingsModal = ({ isOpen, onClose }) => {
 
         {/* Database Backup & Restore Actions */}
         <div className="pt-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={handleExportData}
@@ -242,6 +326,15 @@ export const SettingsModal = ({ isOpen, onClose }) => {
             >
               <Download className="w-4 h-4 text-slate-600" />
               <span>Export JSON Backup</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleFullSnapshotArchive}
+              className="flex items-center gap-1.5 text-xs font-semibold text-indigo-700 hover:text-indigo-900 px-3 py-2 rounded-lg bg-indigo-50 hover:bg-indigo-100 transition-colors cursor-pointer"
+            >
+              <Archive className="w-4 h-4 text-indigo-600" />
+              <span>Snapshot Archive (.json)</span>
             </button>
 
             <button

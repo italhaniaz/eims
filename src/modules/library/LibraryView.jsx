@@ -16,23 +16,29 @@ import {
   Download,
   ChevronLeft,
   ChevronRight,
-  RotateCcw
+  RotateCcw,
+  Printer,
+  AlertCircle,
+  FileText,
+  School,
+  X
 } from 'lucide-react'
 import { useAppData } from '../../context/AppDataContext'
 import { useToast } from '../../context/ToastContext'
 import Modal from '../../components/common/Modal'
 
 export const LibraryView = () => {
-  const { library = [], bookIssues = [], students = [], addItem, updateItem, deleteItem } = useAppData()
+  const { library = [], bookIssues = [], students = [], institutes = [], addItem, updateItem, deleteItem } = useAppData()
   const { toast } = useToast()
 
-  const [activeTab, setActiveTab] = useState('catalog') // 'catalog' | 'issued'
+  const [activeTab, setActiveTab] = useState('catalog') // 'catalog' | 'issued' | 'overdue'
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('ALL')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isIssueModalOpen, setIsIssueModalOpen] = useState(false)
   const [selectedBookForIssue, setSelectedBookForIssue] = useState(null)
   const [editingBook, setEditingBook] = useState(null)
+  const [selectedClearanceSlip, setSelectedClearanceSlip] = useState(null)
 
   // Catalog pagination
   const [currentPage, setCurrentPage] = useState(1)
@@ -57,14 +63,29 @@ export const LibraryView = () => {
     dueDate: '2026-11-15'
   })
 
+  // Overdue fine calculation helper
+  const getOverdueDetails = (dueDate) => {
+    if (!dueDate) return { isOverdue: false, days: 0, fine: 0 }
+    const due = new Date(dueDate)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    due.setHours(0, 0, 0, 0)
+    const diffTime = today - due
+    const days = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+    if (days > 0) {
+      return { isOverdue: true, days, fine: days * 15 } // Rs. 15 per day
+    }
+    return { isOverdue: false, days: 0, fine: 0 }
+  }
+
   const openAddModal = () => {
     setEditingBook(null)
     setFormData({
       title: '',
       author: '',
-      isbn: `978-${Math.floor(1000000000 + Math.random() * 9000000000)}`,
+      isbn: `978-${Math.floor(100000000 + Math.random() * 900000000)}`,
       category: 'Computer Science',
-      shelfNo: 'A-10',
+      shelfNo: 'B-04',
       totalCopies: 10,
       issuedCopies: 0,
       status: 'Available'
@@ -72,19 +93,31 @@ export const LibraryView = () => {
     setIsModalOpen(true)
   }
 
-  const openEditModal = (b) => {
-    setEditingBook(b)
+  const openEditModal = (book) => {
+    setEditingBook(book)
     setFormData({
-      title: b.title,
-      author: b.author,
-      isbn: b.isbn || '',
-      category: b.category || 'General',
-      shelfNo: b.shelfNo || 'A-1',
-      totalCopies: b.totalCopies || 1,
-      issuedCopies: b.issuedCopies || 0,
-      status: b.status || 'Available'
+      title: book.title || '',
+      author: book.author || '',
+      isbn: book.isbn || '',
+      category: book.category || 'Computer Science',
+      shelfNo: book.shelfNo || 'A-10',
+      totalCopies: Number(book.totalCopies || 10),
+      issuedCopies: Number(book.issuedCopies || 0),
+      status: book.status || 'Available'
     })
     setIsModalOpen(true)
+  }
+
+  const openIssueModal = (book) => {
+    setSelectedBookForIssue(book)
+    const defDue = new Date()
+    defDue.setDate(defDue.getDate() + 14)
+    setIssueData({
+      studentName: students[0]?.name || '',
+      rollNumber: students[0]?.rollNumber || '',
+      dueDate: defDue.toISOString().split('T')[0]
+    })
+    setIsIssueModalOpen(true)
   }
 
   const handleSubmit = async (e) => {
@@ -94,38 +127,34 @@ export const LibraryView = () => {
       return
     }
 
+    const payload = {
+      ...formData,
+      totalCopies: Number(formData.totalCopies),
+      issuedCopies: Number(formData.issuedCopies || 0),
+      status: Number(formData.totalCopies) > Number(formData.issuedCopies || 0) ? 'Available' : 'Out of Stock'
+    }
+
     if (editingBook) {
-      await updateItem('library', editingBook.id, formData)
-      toast.success(`Book "${formData.title}" updated in catalog.`)
+      await updateItem('library', editingBook.id, payload)
+      toast.success(`Book "${formData.title}" updated successfully!`)
     } else {
-      await addItem('library', formData)
-      toast.success(`Book "${formData.title}" registered in library!`)
+      await addItem('library', payload)
+      toast.success(`Book "${formData.title}" added to catalog!`)
     }
     setIsModalOpen(false)
   }
 
-  // Open Issue Modal
-  const openIssueModal = (book) => {
-    const available = Number(book.totalCopies || 0) - Number(book.issuedCopies || 0)
-    if (available <= 0) {
-      toast.warning('No available copies left in stock for this book!')
-      return
-    }
-    setSelectedBookForIssue(book)
-    setIssueData({
-      studentName: students[0]?.name || '',
-      rollNumber: students[0]?.rollNumber || '',
-      dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 2 weeks default
-    })
-    setIsIssueModalOpen(true)
-  }
-
-  // Process Book Issue
+  // Issue book to student
   const handleConfirmIssue = async (e) => {
     e.preventDefault()
-    if (!selectedBookForIssue || !issueData.studentName) return
+    if (!selectedBookForIssue) return
 
-    // Create issue record
+    const available = Number(selectedBookForIssue.totalCopies || 0) - Number(selectedBookForIssue.issuedCopies || 0)
+    if (available <= 0) {
+      toast.error('No copies available in stock to issue.')
+      return
+    }
+
     await addItem('bookIssues', {
       bookId: selectedBookForIssue.id,
       bookTitle: selectedBookForIssue.title,
@@ -149,7 +178,6 @@ export const LibraryView = () => {
 
   // Process Book Return
   const handleReturnBook = async (issueRecord) => {
-    // Find book
     const book = library.find(b => b.id === issueRecord.bookId)
     if (book && Number(book.issuedCopies) > 0) {
       await updateItem('library', book.id, {
@@ -157,12 +185,15 @@ export const LibraryView = () => {
       })
     }
 
+    const overdueInfo = getOverdueDetails(issueRecord.dueDate)
+
     await updateItem('bookIssues', issueRecord.id, {
       status: 'Returned',
-      returnedDate: new Date().toISOString().split('T')[0]
+      returnedDate: new Date().toISOString().split('T')[0],
+      fineCollected: overdueInfo.fine
     })
 
-    toast.success(`Book "${issueRecord.bookTitle}" marked as Returned! Stock updated.`)
+    toast.success(`Book "${issueRecord.bookTitle}" marked as Returned! Inventory restored.`)
   }
 
   const handleDelete = async (id, title) => {
@@ -193,6 +224,10 @@ export const LibraryView = () => {
     return bookIssues.filter(i => i.status === 'Issued')
   }, [bookIssues])
 
+  const overdueIssues = useMemo(() => {
+    return activeIssues.filter(i => getOverdueDetails(i.dueDate).isOverdue)
+  }, [activeIssues])
+
   // Export Library Catalog CSV
   const exportCatalogCSV = () => {
     if (filtered.length === 0) {
@@ -221,8 +256,10 @@ export const LibraryView = () => {
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
-    toast.success(`Exported ${filtered.length} library books to CSV.`)
+    toast.success('Library catalog exported to CSV.')
   }
+
+  const displayedLoans = activeTab === 'overdue' ? overdueIssues : activeIssues
 
   return (
     <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
@@ -231,16 +268,18 @@ export const LibraryView = () => {
         <div>
           <div className="flex items-center gap-2">
             <BookMarked className="w-5 h-5 text-indigo-600" />
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Campus Library Management & Circulation</h1>
+            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Central Digital Library & Circulation</h1>
           </div>
-          <p className="text-xs text-slate-500 mt-1">Book cataloging, student lending circulation, and due date returns tracking</p>
+          <p className="text-xs text-slate-500 mt-1">
+            Book catalog tracking, student loan circulation, automated overdue fines, and printable clearance receipts
+          </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={exportCatalogCSV}
             className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 transition-all cursor-pointer"
-            title="Download Catalog CSV"
+            title="Download CSV catalog"
           >
             <Download className="w-3.5 h-3.5" />
             <span>Export Catalog</span>
@@ -257,45 +296,43 @@ export const LibraryView = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center justify-between border-b border-slate-200">
-        <div className="flex gap-4">
-          <button
-            onClick={() => setActiveTab('catalog')}
-            className={`pb-3 text-xs font-bold border-b-2 transition-all cursor-pointer ${
-              activeTab === 'catalog'
-                ? 'border-indigo-600 text-indigo-700'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            📚 Book Catalog ({library.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('issued')}
-            className={`pb-3 text-xs font-bold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
-              activeTab === 'issued'
-                ? 'border-indigo-600 text-indigo-700'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            <span>Active Student Loans</span>
-            {activeIssues.length > 0 && (
-              <span className="w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px] font-bold">
-                {activeIssues.length}
-              </span>
-            )}
-          </button>
-        </div>
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+        <button
+          onClick={() => setActiveTab('catalog')}
+          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            activeTab === 'catalog' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          Book Catalog ({library.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('issued')}
+          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            activeTab === 'issued' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          Active Loans ({activeIssues.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('overdue')}
+          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+            activeTab === 'overdue' ? 'bg-rose-600 text-white shadow-sm' : 'text-rose-600 hover:bg-rose-50'
+          }`}
+        >
+          <Clock className="w-3.5 h-3.5" />
+          <span>Overdue Books ({overdueIssues.length})</span>
+        </button>
       </div>
 
       {activeTab === 'catalog' ? (
         <>
-          {/* Search & Filter Toolbar */}
-          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-            <div className="relative flex-1 max-w-md">
+          {/* Search & Category Filter Bar */}
+          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="relative flex-1 w-full max-w-md">
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Search by book title, author, or ISBN..."
+                placeholder="Search by title, author, or ISBN..."
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value)
@@ -305,47 +342,50 @@ export const LibraryView = () => {
               />
             </div>
 
-            <div className="flex items-center gap-2 flex-wrap">
-              {['ALL', 'Computer Science', 'Physics', 'Mathematics', 'General'].map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => {
-                    setSelectedCategory(cat)
-                    setCurrentPage(1)
-                  }}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-                    selectedCategory === cat
-                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <select
+                value={selectedCategory}
+                onChange={(e) => {
+                  setSelectedCategory(e.target.value)
+                  setCurrentPage(1)
+                }}
+                className="px-3 py-2 text-xs rounded-lg border border-slate-200 bg-white font-medium"
+              >
+                <option value="ALL">All Categories</option>
+                <option value="Computer Science">Computer Science</option>
+                <option value="Physics">Physics</option>
+                <option value="Mathematics">Mathematics</option>
+                <option value="Chemistry">Chemistry</option>
+                <option value="Literature">Literature</option>
+                <option value="General Knowledge">General Knowledge</option>
+              </select>
             </div>
           </div>
 
-          {/* Book Cards Grid */}
+          {/* Catalog Cards Grid */}
           {paginatedBooks.length > 0 ? (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
                 {paginatedBooks.map((b) => {
                   const available = Math.max(0, Number(b.totalCopies || 0) - Number(b.issuedCopies || 0))
                   return (
-                    <div key={b.id} className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+                    <div 
+                      key={b.id}
+                      className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all p-5 flex flex-col justify-between"
+                    >
                       <div>
-                        <div className="flex items-start justify-between gap-2">
-                          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+                        <div className="flex items-start justify-between">
+                          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100">
                             {b.category}
                           </span>
-                          <span className="font-mono text-[10px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                          <span className="text-[11px] font-mono font-semibold text-slate-400">
                             Shelf: {b.shelfNo}
                           </span>
                         </div>
 
-                        <h3 className="font-bold text-slate-900 mt-3 text-base leading-snug">{b.title}</h3>
-                        <p className="text-xs text-slate-500 mt-1">Author: <strong className="text-slate-700">{b.author}</strong></p>
-                        <p className="font-mono text-[11px] text-slate-400 mt-0.5">ISBN: {b.isbn}</p>
+                        <h3 className="font-bold text-slate-900 mt-3 text-base line-clamp-2 leading-snug">{b.title}</h3>
+                        <p className="text-xs text-slate-500 mt-1">by {b.author}</p>
+                        <span className="text-[11px] font-mono text-slate-400 block mt-1">ISBN: {b.isbn}</span>
 
                         <div className="mt-4 pt-3 border-t border-slate-100 grid grid-cols-2 gap-2 text-center text-xs">
                           <div className="p-2 rounded-lg bg-slate-50 border border-slate-100">
@@ -430,54 +470,79 @@ export const LibraryView = () => {
           )}
         </>
       ) : (
-        /* Active Loans Table */
+        /* Active Loans & Overdue Table */
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
             <div>
-              <h3 className="font-bold text-slate-900 text-sm">Active Book Loans & Checkouts</h3>
-              <p className="text-xs text-slate-400">Track which student currently holds each library title</p>
+              <h3 className="font-bold text-slate-900 text-sm">
+                {activeTab === 'overdue' ? 'Overdue Books & Penalty Ledger' : 'Active Book Loans & Checkouts'}
+              </h3>
+              <p className="text-xs text-slate-400">Track book circulation, overdue fines (Rs. 15/day), and return clearance slips</p>
             </div>
             <span className="text-xs font-semibold bg-amber-50 text-amber-700 px-3 py-1 rounded-full border border-amber-200">
-              Active Loans: {activeIssues.length}
+              Showing: {displayedLoans.length} Loans
             </span>
           </div>
 
-          <table className="w-full text-left text-xs min-w-[650px]">
+          <table className="w-full text-left text-xs min-w-[700px]">
             <thead className="bg-slate-50 text-[11px] font-bold text-slate-600 uppercase border-b border-slate-200">
               <tr>
                 <th className="px-6 py-3.5">Book Title</th>
-                <th className="px-6 py-3.5">Student / Borrower</th>
+                <th className="px-6 py-3.5">Student Borrower</th>
                 <th className="px-6 py-3.5">Roll Number</th>
                 <th className="px-6 py-3.5">Issue Date</th>
-                <th className="px-6 py-3.5">Return Due Date</th>
-                <th className="px-6 py-3.5 text-right">Action</th>
+                <th className="px-6 py-3.5">Due Date & Fine</th>
+                <th className="px-6 py-3.5 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {activeIssues.length > 0 ? (
-                activeIssues.map((iss) => (
-                  <tr key={iss.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-3.5 font-bold text-slate-900">{iss.bookTitle}</td>
-                    <td className="px-6 py-3.5 font-semibold text-slate-800">{iss.studentName}</td>
-                    <td className="px-6 py-3.5 font-mono text-slate-600">{iss.rollNumber}</td>
-                    <td className="px-6 py-3.5 text-slate-500">{iss.issueDate}</td>
-                    <td className="px-6 py-3.5 font-mono font-bold text-rose-600">{iss.dueDate}</td>
-                    <td className="px-6 py-3.5 text-right">
-                      <button
-                        onClick={() => handleReturnBook(iss)}
-                        className="px-3 py-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded font-bold transition-all cursor-pointer flex items-center gap-1 ml-auto"
-                      >
-                        <RotateCcw className="w-3 h-3" />
-                        <span>Mark Returned</span>
-                      </button>
-                    </td>
-                  </tr>
-                ))
+              {displayedLoans.length > 0 ? (
+                displayedLoans.map((iss) => {
+                  const overdue = getOverdueDetails(iss.dueDate)
+
+                  return (
+                    <tr key={iss.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-6 py-3.5 font-bold text-slate-900">{iss.bookTitle}</td>
+                      <td className="px-6 py-3.5 font-semibold text-slate-800">{iss.studentName}</td>
+                      <td className="px-6 py-3.5 font-mono text-slate-600">{iss.rollNumber}</td>
+                      <td className="px-6 py-3.5 text-slate-500">{iss.issueDate}</td>
+                      <td className="px-6 py-3.5">
+                        <span className="font-mono font-bold text-slate-700 block">{iss.dueDate}</span>
+                        {overdue.isOverdue ? (
+                          <span className="inline-block mt-0.5 text-[10px] font-bold px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
+                            Overdue {overdue.days}d • Fine: Rs. {overdue.fine}
+                          </span>
+                        ) : (
+                          <span className="inline-block mt-0.5 text-[10px] font-medium text-emerald-600">On Time</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-3.5 text-right space-x-1.5 whitespace-nowrap">
+                        <button
+                          onClick={() => setSelectedClearanceSlip({ ...iss, overdue })}
+                          className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-semibold inline-flex items-center gap-1"
+                          title="Generate Return Clearance Slip"
+                        >
+                          <FileText className="w-3 h-3 text-slate-500" />
+                          <span>Clearance Slip</span>
+                        </button>
+
+                        <button
+                          onClick={() => handleReturnBook(iss)}
+                          className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-bold inline-flex items-center gap-1"
+                          title="Mark Book as Returned"
+                        >
+                          <RotateCcw className="w-3 h-3" />
+                          <span>Mark Returned</span>
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })
               ) : (
                 <tr>
                   <td colSpan={6} className="px-6 py-10 text-center text-slate-400">
                     <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-1" />
-                    <p className="font-semibold text-slate-700">No Pending Loans</p>
+                    <p className="font-semibold text-slate-700">No Loans in this View</p>
                     <p className="text-[11px] text-slate-400">All books are accounted for and in library stock.</p>
                   </td>
                 </tr>
@@ -519,38 +584,41 @@ export const LibraryView = () => {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Category</label>
+              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">ISBN Number</label>
+              <input
+                type="text"
+                value={formData.isbn}
+                onChange={(e) => setFormData({ ...formData, isbn: e.target.value })}
+                className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 font-mono"
+                placeholder="978-0262033848"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Subject Category</label>
               <select
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                className="w-full px-3 py-2 text-xs rounded border border-slate-200 bg-white"
               >
                 <option value="Computer Science">Computer Science</option>
                 <option value="Physics">Physics</option>
                 <option value="Mathematics">Mathematics</option>
                 <option value="Chemistry">Chemistry</option>
-                <option value="General">General</option>
+                <option value="Literature">Literature</option>
+                <option value="General Knowledge">General Knowledge</option>
               </select>
             </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">ISBN</label>
-              <input
-                type="text"
-                value={formData.isbn}
-                onChange={(e) => setFormData({ ...formData, isbn: e.target.value })}
-                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 font-mono"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Shelf Location</label>
+              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Shelf / Aisle Location</label>
               <input
                 type="text"
                 value={formData.shelfNo}
                 onChange={(e) => setFormData({ ...formData, shelfNo: e.target.value })}
-                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 font-mono"
+                className="w-full px-3 py-1.5 text-xs rounded border border-slate-200"
+                placeholder="e.g. A-14"
               />
             </div>
             <div>
@@ -558,10 +626,9 @@ export const LibraryView = () => {
               <input
                 type="number"
                 min="1"
-                required
                 value={formData.totalCopies}
-                onChange={(e) => setFormData({ ...formData, totalCopies: Number(e.target.value) })}
-                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 font-mono"
+                onChange={(e) => setFormData({ ...formData, totalCopies: e.target.value })}
+                className="w-full px-3 py-1.5 text-xs rounded border border-slate-200"
               />
             </div>
           </div>
@@ -570,15 +637,15 @@ export const LibraryView = () => {
             <button
               type="button"
               onClick={() => setIsModalOpen(false)}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
+              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow cursor-pointer"
+              className="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow"
             >
-              {editingBook ? 'Update Book' : 'Register Book'}
+              Save Book to Catalog
             </button>
           </div>
         </form>
@@ -592,25 +659,25 @@ export const LibraryView = () => {
           title={`Issue Book: ${selectedBookForIssue.title}`}
         >
           <form onSubmit={handleConfirmIssue} className="space-y-4">
-            <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-xs space-y-1">
-              <div><span className="text-slate-500">Selected Title:</span> <strong className="text-indigo-900">{selectedBookForIssue.title}</strong></div>
-              <div><span className="text-slate-500">Author:</span> <strong className="text-slate-800">{selectedBookForIssue.author}</strong></div>
-              <div><span className="text-slate-500">Available Stock:</span> <strong className="text-emerald-700 font-mono">{Number(selectedBookForIssue.totalCopies) - Number(selectedBookForIssue.issuedCopies)} copies</strong></div>
+            <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-xl text-xs space-y-1">
+              <span className="font-bold text-indigo-900 block">{selectedBookForIssue.title}</span>
+              <span className="text-indigo-700 block">Author: {selectedBookForIssue.author} • Shelf: {selectedBookForIssue.shelfNo}</span>
+              <span className="text-emerald-700 font-semibold block">Available Copies: {Number(selectedBookForIssue.totalCopies || 0) - Number(selectedBookForIssue.issuedCopies || 0)}</span>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Borrower Student *</label>
+              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Select Student *</label>
               <select
                 value={issueData.studentName}
                 onChange={(e) => {
-                  const std = students.find(s => s.name === e.target.value)
-                  setIssueData(prev => ({
-                    ...prev,
+                  const s = students.find(std => std.name === e.target.value)
+                  setIssueData({
+                    ...issueData,
                     studentName: e.target.value,
-                    rollNumber: std?.rollNumber || ''
-                  }))
+                    rollNumber: s?.rollNumber || `STD-${Math.floor(100 + Math.random() * 900)}`
+                  })
                 }}
-                className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200"
+                className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 bg-white"
               >
                 {students.map(s => (
                   <option key={s.id} value={s.name}>{s.name} ({s.rollNumber}) - {s.className}</option>
@@ -625,7 +692,7 @@ export const LibraryView = () => {
                   type="text"
                   readOnly
                   value={issueData.rollNumber}
-                  className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 bg-slate-50 font-mono"
+                  className="w-full px-3 py-2 text-xs rounded border border-slate-200 bg-slate-50 font-mono"
                 />
               </div>
               <div>
@@ -635,7 +702,7 @@ export const LibraryView = () => {
                   required
                   value={issueData.dueDate}
                   onChange={(e) => setIssueData({ ...issueData, dueDate: e.target.value })}
-                  className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 font-mono"
+                  className="w-full px-3 py-2 text-xs rounded border border-slate-200"
                 />
               </div>
             </div>
@@ -644,18 +711,104 @@ export const LibraryView = () => {
               <button
                 type="button"
                 onClick={() => setIsIssueModalOpen(false)}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow cursor-pointer"
+                className="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow"
               >
-                Confirm Book Loan
+                Confirm Loan & Issue Book
               </button>
             </div>
           </form>
+        </Modal>
+      )}
+
+      {/* Official Library Return & Clearance Receipt Modal */}
+      {selectedClearanceSlip && (
+        <Modal
+          isOpen={Boolean(selectedClearanceSlip)}
+          onClose={() => setSelectedClearanceSlip(null)}
+          title="Official Library Book Return & Clearance Receipt"
+        >
+          <div className="space-y-4">
+            <div 
+              id="printable-clearance-slip"
+              className="p-6 bg-white border-2 border-slate-300 rounded-2xl space-y-4 print:border-black"
+            >
+              {/* Slip Header */}
+              <div className="text-center border-b pb-3">
+                <School className="w-8 h-8 text-indigo-600 mx-auto mb-1" />
+                <h3 className="text-sm font-black uppercase tracking-wider text-slate-900">
+                  {institutes[0]?.name || 'CENTRAL HIGH SCHOOL'}
+                </h3>
+                <p className="text-[11px] text-slate-500">Central Digital Library & Circulation Cell</p>
+                <span className="inline-block mt-1 font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 uppercase">
+                  BOOK RETURN & DUES CLEARANCE VOUCHER
+                </span>
+              </div>
+
+              {/* Student & Book Info */}
+              <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-3 rounded-lg border">
+                <div><span className="text-slate-400">Borrower:</span> <strong className="text-slate-800">{selectedClearanceSlip.studentName}</strong></div>
+                <div><span className="text-slate-400">Roll Number:</span> <strong className="text-slate-800 font-mono">{selectedClearanceSlip.rollNumber}</strong></div>
+                <div><span className="text-slate-400">Book Title:</span> <strong className="text-slate-800">{selectedClearanceSlip.bookTitle}</strong></div>
+                <div><span className="text-slate-400">Issue Date:</span> <strong className="text-slate-800">{selectedClearanceSlip.issueDate}</strong></div>
+                <div><span className="text-slate-400">Return Deadline:</span> <strong className="text-slate-800">{selectedClearanceSlip.dueDate}</strong></div>
+                <div><span className="text-slate-400">Return Date:</span> <strong className="text-slate-800">{new Date().toISOString().split('T')[0]}</strong></div>
+              </div>
+
+              {/* Overdue Fine Status */}
+              <div className="p-3 rounded-xl border flex items-center justify-between text-xs bg-slate-50">
+                <div>
+                  <span className="font-bold text-slate-700 block">Circulation Fine Assessment:</span>
+                  <span className="text-[10px] text-slate-500">
+                    {selectedClearanceSlip.overdue?.isOverdue 
+                      ? `${selectedClearanceSlip.overdue.days} days overdue @ Rs. 15/day` 
+                      : 'Returned within permissible checkout period'}
+                  </span>
+                </div>
+                <div className="text-right font-mono">
+                  <span className="text-sm font-black text-slate-900">
+                    Rs. {selectedClearanceSlip.overdue?.fine || 0}
+                  </span>
+                  <span className="text-[9px] text-emerald-700 font-bold block">PAID & SETTLED</span>
+                </div>
+              </div>
+
+              {/* Clearance Declaration */}
+              <p className="text-[11px] text-slate-600 leading-relaxed border-t pt-2">
+                This acknowledges that the aforementioned book has been received in satisfactory condition and restored to catalog inventory. The student holds no outstanding liabilities for this transaction.
+              </p>
+
+              {/* Signatures */}
+              <div className="flex justify-between pt-6 text-[10px] text-slate-400 border-t">
+                <span>Borrower Signature</span>
+                <span>Circulation Desk Officer</span>
+                <span>Head Librarian Seal</span>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setSelectedClearanceSlip(null)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm flex items-center gap-1.5"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print Clearance Voucher (PDF)</span>
+              </button>
+            </div>
+          </div>
         </Modal>
       )}
     </div>

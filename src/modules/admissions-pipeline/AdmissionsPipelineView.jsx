@@ -12,17 +12,24 @@ import {
   Zap, 
   UserPlus, 
   Check,
-  Download
+  Download,
+  FileText,
+  Printer,
+  School,
+  Award,
+  X
 } from 'lucide-react'
 import { useAppData } from '../../context/AppDataContext'
 import { useToast } from '../../context/ToastContext'
 import Modal from '../../components/common/Modal'
 
 export const AdmissionsPipelineView = () => {
-  const { admissionsPipeline = [], addItem, updateItem, deleteItem, students = [] } = useAppData()
+  const { admissionsPipeline = [], addItem, updateItem, deleteItem, students = [], institutes = [] } = useAppData()
   const { toast } = useToast()
   const [searchTerm, setSearchTerm] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedApplicantForScorecard, setSelectedApplicantForScorecard] = useState(null)
+  const [selectedApplicantForOffer, setSelectedApplicantForOffer] = useState(null)
 
   const stages = [
     'Inquiry Received',
@@ -38,6 +45,14 @@ export const AdmissionsPipelineView = () => {
     gradeApplied: '10th Grade',
     stage: 'Inquiry Received',
     testDate: '2026-10-25'
+  })
+
+  // Evaluation Scorecard state
+  const [scorecardData, setScorecardData] = useState({
+    english: 82,
+    math: 88,
+    science: 80,
+    remarks: 'Clear concept foundation, confident interpersonal skills.'
   })
 
   const handleSubmit = async (e) => {
@@ -109,6 +124,35 @@ export const AdmissionsPipelineView = () => {
     toast.success(`Candidate "${applicant.studentName}" successfully enrolled with Roll Number: ${newRoll}!`)
   }
 
+  // Save entrance evaluation scorecard
+  const handleSaveScorecard = async (e) => {
+    e.preventDefault()
+    if (!selectedApplicantForScorecard) return
+
+    const total = Number(scorecardData.english) + Number(scorecardData.math) + Number(scorecardData.science)
+    const percentage = Math.round((total / 300) * 100)
+    const passed = percentage >= 50
+
+    const scorecard = {
+      english: Number(scorecardData.english),
+      math: Number(scorecardData.math),
+      science: Number(scorecardData.science),
+      totalMarks: total,
+      percentage: `${percentage}%`,
+      decision: passed ? 'Recommended for Admission' : 'Requires Retest',
+      remarks: scorecardData.remarks,
+      evaluatedDate: new Date().toISOString().split('T')[0]
+    }
+
+    await updateItem('admissionsPipeline', selectedApplicantForScorecard.id, {
+      scorecard,
+      stage: passed ? 'Interview Passed' : selectedApplicantForScorecard.stage
+    })
+
+    toast.success(`Entrance test evaluation recorded for ${selectedApplicantForScorecard.studentName} (${percentage}%)!`)
+    setSelectedApplicantForScorecard(null)
+  }
+
   const handleDelete = async (id, name) => {
     if (window.confirm(`Delete inquiry for "${name}"?`)) {
       await deleteItem('admissionsPipeline', id)
@@ -129,7 +173,7 @@ export const AdmissionsPipelineView = () => {
       return
     }
 
-    const headers = ['Applicant Name', 'Parent Name', 'Phone', 'Grade Applied', 'Current Stage', 'Status', 'Test Date']
+    const headers = ['Applicant Name', 'Parent Name', 'Phone', 'Grade Applied', 'Current Stage', 'Status', 'Test Date', 'Scorecard %']
     const rows = filtered.map(a => [
       `"${a.studentName || ''}"`,
       `"${a.parentName || ''}"`,
@@ -137,7 +181,8 @@ export const AdmissionsPipelineView = () => {
       `"${a.gradeApplied || ''}"`,
       `"${a.stage || ''}"`,
       `"${a.status || ''}"`,
-      `"${a.testDate || ''}"`
+      `"${a.testDate || ''}"`,
+      `"${a.scorecard?.percentage || 'Pending'}"`
     ])
 
     const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
@@ -161,7 +206,9 @@ export const AdmissionsPipelineView = () => {
             <UserCheck className="w-5 h-5 text-teal-600" />
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">Admissions Inquiry & Leads Pipeline</h1>
           </div>
-          <p className="text-xs text-slate-500 mt-1">Track prospective student inquiries, advance through entrance stages, and 1-click enroll</p>
+          <p className="text-xs text-slate-500 mt-1">
+            Track prospective student inquiries, record entrance test scorecards, and generate official Admission Offer letters
+          </p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -184,37 +231,34 @@ export const AdmissionsPipelineView = () => {
         </div>
       </div>
 
-      {/* Stage Flow Indicator */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm text-xs">
-        {stages.map((stg, idx) => {
-          const count = admissionsPipeline.filter(a => a.stage === stg).length
+      {/* Stage Summary Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {stages.map((st, i) => {
+          const count = admissionsPipeline.filter(a => a.stage === st).length
           return (
-            <div key={stg} className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex flex-col justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Step 0{idx + 1}</span>
-              <p className="font-bold text-slate-800 mt-1 leading-snug">{stg}</p>
-              <div className="mt-2 flex items-center justify-between">
-                <span className="text-sm font-black text-teal-700">{count}</span>
-                <span className="text-[10px] text-slate-400 font-medium">Applicants</span>
-              </div>
+            <div key={st} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+              <span className="text-[11px] font-bold uppercase text-slate-400 block tracking-wider">Step {i + 1}</span>
+              <span className="text-xl font-bold text-slate-900 font-mono mt-1 block">{count}</span>
+              <span className="text-xs text-slate-600 font-semibold truncate block mt-0.5">{st}</span>
             </div>
           )
         })}
       </div>
 
-      {/* Search Bar */}
+      {/* Search Toolbar */}
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between gap-4">
         <div className="relative flex-1 max-w-md">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search candidate name, parent phone, or grade..."
+            placeholder="Search by student name, phone, or grade..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
           />
         </div>
-        <span className="text-xs text-slate-500 font-semibold bg-teal-50 text-teal-700 px-3 py-1.5 rounded-lg whitespace-nowrap">
-          Total Inquiries: {filtered.length}
+        <span className="text-xs text-slate-500 font-semibold bg-teal-50 text-teal-800 px-3 py-1.5 rounded-lg">
+          Total Leads: {filtered.length}
         </span>
       </div>
 
@@ -222,10 +266,13 @@ export const AdmissionsPipelineView = () => {
       {filtered.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {filtered.map(app => (
-            <div key={app.id} className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+            <div 
+              key={app.id}
+              className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
+            >
               <div>
                 <div className="flex items-start justify-between">
-                  <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200">
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200">
                     {app.stage}
                   </span>
                   <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
@@ -245,6 +292,12 @@ export const AdmissionsPipelineView = () => {
                     <Calendar className="w-3.5 h-3.5 text-slate-400" />
                     <span>Test Date: {app.testDate || 'Pending'}</span>
                   </div>
+                  {app.scorecard ? (
+                    <div className="text-[11px] text-teal-800 bg-teal-50 px-2.5 py-1 rounded-md font-semibold flex items-center justify-between">
+                      <span>Test Score: {app.scorecard.percentage}</span>
+                      <span className="text-[10px] font-bold text-emerald-700">{app.scorecard.decision}</span>
+                    </div>
+                  ) : null}
                   {app.assignedRollNumber && (
                     <div className="text-[11px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-mono font-bold mt-1">
                       Assigned Roll: {app.assignedRollNumber}
@@ -253,37 +306,69 @@ export const AdmissionsPipelineView = () => {
                 </div>
               </div>
 
-              <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                {app.stage !== 'Enrolled & Admitted' ? (
+              <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between gap-1.5 flex-wrap">
+                <div className="flex items-center gap-1">
                   <button
-                    onClick={() => handleAdvanceStage(app)}
-                    className="flex items-center gap-1.5 text-xs font-semibold text-teal-700 hover:text-teal-900 bg-teal-50 hover:bg-teal-100 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer"
+                    onClick={() => {
+                      setSelectedApplicantForScorecard(app)
+                      if (app.scorecard) {
+                        setScorecardData({
+                          english: app.scorecard.english || 80,
+                          math: app.scorecard.math || 80,
+                          science: app.scorecard.science || 80,
+                          remarks: app.scorecard.remarks || ''
+                        })
+                      }
+                    }}
+                    className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-semibold flex items-center gap-1"
+                    title="Evaluate Entrance Test Scorecard"
                   >
-                    <span>Advance Stage</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
+                    <Award className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Scorecard</span>
                   </button>
-                ) : !app.transferredToRoster ? (
-                  <button
-                    onClick={() => handleConvertToStudent(app)}
-                    className="flex items-center gap-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 rounded-lg shadow-sm transition-all cursor-pointer"
-                    title="1-Click Convert to Enrolled Student"
-                  >
-                    <UserPlus className="w-3.5 h-3.5" />
-                    <span>Enroll to Roster</span>
-                  </button>
-                ) : (
-                  <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Enrolled in Roster
-                  </span>
-                )}
 
-                <button 
-                  onClick={() => handleDelete(app.id, app.studentName)} 
-                  className="p-1.5 text-slate-400 hover:text-rose-600 rounded transition-colors cursor-pointer"
-                  title="Delete Inquiry"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                  <button
+                    onClick={() => setSelectedApplicantForOffer(app)}
+                    className="p-1.5 bg-teal-50 hover:bg-teal-100 text-teal-800 rounded text-xs font-semibold flex items-center gap-1"
+                    title="Generate Formal Admission Offer Letter"
+                  >
+                    <FileText className="w-3.5 h-3.5 text-teal-700" />
+                    <span>Offer</span>
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-1">
+                  {app.stage !== 'Enrolled & Admitted' ? (
+                    <button
+                      onClick={() => handleAdvanceStage(app)}
+                      className="p-1.5 text-teal-700 hover:text-teal-900 bg-teal-50 hover:bg-teal-100 rounded text-xs font-semibold flex items-center gap-1"
+                      title="Advance to Next Stage"
+                    >
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  ) : !app.transferredToRoster ? (
+                    <button
+                      onClick={() => handleConvertToStudent(app)}
+                      className="px-2.5 py-1 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded shadow-sm flex items-center gap-1"
+                      title="1-Click Enroll to Student Roster"
+                    >
+                      <UserPlus className="w-3.5 h-3.5" />
+                      <span>Enroll</span>
+                    </button>
+                  ) : (
+                    <span className="text-[11px] font-bold text-emerald-600 flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Enrolled
+                    </span>
+                  )}
+
+                  <button 
+                    onClick={() => handleDelete(app.id, app.studentName)} 
+                    className="p-1.5 text-slate-400 hover:text-rose-600 rounded"
+                    title="Delete Inquiry"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -339,7 +424,7 @@ export const AdmissionsPipelineView = () => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Parent / Guardian Name</label>
+              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Parent / Guardian Full Name</label>
               <input
                 type="text"
                 placeholder="e.g. Tariq Mehmood"
@@ -349,29 +434,19 @@ export const AdmissionsPipelineView = () => {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Parent Phone Number *</label>
+              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Parent Phone / Mobile *</label>
               <input
-                type="tel"
+                type="text"
                 required
-                placeholder="+92 3XX-XXXXXXX"
+                placeholder="+92 321 8899001"
                 value={formData.parentPhone}
                 onChange={(e) => setFormData({ ...formData, parentPhone: e.target.value })}
-                className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/20 font-mono"
+                className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Initial Stage</label>
-              <select
-                value={formData.stage}
-                onChange={(e) => setFormData({ ...formData, stage: e.target.value })}
-                className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
-              >
-                {stages.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
             <div>
               <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Entrance Test Date</label>
               <input
@@ -381,25 +456,218 @@ export const AdmissionsPipelineView = () => {
                 className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
               />
             </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Initial Stage</label>
+              <select
+                value={formData.stage}
+                onChange={(e) => setFormData({ ...formData, stage: e.target.value })}
+                className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/20 bg-white"
+              >
+                {stages.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
           </div>
 
           <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
             <button
               type="button"
               onClick={() => setIsModalOpen(false)}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
+              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-5 py-2 text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 rounded-lg shadow cursor-pointer"
+              className="px-5 py-2 text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 rounded-lg shadow"
             >
-              Register Inquiry
+              Add Applicant
             </button>
           </div>
         </form>
       </Modal>
+
+      {/* Entrance Test Scorecard Modal */}
+      {selectedApplicantForScorecard && (
+        <Modal
+          isOpen={Boolean(selectedApplicantForScorecard)}
+          onClose={() => setSelectedApplicantForScorecard(null)}
+          title={`Entrance Test Scorecard: ${selectedApplicantForScorecard.studentName}`}
+        >
+          <form onSubmit={handleSaveScorecard} className="space-y-4">
+            <div className="p-3 bg-teal-50 border border-teal-200 rounded-xl text-xs space-y-0.5">
+              <span className="font-bold text-teal-950 block">{selectedApplicantForScorecard.studentName}</span>
+              <span className="text-teal-700 block">Grade Applied: {selectedApplicantForScorecard.gradeApplied} • Parent: {selectedApplicantForScorecard.parentName}</span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">English (Max 100)</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  required
+                  value={scorecardData.english}
+                  onChange={(e) => setScorecardData({ ...scorecardData, english: e.target.value })}
+                  className="w-full px-3 py-1.5 text-xs rounded border border-slate-200 font-bold"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Math (Max 100)</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  required
+                  value={scorecardData.math}
+                  onChange={(e) => setScorecardData({ ...scorecardData, math: e.target.value })}
+                  className="w-full px-3 py-1.5 text-xs rounded border border-slate-200 font-bold"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Science (Max 100)</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  required
+                  value={scorecardData.science}
+                  onChange={(e) => setScorecardData({ ...scorecardData, science: e.target.value })}
+                  className="w-full px-3 py-1.5 text-xs rounded border border-slate-200 font-bold"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Interviewer Notes & Assessment</label>
+              <textarea
+                rows={2}
+                value={scorecardData.remarks}
+                onChange={(e) => setScorecardData({ ...scorecardData, remarks: e.target.value })}
+                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200"
+                placeholder="Candidate aptitude, behavior, and academic recommendations..."
+              />
+            </div>
+
+            <div className="flex justify-end gap-2.5 pt-2 border-t">
+              <button
+                type="button"
+                onClick={() => setSelectedApplicantForScorecard(null)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2 text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 rounded-lg shadow-sm"
+              >
+                Record Evaluation Scorecard
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {/* Official Admission Offer Letter Modal (Printable) */}
+      {selectedApplicantForOffer && (
+        <Modal
+          isOpen={Boolean(selectedApplicantForOffer)}
+          onClose={() => setSelectedApplicantForOffer(null)}
+          title="Official Admission Acceptance & Offer Letter"
+        >
+          <div className="space-y-4">
+            <div 
+              id="printable-offer-letter"
+              className="p-8 bg-white border-2 border-slate-300 rounded-2xl space-y-5 print:border-black print:p-10"
+            >
+              {/* Letterhead */}
+              <div className="text-center border-b pb-4">
+                <School className="w-10 h-10 text-teal-700 mx-auto mb-1" />
+                <h2 className="text-lg font-black uppercase tracking-wider text-slate-900">
+                  {institutes[0]?.name || 'CENTRAL HIGH SCHOOL'}
+                </h2>
+                <p className="text-xs text-slate-500">Office of Admissions & Student Enrollment</p>
+                <div className="mt-2 inline-block px-3 py-1 bg-teal-50 border border-teal-200 rounded text-xs font-bold uppercase tracking-widest text-teal-900">
+                  OFFICIAL ADMISSION OFFER & FEE INTIMATION
+                </div>
+              </div>
+
+              {/* Offer Body */}
+              <div className="text-xs text-slate-800 space-y-3 leading-relaxed">
+                <p>
+                  Date: <strong className="font-mono">{new Date().toISOString().split('T')[0]}</strong>
+                </p>
+                <p>
+                  To: <strong>Mr. / Mrs. {selectedApplicantForOffer.parentName || 'Parent / Guardian'}</strong><br />
+                  Guardian of: <strong className="text-teal-950 font-bold">{selectedApplicantForOffer.studentName}</strong><br />
+                  Phone: <span className="font-mono">{selectedApplicantForOffer.parentPhone}</span>
+                </p>
+                <p>
+                  Dear Guardian,
+                </p>
+                <p>
+                  We are pleased to inform you that upon evaluation of the Entrance Examination and Academic Interview, your ward <strong className="text-slate-950">{selectedApplicantForOffer.studentName}</strong> has been granted provisional admission to <strong>{selectedApplicantForOffer.gradeApplied}</strong> for the upcoming academic session.
+                </p>
+                
+                <div className="p-3 bg-slate-50 rounded-lg border text-xs grid grid-cols-2 gap-2">
+                  <div><span>Provisional Admission ID:</span> <strong className="font-mono text-teal-800">ADM-{selectedApplicantForOffer.id || '2026'}</strong></div>
+                  <div><span>Entrance Result:</span> <strong className="text-emerald-700">{selectedApplicantForOffer.scorecard?.percentage || 'Passed (83%)'}</strong></div>
+                  <div><span>Enrolling Class:</span> <strong>{selectedApplicantForOffer.gradeApplied}</strong></div>
+                  <div><span>Fee Deposit Due Date:</span> <strong className="text-rose-600 font-mono">Within 7 Working Days</strong></div>
+                </div>
+
+                <p>
+                  Please submit the following original credentials along with the admission fee deposit slip at the campus accounts counter to finalize registration:
+                </p>
+                <ul className="list-disc pl-5 space-y-1 text-slate-600">
+                  <li>Original School Leaving Certificate (SLC) from previous institution</li>
+                  <li>Copy of Student NADRA B-Form / Birth Certificate</li>
+                  <li>4 passport-sized photographs with blue background</li>
+                  <li>Copy of Father / Guardian CNIC</li>
+                </ul>
+
+                <p className="pt-2">
+                  We look forward to welcoming {selectedApplicantForOffer.studentName} into our academic family.
+                </p>
+              </div>
+
+              {/* Signatures */}
+              <div className="pt-10 flex justify-between text-xs text-slate-500 border-t">
+                <div>
+                  <div className="w-32 border-b border-slate-400 mb-1"></div>
+                  <span>Incharge Admissions</span>
+                </div>
+                <div>
+                  <div className="w-32 border-b border-slate-400 mb-1"></div>
+                  <span>Accounts Officer</span>
+                </div>
+                <div className="text-right">
+                  <div className="w-36 border-b-2 border-teal-700 mb-1 ml-auto"></div>
+                  <strong className="text-slate-800">Principal Seal & Signature</strong>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setSelectedApplicantForOffer(null)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="px-5 py-2 text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 rounded-lg shadow-sm flex items-center gap-1.5"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print Official Offer Letter (PDF)</span>
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }

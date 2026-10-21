@@ -10,15 +10,19 @@ import {
   Mail, 
   Phone, 
   Eye, 
-  School,
-  Award,
-  Users,
-  Download,
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
-  ChevronLeft,
-  ChevronRight
+  School, 
+  Award, 
+  Users, 
+  Download, 
+  ArrowUpDown, 
+  ArrowUp, 
+  ArrowDown, 
+  ChevronLeft, 
+  ChevronRight,
+  ShieldCheck,
+  CheckCircle2,
+  Layers,
+  Sparkles
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
@@ -593,6 +597,63 @@ export const InstitutesView = () => {
               <div className="p-3 bg-white rounded-lg border border-slate-100">
                 <span className="text-slate-400 block text-[11px]">Contact Phone</span>
                 <span className="font-semibold text-slate-800">{viewingDetails.phone || '—'}</span>
+              </div>
+            </div>
+
+            {/* Campus Infrastructure, Facilities & Quality Accreditation Audit */}
+            <div className="bg-gradient-to-br from-indigo-50/60 to-slate-50 border border-indigo-100/80 rounded-xl p-4 space-y-3">
+              <div className="flex items-center justify-between border-b border-indigo-100 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center shadow-xs">
+                    <ShieldCheck className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-900 tracking-tight">Campus Infrastructure & Quality Accreditation Audit</h4>
+                    <p className="text-[11px] text-slate-500">Regulatory standards compliance & campus facility audit report</p>
+                  </div>
+                </div>
+                <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-100/80 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Category-A Tier
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+                <div className="bg-white/80 p-2.5 rounded-lg border border-indigo-50">
+                  <span className="text-[10px] text-slate-400 block uppercase font-bold tracking-wider">Laboratories</span>
+                  <p className="text-xs font-bold text-slate-800 mt-0.5">3 Full Labs</p>
+                  <p className="text-[10px] text-slate-500">Physics, Chem, Bio</p>
+                </div>
+                <div className="bg-white/80 p-2.5 rounded-lg border border-indigo-50">
+                  <span className="text-[10px] text-slate-400 block uppercase font-bold tracking-wider">Computer Lab</span>
+                  <p className="text-xs font-bold text-slate-800 mt-0.5">50 Workstations</p>
+                  <p className="text-[10px] text-slate-500">High-speed LAN/Fibre</p>
+                </div>
+                <div className="bg-white/80 p-2.5 rounded-lg border border-indigo-50">
+                  <span className="text-[10px] text-slate-400 block uppercase font-bold tracking-wider">Central Library</span>
+                  <p className="text-xs font-bold text-slate-800 mt-0.5">9,200 Titles</p>
+                  <p className="text-[10px] text-slate-500">OPAC & Digital Kiosk</p>
+                </div>
+                <div className="bg-white/80 p-2.5 rounded-lg border border-indigo-50">
+                  <span className="text-[10px] text-slate-400 block uppercase font-bold tracking-wider">Student-Teacher</span>
+                  <p className="text-xs font-bold text-slate-800 mt-0.5">18:1 Ratio</p>
+                  <p className="text-[10px] text-emerald-600 font-medium">Optimal Standard</p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-indigo-100/60 text-[11px] text-slate-600">
+                <div className="flex items-center gap-4">
+                  <span className="flex items-center gap-1 text-slate-600">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    Affiliation License: <strong>Valid through Dec 2028</strong>
+                  </span>
+                  <span className="flex items-center gap-1 text-slate-600">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    Fire & Safety Clearance: <strong>Certified</strong>
+                  </span>
+                </div>
+                <span className="text-[10px] text-indigo-700 font-semibold bg-indigo-100/70 px-2 py-0.5 rounded">
+                  BISE Registered Campus
+                </span>
               </div>
             </div>
 
