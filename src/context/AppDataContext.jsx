@@ -175,6 +175,7 @@ export const AppDataProvider = ({ children }) => {
         attendance: data.attendance || {},
         transport: data.transport || [],
         library: data.library || [],
+        bookIssues: data.bookIssues || [],
         admissionsPipeline: data.admissionsPipeline || [],
         auditLogs: data.auditLogs || [],
         communicationLogs: data.communicationLogs || [],

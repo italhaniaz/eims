@@ -25,7 +25,8 @@ import Modal from '../../../components/common/Modal'
 
 export const ClassesView = ({ currentInstitute }) => {
   const { 
-    classes, 
+    classes,
+    students = [], 
     addItem, 
     updateItem, 
     deleteItem,
@@ -443,7 +444,11 @@ export const ClassesView = ({ currentInstitute }) => {
           {filtered.map(c => {
             const cLevel = c.programLevel || detectProgramLevel(c.name)
             const secList = normalizeClassSections(c)
-            const totalEnrolled = secList.reduce((acc, s) => acc + Number(s.enrolled || 0), 0)
+            const liveEnrolledCount = students.filter(std => 
+              (!std.instituteId || std.instituteId === currentInstitute?.id) &&
+              (std.className || '').toLowerCase().includes((c.name || '').toLowerCase())
+            ).length
+            const totalEnrolled = liveEnrolledCount > 0 ? liveEnrolledCount : secList.reduce((acc, s) => acc + Number(s.enrolled || 0), 0)
             const totalCapacity = secList.reduce((acc, s) => acc + Number(s.capacity || 40), 0)
             const fillPct = Math.min(100, Math.round((totalEnrolled / Math.max(1, totalCapacity)) * 100))
 
