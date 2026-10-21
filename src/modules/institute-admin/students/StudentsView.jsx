@@ -908,7 +908,8 @@ export const StudentsView = ({ currentInstitute }) => {
         toast.info(`Ready to enroll next student (${nextRoll}).`)
       } else if (mode === 'printId') {
         setIsModalOpen(false)
-        setSelectedIdCard(createdOrUpdated || payload)
+        setSelectedStudentForCard(createdOrUpdated || payload)
+        setIsIdCardEngineOpen(true)
       } else {
         setIsModalOpen(false)
       }
@@ -1604,8 +1605,8 @@ export const StudentsView = ({ currentInstitute }) => {
               <button
                 type="button"
                 onClick={() => {
-                  window.print()
-                  toast.info(`Printing ID cards for ${selectedIds.length} selected students.`)
+                  setSelectedStudentForCard(null)
+                  setIsIdCardEngineOpen(true)
                 }}
                 className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded flex items-center gap-1 text-emerald-300 border border-slate-700 cursor-pointer"
               >
@@ -1905,13 +1906,27 @@ export const StudentsView = ({ currentInstitute }) => {
                                 <button
                                   type="button"
                                   onClick={() => {
-                                    setSelectedIdCard(s)
+                                    setSelectedStudentForCard(s)
+                                    setIsIdCardEngineOpen(true)
                                     setOpenMenuStudentId(null)
                                   }}
                                   className="w-full px-3 py-1.5 text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer font-medium"
                                 >
                                   <IdCard className="w-3.5 h-3.5 text-emerald-600" />
-                                  <span>Smart ID Card</span>
+                                  <span>Print PVC ID Card</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedStudentForAdmit(s)
+                                    setIsAdmitCardOpen(true)
+                                    setOpenMenuStudentId(null)
+                                  }}
+                                  className="w-full px-3 py-1.5 text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer font-medium"
+                                >
+                                  <Award className="w-3.5 h-3.5 text-blue-600" />
+                                  <span>Exam Admit Slip</span>
                                 </button>
 
                                 <button
@@ -3579,11 +3594,14 @@ export const StudentsView = ({ currentInstitute }) => {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setSelectedIdCard(selectedProfile)}
+                  onClick={() => {
+                    setSelectedStudentForCard(selectedProfile)
+                    setIsIdCardEngineOpen(true)
+                  }}
                   className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
                 >
                   <IdCard className="w-4 h-4" />
-                  <span>Smart ID</span>
+                  <span>Smart ID Card</span>
                 </button>
                 <button
                   type="button"
