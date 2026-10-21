@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react'
+import React, { useState } from 'react'
 import { 
   LayoutDashboard, 
   Users, 
@@ -305,16 +305,7 @@ export const SuperadminSidebar = ({
                 {(!collapsed || isMobileOpen) && <span>Enterprise Operations</span>}
               </div>
               {(!collapsed || isMobileOpen) && (
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 font-semibold">
-                    7
-                  </span>
-                  {enterpriseOpen ? (
-                    <ChevronUp className="w-4 h-4 text-slate-400" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4 text-slate-400" />
-                  )}
-                </div>
+                enterpriseOpen ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />
               )}
             </button>
 
