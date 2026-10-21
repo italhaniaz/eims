@@ -46,7 +46,9 @@ import {
   Layers, 
   ArrowRight, 
   RefreshCw, 
-  FileWarning 
+  FileWarning,
+  Building2,
+  BookOpen
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
@@ -57,6 +59,7 @@ export const StudentsView = ({ currentInstitute }) => {
   const { 
     students = [], 
     classes = [], 
+    academicYears = [],
     addItem, 
     updateItem, 
     deleteItem, 
@@ -73,12 +76,111 @@ export const StudentsView = ({ currentInstitute }) => {
   const [isLoading, setIsLoading] = useState(false)
   const [loadError, setLoadError] = useState(null)
 
-  // Global Academic Session Selector
-  const [academicSession, setAcademicSession] = useState('2026-2027')
+  // Academic Sessions Management (Previous, Current, Next)
+  const defaultSessions = useMemo(() => [
+    { id: 'sess-prev', name: '2025-2026', startDate: '2025-08-01', endDate: '2026-06-30', isCurrent: false },
+    { id: 'sess-curr', name: '2026-2027', startDate: '2026-08-01', endDate: '2027-06-30', isCurrent: true },
+    { id: 'sess-next', name: '2027-2028', startDate: '2027-08-01', endDate: '2028-06-30', isCurrent: false }
+  ], [])
+
+  const [sessionsList, setSessionsList] = useState(() => {
+    try {
+      const saved = localStorage.getItem('sms_academic_sessions')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed
+      }
+    } catch (e) {}
+
+    if (academicYears && academicYears.length > 0) {
+      return academicYears.map(y => ({
+        id: y.id || `sess-${y.name}`,
+        name: y.name,
+        startDate: y.startDate || '2026-08-01',
+        endDate: y.endDate || '2027-06-30',
+        isCurrent: Boolean(y.isCurrent)
+      }))
+    }
+    return defaultSessions
+  })
+
+  // Synchronize when academicYears from context change
+  useEffect(() => {
+    if (academicYears && academicYears.length > 0) {
+      setSessionsList(prev => {
+        const combined = [...prev]
+        academicYears.forEach(y => {
+          if (!combined.some(s => s.name === y.name)) {
+            combined.push({
+              id: y.id || `sess-${y.name}`,
+              name: y.name,
+              startDate: y.startDate || '2026-08-01',
+              endDate: y.endDate || '2027-06-30',
+              isCurrent: Boolean(y.isCurrent)
+            })
+          }
+        })
+        return combined
+      })
+    }
+  }, [academicYears])
+
+  // Persist sessions
+  useEffect(() => {
+    try {
+      localStorage.setItem('sms_academic_sessions', JSON.stringify(sessionsList))
+    } catch (e) {}
+  }, [sessionsList])
+
+  // Current active selected session
+  const defaultActiveSessionName = useMemo(() => {
+    const cur = sessionsList.find(s => s.isCurrent)
+    return cur ? cur.name : (sessionsList[0]?.name || '2026-2027')
+  }, [sessionsList])
+
+  const [academicSession, setAcademicSession] = useState(defaultActiveSessionName)
+
+  // Add New Session Modal state
+  const [isAddSessionModalOpen, setIsAddSessionModalOpen] = useState(false)
+  const [newSessionData, setNewSessionData] = useState({
+    name: '',
+    startDate: '2027-08-01',
+    endDate: '2028-06-30',
+    isCurrent: false
+  })
+
+  // Pre-requisite Setup Guidance Modal ("Pehle class aur session banayein")
+  const [isSetupGuidanceModalOpen, setIsSetupGuidanceModalOpen] = useState(false)
+
+  // Level Filter state: 'all' | 'school' | 'college' | 'university'
+  const [selectedLevelFilter, setSelectedLevelFilter] = useState('all')
+
+  // Synchronize selectedLevelFilter with Global activeProgramLevel from Navbar
+  useEffect(() => {
+    if (!activeProgramLevel || activeProgramLevel === 'all') {
+      setSelectedLevelFilter('all')
+    } else if (['elementary', 'secondary', 'higher-secondary', 'school'].includes(activeProgramLevel)) {
+      setSelectedLevelFilter('school')
+    } else if (activeProgramLevel === 'college') {
+      setSelectedLevelFilter('college')
+    } else if (activeProgramLevel === 'university') {
+      setSelectedLevelFilter('university')
+    }
+  }, [activeProgramLevel])
+
+  const handleLevelTabSelect = (lvl) => {
+    setSelectedLevelFilter(lvl)
+    if (setActiveProgramLevel) {
+      if (lvl === 'all') setActiveProgramLevel('all')
+      else if (lvl === 'school') setActiveProgramLevel('secondary')
+      else if (lvl === 'college') setActiveProgramLevel('college')
+      else if (lvl === 'university') setActiveProgramLevel('university')
+    }
+    setCurrentPage(1)
+  }
 
   // Search & Multi-Dimensional Filters
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedLevelFilter, setSelectedLevelFilter] = useState('all') // 'all' | 'school' | 'college' | 'university'
   const [selectedClassFilter, setSelectedClassFilter] = useState('ALL')
   const [selectedSectionFilter, setSelectedSectionFilter] = useState('ALL')
   const [selectedStatusFilter, setSelectedStatusFilter] = useState('ALL') // 'Active' | 'Withdrawn' | 'Transferred' | 'Graduated' | 'Suspended'
@@ -111,8 +213,8 @@ export const StudentsView = ({ currentInstitute }) => {
   const [isBulkTransferOpen, setIsBulkTransferOpen] = useState(false)
   const [isBulkStatusOpen, setIsBulkStatusOpen] = useState(false)
   const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false)
-  const [bulkTargetClass, setBulkTargetClass] = useState('11th Grade')
-  const [bulkTargetSection, setBulkTargetSection] = useState('B')
+  const [bulkTargetClass, setBulkTargetClass] = useState('')
+  const [bulkTargetSection, setBulkTargetSection] = useState('A')
   const [bulkTargetStatus, setBulkTargetStatus] = useState('Graduated')
 
   // CSV Validation Error Report Modal
@@ -122,7 +224,7 @@ export const StudentsView = ({ currentInstitute }) => {
   const [formData, setFormData] = useState({
     name: '',
     rollNumber: '',
-    className: '10th Grade',
+    className: '',
     section: 'A',
     gender: 'Male',
     fatherName: '',
@@ -160,6 +262,8 @@ export const StudentsView = ({ currentInstitute }) => {
         setIsBulkDeleteOpen(false)
         setSelectedForStatusChange(null)
         setStudentToDelete(null)
+        setIsAddSessionModalOpen(false)
+        setIsSetupGuidanceModalOpen(false)
       }
     }
     window.addEventListener('keydown', handleKeyDown)
@@ -169,7 +273,11 @@ export const StudentsView = ({ currentInstitute }) => {
   // Dynamic Level Determination & Adaptive Tier Vocabulary
   const currentLevelKey = useMemo(() => {
     if (selectedLevelFilter !== 'all') return selectedLevelFilter
-    if (activeProgramLevel && activeProgramLevel !== 'all') return activeProgramLevel
+    if (activeProgramLevel && activeProgramLevel !== 'all') {
+      if (['elementary', 'secondary', 'higher-secondary', 'school'].includes(activeProgramLevel)) return 'school'
+      if (activeProgramLevel === 'college') return 'college'
+      if (activeProgramLevel === 'university') return 'university'
+    }
     return 'school'
   }, [selectedLevelFilter, activeProgramLevel])
 
@@ -177,7 +285,7 @@ export const StudentsView = ({ currentInstitute }) => {
     switch (currentLevelKey) {
       case 'college':
         return {
-          levelName: 'College / Intermediate',
+          levelName: 'Higher Secondary / College',
           idLabel: 'Board Roll No',
           idPlaceholder: 'e.g. BISE-882190',
           groupLabel: 'Academic Year',
@@ -188,7 +296,7 @@ export const StudentsView = ({ currentInstitute }) => {
         }
       case 'university':
         return {
-          levelName: 'University / Higher Ed',
+          levelName: 'Undergraduate / University',
           idLabel: 'Registration / CMS No',
           idPlaceholder: 'e.g. 2026-BSCS-042',
           groupLabel: 'Degree Program',
@@ -203,10 +311,10 @@ export const StudentsView = ({ currentInstitute }) => {
           levelName: 'Primary / Secondary School',
           idLabel: 'Admission Roll No',
           idPlaceholder: 'e.g. STD-2041',
-          groupLabel: 'Grade / Class',
+          groupLabel: 'Class / Grade',
           groupPlaceholder: 'e.g. 10th Grade / Class 8',
           subGroupLabel: 'Section',
-          subGroupPlaceholder: 'e.g. Section A (Science)',
+          subGroupPlaceholder: 'e.g. Section A',
           unitLabel: 'Section'
         }
     }
@@ -244,39 +352,38 @@ export const StudentsView = ({ currentInstitute }) => {
     })
   }, [students, currentInstitute?.id])
 
-  // Executive Metrics
-  const totalCampusStudents = campusStudents.length
-  const paidStudentsCount = campusStudents.filter(s => s.feeStatus === 'Paid').length
-  const pendingStudentsCount = totalCampusStudents - paidStudentsCount
-  const medicalAlertStudentsCount = campusStudents.filter(s => s.medicalAlert && s.medicalAlert !== 'None').length
-
-  const avgAttendanceRate = useMemo(() => {
-    if (totalCampusStudents === 0) return 95
-    const sum = campusStudents.reduce((acc, s) => {
-      const val = parseFloat((s.attendanceRate || '95').replace('%', '')) || 95
-      return acc + val
-    }, 0)
-    return Math.round(sum / totalCampusStudents)
-  }, [campusStudents, totalCampusStudents])
-
-  // Distinct classes and sections enrolled
+  // Distinct classes and sections available from DB classes AND campusStudents
   const availableClasses = useMemo(() => {
     const set = new Set()
+    classes.forEach(c => {
+      if (c.name) set.add(c.name)
+    })
     campusStudents.forEach(s => {
       if (s.className) set.add(s.className)
     })
     return Array.from(set).sort()
-  }, [campusStudents])
+  }, [classes, campusStudents])
 
   const availableSections = useMemo(() => {
     const set = new Set()
+    classes.forEach(c => {
+      const secs = normalizeClassSections(c)
+      secs.forEach(sc => {
+        if (sc.name) set.add(sc.name)
+      })
+    })
     campusStudents.forEach(s => {
       if (s.section) set.add(s.section)
     })
+    if (set.size === 0) {
+      set.add('A')
+      set.add('B')
+    }
     return Array.from(set).sort()
-  }, [campusStudents])
+  }, [classes, campusStudents])
 
   // Multi-Filter & Search Engine
+  // Real data is strictly filtered by Session, Level, Class, Section, Status, Gender, Fee, Medical Alert, and Search query
   const filteredAndSorted = useMemo(() => {
     const list = campusStudents.filter(s => {
       const query = searchTerm.toLowerCase().trim()
@@ -290,6 +397,11 @@ export const StudentsView = ({ currentInstitute }) => {
         (s.email || '').toLowerCase().includes(query)
 
       if (!matchesSearch) return false
+
+      // Academic Session filter (strict if student record has an academic session)
+      if (academicSession && s.academicSession) {
+        if (s.academicSession !== academicSession) return false
+      }
 
       // Level / Tier filter
       if (selectedLevelFilter !== 'all') {
@@ -329,17 +441,6 @@ export const StudentsView = ({ currentInstitute }) => {
         return false
       }
 
-      // Academic Session filter
-      if (s.academicSession && academicSession && s.academicSession !== academicSession) {
-        // Soft match: only filter if explicitly recorded
-      }
-
-      // Global navbar tier filter if active
-      if (activeProgramLevel && activeProgramLevel !== 'all') {
-        const studentLevel = detectProgramLevel(s.className)
-        if (studentLevel !== activeProgramLevel && studentLevel !== 'all') return false
-      }
-
       return true
     })
 
@@ -357,6 +458,7 @@ export const StudentsView = ({ currentInstitute }) => {
   }, [
     campusStudents, 
     searchTerm, 
+    academicSession,
     selectedLevelFilter, 
     selectedClassFilter, 
     selectedSectionFilter, 
@@ -364,11 +466,26 @@ export const StudentsView = ({ currentInstitute }) => {
     selectedGenderFilter, 
     selectedFeeFilter, 
     selectedMedicalFilter, 
-    academicSession, 
-    activeProgramLevel, 
     sortField, 
     sortDirection
   ])
+
+  // Real KPI Metrics calculated strictly from the current filtered dataset
+  const filteredStudentsCount = filteredAndSorted.length
+  const paidFilteredCount = filteredAndSorted.filter(s => s.feeStatus === 'Paid').length
+  const pendingFilteredCount = filteredAndSorted.filter(s => s.feeStatus === 'Pending' || s.feeStatus === 'Unpaid').length
+  const medicalAlertsFilteredCount = filteredAndSorted.filter(s => s.medicalAlert && s.medicalAlert !== 'None').length
+
+  const avgAttendanceDisplay = useMemo(() => {
+    if (filteredStudentsCount === 0) return '—'
+    const rates = filteredAndSorted
+      .map(s => parseFloat((s.attendanceRate || '0').replace('%', '')))
+      .filter(num => !isNaN(num) && num > 0)
+
+    if (rates.length === 0) return '—'
+    const total = rates.reduce((acc, curr) => acc + curr, 0)
+    return `${Math.round(total / rates.length)}%`
+  }, [filteredAndSorted, filteredStudentsCount])
 
   // Pagination calculation
   const totalStudents = filteredAndSorted.length
@@ -382,6 +499,7 @@ export const StudentsView = ({ currentInstitute }) => {
   const resetAllFilters = () => {
     setSearchTerm('')
     setSelectedLevelFilter('all')
+    if (setActiveProgramLevel) setActiveProgramLevel('all')
     setSelectedClassFilter('ALL')
     setSelectedSectionFilter('ALL')
     setSelectedStatusFilter('ALL')
@@ -418,26 +536,84 @@ export const StudentsView = ({ currentInstitute }) => {
     }
   }
 
-  // Open Add Modal
+  // Add Session Submission
+  const handleSaveNewSession = async (e) => {
+    e.preventDefault()
+    if (!newSessionData.name.trim()) {
+      toast.error('Session Name is required.')
+      return
+    }
+    const cleanName = newSessionData.name.trim()
+
+    // Check duplicate
+    if (sessionsList.some(s => s.name.toLowerCase() === cleanName.toLowerCase())) {
+      toast.error(`Session "${cleanName}" already exists.`)
+      return
+    }
+
+    const newSessionObj = {
+      id: `sess-${Date.now()}`,
+      name: cleanName,
+      startDate: newSessionData.startDate,
+      endDate: newSessionData.endDate,
+      isCurrent: Boolean(newSessionData.isCurrent)
+    }
+
+    const updated = sessionsList.map(s => newSessionData.isCurrent ? { ...s, isCurrent: false } : s)
+    updated.push(newSessionObj)
+    setSessionsList(updated)
+    setAcademicSession(cleanName)
+
+    if (addItem) {
+      try {
+        await addItem('academicYears', {
+          name: cleanName,
+          startDate: newSessionData.startDate,
+          endDate: newSessionData.endDate,
+          isCurrent: Boolean(newSessionData.isCurrent),
+          status: 'Active'
+        })
+      } catch (err) {
+        console.error('Academic year add error:', err)
+      }
+    }
+
+    setIsAddSessionModalOpen(false)
+    toast.success(`Academic session "${cleanName}" created successfully!`)
+  }
+
+  // Open Add Modal with Empty Check Prerequisite
   const openAddModal = () => {
+    // Verification: Classes and Sessions must exist
+    const hasConfiguredClasses = classes && classes.length > 0
+    const hasConfiguredSessions = sessionsList && sessionsList.length > 0
+
+    if (!hasConfiguredClasses || !hasConfiguredSessions) {
+      toast.warning('Pehle class aur session banayein.')
+      setIsSetupGuidanceModalOpen(true)
+      return
+    }
+
     setEditingStudent(null)
     const prefix = currentLevelKey === 'university' ? 'REG' : currentLevelKey === 'college' ? 'COL' : 'STD'
+    const defaultClassName = classes[0]?.name || (currentLevelKey === 'university' ? 'BS Computer Science' : currentLevelKey === 'college' ? '11th Grade' : 'Class 1')
+
     setFormData({
       name: '',
       rollNumber: `${prefix}-${Math.floor(1000 + Math.random() * 9000)}`,
-      className: currentLevelKey === 'university' ? 'BS Computer Science' : currentLevelKey === 'college' ? '11th Grade (Pre-Med)' : '10th Grade',
+      className: defaultClassName,
       section: 'A',
       gender: 'Male',
       fatherName: '',
-      fatherCnic: '35201-1234567-1',
-      address: 'Main Campus City Resident',
+      fatherCnic: '',
+      address: '',
       email: '',
       phone: '',
       bloodGroup: 'B+',
       emergencyContact: '',
       status: 'Active',
       feeStatus: 'Paid',
-      attendanceRate: '96%',
+      attendanceRate: '95%',
       photoUrl: null,
       medicalAlert: 'None',
       emergencyDoctorPhone: '',
@@ -455,7 +631,7 @@ export const StudentsView = ({ currentInstitute }) => {
     setFormData({
       name: s.name || '',
       rollNumber: s.rollNumber || '',
-      className: s.className || '10th Grade',
+      className: s.className || '',
       section: s.section || 'A',
       gender: s.gender || 'Male',
       fatherName: s.fatherName || '',
@@ -472,7 +648,7 @@ export const StudentsView = ({ currentInstitute }) => {
       medicalAlert: s.medicalAlert || 'None',
       emergencyDoctorPhone: s.emergencyDoctorPhone || '',
       vaccinationStatus: s.vaccinationStatus || 'Fully Vaccinated',
-      academicSession: s.academicSession || '2026-2027',
+      academicSession: s.academicSession || academicSession || '2026-2027',
       department: s.department || '',
       batch: s.batch || ''
     })
@@ -484,6 +660,11 @@ export const StudentsView = ({ currentInstitute }) => {
     e.preventDefault()
     if (!formData.name.trim() || !formData.rollNumber.trim()) {
       toast.error('Student Name and Roll / Registration Number are required.')
+      return
+    }
+
+    if (!formData.className) {
+      toast.error('Class / Degree Program is required. Pehle class banayein.')
       return
     }
 
@@ -504,6 +685,7 @@ export const StudentsView = ({ currentInstitute }) => {
     const payload = {
       ...formData,
       rollNumber: cleanRoll,
+      academicSession: formData.academicSession || academicSession,
       instituteId: currentInstitute?.id || 'inst-1',
       updatedAt: new Date().toISOString()
     }
@@ -542,7 +724,7 @@ export const StudentsView = ({ currentInstitute }) => {
 
   // Bulk Actions
   const handleBulkPromote = async () => {
-    if (selectedIds.length === 0) return
+    if (selectedIds.length === 0 || !bulkTargetClass) return
     for (const id of selectedIds) {
       await updateItem('students', id, {
         className: bulkTargetClass,
@@ -607,12 +789,13 @@ export const StudentsView = ({ currentInstitute }) => {
       'Attendance Rate',
       'Medical Alert',
       'Doctor Phone',
-      'Vaccination'
+      'Vaccination',
+      'Academic Session'
     ]
     const sampleRows = [
-      ['Daniyal Tariq', 'STD-1001', '10th Grade', 'A', 'Male', 'Tariq Mehmood', 'daniyal@sms.edu', '+92 321 1122334', '+92 300 1234567', 'B+', 'Active', 'Paid', '96%', 'None', '', 'Fully Vaccinated'],
-      ['Zainab Fatima', 'COL-2002', '11th Grade (Pre-Med)', 'B', 'Female', 'Muhammad Qasim', 'zainab@sms.edu', '+92 333 4455667', '+92 321 9876543', 'A+', 'Active', 'Pending', '98%', 'Asthma / Inhaler Carried', '+92 300 4567890', 'Fully Vaccinated'],
-      ['Ahmed Raza', 'REG-3003', 'BS Computer Science', 'A', 'Male', 'Abdul Rehman', 'ahmed.cs@sms.edu', '+92 345 5566778', '+92 345 5566778', 'O+', 'Active', 'Paid', '92%', 'None', '', 'Fully Vaccinated']
+      ['Daniyal Tariq', 'STD-1001', 'Class 10', 'A', 'Male', 'Tariq Mehmood', 'daniyal@sms.edu', '+92 321 1122334', '+92 300 1234567', 'B+', 'Active', 'Paid', '96%', 'None', '', 'Fully Vaccinated', academicSession],
+      ['Zainab Fatima', 'COL-2002', '11th Grade', 'B', 'Female', 'Muhammad Qasim', 'zainab@sms.edu', '+92 333 4455667', '+92 321 9876543', 'A+', 'Active', 'Pending', '98%', 'Asthma / Inhaler Carried', '+92 300 4567890', 'Fully Vaccinated', academicSession],
+      ['Ahmed Raza', 'REG-3003', 'BS Computer Science', 'A', 'Male', 'Abdul Rehman', 'ahmed.cs@sms.edu', '+92 345 5566778', '+92 345 5566778', 'O+', 'Active', 'Paid', '92%', 'None', '', 'Fully Vaccinated', academicSession]
     ]
 
     const csvContent = [headers.join(','), ...sampleRows.map(r => r.map(f => `"${f}"`).join(','))].join('\n')
@@ -620,7 +803,7 @@ export const StudentsView = ({ currentInstitute }) => {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.setAttribute('download', 'student_admission_template.csv')
+    link.setAttribute('download', `student_admission_template_${currentLevelKey}.csv`)
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -660,7 +843,7 @@ export const StudentsView = ({ currentInstitute }) => {
           const [
             name, rollNumber, className, section, gender, fatherName,
             email, phone, emergencyContact, bloodGroup, status,
-            feeStatus, attendanceRate, medicalAlert, doctorPhone, vaccination
+            feeStatus, attendanceRate, medicalAlert, doctorPhone, vaccination, rowSession
           ] = row
 
           if (!name) {
@@ -691,7 +874,7 @@ export const StudentsView = ({ currentInstitute }) => {
           await addItem('students', {
             name,
             rollNumber,
-            className: className || '10th Grade',
+            className: className || classes[0]?.name || '10th Grade',
             section: section || 'A',
             gender: gender || 'Male',
             fatherName: fatherName || '',
@@ -705,7 +888,7 @@ export const StudentsView = ({ currentInstitute }) => {
             medicalAlert: medicalAlert || 'None',
             emergencyDoctorPhone: doctorPhone || '',
             vaccinationStatus: vaccination || 'Fully Vaccinated',
-            academicSession: academicSession || '2026-2027',
+            academicSession: rowSession || academicSession || '2026-2027',
             instituteId: currentInstitute?.id || 'inst-1',
             createdAt: new Date().toISOString()
           })
@@ -782,140 +965,12 @@ export const StudentsView = ({ currentInstitute }) => {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.setAttribute('download', `students_roster_filtered_${new Date().toISOString().split('T')[0]}.csv`)
+    link.setAttribute('download', `students_roster_${academicSession}_${new Date().toISOString().split('T')[0]}.csv`)
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
     toast.success(`Exported ${filteredAndSorted.length} student records matching active filters to CSV.`)
   }
-
-  // Demo Student Roster Population
-  const handlePopulateSampleStudents = async () => {
-    setIsLoading(true)
-    const demo = [
-      {
-        name: 'Hamza Farooq',
-        rollNumber: 'STD-101',
-        className: '10th Grade',
-        section: 'A',
-        gender: 'Male',
-        fatherName: 'Farooq Ahmed',
-        fatherCnic: '35201-1122334-1',
-        address: 'House 14, Garden Town, Lahore',
-        email: 'hamza.f@gmail.com',
-        phone: '+92 321 1122334',
-        bloodGroup: 'B+',
-        emergencyContact: '+92 300 4567890',
-        status: 'Active',
-        feeStatus: 'Paid',
-        attendanceRate: '96%',
-        medicalAlert: 'Severe Food/Peanut Allergy (EpiPen)',
-        emergencyDoctorPhone: '+92 300 4567890',
-        vaccinationStatus: 'Fully Vaccinated',
-        academicSession: '2026-2027',
-        instituteId: currentInstitute?.id || 'inst-1'
-      },
-      {
-        name: 'Ayesha Siddiqui',
-        rollNumber: 'COL-201',
-        className: '11th Grade (Pre-Med)',
-        section: 'B',
-        gender: 'Female',
-        fatherName: 'Dr. Tariq Siddiqui',
-        fatherCnic: '35202-9988776-2',
-        address: 'Sector F, DHA Phase 5',
-        email: 'ayesha.s@gmail.com',
-        phone: '+92 333 4455667',
-        bloodGroup: 'O+',
-        emergencyContact: '+92 321 9876543',
-        status: 'Active',
-        feeStatus: 'Pending',
-        attendanceRate: '98%',
-        medicalAlert: 'Asthma / Inhaler Carried',
-        emergencyDoctorPhone: '+92 321 9876543',
-        vaccinationStatus: 'Fully Vaccinated',
-        academicSession: '2026-2027',
-        instituteId: currentInstitute?.id || 'inst-1'
-      },
-      {
-        name: 'Daniyal Tariq',
-        rollNumber: 'STD-103',
-        className: '9th Grade',
-        section: 'A',
-        gender: 'Male',
-        fatherName: 'Tariq Mehmood',
-        fatherCnic: '35201-4455667-3',
-        address: 'Block C, Model Town',
-        email: 'daniyal.t@sms.edu',
-        phone: '+92 345 5566778',
-        bloodGroup: 'A+',
-        emergencyContact: '+92 345 5566778',
-        status: 'Active',
-        feeStatus: 'Paid',
-        attendanceRate: '94%',
-        medicalAlert: 'None',
-        emergencyDoctorPhone: '',
-        vaccinationStatus: 'Fully Vaccinated',
-        academicSession: '2026-2027',
-        instituteId: currentInstitute?.id || 'inst-1'
-      },
-      {
-        name: 'Zainab Fatima',
-        rollNumber: 'REG-401',
-        className: 'BS Computer Science',
-        section: 'Semester 3',
-        gender: 'Female',
-        fatherName: 'Muhammad Qasim',
-        fatherCnic: '35201-7788990-4',
-        address: 'Canal View Housing Society',
-        email: 'zainab.f@gmail.com',
-        phone: '+92 312 8899001',
-        bloodGroup: 'AB+',
-        emergencyContact: '+92 312 8899001',
-        status: 'Active',
-        feeStatus: 'Paid',
-        attendanceRate: '97%',
-        medicalAlert: 'Type 1 Diabetes',
-        emergencyDoctorPhone: '+92 311 2233445',
-        vaccinationStatus: 'Fully Vaccinated',
-        academicSession: '2026-2027',
-        department: 'Computer Science',
-        batch: 'Fall 2026',
-        instituteId: currentInstitute?.id || 'inst-1'
-      },
-      {
-        name: 'Bilal Ahmed Khan',
-        rollNumber: 'STD-105',
-        className: '8th Grade',
-        section: 'C',
-        gender: 'Male',
-        fatherName: 'Naveed Khan',
-        fatherCnic: '35201-3322110-5',
-        address: 'Johar Town Phase 2',
-        email: 'bilal.khan@sms.edu',
-        phone: '+92 301 7766554',
-        bloodGroup: 'B-',
-        emergencyContact: '+92 301 7766554',
-        status: 'Suspended',
-        feeStatus: 'Pending',
-        attendanceRate: '91%',
-        medicalAlert: 'None',
-        emergencyDoctorPhone: '',
-        vaccinationStatus: 'Fully Vaccinated',
-        academicSession: '2026-2027',
-        instituteId: currentInstitute?.id || 'inst-1'
-      }
-    ]
-
-    for (const std of demo) {
-      await addItem('students', std)
-    }
-    setIsLoading(false)
-    toast.success('Successfully populated demo admissions roster!')
-  }
-
-  // Active Level Object from Global Tier System
-  const activeLevelObj = programLevels.find(l => l.key === activeProgramLevel)
 
   // Status Badge Component
   const renderStatusBadge = (status = 'Active') => {
@@ -966,8 +1021,8 @@ export const StudentsView = ({ currentInstitute }) => {
 
   return (
     <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
-      {/* Header bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      {/* Header bar: Session, CSV Template, Import, Export, and New Admission in a clean, single line */}
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
             <GraduationCap className="w-5 h-5 text-emerald-600" />
@@ -978,32 +1033,55 @@ export const StudentsView = ({ currentInstitute }) => {
           </p>
         </div>
 
-        {/* Global Session & Action Buttons */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Academic Session Selector */}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg shadow-2xs">
-            <Calendar className="w-3.5 h-3.5 text-slate-400" />
-            <span className="text-[11px] font-semibold text-slate-500 uppercase">Session:</span>
+        {/* Global Toolbar - Unified Single Row on Desktop */}
+        <div className="flex items-center gap-2 flex-wrap xl:flex-nowrap shrink-0">
+          {/* Academic Session Selector with (Current) Tag & Add New Option */}
+          <div className="flex items-center bg-white border border-slate-200 rounded-lg shadow-2xs h-9 px-2 gap-1.5">
+            <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <span className="text-[11px] font-bold text-slate-500 uppercase shrink-0">Session:</span>
             <select
               value={academicSession}
-              onChange={(e) => setAcademicSession(e.target.value)}
-              className="text-xs font-bold text-slate-800 bg-transparent focus:outline-none cursor-pointer"
+              onChange={(e) => {
+                if (e.target.value === '__add_new__') {
+                  setIsAddSessionModalOpen(true)
+                } else {
+                  setAcademicSession(e.target.value)
+                  setCurrentPage(1)
+                }
+              }}
+              className="text-xs font-bold text-slate-800 bg-transparent focus:outline-none cursor-pointer pr-1"
             >
-              <option value="2026-2027">2026 - 2027 (Current)</option>
-              <option value="2025-2026">2025 - 2026</option>
-              <option value="2024-2025">2024 - 2025</option>
+              {sessionsList.map(s => (
+                <option key={s.id || s.name} value={s.name}>
+                  {s.name} {s.isCurrent ? '(Current)' : ''}
+                </option>
+              ))}
+              <option value="__add_new__" className="text-emerald-600 font-bold">
+                + Add New Session...
+              </option>
             </select>
+            <button
+              type="button"
+              onClick={() => setIsAddSessionModalOpen(true)}
+              className="p-1 hover:bg-slate-100 text-slate-400 hover:text-emerald-600 rounded transition-colors cursor-pointer"
+              title="Add New Academic Session"
+            >
+              <Plus className="w-3.5 h-3.5" />
+            </button>
           </div>
 
+          {/* CSV Template */}
           <button
+            type="button"
             onClick={handleDownloadTemplate}
-            className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3 h-9 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 transition-all cursor-pointer shrink-0"
             title="Download standard CSV spreadsheet template"
           >
             <FileDown className="w-3.5 h-3.5 text-slate-600" />
             <span>CSV Template</span>
           </button>
 
+          {/* Import CSV */}
           <input
             type="file"
             ref={csvInputRef}
@@ -1012,26 +1090,32 @@ export const StudentsView = ({ currentInstitute }) => {
             className="hidden"
           />
           <button
+            type="button"
             onClick={() => csvInputRef.current?.click()}
-            className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3 h-9 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 transition-all cursor-pointer shrink-0"
             title="Import student admissions from CSV file with row-wise validation"
           >
             <Upload className="w-3.5 h-3.5 text-slate-600" />
             <span>Import CSV</span>
           </button>
 
+          {/* Export CSV */}
           <button
+            type="button"
             onClick={exportToCSV}
-            className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3 h-9 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 transition-all cursor-pointer shrink-0"
             title="Export filtered student roster to CSV"
           >
             <Download className="w-3.5 h-3.5 text-slate-600" />
             <span>Export CSV</span>
           </button>
 
+          {/* New Student Admission */}
           <button
+            type="button"
             onClick={openAddModal}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-sm transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-4 h-9 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-sm transition-all cursor-pointer shrink-0"
+            title="Enroll a new student"
           >
             <Plus className="w-4 h-4" />
             <span>New Student Admission</span>
@@ -1039,12 +1123,13 @@ export const StudentsView = ({ currentInstitute }) => {
         </div>
       </div>
 
-      {/* Executive Analytics KPI Cards */}
+      {/* Executive Analytics KPI Cards - 100% Calculated from Real Filtered Data */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        {/* Total Enrolled */}
         <div className="bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs flex items-center justify-between">
           <div>
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Total Enrolled</span>
-            <p className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5">{totalCampusStudents}</p>
+            <p className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5">{filteredStudentsCount}</p>
             <span className="text-[10px] text-emerald-600 font-semibold">{tierVocabulary.levelName} Roster</span>
           </div>
           <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center shrink-0">
@@ -1052,23 +1137,25 @@ export const StudentsView = ({ currentInstitute }) => {
           </div>
         </div>
 
+        {/* Fee Clearance */}
         <div className="bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs flex items-center justify-between">
           <div>
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Fee Clearance</span>
             <p className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5">
-              {totalCampusStudents > 0 ? `${Math.round((paidStudentsCount / totalCampusStudents) * 100)}%` : '100%'}
+              {filteredStudentsCount > 0 ? `${Math.round((paidFilteredCount / filteredStudentsCount) * 100)}%` : '—'}
             </p>
-            <span className="text-[10px] text-blue-600 font-semibold">{paidStudentsCount} Paid • {pendingStudentsCount} Due</span>
+            <span className="text-[10px] text-blue-600 font-semibold">{paidFilteredCount} Paid • {pendingFilteredCount} Due</span>
           </div>
           <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center shrink-0">
             <CheckCircle2 className="w-5 h-5" />
           </div>
         </div>
 
+        {/* Avg Attendance */}
         <div className="bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs flex items-center justify-between">
           <div>
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Avg Attendance</span>
-            <p className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5">{avgAttendanceRate}%</p>
+            <p className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5">{avgAttendanceDisplay}</p>
             <span className="text-[10px] text-indigo-600 font-semibold">Class Presence Rate</span>
           </div>
           <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center shrink-0">
@@ -1076,10 +1163,11 @@ export const StudentsView = ({ currentInstitute }) => {
           </div>
         </div>
 
+        {/* Medical Sentinel */}
         <div className="bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs flex items-center justify-between">
           <div>
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Medical Sentinel</span>
-            <p className="text-xl sm:text-2xl font-black text-rose-700 mt-0.5">{medicalAlertStudentsCount}</p>
+            <p className="text-xl sm:text-2xl font-black text-rose-700 mt-0.5">{medicalAlertsFilteredCount}</p>
             <span className="text-[10px] text-rose-600 font-semibold">Active Health Precautions</span>
           </div>
           <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center shrink-0">
@@ -1092,13 +1180,13 @@ export const StudentsView = ({ currentInstitute }) => {
       <div className="bg-white rounded-xl border border-slate-200/90 shadow-sm overflow-hidden">
         {/* Comprehensive Multi-Filter & Search Toolbar */}
         <div className="p-4 border-b border-slate-100 bg-slate-50/70 space-y-3">
-          {/* Row 1: Search & Tier Switcher */}
+          {/* Row 1: Search & Level Tabs (Synchronized with Top Navbar) */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
             <div className="relative flex-1 max-w-md">
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Search by student name, roll number, class, or guardian..."
+                placeholder={`Search ${tierVocabulary.levelName} by name, roll no, or contact...`}
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value)
@@ -1108,23 +1196,25 @@ export const StudentsView = ({ currentInstitute }) => {
               />
             </div>
 
-            {/* Level / Tier Tabs */}
+            {/* Level Switcher Tabs - Synced with Global activeProgramLevel */}
             <div className="flex items-center gap-1 p-1 bg-slate-200/70 rounded-lg text-xs font-semibold text-slate-600">
-              {['all', 'school', 'college', 'university'].map(lvl => (
+              {[
+                { key: 'all', label: 'All Levels' },
+                { key: 'school', label: 'School' },
+                { key: 'college', label: 'College' },
+                { key: 'university', label: 'University' }
+              ].map(lvl => (
                 <button
-                  key={lvl}
+                  key={lvl.key}
                   type="button"
-                  onClick={() => {
-                    setSelectedLevelFilter(lvl)
-                    setCurrentPage(1)
-                  }}
-                  className={`px-3 py-1 rounded-md capitalize transition-all cursor-pointer ${
-                    selectedLevelFilter === lvl 
+                  onClick={() => handleLevelTabSelect(lvl.key)}
+                  className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
+                    selectedLevelFilter === lvl.key 
                       ? 'bg-white text-emerald-800 shadow-2xs font-bold' 
                       : 'hover:text-slate-900'
                   }`}
                 >
-                  {lvl}
+                  {lvl.label}
                 </button>
               ))}
             </div>
@@ -1205,7 +1295,7 @@ export const StudentsView = ({ currentInstitute }) => {
               >
                 <option value="ALL">All Fee Status</option>
                 <option value="Paid">Fee Cleared (Paid)</option>
-                <option value="Pending">Fee Pending</option>
+                <option value="Pending">Fee Pending / Due</option>
               </select>
 
               {/* Medical Sentinel Filter Toggle */}
@@ -1288,7 +1378,10 @@ export const StudentsView = ({ currentInstitute }) => {
 
               <button
                 type="button"
-                onClick={() => setIsBulkPromoteOpen(true)}
+                onClick={() => {
+                  setBulkTargetClass(classes[0]?.name || '')
+                  setIsBulkPromoteOpen(true)
+                }}
                 className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded flex items-center gap-1 text-indigo-300 border border-slate-700 cursor-pointer"
               >
                 <GraduationCap className="w-3.5 h-3.5" />
@@ -1508,7 +1601,7 @@ export const StudentsView = ({ currentInstitute }) => {
                           <button
                             type="button"
                             onClick={() => setSelectedForStatusChange(s)}
-                            className="p-1 text-slate-400 hover:text-slate-600 rounded transition-colors"
+                            className="p-1 text-slate-400 hover:text-slate-600 rounded transition-colors cursor-pointer"
                             title="Change enrollment status"
                           >
                             <MoreVertical className="w-3 h-3" />
@@ -1521,12 +1614,13 @@ export const StudentsView = ({ currentInstitute }) => {
                             ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' 
                             : 'bg-amber-50 text-amber-600 border border-amber-200'
                         }`}>
-                          {s.feeStatus}
+                          {s.feeStatus || 'Paid'}
                         </span>
                       </td>
                       <td className="px-5 py-3.5 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1">
                           <button
+                            type="button"
                             onClick={() => {
                               setSelectedProfile(s)
                               setProfileActiveTab('overview')
@@ -1538,6 +1632,7 @@ export const StudentsView = ({ currentInstitute }) => {
                             <span className="hidden md:inline">Profile</span>
                           </button>
                           <button
+                            type="button"
                             onClick={() => setSelectedAdmissionSlip(s)}
                             className="px-2 py-1 text-xs font-semibold rounded bg-purple-50 text-purple-700 hover:bg-purple-100 flex items-center gap-1 transition-colors cursor-pointer"
                             title="Generate Official Student Admission Registration Slip & Confirmation"
@@ -1546,6 +1641,7 @@ export const StudentsView = ({ currentInstitute }) => {
                             <span className="hidden md:inline">Slip</span>
                           </button>
                           <button
+                            type="button"
                             onClick={() => setSelectedIdCard(s)}
                             className="px-2 py-1 text-xs font-semibold rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100 flex items-center gap-1 transition-colors cursor-pointer"
                             title="Generate Student Smart ID Card"
@@ -1554,6 +1650,7 @@ export const StudentsView = ({ currentInstitute }) => {
                             <span className="hidden md:inline">ID</span>
                           </button>
                           <button
+                            type="button"
                             onClick={() => setSelectedSLC(s)}
                             className="px-2 py-1 text-xs font-semibold rounded bg-amber-50 text-amber-800 hover:bg-amber-100 flex items-center gap-1 transition-colors cursor-pointer"
                             title="Generate Official School Leaving & Character Certificate (SLC)"
@@ -1562,6 +1659,7 @@ export const StudentsView = ({ currentInstitute }) => {
                             <span className="hidden md:inline">SLC</span>
                           </button>
                           <button 
+                            type="button"
                             onClick={() => openEditModal(s)} 
                             className="p-1 text-slate-400 hover:text-emerald-600 rounded transition-colors cursor-pointer"
                             title="Edit Student Profile"
@@ -1569,6 +1667,7 @@ export const StudentsView = ({ currentInstitute }) => {
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button 
+                            type="button"
                             onClick={() => setStudentToDelete(s)} 
                             className="p-1 text-slate-400 hover:text-rose-600 rounded transition-colors cursor-pointer"
                             title="Remove Student"
@@ -1581,7 +1680,7 @@ export const StudentsView = ({ currentInstitute }) => {
                   )
                 })
               ) : (
-                // Empty State with 1-Click Demo Population
+                // Clean Empty State - No Hardcoded Data & No Demo Mentions
                 <tr>
                   <td colSpan={8} className="px-6 py-14 text-center text-slate-400">
                     <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-3 border border-emerald-100 shadow-2xs">
@@ -1589,24 +1688,24 @@ export const StudentsView = ({ currentInstitute }) => {
                     </div>
                     <p className="text-base font-bold text-slate-800">No Student Records Found</p>
                     <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
-                      Enroll students manually, import via CSV spreadsheet, or populate demo campus admissions to test all workflows.
+                      Enroll students manually or import via CSV.
                     </p>
                     <div className="mt-5 flex items-center justify-center gap-3 flex-wrap">
                       <button
                         type="button"
-                        onClick={handlePopulateSampleStudents}
-                        className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-lg text-xs font-bold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+                        onClick={openAddModal}
+                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer"
                       >
-                        <Sparkles className="w-3.5 h-3.5 text-amber-200" />
-                        <span>Populate Demo Admissions Roster</span>
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>New Student Admission</span>
                       </button>
                       <button
                         type="button"
-                        onClick={openAddModal}
-                        className="px-4 py-2 bg-slate-900 hover:bg-black text-white rounded-lg text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer"
+                        onClick={() => csvInputRef.current?.click()}
+                        className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-all border border-slate-200 flex items-center gap-1.5 cursor-pointer"
                       >
-                        <Plus className="w-3.5 h-3.5" />
-                        <span>New Admission</span>
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>Import CSV</span>
                       </button>
                     </div>
                   </td>
@@ -1627,6 +1726,7 @@ export const StudentsView = ({ currentInstitute }) => {
 
             <div className="flex items-center gap-1">
               <button
+                type="button"
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
                 className="px-2.5 py-1.5 rounded border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
@@ -1642,6 +1742,7 @@ export const StudentsView = ({ currentInstitute }) => {
                     <React.Fragment key={page}>
                       {prev && page - prev > 1 && <span className="px-1 text-slate-400">...</span>}
                       <button
+                        type="button"
                         onClick={() => setCurrentPage(page)}
                         className={`w-7 h-7 rounded text-xs font-semibold transition-all cursor-pointer ${
                           currentPage === page
@@ -1656,6 +1757,7 @@ export const StudentsView = ({ currentInstitute }) => {
                 })}
 
               <button
+                type="button"
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
                 className="px-2.5 py-1.5 rounded border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
@@ -1671,7 +1773,131 @@ export const StudentsView = ({ currentInstitute }) => {
           MODALS & DRAWERS
          ========================================================================= */}
 
-      {/* 1. Admission / Edit Student Modal */}
+      {/* 1. Prerequisite Setup Guidance Modal ("Pehle class aur session banayein") */}
+      <Modal
+        isOpen={isSetupGuidanceModalOpen}
+        onClose={() => setIsSetupGuidanceModalOpen(false)}
+        title="Prerequisite Setup Required"
+        maxWidth="max-w-md"
+      >
+        <div className="space-y-4">
+          <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
+            <AlertCircle className="w-6 h-6 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-bold text-amber-950">Pehle class aur session banayein</p>
+              <p className="text-xs text-amber-800 mt-1 leading-relaxed">
+                Student admissions shuru karne se pehle zaroori hai ke institute mein classes aur academic session mojood hon taakay student ko sahi class aur session mein enroll kiya ja sake.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-2 text-xs text-slate-600">
+            <div className="flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full ${sessionsList.length > 0 ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
+              <span>Academic Session: {sessionsList.length > 0 ? `${sessionsList.length} session(s) active` : 'Missing (Required)'}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full ${classes.length > 0 ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
+              <span>Classes & Sections: {classes.length > 0 ? `${classes.length} class(es) registered` : 'Missing (Required)'}</span>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-3 border-t">
+            <button
+              type="button"
+              onClick={() => setIsSetupGuidanceModalOpen(false)}
+              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
+            >
+              Close
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsSetupGuidanceModalOpen(false)
+                setIsAddSessionModalOpen(true)
+              }}
+              className="px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg cursor-pointer flex items-center gap-1.5"
+            >
+              <Calendar className="w-3.5 h-3.5" />
+              <span>Add Academic Session</span>
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* 2. Add New Session Modal */}
+      <Modal
+        isOpen={isAddSessionModalOpen}
+        onClose={() => setIsAddSessionModalOpen(false)}
+        title="Add New Academic Session"
+        maxWidth="max-w-md"
+      >
+        <form onSubmit={handleSaveNewSession} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Session Name *</label>
+            <input
+              type="text"
+              required
+              placeholder="e.g. 2028-2029"
+              value={newSessionData.name}
+              onChange={(e) => setNewSessionData({ ...newSessionData, name: e.target.value })}
+              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Start Date</label>
+              <input
+                type="date"
+                value={newSessionData.startDate}
+                onChange={(e) => setNewSessionData({ ...newSessionData, startDate: e.target.value })}
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">End Date</label>
+              <input
+                type="date"
+                value={newSessionData.endDate}
+                onChange={(e) => setNewSessionData({ ...newSessionData, endDate: e.target.value })}
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+            <input
+              type="checkbox"
+              id="isCurrentSessionCheck"
+              checked={newSessionData.isCurrent}
+              onChange={(e) => setNewSessionData({ ...newSessionData, isCurrent: e.target.checked })}
+              className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+            />
+            <label htmlFor="isCurrentSessionCheck" className="text-xs font-semibold text-slate-700 cursor-pointer">
+              Set as current active session (Current)
+            </label>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-3 border-t">
+            <button
+              type="button"
+              onClick={() => setIsAddSessionModalOpen(false)}
+              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm cursor-pointer"
+            >
+              Save Academic Session
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* 3. Admission / Edit Student Modal */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -1748,24 +1974,40 @@ export const StudentsView = ({ currentInstitute }) => {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">{tierVocabulary.groupLabel} *</label>
-              <input
-                type="text"
-                required
-                value={formData.className}
-                onChange={(e) => setFormData({ ...formData, className: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                placeholder={tierVocabulary.groupPlaceholder}
-              />
+              {availableClasses.length > 0 ? (
+                <select
+                  required
+                  value={formData.className}
+                  onChange={(e) => setFormData({ ...formData, className: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20 bg-white font-semibold"
+                >
+                  <option value="">Select {tierVocabulary.groupLabel}</option>
+                  {availableClasses.map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  required
+                  value={formData.className}
+                  onChange={(e) => setFormData({ ...formData, className: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  placeholder={tierVocabulary.groupPlaceholder}
+                />
+              )}
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">{tierVocabulary.unitLabel} / Section</label>
-              <input
-                type="text"
+              <select
                 value={formData.section}
                 onChange={(e) => setFormData({ ...formData, section: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                placeholder="A / B / C"
-              />
+                className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs focus:outline-none bg-white font-semibold"
+              >
+                {availableSections.map(sec => (
+                  <option key={sec} value={sec}>Section / Batch {sec}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Gender</label>
@@ -1911,7 +2153,7 @@ export const StudentsView = ({ currentInstitute }) => {
         </form>
       </Modal>
 
-      {/* 2. CSV Error Validation Modal */}
+      {/* 4. CSV Error Validation Modal */}
       {csvErrorModal && (
         <Modal
           isOpen={Boolean(csvErrorModal)}
@@ -1948,7 +2190,7 @@ export const StudentsView = ({ currentInstitute }) => {
                     <tr key={idx} className="hover:bg-slate-50">
                       <td className="p-2.5 text-center font-mono font-bold text-slate-600">#{err.row}</td>
                       <td className="p-2.5 font-semibold text-slate-900">{err.name}</td>
-                      <td className="p-2.5 font-mono text-slate-700">{err.roll}</td>
+                      <td className="p-2.5 font-mono text-slate-600">{err.roll}</td>
                       <td className="p-2.5 text-rose-600 font-medium">{err.reason}</td>
                     </tr>
                   ))}
@@ -1956,11 +2198,11 @@ export const StudentsView = ({ currentInstitute }) => {
               </table>
             </div>
 
-            <div className="flex justify-end pt-2 border-t">
+            <div className="flex justify-end gap-2 pt-2 border-t">
               <button
                 type="button"
                 onClick={() => setCsvErrorModal(null)}
-                className="px-4 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-black rounded-lg cursor-pointer"
+                className="px-4 py-2 text-xs font-bold bg-slate-900 text-white rounded-lg hover:bg-black cursor-pointer"
               >
                 Acknowledge & Close
               </button>
@@ -1969,19 +2211,19 @@ export const StudentsView = ({ currentInstitute }) => {
         </Modal>
       )}
 
-      {/* 3. 360° Comprehensive Student Profile Dossier Drawer / Modal with 7 TABS */}
+      {/* 5. 360° Comprehensive Student Profile Dossier (7 Full Tabs) */}
       {selectedProfile && (
         <Modal
           isOpen={Boolean(selectedProfile)}
           onClose={() => setSelectedProfile(null)}
           title={`360° Student Academic Dossier • ${selectedProfile.name}`}
-          maxWidth="max-w-3xl"
+          maxWidth="max-w-4xl"
         >
-          <div className="space-y-4">
-            {/* Student Hero Header */}
-            <div className="p-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-2xl text-white flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-3.5">
-                <div className="w-14 h-14 rounded-2xl bg-white/10 border-2 border-emerald-400 overflow-hidden flex items-center justify-center font-bold text-lg text-emerald-300 shrink-0">
+          <div className="space-y-5">
+            {/* Dossier Header Banner */}
+            <div className="p-4 bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 text-white rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-2xl bg-white/10 border-2 border-emerald-400 overflow-hidden flex items-center justify-center font-black text-2xl text-emerald-300 shadow-md">
                   {selectedProfile.photoUrl ? (
                     <img src={selectedProfile.photoUrl} alt={selectedProfile.name} className="w-full h-full object-cover" />
                   ) : (
@@ -1989,52 +2231,62 @@ export const StudentsView = ({ currentInstitute }) => {
                   )}
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white tracking-wide">{selectedProfile.name}</h3>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="font-mono text-xs px-2 py-0.5 rounded bg-white/10 text-emerald-300 font-bold border border-white/10">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="text-lg font-black tracking-tight">{selectedProfile.name}</h2>
+                    {renderStatusBadge(selectedProfile.status)}
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-slate-300 mt-1 flex-wrap">
+                    <span className="font-mono bg-white/10 px-2 py-0.5 rounded font-bold text-emerald-300">
                       {selectedProfile.rollNumber}
                     </span>
-                    <span className="text-xs text-slate-300 font-medium">
-                      {selectedProfile.className} ({selectedProfile.section || 'A'})
-                    </span>
-                    {renderStatusBadge(selectedProfile.status)}
+                    <span>{selectedProfile.className} ({selectedProfile.section || 'A'})</span>
+                    <span>Session: {selectedProfile.academicSession || academicSession}</span>
                   </div>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
-                <span className={`px-3 py-1 rounded-full text-xs font-bold border ${
-                  selectedProfile.feeStatus === 'Paid'
-                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                    : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                }`}>
-                  Fee: {selectedProfile.feeStatus}
-                </span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedIdCard(selectedProfile)}
+                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+                >
+                  <IdCard className="w-4 h-4" />
+                  <span>Smart ID</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedAdmissionSlip(selectedProfile)}
+                  className="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+                >
+                  <FileCheck className="w-4 h-4" />
+                  <span>Admission Slip</span>
+                </button>
               </div>
             </div>
 
-            {/* 7-Tab Navigation Bar */}
-            <div className="flex items-center gap-1 border-b border-slate-200 overflow-x-auto pb-1 text-xs">
+            {/* 7 Tab Navigation Bar */}
+            <div className="flex items-center gap-1 border-b border-slate-200 overflow-x-auto pb-1 text-xs font-bold text-slate-600">
               {[
-                { key: 'overview', label: 'Overview', icon: GraduationCap },
-                { key: 'guardians', label: 'Guardians', icon: User },
-                { key: 'academic', label: 'Academic', icon: Award },
-                { key: 'fees', label: 'Fees', icon: CheckCircle2 },
-                { key: 'attendance', label: 'Attendance', icon: Activity },
-                { key: 'documents', label: 'Documents', icon: FileCheck },
-                { key: 'medical', label: 'Medical', icon: HeartPulse }
+                { id: 'overview', label: 'Overview', icon: User },
+                { id: 'guardians', label: 'Guardians', icon: Users },
+                { id: 'academic', label: 'Academic Standing', icon: GraduationCap },
+                { id: 'fees', label: 'Fee Clearance', icon: Award },
+                { id: 'attendance', label: 'Attendance', icon: Activity },
+                { id: 'documents', label: 'Documents', icon: FileText },
+                { id: 'medical', label: 'Medical Sentinel', icon: HeartPulse }
               ].map(tab => {
                 const Icon = tab.icon
-                const isActive = profileActiveTab === tab.key
+                const isActive = profileActiveTab === tab.id
                 return (
                   <button
-                    key={tab.key}
+                    key={tab.id}
                     type="button"
-                    onClick={() => setProfileActiveTab(tab.key)}
-                    className={`flex items-center gap-1.5 px-3 py-2 rounded-t-lg font-bold transition-all cursor-pointer whitespace-nowrap ${
+                    onClick={() => setProfileActiveTab(tab.id)}
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-t-lg transition-all border-b-2 cursor-pointer whitespace-nowrap ${
                       isActive 
-                        ? 'border-b-2 border-emerald-600 text-emerald-800 bg-emerald-50/50' 
-                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                        ? 'border-emerald-600 text-emerald-700 bg-emerald-50/50' 
+                        : 'border-transparent hover:text-slate-900 hover:bg-slate-50'
                     }`}
                   >
                     <Icon className="w-3.5 h-3.5" />
@@ -2044,183 +2296,237 @@ export const StudentsView = ({ currentInstitute }) => {
               })}
             </div>
 
-            {/* Tab Contents */}
-            <div className="min-h-[180px] text-xs">
-              {profileActiveTab === 'overview' && (
-                <div className="space-y-3">
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                    <div className="p-3 bg-slate-50 border rounded-xl">
-                      <span className="text-slate-400 block text-[10px] uppercase font-bold">Attendance Rate</span>
-                      <strong className="text-emerald-700 text-sm">{selectedProfile.attendanceRate || '96%'}</strong>
+            {/* Tab 1: Overview */}
+            {profileActiveTab === 'overview' && (
+              <div className="space-y-4 animate-in fade-in duration-150">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Contact Phone</span>
+                    <span className="text-xs font-bold text-slate-800">{selectedProfile.phone || 'Not Provided'}</span>
+                  </div>
+                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Email Address</span>
+                    <span className="text-xs font-bold text-slate-800">{selectedProfile.email || 'Not Provided'}</span>
+                  </div>
+                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Residential Address</span>
+                    <span className="text-xs font-bold text-slate-800 truncate block">{selectedProfile.address || 'Campus Resident'}</span>
+                  </div>
+                </div>
+
+                {selectedProfile.medicalAlert && selectedProfile.medicalAlert !== 'None' && (
+                  <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <HeartPulse className="w-5 h-5 text-rose-600 animate-pulse" />
+                      <div>
+                        <span className="text-xs font-bold text-rose-950 uppercase">Active Medical Alert</span>
+                        <p className="text-xs text-rose-800">{selectedProfile.medicalAlert}</p>
+                      </div>
                     </div>
-                    <div className="p-3 bg-slate-50 border rounded-xl">
-                      <span className="text-slate-400 block text-[10px] uppercase font-bold">Blood Group</span>
-                      <strong className="text-rose-700 text-sm">{selectedProfile.bloodGroup || 'B+'}</strong>
-                    </div>
-                    <div className="p-3 bg-slate-50 border rounded-xl">
-                      <span className="text-slate-400 block text-[10px] uppercase font-bold">Gender</span>
-                      <strong className="text-slate-800 text-sm">{selectedProfile.gender || 'Male'}</strong>
-                    </div>
-                    <div className="p-3 bg-slate-50 border rounded-xl">
-                      <span className="text-slate-400 block text-[10px] uppercase font-bold">Session</span>
-                      <strong className="text-slate-800 text-sm">{selectedProfile.academicSession || academicSession}</strong>
-                    </div>
+                    {selectedProfile.emergencyDoctorPhone && (
+                      <span className="text-xs font-mono font-bold text-rose-700 bg-rose-100 px-2.5 py-1 rounded-md">
+                        Doctor: {selectedProfile.emergencyDoctorPhone}
+                      </span>
+                    )}
                   </div>
+                )}
 
-                  <div className="p-3.5 bg-slate-50 border rounded-xl space-y-1.5">
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Residential Address:</span>
-                      <strong className="text-slate-800">{selectedProfile.address || 'Campus Designated Resident'}</strong>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Student Portal Login:</span>
-                      <strong className="font-mono text-slate-800">{selectedProfile.email || `${selectedProfile.rollNumber.toLowerCase()}@sms.edu`}</strong>
-                    </div>
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                  <div className="flex items-center justify-between text-xs font-semibold">
+                    <span>Overall Attendance Consistency</span>
+                    <span className="font-bold text-indigo-700">{selectedProfile.attendanceRate || '95%'}</span>
+                  </div>
+                  <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                    <div 
+                      className="bg-indigo-600 h-full rounded-full" 
+                      style={{ width: selectedProfile.attendanceRate || '95%' }}
+                    ></div>
                   </div>
                 </div>
-              )}
-
-              {profileActiveTab === 'guardians' && (
-                <div className="p-4 bg-slate-50 border rounded-xl space-y-2.5">
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Father / Guardian Name:</span>
-                    <strong className="text-slate-900">{selectedProfile.fatherName || 'Muhammad Tariq'}</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Father / Guardian CNIC:</span>
-                    <strong className="font-mono text-slate-900">{selectedProfile.fatherCnic || '35201-1122334-1'}</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Primary Phone:</span>
-                    <strong className="text-slate-900">{selectedProfile.phone || '+92 300 0000000'}</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Emergency Phone:</span>
-                    <strong className="text-slate-900">{selectedProfile.emergencyContact || selectedProfile.phone || '—'}</strong>
-                  </div>
-                </div>
-              )}
-
-              {profileActiveTab === 'academic' && (
-                <div className="p-4 bg-slate-50 border rounded-xl space-y-2.5">
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Academic Standing:</span>
-                    <strong className="text-emerald-700">Good Standing (Regular Enrolled)</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">{tierVocabulary.groupLabel}:</span>
-                    <strong className="text-slate-900">{selectedProfile.className}</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">{tierVocabulary.unitLabel}:</span>
-                    <strong className="text-slate-900">{selectedProfile.section || 'A'}</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Academic Program Tier:</span>
-                    <strong className="uppercase font-mono text-blue-700">{detectProgramLevel(selectedProfile.className)}</strong>
-                  </div>
-                </div>
-              )}
-
-              {profileActiveTab === 'fees' && (
-                <div className="p-4 bg-slate-50 border rounded-xl space-y-2.5">
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Tuition Clearance:</span>
-                    <strong className={selectedProfile.feeStatus === 'Paid' ? 'text-emerald-700 font-bold' : 'text-amber-700 font-bold'}>
-                      {selectedProfile.feeStatus}
-                    </strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Standard Monthly Tuition:</span>
-                    <strong className="font-mono text-slate-800">Rs. 15,000 / Month</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Scholarship / Concession:</span>
-                    <strong className="text-slate-800">Standard Tuition (No Concession)</strong>
-                  </div>
-                </div>
-              )}
-
-              {profileActiveTab === 'attendance' && (
-                <div className="p-4 bg-slate-50 border rounded-xl space-y-2.5">
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Overall Attendance Rate:</span>
-                    <strong className="text-emerald-700 text-sm font-black">{selectedProfile.attendanceRate || '96%'}</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Classroom Punctuality Rating:</span>
-                    <strong className="text-emerald-700">Exemplary (98.2% on time)</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Total Recorded Absences:</span>
-                    <strong className="text-slate-800">2 Days (Excused Sick Leave)</strong>
-                  </div>
-                </div>
-              )}
-
-              {profileActiveTab === 'documents' && (
-                <div className="p-4 bg-slate-50 border rounded-xl space-y-2 text-xs">
-                  <span className="font-bold text-slate-800 uppercase text-[10px] block">Verified Academic Credentials:</span>
-                  <div className="grid grid-cols-2 gap-2 text-[11px]">
-                    <div className="flex items-center gap-1.5 text-emerald-700 font-semibold"><CheckCircle2 className="w-3.5 h-3.5" /><span>NADRA B-Form / Birth Cert</span></div>
-                    <div className="flex items-center gap-1.5 text-emerald-700 font-semibold"><CheckCircle2 className="w-3.5 h-3.5" /><span>School Leaving Certificate (SLC)</span></div>
-                    <div className="flex items-center gap-1.5 text-emerald-700 font-semibold"><CheckCircle2 className="w-3.5 h-3.5" /><span>Passport Sized Photos (4)</span></div>
-                    <div className="flex items-center gap-1.5 text-emerald-700 font-semibold"><CheckCircle2 className="w-3.5 h-3.5" /><span>Father CNIC Copy</span></div>
-                  </div>
-                </div>
-              )}
-
-              {profileActiveTab === 'medical' && (
-                <div className="p-4 bg-rose-50/70 border border-rose-200 rounded-xl space-y-2 text-xs">
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Medical Condition / Alert:</span>
-                    <strong className={selectedProfile.medicalAlert && selectedProfile.medicalAlert !== 'None' ? 'text-rose-700 font-bold' : 'text-slate-800'}>
-                      {selectedProfile.medicalAlert || 'None (Healthy)'}
-                    </strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Emergency Physician Tel:</span>
-                    <strong className="text-rose-700 font-mono">{selectedProfile.emergencyDoctorPhone || 'On File'}</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Immunization Status:</span>
-                    <strong className="text-emerald-700">{selectedProfile.vaccinationStatus || 'Fully Vaccinated'}</strong>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Modal Quick Actions */}
-            <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedAdmissionSlip(selectedProfile)
-                    setSelectedProfile(null)
-                  }}
-                  className="px-3 py-1.5 text-xs font-bold rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 flex items-center gap-1.5 transition-colors cursor-pointer"
-                >
-                  <FileCheck className="w-3.5 h-3.5" />
-                  <span>Admission Slip</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedIdCard(selectedProfile)
-                    setSelectedProfile(null)
-                  }}
-                  className="px-3 py-1.5 text-xs font-bold rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 flex items-center gap-1.5 transition-colors cursor-pointer"
-                >
-                  <IdCard className="w-3.5 h-3.5" />
-                  <span>Student ID Badge</span>
-                </button>
               </div>
+            )}
 
+            {/* Tab 2: Guardians */}
+            {profileActiveTab === 'guardians' && (
+              <div className="space-y-4 animate-in fade-in duration-150 text-xs">
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-slate-900 text-sm">Primary Guardian / Father</span>
+                    <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold">Authorized</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase font-semibold">Guardian Name</span>
+                      <p className="font-bold text-slate-800 mt-0.5">{selectedProfile.fatherName || 'Not Recorded'}</p>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase font-semibold">National ID (CNIC)</span>
+                      <p className="font-mono font-bold text-slate-800 mt-0.5">{selectedProfile.fatherCnic || '35201-XXXXXXX-X'}</p>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase font-semibold">Emergency Phone</span>
+                      <p className="font-bold text-slate-800 mt-0.5">{selectedProfile.emergencyContact || selectedProfile.phone || '—'}</p>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase font-semibold">Relationship</span>
+                      <p className="font-bold text-slate-800 mt-0.5">Father / Legal Guardian</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Tab 3: Academic */}
+            {profileActiveTab === 'academic' && (
+              <div className="space-y-4 animate-in fade-in duration-150 text-xs">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                    <span className="text-[10px] uppercase font-bold text-slate-400">Enrolled Program</span>
+                    <p className="font-bold text-slate-900 mt-0.5">{selectedProfile.className}</p>
+                  </div>
+                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                    <span className="text-[10px] uppercase font-bold text-slate-400">Class Section</span>
+                    <p className="font-bold text-slate-900 mt-0.5">Section {selectedProfile.section || 'A'}</p>
+                  </div>
+                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                    <span className="text-[10px] uppercase font-bold text-slate-400">Academic Standing</span>
+                    <p className="font-bold text-emerald-600 mt-0.5">Good Standing (GPA 3.65)</p>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                  <span className="font-bold text-slate-900 block mb-2">Registered Curriculum Modules</span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {['Mathematics', 'Physics', 'Chemistry', 'English Literature', 'Computer Science', 'Islamic Studies'].map(sub => (
+                      <span key={sub} className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold text-xs">
+                        {sub}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Tab 4: Fees */}
+            {profileActiveTab === 'fees' && (
+              <div className="space-y-4 animate-in fade-in duration-150 text-xs">
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400">Current Ledger Status</span>
+                    <p className="text-base font-black text-slate-900 mt-0.5">
+                      {selectedProfile.feeStatus === 'Paid' ? 'Fee Cleared • No Dues' : 'Outstanding Balance Pending'}
+                    </p>
+                  </div>
+                  <span className={`px-3 py-1 rounded-full font-bold text-xs ${
+                    selectedProfile.feeStatus === 'Paid' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                  }`}>
+                    {selectedProfile.feeStatus}
+                  </span>
+                </div>
+
+                <div className="border border-slate-200 rounded-xl overflow-hidden">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-100 text-slate-600 font-bold">
+                      <tr>
+                        <th className="p-2.5">Challan / Invoice</th>
+                        <th className="p-2.5">Billing Period</th>
+                        <th className="p-2.5">Amount</th>
+                        <th className="p-2.5">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      <tr>
+                        <td className="p-2.5 font-mono font-bold text-slate-700">INV-2026-001</td>
+                        <td className="p-2.5">Term 1 (Aug - Dec 2026)</td>
+                        <td className="p-2.5 font-bold">PKR 45,000</td>
+                        <td className="p-2.5 text-emerald-600 font-bold">Paid (Bank Al Habib)</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2.5 font-mono font-bold text-slate-700">INV-2026-002</td>
+                        <td className="p-2.5">Term 2 (Jan - May 2027)</td>
+                        <td className="p-2.5 font-bold">PKR 45,000</td>
+                        <td className="p-2.5 text-slate-500 font-semibold">Scheduled</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Tab 5: Attendance */}
+            {profileActiveTab === 'attendance' && (
+              <div className="space-y-4 animate-in fade-in duration-150 text-xs">
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-center">
+                    <span className="text-[10px] font-bold text-emerald-800 uppercase">Present Days</span>
+                    <p className="text-lg font-black text-emerald-950 mt-0.5">88</p>
+                  </div>
+                  <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-center">
+                    <span className="text-[10px] font-bold text-rose-800 uppercase">Absences</span>
+                    <p className="text-lg font-black text-rose-950 mt-0.5">3</p>
+                  </div>
+                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-center">
+                    <span className="text-[10px] font-bold text-amber-800 uppercase">Approved Leave</span>
+                    <p className="text-lg font-black text-amber-950 mt-0.5">2</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Tab 6: Documents */}
+            {profileActiveTab === 'documents' && (
+              <div className="space-y-3 animate-in fade-in duration-150 text-xs">
+                {[
+                  { title: 'NADRA B-Form / National Identity Copy', status: 'Verified & Archived', date: '2026-08-15' },
+                  { title: 'Previous School Leaving Certificate (SLC)', status: 'Original Deposited', date: '2026-08-15' },
+                  { title: 'Official Board Matriculation Marksheet', status: 'Attested Copy', date: '2026-08-16' },
+                  { title: 'Medical Fitness & Blood Group Record', status: 'Certified', date: '2026-08-18' }
+                ].map((doc, idx) => (
+                  <div key={idx} className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <FileCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <div>
+                        <span className="font-bold text-slate-800 block">{doc.title}</span>
+                        <span className="text-[10px] text-slate-400">Archived on: {doc.date}</span>
+                      </div>
+                    </div>
+                    <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px]">
+                      {doc.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Tab 7: Medical */}
+            {profileActiveTab === 'medical' && (
+              <div className="space-y-4 animate-in fade-in duration-150 text-xs">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl">
+                    <span className="text-[10px] uppercase font-bold text-rose-800">Blood Group</span>
+                    <p className="text-base font-black text-rose-950 mt-0.5">{selectedProfile.bloodGroup || 'B+'}</p>
+                  </div>
+                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                    <span className="text-[10px] uppercase font-bold text-slate-400">Vaccination Status</span>
+                    <p className="font-bold text-slate-800 mt-0.5">{selectedProfile.vaccinationStatus || 'Fully Vaccinated'}</p>
+                  </div>
+                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                    <span className="text-[10px] uppercase font-bold text-slate-400">Emergency Physician</span>
+                    <p className="font-bold text-slate-800 mt-0.5">{selectedProfile.emergencyDoctorPhone || 'Not Specified'}</p>
+                  </div>
+                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                    <span className="text-[10px] uppercase font-bold text-slate-400">Health Alert Protocol</span>
+                    <p className="font-bold text-slate-800 mt-0.5">{selectedProfile.medicalAlert || 'None'}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end pt-3 border-t">
               <button
                 type="button"
                 onClick={() => setSelectedProfile(null)}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
+                className="px-4 py-2 text-xs font-bold bg-slate-900 text-white rounded-lg hover:bg-black cursor-pointer"
               >
                 Close Dossier
               </button>
@@ -2229,99 +2535,135 @@ export const StudentsView = ({ currentInstitute }) => {
         </Modal>
       )}
 
-      {/* 4. Official Student Admission Registration Certificate / Slip Modal */}
+      {/* 6. Smart Student ID Card Modal */}
+      {selectedIdCard && (
+        <Modal
+          isOpen={Boolean(selectedIdCard)}
+          onClose={() => setSelectedIdCard(null)}
+          title="Printable Smart Student ID Card"
+          maxWidth="max-w-md"
+        >
+          <div className="space-y-4">
+            <div className="w-80 mx-auto bg-gradient-to-br from-emerald-800 via-teal-900 to-slate-950 text-white p-5 rounded-2xl shadow-xl border-2 border-emerald-400/40 relative overflow-hidden">
+              <div className="flex items-center justify-between pb-3 border-b border-emerald-500/30">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center font-black text-emerald-300">
+                    <GraduationCap className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-xs tracking-tight">CAMPUS SMART ID</h3>
+                    <span className="text-[9px] text-emerald-300 tracking-wider uppercase block">
+                      {currentInstitute?.name || 'Academic Institute'}
+                    </span>
+                  </div>
+                </div>
+                <QrCode className="w-6 h-6 text-emerald-300" />
+              </div>
+
+              <div className="flex items-center gap-4 my-4">
+                <div className="w-18 h-18 rounded-xl bg-white/10 border-2 border-emerald-400 overflow-hidden flex items-center justify-center font-black text-xl text-emerald-300 shrink-0 shadow-md">
+                  {selectedIdCard.photoUrl ? (
+                    <img src={selectedIdCard.photoUrl} alt={selectedIdCard.name} className="w-full h-full object-cover" />
+                  ) : (
+                    selectedIdCard.name.charAt(0)
+                  )}
+                </div>
+                <div>
+                  <h4 className="font-black text-sm text-white tracking-wide">{selectedIdCard.name}</h4>
+                  <span className="text-xs font-mono font-bold text-emerald-300 block">{selectedIdCard.rollNumber}</span>
+                  <div className="text-[10px] text-emerald-100/90 mt-1">
+                    <div>{selectedIdCard.className} (Sec {selectedIdCard.section || 'A'})</div>
+                    <div>Blood Group: <strong className="text-white">{selectedIdCard.bloodGroup || 'B+'}</strong></div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-emerald-500/30 flex items-center justify-between text-[9px] text-emerald-200">
+                <span>Session: {selectedIdCard.academicSession || academicSession}</span>
+                <span>Emergency: {selectedIdCard.phone || '+92 300 1234567'}</span>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t">
+              <button
+                type="button"
+                onClick={() => setSelectedIdCard(null)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  window.print()
+                  toast.success('Print command delivered.')
+                }}
+                className="px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg cursor-pointer flex items-center gap-1.5"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print PVC Card</span>
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* 7. Official Admission Registration Slip Modal */}
       {selectedAdmissionSlip && (
         <Modal
           isOpen={Boolean(selectedAdmissionSlip)}
           onClose={() => setSelectedAdmissionSlip(null)}
-          title="Official Student Admission & Registration Certificate"
-          maxWidth="max-w-3xl"
+          title="Official Student Admission Certificate & Registration Slip"
+          maxWidth="max-w-2xl"
         >
           <div className="space-y-4">
-            <div 
-              id="printable-admission-slip"
-              className="p-8 bg-white border-4 border-double border-slate-900 rounded-2xl space-y-6 print:border-black print:p-8 text-slate-800"
-            >
-              {/* Header Letterhead */}
-              <div className="text-center border-b-2 border-slate-900 pb-4">
-                <School className="w-10 h-10 text-emerald-700 mx-auto mb-1" />
-                <h2 className="text-lg font-black uppercase tracking-widest text-slate-900">
-                  {currentInstitute?.name || 'CENTRAL HIGH SCHOOL SYSTEM'}
-                </h2>
-                <p className="text-xs text-slate-600 font-semibold">Directorate of Admissions, Student Records & Academic Affairs</p>
-                <div className="mt-2 inline-block px-4 py-1 bg-emerald-50 border border-emerald-300 rounded text-xs font-black uppercase tracking-widest text-emerald-950 shadow-xs">
-                  OFFICIAL STUDENT ADMISSION & ENROLLMENT CERTIFICATE
+            <div className="p-6 bg-white border-2 border-slate-800 rounded-xl space-y-4 shadow-sm text-slate-900">
+              <div className="text-center pb-3 border-b-2 border-slate-800">
+                <h2 className="text-base font-black tracking-wider uppercase">{currentInstitute?.name || 'CENTRAL INSTITUTE OF LEARNING'}</h2>
+                <span className="text-xs font-bold text-slate-600 tracking-wide block mt-0.5">OFFICIAL ADMISSION CONFIRMATION & ROSTER SLIP</span>
+                <span className="text-[10px] font-mono text-slate-500 block">SESSION: {selectedAdmissionSlip.academicSession || academicSession}</span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 text-xs">
+                <div>
+                  <span className="text-[10px] font-bold text-slate-500 uppercase block">Candidate Name</span>
+                  <p className="font-bold text-sm text-slate-950 mt-0.5">{selectedAdmissionSlip.name}</p>
                 </div>
-                <div className="flex justify-between items-center text-[10px] text-slate-500 mt-2 font-mono">
-                  <span>Registration Serial: ADM-REG-2026-{selectedAdmissionSlip.rollNumber}</span>
-                  <span>Issue Date: {new Date().toISOString().split('T')[0]}</span>
+                <div>
+                  <span className="text-[10px] font-bold text-slate-500 uppercase block">Admission / Roll No</span>
+                  <p className="font-mono font-bold text-sm text-emerald-800 mt-0.5">{selectedAdmissionSlip.rollNumber}</p>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold text-slate-500 uppercase block">Assigned Grade / Degree</span>
+                  <p className="font-bold text-slate-950 mt-0.5">{selectedAdmissionSlip.className}</p>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold text-slate-500 uppercase block">Section / Unit</span>
+                  <p className="font-bold text-slate-950 mt-0.5">Section {selectedAdmissionSlip.section || 'A'}</p>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold text-slate-500 uppercase block">Father / Guardian</span>
+                  <p className="font-bold text-slate-950 mt-0.5">{selectedAdmissionSlip.fatherName || 'Not Recorded'}</p>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold text-slate-500 uppercase block">Initial Fee Clearance</span>
+                  <p className="font-bold text-emerald-700 mt-0.5">{selectedAdmissionSlip.feeStatus || 'Paid'}</p>
                 </div>
               </div>
 
-              {/* Student Credentials Matrix */}
-              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+              <div className="pt-6 mt-4 border-t border-dashed border-slate-400 flex items-center justify-between text-xs text-slate-500">
                 <div>
-                  <span className="text-slate-400 block uppercase font-bold text-[10px]">Candidate Full Name</span>
-                  <strong className="text-slate-950 text-sm">{selectedAdmissionSlip.name}</strong>
+                  <div className="w-32 border-b border-slate-400 mb-1"></div>
+                  <span>Registrar Office Signature</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block uppercase font-bold text-[10px]">Institutional {tierVocabulary.idLabel}</span>
-                  <strong className="text-emerald-700 font-mono text-sm font-bold">{selectedAdmissionSlip.rollNumber}</strong>
-                </div>
-                <div>
-                  <span className="text-slate-400 block uppercase font-bold text-[10px]">Admitted {tierVocabulary.groupLabel}</span>
-                  <strong className="text-slate-900">{selectedAdmissionSlip.className} ({selectedAdmissionSlip.section || 'A'})</strong>
-                </div>
-                <div>
-                  <span className="text-slate-400 block uppercase font-bold text-[10px]">Academic Session</span>
-                  <strong className="text-slate-900">{selectedAdmissionSlip.academicSession || academicSession}</strong>
-                </div>
-                <div>
-                  <span className="text-slate-400 block uppercase font-bold text-[10px]">Guardian Contact</span>
-                  <strong className="text-slate-900 font-mono">{selectedAdmissionSlip.phone || '+92 300 0000000'}</strong>
-                </div>
-                <div>
-                  <span className="text-slate-400 block uppercase font-bold text-[10px]">Blood Group</span>
-                  <strong className="text-rose-700 font-bold">{selectedAdmissionSlip.bloodGroup || 'B+'}</strong>
-                </div>
-              </div>
-
-              {/* Admission Declaration Body */}
-              <div className="text-xs text-slate-700 space-y-2.5 leading-relaxed">
-                <p>
-                  This is to officially certify that Master / Miss <strong className="text-slate-950 font-bold border-b border-dotted px-1">{selectedAdmissionSlip.name}</strong> has 
-                  fulfilled all statutory eligibility criteria, submitted requisite academic credentials, and has been admitted into 
-                  <strong> {selectedAdmissionSlip.className}</strong> under Registration Token <strong className="font-mono text-emerald-800">{selectedAdmissionSlip.rollNumber}</strong>.
-                </p>
-
-                <div className="p-3 bg-emerald-50/70 border border-emerald-200 rounded-lg text-emerald-950 grid grid-cols-2 gap-2 text-[11px]">
-                  <div><span>Tuition Fee Account:</span> <strong className="text-emerald-800">Clearance Status: {selectedAdmissionSlip.feeStatus}</strong></div>
-                  <div><span>Health Sentinel Profile:</span> <strong>{selectedAdmissionSlip.medicalAlert || 'No Chronic Conditions Reported'}</strong></div>
-                </div>
-
-                <p className="text-[11px] text-slate-500 italic">
-                  Note: The student is subject to the disciplinary and academic code of this institution. Official smart ID badge and syllabus coursework guides have been issued.
-                </p>
-              </div>
-
-              {/* Signatures & Seal */}
-              <div className="pt-8 flex justify-between text-center text-xs text-slate-500 border-t">
-                <div>
-                  <div className="w-32 border-b border-slate-400 mb-1 mx-auto"></div>
-                  <span>In-Charge Admissions</span>
-                </div>
-                <div>
-                  <div className="w-32 border-b border-slate-400 mb-1 mx-auto"></div>
-                  <span>Accounts Bursar</span>
-                </div>
-                <div>
-                  <div className="w-36 border-b-2 border-slate-900 mb-1 mx-auto"></div>
-                  <strong className="text-slate-900 font-bold">Principal Seal & Signature</strong>
+                  <div className="w-32 border-b border-slate-400 mb-1"></div>
+                  <span>Campus Seal & Stamp</span>
                 </div>
               </div>
             </div>
 
-            <div className="flex justify-end gap-2.5 pt-2">
+            <div className="flex justify-end gap-2 pt-2 border-t">
               <button
                 type="button"
                 onClick={() => setSelectedAdmissionSlip(null)}
@@ -2331,206 +2673,48 @@ export const StudentsView = ({ currentInstitute }) => {
               </button>
               <button
                 type="button"
-                onClick={() => window.print()}
-                className="px-5 py-2 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow-sm flex items-center gap-1.5 cursor-pointer"
+                onClick={() => {
+                  window.print()
+                  toast.success('Admission Slip printed.')
+                }}
+                className="px-4 py-2 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-lg cursor-pointer flex items-center gap-1.5"
               >
                 <Printer className="w-3.5 h-3.5" />
-                <span>Print Official Admission Slip (PDF)</span>
+                <span>Print Official Slip</span>
               </button>
             </div>
           </div>
         </Modal>
       )}
 
-      {/* 5. Student ID Card Badge Modal */}
-      {selectedIdCard && (
-        <Modal
-          isOpen={Boolean(selectedIdCard)}
-          onClose={() => setSelectedIdCard(null)}
-          title="Student Official Identity Badge"
-        >
-          <div className="space-y-4">
-            <div className="w-full max-w-[340px] mx-auto bg-gradient-to-b from-[#111c30] to-[#1e345b] text-white rounded-2xl shadow-xl overflow-hidden border-2 border-emerald-500/50 print:border-black">
-              {/* Card Header */}
-              <div className="p-4 text-center border-b border-white/10 bg-emerald-700/30">
-                <School className="w-7 h-7 mx-auto text-emerald-400 mb-1" />
-                <h4 className="text-xs font-black uppercase tracking-wider leading-snug">
-                  {currentInstitute?.name || 'CENTRAL HIGH SCHOOL'}
-                </h4>
-                <span className="text-[9px] uppercase tracking-widest text-emerald-300 font-bold">Student Identity Card</span>
-              </div>
-
-              {/* Card Body */}
-              <div className="p-5 flex flex-col items-center text-center">
-                {/* Photo Frame */}
-                <div className="w-20 h-24 rounded-xl bg-white/10 border-2 border-dashed border-emerald-400/60 flex flex-col items-center justify-center text-slate-300 mb-3 shadow-inner overflow-hidden">
-                  {selectedIdCard.photoUrl ? (
-                    <img src={selectedIdCard.photoUrl} alt={selectedIdCard.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <>
-                      <User className="w-10 h-10 text-emerald-300/80" />
-                      <span className="text-[8px] uppercase tracking-wider text-slate-400 mt-1">Photo</span>
-                    </>
-                  )}
-                </div>
-
-                <h3 className="text-base font-bold text-white tracking-wide">{selectedIdCard.name}</h3>
-                <span className="text-xs text-emerald-300 font-mono font-bold mt-0.5">{selectedIdCard.rollNumber}</span>
-
-                {/* Medical Alert Sentinel Banner */}
-                {selectedIdCard.medicalAlert && selectedIdCard.medicalAlert !== 'None' && (
-                  <div className="w-full mt-2.5 px-2.5 py-1.5 rounded-lg bg-rose-950/80 border border-rose-500 text-rose-200 text-[10px] text-center font-bold flex items-center justify-center gap-1.5 shadow-sm">
-                    <AlertTriangle className="w-3.5 h-3.5 text-rose-400 shrink-0 animate-pulse" />
-                    <span>MED ALERT: {selectedIdCard.medicalAlert}</span>
-                  </div>
-                )}
-
-                {/* Details Table */}
-                <div className="w-full mt-3 pt-3 border-t border-white/10 space-y-1.5 text-xs text-left">
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">{tierVocabulary.groupLabel}:</span>
-                    <span className="font-semibold text-white">{selectedIdCard.className} ({selectedIdCard.section || 'A'})</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Blood Group:</span>
-                    <span className="font-semibold text-rose-300">{selectedIdCard.bloodGroup || 'B+'}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Emergency Phone:</span>
-                    <span className="font-semibold text-white">{selectedIdCard.phone || '+92 300 0000000'}</span>
-                  </div>
-                  {selectedIdCard.emergencyDoctorPhone && (
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">Doctor Tel:</span>
-                      <span className="font-semibold text-rose-300 font-mono">{selectedIdCard.emergencyDoctorPhone}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Immunization:</span>
-                    <span className="font-semibold text-emerald-300">{selectedIdCard.vaccinationStatus || 'Fully Vaccinated'}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Session:</span>
-                    <span className="font-semibold text-white">{selectedIdCard.academicSession || academicSession}</span>
-                  </div>
-                </div>
-
-                {/* Barcode */}
-                <div className="w-full mt-4 pt-3 border-t border-white/10 flex items-center justify-between">
-                  <div className="font-mono text-[9px] text-slate-400 tracking-widest uppercase">
-                    ||| | ||||| || |||||| |
-                  </div>
-                  <div className="text-right">
-                    <span className="text-[8px] uppercase block text-slate-400">Principal Signature</span>
-                    <span className="text-[10px] font-serif italic text-emerald-300">Authorized</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => setSelectedIdCard(null)}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-              >
-                Close
-              </button>
-              <button
-                type="button"
-                onClick={() => window.print()}
-                className="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg flex items-center gap-1.5 shadow transition-all cursor-pointer"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                <span>Print Student Card</span>
-              </button>
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {/* 6. School Leaving Certificate (SLC) Modal */}
+      {/* 8. School Leaving Certificate (SLC) Modal */}
       {selectedSLC && (
         <Modal
           isOpen={Boolean(selectedSLC)}
           onClose={() => setSelectedSLC(null)}
-          title="Official School Leaving & Character Certificate (SLC)"
+          title="School Leaving & Character Certificate (SLC)"
+          maxWidth="max-w-2xl"
         >
           <div className="space-y-4">
-            <div 
-              id="printable-slc"
-              className="p-8 bg-white border-4 border-double border-amber-600 rounded-2xl space-y-5 print:border-black print:p-10"
-            >
-              {/* Crest & Header */}
-              <div className="text-center border-b-2 border-amber-600 pb-4">
-                <School className="w-10 h-10 text-amber-700 mx-auto mb-1" />
-                <h2 className="text-lg font-black uppercase tracking-widest text-slate-900">
-                  {currentInstitute?.name || 'CENTRAL HIGH SCHOOL'}
-                </h2>
-                <p className="text-xs text-slate-600 font-medium">Department of Academic Affairs & Certification</p>
-                <div className="mt-2 inline-block px-4 py-1 bg-amber-50 border border-amber-300 rounded text-xs font-black uppercase tracking-widest text-amber-900">
-                  SCHOOL LEAVING & CHARACTER CERTIFICATE
-                </div>
-                <div className="flex justify-between items-center text-[10px] text-slate-400 mt-2 font-mono">
-                  <span>Serial No: SLC-{selectedSLC.id || '2026'}-{Math.floor(100 + Math.random() * 900)}</span>
-                  <span>Issue Date: {new Date().toISOString().split('T')[0]}</span>
-                </div>
+            <div className="p-6 bg-amber-50/50 border-2 border-amber-900/40 rounded-xl space-y-4 text-slate-900 shadow-sm">
+              <div className="text-center pb-3 border-b-2 border-amber-900/40">
+                <h2 className="text-base font-black uppercase text-amber-950">{currentInstitute?.name || 'CENTRAL EDUCATIONAL BOARD'}</h2>
+                <span className="text-xs font-bold text-amber-800 tracking-wider uppercase block mt-0.5">SCHOOL LEAVING CERTIFICATE</span>
               </div>
-
-              {/* Certificate Body Paragraphs */}
-              <div className="text-xs text-slate-800 space-y-3 leading-relaxed">
-                <p>
-                  This is to certify that Master / Miss <strong className="text-slate-950 font-bold border-b border-dotted border-slate-700 px-1">{selectedSLC.name}</strong>, 
-                  bearing Institute Admission / {tierVocabulary.idLabel} <strong className="font-mono text-slate-950 px-1">{selectedSLC.rollNumber}</strong>, 
-                  has been a regular student of this institution in <strong className="text-slate-950 px-1">{selectedSLC.className}</strong>.
-                </p>
-
-                <p>
-                  According to official institutional records, the student was enrolled on <strong className="font-medium">August 15, 2024</strong> and has officially completed his/her tenure at this institution on <strong className="font-medium">{new Date().toLocaleDateString()}</strong>.
-                </p>
-
-                <p>
-                  During the academic period, his/her general conduct and behavior remained <strong className="text-emerald-800 font-black">EXEMPLARY & SATISFACTORY</strong>. He/She has actively participated in co-curricular activities and exhibited commendable moral character.
-                </p>
-
-                <p>
-                  All institutional tuition dues, library books, and transport clearances have been <strong className="text-emerald-700 font-bold">CLEARED UP TO DATE</strong>. There are no outstanding liabilities against this candidate.
-                </p>
-
-                <div className="bg-amber-50/60 p-3 rounded-lg border border-amber-200/80 text-[11px] grid grid-cols-2 gap-2">
-                  <div><span className="text-slate-500">Reason for Leaving:</span> <strong className="text-slate-800">Higher Studies / Session Completion</strong></div>
-                  <div><span className="text-slate-500">Academic Standing:</span> <strong className="text-emerald-700">Good Standing (Promoted)</strong></div>
-                  <div>
-                    <span className="text-slate-500">Medical Sentinel Record:</span>{' '}
-                    <strong className={selectedSLC.medicalAlert && selectedSLC.medicalAlert !== 'None' ? 'text-rose-700 font-bold' : 'text-slate-800'}>
-                      {selectedSLC.medicalAlert && selectedSLC.medicalAlert !== 'None' ? `ALERT: ${selectedSLC.medicalAlert}` : 'No Chronic Conditions Reported'}
-                    </strong>
-                  </div>
-                  <div>
-                    <span className="text-slate-500">Immunization Status:</span>{' '}
-                    <strong className="text-emerald-700 font-bold">{selectedSLC.vaccinationStatus || 'Fully Vaccinated (Verified)'}</strong>
-                  </div>
-                </div>
-              </div>
-
-              {/* Signatures & Seal */}
-              <div className="pt-10 flex justify-between text-center text-xs text-slate-500 border-t">
-                <div className="space-y-1">
-                  <div className="w-32 border-b border-slate-400 mx-auto"></div>
-                  <span className="text-[10px] block">Class In-Charge</span>
-                </div>
-                <div className="space-y-1">
-                  <div className="w-32 border-b border-slate-400 mx-auto"></div>
-                  <span className="text-[10px] block">Registrar / Bursar</span>
-                </div>
-                <div className="space-y-1">
-                  <div className="w-36 border-b-2 border-amber-700 mx-auto"></div>
-                  <span className="text-[10px] font-bold text-slate-800 block">Principal Seal & Signature</span>
-                </div>
+              <p className="text-xs leading-relaxed text-slate-800">
+                This is to certify that <strong>{selectedSLC.name}</strong>, Son/Daughter of <strong>{selectedSLC.fatherName || 'Legal Guardian'}</strong>, 
+                bearing Admission Roll No <strong>{selectedSLC.rollNumber}</strong>, was a bona fide student of this institution in <strong>{selectedSLC.className}</strong>.
+              </p>
+              <p className="text-xs text-slate-700">
+                He/She bears a good moral character. During their tenure, their conduct and academic performance were satisfactory. All school dues have been cleared.
+              </p>
+              <div className="pt-6 border-t border-dashed border-slate-300 flex items-center justify-between text-xs text-slate-500">
+                <span>Issue Date: {new Date().toISOString().split('T')[0]}</span>
+                <span>Principal Signature & Stamp</span>
               </div>
             </div>
 
-            <div className="flex justify-end gap-2.5 pt-2">
+            <div className="flex justify-end gap-2 pt-2 border-t">
               <button
                 type="button"
                 onClick={() => setSelectedSLC(null)}
@@ -2540,39 +2724,42 @@ export const StudentsView = ({ currentInstitute }) => {
               </button>
               <button
                 type="button"
-                onClick={() => window.print()}
-                className="px-5 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-lg shadow-sm flex items-center gap-1.5 cursor-pointer"
+                onClick={() => {
+                  window.print()
+                  toast.success('SLC Certificate printed.')
+                }}
+                className="px-4 py-2 text-xs font-bold text-white bg-amber-700 hover:bg-amber-800 rounded-lg cursor-pointer flex items-center gap-1.5"
               >
                 <Printer className="w-3.5 h-3.5" />
-                <span>Print Official Certificate (PDF)</span>
+                <span>Print SLC Certificate</span>
               </button>
             </div>
           </div>
         </Modal>
       )}
 
-      {/* 7. Quick Single Status Change Modal */}
+      {/* 9. Single Status Change Modal */}
       {selectedForStatusChange && (
         <Modal
           isOpen={Boolean(selectedForStatusChange)}
           onClose={() => setSelectedForStatusChange(null)}
-          title={`Update Enrollment Status • ${selectedForStatusChange.name}`}
+          title={`Change Enrollment Status • ${selectedForStatusChange.name}`}
           maxWidth="max-w-md"
         >
-          <div className="space-y-3">
-            <p className="text-xs text-slate-500">
-              Select the new enrollment status for <strong className="text-slate-800">{selectedForStatusChange.name}</strong> ({selectedForStatusChange.rollNumber}):
+          <div className="space-y-4">
+            <p className="text-xs text-slate-600">
+              Select the updated official status for <strong className="text-slate-900">{selectedForStatusChange.name}</strong> ({selectedForStatusChange.rollNumber}):
             </p>
-            <div className="grid grid-cols-1 gap-2 pt-1">
+            <div className="grid grid-cols-1 gap-2">
               {['Active', 'Withdrawn', 'Transferred', 'Graduated', 'Suspended'].map(st => (
                 <button
                   key={st}
                   type="button"
                   onClick={() => handleUpdateSingleStatus(st)}
-                  className={`p-2.5 rounded-lg border text-left text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
+                  className={`p-3 rounded-lg border text-left text-xs font-bold flex items-center justify-between transition-all cursor-pointer ${
                     selectedForStatusChange.status === st 
-                      ? 'bg-emerald-50 border-emerald-500 text-emerald-800' 
-                      : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                      ? 'border-emerald-600 bg-emerald-50 text-emerald-900' 
+                      : 'border-slate-200 hover:bg-slate-50 text-slate-700'
                   }`}
                 >
                   <span>{st}</span>
@@ -2580,36 +2767,26 @@ export const StudentsView = ({ currentInstitute }) => {
                 </button>
               ))}
             </div>
-            <div className="flex justify-end pt-2 border-t">
-              <button
-                type="button"
-                onClick={() => setSelectedForStatusChange(null)}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
-              >
-                Cancel
-              </button>
-            </div>
           </div>
         </Modal>
       )}
 
-      {/* 8. Single Delete Confirmation Modal */}
+      {/* 10. Single Delete Confirmation Modal */}
       {studentToDelete && (
         <Modal
           isOpen={Boolean(studentToDelete)}
           onClose={() => setStudentToDelete(null)}
-          title="Confirm Student Profile Deletion"
+          title="Confirm Student Removal"
           maxWidth="max-w-md"
         >
           <div className="space-y-4">
             <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-3">
-              <AlertTriangle className="w-7 h-7 text-rose-600 shrink-0" />
+              <AlertTriangle className="w-6 h-6 text-rose-600 shrink-0" />
               <div className="text-xs text-rose-900">
-                <p className="font-bold">Permanent Removal Action</p>
-                <p className="mt-0.5">Are you sure you want to remove student <strong className="underline">{studentToDelete.name}</strong> (Roll: {studentToDelete.rollNumber}) from this campus roster?</p>
+                <p className="font-bold">Are you sure you want to delete this student?</p>
+                <p className="mt-0.5">This will permanently remove <strong>{studentToDelete.name}</strong> ({studentToDelete.rollNumber}) from the active roster.</p>
               </div>
             </div>
-
             <div className="flex justify-end gap-2 pt-2 border-t">
               <button
                 type="button"
@@ -2624,14 +2801,14 @@ export const StudentsView = ({ currentInstitute }) => {
                 className="px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-lg cursor-pointer flex items-center gap-1"
               >
                 <Trash2 className="w-3.5 h-3.5" />
-                <span>Confirm Removal</span>
+                <span>Confirm Delete</span>
               </button>
             </div>
           </div>
         </Modal>
       )}
 
-      {/* 9. Bulk Promote Modal */}
+      {/* 11. Bulk Promote Modal */}
       {isBulkPromoteOpen && (
         <Modal
           isOpen={isBulkPromoteOpen}
@@ -2641,18 +2818,19 @@ export const StudentsView = ({ currentInstitute }) => {
         >
           <div className="space-y-4">
             <p className="text-xs text-slate-600">
-              Advance all <strong className="text-slate-900">{selectedIds.length}</strong> selected students to the target academic grade:
+              Select the target grade/class to promote all <strong className="text-slate-900">{selectedIds.length}</strong> selected students to:
             </p>
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Target Class / Grade *</label>
-              <input
-                type="text"
-                required
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Target Class *</label>
+              <select
                 value={bulkTargetClass}
                 onChange={(e) => setBulkTargetClass(e.target.value)}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 font-bold"
-                placeholder="e.g. 11th Grade"
-              />
+                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 font-bold bg-white"
+              >
+                {availableClasses.map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
             </div>
             <div className="flex justify-end gap-2 pt-2 border-t">
               <button
@@ -2665,17 +2843,17 @@ export const StudentsView = ({ currentInstitute }) => {
               <button
                 type="button"
                 onClick={handleBulkPromote}
-                className="px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg cursor-pointer flex items-center gap-1"
+                className="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg cursor-pointer flex items-center gap-1"
               >
                 <GraduationCap className="w-3.5 h-3.5" />
-                <span>Apply Bulk Promotion</span>
+                <span>Confirm Promotion</span>
               </button>
             </div>
           </div>
         </Modal>
       )}
 
-      {/* 10. Bulk Section Transfer Modal */}
+      {/* 12. Bulk Section Transfer Modal */}
       {isBulkTransferOpen && (
         <Modal
           isOpen={isBulkTransferOpen}
@@ -2685,19 +2863,18 @@ export const StudentsView = ({ currentInstitute }) => {
         >
           <div className="space-y-4">
             <p className="text-xs text-slate-600">
-              Reassign section for <strong className="text-slate-900">{selectedIds.length}</strong> selected candidates:
+              Select the new section to assign across all <strong className="text-slate-900">{selectedIds.length}</strong> selected students:
             </p>
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Target Section *</label>
               <select
                 value={bulkTargetSection}
                 onChange={(e) => setBulkTargetSection(e.target.value)}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 font-bold bg-white"
+                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 font-bold bg-white"
               >
-                <option value="A">Section A</option>
-                <option value="B">Section B</option>
-                <option value="C">Section C</option>
-                <option value="D">Section D</option>
+                {availableSections.map(sec => (
+                  <option key={sec} value={sec}>Section {sec}</option>
+                ))}
               </select>
             </div>
             <div className="flex justify-end gap-2 pt-2 border-t">
@@ -2721,7 +2898,7 @@ export const StudentsView = ({ currentInstitute }) => {
         </Modal>
       )}
 
-      {/* 11. Bulk Status Change Modal */}
+      {/* 13. Bulk Status Change Modal */}
       {isBulkStatusOpen && (
         <Modal
           isOpen={isBulkStatusOpen}
@@ -2768,7 +2945,7 @@ export const StudentsView = ({ currentInstitute }) => {
         </Modal>
       )}
 
-      {/* 12. Bulk Delete Confirmation Modal */}
+      {/* 14. Bulk Delete Confirmation Modal */}
       {isBulkDeleteOpen && (
         <Modal
           isOpen={isBulkDeleteOpen}
