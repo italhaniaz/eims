@@ -164,7 +164,7 @@ export const InstituteAdminNavbar = ({
       case 'inst-fees': return 'Fee Invoices & Payments'
       case 'inst-exams': return 'Examinations & Report Cards'
       case 'inst-notices': return 'Campus Notice Board'
-      case 'inst-admissions': return 'Admission Inquiries & CRM'
+      case 'inst-admissions': return 'Inquiries & Leads'
       case 'inst-transport': return 'Campus Transport & Vans'
       case 'inst-library': return 'Campus Library & Book Issues'
       case 'inst-program-levels': return 'Academic Program Levels'
@@ -444,7 +444,7 @@ export const InstituteAdminNavbar = ({
         </div>
 
         <ChevronRight className="hidden lg:inline-block w-3.5 h-3.5 text-slate-300" />
-        <h1 className="hidden lg:inline-block text-sm font-semibold text-slate-700 truncate max-w-[180px]">
+        <h1 className="hidden lg:inline-block text-sm font-semibold text-slate-700 truncate max-w-[220px]">
           {getRouteTitle()}
         </h1>
       </div>

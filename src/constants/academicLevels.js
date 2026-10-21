@@ -1,4 +1,4 @@
-﻿export const PROGRAM_LEVELS = [
+export const PROGRAM_LEVELS = [
   {
     id: 'all',
     tierNumber: 0,
@@ -228,6 +228,18 @@ export const detectProgramLevel = (className = '') => {
   const normalized = className.toLowerCase().trim()
 
   if (
+    normalized.includes('1st year') || normalized.includes('2nd year') ||
+    normalized.includes('11th') || normalized.includes('12th') || 
+    normalized.includes('fsc') || normalized.includes('f.sc') || 
+    normalized.includes('ics') || normalized.includes('i.com') || 
+    normalized.includes('fa') || normalized.includes('a-level') || 
+    normalized.includes('a level') || normalized.includes('inter') ||
+    normalized.includes('hssc')
+  ) {
+    return 'higher-secondary'
+  }
+
+  if (
     normalized.includes('1st') || normalized.includes('2nd') || normalized.includes('3rd') || 
     normalized.includes('4th') || normalized.includes('5th') || normalized.includes('6th') || 
     normalized.includes('7th') || normalized.includes('8th') || normalized.includes('grade 1') ||
@@ -244,17 +256,6 @@ export const detectProgramLevel = (className = '') => {
     normalized.includes('o level') || normalized.includes('ssc')
   ) {
     return 'secondary'
-  }
-
-  if (
-    normalized.includes('11th') || normalized.includes('12th') || 
-    normalized.includes('fsc') || normalized.includes('f.sc') || 
-    normalized.includes('ics') || normalized.includes('i.com') || 
-    normalized.includes('fa') || normalized.includes('a-level') || 
-    normalized.includes('a level') || normalized.includes('inter') ||
-    normalized.includes('hssc')
-  ) {
-    return 'higher-secondary'
   }
 
   if (

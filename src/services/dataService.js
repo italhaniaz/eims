@@ -220,10 +220,7 @@ export const sampleTemplateData = {
       status: 'Issued'
     }
   ],
-  admissionsPipeline: [
-    { id: 'adm-1', studentName: 'Daniyal Tariq', parentName: 'Tariq Mehmood', parentPhone: '+92 321 8899001', gradeApplied: '11th Grade (ICS)', stage: 'Entrance Test Scheduled', testDate: '2026-10-25', status: 'Under Review' },
-    { id: 'adm-2', studentName: 'Ayla Fatima', parentName: 'Khurram Shahzad', parentPhone: '+92 300 4455661', gradeApplied: '9th Grade', stage: 'Interview Passed', testDate: '2026-10-20', status: 'Pending Fee' }
-  ],
+  admissionsPipeline: [],
   auditLogs: [
     { id: 'log-1', action: 'User Sign In', user: 'admin@schoolms.com', ip: '192.168.1.102', timestamp: '2026-10-19 18:20', status: 'Success' },
     { id: 'log-2', action: 'Challan Voucher Generated', user: 'Beaconhouse Admin', ip: '192.168.1.115', timestamp: '2026-10-19 17:45', status: 'Success' }
@@ -249,6 +246,17 @@ export const getStoredData = () => {
         )
         if (filtered.length !== parsed.students.length) {
           parsed.students = filtered
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed))
+        }
+      }
+      if (Array.isArray(parsed.admissionsPipeline)) {
+        const demoPipelineIds = ['adm-1', 'adm-2']
+        const demoPipelineNames = ['Daniyal Tariq', 'Ayla Fatima']
+        const filteredPipeline = parsed.admissionsPipeline.filter(a =>
+          !demoPipelineIds.includes(a.id) && !demoPipelineNames.includes(a.studentName)
+        )
+        if (filteredPipeline.length !== parsed.admissionsPipeline.length) {
+          parsed.admissionsPipeline = filteredPipeline
           localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed))
         }
       }

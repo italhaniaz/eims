@@ -260,7 +260,7 @@ export const CommandPaletteModal = ({ isOpen, onClose, onNavigate, onOpenSetting
         },
         { 
           id: 'nav-adm2', 
-          title: 'Admissions Pipeline & CRM', 
+          title: 'Inquiries & Leads', 
           category: 'Admissions', 
           route: 'inst-admissions', 
           icon: GraduationCap, 
