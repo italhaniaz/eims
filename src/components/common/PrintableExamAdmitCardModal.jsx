@@ -310,11 +310,11 @@ export const PrintableExamAdmitCardModal = ({
 
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                       <div>
-                        <span className="text-[9px] uppercase font-bold text-slate-500 block">Candidate Name (طالب علم)</span>
+                        <span className="text-[9px] uppercase font-bold text-slate-500 block">Candidate Name</span>
                         <strong className="text-slate-900 text-sm">{cand.name}</strong>
                       </div>
                       <div>
-                        <span className="text-[9px] uppercase font-bold text-slate-500 block">Father's Name (والد کا نام)</span>
+                        <span className="text-[9px] uppercase font-bold text-slate-500 block">Father's Name</span>
                         <strong className="text-slate-800">{cand.fatherName}</strong>
                       </div>
                       <div>
@@ -386,14 +386,14 @@ export const PrintableExamAdmitCardModal = ({
                         <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
                         <span>Crucial Examination Rules & Disciplinary Protocols</span>
                       </span>
-                      <span className="text-rose-800 font-bold">(امتحانی قواعد و ضوابط)</span>
+                      
                     </div>
                     <ul className="list-disc pl-4 space-y-0.5 text-slate-600">
                       <li>
                         <strong>Mandatory Slip:</strong> Candidates must present this original attested admit slip at the entry gate. No duplicate entry permitted without principal clearance.
                       </li>
                       <li>
-                        <strong>Zero Tolerance Electronic Devices:</strong> Mobile phones, smartwatches, digital calculators, and unauthorized cheat notes are strictly prohibited. Possessing any device results in paper cancellation (امتحانی ہال میں موبائل فون لانا سختی سے منع ہے).
+                        <strong>Zero Tolerance Electronic Devices:</strong> Mobile phones, smartwatches, digital calculators, and unauthorized cheat notes are strictly prohibited. Possessing any device results in paper cancellation.
                       </li>
                       <li>
                         <strong>Arrival Time:</strong> Candidates must report to their assigned desk 30 minutes before commencement. Late entry exceeding 15 minutes is not allowed.
@@ -406,7 +406,7 @@ export const PrintableExamAdmitCardModal = ({
                     <div>
                       <div className="w-36 mx-auto border-b border-slate-400 mb-1"></div>
                       <span>Candidate Signature</span>
-                      <span className="text-[8px] text-slate-400 block mt-0.5">(دستخط امیدوار)</span>
+                      <span className="text-[8px] text-slate-400 block mt-0.5">(Candidate Signature)</span>
                     </div>
 
                     <div className="flex flex-col items-center">
@@ -417,7 +417,7 @@ export const PrintableExamAdmitCardModal = ({
                     <div>
                       <div className="w-36 mx-auto border-b-2 border-slate-900 mb-1"></div>
                       <span className="font-bold text-slate-900">Controller of Examinations</span>
-                      <span className="text-[8px] text-slate-400 block mt-0.5">(کنٹرولر امتحانات و تصدیقی مہر)</span>
+                      <span className="text-[8px] text-slate-400 block mt-0.5">(Controller Seal & Sign)</span>
                     </div>
                   </div>
                 </div>

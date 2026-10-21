@@ -122,21 +122,21 @@ export const PrintableFeeChallanModal = ({
     {
       id: 'bank-copy',
       title: 'BANK COPY',
-      urduTitle: 'بینک / کیشئر کاپی',
+      
       sub: 'To be retained by receiving bank / cashier',
       tagColor: 'bg-emerald-100 text-emerald-800 border-emerald-300'
     },
     {
       id: 'institute-copy',
       title: 'INSTITUTE COPY',
-      urduTitle: 'ادارہ / اکاؤنٹس کاپی',
+      
       sub: 'To be deposited at campus accounts desk',
       tagColor: 'bg-blue-100 text-blue-800 border-blue-300'
     },
     {
       id: 'student-copy',
       title: 'STUDENT COPY',
-      urduTitle: 'طالب علم / والدین کاپی',
+      
       sub: 'To be retained by student / parent',
       tagColor: 'bg-purple-100 text-purple-800 border-purple-300'
     }
@@ -368,9 +368,7 @@ export const PrintableFeeChallanModal = ({
                               <span className={`px-2.5 py-0.5 rounded font-black text-[10px] uppercase tracking-wider border ${copy.tagColor}`}>
                                 {copy.title}
                               </span>
-                              <span className="text-[10px] font-bold text-slate-600">
-                                ({copy.urduTitle})
-                              </span>
+                              
                             </div>
                             <span className="text-[8px] text-slate-400 block mt-0.5">
                               {copy.sub}
@@ -392,11 +390,11 @@ export const PrintableFeeChallanModal = ({
                           {/* 3. Student Bio Information */}
                           <div className="space-y-1 py-1 text-[10px] border-b border-slate-200">
                             <div className="flex justify-between">
-                              <span className="text-slate-500">Student Name (طالب علم):</span>
+                              <span className="text-slate-500">Student Name:</span>
                               <span className="font-bold text-slate-900 truncate max-w-[140px]">{v.studentName}</span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-slate-500">Father's Name (والد):</span>
+                              <span className="text-slate-500">Father's Name:</span>
                               <span className="font-medium text-slate-800 truncate max-w-[140px]">{v.fatherName || 'Legal Guardian'}</span>
                             </div>
                             <div className="flex justify-between">
@@ -412,7 +410,7 @@ export const PrintableFeeChallanModal = ({
                               <span className="font-semibold text-slate-800">{billingMonth}</span>
                             </div>
                             <div className="flex justify-between text-rose-700 font-bold">
-                              <span>Due Date (معینہ تاریخ):</span>
+                              <span>Due Date:</span>
                               <span className="font-mono">{v.dueDate || dueDate}</span>
                             </div>
                           </div>
@@ -428,7 +426,7 @@ export const PrintableFeeChallanModal = ({
                               </thead>
                               <tbody className="divide-y divide-slate-200">
                                 <tr>
-                                  <td className="p-1 text-slate-700">Monthly Tuition Fee (ٹیوشن)</td>
+                                  <td className="p-1 text-slate-700">Monthly Tuition Fee</td>
                                   <td className="p-1 text-right font-mono font-medium">Rs. {Math.round(grossAmount * 0.75).toLocaleString()}</td>
                                 </tr>
                                 <tr>
@@ -473,7 +471,7 @@ export const PrintableFeeChallanModal = ({
                         <div className="pt-5 mt-2 border-t border-slate-300 grid grid-cols-2 text-[8px] text-center text-slate-600">
                           <div>
                             <div className="w-20 mx-auto border-b border-slate-400 mb-0.5"></div>
-                            <span>Depositor Sign (والدین)</span>
+                            <span>Depositor Signature</span>
                           </div>
                           <div>
                             <div className="w-20 mx-auto border-b border-slate-400 mb-0.5"></div>

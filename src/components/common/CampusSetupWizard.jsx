@@ -55,7 +55,7 @@ export const CampusSetupWizard = ({ currentInstitute, onRouteChange }) => {
     {
       id: 'step-inst',
       title: 'Campus Profile & Registration',
-      urduTitle: 'کیمپس پروفائل اور الحاق',
+      subTitle: 'Profile, Code & Affiliation',
       description: currentInstitute?.name 
         ? `Registered: ${currentInstitute.name} (${currentInstitute.code || 'Main'})`
         : 'Register your institute branch, code, and board affiliation',
@@ -68,7 +68,7 @@ export const CampusSetupWizard = ({ currentInstitute, onRouteChange }) => {
     {
       id: 'step-classes',
       title: 'Classes & Custom Multi-Sections',
-      urduTitle: 'کلاسز اور سیکشنز کی ترتیب',
+      subTitle: 'Grades, Streams & Sections',
       description: instClasses.length > 0 
         ? `${instClasses.length} Classes configured with custom sections (Super Section, etc.)`
         : 'Set up classes from Primary to BS with Super Sections and room numbers',
@@ -81,7 +81,7 @@ export const CampusSetupWizard = ({ currentInstitute, onRouteChange }) => {
     {
       id: 'step-faculty',
       title: 'Faculty & Teachers Roster',
-      urduTitle: 'اساتذہ اور اسٹاف کا اندراج',
+      subTitle: 'Faculty & Department Staff',
       description: instTeachers.length > 0
         ? `${instTeachers.length} Teaching faculty members assigned`
         : 'Register teaching faculty, subject specializations & phone contacts',
@@ -94,7 +94,7 @@ export const CampusSetupWizard = ({ currentInstitute, onRouteChange }) => {
     {
       id: 'step-students',
       title: 'Student Admissions & Enrollment',
-      urduTitle: 'طلباء داخلہ اور رول نمبر رجسٹر',
+      subTitle: 'Enrollment & Student Records',
       description: instStudents.length > 0
         ? `${instStudents.length} Students enrolled with official dossiers and ID records`
         : 'Admit students into classes & sections with full dossiers and ID cards',
@@ -107,7 +107,7 @@ export const CampusSetupWizard = ({ currentInstitute, onRouteChange }) => {
     {
       id: 'step-fees',
       title: 'Fee Structure & Monthly Challans',
-      urduTitle: 'فیس سٹرکچر اور واؤچرز',
+      subTitle: 'Fee Structure & Challans',
       description: instFees.length > 0
         ? `${instFees.length} Fee challan records active with collection status`
         : 'Generate monthly bank challans, concessions & collect payments',
@@ -144,7 +144,7 @@ export const CampusSetupWizard = ({ currentInstitute, onRouteChange }) => {
                 Campus Setup & Onboarding Guide
               </h3>
               <span className="text-[10px] text-slate-400 font-medium">
-                (کیمپس گائیڈ اور ضروری مراحل)
+                (Foundation Checklist)
               </span>
               {isAllComplete ? (
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
@@ -245,7 +245,7 @@ export const CampusSetupWizard = ({ currentInstitute, onRouteChange }) => {
                       <span className="truncate">{step.title}</span>
                     </h4>
                     <p className="text-[10px] text-slate-400 mt-0.5 truncate">
-                      {step.urduTitle}
+                      {step.subTitle}
                     </p>
 
                     {/* Description */}
@@ -281,7 +281,7 @@ export const CampusSetupWizard = ({ currentInstitute, onRouteChange }) => {
             <div className="flex items-center gap-2 text-slate-700">
               <Zap className="w-3.5 h-3.5 text-blue-600 shrink-0" />
               <span>
-                <strong>Layman Tip:</strong> Follow the steps in order from left to right. Once classes are configured, attendance and fee challans activate automatically.
+                <strong>Setup Tip:</strong> Follow the steps in order from left to right. Once classes are configured, attendance and fee challans activate automatically.
               </span>
             </div>
             <div className="flex items-center gap-2 text-[11px] text-slate-500 shrink-0">

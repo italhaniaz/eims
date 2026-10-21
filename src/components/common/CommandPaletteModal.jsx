@@ -621,7 +621,7 @@ export const CommandPaletteModal = ({ isOpen, onClose, onNavigate, onOpenSetting
               <Search className="w-8 h-8 text-slate-300 mx-auto mb-2" />
               <p className="text-sm font-bold text-slate-700">No Matching Results</p>
               <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-                Try searching in English or Roman Urdu: "Fees", "Hazri", "Challan", "9th Grade", "Super Section", or student name.
+                Try searching by student name, roll number, class ("9th Grade", "Super Section"), or module ("Fees", "Attendance", "Exams").
               </p>
             </div>
           )}
