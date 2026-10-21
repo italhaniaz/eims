@@ -124,10 +124,7 @@ export const sampleTemplateData = {
   users: [
     { id: 'usr-1', name: 'Super Administrator', email: 'admin@schoolms.com', role: 'superadmin', institute: 'All Institutes (Global)', phone: '+92 300 1234567', status: 'Active', lastLogin: 'Just now' }
   ],
-  students: [
-    { id: 'std-1', instituteId: 'inst-1', rollNumber: 'BHS-2024-001', name: 'Hamza Farooq', className: '10th Grade', section: 'A', email: 'hamza.f@gmail.com', phone: '+92 321 1122334', feeStatus: 'Paid', attendanceRate: '96%', bloodGroup: 'B+', medicalAlert: 'Severe Food/Peanut Allergy (EpiPen)', emergencyDoctorPhone: '+92 300 4567890', vaccinationStatus: 'Fully Vaccinated' },
-    { id: 'std-2', instituteId: 'inst-1', rollNumber: 'BHS-2024-002', name: 'Ayesha Siddiqui', className: '10th Grade', section: 'B', email: 'ayesha.s@gmail.com', phone: '+92 333 4455667', feeStatus: 'Pending', attendanceRate: '98%', bloodGroup: 'O+', medicalAlert: 'Asthma / Inhaler Carried', emergencyDoctorPhone: '+92 321 9876543', vaccinationStatus: 'Fully Vaccinated' }
-  ],
+  students: [],
   teachers: [
     { id: 'tch-1', instituteId: 'inst-1', empId: 'EMP-01', name: 'Dr. Shahida Parveen', designation: 'Principal', department: 'Administration', phone: '+92 300 9988776', email: 'principal.bhs@sms.edu', status: 'Active' }
   ],
@@ -244,6 +241,17 @@ export const getStoredData = () => {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
       const parsed = JSON.parse(raw)
+      const demoNames = ['Hamza Farooq', 'Ayesha Siddiqui', 'Daniyal Tariq', 'Zainab Fatima', 'Bilal Ahmed Khan', 'Ahmed Raza']
+      const demoRolls = ['STD-101', 'COL-201', 'STD-103', 'REG-401', 'STD-105', 'BHS-2024-001', 'BHS-2024-002', 'STD-1001', 'COL-2002', 'REG-3003']
+      if (Array.isArray(parsed.students)) {
+        const filtered = parsed.students.filter(s => 
+          !demoNames.includes(s.name) && !demoRolls.includes(s.rollNumber)
+        )
+        if (filtered.length !== parsed.students.length) {
+          parsed.students = filtered
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed))
+        }
+      }
       return {
         ...cleanZeroData,
         ...parsed,
