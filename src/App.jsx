@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react'
+﻿import React, { useState, useEffect, lazy, Suspense } from 'react'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { AppDataProvider, useAppData } from './context/AppDataContext'
 import { ToastProvider, useToast } from './context/ToastContext'

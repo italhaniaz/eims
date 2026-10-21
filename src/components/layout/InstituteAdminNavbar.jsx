@@ -20,10 +20,12 @@ import {
   X, 
   Filter, 
   Search,
-  ExternalLink
+  ExternalLink,
+  Key
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useAppData } from '../../context/AppDataContext'
+import ChangePasswordModal from '../common/ChangePasswordModal'
 
 export const InstituteAdminNavbar = ({ 
   currentRoute, 
@@ -44,6 +46,7 @@ export const InstituteAdminNavbar = ({
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [levelDropdownOpen, setLevelDropdownOpen] = useState(false)
   const [showProfileMenu, setShowProfileMenu] = useState(false)
+  const [showPasswordModal, setShowPasswordModal] = useState(false)
   const [levelSearchTerm, setLevelSearchTerm] = useState('')
 
   // Expandable state for each level's categories
@@ -480,6 +483,17 @@ export const InstituteAdminNavbar = ({
                 <button
                   onClick={() => {
                     setShowProfileMenu(false)
+                    setShowPasswordModal(true)
+                  }}
+                  className="w-full text-left px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-medium"
+                >
+                  <Key className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Change Password & Security</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setShowProfileMenu(false)
                     onOpenSettings()
                   }}
                   className="w-full text-left px-4 py-2 text-xs text-slate-600 hover:bg-slate-50 flex items-center gap-2"
@@ -505,6 +519,12 @@ export const InstituteAdminNavbar = ({
           )}
         </div>
       </div>
+
+      {/* Change Password Modal */}
+      <ChangePasswordModal
+        isOpen={showPasswordModal}
+        onClose={() => setShowPasswordModal(false)}
+      />
     </header>
   )
 }

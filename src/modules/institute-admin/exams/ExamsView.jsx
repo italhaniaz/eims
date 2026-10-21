@@ -11,7 +11,10 @@ import {
   Download,
   ChevronLeft,
   ChevronRight,
-  School
+  School,
+  Copy,
+  Layers,
+  X
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
@@ -26,9 +29,14 @@ export const ExamsView = ({ currentInstitute }) => {
 
   const [searchTerm, setSearchTerm] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isBatchModalOpen, setIsBatchModalOpen] = useState(false)
   const [selectedReportCard, setSelectedReportCard] = useState(null)
   const [currentPage, setCurrentPage] = useState(1)
   const pageSize = 8
+
+  // Batch Printing Filter States
+  const [batchClass, setBatchClass] = useState('10th Grade')
+  const [batchTerm, setBatchTerm] = useState('Midterm Examination 2026')
 
   const [formData, setFormData] = useState({
     studentName: instStudents[0]?.name || '',
@@ -98,30 +106,44 @@ export const ExamsView = ({ currentInstitute }) => {
     }
 
     await addItem('exams', newExamRecord)
-    toast.success(`Exam marksheet recorded for ${formData.studentName}!`)
+    toast.success(`Exam marksheet for ${formData.studentName} generated successfully!`)
     setIsModalOpen(false)
   }
 
   const handleDelete = async (id, studentName) => {
-    if (window.confirm(`Delete exam report card for ${studentName}?`)) {
+    if (window.confirm(`Delete exam marksheet for ${studentName}?`)) {
       await deleteItem('exams', id)
-      toast.success(`Report card for ${studentName} removed.`)
+      toast.info('Marksheet record deleted.')
     }
   }
 
   const filteredExams = useMemo(() => {
-    return instExams.filter(e =>
-      (e.studentName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (e.rollNumber || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (e.term || '').toLowerCase().includes(searchTerm.toLowerCase())
+    return instExams.filter(e => 
+      e.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      e.rollNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      e.term.toLowerCase().includes(searchTerm.toLowerCase())
     )
   }, [instExams, searchTerm])
 
-  const totalPages = Math.max(1, Math.ceil(filteredExams.length / pageSize))
+  const totalPages = Math.ceil(filteredExams.length / pageSize) || 1
   const paginatedExams = useMemo(() => {
     const start = (currentPage - 1) * pageSize
     return filteredExams.slice(start, start + pageSize)
-  }, [filteredExams, currentPage, pageSize])
+  }, [filteredExams, currentPage])
+
+  // Batch class exams
+  const batchExamsList = useMemo(() => {
+    const matches = instExams.filter(e => 
+      (!batchClass || batchClass === 'All' || e.className === batchClass)
+    )
+    return matches.length > 0 ? matches : instExams
+  }, [instExams, batchClass])
+
+  // Unique classes for batch dropdown
+  const availableClasses = useMemo(() => {
+    const set = new Set([...instExams.map(e => e.className), ...instStudents.map(s => s.className)].filter(Boolean))
+    return Array.from(set)
+  }, [instExams, instStudents])
 
   return (
     <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
@@ -130,28 +152,31 @@ export const ExamsView = ({ currentInstitute }) => {
         <div>
           <div className="flex items-center gap-2">
             <Award className="w-5 h-5 text-emerald-600" />
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Examinations & Report Cards</h1>
+            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Examinations & Academic Marksheets</h1>
           </div>
-          <p className="text-xs text-slate-500 mt-1">Record term exams, calculate grades, and generate persistent official marksheets</p>
+          <p className="text-xs text-slate-500 mt-1">
+            Subject-wise score recording, automated GPA grading, individual and class-wide batch printable DMCs
+          </p>
         </div>
 
-        <button
-          onClick={() => {
-            if (instStudents.length > 0) {
-              setFormData(prev => ({
-                ...prev,
-                studentName: instStudents[0].name,
-                rollNumber: instStudents[0].rollNumber,
-                className: instStudents[0].className
-              }))
-            }
-            setIsModalOpen(true)
-          }}
-          className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow transition-all"
-        >
-          <Plus className="w-4 h-4" />
-          <span>New Examination Result</span>
-        </button>
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <button
+            onClick={() => setIsBatchModalOpen(true)}
+            className="flex items-center gap-2 px-3.5 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
+            title="Batch Print Class Transcripts"
+          >
+            <Printer className="w-3.5 h-3.5" />
+            <span>Batch Print Class Transcripts</span>
+          </button>
+
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow transition-all"
+          >
+            <Plus className="w-4 h-4" />
+            <span>New Examination Result</span>
+          </button>
+        </div>
       </div>
 
       {/* Search Toolbar */}
@@ -366,7 +391,7 @@ export const ExamsView = ({ currentInstitute }) => {
                 />
               </div>
               <div>
-                <label className="text-[11px] font-semibold text-slate-500 block mb-0.5">English</label>
+                <label className="text-[11px] font-semibold text-slate-500 block mb-0.5">English Literature</label>
                 <input
                   type="number"
                   min="0"
@@ -393,7 +418,7 @@ export const ExamsView = ({ currentInstitute }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Teacher Remarks</label>
+            <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Teacher Remarks / Notes</label>
             <input
               type="text"
               value={formData.remarks}
@@ -421,7 +446,7 @@ export const ExamsView = ({ currentInstitute }) => {
         </form>
       </Modal>
 
-      {/* Official Marksheet Modal (Printable) */}
+      {/* Single Official Marksheet Modal (Printable) */}
       {selectedReportCard && (
         <Modal
           isOpen={Boolean(selectedReportCard)}
@@ -501,6 +526,119 @@ export const ExamsView = ({ currentInstitute }) => {
               >
                 <Printer className="w-3.5 h-3.5" />
                 <span>Print Official Marksheet</span>
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Batch Full Class Transcripts Modal (Print-Ready) */}
+      {isBatchModalOpen && (
+        <Modal
+          isOpen={isBatchModalOpen}
+          onClose={() => setIsBatchModalOpen(false)}
+          title="Batch Class Transcripts & DMCs Generator"
+        >
+          <div className="space-y-5">
+            {/* Filter selection strip */}
+            <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <label className="text-xs font-semibold text-slate-600">Filter Grade/Class:</label>
+                <select
+                  value={batchClass}
+                  onChange={(e) => setBatchClass(e.target.value)}
+                  className="px-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-white"
+                >
+                  <option value="All">All Grades & Classes</option>
+                  {availableClasses.map(cls => (
+                    <option key={cls} value={cls}>{cls}</option>
+                  ))}
+                </select>
+              </div>
+
+              <span className="text-xs font-mono font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
+                {batchExamsList.length} DMCs Ready for Batch Printing
+              </span>
+            </div>
+
+            {/* Continuous printable preview container */}
+            <div className="max-h-[60vh] overflow-y-auto space-y-6 pr-1">
+              {batchExamsList.map((exam, index) => (
+                <div 
+                  key={exam.id || index}
+                  className="p-5 bg-white border-2 border-slate-200 rounded-xl space-y-3 print:border-black print:page-break-after-always print:p-8"
+                  style={{ pageBreakAfter: 'always' }}
+                >
+                  {/* Header */}
+                  <div className="text-center border-b pb-3">
+                    <h3 className="text-sm font-black uppercase tracking-wider text-slate-900">
+                      {currentInstitute?.name || 'CENTRAL HIGH SCHOOL'}
+                    </h3>
+                    <p className="text-[11px] text-slate-500 font-medium">{exam.term} • Official Transcript of Record</p>
+                  </div>
+
+                  {/* Student Details */}
+                  <div className="grid grid-cols-2 gap-1.5 text-[11px] bg-slate-50 p-2.5 rounded border">
+                    <div><span className="text-slate-400">Student:</span> <strong className="text-slate-800">{exam.studentName}</strong></div>
+                    <div><span className="text-slate-400">Roll No:</span> <strong className="text-slate-800 font-mono">{exam.rollNumber}</strong></div>
+                    <div><span className="text-slate-400">Class:</span> <strong className="text-slate-800">{exam.className}</strong></div>
+                    <div><span className="text-slate-400">Date:</span> <strong className="text-slate-800">{exam.date}</strong></div>
+                  </div>
+
+                  {/* Marks Table */}
+                  <table className="w-full text-[11px] text-left border">
+                    <thead className="bg-slate-100 font-bold border-b">
+                      <tr>
+                        <th className="p-1.5">Subject</th>
+                        <th className="p-1.5 text-center">Max</th>
+                        <th className="p-1.5 text-center">Obt.</th>
+                        <th className="p-1.5 text-center">Grade</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {(exam.subjects || []).map((s, i) => (
+                        <tr key={i}>
+                          <td className="p-1.5 font-medium">{s.name}</td>
+                          <td className="p-1.5 text-center">{s.maxMarks}</td>
+                          <td className="p-1.5 text-center font-bold">{s.obtained}</td>
+                          <td className="p-1.5 text-center font-bold text-emerald-700">{s.grade}</td>
+                        </tr>
+                      ))}
+                      <tr className="bg-slate-50 font-bold border-t-2">
+                        <td className="p-1.5">Grand Total</td>
+                        <td className="p-1.5 text-center">{exam.totalMax}</td>
+                        <td className="p-1.5 text-center text-emerald-700">{exam.totalObtained}</td>
+                        <td className="p-1.5 text-center text-emerald-700">{exam.overallGrade} ({exam.percentage})</td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+                  {/* Signatures */}
+                  <div className="flex justify-between pt-4 text-[10px] text-slate-400 border-t">
+                    <span>Class Teacher</span>
+                    <span>Exam Controller</span>
+                    <span>Principal Seal</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex justify-end gap-2.5 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setIsBatchModalOpen(false)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="px-5 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm flex items-center gap-1.5"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print All ({batchExamsList.length}) Class Transcripts (PDF)</span>
               </button>
             </div>
           </div>

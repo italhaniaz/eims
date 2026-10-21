@@ -18,7 +18,9 @@ import {
   School,
   Radio,
   Send,
-  Eye
+  Eye,
+  AlertTriangle,
+  X
 } from 'lucide-react'
 import StatCard from '../../components/common/StatCard'
 import Modal from '../../components/common/Modal'
@@ -31,8 +33,12 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
     addItem, 
     generateReport, 
     sendCommunicationBlast, 
-    institutes 
+    institutes,
+    notices = []
   } = useAppData()
+  
+  const [isNoticeDismissed, setIsNoticeDismissed] = useState(false)
+  const urgentNotice = (notices || []).find(n => n.category === 'Urgent' || n.priority === 'Urgent' || n.pinned)
   
   // Modals state
   const [isUserModalOpen, setIsUserModalOpen] = useState(false)
@@ -189,6 +195,42 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           >
             Dismiss
           </button>
+        </div>
+      )}
+
+      {/* Critical Emergency Directive Alert Banner */}
+      {urgentNotice && !isNoticeDismissed && (
+        <div className="bg-gradient-to-r from-rose-600 via-rose-700 to-amber-600 text-white rounded-2xl p-4 shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in border border-rose-400/40">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0">
+              <AlertTriangle className="w-5 h-5 text-amber-200 animate-pulse" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-black/30 text-amber-200">
+                  PLATFORM DIRECTIVE • URGENT BROADCAST
+                </span>
+                <span className="text-xs text-white/80">{urgentNotice.date}</span>
+              </div>
+              <h3 className="text-sm font-bold mt-0.5 leading-snug">{urgentNotice.title}</h3>
+              <p className="text-xs text-white/90 line-clamp-1 mt-0.5">{urgentNotice.content}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => onRouteChange('announcements')}
+              className="px-3.5 py-1.5 bg-white text-rose-900 rounded-lg text-xs font-bold hover:bg-white/90 transition-all shadow-sm"
+            >
+              View Directives
+            </button>
+            <button
+              onClick={() => setIsNoticeDismissed(true)}
+              className="p-1.5 hover:bg-white/20 rounded-lg text-white/80 hover:text-white transition-colors"
+              title="Dismiss Directive"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       )}
 

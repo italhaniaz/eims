@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+﻿import React, { useState, useRef } from 'react'
 import { Database, CheckCircle2, AlertTriangle, Key, Globe, RefreshCw, Download, Upload, Trash2, Sparkles, FileJson } from 'lucide-react'
 import Modal from './Modal'
 import { isSupabaseConfigured, getSupabaseStatus, supabase } from '../../services/supabaseClient'

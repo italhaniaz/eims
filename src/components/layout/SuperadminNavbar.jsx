@@ -10,10 +10,12 @@ import {
   LogOut,
   ShieldCheck,
   CheckCircle2,
-  ExternalLink
+  ExternalLink,
+  Key
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { isSupabaseConfigured, getSupabaseStatus } from '../../services/supabaseClient'
+import ChangePasswordModal from '../common/ChangePasswordModal'
 
 export const SuperadminNavbar = ({ 
   currentRoute, 
@@ -24,6 +26,7 @@ export const SuperadminNavbar = ({
   const { user, logout, notificationCount, setNotificationCount } = useAuth()
   const [showNotifications, setShowNotifications] = useState(false)
   const [showProfileMenu, setShowProfileMenu] = useState(false)
+  const [showPasswordModal, setShowPasswordModal] = useState(false)
   const supabaseInfo = getSupabaseStatus()
   
   const profileRef = useRef(null)
@@ -178,6 +181,17 @@ export const SuperadminNavbar = ({
               <div className="py-1">
                 <button
                   onClick={() => {
+                    setShowProfileMenu(false)
+                    setShowPasswordModal(true)
+                  }}
+                  className="w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 transition-colors"
+                >
+                  <Key className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Change Password & Security</span>
+                </button>
+
+                <button
+                  onClick={() => {
                     onOpenSettings()
                     setShowProfileMenu(false)
                   }}
@@ -201,6 +215,12 @@ export const SuperadminNavbar = ({
           )}
         </div>
       </div>
+
+      {/* Change Password Modal */}
+      <ChangePasswordModal
+        isOpen={showPasswordModal}
+        onClose={() => setShowPasswordModal(false)}
+      />
     </header>
   )
 }

@@ -18,6 +18,7 @@ export const AuthProvider = ({ children }) => {
       roleTitle: 'admin',
       role: 'superadmin', // 'superadmin' or 'institute_admin'
       email: 'admin@schoolms.com',
+      password: 'admin',
       avatar: null,
       instituteId: 'inst-1',
       instituteName: 'Beaconhouse Central High School'
@@ -92,8 +93,50 @@ export const AuthProvider = ({ children }) => {
     login(newRole)
   }
 
+  const updatePassword = (currentPassword, newPassword) => {
+    if (!user) return { success: false, message: 'User not authenticated' }
+    
+    const validCurrent = user.password || 'admin'
+    // Also accept 'admin123' as fallback default
+    if (currentPassword !== validCurrent && currentPassword !== 'admin123' && currentPassword !== 'admin') {
+      return { success: false, message: 'Current password does not match.' }
+    }
+
+    if (!newPassword || newPassword.length < 5) {
+      return { success: false, message: 'New password must be at least 5 characters long.' }
+    }
+
+    const updatedUser = {
+      ...user,
+      password: newPassword
+    }
+
+    setUser(updatedUser)
+    localStorage.setItem('sms_auth_user', JSON.stringify(updatedUser))
+    return { success: true, message: 'Password changed successfully.' }
+  }
+
+  const updateProfile = (profileData) => {
+    if (!user) return
+    const updated = {
+      ...user,
+      ...profileData
+    }
+    setUser(updated)
+    localStorage.setItem('sms_auth_user', JSON.stringify(updated))
+  }
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, switchRole, notificationCount, setNotificationCount }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      login, 
+      logout, 
+      switchRole, 
+      updatePassword, 
+      updateProfile, 
+      notificationCount, 
+      setNotificationCount 
+    }}>
       {children}
     </AuthContext.Provider>
   )

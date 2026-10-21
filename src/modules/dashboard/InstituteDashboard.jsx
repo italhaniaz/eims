@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { 
   GraduationCap, 
   Users, 
@@ -16,7 +16,9 @@ import {
   Building2,
   Sparkles,
   Star,
-  Plus
+  Plus,
+  AlertTriangle,
+  X
 } from 'lucide-react'
 import StatCard from '../../components/common/StatCard'
 import { useAppData } from '../../context/AppDataContext'
@@ -27,11 +29,18 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
     students, 
     teachers, 
     fees, 
+    notices = [],
     classes = [],
     activeProgramLevel, 
     setActiveProgramLevel, 
     programLevels = [] 
   } = useAppData()
+
+  const [isNoticeDismissed, setIsNoticeDismissed] = useState(false)
+  const urgentNotice = notices.find(n => 
+    (n.category === 'Urgent' || n.priority === 'Urgent' || n.pinned) &&
+    (!n.instituteId || n.instituteId === currentInstitute?.id)
+  )
 
   const activeLevelObj = programLevels.find(l => l.id === activeProgramLevel)
 
@@ -117,6 +126,42 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
 
   return (
     <div className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
+      {/* Critical Emergency Broadcast Banner */}
+      {urgentNotice && !isNoticeDismissed && (
+        <div className="bg-gradient-to-r from-rose-600 via-rose-700 to-amber-600 text-white rounded-2xl p-4 shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in border border-rose-400/40">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0">
+              <AlertTriangle className="w-5 h-5 text-amber-200 animate-pulse" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-black/30 text-amber-200">
+                  CAMPUS DIRECTIVE • URGENT BROADCAST
+                </span>
+                <span className="text-xs text-white/80">{urgentNotice.date}</span>
+              </div>
+              <h3 className="text-sm font-bold mt-0.5 leading-snug">{urgentNotice.title}</h3>
+              <p className="text-xs text-white/90 line-clamp-1 mt-0.5">{urgentNotice.content}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => onRouteChange('inst-notices')}
+              className="px-3.5 py-1.5 bg-white text-rose-900 rounded-lg text-xs font-bold hover:bg-white/90 transition-all shadow-sm"
+            >
+              View Directive
+            </button>
+            <button
+              onClick={() => setIsNoticeDismissed(true)}
+              className="p-1.5 hover:bg-white/20 rounded-lg text-white/80 hover:text-white transition-colors"
+              title="Dismiss Alert"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Dynamic Campus & Academic Tier Header Banner */}
       <div className="bg-gradient-to-r from-[#0f172a] via-[#14233c] to-[#132c4b] border border-slate-800 rounded-2xl p-6 text-white shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-all duration-200">
         <div>
