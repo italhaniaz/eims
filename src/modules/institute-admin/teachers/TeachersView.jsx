@@ -20,7 +20,12 @@ import {
   CheckCircle2,
   Building2,
   School,
-  X
+  X,
+  UserCheck,
+  Calendar,
+  FileText,
+  AlertTriangle,
+  Clock
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
@@ -35,6 +40,17 @@ export const TeachersView = ({ currentInstitute }) => {
   const [editingTeacher, setEditingTeacher] = useState(null)
   const [selectedSalaryTeacher, setSelectedSalaryTeacher] = useState(null)
   const [salaryMonth, setSalaryMonth] = useState('October 2026')
+  const [selectedLeaveTeacher, setSelectedLeaveTeacher] = useState(null)
+  const [leaveDutyOrder, setLeaveDutyOrder] = useState(null)
+  const [leaveFormData, setLeaveFormData] = useState({
+    leaveType: 'Casual Leave',
+    startDate: new Date().toISOString().split('T')[0],
+    endDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    reason: 'Urgent Personal Affairs',
+    substituteTeacherId: '',
+    substituteTeacherName: '',
+    handoverNotes: 'Cover syllabus topics and supervise daily class periods.'
+  })
 
   // Sorting & Pagination
   const [sortField, setSortField] = useState('name')
@@ -72,6 +88,45 @@ export const TeachersView = ({ currentInstitute }) => {
       status: 'Active'
     })
     setIsModalOpen(true)
+  }
+
+  const openLeaveModal = (t) => {
+    setSelectedLeaveTeacher(t)
+    const otherFaculty = teachers.filter(other => other.id !== t.id && (!other.instituteId || other.instituteId === currentInstitute?.id))
+    const defaultSubstitute = otherFaculty[0]
+    setLeaveFormData({
+      leaveType: t.leaveInfo?.leaveType || 'Casual Leave',
+      startDate: t.leaveInfo?.startDate || new Date().toISOString().split('T')[0],
+      endDate: t.leaveInfo?.endDate || new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      reason: t.leaveInfo?.reason || 'Urgent Domestic Affairs',
+      substituteTeacherId: t.leaveInfo?.substituteTeacherId || defaultSubstitute?.id || '',
+      substituteTeacherName: t.leaveInfo?.substituteTeacherName || defaultSubstitute?.name || 'Assigned Proxy',
+      handoverNotes: t.leaveInfo?.handoverNotes || `Supervise ${t.department} department lectures and coursework.`
+    })
+  }
+
+  const handleAssignLeaveAndProxy = async (e) => {
+    e.preventDefault()
+    if (!selectedLeaveTeacher) return
+
+    await updateItem('teachers', selectedLeaveTeacher.id, {
+      status: 'On Leave',
+      leaveInfo: {
+        ...leaveFormData,
+        approvedAt: new Date().toISOString().split('T')[0]
+      }
+    })
+
+    toast.warning(`Faculty member "${selectedLeaveTeacher.name}" marked On Leave. Proxy assigned to: ${leaveFormData.substituteTeacherName}!`)
+    setSelectedLeaveTeacher(null)
+  }
+
+  const handleResumeDuty = async (t) => {
+    await updateItem('teachers', t.id, {
+      status: 'Active',
+      leaveInfo: null
+    })
+    toast.success(`Faculty member "${t.name}" resumed active academic duty. Timetable proxy released!`)
   }
 
   const openEditModal = (t) => {
@@ -310,6 +365,12 @@ export const TeachersView = ({ currentInstitute }) => {
 
                     <h3 className="font-bold text-slate-900 mt-3 text-base">{t.name}</h3>
                     <p className="text-xs text-emerald-600 font-semibold">{t.designation}</p>
+                    {t.status === 'On Leave' && (
+                      <div className="mt-2 flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-[11px] font-semibold">
+                        <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0 animate-pulse" />
+                        <span>On Leave (Proxy: {t.leaveInfo?.substituteTeacherName || 'Assigned'})</span>
+                      </div>
+                    )}
 
                     <div className="mt-4 pt-3 border-t border-slate-100 space-y-2 text-xs text-slate-500">
                       <div className="flex items-center gap-2">
@@ -328,14 +389,44 @@ export const TeachersView = ({ currentInstitute }) => {
                   </div>
 
                   <div className="mt-4 p-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
-                    <button
-                      onClick={() => setSelectedSalaryTeacher(t)}
-                      className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors"
-                      title="Generate Official Monthly Salary Slip"
-                    >
-                      <Receipt className="w-3.5 h-3.5" />
-                      <span>Pay Slip</span>
-                    </button>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => setSelectedSalaryTeacher(t)}
+                        className="flex items-center gap-1.5 px-2 py-1 text-xs font-bold rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors cursor-pointer"
+                        title="Generate Official Monthly Salary Slip"
+                      >
+                        <Receipt className="w-3.5 h-3.5" />
+                        <span>Pay Slip</span>
+                      </button>
+
+                      {t.status === 'On Leave' ? (
+                        <>
+                          <button
+                            onClick={() => handleResumeDuty(t)}
+                            className="px-2 py-1 text-xs font-bold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors cursor-pointer"
+                            title="End Leave and Resume Academic Schedule"
+                          >
+                            Resume
+                          </button>
+                          <button
+                            onClick={() => setLeaveDutyOrder(t)}
+                            className="px-2 py-1 text-xs font-bold rounded-lg bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200 transition-colors cursor-pointer"
+                            title="Print Official Proxy Duty Order"
+                          >
+                            Order
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => openLeaveModal(t)}
+                          className="flex items-center gap-1 px-2 py-1 text-xs font-bold rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors cursor-pointer"
+                          title="Assign Leave & Proxy Substitution"
+                        >
+                          <UserCheck className="w-3.5 h-3.5" />
+                          <span>Leave/Proxy</span>
+                        </button>
+                      )}
+                    </div>
 
                     <div className="flex items-center gap-1">
                       <button 

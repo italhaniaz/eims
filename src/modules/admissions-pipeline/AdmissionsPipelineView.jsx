@@ -30,6 +30,7 @@ export const AdmissionsPipelineView = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedApplicantForScorecard, setSelectedApplicantForScorecard] = useState(null)
   const [selectedApplicantForOffer, setSelectedApplicantForOffer] = useState(null)
+  const [isMeritListOpen, setIsMeritListOpen] = useState(false)
 
   const stages = [
     'Inquiry Received',
@@ -114,6 +115,22 @@ export const AdmissionsPipelineView = () => {
       admissionDate: new Date().toISOString().split('T')[0]
     })
 
+    // Automatically generate first admission & tuition fee challan
+    await addItem('fees', {
+      studentName: applicant.studentName,
+      rollNumber: newRoll,
+      className: applicant.gradeApplied || '10th Grade',
+      amount: 25000,
+      grossAmount: 25000,
+      discountAmount: 0,
+      concessionType: 'None',
+      dueDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      status: 'Pending',
+      feeTitle: 'Admission Enrollment & Term 1 Tuition Fee',
+      instituteId: 'inst-1',
+      paymentDate: null
+    })
+
     await updateItem('admissionsPipeline', applicant.id, {
       stage: 'Enrolled & Admitted',
       status: 'Admitted & Enrolled',
@@ -121,7 +138,7 @@ export const AdmissionsPipelineView = () => {
       assignedRollNumber: newRoll
     })
 
-    toast.success(`Candidate "${applicant.studentName}" successfully enrolled with Roll Number: ${newRoll}!`)
+    toast.success(`Candidate "${applicant.studentName}" enrolled (Roll: ${newRoll}) & Admission Fee Voucher (Rs. 25,000) generated!`)
   }
 
   // Save entrance evaluation scorecard
@@ -219,6 +236,15 @@ export const AdmissionsPipelineView = () => {
           >
             <Download className="w-3.5 h-3.5" />
             <span>Export CSV</span>
+          </button>
+
+          <button
+            onClick={() => setIsMeritListOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white rounded-lg text-xs font-bold shadow transition-all cursor-pointer"
+            title="Generate Official Entrance Exam Merit & Selection List"
+          >
+            <Award className="w-3.5 h-3.5 text-amber-200" />
+            <span>Merit List Gazette</span>
           </button>
 
           <button

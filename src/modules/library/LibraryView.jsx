@@ -21,7 +21,10 @@ import {
   AlertCircle,
   FileText,
   School,
-  X
+  X,
+  DollarSign,
+  CreditCard,
+  ShieldAlert
 } from 'lucide-react'
 import { useAppData } from '../../context/AppDataContext'
 import { useToast } from '../../context/ToastContext'
@@ -39,6 +42,9 @@ export const LibraryView = () => {
   const [selectedBookForIssue, setSelectedBookForIssue] = useState(null)
   const [editingBook, setEditingBook] = useState(null)
   const [selectedClearanceSlip, setSelectedClearanceSlip] = useState(null)
+  const [selectedReturnIssue, setSelectedReturnIssue] = useState(null)
+  const [returnSettlementType, setReturnSettlementType] = useState('cash') // 'cash' | 'push_fee' | 'lost_damaged' | 'waive'
+  const [lostBookReplacementCost, setLostBookReplacementCost] = useState(1500)
 
   // Catalog pagination
   const [currentPage, setCurrentPage] = useState(1)
@@ -174,6 +180,115 @@ export const LibraryView = () => {
     toast.success(`Book "${selectedBookForIssue.title}" issued to ${issueData.studentName}!`)
     setIsIssueModalOpen(false)
     setSelectedBookForIssue(null)
+  }
+
+  // Process Book Return with Fine Ledger Integration
+  const handleSettleReturn = async (e) => {
+    e.preventDefault()
+    if (!selectedReturnIssue) return
+
+    const iss = selectedReturnIssue
+    const overdue = getOverdueDetails(iss.dueDate)
+    const book = library.find(b => b.id === iss.bookId)
+
+    if (returnSettlementType === 'lost_damaged') {
+      // Decrement total copies as book is lost
+      if (book) {
+        await updateItem('library', book.id, {
+          totalCopies: Math.max(0, Number(book.totalCopies || 1) - 1),
+          issuedCopies: Math.max(0, Number(book.issuedCopies || 1) - 1)
+        })
+      }
+
+      // Push book replacement invoice to Student Fees
+      await addItem('fees', {
+        studentName: iss.studentName,
+        rollNumber: iss.rollNumber,
+        className: '10th Grade',
+        amount: Number(lostBookReplacementCost),
+        grossAmount: Number(lostBookReplacementCost),
+        discountAmount: 0,
+        concessionType: 'None',
+        dueDate: new Date().toISOString().split('T')[0],
+        status: 'Pending',
+        feeTitle: `Library Book Loss Replacement Penalty: ${iss.bookTitle}`,
+        instituteId: 'inst-1',
+        paymentDate: null
+      })
+
+      await updateItem('bookIssues', iss.id, {
+        status: 'Lost / Damaged',
+        returnedDate: new Date().toISOString().split('T')[0],
+        fineCollected: 0,
+        lossPenaltyBilled: Number(lostBookReplacementCost)
+      })
+
+      toast.warning(`Book marked as Lost. Replacement penalty Rs. ${lostBookReplacementCost.toLocaleString()} billed to ${iss.studentName}'s fee ledger!`)
+    } else if (returnSettlementType === 'push_fee') {
+      // Push overdue fine to student fee ledger
+      if (book && Number(book.issuedCopies) > 0) {
+        await updateItem('library', book.id, {
+          issuedCopies: Math.max(0, Number(book.issuedCopies) - 1)
+        })
+      }
+
+      await addItem('fees', {
+        studentName: iss.studentName,
+        rollNumber: iss.rollNumber,
+        className: '10th Grade',
+        amount: Number(overdue.fine),
+        grossAmount: Number(overdue.fine),
+        discountAmount: 0,
+        concessionType: 'None',
+        dueDate: new Date().toISOString().split('T')[0],
+        status: 'Pending',
+        feeTitle: `Library Overdue Circulation Fine: ${iss.bookTitle} (${overdue.days} days)`,
+        instituteId: 'inst-1',
+        paymentDate: null
+      })
+
+      await updateItem('bookIssues', iss.id, {
+        status: 'Returned',
+        returnedDate: new Date().toISOString().split('T')[0],
+        fineCollected: 0,
+        fineBilledToFeeChallan: true
+      })
+
+      toast.success(`Book returned! Overdue fine of Rs. ${overdue.fine} pushed to ${iss.studentName}'s fee account.`)
+    } else if (returnSettlementType === 'waive') {
+      if (book && Number(book.issuedCopies) > 0) {
+        await updateItem('library', book.id, {
+          issuedCopies: Math.max(0, Number(book.issuedCopies) - 1)
+        })
+      }
+
+      await updateItem('bookIssues', iss.id, {
+        status: 'Returned',
+        returnedDate: new Date().toISOString().split('T')[0],
+        fineCollected: 0,
+        fineWaived: true
+      })
+
+      toast.info(`Book returned! Overdue fine was administratively waived.`)
+    } else {
+      // Cash collection at desk
+      if (book && Number(book.issuedCopies) > 0) {
+        await updateItem('library', book.id, {
+          issuedCopies: Math.max(0, Number(book.issuedCopies) - 1)
+        })
+      }
+
+      await updateItem('bookIssues', iss.id, {
+        status: 'Returned',
+        returnedDate: new Date().toISOString().split('T')[0],
+        fineCollected: overdue.fine
+      })
+
+      toast.success(`Book returned! Rs. ${overdue.fine} overdue fine collected in cash at library desk.`)
+      setSelectedClearanceSlip({ ...iss, overdue })
+    }
+
+    setSelectedReturnIssue(null)
   }
 
   // Process Book Return
@@ -526,14 +641,28 @@ export const LibraryView = () => {
                           <span>Clearance Slip</span>
                         </button>
 
-                        <button
-                          onClick={() => handleReturnBook(iss)}
-                          className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-bold inline-flex items-center gap-1"
-                          title="Mark Book as Returned"
-                        >
-                          <RotateCcw className="w-3 h-3" />
-                          <span>Mark Returned</span>
-                        </button>
+                        {overdue.isOverdue ? (
+                          <button
+                            onClick={() => {
+                              setSelectedReturnIssue(iss)
+                              setReturnSettlementType('cash')
+                            }}
+                            className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded text-xs font-bold inline-flex items-center gap-1 shadow-sm cursor-pointer"
+                            title="Settle Overdue Fine & Process Return"
+                          >
+                            <AlertCircle className="w-3 h-3" />
+                            <span>Settle Fine & Return</span>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleReturnBook(iss)}
+                            className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-bold inline-flex items-center gap-1 cursor-pointer"
+                            title="Mark Book as Returned"
+                          >
+                            <RotateCcw className="w-3 h-3" />
+                            <span>Mark Returned</span>
+                          </button>
+                        )}
                       </td>
                     </tr>
                   )

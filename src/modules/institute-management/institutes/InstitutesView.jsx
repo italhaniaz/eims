@@ -22,20 +22,28 @@ import {
   ShieldCheck,
   CheckCircle2,
   Layers,
-  Sparkles
+  Sparkles,
+  Upload,
+  FileCode,
+  Database,
+  RefreshCw
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
 import Modal from '../../../components/common/Modal'
 
 export const InstitutesView = () => {
-  const { institutes, examinationBodies, addItem, updateItem, deleteItem } = useAppData()
+  const { institutes, examinationBodies, addItem, updateItem, deleteItem, exportData, importData, validateBackup, rollbackLastRestore } = useAppData()
   const { toast } = useToast()
 
   const [searchTerm, setSearchTerm] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingInstitute, setEditingInstitute] = useState(null)
   const [viewingDetails, setViewingDetails] = useState(null)
+  const [isBackupModalOpen, setIsBackupModalOpen] = useState(false)
+  const [backupInspectionReport, setBackupInspectionReport] = useState(null)
+  const [selectedBackupPayload, setSelectedBackupPayload] = useState(null)
+  const fileInputRef = React.useRef(null)
 
   // Sorting & Pagination
   const [sortField, setSortField] = useState('name')
@@ -55,6 +63,64 @@ export const InstitutesView = () => {
     affiliatedBoard: 'BISE Lahore',
     status: 'Active'
   })
+
+  const handleDownloadSnapshot = () => {
+    const snapshot = exportData()
+    const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(snapshot, null, 2))}`
+    const downloadAnchor = document.createElement('a')
+    downloadAnchor.setAttribute('href', jsonString)
+    downloadAnchor.setAttribute('download', `eims_campus_snapshot_${new Date().toISOString().split('T')[0]}.json`)
+    document.body.appendChild(downloadAnchor)
+    downloadAnchor.click()
+    downloadAnchor.remove()
+    toast.success('Verified campus snapshot package downloaded!')
+  }
+
+  const handleBackupFileUpload = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      try {
+        const parsed = JSON.parse(event.target.result)
+        const report = validateBackup(parsed)
+        if (report.valid) {
+          setBackupInspectionReport(report)
+          setSelectedBackupPayload(report.dataPayload)
+          toast.success('Backup package schema validated and verified!')
+        } else {
+          setBackupInspectionReport(null)
+          setSelectedBackupPayload(null)
+          toast.error(report.error || 'Invalid backup file structure.')
+        }
+      } catch (err) {
+        setBackupInspectionReport(null)
+        setSelectedBackupPayload(null)
+        toast.error('Corrupted JSON file. Unable to parse.')
+      }
+    }
+    reader.readAsText(file)
+  }
+
+  const handleApplyRestore = () => {
+    if (!selectedBackupPayload) return
+    importData(selectedBackupPayload)
+    toast.success('Campus database restored and verified successfully!')
+    setIsBackupModalOpen(false)
+    setBackupInspectionReport(null)
+    setSelectedBackupPayload(null)
+  }
+
+  const handleRollback = () => {
+    const res = rollbackLastRestore()
+    if (res) {
+      toast.info('Database rolled back to previous snapshot!')
+      setIsBackupModalOpen(false)
+    } else {
+      toast.warning('No rollback snapshot available.')
+    }
+  }
 
   const openAddModal = () => {
     setEditingInstitute(null)
@@ -227,8 +293,17 @@ export const InstitutesView = () => {
           </button>
 
           <button
+            onClick={() => setIsBackupModalOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-lg text-xs font-bold shadow-sm transition-all cursor-pointer"
+            title="One-Click Verified Campus Snapshot & Disaster Recovery"
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-200" />
+            <span>Disaster Recovery</span>
+          </button>
+
+          <button
             onClick={openAddModal}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Register New Institute</span>

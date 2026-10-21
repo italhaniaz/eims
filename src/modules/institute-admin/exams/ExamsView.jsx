@@ -40,6 +40,7 @@ export const ExamsView = ({ currentInstitute }) => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isBatchModalOpen, setIsBatchModalOpen] = useState(false)
   const [selectedReportCard, setSelectedReportCard] = useState(null)
+  const [selectedPtmReportCard, setSelectedPtmReportCard] = useState(null)
   const [selectedRollNumberSlip, setSelectedRollNumberSlip] = useState(null)
   const [currentPage, setCurrentPage] = useState(1)
   const pageSize = 8
@@ -81,6 +82,17 @@ export const ExamsView = ({ currentInstitute }) => {
     computer: 90,
     remarks: 'Keep up the consistent hard work.'
   })
+
+  const getClassRank = (exam) => {
+    const classExams = instExams.filter(e => e.className === exam.className && e.term === exam.term)
+    if (classExams.length === 0) return { rank: 1, total: 1 }
+    const sorted = [...classExams].sort((a, b) => Number(b.totalObtained || 0) - Number(a.totalObtained || 0))
+    const idx = sorted.findIndex(e => e.id === exam.id || e.rollNumber === exam.rollNumber)
+    return {
+      rank: idx >= 0 ? idx + 1 : 1,
+      total: sorted.length
+    }
+  }
 
   const getGrade = (marks) => {
     const m = Number(marks)
@@ -353,6 +365,14 @@ export const ExamsView = ({ currentInstitute }) => {
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              onClick={() => setSelectedPtmReportCard(e)}
+                              className="px-2 py-1 text-xs font-bold rounded-lg bg-amber-50 text-amber-900 border border-amber-300 hover:bg-amber-100 flex items-center gap-1 transition-colors cursor-pointer"
+                              title="Generate Consolidated Annual Terminal Report Card for Parent-Teacher Meeting"
+                            >
+                              <Award className="w-3.5 h-3.5 text-amber-600" />
+                              <span>PTM Card</span>
+                            </button>
                             <button
                               onClick={() => setSelectedReportCard(e)}
                               className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
@@ -906,6 +926,177 @@ export const ExamsView = ({ currentInstitute }) => {
               >
                 <Printer className="w-3.5 h-3.5" />
                 <span>Print Official Admit Card (PDF)</span>
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Consolidated Annual Terminal Report Card (PTM) Modal */}
+      {selectedPtmReportCard && (
+        <Modal
+          isOpen={Boolean(selectedPtmReportCard)}
+          onClose={() => setSelectedPtmReportCard(null)}
+          title="Consolidated Annual Terminal Report Card (PTM Official Transcript)"
+          maxWidth="max-w-3xl"
+        >
+          <div className="space-y-4">
+            <div 
+              id="printable-ptm-report-card"
+              className="p-8 bg-white border-4 border-double border-slate-900 rounded-2xl space-y-6 print:border-black print:p-8 text-slate-800"
+            >
+              {/* Header Letterhead */}
+              <div className="text-center border-b-2 border-slate-900 pb-4">
+                <School className="w-10 h-10 text-amber-700 mx-auto mb-1" />
+                <h2 className="text-lg font-black uppercase tracking-widest text-slate-900">
+                  {currentInstitute?.name || 'CENTRAL HIGH SCHOOL SYSTEM'}
+                </h2>
+                <p className="text-xs text-slate-600 font-semibold">Affiliated with Board of Intermediate & Secondary Education (BISE)</p>
+                <div className="mt-2 inline-block px-4 py-1 bg-amber-50 border border-amber-300 rounded text-xs font-black uppercase tracking-widest text-amber-950">
+                  COMPREHENSIVE ACADEMIC PROGRESS REPORT CARD & TERMINAL TRANSCRIPT
+                </div>
+                <div className="flex justify-between items-center text-[10px] text-slate-500 mt-2 font-mono">
+                  <span>Session: 2026 - 2027</span>
+                  <span>Terminal Term: {selectedPtmReportCard.term}</span>
+                  <span>Issue Date: {new Date().toISOString().split('T')[0]}</span>
+                </div>
+              </div>
+
+              {/* Student Details & Class Position Hero Card */}
+              {(() => {
+                const rankInfo = getClassRank(selectedPtmReportCard);
+                return (
+                  <div className="p-4 bg-gradient-to-r from-amber-50/70 via-slate-50 to-indigo-50/70 border border-slate-300 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-slate-900 text-amber-400 font-black flex items-center justify-center text-lg shrink-0 border-2 border-amber-500">
+                        {selectedPtmReportCard.studentName?.charAt(0)}
+                      </div>
+                      <div>
+                        <h3 className="text-base font-black text-slate-900">{selectedPtmReportCard.studentName}</h3>
+                        <p className="text-xs text-slate-600">
+                          Roll No: <span className="font-mono font-bold text-slate-900">{selectedPtmReportCard.rollNumber}</span> • Class: <strong>{selectedPtmReportCard.className}</strong>
+                        </p>
+                        <p className="text-[11px] text-slate-500 mt-0.5">
+                          Attendance Record: <strong className="text-emerald-700">96.4% (Regular)</strong> • Conduct: <strong className="text-emerald-700">Exemplary</strong>
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="text-right sm:text-right bg-white p-2.5 rounded-lg border border-slate-300 shadow-sm">
+                      <span className="text-[10px] uppercase font-bold text-slate-500 block">Class Merit Standing</span>
+                      <span className="text-sm font-black text-amber-800 flex items-center gap-1 justify-end font-mono">
+                        <Award className="w-4 h-4 text-amber-600" />
+                        <span>Position #{rankInfo.rank} of {rankInfo.total}</span>
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-medium block">In {selectedPtmReportCard.className}</span>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Subject Wise Performance Table with Visual Progress Bar Curve */}
+              <div className="space-y-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
+                  Detailed Academic Assessment & Grading Matrix
+                </span>
+                <table className="w-full text-left text-xs border border-slate-300">
+                  <thead className="bg-slate-100 font-bold border-b border-slate-300 text-[10px] uppercase">
+                    <tr>
+                      <th className="p-2.5">Subject / Course Module</th>
+                      <th className="p-2.5 text-center">Max Marks</th>
+                      <th className="p-2.5 text-center">Marks Obtained</th>
+                      <th className="p-2.5 text-center">Performance Curve</th>
+                      <th className="p-2.5 text-center">Grade</th>
+                      <th className="p-2.5 text-center">Remark</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200">
+                    {(selectedPtmReportCard.subjects || []).map((s, idx) => {
+                      const pct = Math.round((Number(s.obtained) / Number(s.maxMarks)) * 100);
+                      const barColor = pct >= 80 ? 'bg-emerald-600' : pct >= 60 ? 'bg-blue-600' : 'bg-amber-600';
+                      return (
+                        <tr key={idx} className="hover:bg-slate-50/70">
+                          <td className="p-2.5 font-bold text-slate-900">{s.name}</td>
+                          <td className="p-2.5 text-center font-mono">{s.maxMarks}</td>
+                          <td className="p-2.5 text-center font-mono font-bold">{s.obtained}</td>
+                          <td className="p-2.5 text-center w-36">
+                            <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                              <div className={`${barColor} h-2 rounded-full`} style={{ width: `${pct}%` }}></div>
+                            </div>
+                            <span className="text-[9px] text-slate-500 font-mono block mt-0.5">{pct}%</span>
+                          </td>
+                          <td className="p-2.5 text-center font-bold font-mono text-emerald-700">{s.grade}</td>
+                          <td className="p-2.5 text-center text-[10px] text-slate-600 font-medium">
+                            {pct >= 85 ? 'Distinction' : pct >= 70 ? 'Very Good' : 'Satisfactory'}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    <tr className="bg-slate-100 font-bold border-t-2 border-slate-900 text-xs">
+                      <td className="p-2.5 font-black uppercase">Aggregate Grand Total</td>
+                      <td className="p-2.5 text-center font-mono">{selectedPtmReportCard.totalMax}</td>
+                      <td className="p-2.5 text-center font-mono text-emerald-800 font-black">{selectedPtmReportCard.totalObtained}</td>
+                      <td className="p-2.5 text-center font-mono font-black text-emerald-800">{selectedPtmReportCard.percentage}</td>
+                      <td className="p-2.5 text-center font-mono text-emerald-800 font-black">{selectedPtmReportCard.overallGrade}</td>
+                      <td className="p-2.5 text-center text-emerald-800 font-black">PASSED</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Assessment Observations */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div className="p-3 bg-slate-50 border border-slate-300 rounded-lg">
+                  <span className="font-bold text-slate-800 block uppercase text-[10px]">Class Teacher Observations:</span>
+                  <p className="mt-1 italic text-slate-700">
+                    "{selectedPtmReportCard.remarks || 'Shows remarkable aptitude in scientific analysis and punctual attendance.'}"
+                  </p>
+                </div>
+
+                <div className="p-3 bg-slate-50 border border-slate-300 rounded-lg">
+                  <span className="font-bold text-slate-800 block uppercase text-[10px]">Principal Promotion Endorsement:</span>
+                  <p className="mt-1 font-semibold text-emerald-800">
+                    Recommended and Promoted in Good Standing to the next academic level with distinction.
+                  </p>
+                </div>
+              </div>
+
+              {/* Signatures & Parent Acknowledgment */}
+              <div className="pt-8 grid grid-cols-4 gap-4 text-center text-[11px] text-slate-500 border-t">
+                <div>
+                  <div className="border-b border-slate-400 mb-1 w-24 mx-auto"></div>
+                  <span>Class In-Charge</span>
+                </div>
+                <div>
+                  <div className="border-b border-slate-400 mb-1 w-24 mx-auto"></div>
+                  <span>Exam Controller</span>
+                </div>
+                <div>
+                  <div className="border-b-2 border-slate-900 mb-1 w-28 mx-auto"></div>
+                  <strong className="text-slate-900 font-bold">Principal Seal</strong>
+                </div>
+                <div>
+                  <div className="border-b border-dashed border-slate-400 mb-1 w-28 mx-auto"></div>
+                  <span>Parent / Guardian Sign</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setSelectedPtmReportCard(null)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="px-5 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-black rounded-lg shadow-sm flex items-center gap-1.5 cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print Official PTM Report Card (PDF)</span>
               </button>
             </div>
           </div>

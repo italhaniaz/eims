@@ -53,6 +53,20 @@ export const AppDataProvider = ({ children }) => {
     return updated
   }
 
+  const exportData = () => {
+    return DataService.exportData()
+  }
+
+  const validateBackup = (backupObj) => {
+    return DataService.validateBackup(backupObj)
+  }
+
+  const rollbackLastRestore = () => {
+    const restored = DataService.rollbackLastRestore()
+    if (restored) refreshData()
+    return restored
+  }
+
   // Attendance Persistence Handlers
   const saveAttendance = (date, classKey, records) => {
     const res = DataService.saveAttendance(date, classKey, records)
@@ -197,6 +211,9 @@ export const AppDataProvider = ({ children }) => {
         resetToZero,
         loadSampleTemplate,
         importData,
+        exportData,
+        validateBackup,
+        rollbackLastRestore,
         saveAttendance,
         getAttendance,
         saveTimetable,
