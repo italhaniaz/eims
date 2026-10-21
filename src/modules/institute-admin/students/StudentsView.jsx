@@ -28,7 +28,14 @@ import {
   Award,
   CheckCircle2,
   HeartPulse,
-  AlertTriangle
+  AlertTriangle,
+  Eye,
+  FileCheck,
+  Sparkles,
+  Activity,
+  ShieldCheck,
+  Check,
+  Calendar
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
@@ -57,6 +64,11 @@ export const StudentsView = ({ currentInstitute }) => {
   const [editingStudent, setEditingStudent] = useState(null)
   const [selectedIdCard, setSelectedIdCard] = useState(null)
   const [selectedSLC, setSelectedSLC] = useState(null)
+  const [selectedProfile, setSelectedProfile] = useState(null)
+  const [selectedAdmissionSlip, setSelectedAdmissionSlip] = useState(null)
+  const [selectedClassFilter, setSelectedClassFilter] = useState('ALL')
+  const [selectedFeeFilter, setSelectedFeeFilter] = useState('ALL')
+  const [selectedMedicalFilter, setSelectedMedicalFilter] = useState('ALL')
 
   // Sorting state
   const [sortField, setSortField] = useState('name')
@@ -204,10 +216,129 @@ export const StudentsView = ({ currentInstitute }) => {
     }
   }
 
+  // Campus students pool & Executive Metrics
+  const campusStudents = useMemo(() => {
+    return students.filter(s => !s.instituteId || !currentInstitute?.id || s.instituteId === currentInstitute?.id || currentInstitute?.id === 'inst-default')
+  }, [students, currentInstitute?.id])
+
+  const totalCampusStudents = campusStudents.length
+  const paidStudentsCount = campusStudents.filter(s => s.feeStatus === 'Paid').length
+  const pendingStudentsCount = totalCampusStudents - paidStudentsCount
+  const medicalAlertStudentsCount = campusStudents.filter(s => s.medicalAlert && s.medicalAlert !== 'None').length
+
+  const avgAttendanceRate = useMemo(() => {
+    if (totalCampusStudents === 0) return 95
+    const sum = campusStudents.reduce((acc, s) => {
+      const val = parseFloat((s.attendanceRate || '95').replace('%', '')) || 95
+      return acc + val
+    }, 0)
+    return Math.round(sum / totalCampusStudents)
+  }, [campusStudents, totalCampusStudents])
+
+  // Distinct classes enrolled
+  const availableClasses = useMemo(() => {
+    const set = new Set()
+    campusStudents.forEach(s => {
+      if (s.className) set.add(s.className)
+    })
+    return Array.from(set).sort()
+  }, [campusStudents])
+
+  // Demo Population Handler
+  const handlePopulateSampleStudents = async () => {
+    const demo = [
+      {
+        name: 'Hamza Farooq',
+        rollNumber: 'BHS-101',
+        className: '10th Grade',
+        section: 'A',
+        email: 'hamza.f@gmail.com',
+        phone: '+92 321 1122334',
+        bloodGroup: 'B+',
+        emergencyContact: '+92 300 4567890',
+        feeStatus: 'Paid',
+        attendanceRate: '96%',
+        medicalAlert: 'Severe Food/Peanut Allergy (EpiPen)',
+        emergencyDoctorPhone: '+92 300 4567890',
+        vaccinationStatus: 'Fully Vaccinated',
+        instituteId: currentInstitute?.id || 'inst-1'
+      },
+      {
+        name: 'Ayesha Siddiqui',
+        rollNumber: 'BHS-102',
+        className: '10th Grade',
+        section: 'B',
+        email: 'ayesha.s@gmail.com',
+        phone: '+92 333 4455667',
+        bloodGroup: 'O+',
+        emergencyContact: '+92 321 9876543',
+        feeStatus: 'Pending',
+        attendanceRate: '98%',
+        medicalAlert: 'Asthma / Inhaler Carried',
+        emergencyDoctorPhone: '+92 321 9876543',
+        vaccinationStatus: 'Fully Vaccinated',
+        instituteId: currentInstitute?.id || 'inst-1'
+      },
+      {
+        name: 'Daniyal Tariq',
+        rollNumber: 'BHS-103',
+        className: '9th Grade',
+        section: 'A',
+        email: 'daniyal.t@sms.edu',
+        phone: '+92 345 5566778',
+        bloodGroup: 'A+',
+        emergencyContact: '+92 345 5566778',
+        feeStatus: 'Paid',
+        attendanceRate: '94%',
+        medicalAlert: 'None',
+        emergencyDoctorPhone: '',
+        vaccinationStatus: 'Fully Vaccinated',
+        instituteId: currentInstitute?.id || 'inst-1'
+      },
+      {
+        name: 'Zainab Fatima',
+        rollNumber: 'BHS-104',
+        className: '10th Grade',
+        section: 'A',
+        email: 'zainab.f@gmail.com',
+        phone: '+92 312 8899001',
+        bloodGroup: 'AB+',
+        emergencyContact: '+92 312 8899001',
+        feeStatus: 'Paid',
+        attendanceRate: '97%',
+        medicalAlert: 'Type 1 Diabetes',
+        emergencyDoctorPhone: '+92 311 2233445',
+        vaccinationStatus: 'Fully Vaccinated',
+        instituteId: currentInstitute?.id || 'inst-1'
+      },
+      {
+        name: 'Bilal Ahmed Khan',
+        rollNumber: 'BHS-105',
+        className: '8th Grade',
+        section: 'C',
+        email: 'bilal.khan@sms.edu',
+        phone: '+92 301 7766554',
+        bloodGroup: 'B-',
+        emergencyContact: '+92 301 7766554',
+        feeStatus: 'Pending',
+        attendanceRate: '91%',
+        medicalAlert: 'None',
+        emergencyDoctorPhone: '',
+        vaccinationStatus: 'Fully Vaccinated',
+        instituteId: currentInstitute?.id || 'inst-1'
+      }
+    ]
+
+    for (const std of demo) {
+      await addItem('students', std)
+    }
+    toast.success('Successfully populated demo admissions roster!')
+  }
+
   // Filtered & Sorted Student Roster
   const filteredAndSorted = useMemo(() => {
     const list = students.filter(s => {
-      const matchesCampus = !s.instituteId || s.instituteId === currentInstitute?.id
+      const matchesCampus = !s.instituteId || !currentInstitute?.id || s.instituteId === currentInstitute?.id || currentInstitute?.id === 'inst-default'
       const query = searchTerm.toLowerCase()
       const matchesSearch = 
         (s.name || '').toLowerCase().includes(query) ||
@@ -216,6 +347,18 @@ export const StudentsView = ({ currentInstitute }) => {
         (s.phone || '').includes(query)
 
       if (!matchesCampus || !matchesSearch) return false
+
+      if (selectedClassFilter !== 'ALL' && s.className !== selectedClassFilter) {
+        return false
+      }
+
+      if (selectedFeeFilter !== 'ALL' && s.feeStatus !== selectedFeeFilter) {
+        return false
+      }
+
+      if (selectedMedicalFilter === 'Alerts' && (!s.medicalAlert || s.medicalAlert === 'None')) {
+        return false
+      }
 
       if (activeProgramLevel && activeProgramLevel !== 'all') {
         const studentLevel = detectProgramLevel(s.className)
@@ -235,7 +378,7 @@ export const StudentsView = ({ currentInstitute }) => {
       if (valA > valB) return sortDirection === 'asc' ? 1 : -1
       return 0
     })
-  }, [students, currentInstitute?.id, searchTerm, activeProgramLevel, sortField, sortDirection])
+  }, [students, currentInstitute?.id, searchTerm, selectedClassFilter, selectedFeeFilter, selectedMedicalFilter, activeProgramLevel, sortField, sortDirection])
 
   // Pagination calculation
   const totalStudents = filteredAndSorted.length
@@ -404,12 +547,61 @@ export const StudentsView = ({ currentInstitute }) => {
         </div>
       </div>
 
+      {/* Executive Analytics KPI Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-white p-4 rounded-xl border border-slate-200/90 shadow-xs flex items-center justify-between">
+          <div>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Total Enrolled</span>
+            <p className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5">{totalCampusStudents}</p>
+            <span className="text-[10px] text-emerald-600 font-semibold">Active Roster</span>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center shrink-0">
+            <GraduationCap className="w-5 h-5" />
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-xl border border-slate-200/90 shadow-xs flex items-center justify-between">
+          <div>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Fee Clearance</span>
+            <p className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5">
+              {totalCampusStudents > 0 ? `${Math.round((paidStudentsCount / totalCampusStudents) * 100)}%` : '100%'}
+            </p>
+            <span className="text-[10px] text-blue-600 font-semibold">{paidStudentsCount} Paid • {pendingStudentsCount} Due</span>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center shrink-0">
+            <CheckCircle2 className="w-5 h-5" />
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-xl border border-slate-200/90 shadow-xs flex items-center justify-between">
+          <div>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Avg Attendance</span>
+            <p className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5">{avgAttendanceRate}%</p>
+            <span className="text-[10px] text-indigo-600 font-semibold">Class Presence</span>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center shrink-0">
+            <Activity className="w-5 h-5" />
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-xl border border-slate-200/90 shadow-xs flex items-center justify-between">
+          <div>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Medical Sentinel</span>
+            <p className="text-xl sm:text-2xl font-black text-rose-700 mt-0.5">{medicalAlertStudentsCount}</p>
+            <span className="text-[10px] text-rose-600 font-semibold">Emergency Health Alerts</span>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center shrink-0">
+            <HeartPulse className="w-5 h-5" />
+          </div>
+        </div>
+      </div>
+
       {/* Main Table Card */}
       <div className="bg-white rounded-xl border border-slate-200/90 shadow-sm overflow-hidden">
         {/* Search & Filter toolbar */}
         <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-50/50">
-          <div className="flex items-center gap-2.5 flex-1">
-            <div className="relative w-full max-w-md">
+          <div className="flex items-center gap-2 flex-1 flex-wrap">
+            <div className="relative w-full sm:w-64 md:w-80">
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
@@ -419,6 +611,54 @@ export const StudentsView = ({ currentInstitute }) => {
                 className="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 bg-white"
               />
             </div>
+
+            {/* Class Filter */}
+            <select
+              value={selectedClassFilter}
+              onChange={(e) => {
+                setSelectedClassFilter(e.target.value)
+                setCurrentPage(1)
+              }}
+              className="px-2.5 py-2 text-xs rounded-lg border border-slate-200 bg-white text-slate-700 font-medium focus:outline-none cursor-pointer"
+            >
+              <option value="ALL">All Classes</option>
+              {availableClasses.map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+
+            {/* Fee Status Filter */}
+            <select
+              value={selectedFeeFilter}
+              onChange={(e) => {
+                setSelectedFeeFilter(e.target.value)
+                setCurrentPage(1)
+              }}
+              className="px-2.5 py-2 text-xs rounded-lg border border-slate-200 bg-white text-slate-700 font-medium focus:outline-none cursor-pointer"
+            >
+              <option value="ALL">All Fee Status</option>
+              <option value="Paid">Paid Only</option>
+              <option value="Pending">Pending Fee</option>
+            </select>
+
+            {/* Medical Sentinel Filter */}
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedMedicalFilter(prev => prev === 'Alerts' ? 'ALL' : 'Alerts')
+                setCurrentPage(1)
+              }}
+              className={`px-2.5 py-2 text-xs rounded-lg border font-semibold flex items-center gap-1 transition-all cursor-pointer ${
+                selectedMedicalFilter === 'Alerts'
+                  ? 'bg-rose-50 border-rose-300 text-rose-700 shadow-xs'
+                  : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+              }`}
+              title="Filter students with active medical alert conditions"
+            >
+              <HeartPulse className="w-3.5 h-3.5 text-rose-600" />
+              <span>Medical Alerts</span>
+            </button>
+
             {activeProgramLevel && activeProgramLevel !== 'all' && (
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 border border-blue-200 text-blue-800 text-xs font-semibold shrink-0">
                 <span>Tier: {activeLevelObj?.shortTitle}</span>
@@ -578,33 +818,49 @@ export const StudentsView = ({ currentInstitute }) => {
                       </span>
                     </td>
                     <td className="px-6 py-3.5 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => setSelectedProfile(s)}
+                          className="px-2 py-1 text-xs font-semibold rounded bg-blue-50 text-blue-700 hover:bg-blue-100 flex items-center gap-1 transition-colors cursor-pointer"
+                          title="View 360° Comprehensive Student Dossier & Profile"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">Profile</span>
+                        </button>
+                        <button
+                          onClick={() => setSelectedAdmissionSlip(s)}
+                          className="px-2 py-1 text-xs font-semibold rounded bg-purple-50 text-purple-700 hover:bg-purple-100 flex items-center gap-1 transition-colors cursor-pointer"
+                          title="Generate Official Student Admission Registration Slip & Confirmation"
+                        >
+                          <FileCheck className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">Slip</span>
+                        </button>
                         <button
                           onClick={() => setSelectedIdCard(s)}
-                          className="px-2.5 py-1 text-xs font-semibold rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100 flex items-center gap-1 transition-colors"
-                          title="Generate Student ID Card"
+                          className="px-2 py-1 text-xs font-semibold rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100 flex items-center gap-1 transition-colors cursor-pointer"
+                          title="Generate Student Smart ID Card"
                         >
                           <IdCard className="w-3.5 h-3.5" />
-                          <span>ID Card</span>
+                          <span className="hidden sm:inline">ID</span>
                         </button>
                         <button
                           onClick={() => setSelectedSLC(s)}
-                          className="px-2.5 py-1 text-xs font-semibold rounded bg-amber-50 text-amber-800 hover:bg-amber-100 flex items-center gap-1 transition-colors"
+                          className="px-2 py-1 text-xs font-semibold rounded bg-amber-50 text-amber-800 hover:bg-amber-100 flex items-center gap-1 transition-colors cursor-pointer"
                           title="Generate Official School Leaving & Character Certificate (SLC)"
                         >
                           <FileText className="w-3.5 h-3.5" />
-                          <span>SLC</span>
+                          <span className="hidden sm:inline">SLC</span>
                         </button>
                         <button 
                           onClick={() => openEditModal(s)} 
-                          className="p-1.5 text-slate-400 hover:text-emerald-600 rounded transition-colors"
+                          className="p-1 text-slate-400 hover:text-emerald-600 rounded transition-colors cursor-pointer"
                           title="Edit Student"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button 
                           onClick={() => handleDelete(s.id, s.name)} 
-                          className="p-1.5 text-slate-400 hover:text-rose-600 rounded transition-colors"
+                          className="p-1 text-slate-400 hover:text-rose-600 rounded transition-colors cursor-pointer"
                           title="Remove Student"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -615,10 +871,32 @@ export const StudentsView = ({ currentInstitute }) => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-slate-400">
-                    <GraduationCap className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                    <p className="text-sm font-semibold text-slate-600">No Student Records Found</p>
-                    <p className="text-xs text-slate-400 mt-1">Enroll students manually or import via CSV file above.</p>
+                  <td colSpan={6} className="px-6 py-14 text-center text-slate-400">
+                    <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-3 border border-emerald-100 shadow-xs">
+                      <GraduationCap className="w-7 h-7" />
+                    </div>
+                    <p className="text-base font-bold text-slate-800">No Student Records Found</p>
+                    <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+                      Enroll students manually, import via CSV roster, or populate demo campus admissions to test all workflows.
+                    </p>
+                    <div className="mt-5 flex items-center justify-center gap-3 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={handlePopulateSampleStudents}
+                        className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-lg text-xs font-bold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-amber-200" />
+                        <span>Populate Demo Admissions Roster</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={openAddModal}
+                        className="px-4 py-2 bg-slate-900 hover:bg-black text-white rounded-lg text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>New Admission</span>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               )}
@@ -984,6 +1262,272 @@ export const StudentsView = ({ currentInstitute }) => {
               >
                 <Printer className="w-3.5 h-3.5" />
                 <span>Print Student Card</span>
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* 360° Comprehensive Student Dossier & Profile Modal */}
+      {selectedProfile && (
+        <Modal
+          isOpen={Boolean(selectedProfile)}
+          onClose={() => setSelectedProfile(null)}
+          title="Student Academic Dossier & Profile (360° View)"
+          maxWidth="max-w-2xl"
+        >
+          <div className="space-y-4">
+            {/* Student Hero Header */}
+            <div className="p-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-2xl text-white flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5">
+                <div className="w-14 h-14 rounded-2xl bg-white/10 border-2 border-emerald-400 overflow-hidden flex items-center justify-center font-bold text-lg text-emerald-300 shrink-0">
+                  {selectedProfile.photoUrl ? (
+                    <img src={selectedProfile.photoUrl} alt={selectedProfile.name} className="w-full h-full object-cover" />
+                  ) : (
+                    selectedProfile.name.charAt(0)
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white tracking-wide">{selectedProfile.name}</h3>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="font-mono text-xs px-2 py-0.5 rounded bg-white/10 text-emerald-300 font-bold border border-white/10">
+                      {selectedProfile.rollNumber}
+                    </span>
+                    <span className="text-xs text-slate-300 font-medium">
+                      {selectedProfile.className} ({selectedProfile.section || 'A'})
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className={`px-3 py-1 rounded-full text-xs font-bold border ${
+                  selectedProfile.feeStatus === 'Paid'
+                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                    : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                }`}>
+                  Fee: {selectedProfile.feeStatus}
+                </span>
+              </div>
+            </div>
+
+            {/* Dossier Information Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Academic Credentials */}
+              <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-xs">
+                <span className="font-bold text-slate-900 uppercase text-[10px] tracking-wider block border-b border-slate-200 pb-1.5 flex items-center gap-1.5">
+                  <GraduationCap className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Academic Standing</span>
+                </span>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Roll Number:</span>
+                  <strong className="font-mono text-slate-800">{selectedProfile.rollNumber}</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Class & Section:</span>
+                  <strong className="text-slate-800">{selectedProfile.className} ({selectedProfile.section || 'A'})</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Attendance Rate:</span>
+                  <strong className="text-emerald-700">{selectedProfile.attendanceRate || '96%'}</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Student Email:</span>
+                  <span className="text-slate-700 font-mono text-[11px] truncate max-w-[160px]">{selectedProfile.email || 'N/A'}</span>
+                </div>
+              </div>
+
+              {/* Emergency & Guardian Contacts */}
+              <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-xs">
+                <span className="font-bold text-slate-900 uppercase text-[10px] tracking-wider block border-b border-slate-200 pb-1.5 flex items-center gap-1.5">
+                  <Phone className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Guardian & Emergency</span>
+                </span>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Primary Phone:</span>
+                  <strong className="text-slate-800">{selectedProfile.phone || '—'}</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Emergency Contact:</span>
+                  <strong className="text-slate-800">{selectedProfile.emergencyContact || selectedProfile.phone || '—'}</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Physician Phone:</span>
+                  <strong className="text-rose-700 font-mono">{selectedProfile.emergencyDoctorPhone || 'On File'}</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Blood Group:</span>
+                  <span className="px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 font-bold">{selectedProfile.bloodGroup || 'B+'}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Medical Sentinel Section */}
+            <div className="p-3.5 bg-rose-50/70 border border-rose-200 rounded-xl space-y-2 text-xs">
+              <span className="font-bold text-rose-950 uppercase text-[10px] tracking-wider block border-b border-rose-200 pb-1.5 flex items-center gap-1.5">
+                <HeartPulse className="w-3.5 h-3.5 text-rose-600" />
+                <span>Student Medical & Health Sentinel Profile</span>
+              </span>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <span className="text-slate-500 block text-[11px]">Medical Alert Condition:</span>
+                  <strong className={selectedProfile.medicalAlert && selectedProfile.medicalAlert !== 'None' ? 'text-rose-700 font-bold' : 'text-slate-800'}>
+                    {selectedProfile.medicalAlert || 'None (Healthy)'}
+                  </strong>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[11px]">Vaccination Status:</span>
+                  <strong className="text-emerald-700">{selectedProfile.vaccinationStatus || 'Fully Vaccinated'}</strong>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Quick Actions */}
+            <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedAdmissionSlip(selectedProfile)
+                    setSelectedProfile(null)
+                  }}
+                  className="px-3 py-1.5 text-xs font-bold rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <FileCheck className="w-3.5 h-3.5" />
+                  <span>Admission Slip</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedIdCard(selectedProfile)
+                    setSelectedProfile(null)
+                  }}
+                  className="px-3 py-1.5 text-xs font-bold rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <IdCard className="w-3.5 h-3.5" />
+                  <span>Student ID Badge</span>
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedProfile(null)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
+              >
+                Close Dossier
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Official Student Admission & Registration Certificate / Slip Modal */}
+      {selectedAdmissionSlip && (
+        <Modal
+          isOpen={Boolean(selectedAdmissionSlip)}
+          onClose={() => setSelectedAdmissionSlip(null)}
+          title="Official Student Admission & Registration Certificate"
+          maxWidth="max-w-3xl"
+        >
+          <div className="space-y-4">
+            <div 
+              id="printable-admission-slip"
+              className="p-8 bg-white border-4 border-double border-slate-900 rounded-2xl space-y-6 print:border-black print:p-8 text-slate-800"
+            >
+              {/* Header Letterhead */}
+              <div className="text-center border-b-2 border-slate-900 pb-4">
+                <School className="w-10 h-10 text-emerald-700 mx-auto mb-1" />
+                <h2 className="text-lg font-black uppercase tracking-widest text-slate-900">
+                  {currentInstitute?.name || 'CENTRAL HIGH SCHOOL SYSTEM'}
+                </h2>
+                <p className="text-xs text-slate-600 font-semibold">Directorate of Admissions, Student Records & Academic Affairs</p>
+                <div className="mt-2 inline-block px-4 py-1 bg-emerald-50 border border-emerald-300 rounded text-xs font-black uppercase tracking-widest text-emerald-950 shadow-xs">
+                  OFFICIAL STUDENT ADMISSION & ENROLLMENT CERTIFICATE
+                </div>
+                <div className="flex justify-between items-center text-[10px] text-slate-500 mt-2 font-mono">
+                  <span>Registration Serial: ADM-REG-2026-{selectedAdmissionSlip.rollNumber}</span>
+                  <span>Issue Date: {new Date().toISOString().split('T')[0]}</span>
+                </div>
+              </div>
+
+              {/* Student Credentials Matrix */}
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                <div>
+                  <span className="text-slate-400 block uppercase font-bold text-[10px]">Candidate Full Name</span>
+                  <strong className="text-slate-950 text-sm">{selectedAdmissionSlip.name}</strong>
+                </div>
+                <div>
+                  <span className="text-slate-400 block uppercase font-bold text-[10px]">Institutional Roll Number</span>
+                  <strong className="text-emerald-700 font-mono text-sm font-bold">{selectedAdmissionSlip.rollNumber}</strong>
+                </div>
+                <div>
+                  <span className="text-slate-400 block uppercase font-bold text-[10px]">Admitted Grade / Section</span>
+                  <strong className="text-slate-900">{selectedAdmissionSlip.className} ({selectedAdmissionSlip.section || 'A'})</strong>
+                </div>
+                <div>
+                  <span className="text-slate-400 block uppercase font-bold text-[10px]">Academic Session</span>
+                  <strong className="text-slate-900">2026 - 2027</strong>
+                </div>
+                <div>
+                  <span className="text-slate-400 block uppercase font-bold text-[10px]">Guardian Contact</span>
+                  <strong className="text-slate-900 font-mono">{selectedAdmissionSlip.phone || '+92 300 0000000'}</strong>
+                </div>
+                <div>
+                  <span className="text-slate-400 block uppercase font-bold text-[10px]">Blood Group</span>
+                  <strong className="text-rose-700 font-bold">{selectedAdmissionSlip.bloodGroup || 'B+'}</strong>
+                </div>
+              </div>
+
+              {/* Admission Declaration Body */}
+              <div className="text-xs text-slate-700 space-y-2.5 leading-relaxed">
+                <p>
+                  This is to officially certify that Master / Miss <strong className="text-slate-950 font-bold border-b border-dotted px-1">{selectedAdmissionSlip.name}</strong> has 
+                  fulfilled all statutory eligibility criteria, submitted requisite academic credentials, and has been admitted into 
+                  <strong> {selectedAdmissionSlip.className}</strong> under Registration Token <strong className="font-mono text-emerald-800">{selectedAdmissionSlip.rollNumber}</strong>.
+                </p>
+
+                <div className="p-3 bg-emerald-50/70 border border-emerald-200 rounded-lg text-emerald-950 grid grid-cols-2 gap-2 text-[11px]">
+                  <div><span>Tuition Fee Account:</span> <strong className="text-emerald-800">Clearance Status: {selectedAdmissionSlip.feeStatus}</strong></div>
+                  <div><span>Health Sentinel Profile:</span> <strong>{selectedAdmissionSlip.medicalAlert || 'No Chronic Conditions Reported'}</strong></div>
+                </div>
+
+                <p className="text-[11px] text-slate-500 italic">
+                  Note: The student is subject to the disciplinary and academic code of this institution. Official smart ID badge and syllabus coursework guides have been issued.
+                </p>
+              </div>
+
+              {/* Signatures & Seal */}
+              <div className="pt-8 flex justify-between text-center text-xs text-slate-500 border-t">
+                <div>
+                  <div className="w-32 border-b border-slate-400 mb-1 mx-auto"></div>
+                  <span>In-Charge Admissions</span>
+                </div>
+                <div>
+                  <div className="w-32 border-b border-slate-400 mb-1 mx-auto"></div>
+                  <span>Accounts Bursar</span>
+                </div>
+                <div>
+                  <div className="w-36 border-b-2 border-slate-900 mb-1 mx-auto"></div>
+                  <strong className="text-slate-900 font-bold">Principal Seal & Signature</strong>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setSelectedAdmissionSlip(null)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="px-5 py-2 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow-sm flex items-center gap-1.5 cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print Official Admission Slip (PDF)</span>
               </button>
             </div>
           </div>
