@@ -1,0 +1,11 @@
+{
+  "name": "eims-proxy",
+  "version": "1.0.0",
+  "description": "Proxy to root package scripts",
+  "scripts": {
+    "dev": "npm --prefix .. run dev",
+    "build": "npm --prefix .. run build",
+    "preview": "npm --prefix .. run preview",
+    "server": "npm --prefix .. run server"
+  }
+}

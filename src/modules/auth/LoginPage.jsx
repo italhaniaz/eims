@@ -7,7 +7,10 @@ import {
   EyeOff, 
   ArrowRight,
   Database,
-  AlertCircle
+  AlertCircle,
+  ShieldCheck,
+  School,
+  Sparkles
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { isSupabaseConfigured } from '../../services/supabaseClient'
@@ -20,6 +23,26 @@ export const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [rememberMe, setRememberMe] = useState(true)
   const [authError, setAuthError] = useState('')
+
+  const handleQuickLogin = (role) => {
+    setAuthError('')
+    setIsLoading(true)
+    if (role === 'superadmin') {
+      setIdentifier('admin@schoolms.com')
+      setPassword('admin123')
+      setTimeout(() => {
+        login('superadmin', 'admin@schoolms.com')
+        setIsLoading(false)
+      }, 350)
+    } else {
+      setIdentifier('admin.beacon@sms.edu')
+      setPassword('institute123')
+      setTimeout(() => {
+        login('institute_admin', 'admin.beacon@sms.edu')
+        setIsLoading(false)
+      }, 350)
+    }
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -83,9 +106,56 @@ export const LoginPage = () => {
 
         {/* Clean Executive Login Card */}
         <div className="bg-[#141f36]/95 backdrop-blur-xl border border-slate-700/70 rounded-2xl p-6 sm:p-8 shadow-2xl">
-          <div className="mb-6">
-            <h2 className="text-lg font-bold text-white tracking-tight">Account Login</h2>
-            <p className="text-xs text-slate-400 mt-0.5">Enter your credentials to access your administrative workspace</p>
+          <div className="mb-5 flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-bold text-white tracking-tight">Account Login</h2>
+              <p className="text-xs text-slate-400 mt-0.5">Enter credentials or click below for instant demo</p>
+            </div>
+            <div className="px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-semibold flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              Live Ready
+            </div>
+          </div>
+
+          {/* Quick 1-Click Fast Demo Section */}
+          <div className="mb-5 p-3 rounded-xl bg-slate-900/70 border border-slate-800">
+            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-300 uppercase tracking-wider mb-2.5">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>Instant 1-Click Demo Login</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => handleQuickLogin('superadmin')}
+                disabled={isLoading}
+                className="p-2.5 rounded-lg bg-blue-600/15 hover:bg-blue-600/25 border border-blue-500/30 text-left transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer group"
+              >
+                <div className="flex items-center gap-1.5 text-xs font-bold text-blue-300 group-hover:text-white">
+                  <ShieldCheck className="w-4 h-4 text-blue-400 shrink-0" />
+                  <span>Superadmin</span>
+                </div>
+                <div className="text-[10px] text-slate-400 mt-1 font-mono truncate">admin@schoolms.com</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleQuickLogin('institute')}
+                disabled={isLoading}
+                className="p-2.5 rounded-lg bg-indigo-600/15 hover:bg-indigo-600/25 border border-indigo-500/30 text-left transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer group"
+              >
+                <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-300 group-hover:text-white">
+                  <School className="w-4 h-4 text-indigo-400 shrink-0" />
+                  <span>Institute Admin</span>
+                </div>
+                <div className="text-[10px] text-slate-400 mt-1 font-mono truncate">admin.beacon@sms.edu</div>
+              </button>
+            </div>
+          </div>
+
+          <div className="relative flex py-1.5 items-center mb-4">
+            <div className="flex-grow border-t border-slate-800"></div>
+            <span className="flex-shrink mx-3 text-[10px] text-slate-500 uppercase tracking-widest font-semibold">Or enter manually</span>
+            <div className="flex-grow border-t border-slate-800"></div>
           </div>
 
           {authError && (
@@ -111,7 +181,7 @@ export const LoginPage = () => {
                     if (authError) setAuthError('')
                   }}
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#0b1424] border border-slate-700 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder="Enter email or username"
+                  placeholder="e.g. admin@schoolms.com"
                 />
               </div>
             </div>
@@ -125,7 +195,7 @@ export const LoginPage = () => {
                   href="#forgot" 
                   onClick={(e) => { 
                     e.preventDefault()
-                    alert('Please contact your System Administrator to reset your credentials.') 
+                    alert('Demo passwords: admin123 (Superadmin) or institute123 (Institute Admin)') 
                   }} 
                   className="text-[11px] text-blue-400 hover:underline"
                 >
@@ -143,7 +213,7 @@ export const LoginPage = () => {
                     if (authError) setAuthError('')
                   }}
                   className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-[#0b1424] border border-slate-700 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder="Enter password"
+                  placeholder="e.g. admin123"
                 />
                 <button
                   type="button"

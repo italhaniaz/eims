@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, lazy, Suspense } from 'react'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { AppDataProvider, useAppData } from './context/AppDataContext'
+import { ToastProvider, useToast } from './context/ToastContext'
 
 // Layout components
 import SuperadminSidebar from './components/layout/SuperadminSidebar'
@@ -12,46 +13,95 @@ import SettingsModal from './components/common/SettingsModal'
 // Auth
 import LoginPage from './modules/auth/LoginPage'
 
-// Superadmin Views (Divisions and Districts removed as requested)
-import SuperadminDashboard from './modules/dashboard/SuperadminDashboard'
-import InstitutesView from './modules/institute-management/institutes/InstitutesView'
-import DepartmentsView from './modules/institute-management/departments/DepartmentsView'
-import ExaminationBodiesView from './modules/institute-management/examination-bodies/ExaminationBodiesView'
-import AcademicYearsView from './modules/academics/academic-years/AcademicYearsView'
-import ProgramTypesView from './modules/academics/program-types/ProgramTypesView'
-import ProgramsView from './modules/academics/programs/ProgramsView'
-import SubjectsView from './modules/academics/subjects/SubjectsView'
-import StudySchemesView from './modules/academics/study-schemes/StudySchemesView'
-import UsersManagementView from './modules/users-management/UsersManagementView'
-import NoticeBroadcasterView from './modules/announcements/NoticeBroadcasterView'
+// Lazy-loaded Views for Bundle Performance & Code Splitting
+const SuperadminDashboard = lazy(() => import('./modules/dashboard/SuperadminDashboard'))
+const InstitutesView = lazy(() => import('./modules/institute-management/institutes/InstitutesView'))
+const DepartmentsView = lazy(() => import('./modules/institute-management/departments/DepartmentsView'))
+const ExaminationBodiesView = lazy(() => import('./modules/institute-management/examination-bodies/ExaminationBodiesView'))
+const AcademicYearsView = lazy(() => import('./modules/academics/academic-years/AcademicYearsView'))
+const ProgramTypesView = lazy(() => import('./modules/academics/program-types/ProgramTypesView'))
+const ProgramsView = lazy(() => import('./modules/academics/programs/ProgramsView'))
+const SubjectsView = lazy(() => import('./modules/academics/subjects/SubjectsView'))
+const StudySchemesView = lazy(() => import('./modules/academics/study-schemes/StudySchemesView'))
+const UsersManagementView = lazy(() => import('./modules/users-management/UsersManagementView'))
+const NoticeBroadcasterView = lazy(() => import('./modules/announcements/NoticeBroadcasterView'))
 
-// Institute Admin Views (Enhanced with Timetable, Exams, Notices)
-import InstituteDashboard from './modules/dashboard/InstituteDashboard'
-import StudentsView from './modules/institute-admin/students/StudentsView'
-import TeachersView from './modules/institute-admin/teachers/TeachersView'
-import ClassesView from './modules/institute-admin/classes/ClassesView'
-import TimetableView from './modules/institute-admin/timetable/TimetableView'
-import AttendanceView from './modules/institute-admin/attendance/AttendanceView'
-import FeesView from './modules/institute-admin/fees/FeesView'
-import ExamsView from './modules/institute-admin/exams/ExamsView'
-import NoticeBoardView from './modules/institute-admin/notices/NoticeBoardView'
-import ProgramLevelsView from './modules/academics/ProgramLevelsView'
+// Institute Admin Views
+const InstituteDashboard = lazy(() => import('./modules/dashboard/InstituteDashboard'))
+const StudentsView = lazy(() => import('./modules/institute-admin/students/StudentsView'))
+const TeachersView = lazy(() => import('./modules/institute-admin/teachers/TeachersView'))
+const ClassesView = lazy(() => import('./modules/institute-admin/classes/ClassesView'))
+const TimetableView = lazy(() => import('./modules/institute-admin/timetable/TimetableView'))
+const AttendanceView = lazy(() => import('./modules/institute-admin/attendance/AttendanceView'))
+const FeesView = lazy(() => import('./modules/institute-admin/fees/FeesView'))
+const ExamsView = lazy(() => import('./modules/institute-admin/exams/ExamsView'))
+const NoticeBoardView = lazy(() => import('./modules/institute-admin/notices/NoticeBoardView'))
+const ProgramLevelsView = lazy(() => import('./modules/academics/ProgramLevelsView'))
 
 // High-Demand Modern Operations Modules
-import FinancialAnalyticsView from './modules/finance/FinancialAnalyticsView'
-import TransportView from './modules/transport/TransportView'
-import LibraryView from './modules/library/LibraryView'
-import AdmissionsPipelineView from './modules/admissions-pipeline/AdmissionsPipelineView'
-import CommunicationGatewayView from './modules/communication/CommunicationGatewayView'
-import AuditLogsView from './modules/audit-logs/AuditLogsView'
+const FinancialAnalyticsView = lazy(() => import('./modules/finance/FinancialAnalyticsView'))
+const TransportView = lazy(() => import('./modules/transport/TransportView'))
+const LibraryView = lazy(() => import('./modules/library/LibraryView'))
+const AdmissionsPipelineView = lazy(() => import('./modules/admissions-pipeline/AdmissionsPipelineView'))
+const CommunicationGatewayView = lazy(() => import('./modules/communication/CommunicationGatewayView'))
+const AuditLogsView = lazy(() => import('./modules/audit-logs/AuditLogsView'))
+
+// Executive Minimal Loading Fallback
+const ModuleLoader = () => (
+  <div className="flex flex-col items-center justify-center min-h-[380px] w-full p-8 text-center animate-in fade-in duration-200">
+    <div className="w-9 h-9 border-3 border-blue-600/30 border-t-blue-600 rounded-full animate-spin mb-3"></div>
+    <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Loading Module...</span>
+  </div>
+)
 
 const AppContent = () => {
   const { user } = useAuth()
-  const { institutes, refreshData } = useAppData()
+  const { institutes } = useAppData()
 
-  // Routing state
-  const [superadminRoute, setSuperadminRoute] = useState('dashboard')
-  const [instituteRoute, setInstituteRoute] = useState('inst-dashboard')
+  // Helper to extract initial route from window.location.hash
+  const getInitialRoute = (defaultRoute) => {
+    if (typeof window !== 'undefined' && window.location.hash) {
+      const cleanHash = window.location.hash.replace(/^#\/?/, '')
+      if (cleanHash) return cleanHash
+    }
+    return defaultRoute
+  }
+
+  // Routing state synced with Browser History & Hash
+  const [superadminRoute, setSuperadminRouteState] = useState(() => getInitialRoute('dashboard'))
+  const [instituteRoute, setInstituteRouteState] = useState(() => getInitialRoute('inst-dashboard'))
+
+  // Route setters that update the browser URL hash without full reload
+  const setSuperadminRoute = (route) => {
+    setSuperadminRouteState(route)
+    if (typeof window !== 'undefined') {
+      window.location.hash = `#${route}`
+    }
+  }
+
+  const setInstituteRoute = (route) => {
+    setInstituteRouteState(route)
+    if (typeof window !== 'undefined') {
+      window.location.hash = `#${route}`
+    }
+  }
+
+  // Synchronize on browser Back/Forward (popstate & hashchange)
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace(/^#\/?/, '')
+      if (hash) {
+        if (user?.role === 'superadmin') {
+          setSuperadminRouteState(hash)
+        } else if (user?.role === 'institute_admin') {
+          setInstituteRouteState(hash)
+        }
+      }
+    }
+
+    window.addEventListener('hashchange', handleHashChange)
+    return () => window.removeEventListener('hashchange', handleHashChange)
+  }, [user?.role])
   
   // Mobile drawer states
   const [superMobileOpen, setSuperMobileOpen] = useState(false)
@@ -90,35 +140,37 @@ const AppContent = () => {
           />
 
           <main className="flex-1 overflow-y-auto">
-            {superadminRoute === 'dashboard' && (
-              <SuperadminDashboard
-                onRouteChange={setSuperadminRoute}
-                onOpenSettings={() => setIsSettingsOpen(true)}
-              />
-            )}
-            {superadminRoute === 'institutes' && (
-              <InstitutesView />
-            )}
-            {superadminRoute === 'departments' && <DepartmentsView />}
-            {superadminRoute === 'examination-bodies' && <ExaminationBodiesView />}
-            {superadminRoute === 'academic-years' && <AcademicYearsView />}
-            {superadminRoute === 'program-types' && <ProgramTypesView />}
-            {superadminRoute === 'programs' && <ProgramsView />}
-            {superadminRoute === 'subjects' && <SubjectsView />}
-            {superadminRoute === 'study-schemes' && <StudySchemesView />}
-            {superadminRoute === 'finance' && <FinancialAnalyticsView />}
-            {superadminRoute === 'transport' && <TransportView />}
-            {superadminRoute === 'library' && <LibraryView />}
-            {superadminRoute === 'admissions-pipeline' && <AdmissionsPipelineView />}
-            {superadminRoute === 'communication' && <CommunicationGatewayView />}
-            {superadminRoute === 'audit-logs' && <AuditLogsView />}
-            {superadminRoute === 'announcements' && <NoticeBroadcasterView />}
-            {superadminRoute === 'users-all' && (
-              <UsersManagementView defaultTab="all" />
-            )}
-            {superadminRoute === 'users-roles' && (
-              <UsersManagementView defaultTab="roles" />
-            )}
+            <Suspense fallback={<ModuleLoader />}>
+              {superadminRoute === 'dashboard' && (
+                <SuperadminDashboard
+                  onRouteChange={setSuperadminRoute}
+                  onOpenSettings={() => setIsSettingsOpen(true)}
+                />
+              )}
+              {superadminRoute === 'institutes' && (
+                <InstitutesView />
+              )}
+              {superadminRoute === 'departments' && <DepartmentsView />}
+              {superadminRoute === 'examination-bodies' && <ExaminationBodiesView />}
+              {superadminRoute === 'academic-years' && <AcademicYearsView />}
+              {superadminRoute === 'program-types' && <ProgramTypesView />}
+              {superadminRoute === 'programs' && <ProgramsView />}
+              {superadminRoute === 'subjects' && <SubjectsView />}
+              {superadminRoute === 'study-schemes' && <StudySchemesView />}
+              {superadminRoute === 'finance' && <FinancialAnalyticsView />}
+              {superadminRoute === 'transport' && <TransportView />}
+              {superadminRoute === 'library' && <LibraryView />}
+              {superadminRoute === 'admissions-pipeline' && <AdmissionsPipelineView />}
+              {superadminRoute === 'communication' && <CommunicationGatewayView />}
+              {superadminRoute === 'audit-logs' && <AuditLogsView />}
+              {superadminRoute === 'announcements' && <NoticeBroadcasterView />}
+              {superadminRoute === 'users-all' && (
+                <UsersManagementView defaultTab="all" />
+              )}
+              {superadminRoute === 'users-roles' && (
+                <UsersManagementView defaultTab="roles" />
+              )}
+            </Suspense>
           </main>
         </div>
 
@@ -162,48 +214,50 @@ const AppContent = () => {
         />
 
         <main className="flex-1 overflow-y-auto">
-          {instituteRoute === 'inst-dashboard' && (
-            <InstituteDashboard
-              currentInstitute={activeCampus}
-              onRouteChange={setInstituteRoute}
-            />
-          )}
-          {instituteRoute === 'inst-students' && (
-            <StudentsView currentInstitute={activeCampus} />
-          )}
-          {instituteRoute === 'inst-teachers' && (
-            <TeachersView currentInstitute={activeCampus} />
-          )}
-          {instituteRoute === 'inst-classes' && (
-            <ClassesView currentInstitute={activeCampus} />
-          )}
-          {instituteRoute === 'inst-timetable' && (
-            <TimetableView currentInstitute={activeCampus} />
-          )}
-          {instituteRoute === 'inst-attendance' && (
-            <AttendanceView currentInstitute={activeCampus} />
-          )}
-          {instituteRoute === 'inst-fees' && (
-            <FeesView currentInstitute={activeCampus} />
-          )}
-          {instituteRoute === 'inst-exams' && (
-            <ExamsView currentInstitute={activeCampus} />
-          )}
-          {instituteRoute === 'inst-program-levels' && (
-            <ProgramLevelsView currentInstitute={activeCampus} />
-          )}
-          {instituteRoute === 'inst-notices' && (
-            <NoticeBoardView currentInstitute={activeCampus} />
-          )}
-          {instituteRoute === 'inst-admissions' && (
-            <AdmissionsPipelineView currentInstitute={activeCampus} />
-          )}
-          {instituteRoute === 'inst-transport' && (
-            <TransportView currentInstitute={activeCampus} />
-          )}
-          {instituteRoute === 'inst-library' && (
-            <LibraryView currentInstitute={activeCampus} />
-          )}
+          <Suspense fallback={<ModuleLoader />}>
+            {instituteRoute === 'inst-dashboard' && (
+              <InstituteDashboard
+                currentInstitute={activeCampus}
+                onRouteChange={setInstituteRoute}
+              />
+            )}
+            {instituteRoute === 'inst-students' && (
+              <StudentsView currentInstitute={activeCampus} />
+            )}
+            {instituteRoute === 'inst-teachers' && (
+              <TeachersView currentInstitute={activeCampus} />
+            )}
+            {instituteRoute === 'inst-classes' && (
+              <ClassesView currentInstitute={activeCampus} />
+            )}
+            {instituteRoute === 'inst-timetable' && (
+              <TimetableView currentInstitute={activeCampus} />
+            )}
+            {instituteRoute === 'inst-attendance' && (
+              <AttendanceView currentInstitute={activeCampus} />
+            )}
+            {instituteRoute === 'inst-fees' && (
+              <FeesView currentInstitute={activeCampus} />
+            )}
+            {instituteRoute === 'inst-exams' && (
+              <ExamsView currentInstitute={activeCampus} />
+            )}
+            {instituteRoute === 'inst-program-levels' && (
+              <ProgramLevelsView currentInstitute={activeCampus} />
+            )}
+            {instituteRoute === 'inst-notices' && (
+              <NoticeBoardView currentInstitute={activeCampus} />
+            )}
+            {instituteRoute === 'inst-admissions' && (
+              <AdmissionsPipelineView currentInstitute={activeCampus} />
+            )}
+            {instituteRoute === 'inst-transport' && (
+              <TransportView currentInstitute={activeCampus} />
+            )}
+            {instituteRoute === 'inst-library' && (
+              <LibraryView currentInstitute={activeCampus} />
+            )}
+          </Suspense>
         </main>
       </div>
 
@@ -219,7 +273,9 @@ function App() {
   return (
     <AuthProvider>
       <AppDataProvider>
-        <AppContent />
+        <ToastProvider>
+          <AppContent />
+        </ToastProvider>
       </AppDataProvider>
     </AuthProvider>
   )

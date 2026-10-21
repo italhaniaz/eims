@@ -334,5 +334,31 @@ export const DataService = {
   loadSampleTemplate() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(sampleTemplateData))
     return sampleTemplateData
+  },
+
+  importData(incomingData) {
+    if (!incomingData || typeof incomingData !== 'object') {
+      throw new Error('Invalid JSON database format.')
+    }
+    const merged = {
+      ...cleanZeroData,
+      ...incomingData,
+      recentActivity: [
+        {
+          id: `act-${Date.now()}`,
+          text: 'Database successfully restored from backup package',
+          time: 'Just now',
+          type: 'system',
+          dotColor: '#3b82f6'
+        },
+        ...(incomingData.recentActivity || [])
+      ]
+    }
+    saveStoredData(merged)
+    return merged
+  },
+
+  exportData() {
+    return getStoredData()
   }
 }

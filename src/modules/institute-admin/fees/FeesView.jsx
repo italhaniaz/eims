@@ -1,16 +1,36 @@
 import React, { useState } from 'react'
-import { Receipt, Plus, Search, CheckCircle, Clock, Printer, CreditCard, School } from 'lucide-react'
+import { 
+  Receipt, 
+  Plus, 
+  Search, 
+  CheckCircle, 
+  Clock, 
+  Printer, 
+  CreditCard, 
+  School,
+  Zap,
+  Banknote,
+  DollarSign,
+  CheckCircle2,
+  Calendar,
+  Building
+} from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
+import { useToast } from '../../../context/ToastContext'
 import Modal from '../../../components/common/Modal'
 
 export const FeesView = ({ currentInstitute }) => {
   const { fees, students, addItem, updateItem } = useAppData()
+  const { toast } = useToast()
   const instStudents = students.filter(s => !s.instituteId || s.instituteId === currentInstitute?.id)
 
   const [searchTerm, setSearchTerm] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isPosModalOpen, setIsPosModalOpen] = useState(false)
   const [selectedVoucher, setSelectedVoucher] = useState(null)
+  const [posReceipt, setPosReceipt] = useState(null)
 
+  // Standard Voucher Form
   const [formData, setFormData] = useState({
     studentName: instStudents[0]?.name || '',
     rollNumber: instStudents[0]?.rollNumber || '',
@@ -18,6 +38,19 @@ export const FeesView = ({ currentInstitute }) => {
     amount: 15000,
     dueDate: '2026-10-30',
     status: 'Pending'
+  })
+
+  // POS Cashier Terminal State
+  const [posData, setPosData] = useState({
+    selectedFeeId: '',
+    studentName: '',
+    rollNumber: '',
+    className: '',
+    amount: 0,
+    paymentMethod: 'Cash',
+    cashTendered: '',
+    discount: 0,
+    cashierNotes: ''
   })
 
   const handleStudentSelect = (studentName) => {
@@ -32,13 +65,17 @@ export const FeesView = ({ currentInstitute }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!formData.studentName || !formData.amount) return
+    if (!formData.studentName || !formData.amount) {
+      toast.error('Please enter student name and fee amount.')
+      return
+    }
 
     await addItem('fees', {
       ...formData,
       instituteId: currentInstitute?.id || 'inst-1',
       paymentDate: formData.status === 'Paid' ? new Date().toISOString().split('T')[0] : null
     })
+    toast.success(`Fee challan issued for ${formData.studentName}!`)
     setIsModalOpen(false)
   }
 
@@ -47,6 +84,86 @@ export const FeesView = ({ currentInstitute }) => {
       status: 'Paid',
       paymentDate: new Date().toISOString().split('T')[0]
     })
+    toast.success(`Payment verified and marked as Paid for ${fee.studentName}`)
+  }
+
+  // Open POS modal with a pre-selected fee voucher or fresh
+  const openPosCashier = (fee = null) => {
+    if (fee) {
+      setPosData({
+        selectedFeeId: fee.id,
+        studentName: fee.studentName,
+        rollNumber: fee.rollNumber,
+        className: fee.className || '10th Grade',
+        amount: Number(fee.amount || 0),
+        paymentMethod: 'Cash',
+        cashTendered: Number(fee.amount || 0),
+        discount: 0,
+        cashierNotes: 'Counter Cash Collection'
+      })
+    } else {
+      const pendingFees = fees.filter(f => f.status !== 'Paid' && (!f.instituteId || f.instituteId === currentInstitute?.id))
+      const first = pendingFees[0]
+      setPosData({
+        selectedFeeId: first?.id || '',
+        studentName: first?.studentName || instStudents[0]?.name || '',
+        rollNumber: first?.rollNumber || instStudents[0]?.rollNumber || '',
+        className: first?.className || '10th Grade',
+        amount: Number(first?.amount || 15000),
+        paymentMethod: 'Cash',
+        cashTendered: Number(first?.amount || 15000),
+        discount: 0,
+        cashierNotes: 'Counter Cash Collection'
+      })
+    }
+    setIsPosModalOpen(true)
+  }
+
+  // Process POS Cashier Payment
+  const handleProcessPosPayment = async (e) => {
+    e.preventDefault()
+    const payable = Math.max(0, posData.amount - posData.discount)
+
+    if (posData.selectedFeeId) {
+      await updateItem('fees', posData.selectedFeeId, {
+        status: 'Paid',
+        paymentDate: new Date().toISOString().split('T')[0],
+        paymentMethod: posData.paymentMethod,
+        discountApplied: posData.discount,
+        finalPaid: payable
+      })
+    } else {
+      await addItem('fees', {
+        studentName: posData.studentName,
+        rollNumber: posData.rollNumber,
+        className: posData.className,
+        amount: payable,
+        status: 'Paid',
+        dueDate: new Date().toISOString().split('T')[0],
+        paymentDate: new Date().toISOString().split('T')[0],
+        instituteId: currentInstitute?.id || 'inst-1',
+        paymentMethod: posData.paymentMethod
+      })
+    }
+
+    const receiptObj = {
+      receiptNo: `POS-${Date.now().toString().slice(-6)}`,
+      studentName: posData.studentName,
+      rollNumber: posData.rollNumber,
+      className: posData.className,
+      amount: posData.amount,
+      discount: posData.discount,
+      finalPaid: payable,
+      cashTendered: posData.cashTendered,
+      changeDue: Math.max(0, Number(posData.cashTendered) - payable),
+      paymentMethod: posData.paymentMethod,
+      date: new Date().toLocaleString(),
+      cashier: 'Fee Counter Operator'
+    }
+
+    toast.success(`POS Collection Successful! Rs. ${payable.toLocaleString()} received.`)
+    setIsPosModalOpen(false)
+    setPosReceipt(receiptObj)
   }
 
   const filtered = fees.filter(f =>
@@ -69,25 +186,37 @@ export const FeesView = ({ currentInstitute }) => {
         <div>
           <div className="flex items-center gap-2">
             <Receipt className="w-5 h-5 text-emerald-600" />
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Fee Management & Challans</h1>
+            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Fee Management & POS Cashier Terminal</h1>
           </div>
-          <p className="text-xs text-slate-500 mt-1">Issue 3-copy bank vouchers, record tuition fees, and track collections</p>
+          <p className="text-xs text-slate-500 mt-1">Issue official 3-copy bank vouchers, fast POS counter fee collections, and print receipts</p>
         </div>
 
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold shadow-sm transition-all"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Generate New Fee Challan</span>
-        </button>
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => openPosCashier()}
+            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold shadow-sm transition-all cursor-pointer"
+          >
+            <Zap className="w-4 h-4 text-amber-300" />
+            <span>Fast POS Cashier Counter</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold shadow-sm transition-all cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Generate New Fee Challan</span>
+          </button>
+        </div>
       </div>
 
       {/* Summary Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-xl flex items-center justify-between">
           <div>
-            <span className="text-xs text-emerald-600 font-semibold uppercase">Total Fee Collected</span>
+            <span className="text-xs text-emerald-600 font-semibold uppercase tracking-wider">Total Fee Collected</span>
             <p className="text-2xl font-bold text-emerald-900 mt-1">Rs. {totalCollected.toLocaleString()}</p>
           </div>
           <div className="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
@@ -97,7 +226,7 @@ export const FeesView = ({ currentInstitute }) => {
 
         <div className="bg-amber-50 border border-amber-100 p-4 rounded-xl flex items-center justify-between">
           <div>
-            <span className="text-xs text-amber-600 font-semibold uppercase">Pending Invoices</span>
+            <span className="text-xs text-amber-600 font-semibold uppercase tracking-wider">Pending Invoices</span>
             <p className="text-2xl font-bold text-amber-900 mt-1">Rs. {totalPending.toLocaleString()}</p>
           </div>
           <div className="w-10 h-10 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center">
@@ -138,45 +267,56 @@ export const FeesView = ({ currentInstitute }) => {
               {filtered.length > 0 ? (
                 filtered.map(f => (
                   <tr key={f.id} className="hover:bg-slate-50/70">
-                    <td className="px-6 py-4 font-bold text-slate-800">{f.studentName}</td>
-                    <td className="px-6 py-4 font-mono text-xs text-slate-600">{f.rollNumber}</td>
-                    <td className="px-6 py-4 font-bold text-slate-900">Rs. {Number(f.amount).toLocaleString()}</td>
-                    <td className="px-6 py-4 text-xs text-slate-500 font-mono">{f.dueDate}</td>
+                    <td className="px-6 py-4 font-semibold text-slate-900">{f.studentName}</td>
+                    <td className="px-6 py-4 font-mono text-xs text-slate-500">{f.rollNumber}</td>
+                    <td className="px-6 py-4 font-mono font-bold text-slate-900">Rs. {Number(f.amount).toLocaleString()}</td>
+                    <td className="px-6 py-4 text-slate-500 text-xs">{f.dueDate}</td>
                     <td className="px-6 py-4">
-                      <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-                        f.status === 'Paid' 
-                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
-                          : 'bg-amber-50 text-amber-700 border border-amber-200'
-                      }`}>
-                        {f.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      {f.status !== 'Paid' && (
-                        <button
-                          onClick={() => markPaid(f)}
-                          className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-semibold shadow-sm mr-2"
-                        >
-                          Receive
-                        </button>
+                      {f.status === 'Paid' ? (
+                        <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-semibold">
+                          Paid
+                        </span>
+                      ) : (
+                        <span className="px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-xs font-semibold">
+                          Pending
+                        </span>
                       )}
-                      <button 
+                    </td>
+                    <td className="px-6 py-4 text-right space-x-2">
+                      {f.status !== 'Paid' && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => openPosCashier(f)}
+                            className="px-2.5 py-1.5 text-xs font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-md transition-colors cursor-pointer"
+                            title="Collect Fee via POS Counter"
+                          >
+                            ⚡ POS Collect
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => markPaid(f)}
+                            className="px-2.5 py-1.5 text-xs font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-md transition-colors cursor-pointer"
+                          >
+                            Mark Paid
+                          </button>
+                        </>
+                      )}
+                      <button
+                        type="button"
                         onClick={() => setSelectedVoucher(f)}
-                        className="p-1.5 text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 rounded inline-flex items-center gap-1 transition-colors"
-                        title="Print 3-Copy Bank Challan"
+                        className="px-2.5 py-1.5 text-xs font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-md transition-colors inline-flex items-center gap-1 cursor-pointer"
                       >
-                        <Printer className="w-4 h-4" />
-                        <span className="text-xs font-medium">Challan</span>
+                        <Printer className="w-3.5 h-3.5" />
+                        <span>Challan</span>
                       </button>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-slate-400">
-                    <Receipt className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                    <p className="text-sm font-semibold text-slate-600">0 Fee Challans Found</p>
-                    <p className="text-xs text-slate-400 mt-1">Click the "Generate New Fee Challan" button to issue and print official fee vouchers.</p>
+                  <td colSpan="6" className="text-center py-8 text-slate-400 text-xs">
+                    No fee vouchers found matching criteria.
                   </td>
                 </tr>
               )}
@@ -184,6 +324,251 @@ export const FeesView = ({ currentInstitute }) => {
           </table>
         </div>
       </div>
+
+      {/* Fast POS Cashier Counter Modal */}
+      {isPosModalOpen && (
+        <Modal
+          isOpen={isPosModalOpen}
+          onClose={() => setIsPosModalOpen(false)}
+          title="Point of Sale (POS) - Quick Fee Collection Counter"
+          maxWidth="max-w-xl"
+        >
+          <form onSubmit={handleProcessPosPayment} className="space-y-4">
+            <div className="p-3 bg-indigo-50/70 border border-indigo-100 rounded-xl flex items-center justify-between text-xs text-indigo-900">
+              <div className="flex items-center gap-2">
+                <Zap className="w-4 h-4 text-amber-500 shrink-0" />
+                <span className="font-semibold">Cashier POS Terminal Active</span>
+              </div>
+              <span className="font-mono text-[11px] text-indigo-600">{currentInstitute?.name || 'Main Campus'}</span>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Select Voucher or Student</label>
+              <select
+                value={posData.selectedFeeId}
+                onChange={(e) => {
+                  const selectedId = e.target.value
+                  const chosenFee = fees.find(f => f.id === selectedId)
+                  if (chosenFee) {
+                    setPosData(prev => ({
+                      ...prev,
+                      selectedFeeId: selectedId,
+                      studentName: chosenFee.studentName,
+                      rollNumber: chosenFee.rollNumber,
+                      className: chosenFee.className || '10th Grade',
+                      amount: Number(chosenFee.amount || 0),
+                      cashTendered: Number(chosenFee.amount || 0)
+                    }))
+                  }
+                }}
+                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm bg-white"
+              >
+                <option value="">-- Choose Existing Pending Challan --</option>
+                {fees.filter(f => f.status !== 'Paid').map(f => (
+                  <option key={f.id} value={f.id}>
+                    {f.studentName} ({f.rollNumber}) - Rs. {Number(f.amount).toLocaleString()}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Student Name</label>
+                <input
+                  type="text"
+                  required
+                  value={posData.studentName}
+                  onChange={(e) => setPosData({ ...posData, studentName: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-lg border border-slate-200 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Roll Number</label>
+                <input
+                  type="text"
+                  required
+                  value={posData.rollNumber}
+                  onChange={(e) => setPosData({ ...posData, rollNumber: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-lg border border-slate-200 text-sm font-mono"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Fee Amount (PKR)</label>
+                <input
+                  type="number"
+                  required
+                  value={posData.amount}
+                  onChange={(e) => setPosData({ ...posData, amount: Number(e.target.value) })}
+                  className="w-full px-3.5 py-2 rounded-lg border border-slate-200 text-sm font-bold"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Discount (PKR)</label>
+                <input
+                  type="number"
+                  value={posData.discount}
+                  onChange={(e) => setPosData({ ...posData, discount: Number(e.target.value) })}
+                  className="w-full px-3.5 py-2 rounded-lg border border-slate-200 text-sm text-emerald-600 font-bold"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Net Payable</label>
+                <div className="w-full px-3.5 py-2 rounded-lg bg-slate-100 border border-slate-200 text-sm font-black text-slate-900 font-mono">
+                  Rs. {Math.max(0, posData.amount - posData.discount).toLocaleString()}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Payment Method</label>
+                <select
+                  value={posData.paymentMethod}
+                  onChange={(e) => setPosData({ ...posData, paymentMethod: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm bg-white"
+                >
+                  <option value="Cash">💵 Cash Counter</option>
+                  <option value="POS Card">💳 Credit/Debit Card (POS)</option>
+                  <option value="JazzCash / EasyPaisa">📱 Mobile Wallet (JazzCash / EasyPaisa)</option>
+                  <option value="Bank Transfer">🏦 Direct Bank Transfer</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Cash Tendered (PKR)</label>
+                <input
+                  type="number"
+                  value={posData.cashTendered}
+                  onChange={(e) => setPosData({ ...posData, cashTendered: Number(e.target.value) })}
+                  className="w-full px-3.5 py-2 rounded-lg border border-slate-200 text-sm font-bold"
+                />
+                {Number(posData.cashTendered) > Math.max(0, posData.amount - posData.discount) && (
+                  <span className="text-[11px] text-emerald-600 font-semibold mt-1 block">
+                    Change to return: Rs. {(Number(posData.cashTendered) - Math.max(0, posData.amount - posData.discount)).toLocaleString()}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-3 border-t">
+              <button
+                type="button"
+                onClick={() => setIsPosModalOpen(false)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-md flex items-center gap-1.5 cursor-pointer"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Collect & Print Receipt</span>
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {/* POS Thermal-Style Receipt Modal */}
+      {posReceipt && (
+        <Modal
+          isOpen={Boolean(posReceipt)}
+          onClose={() => setPosReceipt(null)}
+          title="Cashier POS Fee Receipt"
+          maxWidth="max-w-md"
+        >
+          <div className="space-y-4">
+            <div className="p-5 border-2 border-dashed border-slate-800 rounded-xl bg-white text-slate-900 font-mono text-xs space-y-3">
+              <div className="text-center border-b pb-3">
+                <h3 className="font-bold text-base uppercase tracking-tight">{currentInstitute?.name || 'CENTRAL HIGH SCHOOL'}</h3>
+                <p className="text-[10px] text-slate-500 uppercase">Fee Counter POS Terminal</p>
+                <p className="text-[11px] font-bold text-emerald-600 mt-1">*** PAYMENT RECEIVED ***</p>
+              </div>
+
+              <div className="space-y-1 text-[11px]">
+                <div className="flex justify-between">
+                  <span>Receipt No:</span>
+                  <span className="font-bold">{posReceipt.receiptNo}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Date/Time:</span>
+                  <span>{posReceipt.date}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Student Name:</span>
+                  <span className="font-bold">{posReceipt.studentName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Roll No:</span>
+                  <span>{posReceipt.rollNumber}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Payment Mode:</span>
+                  <span className="font-bold">{posReceipt.paymentMethod}</span>
+                </div>
+              </div>
+
+              <div className="border-t border-b py-2 space-y-1">
+                <div className="flex justify-between">
+                  <span>Tuition / Exam Fee:</span>
+                  <span>Rs. {Number(posReceipt.amount).toLocaleString()}</span>
+                </div>
+                {Number(posReceipt.discount) > 0 && (
+                  <div className="flex justify-between text-emerald-600">
+                    <span>Discount / Concession:</span>
+                    <span>- Rs. {Number(posReceipt.discount).toLocaleString()}</span>
+                  </div>
+                )}
+                <div className="flex justify-between font-bold text-sm pt-1 border-t">
+                  <span>Total Paid:</span>
+                  <span>Rs. {Number(posReceipt.finalPaid).toLocaleString()}</span>
+                </div>
+                {posReceipt.paymentMethod === 'Cash' && (
+                  <>
+                    <div className="flex justify-between text-[10px] text-slate-500">
+                      <span>Cash Tendered:</span>
+                      <span>Rs. {Number(posReceipt.cashTendered).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-[10px] text-slate-500">
+                      <span>Change Given:</span>
+                      <span>Rs. {Number(posReceipt.changeDue).toLocaleString()}</span>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div className="text-center pt-2 text-[10px] text-slate-500 space-y-1">
+                <p>Status: VERIFIED & CLEARED</p>
+                <p>Thank you! Keep this receipt for your records.</p>
+                <p className="font-bold pt-2 border-t">Cashier: {posReceipt.cashier}</p>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 print:hidden">
+              <button
+                type="button"
+                onClick={() => setPosReceipt(null)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="px-5 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-black rounded-lg flex items-center gap-1.5 shadow cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print POS Receipt</span>
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {/* Generate Challan Modal */}
       <Modal
@@ -262,8 +647,8 @@ export const FeesView = ({ currentInstitute }) => {
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-3 border-t">
-            <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm text-slate-600">Cancel</button>
-            <button type="submit" className="px-5 py-2 text-sm text-white bg-emerald-600 rounded-lg font-semibold">Issue Voucher</button>
+            <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm text-slate-600 cursor-pointer">Cancel</button>
+            <button type="submit" className="px-5 py-2 text-sm text-white bg-emerald-600 rounded-lg font-semibold cursor-pointer">Issue Voucher</button>
           </div>
         </form>
       </Modal>
@@ -348,14 +733,14 @@ export const FeesView = ({ currentInstitute }) => {
               <button
                 type="button"
                 onClick={() => setSelectedVoucher(null)}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg"
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
               >
                 Close
               </button>
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="px-5 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-black rounded-lg flex items-center gap-1.5 shadow"
+                className="px-5 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-black rounded-lg flex items-center gap-1.5 shadow cursor-pointer"
               >
                 <Printer className="w-3.5 h-3.5" />
                 <span>Print Official Challan</span>

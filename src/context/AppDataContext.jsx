@@ -47,6 +47,12 @@ export const AppDataProvider = ({ children }) => {
     setData({ ...sample })
   }
 
+  const importData = (jsonData) => {
+    const updated = DataService.importData(jsonData)
+    setData({ ...updated })
+    return updated
+  }
+
   // Quick Action: generate and download report
   const generateReport = () => {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
@@ -155,6 +161,7 @@ export const AppDataProvider = ({ children }) => {
         deleteItem,
         resetToZero,
         loadSampleTemplate,
+        importData,
         generateReport,
         sendCommunicationBlast
       }}
