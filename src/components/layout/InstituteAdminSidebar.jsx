@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react'
+import React, { useState } from 'react'
 import { 
   LayoutDashboard, 
   GraduationCap, 
@@ -174,7 +174,7 @@ export const InstituteAdminSidebar = ({
                   }`}
                 >
                   <Users className="w-3.5 h-3.5 opacity-80 text-blue-400 shrink-0" />
-                  <span className="truncate">Teachers & Faculty</span>
+                  <span className="truncate">Faculty & Staff</span>
                 </button>
                 <button
                   onClick={() => handleNavClick('inst-classes')}

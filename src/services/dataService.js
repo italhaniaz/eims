@@ -125,9 +125,7 @@ export const sampleTemplateData = {
     { id: 'usr-1', name: 'Super Administrator', email: 'admin@schoolms.com', role: 'superadmin', institute: 'All Institutes (Global)', phone: '+92 300 1234567', status: 'Active', lastLogin: 'Just now' }
   ],
   students: [],
-  teachers: [
-    { id: 'tch-1', instituteId: 'inst-1', empId: 'EMP-01', name: 'Dr. Shahida Parveen', designation: 'Principal', department: 'Administration', phone: '+92 300 9988776', email: 'principal.bhs@sms.edu', status: 'Active' }
-  ],
+  teachers: [],
   classes: [
     { id: 'cls-1', instituteId: 'inst-1', name: 'Class 10', section: 'A - Science', roomNo: 'Room 101', capacity: 40, enrolled: 35, classTeacher: 'Dr. Shahida Parveen' }
   ],
@@ -257,6 +255,17 @@ export const getStoredData = () => {
         )
         if (filteredPipeline.length !== parsed.admissionsPipeline.length) {
           parsed.admissionsPipeline = filteredPipeline
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed))
+        }
+      }
+      if (Array.isArray(parsed.teachers)) {
+        const demoTeacherIds = ['tch-1']
+        const demoTeacherNames = ['Dr. Shahida Parveen']
+        const filteredTeachers = parsed.teachers.filter(t =>
+          !demoTeacherIds.includes(t.id) && !demoTeacherNames.includes(t.name)
+        )
+        if (filteredTeachers.length !== parsed.teachers.length) {
+          parsed.teachers = filteredTeachers
           localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed))
         }
       }

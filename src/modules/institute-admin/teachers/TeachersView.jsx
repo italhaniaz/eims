@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useRef } from 'react'
 import { 
   Users, 
   Plus, 
@@ -9,6 +9,7 @@ import {
   Phone, 
   BookOpen,
   Download,
+  Upload,
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
@@ -25,128 +26,198 @@ import {
   Calendar,
   FileText,
   AlertTriangle,
-  Clock
+  Clock,
+  CreditCard,
+  Layers,
+  Eye,
+  Filter,
+  RotateCcw,
+  FileSpreadsheet,
+  SlidersHorizontal,
+  Sparkles,
+  ShieldAlert,
+  GraduationCap,
+  LayoutGrid,
+  List,
+  CheckSquare,
+  Square,
+  AlertCircle
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
 import Modal from '../../../components/common/Modal'
+import { AddStaffModal } from './AddStaffModal'
+import { StaffProfileDrawer } from './StaffProfileDrawer'
+import { StaffIdCardModal } from './StaffIdCardModal'
+import { StaffPaySlipModal } from './StaffPaySlipModal'
+import { AppointmentLetterModal } from './AppointmentLetterModal'
 
 export const TeachersView = ({ currentInstitute }) => {
-  const { teachers = [], institutes = [], addItem, updateItem, deleteItem } = useAppData()
+  const { teachers = [], classes = [], institutes = [], addItem, updateItem, deleteItem } = useAppData()
   const { toast } = useToast()
 
-  const [searchTerm, setSearchTerm] = useState('')
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [editingTeacher, setEditingTeacher] = useState(null)
-  const [selectedSalaryTeacher, setSelectedSalaryTeacher] = useState(null)
-  const [salaryMonth, setSalaryMonth] = useState('October 2026')
-  const [selectedLeaveTeacher, setSelectedLeaveTeacher] = useState(null)
+  // Active Main Tab
+  const [activeTab, setActiveTab] = useState('directory') // 'directory' | 'workload' | 'leaves' | 'payroll'
+
+  // View Layout
+  const [viewMode, setViewMode] = useState('table') // 'table' | 'cards'
+
+  // Modals and Drawers State
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [editingStaff, setEditingStaff] = useState(null)
+  const [drawerStaff, setDrawerStaff] = useState(null)
+  
+  // Printable Sub-Modals
+  const [idCardStaff, setIdCardStaff] = useState(null)
+  const [isIdCardOpen, setIsIdCardOpen] = useState(false)
+  const [paySlipStaff, setPaySlipStaff] = useState(null)
+  const [isPaySlipOpen, setIsPaySlipOpen] = useState(false)
+  const [appointmentLetterStaff, setAppointmentLetterStaff] = useState(null)
+  const [isAppointmentLetterOpen, setIsAppointmentLetterOpen] = useState(false)
+
+  // Leave & Proxy Modal
+  const [selectedLeaveStaff, setSelectedLeaveStaff] = useState(null)
   const [leaveDutyOrder, setLeaveDutyOrder] = useState(null)
   const [leaveFormData, setLeaveFormData] = useState({
     leaveType: 'Casual Leave',
     startDate: new Date().toISOString().split('T')[0],
     endDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    reason: 'Urgent Personal Affairs',
+    reason: 'Urgent Domestic Affairs',
     substituteTeacherId: '',
     substituteTeacherName: '',
-    handoverNotes: 'Cover syllabus topics and supervise daily class periods.'
+    handoverNotes: 'Supervise daily periods and gradebook activities.'
   })
 
-  // Sorting & Pagination
+  // Delete & Class Teacher Conflict Warning Modal
+  const [staffToDelete, setStaffToDelete] = useState(null)
+
+  // CSV Import Modal
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false)
+  const [csvFile, setCsvFile] = useState(null)
+  const [csvParseErrors, setCsvParseErrors] = useState([])
+  const [csvParsedRows, setCsvParsedRows] = useState([])
+  const fileInputRef = useRef(null)
+
+  // Filter Bar States
+  const [searchTerm, setSearchTerm] = useState('')
+  const [selectedLevel, setSelectedLevel] = useState('All Levels')
+  const [selectedCategory, setSelectedCategory] = useState('All Categories') // 'All Categories' | 'Teaching' | 'Non-Teaching'
+  const [selectedDepartment, setSelectedDepartment] = useState('All Departments')
+  const [selectedEmploymentType, setSelectedEmploymentType] = useState('All')
+  const [selectedStatus, setSelectedStatus] = useState('All')
+
+  // Sorting
   const [sortField, setSortField] = useState('name')
   const [sortDirection, setSortDirection] = useState('asc')
+
+  // Pagination
   const [currentPage, setCurrentPage] = useState(1)
-  const [pageSize, setPageSize] = useState(9)
+  const [pageSize, setPageSize] = useState(10)
 
-  const [formData, setFormData] = useState({
-    name: '',
-    empId: '',
-    designation: 'Senior Teacher',
-    department: 'Sciences',
-    phone: '',
-    email: '',
-    basicSalary: 65000,
-    allowance: 15000,
-    deductions: 3500,
-    bankAccount: 'PK72HABB000192837465',
-    status: 'Active'
-  })
+  // Multi-Select Bulk Actions
+  const [selectedIds, setSelectedIds] = useState([])
 
-  const openAddModal = () => {
-    setEditingTeacher(null)
-    setFormData({
-      name: '',
-      empId: `EMP-${Math.floor(10 + Math.random() * 90)}`,
-      designation: 'Senior Teacher',
-      department: 'Sciences',
-      phone: '',
-      email: '',
-      basicSalary: 65000,
-      allowance: 15000,
-      deductions: 3500,
-      bankAccount: `PK${Math.floor(10 + Math.random() * 89)}HABB000${Math.floor(100000000 + Math.random() * 900000000)}`,
-      status: 'Active'
-    })
-    setIsModalOpen(true)
-  }
-
-  const openLeaveModal = (t) => {
-    setSelectedLeaveTeacher(t)
-    const otherFaculty = teachers.filter(other => other.id !== t.id && (!other.instituteId || other.instituteId === currentInstitute?.id))
-    const defaultSubstitute = otherFaculty[0]
-    setLeaveFormData({
-      leaveType: t.leaveInfo?.leaveType || 'Casual Leave',
-      startDate: t.leaveInfo?.startDate || new Date().toISOString().split('T')[0],
-      endDate: t.leaveInfo?.endDate || new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      reason: t.leaveInfo?.reason || 'Urgent Domestic Affairs',
-      substituteTeacherId: t.leaveInfo?.substituteTeacherId || defaultSubstitute?.id || '',
-      substituteTeacherName: t.leaveInfo?.substituteTeacherName || defaultSubstitute?.name || 'Assigned Proxy',
-      handoverNotes: t.leaveInfo?.handoverNotes || `Supervise ${t.department} department lectures and coursework.`
-    })
-  }
-
-  const handleAssignLeaveAndProxy = async (e) => {
-    e.preventDefault()
-    if (!selectedLeaveTeacher) return
-
-    await updateItem('teachers', selectedLeaveTeacher.id, {
-      status: 'On Leave',
-      leaveInfo: {
-        ...leaveFormData,
-        approvedAt: new Date().toISOString().split('T')[0]
+  // Available unique departments for filter dropdown
+  const availableDepartments = useMemo(() => {
+    const set = new Set()
+    teachers.forEach(t => {
+      if (t.department && t.department.trim()) {
+        set.add(t.department.trim())
       }
     })
+    return Array.from(set).sort()
+  }, [teachers])
 
-    toast.warning(`Faculty member "${selectedLeaveTeacher.name}" marked On Leave. Proxy assigned to: ${leaveFormData.substituteTeacherName}!`)
-    setSelectedLeaveTeacher(null)
-  }
+  // Current Institute Staff list
+  const instituteStaff = useMemo(() => {
+    return teachers.filter(t => !t.instituteId || t.instituteId === currentInstitute?.id)
+  }, [teachers, currentInstitute?.id])
 
-  const handleResumeDuty = async (t) => {
-    await updateItem('teachers', t.id, {
-      status: 'Active',
-      leaveInfo: null
+  // Top KPI Metrics
+  const totalStaffCount = instituteStaff.length
+  const teachingCount = instituteStaff.filter(t => (t.category || 'Teaching') === 'Teaching').length
+  const nonTeachingCount = instituteStaff.filter(t => t.category === 'Non-Teaching').length
+  const presentTodayCount = instituteStaff.filter(t => t.status === 'Active' || !t.status).length
+  const onLeaveCount = instituteStaff.filter(t => t.status === 'On Leave').length
+  const classTeachersCount = instituteStaff.filter(t => t.isClassTeacher).length
+  const totalClassesCount = classes.filter(c => !c.instituteId || c.instituteId === currentInstitute?.id).length
+
+  // Filtered & Sorted Staff List
+  const filteredStaff = useMemo(() => {
+    return instituteStaff.filter(staff => {
+      // Search
+      const term = searchTerm.toLowerCase().trim()
+      if (term) {
+        const matchesName = staff.name?.toLowerCase().includes(term)
+        const matchesEmpId = staff.empId?.toLowerCase().includes(term)
+        const matchesDept = staff.department?.toLowerCase().includes(term)
+        const matchesDesig = staff.designation?.toLowerCase().includes(term)
+        const matchesPhone = staff.phone?.toLowerCase().includes(term)
+        const matchesCnic = staff.cnic?.toLowerCase().includes(term)
+        if (!matchesName && !matchesEmpId && !matchesDept && !matchesDesig && !matchesPhone && !matchesCnic) {
+          return false
+        }
+      }
+
+      // Level
+      if (selectedLevel !== 'All Levels') {
+        const staffLevel = (staff.level || 'school').toLowerCase()
+        if (staffLevel !== selectedLevel.toLowerCase()) return false
+      }
+
+      // Category
+      if (selectedCategory !== 'All Categories') {
+        const staffCat = staff.category || 'Teaching'
+        if (staffCat !== selectedCategory) return false
+      }
+
+      // Department
+      if (selectedDepartment !== 'All Departments') {
+        if ((staff.department || '').toLowerCase() !== selectedDepartment.toLowerCase()) return false
+      }
+
+      // Employment Type
+      if (selectedEmploymentType !== 'All') {
+        if ((staff.employmentType || '').toLowerCase() !== selectedEmploymentType.toLowerCase()) return false
+      }
+
+      // Status
+      if (selectedStatus !== 'All') {
+        const currentStat = staff.status || 'Active'
+        if (currentStat.toLowerCase() !== selectedStatus.toLowerCase()) return false
+      }
+
+      return true
+    }).sort((a, b) => {
+      let valA = a[sortField] || ''
+      let valB = b[sortField] || ''
+      if (typeof valA === 'string') valA = valA.toLowerCase()
+      if (typeof valB === 'string') valB = valB.toLowerCase()
+
+      if (valA < valB) return sortDirection === 'asc' ? -1 : 1
+      if (valA > valB) return sortDirection === 'asc' ? 1 : -1
+      return 0
     })
-    toast.success(`Faculty member "${t.name}" resumed active academic duty. Timetable proxy released!`)
-  }
+  }, [
+    instituteStaff,
+    searchTerm,
+    selectedLevel,
+    selectedCategory,
+    selectedDepartment,
+    selectedEmploymentType,
+    selectedStatus,
+    sortField,
+    sortDirection
+  ])
 
-  const openEditModal = (t) => {
-    setEditingTeacher(t)
-    setFormData({
-      name: t.name || '',
-      empId: t.empId || '',
-      designation: t.designation || 'Senior Teacher',
-      department: t.department || 'Sciences',
-      phone: t.phone || '',
-      email: t.email || '',
-      basicSalary: t.basicSalary || 65000,
-      allowance: t.allowance || 15000,
-      deductions: t.deductions || 3500,
-      bankAccount: t.bankAccount || 'PK72HABB000192837465',
-      status: t.status || 'Active'
-    })
-    setIsModalOpen(true)
-  }
+  // Pagination calculation
+  const totalPages = Math.ceil(filteredStaff.length / pageSize) || 1
+  const paginatedStaff = useMemo(() => {
+    const start = (currentPage - 1) * pageSize
+    return filteredStaff.slice(start, start + pageSize)
+  }, [filteredStaff, currentPage, pageSize])
 
+  // Toggle Sorting
   const handleSort = (field) => {
     if (sortField === field) {
       setSortDirection(prev => (prev === 'asc' ? 'desc' : 'asc'))
@@ -156,69 +227,240 @@ export const TeachersView = ({ currentInstitute }) => {
     }
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    if (!formData.name.trim() || !formData.empId.trim()) {
-      toast.error('Faculty Name and Employee ID are required.')
-      return
-    }
+  // Clear all filters
+  const handleClearFilters = () => {
+    setSearchTerm('')
+    setSelectedLevel('All Levels')
+    setSelectedCategory('All Categories')
+    setSelectedDepartment('All Departments')
+    setSelectedEmploymentType('All')
+    setSelectedStatus('All')
+    setCurrentPage(1)
+  }
 
-    // Check duplicate employee ID
-    const isDuplicate = teachers.some(t => 
-      t.empId?.toLowerCase() === formData.empId.toLowerCase() && 
-      (!editingTeacher || t.id !== editingTeacher.id)
-    )
-    if (isDuplicate) {
-      toast.error(`Employee ID "${formData.empId}" is already assigned to another faculty member.`)
-      return
-    }
+  const isAnyFilterActive = 
+    searchTerm !== '' || 
+    selectedLevel !== 'All Levels' || 
+    selectedCategory !== 'All Categories' || 
+    selectedDepartment !== 'All Departments' || 
+    selectedEmploymentType !== 'All' || 
+    selectedStatus !== 'All'
 
-    const payload = {
-      ...formData,
-      basicSalary: Number(formData.basicSalary || 0),
-      allowance: Number(formData.allowance || 0),
-      deductions: Number(formData.deductions || 0),
-      netSalary: Number(formData.basicSalary || 0) + Number(formData.allowance || 0) - Number(formData.deductions || 0),
-      instituteId: currentInstitute?.id || 'inst-1'
-    }
-
-    if (editingTeacher) {
-      await updateItem('teachers', editingTeacher.id, payload)
-      toast.success(`Faculty profile for ${formData.name} updated successfully!`)
+  // Multi-Select Handlers
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      const allPageIds = paginatedStaff.map(s => s.id)
+      setSelectedIds(prev => Array.from(new Set([...prev, ...allPageIds])))
     } else {
-      await addItem('teachers', payload)
-      toast.success(`Faculty member ${formData.name} registered!`)
-    }
-    setIsModalOpen(false)
-  }
-
-  const handleDelete = async (id, name) => {
-    if (window.confirm(`Are you sure you want to remove "${name}" from faculty records?`)) {
-      await deleteItem('teachers', id)
-      toast.info(`Faculty member ${name} removed.`)
+      const pageIdSet = new Set(paginatedStaff.map(s => s.id))
+      setSelectedIds(prev => prev.filter(id => !pageIdSet.has(id)))
     }
   }
 
-  // Export Faculty CSV
-  const exportTeachersCSV = () => {
-    if (teachers.length === 0) {
-      toast.warning('No faculty members available to export.')
+  const handleToggleSelect = (id) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    )
+  }
+
+  const isPageAllSelected = paginatedStaff.length > 0 && paginatedStaff.every(s => selectedIds.includes(s.id))
+
+  // Open Add Modal
+  const handleOpenAddModal = () => {
+    setEditingStaff(null)
+    setIsAddModalOpen(true)
+  }
+
+  // Open Edit Modal
+  const handleOpenEditModal = (staff) => {
+    setEditingStaff(staff)
+    setIsAddModalOpen(true)
+  }
+
+  // Open Staff Profile Dossier Drawer
+  const handleOpenDrawer = (staff) => {
+    setDrawerStaff(staff)
+  }
+
+  // Open ID Card Modal
+  const handleOpenIdCard = (staff) => {
+    setIdCardStaff(staff)
+    setIsIdCardOpen(true)
+  }
+
+  // Open Pay Slip Modal
+  const handleOpenPaySlip = (staff) => {
+    setPaySlipStaff(staff)
+    setIsPaySlipOpen(true)
+  }
+
+  // Open Appointment Letter Modal
+  const handleOpenAppointmentLetter = (staff) => {
+    setAppointmentLetterStaff(staff)
+    setIsAppointmentLetterOpen(true)
+  }
+
+  // Save / Update Staff (from AddStaffModal)
+  const handleSaveStaff = async (staffData) => {
+    try {
+      const payload = {
+        ...staffData,
+        instituteId: currentInstitute?.id || 'inst-1',
+        updatedAt: new Date().toISOString()
+      }
+
+      if (editingStaff) {
+        await updateItem('teachers', editingStaff.id, payload)
+        toast.success(`Staff record for "${staffData.name}" updated successfully!`)
+        if (drawerStaff && drawerStaff.id === editingStaff.id) {
+          setDrawerStaff({ ...drawerStaff, ...payload })
+        }
+      } else {
+        await addItem('teachers', {
+          ...payload,
+          createdAt: new Date().toISOString()
+        })
+        toast.success(`Staff member "${staffData.name}" (${staffData.empId}) registered successfully!`)
+      }
+      setIsAddModalOpen(false)
+      setEditingStaff(null)
+    } catch (err) {
+      toast.error('Failed to save staff record. Please try again.')
+    }
+  }
+
+  // Leave & Proxy Handlers
+  const handleOpenLeaveModal = (staff) => {
+    setSelectedLeaveStaff(staff)
+    const otherFaculty = instituteStaff.filter(other => other.id !== staff.id && other.status !== 'On Leave')
+    const defaultSub = otherFaculty[0]
+
+    setLeaveFormData({
+      leaveType: staff.leaveInfo?.leaveType || 'Casual Leave',
+      startDate: staff.leaveInfo?.startDate || new Date().toISOString().split('T')[0],
+      endDate: staff.leaveInfo?.endDate || new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      reason: staff.leaveInfo?.reason || 'Urgent Domestic Affairs',
+      substituteTeacherId: staff.leaveInfo?.substituteTeacherId || defaultSub?.id || '',
+      substituteTeacherName: staff.leaveInfo?.substituteTeacherName || defaultSub?.name || 'Assigned Proxy',
+      handoverNotes: staff.leaveInfo?.handoverNotes || `Supervise daily lectures, course syllabus, and gradebook for ${staff.department} classes.`
+    })
+  }
+
+  const handleAssignLeave = async (e) => {
+    e.preventDefault()
+    if (!selectedLeaveStaff) return
+
+    await updateItem('teachers', selectedLeaveStaff.id, {
+      status: 'On Leave',
+      leaveInfo: {
+        ...leaveFormData,
+        approvedAt: new Date().toISOString().split('T')[0]
+      }
+    })
+
+    toast.warning(`Faculty member "${selectedLeaveStaff.name}" marked On Leave. Proxy assigned to: ${leaveFormData.substituteTeacherName}!`)
+    setSelectedLeaveStaff(null)
+    if (drawerStaff && drawerStaff.id === selectedLeaveStaff.id) {
+      setDrawerStaff({ ...drawerStaff, status: 'On Leave', leaveInfo: { ...leaveFormData, approvedAt: new Date().toISOString().split('T')[0] } })
+    }
+  }
+
+  const handleResumeDuty = async (staff) => {
+    await updateItem('teachers', staff.id, {
+      status: 'Active',
+      leaveInfo: null
+    })
+    toast.success(`Faculty member "${staff.name}" resumed active academic duty. Timetable proxy released!`)
+    if (drawerStaff && drawerStaff.id === staff.id) {
+      setDrawerStaff({ ...drawerStaff, status: 'Active', leaveInfo: null })
+    }
+  }
+
+  // Delete Staff with Class Teacher Reassignment Check
+  const initiateDelete = (staff) => {
+    setStaffToDelete(staff)
+  }
+
+  const confirmDelete = async () => {
+    if (!staffToDelete) return
+    await deleteItem('teachers', staffToDelete.id)
+    toast.info(`Staff record for "${staffToDelete.name}" (${staffToDelete.empId}) removed.`)
+    if (drawerStaff && drawerStaff.id === staffToDelete.id) {
+      setDrawerStaff(null)
+    }
+    setStaffToDelete(null)
+  }
+
+  // Bulk Actions
+  const handleBulkStatusChange = async (newStatus) => {
+    if (selectedIds.length === 0) return
+    for (const id of selectedIds) {
+      await updateItem('teachers', id, { status: newStatus })
+    }
+    toast.success(`Status updated to "${newStatus}" for ${selectedIds.length} staff member(s).`)
+    setSelectedIds([])
+  }
+
+  const handleBulkPrintIdCards = () => {
+    if (selectedIds.length === 0) return
+    const staffList = instituteStaff.filter(s => selectedIds.includes(s.id))
+    if (staffList.length > 0) {
+      setIdCardStaff(staffList[0])
+      setIsIdCardOpen(true)
+    }
+  }
+
+  // Export CSV
+  const handleExportCSV = (exportOnlySelected = false) => {
+    const listToExport = exportOnlySelected 
+      ? instituteStaff.filter(s => selectedIds.includes(s.id))
+      : filteredStaff
+
+    if (listToExport.length === 0) {
+      toast.warning('No staff members available to export.')
       return
     }
 
-    const headers = ['Employee ID', 'Name', 'Designation', 'Department', 'Phone', 'Email', 'Basic Salary', 'Allowances', 'Deductions', 'Net Salary', 'Status']
-    const rows = teachers.map(t => [
-      `"${t.empId || ''}"`,
-      `"${t.name || ''}"`,
-      `"${t.designation || ''}"`,
-      `"${t.department || ''}"`,
-      `"${t.phone || ''}"`,
-      `"${t.email || ''}"`,
-      `"${t.basicSalary || 65000}"`,
-      `"${t.allowance || 15000}"`,
-      `"${t.deductions || 3500}"`,
-      `"${(t.basicSalary || 65000) + (t.allowance || 15000) - (t.deductions || 3500)}"`,
-      `"${t.status || 'Active'}"`
+    const headers = [
+      'Employee ID',
+      'Full Name',
+      'Category',
+      'Academic Level',
+      'Department',
+      'Designation',
+      'Employment Type',
+      'Status',
+      'Phone',
+      'Email',
+      'CNIC',
+      'Gender',
+      'Basic Salary',
+      'Allowances',
+      'Deductions',
+      'Net Salary',
+      'Class Teacher Assigned',
+      'Bank Account (IBAN)'
+    ]
+
+    const rows = listToExport.map(s => [
+      `"${s.empId || ''}"`,
+      `"${s.name || ''}"`,
+      `"${s.category || 'Teaching'}"`,
+      `"${s.level || 'School'}"`,
+      `"${s.department || ''}"`,
+      `"${s.designation || ''}"`,
+      `"${s.employmentType || 'Permanent / Regular'}"`,
+      `"${s.status || 'Active'}"`,
+      `"${s.phone || ''}"`,
+      `"${s.email || ''}"`,
+      `"${s.cnic || ''}"`,
+      `"${s.gender || ''}"`,
+      `"${s.basicSalary || 0}"`,
+      `"${s.allowance || 0}"`,
+      `"${s.deductions || 0}"`,
+      `"${(Number(s.basicSalary || 0) + Number(s.allowance || 0) - Number(s.deductions || 0))}"`,
+      `"${s.isClassTeacher ? `Class ${s.classTeacherClass}-${s.classTeacherSection || 'A'}` : 'No'}"`,
+      `"${s.bankAccount || ''}"`
     ])
 
     const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
@@ -226,557 +468,1521 @@ export const TeachersView = ({ currentInstitute }) => {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.setAttribute('download', `Faculty_Roster_${new Date().toISOString().split('T')[0]}.csv`)
+    link.setAttribute('download', `Faculty_Staff_Roster_${new Date().toISOString().split('T')[0]}.csv`)
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
-    toast.success('Faculty roster exported to CSV.')
+    toast.success(`Exported ${listToExport.length} staff records to CSV.`)
   }
 
-  // Filtered & Sorted
-  const filtered = useMemo(() => {
-    return teachers.filter(t => {
-      const matchInst = !t.instituteId || t.instituteId === currentInstitute?.id
-      if (!matchInst) return false
-      const term = searchTerm.toLowerCase()
-      return (
-        t.name?.toLowerCase().includes(term) ||
-        t.empId?.toLowerCase().includes(term) ||
-        t.department?.toLowerCase().includes(term) ||
-        t.designation?.toLowerCase().includes(term)
-      )
-    }).sort((a, b) => {
-      const valA = (a[sortField] || '').toString().toLowerCase()
-      const valB = (b[sortField] || '').toString().toLowerCase()
-      return sortDirection === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA)
-    })
-  }, [teachers, currentInstitute?.id, searchTerm, sortField, sortDirection])
+  // Download Sample CSV Template
+  const handleDownloadTemplate = () => {
+    const sampleHeaders = [
+      'Name',
+      'Category',
+      'Level',
+      'Department',
+      'Designation',
+      'EmploymentType',
+      'Gender',
+      'Phone',
+      'Email',
+      'CNIC',
+      'BasicSalary',
+      'Allowances',
+      'Deductions',
+      'BankAccount'
+    ]
+    const sampleData = [
+      'Prof. Dr. Shahid Javed,Teaching,college,Computer Science,Associate Professor,Permanent / Regular,Male,+92 300 1234567,shahid@institute.edu.pk,35201-1234567-1,95000,20000,5000,PK72HABB000192837465',
+      'Nadeem Akhtar,Non-Teaching,school,Administration,Senior Office Assistant,Contract,Male,+92 321 7654321,nadeem@institute.edu.pk,35202-9876543-1,45000,8000,2000,PK45MEZN000987654321'
+    ]
+    const content = [sampleHeaders.join(','), ...sampleData].join('\n')
+    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', 'Faculty_Staff_Import_Template.csv')
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    toast.info('Sample CSV template downloaded.')
+  }
 
-  const totalTeachers = filtered.length
-  const totalPages = Math.ceil(totalTeachers / pageSize) || 1
-  const paginatedTeachers = useMemo(() => {
-    const start = (currentPage - 1) * pageSize
-    return filtered.slice(start, start + pageSize)
-  }, [filtered, currentPage, pageSize])
+  // Handle CSV File Selection & Parse
+  const handleCsvFileChange = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (!file.name.endsWith('.csv')) {
+      toast.error('Invalid file format. Please upload a valid .csv file.')
+      return
+    }
+
+    setCsvFile(file)
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const text = event.target?.result
+      if (!text) return
+
+      const lines = text.split(/\r?\n/).filter(line => line.trim().length > 0)
+      if (lines.length <= 1) {
+        setCsvParseErrors(['The uploaded CSV is empty or only contains headers.'])
+        setCsvParsedRows([])
+        return
+      }
+
+      const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, '').toLowerCase())
+      const nameIndex = headers.findIndex(h => h.includes('name'))
+      const catIndex = headers.findIndex(h => h.includes('cat'))
+      const deptIndex = headers.findIndex(h => h.includes('dept') || h.includes('department'))
+      const desigIndex = headers.findIndex(h => h.includes('desig'))
+      const phoneIndex = headers.findIndex(h => h.includes('phone') || h.includes('mobile'))
+      const emailIndex = headers.findIndex(h => h.includes('email'))
+      const cnicIndex = headers.findIndex(h => h.includes('cnic'))
+      const basicIndex = headers.findIndex(h => h.includes('basic'))
+      const allowIndex = headers.findIndex(h => h.includes('allow'))
+      const dedIndex = headers.findIndex(h => h.includes('deduct'))
+      const bankIndex = headers.findIndex(h => h.includes('bank') || h.includes('iban'))
+
+      const parsed = []
+      const errors = []
+
+      // Sequential auto ID generation for imported rows
+      const existingNums = teachers.map(t => {
+        const match = String(t.empId || '').match(/([0-9]+)$/)
+        return match ? parseInt(match[1], 10) : 0
+      }).filter(n => !isNaN(n) && n > 0)
+      let nextIdNum = (existingNums.length > 0 ? Math.max(...existingNums) : 0) + 1
+
+      for (let i = 1; i < lines.length; i++) {
+        const row = lines[i].split(',').map(cell => cell.trim().replace(/^"|"$/g, ''))
+        const staffName = nameIndex >= 0 ? row[nameIndex] : row[0]
+
+        if (!staffName || staffName.trim().length < 2) {
+          errors.push(`Row ${i + 1}: Name is missing or invalid.`)
+          continue
+        }
+
+        const staffEmpId = `EMP-${String(nextIdNum++).padStart(3, '0')}`
+        const staffCategory = (catIndex >= 0 && row[catIndex]) ? row[catIndex] : 'Teaching'
+        const staffDept = (deptIndex >= 0 && row[deptIndex]) ? row[deptIndex] : 'General'
+        const staffDesig = (desigIndex >= 0 && row[desigIndex]) ? row[desigIndex] : 'Staff Member'
+        const staffPhone = (phoneIndex >= 0 && row[phoneIndex]) ? row[phoneIndex] : ''
+        const staffEmail = (emailIndex >= 0 && row[emailIndex]) ? row[emailIndex] : ''
+        const staffCnic = (cnicIndex >= 0 && row[cnicIndex]) ? row[cnicIndex] : ''
+        const basic = (basicIndex >= 0 && Number(row[basicIndex])) ? Number(row[basicIndex]) : 65000
+        const allow = (allowIndex >= 0 && Number(row[allowIndex])) ? Number(row[allowIndex]) : 15000
+        const ded = (dedIndex >= 0 && Number(row[dedIndex])) ? Number(row[dedIndex]) : 3500
+        const bank = (bankIndex >= 0 && row[bankIndex]) ? row[bankIndex] : 'PK72HABB000192837465'
+
+        parsed.push({
+          name: staffName,
+          empId: staffEmpId,
+          category: staffCategory,
+          department: staffDept,
+          designation: staffDesig,
+          phone: staffPhone,
+          email: staffEmail,
+          cnic: staffCnic,
+          basicSalary: basic,
+          allowance: allow,
+          deductions: ded,
+          netSalary: basic + allow - ded,
+          bankAccount: bank,
+          status: 'Active',
+          level: 'school',
+          instituteId: currentInstitute?.id || 'inst-1'
+        })
+      }
+
+      setCsvParsedRows(parsed)
+      setCsvParseErrors(errors)
+    }
+    reader.readAsText(file)
+  }
+
+  // Confirm Import
+  const handleConfirmImport = async () => {
+    if (csvParsedRows.length === 0) return
+    for (const item of csvParsedRows) {
+      await addItem('teachers', item)
+    }
+    toast.success(`Successfully imported ${csvParsedRows.length} staff member(s)!`)
+    setIsImportModalOpen(false)
+    setCsvFile(null)
+    setCsvParsedRows([])
+    setCsvParseErrors([])
+  }
 
   return (
     <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
+      
+      {/* Page Title & Main Actions */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-emerald-600" />
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Faculty & Staff Management</h1>
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-sm">
+              <Users className="w-5 h-5" />
+            </div>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                Faculty & Staff
+              </h1>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Personnel roster, timetable workload allocations, leave & substitution proxies, and monthly payroll
+              </p>
+            </div>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Department allocations, academic faculty directory, staff compensation payroll, and printable monthly pay slips
-          </p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
+          {/* Import CSV */}
           <button
-            onClick={exportTeachersCSV}
-            className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 transition-all"
-            title="Export faculty roster to CSV"
+            onClick={() => setIsImportModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold border border-slate-200 shadow-sm transition-all"
+            title="Import faculty roster via CSV spreadsheet"
           >
-            <Download className="w-3.5 h-3.5" />
+            <Upload className="w-3.5 h-3.5 text-slate-500" />
+            <span>Import CSV</span>
+          </button>
+
+          {/* Export CSV */}
+          <button
+            onClick={() => handleExportCSV(false)}
+            className="flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold border border-slate-200 shadow-sm transition-all"
+            title="Export filtered faculty roster to CSV"
+          >
+            <Download className="w-3.5 h-3.5 text-slate-500" />
             <span>Export CSV</span>
           </button>
 
+          {/* + Add Staff Member */}
           <button
-            onClick={openAddModal}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
+            onClick={handleOpenAddModal}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all hover:shadow"
           >
             <Plus className="w-4 h-4" />
-            <span>Add New Teacher</span>
+            <span>+ Add Staff Member</span>
           </button>
         </div>
       </div>
 
-      {/* Search and Sorting toolbar */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder="Search by name, employee ID, or department..."
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value)
-              setCurrentPage(1)
-            }}
-            className="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-          />
+      {/* KPI Cards Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Card 1: Total Staff */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Staff</span>
+            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+              <Users className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <span className="text-2xl font-black text-slate-900 tracking-tight">
+              {totalStaffCount}
+            </span>
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              {totalStaffCount > 0 ? `${teachingCount} Teaching • ${nonTeachingCount} Staff` : 'No staff registered yet'}
+            </p>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 text-xs text-slate-500">
-            <span>Sort:</span>
-            <button
-              onClick={() => handleSort('name')}
-              className={`px-2 py-1 rounded text-xs font-medium border flex items-center gap-1 ${
-                sortField === 'name' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-white border-slate-200 text-slate-600'
-              }`}
-            >
-              <span>Name</span>
-              {sortField === 'name' && (sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
-            </button>
-            <button
-              onClick={() => handleSort('department')}
-              className={`px-2 py-1 rounded text-xs font-medium border flex items-center gap-1 ${
-                sortField === 'department' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-white border-slate-200 text-slate-600'
-              }`}
-            >
-              <span>Dept</span>
-              {sortField === 'department' && (sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
-            </button>
+        {/* Card 2: Present Today */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Active on Duty</span>
+            <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+              <CheckCircle2 className="w-4 h-4" />
+            </div>
           </div>
+          <div className="mt-3">
+            <span className="text-2xl font-black text-slate-900 tracking-tight">
+              {presentTodayCount}
+            </span>
+            <p className="text-[11px] text-emerald-600 font-semibold mt-0.5">
+              {totalStaffCount > 0 ? `${Math.round((presentTodayCount / totalStaffCount) * 100)}% active duty` : '—'}
+            </p>
+          </div>
+        </div>
 
-          <span className="text-xs font-semibold bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-lg whitespace-nowrap">
-            Total: {totalTeachers}
-          </span>
+        {/* Card 3: On Leave / Proxy */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">On Leave</span>
+            <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+              <Clock className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <span className="text-2xl font-black text-slate-900 tracking-tight">
+              {onLeaveCount}
+            </span>
+            <p className="text-[11px] text-amber-700 font-medium mt-0.5">
+              {onLeaveCount > 0 ? `${onLeaveCount} active proxy substitutions` : 'Zero leave requests'}
+            </p>
+          </div>
+        </div>
+
+        {/* Card 4: Class Teachers Assigned */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Class In-Charges</span>
+            <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+              <GraduationCap className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <span className="text-2xl font-black text-slate-900 tracking-tight">
+              {classTeachersCount}
+            </span>
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              {totalClassesCount > 0 ? `${classTeachersCount} of ${totalClassesCount} classes covered` : '0 assigned'}
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Faculty Cards Grid */}
-      {paginatedTeachers.length > 0 ? (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {paginatedTeachers.map((t) => {
-              const basic = t.basicSalary || 65000
-              const allow = t.allowance || 15000
-              const ded = t.deductions || 3500
-              const net = basic + allow - ded
+      {/* Main Tabs Navigation */}
+      <div className="flex items-center justify-between border-b border-slate-200 pb-0.5 overflow-x-auto scrollbar-none">
+        <div className="flex items-center gap-1 sm:gap-2">
+          <button
+            onClick={() => setActiveTab('directory')}
+            className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+              activeTab === 'directory'
+                ? 'bg-emerald-600 text-white shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <Users className="w-3.5 h-3.5" />
+            <span>Staff Directory</span>
+            <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+              activeTab === 'directory' ? 'bg-emerald-700 text-white' : 'bg-slate-200 text-slate-700'
+            }`}>
+              {filteredStaff.length}
+            </span>
+          </button>
 
-              return (
-                <div 
-                  key={t.id} 
-                  className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all flex flex-col justify-between overflow-hidden"
-                >
-                  <div className="p-5">
-                    <div className="flex items-start justify-between">
-                      <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-sm">
-                        {t.name.charAt(0)}
-                      </div>
-                      <span className="font-mono text-xs px-2 py-0.5 bg-slate-100 text-slate-700 rounded font-semibold border border-slate-200">
-                        {t.empId}
-                      </span>
-                    </div>
+          <button
+            onClick={() => setActiveTab('workload')}
+            className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+              activeTab === 'workload'
+                ? 'bg-emerald-600 text-white shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>Workload & Classes</span>
+          </button>
 
-                    <h3 className="font-bold text-slate-900 mt-3 text-base">{t.name}</h3>
-                    <p className="text-xs text-emerald-600 font-semibold">{t.designation}</p>
-                    {t.status === 'On Leave' && (
-                      <div className="mt-2 flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-[11px] font-semibold">
-                        <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0 animate-pulse" />
-                        <span>On Leave (Proxy: {t.leaveInfo?.substituteTeacherName || 'Assigned'})</span>
-                      </div>
-                    )}
+          <button
+            onClick={() => setActiveTab('leaves')}
+            className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+              activeTab === 'leaves'
+                ? 'bg-emerald-600 text-white shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <UserCheck className="w-3.5 h-3.5" />
+            <span>Leaves & Proxies</span>
+            {onLeaveCount > 0 && (
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+            )}
+          </button>
 
-                    <div className="mt-4 pt-3 border-t border-slate-100 space-y-2 text-xs text-slate-500">
-                      <div className="flex items-center gap-2">
-                        <BookOpen className="w-3.5 h-3.5 text-slate-400" />
-                        <span>{t.department} Department</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Phone className="w-3.5 h-3.5 text-slate-400" />
-                        <span>{t.phone || 'No phone registered'}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
-                        <span className="font-mono font-semibold text-slate-700">Net Pay: Rs. {net.toLocaleString()}</span>
-                      </div>
-                    </div>
+          <button
+            onClick={() => setActiveTab('payroll')}
+            className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+              activeTab === 'payroll'
+                ? 'bg-emerald-600 text-white shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <DollarSign className="w-3.5 h-3.5" />
+            <span>Compensation & Payroll</span>
+          </button>
+        </div>
+
+        {/* View Switcher (Table vs Cards) for Directory tab */}
+        {activeTab === 'directory' && (
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-semibold text-slate-600 shrink-0">
+            <button
+              onClick={() => setViewMode('table')}
+              className={`p-1.5 rounded-lg transition-all ${
+                viewMode === 'table' ? 'bg-white text-slate-900 shadow-sm' : 'hover:text-slate-900'
+              }`}
+              title="Table View"
+            >
+              <List className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('cards')}
+              className={`p-1.5 rounded-lg transition-all ${
+                viewMode === 'cards' ? 'bg-white text-slate-900 shadow-sm' : 'hover:text-slate-900'
+              }`}
+              title="Cards Grid View"
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Advanced Filter Toolbar */}
+      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {/* Search Box */}
+          <div className="relative col-span-1 sm:col-span-2 lg:col-span-1">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search by name, ID, CNIC, phone..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value)
+                setCurrentPage(1)
+              }}
+              className="w-full pl-9 pr-3.5 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 bg-slate-50 focus:bg-white"
+            />
+          </div>
+
+          {/* Level Filter */}
+          <div>
+            <select
+              value={selectedLevel}
+              onChange={(e) => {
+                setSelectedLevel(e.target.value)
+                setCurrentPage(1)
+              }}
+              className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white font-medium text-slate-700"
+            >
+              <option value="All Levels">All Academic Levels</option>
+              <option value="school">Primary / Secondary School</option>
+              <option value="college">Higher Secondary / College</option>
+              <option value="university">University / Higher Ed</option>
+            </select>
+          </div>
+
+          {/* Category Filter */}
+          <div>
+            <select
+              value={selectedCategory}
+              onChange={(e) => {
+                setSelectedCategory(e.target.value)
+                setCurrentPage(1)
+              }}
+              className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white font-medium text-slate-700"
+            >
+              <option value="All Categories">All Cadres (Teaching & Staff)</option>
+              <option value="Teaching">Teaching Faculty Only</option>
+              <option value="Non-Teaching">Non-Teaching Staff Only</option>
+            </select>
+          </div>
+
+          {/* Department Filter */}
+          <div>
+            <select
+              value={selectedDepartment}
+              onChange={(e) => {
+                setSelectedDepartment(e.target.value)
+                setCurrentPage(1)
+              }}
+              className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white font-medium text-slate-700"
+            >
+              <option value="All Departments">All Departments</option>
+              {availableDepartments.map(dept => (
+                <option key={dept} value={dept}>{dept}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Secondary Filter Line */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100 text-xs">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-slate-400 font-semibold">Status:</span>
+            {['All', 'Active', 'On Leave', 'Suspended'].map(stat => (
+              <button
+                key={stat}
+                onClick={() => {
+                  setSelectedStatus(stat)
+                  setCurrentPage(1)
+                }}
+                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                  selectedStatus === stat
+                    ? 'bg-slate-900 text-white shadow-sm'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                {stat}
+              </button>
+            ))}
+
+            <span className="text-slate-300 ml-2">|</span>
+
+            <span className="text-slate-400 font-semibold ml-2">Type:</span>
+            <select
+              value={selectedEmploymentType}
+              onChange={(e) => {
+                setSelectedEmploymentType(e.target.value)
+                setCurrentPage(1)
+              }}
+              className="px-2.5 py-1 rounded-lg border border-slate-200 bg-slate-50 text-xs text-slate-700 font-medium"
+            >
+              <option value="All">All Types</option>
+              <option value="Permanent / Regular">Permanent / Regular</option>
+              <option value="Contract">Contract</option>
+              <option value="Visiting / Adjunct">Visiting / Adjunct</option>
+              <option value="Probation">Probation</option>
+            </select>
+          </div>
+
+          {/* Clear Filters Button */}
+          {isAnyFilterActive && (
+            <button
+              onClick={handleClearFilters}
+              className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50 border border-rose-200 transition-colors ml-auto"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Clear Filters</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Bulk Action Bar (when rows are selected) */}
+      {selectedIds.length > 0 && (
+        <div className="bg-emerald-900 text-white p-3.5 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-lg animate-in fade-in duration-150">
+          <div className="flex items-center gap-2.5">
+            <span className="w-6 h-6 rounded-lg bg-emerald-500/30 flex items-center justify-center font-mono text-xs font-bold text-emerald-300">
+              {selectedIds.length}
+            </span>
+            <span className="text-xs font-semibold">
+              Faculty / Staff Selected
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap text-xs">
+            <button
+              onClick={handleBulkPrintIdCards}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-800 hover:bg-emerald-700 text-white rounded-lg font-semibold transition-colors"
+            >
+              <CreditCard className="w-3.5 h-3.5 text-emerald-300" />
+              <span>Print ID Cards</span>
+            </button>
+            <button
+              onClick={() => handleExportCSV(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-800 hover:bg-emerald-700 text-white rounded-lg font-semibold transition-colors"
+            >
+              <Download className="w-3.5 h-3.5 text-emerald-300" />
+              <span>Export Selected CSV</span>
+            </button>
+            <button
+              onClick={() => handleBulkStatusChange('Active')}
+              className="px-2.5 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white rounded-lg font-semibold transition-colors"
+            >
+              Set Active
+            </button>
+            <button
+              onClick={() => setSelectedIds([])}
+              className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg font-semibold transition-colors"
+            >
+              Deselect All
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 1: STAFF DIRECTORY */}
+      {activeTab === 'directory' && (
+        <>
+          {filteredStaff.length > 0 ? (
+            viewMode === 'table' ? (
+              /* Table Layout */
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider">
+                      <tr>
+                        <th className="p-3.5 w-10 text-center">
+                          <input
+                            type="checkbox"
+                            checked={isPageAllSelected}
+                            onChange={handleSelectAll}
+                            className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                          />
+                        </th>
+                        <th 
+                          onClick={() => handleSort('name')}
+                          className="p-3.5 cursor-pointer hover:bg-slate-100 transition-colors"
+                        >
+                          <div className="flex items-center gap-1.5">
+                            <span>Staff Member</span>
+                            <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                          </div>
+                        </th>
+                        <th 
+                          onClick={() => handleSort('empId')}
+                          className="p-3.5 cursor-pointer hover:bg-slate-100 transition-colors"
+                        >
+                          <div className="flex items-center gap-1.5">
+                            <span>Employee ID</span>
+                            <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                          </div>
+                        </th>
+                        <th 
+                          onClick={() => handleSort('department')}
+                          className="p-3.5 cursor-pointer hover:bg-slate-100 transition-colors"
+                        >
+                          <div className="flex items-center gap-1.5">
+                            <span>Department & Role</span>
+                            <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                          </div>
+                        </th>
+                        <th className="p-3.5">
+                          <span>Workload / Class In-Charge</span>
+                        </th>
+                        <th className="p-3.5">
+                          <span>Contact</span>
+                        </th>
+                        <th className="p-3.5">
+                          <span>Status</span>
+                        </th>
+                        <th className="p-3.5 text-right">
+                          <span>Actions</span>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-slate-700">
+                      {paginatedStaff.map((staff) => {
+                        const isSelected = selectedIds.includes(staff.id)
+                        return (
+                          <tr 
+                            key={staff.id} 
+                            className={`hover:bg-slate-50/80 transition-colors ${isSelected ? 'bg-emerald-50/30' : ''}`}
+                          >
+                            <td className="p-3.5 text-center">
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => handleToggleSelect(staff.id)}
+                                className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                              />
+                            </td>
+
+                            {/* Name + Avatar */}
+                            <td className="p-3.5">
+                              <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden">
+                                  {staff.photoUrl ? (
+                                    <img src={staff.photoUrl} alt={staff.name} className="w-full h-full object-cover" />
+                                  ) : (
+                                    staff.name.charAt(0)
+                                  )}
+                                </div>
+                                <div>
+                                  <button
+                                    onClick={() => handleOpenDrawer(staff)}
+                                    className="font-bold text-slate-900 hover:text-emerald-700 text-left block transition-colors"
+                                  >
+                                    {staff.name}
+                                  </button>
+                                  <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mt-0.5">
+                                    <span className="capitalize">{staff.gender || 'Not specified'}</span>
+                                    <span>•</span>
+                                    <span className="font-mono">{staff.cnic || 'CNIC pending'}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+
+                            {/* Employee ID */}
+                            <td className="p-3.5">
+                              <span className="font-mono text-xs px-2.5 py-1 bg-slate-100 text-slate-700 rounded-lg font-bold border border-slate-200">
+                                {staff.empId}
+                              </span>
+                            </td>
+
+                            {/* Department & Role */}
+                            <td className="p-3.5">
+                              <div>
+                                <strong className="text-slate-800 block">{staff.designation || 'Faculty Member'}</strong>
+                                <span className="text-[11px] text-slate-500">
+                                  {staff.department || 'General'} • <span className="capitalize">{staff.category || 'Teaching'}</span>
+                                </span>
+                              </div>
+                            </td>
+
+                            {/* Workload / Class In-charge */}
+                            <td className="p-3.5">
+                              {staff.category === 'Non-Teaching' ? (
+                                <span className="text-[11px] text-slate-500 font-medium">Administration / Operations</span>
+                              ) : staff.isClassTeacher ? (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold text-[11px]">
+                                  ★ Class {staff.classTeacherClass}-{staff.classTeacherSection || 'A'}
+                                </span>
+                              ) : (
+                                <span className="text-[11px] text-slate-500">
+                                  {staff.subjects && staff.subjects.length > 0 ? `${staff.subjects.length} Assigned Course(s)` : 'General Subject Teacher'}
+                                </span>
+                              )}
+                            </td>
+
+                            {/* Contact */}
+                            <td className="p-3.5">
+                              <div className="space-y-0.5">
+                                <div className="flex items-center gap-1 text-[11px] font-mono text-slate-700">
+                                  <Phone className="w-3 h-3 text-slate-400" />
+                                  <span>{staff.phone || '—'}</span>
+                                </div>
+                                <div className="flex items-center gap-1 text-[11px] text-slate-500 truncate max-w-[150px]">
+                                  <Mail className="w-3 h-3 text-slate-400" />
+                                  <span>{staff.email || '—'}</span>
+                                </div>
+                              </div>
+                            </td>
+
+                            {/* Status */}
+                            <td className="p-3.5">
+                              {staff.status === 'On Leave' ? (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                                  <Clock className="w-3 h-3 text-amber-600 animate-pulse" />
+                                  <span>On Leave</span>
+                                </span>
+                              ) : staff.status === 'Suspended' ? (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-50 text-rose-800 border border-rose-200">
+                                  Suspended
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                  <span>Active</span>
+                                </span>
+                              )}
+                            </td>
+
+                            {/* Actions */}
+                            <td className="p-3.5 text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                <button
+                                  onClick={() => handleOpenDrawer(staff)}
+                                  className="p-1.5 text-slate-400 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors"
+                                  title="View Full Profile Dossier"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleOpenIdCard(staff)}
+                                  className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                  title="Print ID Card"
+                                >
+                                  <CreditCard className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleOpenPaySlip(staff)}
+                                  className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                                  title="Generate Monthly Pay Slip"
+                                >
+                                  <Receipt className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleOpenEditModal(staff)}
+                                  className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                  title="Edit Staff Member"
+                                >
+                                  <Edit2 className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => initiateDelete(staff)}
+                                  className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                                  title="Deactivate / Delete"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination Controls */}
+                <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+                  <div>
+                    Showing <span className="font-semibold text-slate-700">{(currentPage - 1) * pageSize + 1}</span> to <span className="font-semibold text-slate-700">{Math.min(currentPage * pageSize, filteredStaff.length)}</span> of <span className="font-semibold text-slate-700">{filteredStaff.length}</span> staff members
                   </div>
 
-                  <div className="mt-4 p-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        onClick={() => setSelectedSalaryTeacher(t)}
-                        className="flex items-center gap-1.5 px-2 py-1 text-xs font-bold rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors cursor-pointer"
-                        title="Generate Official Monthly Salary Slip"
-                      >
-                        <Receipt className="w-3.5 h-3.5" />
-                        <span>Pay Slip</span>
-                      </button>
-
-                      {t.status === 'On Leave' ? (
-                        <>
-                          <button
-                            onClick={() => handleResumeDuty(t)}
-                            className="px-2 py-1 text-xs font-bold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors cursor-pointer"
-                            title="End Leave and Resume Academic Schedule"
-                          >
-                            Resume
-                          </button>
-                          <button
-                            onClick={() => setLeaveDutyOrder(t)}
-                            className="px-2 py-1 text-xs font-bold rounded-lg bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200 transition-colors cursor-pointer"
-                            title="Print Official Proxy Duty Order"
-                          >
-                            Order
-                          </button>
-                        </>
-                      ) : (
-                        <button
-                          onClick={() => openLeaveModal(t)}
-                          className="flex items-center gap-1 px-2 py-1 text-xs font-bold rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors cursor-pointer"
-                          title="Assign Leave & Proxy Substitution"
-                        >
-                          <UserCheck className="w-3.5 h-3.5" />
-                          <span>Leave/Proxy</span>
-                        </button>
-                      )}
-                    </div>
-
+                  {totalPages > 1 && (
                     <div className="flex items-center gap-1">
-                      <button 
-                        onClick={() => openEditModal(t)} 
-                        className="p-1.5 text-slate-400 hover:text-emerald-600 rounded transition-colors"
-                        title="Edit Faculty Member"
+                      <button
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
                       >
-                        <Edit2 className="w-4 h-4" />
+                        <ChevronLeft className="w-4 h-4" />
                       </button>
-                      <button 
-                        onClick={() => handleDelete(t.id, t.name)} 
-                        className="p-1.5 text-slate-400 hover:text-rose-600 rounded transition-colors"
-                        title="Delete Faculty Member"
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                        <button
+                          key={page}
+                          onClick={() => setCurrentPage(page)}
+                          className={`w-7 h-7 rounded-lg font-bold ${
+                            currentPage === page
+                              ? 'bg-emerald-600 text-white shadow-sm'
+                              : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      ))}
+                      <button
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        className="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <ChevronRight className="w-4 h-4" />
                       </button>
                     </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              /* Cards Grid Layout */
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {paginatedStaff.map((staff) => {
+                  const basic = Number(staff.basicSalary || 0)
+                  const allow = Number(staff.allowance || 0)
+                  const ded = Number(staff.deductions || 0)
+                  const net = staff.netSalary || (basic + allow - ded)
+
+                  return (
+                    <div
+                      key={staff.id}
+                      className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all flex flex-col justify-between overflow-hidden"
+                    >
+                      <div className="p-5">
+                        <div className="flex items-start justify-between">
+                          <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-base overflow-hidden">
+                            {staff.photoUrl ? (
+                              <img src={staff.photoUrl} alt={staff.name} className="w-full h-full object-cover" />
+                            ) : (
+                              staff.name.charAt(0)
+                            )}
+                          </div>
+                          <span className="font-mono text-xs px-2.5 py-1 bg-slate-100 text-slate-700 rounded-lg font-bold border border-slate-200">
+                            {staff.empId}
+                          </span>
+                        </div>
+
+                        <h3 
+                          onClick={() => handleOpenDrawer(staff)}
+                          className="font-bold text-slate-900 mt-3.5 text-base hover:text-emerald-700 cursor-pointer transition-colors"
+                        >
+                          {staff.name}
+                        </h3>
+                        <p className="text-xs text-emerald-700 font-semibold">{staff.designation || 'Faculty Member'}</p>
+                        <p className="text-[11px] text-slate-500 mt-0.5">{staff.department} Department</p>
+
+                        {/* Class Teacher Badge if assigned */}
+                        {staff.isClassTeacher && (
+                          <div className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800 text-[11px] font-bold">
+                            <span>★ Class Teacher: Class {staff.classTeacherClass}-{staff.classTeacherSection || 'A'}</span>
+                          </div>
+                        )}
+
+                        {/* On Leave Notification */}
+                        {staff.status === 'On Leave' && (
+                          <div className="mt-2.5 flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-[11px] font-semibold">
+                            <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0 animate-pulse" />
+                            <span>On Leave (Proxy: {staff.leaveInfo?.substituteTeacherName || 'Assigned'})</span>
+                          </div>
+                        )}
+
+                        <div className="mt-4 pt-3 border-t border-slate-100 space-y-2 text-xs text-slate-500">
+                          <div className="flex items-center gap-2">
+                            <Phone className="w-3.5 h-3.5 text-slate-400" />
+                            <span className="font-mono">{staff.phone || 'No phone registered'}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
+                            <span className="font-mono font-bold text-slate-700">Net Pay: Rs. {net.toLocaleString()}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Card Footer Actions */}
+                      <div className="p-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => handleOpenPaySlip(staff)}
+                            className="px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors"
+                            title="Generate Pay Slip"
+                          >
+                            Pay Slip
+                          </button>
+                          <button
+                            onClick={() => handleOpenIdCard(staff)}
+                            className="px-2.5 py-1 text-xs font-bold rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                            title="Print ID Card"
+                          >
+                            ID Card
+                          </button>
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => handleOpenDrawer(staff)}
+                            className="p-1.5 text-slate-400 hover:text-emerald-700 rounded-lg transition-colors"
+                            title="View Profile Dossier"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleOpenEditModal(staff)}
+                            className="p-1.5 text-slate-400 hover:text-indigo-600 rounded-lg transition-colors"
+                            title="Edit Staff Member"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => initiateDelete(staff)}
+                            className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg transition-colors"
+                            title="Delete Staff Member"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )
+          ) : (
+            /* Empty State */
+            <div className="bg-white rounded-2xl p-12 border border-slate-200 text-center shadow-sm max-w-xl mx-auto space-y-4">
+              <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto shadow-inner">
+                <Users className="w-8 h-8" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-800">
+                  {isAnyFilterActive ? 'No Staff Found Matching Current Filters' : 'No Faculty or Staff Members Registered'}
+                </h3>
+                <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+                  {isAnyFilterActive
+                    ? 'Try adjusting your search criteria, level, category, or status filters.'
+                    : 'Get started by manually registering a faculty member or importing a staff spreadsheet via CSV.'}
+                </p>
+              </div>
+              <div className="flex items-center justify-center gap-3 pt-2">
+                {isAnyFilterActive ? (
+                  <button
+                    onClick={handleClearFilters}
+                    className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-colors shadow-sm"
+                  >
+                    Clear All Filters
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={handleOpenAddModal}
+                      className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 transition-colors shadow-sm flex items-center gap-1.5"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>+ Add Staff Member</span>
+                    </button>
+                    <button
+                      onClick={() => setIsImportModalOpen(true)}
+                      className="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold hover:bg-slate-200 transition-colors"
+                    >
+                      Import CSV Template
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* TAB 2: WORKLOAD & ASSIGNMENTS */}
+      {activeTab === 'workload' && (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div>
+              <h2 className="text-base font-bold text-slate-900">Academic Workload & Timetable Distribution</h2>
+              <p className="text-xs text-slate-500">Weekly periods and credit hour distribution across faculty</p>
+            </div>
+            <span className="text-xs px-3 py-1 bg-emerald-50 text-emerald-800 font-bold rounded-lg border border-emerald-200">
+              Active Faculty: {teachingCount}
+            </span>
+          </div>
+
+          {teachingCount > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider">
+                  <tr>
+                    <th className="p-3.5">Faculty Member</th>
+                    <th className="p-3.5">Level & Cadre</th>
+                    <th className="p-3.5">Class In-Charge</th>
+                    <th className="p-3.5">Assigned Courses</th>
+                    <th className="p-3.5 text-center">Weekly Periods / Credits</th>
+                    <th className="p-3.5 text-center">Load Health</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {instituteStaff.filter(s => (s.category || 'Teaching') === 'Teaching').map(teacher => {
+                    const weeklyLoad = teacher.weeklyPeriods || teacher.weeklyCreditHours || 18
+                    const isOverloaded = weeklyLoad > 28
+                    return (
+                      <tr key={teacher.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="p-3.5 font-bold text-slate-900">
+                          {teacher.name}
+                          <span className="text-[11px] text-slate-400 block font-normal">{teacher.empId}</span>
+                        </td>
+                        <td className="p-3.5 capitalize text-slate-600">
+                          {teacher.level || 'School'} • {teacher.designation}
+                        </td>
+                        <td className="p-3.5">
+                          {teacher.isClassTeacher ? (
+                            <span className="px-2 py-0.5 rounded font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px]">
+                              Class {teacher.classTeacherClass}-{teacher.classTeacherSection || 'A'}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400 text-[11px]">—</span>
+                          )}
+                        </td>
+                        <td className="p-3.5 text-slate-700">
+                          {teacher.subjects && teacher.subjects.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {teacher.subjects.map((sub, i) => (
+                                <span key={i} className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-mono text-[10px]">
+                                  {sub.name || sub}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-slate-400 text-[11px]">General Faculty</span>
+                          )}
+                        </td>
+                        <td className="p-3.5 text-center font-mono font-bold text-slate-800">
+                          {weeklyLoad} {teacher.level === 'university' ? 'Cr. Hrs' : 'Periods/Wk'}
+                        </td>
+                        <td className="p-3.5 text-center">
+                          {isOverloaded ? (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                              Overloaded
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              Optimal
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="p-8 text-center text-slate-400 text-xs">
+              No teaching faculty registered yet.
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB 3: LEAVES & PROXIES */}
+      {activeTab === 'leaves' && (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div>
+              <h2 className="text-base font-bold text-slate-900">Faculty Leave & Timetable Proxy Substitutions</h2>
+              <p className="text-xs text-slate-500">Track approved leaves, substitute teachers, and duty resumption</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {instituteStaff.map((staff) => {
+              const isOnLeave = staff.status === 'On Leave'
+              return (
+                <div 
+                  key={staff.id} 
+                  className={`p-4 rounded-xl border transition-all ${
+                    isOnLeave ? 'border-amber-300 bg-amber-50/40' : 'border-slate-200 bg-slate-50/50'
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h4 className="font-bold text-slate-900 text-sm">{staff.name}</h4>
+                      <p className="text-xs text-slate-500">{staff.designation} • {staff.department}</p>
+                    </div>
+                    {isOnLeave ? (
+                      <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[11px] font-bold border border-amber-300 animate-pulse">
+                        On Leave
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-semibold border border-emerald-200">
+                        Active Duty
+                      </span>
+                    )}
+                  </div>
+
+                  {isOnLeave && (
+                    <div className="mt-3 pt-3 border-t border-amber-200 text-xs space-y-1.5 text-amber-900">
+                      <div>
+                        <span className="text-amber-700">Period: </span>
+                        <strong>{staff.leaveInfo?.startDate} to {staff.leaveInfo?.endDate}</strong>
+                      </div>
+                      <div>
+                        <span className="text-amber-700">Proxy Substitute: </span>
+                        <strong>{staff.leaveInfo?.substituteTeacherName || 'Assigned Proxy'}</strong>
+                      </div>
+                      <div>
+                        <span className="text-amber-700">Handover: </span>
+                        <p className="italic text-amber-800 mt-0.5">{staff.leaveInfo?.handoverNotes}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="mt-4 pt-3 border-t border-slate-200/60 flex items-center justify-end gap-2 text-xs">
+                    {isOnLeave ? (
+                      <button
+                        onClick={() => handleResumeDuty(staff)}
+                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-sm transition-colors"
+                      >
+                        Resume Active Duty
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleOpenLeaveModal(staff)}
+                        className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold rounded-lg border border-indigo-200 transition-colors"
+                      >
+                        Assign Leave & Proxy
+                      </button>
+                    )}
                   </div>
                 </div>
               )
             })}
           </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 text-xs text-slate-500">
-              <div>
-                Showing Page <span className="font-semibold text-slate-700">{currentPage}</span> of <span className="font-semibold text-slate-700">{totalPages}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
-                  disabled={currentPage === 1}
-                  className="px-2.5 py-1.5 rounded border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`w-7 h-7 rounded font-semibold ${
-                      currentPage === page
-                        ? 'bg-emerald-600 text-white'
-                        : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
-                    }`}
-                  >
-                    {page}
-                  </button>
-                ))}
-                <button
-                  onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
-                  disabled={currentPage === totalPages}
-                  className="px-2.5 py-1.5 rounded border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="bg-white rounded-xl p-12 border border-slate-200 text-center shadow-sm">
-          <Users className="w-12 h-12 text-slate-300 mx-auto mb-2" />
-          <h3 className="text-base font-bold text-slate-700">No Faculty Members Found</h3>
-          <p className="text-xs text-slate-400 mt-1">Get started by clicking the "Add New Teacher" button above.</p>
         </div>
       )}
 
-      {/* Add / Edit Faculty Modal */}
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title={editingTeacher ? 'Edit Faculty Details & Compensation' : 'Register New Faculty Member'}
-      >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Full Name *</label>
-            <input
-              type="text"
-              required
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-              placeholder="e.g. Dr. Shahida Parveen"
-            />
+      {/* TAB 4: COMPENSATION & PAYROLL */}
+      {activeTab === 'payroll' && (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+            <div>
+              <h2 className="text-base font-bold text-slate-900">Institutional Payroll & Compensation Registry</h2>
+              <p className="text-xs text-slate-500">Official monthly salary disbursement, allowances, and printable pay vouchers</p>
+            </div>
+            <button
+              onClick={() => handleExportCSV(false)}
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-sm transition-all"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Export Payroll Sheet</span>
+            </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          {filteredStaff.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider">
+                  <tr>
+                    <th className="p-3.5">Staff Member</th>
+                    <th className="p-3.5">Employee ID</th>
+                    <th className="p-3.5">Basic Pay</th>
+                    <th className="p-3.5">Allowances</th>
+                    <th className="p-3.5">Deductions</th>
+                    <th className="p-3.5">Net Take-Home</th>
+                    <th className="p-3.5">Bank IBAN</th>
+                    <th className="p-3.5 text-right">Pay Slip</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredStaff.map((staff) => {
+                    const basic = Number(staff.basicSalary || 0)
+                    const allow = Number(staff.allowance || 0)
+                    const ded = Number(staff.deductions || 0)
+                    const net = staff.netSalary || (basic + allow - ded)
+
+                    return (
+                      <tr key={staff.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="p-3.5 font-bold text-slate-900">
+                          {staff.name}
+                          <span className="text-[11px] text-slate-400 block font-normal">{staff.designation}</span>
+                        </td>
+                        <td className="p-3.5 font-mono font-bold text-slate-700">
+                          {staff.empId}
+                        </td>
+                        <td className="p-3.5 font-mono text-slate-700">
+                          Rs. {basic.toLocaleString()}
+                        </td>
+                        <td className="p-3.5 font-mono text-slate-700">
+                          Rs. {allow.toLocaleString()}
+                        </td>
+                        <td className="p-3.5 font-mono text-rose-600">
+                          - Rs. {ded.toLocaleString()}
+                        </td>
+                        <td className="p-3.5 font-mono font-black text-emerald-800">
+                          Rs. {net.toLocaleString()}
+                        </td>
+                        <td className="p-3.5 font-mono text-slate-500 text-[11px]">
+                          {staff.bankAccount || 'PK72HABB000192837465'}
+                        </td>
+                        <td className="p-3.5 text-right">
+                          <button
+                            onClick={() => handleOpenPaySlip(staff)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold rounded-lg transition-colors ml-auto text-xs"
+                          >
+                            <Receipt className="w-3.5 h-3.5" />
+                            <span>Pay Slip</span>
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="p-8 text-center text-slate-400 text-xs">
+              No staff members registered in payroll.
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Leave & Proxy Assignment Modal */}
+      {selectedLeaveStaff && (
+        <Modal
+          isOpen={Boolean(selectedLeaveStaff)}
+          onClose={() => setSelectedLeaveStaff(null)}
+          title={`Assign Leave & Substitute Proxy for ${selectedLeaveStaff.name}`}
+        >
+          <form onSubmit={handleAssignLeave} className="space-y-4">
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800">
+              Marking a faculty member on leave automatically transfers timetable responsibilities to the assigned substitute teacher.
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Leave Type</label>
+                <select
+                  value={leaveFormData.leaveType}
+                  onChange={(e) => setLeaveFormData({ ...leaveFormData, leaveType: e.target.value })}
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200"
+                >
+                  <option value="Casual Leave">Casual Leave</option>
+                  <option value="Medical / Sick Leave">Medical / Sick Leave</option>
+                  <option value="Annual / Earned Leave">Annual / Earned Leave</option>
+                  <option value="Duty / Official Leave">Duty / Official Leave</option>
+                  <option value="Hajj / Umrah Leave">Hajj / Umrah Leave</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Substitute Proxy Teacher *</label>
+                <select
+                  required
+                  value={leaveFormData.substituteTeacherId}
+                  onChange={(e) => {
+                    const found = instituteStaff.find(t => t.id === e.target.value)
+                    setLeaveFormData({
+                      ...leaveFormData,
+                      substituteTeacherId: e.target.value,
+                      substituteTeacherName: found?.name || 'Assigned Proxy'
+                    })
+                  }}
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200"
+                >
+                  <option value="">-- Select Faculty Member --</option>
+                  {instituteStaff
+                    .filter(t => t.id !== selectedLeaveStaff.id && t.status !== 'On Leave')
+                    .map(t => (
+                      <option key={t.id} value={t.id}>
+                        {t.name} ({t.department} - {t.empId})
+                      </option>
+                    ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Start Date</label>
+                <input
+                  type="date"
+                  required
+                  value={leaveFormData.startDate}
+                  onChange={(e) => setLeaveFormData({ ...leaveFormData, startDate: e.target.value })}
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">End Date</label>
+                <input
+                  type="date"
+                  required
+                  value={leaveFormData.endDate}
+                  onChange={(e) => setLeaveFormData({ ...leaveFormData, endDate: e.target.value })}
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200"
+                />
+              </div>
+            </div>
+
             <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Employee ID (Unique) *</label>
+              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Reason for Leave</label>
               <input
                 type="text"
                 required
-                value={formData.empId}
-                onChange={(e) => setFormData({ ...formData, empId: e.target.value })}
-                className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                placeholder="EMP-01"
+                value={leaveFormData.reason}
+                onChange={(e) => setLeaveFormData({ ...leaveFormData, reason: e.target.value })}
+                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200"
+                placeholder="Urgent Personal / Medical Affairs"
               />
             </div>
+
             <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Designation</label>
-              <input
-                type="text"
-                value={formData.designation}
-                onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
-                className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                placeholder="Senior Lecturer / Principal"
+              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Handover Directives & Coursework Notes</label>
+              <textarea
+                rows={3}
+                value={leaveFormData.handoverNotes}
+                onChange={(e) => setLeaveFormData({ ...leaveFormData, handoverNotes: e.target.value })}
+                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200"
+                placeholder="Specific instructions for course syllabus, exams, and class supervision..."
               />
             </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Department</label>
-              <select
-                value={formData.department}
-                onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-              >
-                <option value="Sciences">Sciences</option>
-                <option value="Computer Science">Computer Science</option>
-                <option value="Mathematics">Mathematics</option>
-                <option value="English & Languages">English & Languages</option>
-                <option value="Social Sciences">Social Sciences</option>
-                <option value="Administration">Administration</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Status</label>
-              <select
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-              >
-                <option value="Active">Active</option>
-                <option value="On Leave">On Leave</option>
-                <option value="Resigned">Resigned</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Phone Number</label>
-              <input
-                type="tel"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                placeholder="+92 3XX-XXXXXXX"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Email Address</label>
-              <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                placeholder="teacher@sms.edu"
-              />
-            </div>
-          </div>
-
-          {/* Salary Structure Section */}
-          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
-            <span className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-              Faculty Salary Package (PKR)
-            </span>
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-500 mb-1">Basic Pay</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={formData.basicSalary}
-                  onChange={(e) => setFormData({ ...formData, basicSalary: Number(e.target.value) })}
-                  className="w-full px-2.5 py-1.5 text-xs rounded border border-slate-200 bg-white"
-                />
-              </div>
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-500 mb-1">Allowances</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={formData.allowance}
-                  onChange={(e) => setFormData({ ...formData, allowance: Number(e.target.value) })}
-                  className="w-full px-2.5 py-1.5 text-xs rounded border border-slate-200 bg-white"
-                />
-              </div>
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-500 mb-1">Deductions (Tax/PF)</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={formData.deductions}
-                  onChange={(e) => setFormData({ ...formData, deductions: Number(e.target.value) })}
-                  className="w-full px-2.5 py-1.5 text-xs rounded border border-slate-200 bg-white"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-500 mb-1">Disbursement Bank Account (IBAN)</label>
-              <input
-                type="text"
-                value={formData.bankAccount}
-                onChange={(e) => setFormData({ ...formData, bankAccount: e.target.value })}
-                className="w-full px-2.5 py-1.5 text-xs rounded border border-slate-200 font-mono bg-white"
-                placeholder="PK72HABB000192837465"
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
-            <button
-              type="button"
-              onClick={() => setIsModalOpen(false)}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow transition-all"
-            >
-              {editingTeacher ? 'Update Faculty' : 'Add Faculty'}
-            </button>
-          </div>
-        </form>
-      </Modal>
-
-      {/* Official Monthly Salary Slip Modal */}
-      {selectedSalaryTeacher && (
-        <Modal
-          isOpen={Boolean(selectedSalaryTeacher)}
-          onClose={() => setSelectedSalaryTeacher(null)}
-          title="Official Faculty Monthly Salary Slip / Pay Voucher"
-        >
-          <div className="space-y-4">
-            <div 
-              id="printable-salary-slip"
-              className="p-6 bg-white border-2 border-slate-300 rounded-2xl space-y-4 print:border-black"
-            >
-              {/* Slip Header */}
-              <div className="text-center border-b pb-4">
-                <School className="w-8 h-8 text-emerald-600 mx-auto mb-1" />
-                <h3 className="text-base font-black uppercase tracking-wider text-slate-900">
-                  {currentInstitute?.name || institutes[0]?.name || 'CENTRAL HIGH SCHOOL'}
-                </h3>
-                <p className="text-xs text-slate-500">Finance & Payroll Disbursement Department</p>
-                <div className="mt-2 inline-flex items-center gap-2">
-                  <span className="font-mono text-[11px] font-bold px-2.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wider">
-                    PAY SLIP FOR {salaryMonth}
-                  </span>
-                </div>
-              </div>
-
-              {/* Faculty Info */}
-              <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-3 rounded-lg border">
-                <div><span className="text-slate-400">Employee Name:</span> <strong className="text-slate-800">{selectedSalaryTeacher.name}</strong></div>
-                <div><span className="text-slate-400">Employee ID:</span> <strong className="text-slate-800 font-mono">{selectedSalaryTeacher.empId}</strong></div>
-                <div><span className="text-slate-400">Designation:</span> <strong className="text-slate-800">{selectedSalaryTeacher.designation}</strong></div>
-                <div><span className="text-slate-400">Department:</span> <strong className="text-slate-800">{selectedSalaryTeacher.department}</strong></div>
-                <div className="col-span-2"><span className="text-slate-400">Bank Account:</span> <strong className="text-slate-800 font-mono">{selectedSalaryTeacher.bankAccount || 'PK72HABB000192837465'}</strong></div>
-              </div>
-
-              {/* Earnings vs Deductions Table */}
-              <div className="grid grid-cols-2 gap-3 text-xs">
-                {/* Earnings */}
-                <div className="border rounded-lg overflow-hidden">
-                  <div className="bg-emerald-50 px-3 py-1.5 font-bold text-emerald-800 border-b">Earnings (PKR)</div>
-                  <div className="p-3 space-y-1.5">
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Basic Salary:</span>
-                      <strong className="font-mono">Rs. {(selectedSalaryTeacher.basicSalary || 65000).toLocaleString()}</strong>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Allowances (Medical/Conveyance):</span>
-                      <strong className="font-mono">Rs. {(selectedSalaryTeacher.allowance || 15000).toLocaleString()}</strong>
-                    </div>
-                    <div className="pt-2 border-t flex justify-between font-bold text-slate-800">
-                      <span>Gross Earnings:</span>
-                      <span className="font-mono">Rs. {((selectedSalaryTeacher.basicSalary || 65000) + (selectedSalaryTeacher.allowance || 15000)).toLocaleString()}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Deductions */}
-                <div className="border rounded-lg overflow-hidden">
-                  <div className="bg-rose-50 px-3 py-1.5 font-bold text-rose-800 border-b">Deductions (PKR)</div>
-                  <div className="p-3 space-y-1.5">
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Income Tax (Withheld):</span>
-                      <strong className="font-mono text-rose-600">Rs. {Math.round((selectedSalaryTeacher.deductions || 3500) * 0.6).toLocaleString()}</strong>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Provident Fund / EOBI:</span>
-                      <strong className="font-mono text-rose-600">Rs. {Math.round((selectedSalaryTeacher.deductions || 3500) * 0.4).toLocaleString()}</strong>
-                    </div>
-                    <div className="pt-2 border-t flex justify-between font-bold text-rose-700">
-                      <span>Total Deductions:</span>
-                      <span className="font-mono">Rs. {(selectedSalaryTeacher.deductions || 3500).toLocaleString()}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Net Payable Highlight */}
-              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center justify-between">
-                <div>
-                  <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider block">Net Take-Home Salary</span>
-                  <span className="text-[10px] text-slate-500">Credited via Electronic Bank Transfer</span>
-                </div>
-                <div className="text-right">
-                  <span className="font-mono text-xl font-black text-emerald-800">
-                    Rs. {((selectedSalaryTeacher.basicSalary || 65000) + (selectedSalaryTeacher.allowance || 15000) - (selectedSalaryTeacher.deductions || 3500)).toLocaleString()}
-                  </span>
-                </div>
-              </div>
-
-              {/* Signatures */}
-              <div className="pt-8 text-[11px] text-slate-400 border-t flex justify-between">
-                <span>Accounts Officer</span>
-                <span>Faculty Signature</span>
-                <span>Bursar / Principal Seal</span>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2.5 pt-2">
+            <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
               <button
                 type="button"
-                onClick={() => setSelectedSalaryTeacher(null)}
+                onClick={() => setSelectedLeaveStaff(null)}
                 className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg"
               >
-                Close
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm"
+              >
+                Approve Leave & Assign Proxy
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {/* Delete / Deactivation Warning Dialog */}
+      {staffToDelete && (
+        <Modal
+          isOpen={Boolean(staffToDelete)}
+          onClose={() => setStaffToDelete(null)}
+          title="Confirm Staff Removal / Deactivation"
+        >
+          <div className="space-y-4">
+            <div className="flex items-start gap-3 p-4 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800">
+              <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+              <div>
+                <strong className="block font-bold">Are you sure you want to remove this staff record?</strong>
+                <p className="mt-1">
+                  You are about to delete the faculty record for <strong className="text-slate-900">{staffToDelete.name}</strong> ({staffToDelete.empId}).
+                </p>
+              </div>
+            </div>
+
+            {staffToDelete.isClassTeacher && (
+              <div className="p-3.5 bg-amber-50 border border-amber-300 rounded-xl text-xs text-amber-900">
+                <div className="flex items-center gap-1.5 font-bold text-amber-900 mb-1">
+                  <ShieldAlert className="w-4 h-4 text-amber-700" />
+                  <span>Primary Class Teacher Warning</span>
+                </div>
+                <p>
+                  This faculty member is currently assigned as the <strong>Class Teacher for Class {staffToDelete.classTeacherClass}-{staffToDelete.classTeacherSection || 'A'}</strong>. Removing them will leave this class without an assigned in-charge. Please ensure a replacement class teacher is appointed.
+                </p>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setStaffToDelete(null)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg"
+              >
+                Cancel
               </button>
               <button
                 type="button"
-                onClick={() => window.print()}
-                className="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm flex items-center gap-1.5"
+                onClick={confirmDelete}
+                className="px-5 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-lg shadow-sm"
               >
-                <Printer className="w-3.5 h-3.5" />
-                <span>Print Official Pay Slip (PDF)</span>
+                Confirm & Remove Staff
               </button>
             </div>
           </div>
         </Modal>
       )}
+
+      {/* CSV Import Modal */}
+      {isImportModalOpen && (
+        <Modal
+          isOpen={isImportModalOpen}
+          onClose={() => {
+            setIsImportModalOpen(false)
+            setCsvFile(null)
+            setCsvParsedRows([])
+            setCsvParseErrors([])
+          }}
+          title="Import Faculty & Staff via CSV Spreadsheet"
+        >
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+              <div>
+                <strong className="text-slate-800 block">Download Official Import Template</strong>
+                <span className="text-slate-500 text-[11px]">Includes all required faculty columns and sample data</span>
+              </div>
+              <button
+                type="button"
+                onClick={handleDownloadTemplate}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-colors"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Template CSV</span>
+              </button>
+            </div>
+
+            {/* Dropzone */}
+            <div 
+              onClick={() => fileInputRef.current?.click()}
+              className="border-2 border-dashed border-slate-300 hover:border-emerald-500 rounded-2xl p-6 text-center cursor-pointer bg-slate-50 hover:bg-emerald-50/20 transition-all"
+            >
+              <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+              <p className="text-xs font-bold text-slate-700">
+                {csvFile ? csvFile.name : 'Click to select or drop CSV file here'}
+              </p>
+              <p className="text-[11px] text-slate-400 mt-0.5">Maximum file size: 5MB (.csv format only)</p>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv"
+                className="hidden"
+                onChange={handleCsvFileChange}
+              />
+            </div>
+
+            {/* Parse Errors */}
+            {csvParseErrors.length > 0 && (
+              <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 space-y-1">
+                <strong className="block font-bold">Import Warnings:</strong>
+                {csvParseErrors.map((err, idx) => (
+                  <p key={idx} className="text-[11px]">• {err}</p>
+                ))}
+              </div>
+            )}
+
+            {/* Preview of Parsed Rows */}
+            {csvParsedRows.length > 0 && (
+              <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900">
+                <span className="font-bold">
+                  ✓ {csvParsedRows.length} valid staff member(s) parsed and ready to import.
+                </span>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsImportModalOpen(false)
+                  setCsvFile(null)
+                  setCsvParsedRows([])
+                }}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={csvParsedRows.length === 0}
+                onClick={handleConfirmImport}
+                className="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg shadow-sm"
+              >
+                Import {csvParsedRows.length} Staff Members
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* 5-Step Add / Edit Staff Wizard Modal */}
+      <AddStaffModal
+        isOpen={isAddModalOpen}
+        onClose={() => {
+          setIsAddModalOpen(false)
+          setEditingStaff(null)
+        }}
+        editingStaff={editingStaff}
+        classes={classes}
+        teachers={teachers}
+        currentInstitute={currentInstitute}
+        onSaveStaff={handleSaveStaff}
+      />
+
+      {/* Staff Profile Dossier Drawer */}
+      <StaffProfileDrawer
+        isOpen={Boolean(drawerStaff)}
+        onClose={() => setDrawerStaff(null)}
+        staffMember={drawerStaff}
+        onEdit={(staff) => {
+          setDrawerStaff(null)
+          handleOpenEditModal(staff)
+        }}
+        onPrintIdCard={(staff) => handleOpenIdCard(staff)}
+        onPrintPaySlip={(staff) => handleOpenPaySlip(staff)}
+        onPrintAppointmentLetter={(staff) => handleOpenAppointmentLetter(staff)}
+        onOpenLeaveModal={(staff) => handleOpenLeaveModal(staff)}
+        onResumeDuty={(staff) => handleResumeDuty(staff)}
+      />
+
+      {/* Printable Staff ID Card Modal */}
+      <StaffIdCardModal
+        isOpen={isIdCardOpen}
+        onClose={() => {
+          setIsIdCardOpen(false)
+          setIdCardStaff(null)
+        }}
+        selectedStaff={idCardStaff}
+        allStaff={instituteStaff}
+        currentInstitute={currentInstitute}
+      />
+
+      {/* Official Monthly Pay Slip Modal */}
+      <StaffPaySlipModal
+        isOpen={isPaySlipOpen}
+        onClose={() => {
+          setIsPaySlipOpen(false)
+          setPaySlipStaff(null)
+        }}
+        selectedStaff={paySlipStaff}
+        currentInstitute={currentInstitute}
+      />
+
+      {/* Official Appointment Letter Modal */}
+      <AppointmentLetterModal
+        isOpen={isAppointmentLetterOpen}
+        onClose={() => {
+          setIsAppointmentLetterOpen(false)
+          setAppointmentLetterStaff(null)
+        }}
+        selectedStaff={appointmentLetterStaff}
+        currentInstitute={currentInstitute}
+      />
+
     </div>
   )
 }

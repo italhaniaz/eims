@@ -157,7 +157,7 @@ export const InstituteAdminNavbar = ({
     switch (currentRoute) {
       case 'inst-dashboard': return 'Campus Overview'
       case 'inst-students': return 'Students & Admissions'
-      case 'inst-teachers': return 'Teachers & Faculty'
+      case 'inst-teachers': return 'Faculty & Staff'
       case 'inst-classes': return 'Classes & Sections'
       case 'inst-timetable': return 'Class Timetable Schedule'
       case 'inst-attendance': return 'Daily Attendance Log'

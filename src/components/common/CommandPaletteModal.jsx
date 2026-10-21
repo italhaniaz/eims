@@ -196,7 +196,7 @@ export const CommandPaletteModal = ({ isOpen, onClose, onNavigate, onOpenSetting
         },
         { 
           id: 'nav-tch', 
-          title: 'Teachers & Faculty Directory', 
+          title: 'Faculty & Staff Directory', 
           category: 'Faculty', 
           route: 'inst-teachers', 
           icon: Users, 
