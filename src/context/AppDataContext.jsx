@@ -10,13 +10,19 @@ export const AppDataProvider = ({ children }) => {
   const [activeProgramLevel, setActiveProgramLevel] = useState('all')
 
   const refreshData = () => {
-    setData({ ...getStoredData() })
+    const fresh = getStoredData()
+    setData({ ...fresh })
+    return fresh
   }
 
   const addItem = async (collection, item) => {
     setLoading(true)
     const created = await DataService.addItem(collection, item)
-    refreshData()
+    const fresh = getStoredData()
+    setData(prev => ({
+      ...fresh,
+      [collection]: fresh[collection] || [created, ...(prev[collection] || [])]
+    }))
     setLoading(false)
     return created
   }
@@ -24,7 +30,11 @@ export const AppDataProvider = ({ children }) => {
   const updateItem = async (collection, id, updates) => {
     setLoading(true)
     const updated = await DataService.updateItem(collection, id, updates)
-    refreshData()
+    const fresh = getStoredData()
+    setData(prev => ({
+      ...fresh,
+      [collection]: fresh[collection] || (prev[collection] || []).map(i => i.id === id ? { ...i, ...updates } : i)
+    }))
     setLoading(false)
     return updated
   }
@@ -32,7 +42,11 @@ export const AppDataProvider = ({ children }) => {
   const deleteItem = async (collection, id) => {
     setLoading(true)
     const res = await DataService.deleteItem(collection, id)
-    refreshData()
+    const fresh = getStoredData()
+    setData(prev => ({
+      ...fresh,
+      [collection]: fresh[collection] || (prev[collection] || []).filter(i => i.id !== id)
+    }))
     setLoading(false)
     return res
   }

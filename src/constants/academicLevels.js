@@ -303,3 +303,158 @@ export const normalizeClassSections = (c) => {
     }
   ]
 }
+
+// Built-in presets for 1-Click Standard Tier Classes Setup
+export const TIER_DEFAULT_CLASSES = {
+  elementary: [
+    {
+      name: '1st Grade (Primary)',
+      programLevel: 'elementary',
+      sections: [
+        { id: 'sec-1g-1', name: 'Super Section', roomNo: 'Room 101', capacity: 35, enrolled: 0, classTeacher: '' },
+        { id: 'sec-1g-2', name: 'Section A', roomNo: 'Room 102', capacity: 35, enrolled: 0, classTeacher: '' }
+      ]
+    },
+    {
+      name: '2nd Grade (Primary)',
+      programLevel: 'elementary',
+      sections: [
+        { id: 'sec-2g-1', name: 'Super Section', roomNo: 'Room 103', capacity: 35, enrolled: 0, classTeacher: '' },
+        { id: 'sec-2g-2', name: 'Section A', roomNo: 'Room 104', capacity: 35, enrolled: 0, classTeacher: '' }
+      ]
+    },
+    {
+      name: '3rd Grade (Primary)',
+      programLevel: 'elementary',
+      sections: [
+        { id: 'sec-3g-1', name: 'Super Section', roomNo: 'Room 105', capacity: 35, enrolled: 0, classTeacher: '' },
+        { id: 'sec-3g-2', name: 'Section A', roomNo: 'Room 106', capacity: 35, enrolled: 0, classTeacher: '' }
+      ]
+    },
+    {
+      name: '4th Grade (Primary)',
+      programLevel: 'elementary',
+      sections: [
+        { id: 'sec-4g-1', name: 'Super Section', roomNo: 'Room 107', capacity: 35, enrolled: 0, classTeacher: '' },
+        { id: 'sec-4g-2', name: 'Section A', roomNo: 'Room 108', capacity: 35, enrolled: 0, classTeacher: '' }
+      ]
+    },
+    {
+      name: '5th Grade (Primary)',
+      programLevel: 'elementary',
+      sections: [
+        { id: 'sec-5g-1', name: 'Super Section', roomNo: 'Room 109', capacity: 35, enrolled: 0, classTeacher: '' },
+        { id: 'sec-5g-2', name: 'Section A', roomNo: 'Room 110', capacity: 35, enrolled: 0, classTeacher: '' }
+      ]
+    },
+    {
+      name: '6th Grade (Middle)',
+      programLevel: 'elementary',
+      sections: [
+        { id: 'sec-6g-1', name: 'Super Section', roomNo: 'Room 201', capacity: 40, enrolled: 0, classTeacher: '' },
+        { id: 'sec-6g-2', name: 'Section A', roomNo: 'Room 202', capacity: 40, enrolled: 0, classTeacher: '' }
+      ]
+    },
+    {
+      name: '7th Grade (Middle)',
+      programLevel: 'elementary',
+      sections: [
+        { id: 'sec-7g-1', name: 'Super Section', roomNo: 'Room 203', capacity: 40, enrolled: 0, classTeacher: '' },
+        { id: 'sec-7g-2', name: 'Section A', roomNo: 'Room 204', capacity: 40, enrolled: 0, classTeacher: '' }
+      ]
+    },
+    {
+      name: '8th Grade (Middle)',
+      programLevel: 'elementary',
+      sections: [
+        { id: 'sec-8g-1', name: 'Super Section', roomNo: 'Room 205', capacity: 40, enrolled: 0, classTeacher: '' },
+        { id: 'sec-8g-2', name: 'Section A', roomNo: 'Room 206', capacity: 40, enrolled: 0, classTeacher: '' }
+      ]
+    }
+  ],
+  secondary: [
+    {
+      name: '9th Grade (Matric Science)',
+      programLevel: 'secondary',
+      sections: [
+        { id: 'sec-9s-1', name: 'Super Section', roomNo: 'Room 301', capacity: 40, enrolled: 0, classTeacher: '' },
+        { id: 'sec-9s-2', name: 'Section A', roomNo: 'Room 302', capacity: 40, enrolled: 0, classTeacher: '' },
+        { id: 'sec-9s-3', name: 'Section B', roomNo: 'Room 303', capacity: 40, enrolled: 0, classTeacher: '' }
+      ]
+    },
+    {
+      name: '10th Grade (Matric Science)',
+      programLevel: 'secondary',
+      sections: [
+        { id: 'sec-10s-1', name: 'Super Section', roomNo: 'Room 304', capacity: 40, enrolled: 0, classTeacher: '' },
+        { id: 'sec-10s-2', name: 'Section A', roomNo: 'Room 305', capacity: 40, enrolled: 0, classTeacher: '' },
+        { id: 'sec-10s-3', name: 'Section B', roomNo: 'Room 306', capacity: 40, enrolled: 0, classTeacher: '' }
+      ]
+    }
+  ],
+  'higher-secondary': [
+    {
+      name: '11th Grade (F.Sc Pre-Medical)',
+      programLevel: 'higher-secondary',
+      sections: [
+        { id: 'sec-11m-1', name: 'Super Section', roomNo: 'Hall 401', capacity: 45, enrolled: 0, classTeacher: '' },
+        { id: 'sec-11m-2', name: 'Section A', roomNo: 'Hall 402', capacity: 45, enrolled: 0, classTeacher: '' }
+      ]
+    },
+    {
+      name: '11th Grade (ICS Computer Science)',
+      programLevel: 'higher-secondary',
+      sections: [
+        { id: 'sec-11c-1', name: 'Super Section', roomNo: 'Hall 403', capacity: 45, enrolled: 0, classTeacher: '' },
+        { id: 'sec-11c-2', name: 'Section A', roomNo: 'Hall 404', capacity: 45, enrolled: 0, classTeacher: '' }
+      ]
+    },
+    {
+      name: '12th Grade (F.Sc Pre-Engineering)',
+      programLevel: 'higher-secondary',
+      sections: [
+        { id: 'sec-12e-1', name: 'Super Section', roomNo: 'Hall 405', capacity: 45, enrolled: 0, classTeacher: '' },
+        { id: 'sec-12e-2', name: 'Section A', roomNo: 'Hall 406', capacity: 45, enrolled: 0, classTeacher: '' }
+      ]
+    }
+  ],
+  college: [
+    {
+      name: 'ADP in Computer Science (ADP-CS)',
+      programLevel: 'college',
+      sections: [
+        { id: 'sec-adp-1', name: 'Morning Batch', roomNo: 'Block B-101', capacity: 50, enrolled: 0, classTeacher: '' },
+        { id: 'sec-adp-2', name: 'Evening Batch', roomNo: 'Block B-102', capacity: 50, enrolled: 0, classTeacher: '' }
+      ]
+    },
+    {
+      name: 'ADP in Business Administration (ADP-BBA)',
+      programLevel: 'college',
+      sections: [
+        { id: 'sec-adpb-1', name: 'Morning Batch', roomNo: 'Block B-103', capacity: 50, enrolled: 0, classTeacher: '' }
+      ]
+    }
+  ],
+  university: [
+    {
+      name: 'BS Computer Science (BSCS)',
+      programLevel: 'university',
+      sections: [
+        { id: 'sec-bscs-1', name: 'Super Section', roomNo: 'Lab Complex 1', capacity: 50, enrolled: 0, classTeacher: '' },
+        { id: 'sec-bscs-2', name: 'Section Alpha', roomNo: 'Lab Complex 2', capacity: 50, enrolled: 0, classTeacher: '' }
+      ]
+    },
+    {
+      name: 'BS Software Engineering (BSSE)',
+      programLevel: 'university',
+      sections: [
+        { id: 'sec-bsse-1', name: 'Super Section', roomNo: 'Software Hall 1', capacity: 45, enrolled: 0, classTeacher: '' },
+        { id: 'sec-bsse-2', name: 'Section Alpha', roomNo: 'Software Hall 2', capacity: 45, enrolled: 0, classTeacher: '' }
+      ]
+    }
+  ]
+}
+
+export const getDefaultClassesForTier = (tierId) => {
+  return TIER_DEFAULT_CLASSES[tierId] || []
+}
