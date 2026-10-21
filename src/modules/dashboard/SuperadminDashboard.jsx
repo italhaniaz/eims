@@ -20,7 +20,9 @@ import {
   Send,
   Eye,
   AlertTriangle,
-  X
+  X,
+  ShieldCheck,
+  GraduationCap
 } from 'lucide-react'
 import StatCard from '../../components/common/StatCard'
 import Modal from '../../components/common/Modal'
@@ -392,74 +394,109 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           </div>
 
           <div className="space-y-2.5">
-            {/* Create New User */}
+            {/* 1. Roles & Permissions (RBAC Matrix) */}
             <button
-              onClick={() => setIsUserModalOpen(true)}
-              className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-slate-50/80 hover:bg-white border border-slate-200/70 hover:border-blue-400 hover:shadow-sm text-slate-700 font-medium text-sm transition-all duration-150 group active:scale-[0.99]"
+              onClick={() => onRouteChange('users-roles')}
+              className="w-full flex items-center justify-between p-3 sm:p-3.5 rounded-xl bg-slate-50/80 hover:bg-white border border-slate-200/70 hover:border-indigo-400 hover:shadow-sm text-slate-700 font-medium text-sm transition-all duration-150 group active:scale-[0.99] text-left"
             >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center transition-colors group-hover:bg-blue-600 group-hover:text-white">
-                  <UserPlus className="w-4 h-4" />
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 transition-colors group-hover:bg-indigo-600 group-hover:text-white">
+                  <ShieldCheck className="w-4 h-4" />
                 </div>
-                <span className="font-semibold text-slate-800 text-sm">Create New User</span>
+                <div className="truncate">
+                  <span className="block font-semibold text-slate-800 text-xs sm:text-sm group-hover:text-indigo-600 transition-colors truncate">
+                    Roles & RBAC Matrix
+                  </span>
+                  <span className="block text-[11px] text-slate-400 font-normal truncate">
+                    Manage 6 platform roles & permission policies
+                  </span>
+                </div>
               </div>
-              <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+              <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0 ml-2" />
             </button>
 
-            {/* Register New Institute */}
-            <button
-              onClick={() => setIsInstituteModalOpen(true)}
-              className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-slate-50/80 hover:bg-white border border-slate-200/70 hover:border-indigo-400 hover:shadow-sm text-slate-700 font-medium text-sm transition-all duration-150 group active:scale-[0.99]"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center transition-colors group-hover:bg-indigo-600 group-hover:text-white">
-                  <School className="w-4 h-4" />
-                </div>
-                <span className="font-semibold text-slate-800 text-sm">Register New Institute</span>
-              </div>
-              <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
-            </button>
-
-            {/* Generate Report */}
+            {/* 2. Generate Executive Report */}
             <button
               onClick={handleGenerateReport}
-              className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-slate-50/80 hover:bg-white border border-slate-200/70 hover:border-emerald-400 hover:shadow-sm text-slate-700 font-medium text-sm transition-all duration-150 group active:scale-[0.99]"
+              className="w-full flex items-center justify-between p-3 sm:p-3.5 rounded-xl bg-slate-50/80 hover:bg-white border border-slate-200/70 hover:border-emerald-400 hover:shadow-sm text-slate-700 font-medium text-sm transition-all duration-150 group active:scale-[0.99] text-left"
             >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center transition-colors group-hover:bg-emerald-600 group-hover:text-white">
-                  <FileText className="w-4 h-4" />
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 transition-colors group-hover:bg-emerald-600 group-hover:text-white">
+                  <Download className="w-4 h-4" />
                 </div>
-                <span className="font-semibold text-slate-800 text-sm">Generate Report</span>
+                <div className="truncate">
+                  <span className="block font-semibold text-slate-800 text-xs sm:text-sm group-hover:text-emerald-600 transition-colors truncate">
+                    Generate Executive Report
+                  </span>
+                  <span className="block text-[11px] text-slate-400 font-normal truncate">
+                    Download multi-campus audit CSV snapshot
+                  </span>
+                </div>
               </div>
-              <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+              <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0 ml-2" />
             </button>
 
-            {/* View Users */}
+            {/* 3. Broadcast Announcement */}
             <button
-              onClick={() => onRouteChange('users-all')}
-              className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-slate-50/80 hover:bg-white border border-slate-200/70 hover:border-indigo-400 hover:shadow-sm text-slate-700 font-medium text-sm transition-all duration-150 group active:scale-[0.99]"
+              onClick={() => setIsBroadcastModalOpen(true)}
+              className="w-full flex items-center justify-between p-3 sm:p-3.5 rounded-xl bg-slate-50/80 hover:bg-white border border-slate-200/70 hover:border-blue-400 hover:shadow-sm text-slate-700 font-medium text-sm transition-all duration-150 group active:scale-[0.99] text-left"
             >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center transition-colors group-hover:bg-indigo-600 group-hover:text-white">
-                  <ListFilter className="w-4 h-4" />
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 transition-colors group-hover:bg-blue-600 group-hover:text-white">
+                  <Radio className="w-4 h-4" />
                 </div>
-                <span className="font-semibold text-slate-800 text-sm">View Users</span>
+                <div className="truncate">
+                  <span className="block font-semibold text-slate-800 text-xs sm:text-sm group-hover:text-blue-600 transition-colors truncate">
+                    Broadcast Announcement
+                  </span>
+                  <span className="block text-[11px] text-slate-400 font-normal truncate">
+                    Instant alert dispatch to active sessions
+                  </span>
+                </div>
               </div>
-              <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+              <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0 ml-2" />
             </button>
 
-            {/* Settings */}
+            {/* 4. Academic Programs & Boards */}
+            <button
+              onClick={() => onRouteChange('programs')}
+              className="w-full flex items-center justify-between p-3 sm:p-3.5 rounded-xl bg-slate-50/80 hover:bg-white border border-slate-200/70 hover:border-purple-400 hover:shadow-sm text-slate-700 font-medium text-sm transition-all duration-150 group active:scale-[0.99] text-left"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 transition-colors group-hover:bg-purple-600 group-hover:text-white">
+                  <GraduationCap className="w-4 h-4" />
+                </div>
+                <div className="truncate">
+                  <span className="block font-semibold text-slate-800 text-xs sm:text-sm group-hover:text-purple-600 transition-colors truncate">
+                    Academic Programs & Boards
+                  </span>
+                  <span className="block text-[11px] text-slate-400 font-normal truncate">
+                    Configure global degrees, boards & streams
+                  </span>
+                </div>
+              </div>
+              <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-purple-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0 ml-2" />
+            </button>
+
+            {/* 5. Platform Settings */}
             <button
               onClick={onOpenSettings}
-              className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-slate-50/80 hover:bg-white border border-slate-200/70 hover:border-slate-400 hover:shadow-sm text-slate-700 font-medium text-sm transition-all duration-150 group active:scale-[0.99]"
+              className="w-full flex items-center justify-between p-3 sm:p-3.5 rounded-xl bg-slate-50/80 hover:bg-white border border-slate-200/70 hover:border-slate-400 hover:shadow-sm text-slate-700 font-medium text-sm transition-all duration-150 group active:scale-[0.99] text-left"
             >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center transition-colors group-hover:bg-slate-700 group-hover:text-white">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 transition-colors group-hover:bg-slate-700 group-hover:text-white">
                   <Settings className="w-4 h-4" />
                 </div>
-                <span className="font-semibold text-slate-800 text-sm">Settings</span>
+                <div className="truncate">
+                  <span className="block font-semibold text-slate-800 text-xs sm:text-sm group-hover:text-slate-900 transition-colors truncate">
+                    Platform Settings
+                  </span>
+                  <span className="block text-[11px] text-slate-400 font-normal truncate">
+                    Global platform configurations & preferences
+                  </span>
+                </div>
               </div>
-              <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-slate-800 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+              <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-slate-800 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0 ml-2" />
             </button>
           </div>
         </div>
