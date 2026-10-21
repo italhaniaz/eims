@@ -14,29 +14,60 @@ import {
   School,
   Copy,
   Layers,
-  X
+  X,
+  Calendar,
+  Clock,
+  MapPin,
+  IdCard,
+  QrCode,
+  FileCheck,
+  Building,
+  Sparkles
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
 import Modal from '../../../components/common/Modal'
 
 export const ExamsView = ({ currentInstitute }) => {
-  const { exams = [], students = [], addItem, deleteItem } = useAppData()
+  const { exams = [], students = [], addItem, deleteItem, logAuditEvent } = useAppData()
   const { toast } = useToast()
 
   const instStudents = students.filter(s => !s.instituteId || s.instituteId === currentInstitute?.id)
   const instExams = exams.filter(e => !e.instituteId || e.instituteId === currentInstitute?.id)
 
+  const [activeViewTab, setActiveViewTab] = useState('results') // 'results' | 'datesheet'
   const [searchTerm, setSearchTerm] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isBatchModalOpen, setIsBatchModalOpen] = useState(false)
   const [selectedReportCard, setSelectedReportCard] = useState(null)
+  const [selectedRollNumberSlip, setSelectedRollNumberSlip] = useState(null)
   const [currentPage, setCurrentPage] = useState(1)
   const pageSize = 8
 
   // Batch Printing Filter States
   const [batchClass, setBatchClass] = useState('10th Grade')
   const [batchTerm, setBatchTerm] = useState('Midterm Examination 2026')
+
+  // Date Sheet State
+  const [dateSheetTerm, setDateSheetTerm] = useState('Annual Examination 2026')
+  const [dateSheetClass, setDateSheetClass] = useState('10th Grade')
+  const [isAddDateSheetOpen, setIsAddDateSheetOpen] = useState(false)
+  const [dateSheet, setDateSheet] = useState([
+    { id: 'ds-1', subject: 'Mathematics (Advanced)', date: '2026-11-02', day: 'Monday', time: '09:00 AM - 12:00 PM', hall: 'Main Examination Hall A', invigilator: 'Prof. Tariq Mahmood' },
+    { id: 'ds-2', subject: 'Physics (Theory & Numericals)', date: '2026-11-04', day: 'Wednesday', time: '09:00 AM - 12:00 PM', hall: 'Hall B (Science Block)', invigilator: 'Dr. Fatima Zahra' },
+    { id: 'ds-3', subject: 'Chemistry', date: '2026-11-06', day: 'Friday', time: '09:00 AM - 12:00 PM', hall: 'Hall B (Science Block)', invigilator: 'Dr. Rashid Minhas' },
+    { id: 'ds-4', subject: 'English Language & Comp', date: '2026-11-09', day: 'Monday', time: '09:00 AM - 12:00 PM', hall: 'Main Examination Hall A', invigilator: 'Ms. Ayesha Siddiqua' },
+    { id: 'ds-5', subject: 'Computer Science (Paper I)', date: '2026-11-11', day: 'Wednesday', time: '09:00 AM - 12:00 PM', hall: 'IT Center Workstation Lab', invigilator: 'Engr. Imran Qureshi' },
+  ])
+
+  const [newDateSheetItem, setNewDateSheetItem] = useState({
+    subject: '',
+    date: '2026-11-15',
+    day: 'Monday',
+    time: '09:00 AM - 12:00 PM',
+    hall: 'Main Examination Hall A',
+    invigilator: ''
+  })
 
   const [formData, setFormData] = useState({
     studentName: instStudents[0]?.name || '',
@@ -117,33 +148,74 @@ export const ExamsView = ({ currentInstitute }) => {
     }
   }
 
+  const handleAddDateSheetEntry = (e) => {
+    e.preventDefault()
+    if (!newDateSheetItem.subject) {
+      toast.error('Please enter subject title.')
+      return
+    }
+    const entry = {
+      ...newDateSheetItem,
+      id: `ds-${Date.now()}`
+    }
+    setDateSheet(prev => [...prev, entry])
+    setIsAddDateSheetOpen(false)
+    toast.success(`Exam slot for "${newDateSheetItem.subject}" scheduled!`)
+    setNewDateSheetItem({
+      subject: '',
+      date: '2026-11-15',
+      day: 'Monday',
+      time: '09:00 AM - 12:00 PM',
+      hall: 'Main Examination Hall A',
+      invigilator: ''
+    })
+  }
+
+  const handleGenerateRollNumberSlip = (student) => {
+    setSelectedRollNumberSlip({
+      studentName: student.name || student.studentName,
+      rollNumber: student.rollNumber || 'BHS-2024-001',
+      className: student.className || '10th Grade',
+      fatherName: student.fatherName || 'Muhammad Farooq',
+      term: dateSheetTerm,
+      center: `${currentInstitute?.name || 'Central High Campus'}, Main Exam Hall A`,
+      examSchedule: dateSheet
+    })
+    if (logAuditEvent) {
+      logAuditEvent(`Generated Roll Number Slip for ${student.name || student.studentName}`, 'Exam Controller', 'Success')
+    }
+  }
+
   const filteredExams = useMemo(() => {
-    return instExams.filter(e => 
-      e.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      e.rollNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      e.term.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    return instExams.filter(e => {
+      const s = searchTerm.toLowerCase()
+      return (
+        (e.studentName || '').toLowerCase().includes(s) ||
+        (e.rollNumber || '').toLowerCase().includes(s) ||
+        (e.className || '').toLowerCase().includes(s) ||
+        (e.term || '').toLowerCase().includes(s)
+      )
+    })
   }, [instExams, searchTerm])
 
-  const totalPages = Math.ceil(filteredExams.length / pageSize) || 1
+  const totalPages = Math.max(1, Math.ceil(filteredExams.length / pageSize))
   const paginatedExams = useMemo(() => {
     const start = (currentPage - 1) * pageSize
     return filteredExams.slice(start, start + pageSize)
-  }, [filteredExams, currentPage])
+  }, [filteredExams, currentPage, pageSize])
 
-  // Batch class exams
-  const batchExamsList = useMemo(() => {
-    const matches = instExams.filter(e => 
-      (!batchClass || batchClass === 'All' || e.className === batchClass)
-    )
-    return matches.length > 0 ? matches : instExams
-  }, [instExams, batchClass])
-
-  // Unique classes for batch dropdown
   const availableClasses = useMemo(() => {
-    const set = new Set([...instExams.map(e => e.className), ...instStudents.map(s => s.className)].filter(Boolean))
+    const set = new Set(instStudents.map(s => s.className).filter(Boolean))
     return Array.from(set)
-  }, [instExams, instStudents])
+  }, [instStudents])
+
+  const batchExamsList = useMemo(() => {
+    return instExams.filter(e => {
+      const matchesClass = batchClass === 'All' || e.className === batchClass
+      const matchesTerm = !batchTerm || e.term === batchTerm
+      return matchesClass && matchesTerm
+    })
+  }, [instExams, batchClass, batchTerm])
 
   return (
     <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
@@ -151,264 +223,424 @@ export const ExamsView = ({ currentInstitute }) => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <Award className="w-5 h-5 text-emerald-600" />
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Examinations & Academic Marksheets</h1>
+            <Award className="w-5 h-5 text-indigo-600" />
+            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Examinations & Marksheets</h1>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Subject-wise score recording, automated GPA grading, individual and class-wide batch printable DMCs
+            Conduct terms, manage date sheets, generate roll number slips, and print official DMCs
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 flex-wrap">
-          <button
-            onClick={() => setIsBatchModalOpen(true)}
-            className="flex items-center gap-2 px-3.5 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
-            title="Batch Print Class Transcripts"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            <span>Batch Print Class Transcripts</span>
-          </button>
-
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow transition-all"
-          >
-            <Plus className="w-4 h-4" />
-            <span>New Examination Result</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Search Toolbar */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder="Search student name, roll number, or exam term..."
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value)
-              setCurrentPage(1)
-            }}
-            className="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-          />
-        </div>
-        <span className="text-xs text-slate-500 font-semibold bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-lg">
-          Total Marksheets: {filteredExams.length}
-        </span>
-      </div>
-
-      {/* Exam Result Cards Grid */}
-      {paginatedExams.length > 0 ? (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {paginatedExams.map((ex) => (
-              <div 
-                key={ex.id}
-                className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all flex flex-col justify-between overflow-hidden"
-              >
-                <div className="p-5">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold border border-slate-200">
-                        {ex.rollNumber}
-                      </span>
-                      <h3 className="font-bold text-slate-900 mt-2 text-base">{ex.studentName}</h3>
-                      <p className="text-xs text-slate-500">{ex.className} • {ex.term}</p>
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <span className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-black text-sm border border-emerald-200">
-                        {ex.overallGrade}
-                      </span>
-                      <span className="text-[10px] text-slate-400 font-mono mt-1">{ex.percentage}</span>
-                    </div>
-                  </div>
-
-                  {/* Subject Breakdown preview */}
-                  <div className="mt-4 pt-3 border-t border-slate-100 space-y-1.5 text-xs">
-                    {(ex.subjects || []).slice(0, 3).map((sub, idx) => (
-                      <div key={idx} className="flex justify-between text-slate-600">
-                        <span className="text-slate-500 truncate max-w-[150px]">{sub.name}</span>
-                        <span className="font-mono font-medium">{sub.obtained}/{sub.maxMarks} ({sub.grade})</span>
-                      </div>
-                    ))}
-                    {(ex.subjects || []).length > 3 && (
-                      <div className="text-[11px] text-slate-400 italic">
-                        + {(ex.subjects || []).length - 3} more subjects recorded
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="p-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
-                  <button
-                    onClick={() => setSelectedReportCard(ex)}
-                    className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 hover:text-emerald-900 transition-colors"
-                  >
-                    <FileText className="w-3.5 h-3.5" />
-                    <span>View Report Card</span>
-                  </button>
-                  <button
-                    onClick={() => handleDelete(ex.id, ex.studentName)}
-                    className="p-1.5 text-slate-400 hover:text-rose-600 rounded transition-colors"
-                    title="Delete Result"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            ))}
+        <div className="flex flex-wrap items-center gap-2.5">
+          <div className="bg-slate-200/80 p-1 rounded-xl flex items-center gap-1 text-xs font-semibold">
+            <button
+              onClick={() => setActiveViewTab('results')}
+              className={`px-3 py-1.5 rounded-lg transition-all ${
+                activeViewTab === 'results' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Results & Transcripts ({instExams.length})
+            </button>
+            <button
+              onClick={() => setActiveViewTab('datesheet')}
+              className={`px-3 py-1.5 rounded-lg transition-all ${
+                activeViewTab === 'datesheet' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Date Sheet & Admit Slips
+            </button>
           </div>
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 text-xs text-slate-500">
-              <div>
-                Showing Page <span className="font-semibold text-slate-700">{currentPage}</span> of <span className="font-semibold text-slate-700">{totalPages}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
-                  disabled={currentPage === 1}
-                  className="px-2.5 py-1.5 rounded border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`w-7 h-7 rounded font-semibold ${
-                      currentPage === page
-                        ? 'bg-emerald-600 text-white'
-                        : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
-                    }`}
-                  >
-                    {page}
-                  </button>
-                ))}
-                <button
-                  onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
-                  disabled={currentPage === totalPages}
-                  className="px-2.5 py-1.5 rounded border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+          {activeViewTab === 'results' ? (
+            <>
+              <button
+                onClick={() => setIsBatchModalOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+                title="Batch print class report cards"
+              >
+                <Layers className="w-3.5 h-3.5 text-slate-600" />
+                <span className="hidden sm:inline">Batch Print DMCs</span>
+              </button>
+
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-all cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Record New Marksheet</span>
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => setIsAddDateSheetOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-all cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Exam Paper Slot</span>
+            </button>
           )}
         </div>
+      </div>
+
+      {activeViewTab === 'results' ? (
+        <>
+          {/* Search bar */}
+          <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex items-center justify-between gap-4">
+            <div className="relative flex-1 max-w-md">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search marksheet by student, roll number, or term..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value)
+                  setCurrentPage(1)
+                }}
+                className="w-full pl-9 pr-4 py-2 text-xs sm:text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              />
+            </div>
+            <span className="text-xs text-slate-400 font-mono hidden sm:inline">
+              Showing {filteredExams.length} transcripts
+            </span>
+          </div>
+
+          {/* Marksheets Table */}
+          <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs sm:text-sm min-w-[700px]">
+                <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-semibold border-b">
+                  <tr>
+                    <th className="px-6 py-4">Student & Roll No</th>
+                    <th className="px-6 py-4">Class</th>
+                    <th className="px-6 py-4">Examination Term</th>
+                    <th className="px-6 py-4 text-center">Marks Obtained</th>
+                    <th className="px-6 py-4 text-center">Grade</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {paginatedExams.length > 0 ? (
+                    paginatedExams.map(e => (
+                      <tr key={e.id} className="hover:bg-slate-50/70 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-700 flex items-center justify-center font-bold text-xs shrink-0">
+                              <User className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <p className="font-bold text-slate-800">{e.studentName}</p>
+                              <p className="text-[11px] text-slate-400 font-mono">{e.rollNumber}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-slate-600 font-medium">{e.className}</td>
+                        <td className="px-6 py-4">
+                          <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">
+                            {e.term}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-center font-mono font-bold text-slate-800">
+                          {e.totalObtained} / {e.totalMax} <span className="text-[11px] text-slate-400 font-normal">({e.percentage})</span>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-black ${
+                            e.overallGrade.startsWith('A') 
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : 'bg-blue-50 text-blue-700 border border-blue-200'
+                          }`}>
+                            {e.overallGrade}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              onClick={() => setSelectedReportCard(e)}
+                              className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
+                              title="Print Detailed Mark Certificate (DMC)"
+                            >
+                              <Printer className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleGenerateRollNumberSlip({ name: e.studentName, rollNumber: e.rollNumber, className: e.className })}
+                              className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors cursor-pointer"
+                              title="Generate Official Roll Number Slip"
+                            >
+                              <IdCard className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(e.id, e.studentName)}
+                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                              title="Delete marksheet record"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-12 text-center text-slate-400">
+                        <Award className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                        <p className="text-sm font-semibold text-slate-600">No Marksheet Records Found</p>
+                        <p className="text-xs text-slate-400 mt-1">Record terms and subject grades to generate student transcripts.</p>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination Controls */}
+            {filteredExams.length > 0 && (
+              <div className="p-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 font-sans">
+                <div>
+                  Showing <strong>{(currentPage - 1) * pageSize + 1}</strong> to <strong>{Math.min(currentPage * pageSize, filteredExams.length)}</strong> of <strong>{filteredExams.length}</strong> marksheets
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    className="px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 transition-colors cursor-pointer"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span>Prev</span>
+                  </button>
+                  
+                  <span className="font-semibold px-2">Page {currentPage} of {totalPages}</span>
+
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 transition-colors cursor-pointer"
+                  >
+                    <span>Next</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </>
       ) : (
-        <div className="bg-white rounded-xl p-12 border border-slate-200 text-center shadow-sm">
-          <Award className="w-12 h-12 text-slate-300 mx-auto mb-2" />
-          <h3 className="text-base font-bold text-slate-700">No Exam Records Found</h3>
-          <p className="text-xs text-slate-400 mt-1">Record student exam marks and generate report cards using the button above.</p>
+        /* Examination Date Sheet & Admit Card Tab */
+        <div className="space-y-6">
+          <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 flex items-center gap-1.5">
+                <Calendar className="w-4 h-4" /> Official Examination Schedule
+              </span>
+              <h3 className="text-lg font-black text-slate-900 mt-0.5">{dateSheetTerm} • {dateSheetClass}</h3>
+              <p className="text-xs text-slate-500 mt-1">
+                Centralized timetable approved by the Board of Examiners & Academic Council
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2.5">
+              <button
+                onClick={() => window.print()}
+                className="flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-black text-white rounded-lg text-xs font-bold shadow-sm transition-all cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print Official Date Sheet Notice</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Date Sheet Table */}
+          <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs sm:text-sm min-w-[700px]">
+                <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-semibold border-b">
+                  <tr>
+                    <th className="px-6 py-4">Subject / Course Paper</th>
+                    <th className="px-6 py-4">Examination Date</th>
+                    <th className="px-6 py-4">Day</th>
+                    <th className="px-6 py-4">Time Slot</th>
+                    <th className="px-6 py-4">Examination Hall</th>
+                    <th className="px-6 py-4">Chief Invigilator</th>
+                    <th className="px-6 py-4 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-sans">
+                  {dateSheet.map((ds, idx) => (
+                    <tr key={ds.id || idx} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="px-6 py-4 font-bold text-slate-800 flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
+                        <span>{ds.subject}</span>
+                      </td>
+                      <td className="px-6 py-4 font-mono font-semibold text-slate-700">{ds.date}</td>
+                      <td className="px-6 py-4 text-slate-600 font-medium">{ds.day}</td>
+                      <td className="px-6 py-4 text-slate-600 font-mono text-xs">{ds.time}</td>
+                      <td className="px-6 py-4 text-slate-600 font-medium">
+                        <span className="inline-flex items-center gap-1 text-[11px] bg-slate-100 px-2 py-0.5 rounded">
+                          <MapPin className="w-3 h-3 text-slate-400" />
+                          {ds.hall}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-slate-500 text-xs">{ds.invigilator || 'Staff On Duty'}</td>
+                      <td className="px-6 py-4 text-right">
+                        <button
+                          onClick={() => {
+                            setDateSheet(prev => prev.filter(item => item.id !== ds.id))
+                            toast.info(`Paper slot for ${ds.subject} removed.`)
+                          }}
+                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                          title="Remove exam slot"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Quick Roll Number Slip Action Card */}
+          <div className="bg-gradient-to-r from-purple-50 via-indigo-50 to-blue-50 border border-indigo-100 rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-600/20 shrink-0">
+                <IdCard className="w-6 h-6" />
+              </div>
+              <div>
+                <h4 className="font-bold text-slate-900 text-sm">Individual Candidate Roll Number Slip & Admit Card</h4>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Generate verified entry card with student photo, hall code, barcode, and exam rules
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <select
+                onChange={(e) => {
+                  const std = instStudents.find(s => s.name === e.target.value)
+                  if (std) handleGenerateRollNumberSlip(std)
+                }}
+                defaultValue=""
+                className="px-3.5 py-2 text-xs font-semibold rounded-lg border border-slate-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-700"
+              >
+                <option value="" disabled>Select Student for Roll No Slip...</option>
+                {instStudents.map(s => (
+                  <option key={s.id} value={s.name}>{s.name} ({s.rollNumber || 'STD'})</option>
+                ))}
+              </select>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* New Examination Modal */}
+      {/* Record New Marksheet Modal */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Record Examination Result & Marksheet"
+        title="Record New Examination Marksheet"
+        maxWidth="max-w-xl"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Select Student *</label>
-            <select
-              value={formData.studentName}
-              onChange={(e) => handleStudentSelect(e.target.value)}
-              className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-            >
-              {instStudents.map(s => (
-                <option key={s.id} value={s.name}>{s.name} ({s.rollNumber}) - {s.className}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Select Student</label>
+              <select
+                value={formData.studentName}
+                onChange={(e) => handleStudentSelect(e.target.value)}
+                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 bg-white"
+              >
+                {instStudents.map(s => (
+                  <option key={s.id} value={s.name}>{s.name} ({s.rollNumber || 'STD'})</option>
+                ))}
+              </select>
+            </div>
             <div>
               <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Roll Number</label>
               <input
                 type="text"
                 readOnly
                 value={formData.rollNumber}
-                className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 bg-slate-50 font-mono"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Examination Term</label>
-              <input
-                type="text"
-                required
-                value={formData.term}
-                onChange={(e) => setFormData({ ...formData, term: e.target.value })}
-                className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                placeholder="e.g. Midterm 2026"
+                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 bg-slate-50 font-mono"
               />
             </div>
           </div>
 
-          {/* Subjects marks entry */}
-          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2.5">
-            <span className="block text-xs font-bold text-slate-700 uppercase tracking-wider">Subject Marks (Max 100 each)</span>
-            <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Class / Grade</label>
+              <input
+                type="text"
+                value={formData.className}
+                onChange={(e) => setFormData({ ...formData, className: e.target.value })}
+                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Term</label>
+              <select
+                value={formData.term}
+                onChange={(e) => setFormData({ ...formData, term: e.target.value })}
+                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 bg-white"
+              >
+                <option value="Midterm Examination 2026">Midterm Examination 2026</option>
+                <option value="Annual Examination 2026">Annual Examination 2026</option>
+                <option value="Send-Up Board Prep 2026">Send-Up Board Prep 2026</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="space-y-2 pt-2 border-t">
+            <span className="text-xs font-bold uppercase text-slate-700 tracking-wider">Subject Marks (Max 100 Each)</span>
+            <div className="grid grid-cols-3 gap-2.5">
               <div>
-                <label className="text-[11px] font-semibold text-slate-500 block mb-0.5">Mathematics</label>
+                <label className="block text-[11px] text-slate-500 font-medium">Mathematics</label>
                 <input
                   type="number"
                   min="0"
                   max="100"
-                  required
                   value={formData.math}
                   onChange={(e) => setFormData({ ...formData, math: e.target.value })}
                   className="w-full px-3 py-1.5 text-xs rounded border border-slate-200"
                 />
               </div>
               <div>
-                <label className="text-[11px] font-semibold text-slate-500 block mb-0.5">Physics</label>
+                <label className="block text-[11px] text-slate-500 font-medium">Physics</label>
                 <input
                   type="number"
                   min="0"
                   max="100"
-                  required
                   value={formData.physics}
                   onChange={(e) => setFormData({ ...formData, physics: e.target.value })}
                   className="w-full px-3 py-1.5 text-xs rounded border border-slate-200"
                 />
               </div>
               <div>
-                <label className="text-[11px] font-semibold text-slate-500 block mb-0.5">Chemistry</label>
+                <label className="block text-[11px] text-slate-500 font-medium">Chemistry</label>
                 <input
                   type="number"
                   min="0"
                   max="100"
-                  required
                   value={formData.chemistry}
                   onChange={(e) => setFormData({ ...formData, chemistry: e.target.value })}
                   className="w-full px-3 py-1.5 text-xs rounded border border-slate-200"
                 />
               </div>
               <div>
-                <label className="text-[11px] font-semibold text-slate-500 block mb-0.5">English Literature</label>
+                <label className="block text-[11px] text-slate-500 font-medium">English Literature</label>
                 <input
                   type="number"
                   min="0"
                   max="100"
-                  required
                   value={formData.english}
                   onChange={(e) => setFormData({ ...formData, english: e.target.value })}
                   className="w-full px-3 py-1.5 text-xs rounded border border-slate-200"
                 />
               </div>
-              <div className="col-span-2">
-                <label className="text-[11px] font-semibold text-slate-500 block mb-0.5">Computer Science</label>
+              <div>
+                <label className="block text-[11px] text-slate-500 font-medium">Computer Science</label>
                 <input
                   type="number"
                   min="0"
                   max="100"
-                  required
                   value={formData.computer}
                   onChange={(e) => setFormData({ ...formData, computer: e.target.value })}
                   className="w-full px-3 py-1.5 text-xs rounded border border-slate-200"
@@ -418,61 +650,292 @@ export const ExamsView = ({ currentInstitute }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Teacher Remarks / Notes</label>
+            <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Remarks & Conduct</label>
             <input
               type="text"
               value={formData.remarks}
               onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
-              className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-              placeholder="e.g. Excellent conduct and analytical problem solving."
+              className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200"
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
+          <div className="flex justify-end gap-2.5 pt-3 border-t">
             <button
               type="button"
               onClick={() => setIsModalOpen(false)}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow transition-all"
+              className="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm"
             >
-              Save Exam Result
+              Save Marksheet
             </button>
           </div>
         </form>
       </Modal>
 
-      {/* Single Official Marksheet Modal (Printable) */}
-      {selectedReportCard && (
+      {/* Add Date Sheet Slot Modal */}
+      <Modal
+        isOpen={isAddDateSheetOpen}
+        onClose={() => setIsAddDateSheetOpen(false)}
+        title="Add Exam Schedule Paper Slot"
+        maxWidth="max-w-md"
+      >
+        <form onSubmit={handleAddDateSheetEntry} className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Subject Name</label>
+            <input
+              type="text"
+              required
+              value={newDateSheetItem.subject}
+              onChange={(e) => setNewDateSheetItem({ ...newDateSheetItem, subject: e.target.value })}
+              placeholder="e.g. Pakistan Studies / Biology"
+              className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Date</label>
+              <input
+                type="date"
+                required
+                value={newDateSheetItem.date}
+                onChange={(e) => setNewDateSheetItem({ ...newDateSheetItem, date: e.target.value })}
+                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Day</label>
+              <select
+                value={newDateSheetItem.day}
+                onChange={(e) => setNewDateSheetItem({ ...newDateSheetItem, day: e.target.value })}
+                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 bg-white"
+              >
+                <option value="Monday">Monday</option>
+                <option value="Tuesday">Tuesday</option>
+                <option value="Wednesday">Wednesday</option>
+                <option value="Thursday">Thursday</option>
+                <option value="Friday">Friday</option>
+                <option value="Saturday">Saturday</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Time Slot</label>
+              <input
+                type="text"
+                value={newDateSheetItem.time}
+                onChange={(e) => setNewDateSheetItem({ ...newDateSheetItem, time: e.target.value })}
+                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Hall / Room</label>
+              <input
+                type="text"
+                value={newDateSheetItem.hall}
+                onChange={(e) => setNewDateSheetItem({ ...newDateSheetItem, hall: e.target.value })}
+                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Chief Invigilator</label>
+            <input
+              type="text"
+              value={newDateSheetItem.invigilator}
+              onChange={(e) => setNewDateSheetItem({ ...newDateSheetItem, invigilator: e.target.value })}
+              placeholder="e.g. Prof. Tariq Mahmood"
+              className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200"
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2 border-t">
+            <button
+              type="button"
+              onClick={() => setIsAddDateSheetOpen(false)}
+              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm"
+            >
+              Add Paper Slot
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Official Roll Number Slip Modal */}
+      {selectedRollNumberSlip && (
         <Modal
-          isOpen={Boolean(selectedReportCard)}
-          onClose={() => setSelectedReportCard(null)}
-          title="Official Academic Transcript & Marksheet"
+          isOpen={!!selectedRollNumberSlip}
+          onClose={() => setSelectedRollNumberSlip(null)}
+          title="Official Candidate Roll Number Slip & Admit Card"
+          maxWidth="max-w-2xl"
         >
           <div className="space-y-4">
-            <div id="printable-report-card" className="p-6 bg-white border-2 border-slate-300 rounded-2xl space-y-4 print:border-black">
-              {/* Header */}
-              <div className="text-center border-b pb-4">
-                <School className="w-8 h-8 text-emerald-600 mx-auto mb-1" />
+            <div id="printable-roll-no-slip" className="p-6 bg-white border-2 border-slate-900 rounded-xl space-y-4 font-sans text-slate-800">
+              {/* Slip Header */}
+              <div className="flex items-center justify-between border-b-2 border-slate-900 pb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black text-xl">
+                    <School className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black uppercase tracking-wider text-slate-900">
+                      {currentInstitute?.name || 'CENTRAL HIGH SCHOOL SYSTEM'}
+                    </h3>
+                    <p className="text-[11px] font-semibold text-slate-600">
+                      BOARD OF INTERMEDIATE & SECONDARY EDUCATION • ROLL NUMBER SLIP
+                    </p>
+                    <p className="text-[10px] text-slate-400 font-mono">
+                      Examination Session: {selectedRollNumberSlip.term}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="w-20 h-24 border-2 border-dashed border-slate-300 rounded bg-slate-50 flex flex-col items-center justify-center text-slate-400 text-[9px] font-semibold">
+                  <User className="w-6 h-6 mb-1 text-slate-300" />
+                  <span>AFFIX PHOTO</span>
+                </div>
+              </div>
+
+              {/* Candidate Info Grid */}
+              <div className="grid grid-cols-2 gap-3 text-xs bg-slate-50 p-3 rounded-lg border border-slate-200">
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Candidate Full Name</span>
+                  <strong className="text-slate-900 text-sm">{selectedRollNumberSlip.studentName}</strong>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Roll Number / Token</span>
+                  <strong className="text-indigo-700 text-sm font-mono tracking-wider">{selectedRollNumberSlip.rollNumber}</strong>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Father / Guardian Name</span>
+                  <strong className="text-slate-800">{selectedRollNumberSlip.fatherName}</strong>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Grade & Group</span>
+                  <strong className="text-slate-800">{selectedRollNumberSlip.className} (Science Group)</strong>
+                </div>
+                <div className="col-span-2 pt-1 border-t border-slate-200">
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Allotted Examination Center</span>
+                  <strong className="text-slate-800">{selectedRollNumberSlip.center}</strong>
+                </div>
+              </div>
+
+              {/* Schedule Table */}
+              <div className="space-y-1.5">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
+                  Examination Paper Schedule & Seating Allotment
+                </span>
+                <table className="w-full text-left text-[11px] border border-slate-200">
+                  <thead className="bg-slate-100 font-bold border-b border-slate-200">
+                    <tr>
+                      <th className="p-2">Subject</th>
+                      <th className="p-2">Date</th>
+                      <th className="p-2">Day</th>
+                      <th className="p-2">Timing</th>
+                      <th className="p-2">Room / Hall</th>
+                      <th className="p-2 text-center">Invigilator Sign</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {selectedRollNumberSlip.examSchedule.map((item, idx) => (
+                      <tr key={idx}>
+                        <td className="p-2 font-bold">{item.subject}</td>
+                        <td className="p-2 font-mono">{item.date}</td>
+                        <td className="p-2">{item.day}</td>
+                        <td className="p-2 font-mono text-[10px]">{item.time}</td>
+                        <td className="p-2">{item.hall}</td>
+                        <td className="p-2 border-l border-slate-200 text-center text-slate-300">____________</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Instructions & Signatures */}
+              <div className="space-y-2 text-[10px] text-slate-500 pt-2 border-t border-slate-200">
+                <p className="font-semibold text-slate-700">Crucial Candidate Instructions:</p>
+                <ul className="list-disc pl-4 space-y-0.5">
+                  <li>Candidates must be present at the examination hall 30 minutes before the scheduled time.</li>
+                  <li>Original Roll Number Slip is compulsory for entry into the examination premises.</li>
+                  <li>Mobile phones, smartwatches, and programmable calculators are strictly prohibited.</li>
+                </ul>
+
+                <div className="flex justify-between items-end pt-6 text-[11px] font-semibold text-slate-700">
+                  <div className="text-center">
+                    <div className="w-32 border-b border-slate-400 mb-1"></div>
+                    <span>Candidate Signature</span>
+                  </div>
+                  <div className="text-center">
+                    <div className="w-32 border-b border-slate-400 mb-1"></div>
+                    <span>Center Superintendent</span>
+                  </div>
+                  <div className="text-center">
+                    <div className="w-32 border-b-2 border-slate-900 mb-1"></div>
+                    <span className="font-bold text-slate-900">Controller of Examinations</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setSelectedRollNumberSlip(null)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="flex items-center gap-1.5 px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print Official Admit Card (PDF)</span>
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Individual DMC Modal */}
+      {selectedReportCard && (
+        <Modal
+          isOpen={!!selectedReportCard}
+          onClose={() => setSelectedReportCard(null)}
+          title="Official Detailed Marks Certificate (DMC)"
+          maxWidth="max-w-xl"
+        >
+          <div className="space-y-4">
+            <div className="p-6 bg-white border-2 border-slate-800 rounded-xl space-y-4 font-sans">
+              <div className="text-center border-b pb-3">
                 <h3 className="text-base font-black uppercase tracking-wider text-slate-900">
-                  {currentInstitute?.name || 'CENTRAL HIGH SCHOOL'}
+                  {currentInstitute?.name || 'CENTRAL HIGH SCHOOL SYSTEM'}
                 </h3>
-                <p className="text-xs text-slate-500">{selectedReportCard.term} • Official Marksheet</p>
+                <p className="text-xs text-slate-500 font-medium">{selectedReportCard.term} • Official Transcript</p>
               </div>
 
-              {/* Student Info */}
               <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-3 rounded-lg border">
-                <div><span className="text-slate-400">Student Name:</span> <strong className="text-slate-800">{selectedReportCard.studentName}</strong></div>
-                <div><span className="text-slate-400">Roll Number:</span> <strong className="text-slate-800 font-mono">{selectedReportCard.rollNumber}</strong></div>
-                <div><span className="text-slate-400">Grade / Class:</span> <strong className="text-slate-800">{selectedReportCard.className}</strong></div>
-                <div><span className="text-slate-400">Issue Date:</span> <strong className="text-slate-800">{selectedReportCard.date}</strong></div>
+                <div><span className="text-slate-400">Student:</span> <strong className="text-slate-800">{selectedReportCard.studentName}</strong></div>
+                <div><span className="text-slate-400">Roll No:</span> <strong className="text-slate-800 font-mono">{selectedReportCard.rollNumber}</strong></div>
+                <div><span className="text-slate-400">Class:</span> <strong className="text-slate-800">{selectedReportCard.className}</strong></div>
+                <div><span className="text-slate-400">Issued On:</span> <strong className="text-slate-800">{selectedReportCard.date}</strong></div>
               </div>
 
-              {/* Subject Table */}
               <table className="w-full text-xs text-left border">
                 <thead className="bg-slate-100 font-bold border-b">
                   <tr>
@@ -500,18 +963,19 @@ export const ExamsView = ({ currentInstitute }) => {
                 </tbody>
               </table>
 
-              {/* Remarks & Signatures */}
-              <div className="pt-2 text-xs text-slate-600 border-t">
-                <p><strong>Remarks:</strong> {selectedReportCard.remarks || 'Satisfactory academic performance.'}</p>
-                <div className="flex justify-between mt-8 pt-4 border-t text-slate-400 text-[11px]">
-                  <span>Class Teacher Signature</span>
-                  <span>Controller of Examinations</span>
-                  <span>Principal Seal & Signature</span>
-                </div>
+              <div className="p-3 bg-slate-50 rounded border text-xs text-slate-600">
+                <span className="font-bold text-slate-700 block">Instructor Assessment & Remarks:</span>
+                <p className="mt-0.5 italic">"{selectedReportCard.remarks}"</p>
+              </div>
+
+              <div className="flex justify-between pt-6 text-[10px] text-slate-400 border-t">
+                <span>Class Teacher Signature</span>
+                <span>Exam Controller Seal</span>
+                <span>Principal Verification</span>
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-2">
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
               <button
                 type="button"
                 onClick={() => setSelectedReportCard(null)}
@@ -522,28 +986,28 @@ export const ExamsView = ({ currentInstitute }) => {
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg flex items-center gap-1.5 shadow"
+                className="flex items-center gap-1.5 px-5 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-black rounded-lg shadow-sm"
               >
                 <Printer className="w-3.5 h-3.5" />
-                <span>Print Official Marksheet</span>
+                <span>Print Official DMC</span>
               </button>
             </div>
           </div>
         </Modal>
       )}
 
-      {/* Batch Full Class Transcripts Modal (Print-Ready) */}
+      {/* Batch DMC Modal */}
       {isBatchModalOpen && (
         <Modal
           isOpen={isBatchModalOpen}
           onClose={() => setIsBatchModalOpen(false)}
-          title="Batch Class Transcripts & DMCs Generator"
+          title="Batch Class Marksheet & Report Card Generator"
+          maxWidth="max-w-3xl"
         >
-          <div className="space-y-5">
-            {/* Filter selection strip */}
-            <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <label className="text-xs font-semibold text-slate-600">Filter Grade/Class:</label>
+          <div className="space-y-4">
+            <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-slate-600">Select Class:</span>
                 <select
                   value={batchClass}
                   onChange={(e) => setBatchClass(e.target.value)}
@@ -561,7 +1025,6 @@ export const ExamsView = ({ currentInstitute }) => {
               </span>
             </div>
 
-            {/* Continuous printable preview container */}
             <div className="max-h-[60vh] overflow-y-auto space-y-6 pr-1">
               {batchExamsList.map((exam, index) => (
                 <div 
@@ -569,7 +1032,6 @@ export const ExamsView = ({ currentInstitute }) => {
                   className="p-5 bg-white border-2 border-slate-200 rounded-xl space-y-3 print:border-black print:page-break-after-always print:p-8"
                   style={{ pageBreakAfter: 'always' }}
                 >
-                  {/* Header */}
                   <div className="text-center border-b pb-3">
                     <h3 className="text-sm font-black uppercase tracking-wider text-slate-900">
                       {currentInstitute?.name || 'CENTRAL HIGH SCHOOL'}
@@ -577,7 +1039,6 @@ export const ExamsView = ({ currentInstitute }) => {
                     <p className="text-[11px] text-slate-500 font-medium">{exam.term} • Official Transcript of Record</p>
                   </div>
 
-                  {/* Student Details */}
                   <div className="grid grid-cols-2 gap-1.5 text-[11px] bg-slate-50 p-2.5 rounded border">
                     <div><span className="text-slate-400">Student:</span> <strong className="text-slate-800">{exam.studentName}</strong></div>
                     <div><span className="text-slate-400">Roll No:</span> <strong className="text-slate-800 font-mono">{exam.rollNumber}</strong></div>
@@ -585,7 +1046,6 @@ export const ExamsView = ({ currentInstitute }) => {
                     <div><span className="text-slate-400">Date:</span> <strong className="text-slate-800">{exam.date}</strong></div>
                   </div>
 
-                  {/* Marks Table */}
                   <table className="w-full text-[11px] text-left border">
                     <thead className="bg-slate-100 font-bold border-b">
                       <tr>
@@ -613,7 +1073,6 @@ export const ExamsView = ({ currentInstitute }) => {
                     </tbody>
                   </table>
 
-                  {/* Signatures */}
                   <div className="flex justify-between pt-4 text-[10px] text-slate-400 border-t">
                     <span>Class Teacher</span>
                     <span>Exam Controller</span>
@@ -623,7 +1082,6 @@ export const ExamsView = ({ currentInstitute }) => {
               ))}
             </div>
 
-            {/* Modal Actions */}
             <div className="flex justify-end gap-2.5 pt-2 border-t border-slate-100">
               <button
                 type="button"
@@ -635,7 +1093,7 @@ export const ExamsView = ({ currentInstitute }) => {
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="px-5 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm flex items-center gap-1.5"
+                className="px-5 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm flex items-center gap-1.5 cursor-pointer"
               >
                 <Printer className="w-3.5 h-3.5" />
                 <span>Print All ({batchExamsList.length}) Class Transcripts (PDF)</span>

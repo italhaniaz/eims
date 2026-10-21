@@ -75,6 +75,13 @@ export const AppDataProvider = ({ children }) => {
     return DataService.getTimetable(classKey)
   }
 
+  // Security Audit Logging Hook
+  const logAuditEvent = (action, user, status = 'Success', ip = null) => {
+    const entry = DataService.logAuditEvent(action, user, status, ip)
+    refreshData()
+    return entry
+  }
+
   // Quick Action: generate and download report
   const generateReport = () => {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
@@ -194,6 +201,7 @@ export const AppDataProvider = ({ children }) => {
         getAttendance,
         saveTimetable,
         getTimetable,
+        logAuditEvent,
         generateReport,
         sendCommunicationBlast
       }}

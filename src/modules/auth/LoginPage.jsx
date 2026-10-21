@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { 
   Building2, 
   Lock, 
@@ -7,13 +7,17 @@ import {
   EyeOff, 
   ArrowRight,
   Database,
-  AlertCircle,
-  ShieldCheck,
-  School,
-  Sparkles
+  AlertCircle, 
+  ShieldCheck, 
+  School, 
+  Sparkles,
+  ShieldAlert,
+  Clock,
+  AlertTriangle
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { isSupabaseConfigured } from '../../services/supabaseClient'
+import { DataService } from '../../services/dataService'
 
 export const LoginPage = () => {
   const { login } = useAuth()
@@ -24,13 +28,48 @@ export const LoginPage = () => {
   const [rememberMe, setRememberMe] = useState(true)
   const [authError, setAuthError] = useState('')
 
+  // Brute-force Rate Limiting & Account Lockout Guard
+  const [failedAttempts, setFailedAttempts] = useState(() => {
+    return Number(sessionStorage.getItem('sms_auth_failed_attempts') || 0)
+  })
+  const [lockoutUntil, setLockoutUntil] = useState(() => {
+    return Number(sessionStorage.getItem('sms_auth_lockout_until') || 0)
+  })
+  const [secondsRemaining, setSecondsRemaining] = useState(0)
+
+  const isLockedOut = lockoutUntil > Date.now()
+
+  useEffect(() => {
+    if (!lockoutUntil) return
+    const updateCountdown = () => {
+      const remaining = Math.max(0, Math.ceil((lockoutUntil - Date.now()) / 1000))
+      setSecondsRemaining(remaining)
+      if (remaining <= 0) {
+        setLockoutUntil(0)
+        setFailedAttempts(0)
+        sessionStorage.removeItem('sms_auth_lockout_until')
+        sessionStorage.removeItem('sms_auth_failed_attempts')
+      }
+    }
+    updateCountdown()
+    const timer = setInterval(updateCountdown, 1000)
+    return () => clearInterval(timer)
+  }, [lockoutUntil])
+
   const handleQuickLogin = (role) => {
+    if (isLockedOut) return
     setAuthError('')
     setIsLoading(true)
+    sessionStorage.removeItem('sms_auth_failed_attempts')
+    sessionStorage.removeItem('sms_auth_lockout_until')
+    setFailedAttempts(0)
+    setLockoutUntil(0)
+
     if (role === 'superadmin') {
       setIdentifier('admin@schoolms.com')
       setPassword('admin123')
       setTimeout(() => {
+        DataService.logAuditEvent('Quick Demo Sign In (Superadmin)', 'admin@schoolms.com', 'Success')
         login('superadmin', 'admin@schoolms.com')
         setIsLoading(false)
       }, 350)
@@ -38,6 +77,7 @@ export const LoginPage = () => {
       setIdentifier('admin.beacon@sms.edu')
       setPassword('institute123')
       setTimeout(() => {
+        DataService.logAuditEvent('Quick Demo Sign In (Institute Admin)', 'admin.beacon@sms.edu', 'Success')
         login('institute_admin', 'admin.beacon@sms.edu')
         setIsLoading(false)
       }, 350)
@@ -46,8 +86,12 @@ export const LoginPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    setAuthError('')
+    if (isLockedOut) {
+      setAuthError(`Security Lockout Active: Please wait ${secondsRemaining}s before attempting again.`)
+      return
+    }
 
+    setAuthError('')
     const id = (identifier || '').trim().toLowerCase()
     const pass = (password || '').trim()
 
@@ -67,18 +111,36 @@ export const LoginPage = () => {
       const isInstituteAdmin = (id === 'institute' || id === 'institute_admin' || id === 'admin.beacon@sms.edu' || id.includes('institute') || id.includes('beacon') || id.includes('school')) && 
                               (pass === 'institute123' || pass === 'admin123' || pass === 'admin')
 
-      if (isSuperadmin) {
-        login('superadmin', id.includes('@') ? id : 'admin@schoolms.com')
-      } else if (isInstituteAdmin) {
-        login('institute_admin', id.includes('@') ? id : 'admin.beacon@sms.edu')
-      } else if (pass === 'admin123' || pass === 'admin') {
-        // Fallback for admin credentials
-        login('superadmin', id)
-      } else if (pass === 'institute123') {
-        // Fallback for institute credentials
-        login('institute_admin', id)
+      if (isSuperadmin || isInstituteAdmin || pass === 'admin123' || pass === 'admin' || pass === 'institute123') {
+        // Successful login
+        sessionStorage.removeItem('sms_auth_failed_attempts')
+        sessionStorage.removeItem('sms_auth_lockout_until')
+        setFailedAttempts(0)
+        setLockoutUntil(0)
+        DataService.logAuditEvent('User Sign In Successful', id, 'Success')
+
+        if (isSuperadmin) {
+          login('superadmin', id.includes('@') ? id : 'admin@schoolms.com')
+        } else {
+          login('institute_admin', id.includes('@') ? id : 'admin.beacon@sms.edu')
+        }
       } else {
-        setAuthError('Invalid email/username or password. Please verify your credentials.')
+        // Failed attempt - increment brute force counter
+        const nextAttempts = failedAttempts + 1
+        setFailedAttempts(nextAttempts)
+        sessionStorage.setItem('sms_auth_failed_attempts', nextAttempts.toString())
+
+        if (nextAttempts >= 5) {
+          const lockTime = Date.now() + 60000 // 60s cooldown
+          setLockoutUntil(lockTime)
+          setSecondsRemaining(60)
+          sessionStorage.setItem('sms_auth_lockout_until', lockTime.toString())
+          DataService.logAuditEvent('Brute-force lockout triggered (5 failed attempts)', id, 'Warning')
+          setAuthError('🚨 Security Alert: 5 consecutive failed login attempts detected. Form locked for 60 seconds to protect against brute-force attacks.')
+        } else {
+          DataService.logAuditEvent('Failed login attempt', id, 'Warning')
+          setAuthError(`Invalid credentials. Attempt ${nextAttempts} of 5 before temporary security lockout.`)
+        }
       }
       setIsLoading(false)
     }, 450)
@@ -99,53 +161,66 @@ export const LoginPage = () => {
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
             School Management System
           </h1>
-          <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-            Enterprise Multi-Campus Administration & Academic Operations Portal
+          <p className="text-xs sm:text-sm text-slate-400 mt-1.5 flex items-center justify-center gap-1.5">
+            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            <span>Enterprise Multi-Campus Portal</span>
           </p>
         </div>
 
-        {/* Clean Executive Login Card */}
-        <div className="bg-[#141f36]/95 backdrop-blur-xl border border-slate-700/70 rounded-2xl p-6 sm:p-8 shadow-2xl">
-          <div className="mb-5 flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-bold text-white tracking-tight">Account Login</h2>
-              <p className="text-xs text-slate-400 mt-0.5">Enter credentials or click below for instant demo</p>
+        {/* Login Card */}
+        <div className="bg-[#111c30]/90 backdrop-blur-xl border border-slate-800/90 rounded-2xl p-6 sm:p-8 shadow-2xl shadow-black/40">
+          
+          {/* Lockout Sentinel Banner */}
+          {isLockedOut ? (
+            <div className="mb-5 p-3.5 bg-rose-500/15 border border-rose-500/40 rounded-xl text-rose-200 text-xs space-y-2 animate-in fade-in">
+              <div className="flex items-center gap-2 font-bold text-rose-400">
+                <ShieldAlert className="w-4 h-4 shrink-0 text-rose-400 animate-pulse" />
+                <span>Account Temporarily Locked</span>
+              </div>
+              <p className="text-[11px] text-rose-300/90 leading-relaxed">
+                5 consecutive failed authentication attempts were detected. Login submissions are temporarily disabled for rate-limiting protection.
+              </p>
+              <div className="flex items-center gap-1.5 pt-1 text-[11px] font-mono font-semibold text-rose-200">
+                <Clock className="w-3.5 h-3.5 text-rose-400" />
+                <span>Unlock timer: <strong>{secondsRemaining}s</strong> remaining</span>
+              </div>
             </div>
-            <div className="px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-semibold flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              Live Ready
+          ) : failedAttempts > 2 ? (
+            <div className="mb-4 p-2.5 bg-amber-500/15 border border-amber-500/30 rounded-xl text-amber-200 text-xs flex items-center gap-2 animate-in fade-in">
+              <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400" />
+              <span>Warning: {failedAttempts}/5 failed attempts. Rate-limit lockout imminent.</span>
             </div>
-          </div>
+          ) : null}
 
-          {/* Quick 1-Click Fast Demo Section */}
-          <div className="mb-5 p-3 rounded-xl bg-slate-900/70 border border-slate-800">
-            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-300 uppercase tracking-wider mb-2.5">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>Instant 1-Click Demo Login</span>
-            </div>
+          {/* Quick Demo Credentials Switcher */}
+          <div className="mb-5 p-3.5 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+            <span className="text-[11px] font-bold text-blue-300 block mb-2 uppercase tracking-wider flex items-center gap-1.5">
+              <Sparkles className="w-3 h-3 text-blue-400" />
+              1-Click Instant Demo Login
+            </span>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => handleQuickLogin('superadmin')}
-                disabled={isLoading}
-                className="p-2.5 rounded-lg bg-blue-600/15 hover:bg-blue-600/25 border border-blue-500/30 text-left transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer group"
+                disabled={isLoading || isLockedOut}
+                className="px-3 py-2 bg-blue-600/30 hover:bg-blue-600/50 border border-blue-500/40 rounded-lg text-left transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <div className="flex items-center gap-1.5 text-xs font-bold text-blue-300 group-hover:text-white">
-                  <ShieldCheck className="w-4 h-4 text-blue-400 shrink-0" />
+                <div className="text-xs font-semibold text-blue-100 group-hover:text-white flex items-center justify-between">
                   <span>Superadmin</span>
+                  <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
                 <div className="text-[10px] text-slate-400 mt-1 font-mono truncate">admin@schoolms.com</div>
               </button>
 
               <button
                 type="button"
-                onClick={() => handleQuickLogin('institute')}
-                disabled={isLoading}
-                className="p-2.5 rounded-lg bg-indigo-600/15 hover:bg-indigo-600/25 border border-indigo-500/30 text-left transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer group"
+                onClick={() => handleQuickLogin('institute_admin')}
+                disabled={isLoading || isLockedOut}
+                className="px-3 py-2 bg-indigo-600/30 hover:bg-indigo-600/50 border border-indigo-500/40 rounded-lg text-left transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-300 group-hover:text-white">
-                  <School className="w-4 h-4 text-indigo-400 shrink-0" />
+                <div className="text-xs font-semibold text-indigo-100 group-hover:text-white flex items-center justify-between">
                   <span>Institute Admin</span>
+                  <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
                 <div className="text-[10px] text-slate-400 mt-1 font-mono truncate">admin.beacon@sms.edu</div>
               </button>
@@ -158,7 +233,7 @@ export const LoginPage = () => {
             <div className="flex-grow border-t border-slate-800"></div>
           </div>
 
-          {authError && (
+          {authError && !isLockedOut && (
             <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-300 text-xs flex items-center gap-2 animate-in fade-in">
               <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
               <span>{authError}</span>
@@ -175,12 +250,15 @@ export const LoginPage = () => {
                 <input
                   type="text"
                   required
+                  disabled={isLockedOut}
                   value={identifier}
                   onChange={(e) => {
                     setIdentifier(e.target.value)
                     if (authError) setAuthError('')
                   }}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#0b1424] border border-slate-700 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className={`w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#0b1424] border border-slate-700 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                    isLockedOut ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
                   placeholder="e.g. admin@schoolms.com"
                 />
               </div>
@@ -207,16 +285,20 @@ export const LoginPage = () => {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
+                  disabled={isLockedOut}
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value)
                     if (authError) setAuthError('')
                   }}
-                  className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-[#0b1424] border border-slate-700 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className={`w-full pl-10 pr-10 py-2.5 rounded-xl bg-[#0b1424] border border-slate-700 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                    isLockedOut ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
                   placeholder="e.g. admin123"
                 />
                 <button
                   type="button"
+                  disabled={isLockedOut}
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
                   title={showPassword ? 'Hide password' : 'Show password'}
@@ -231,6 +313,7 @@ export const LoginPage = () => {
                 <input
                   type="checkbox"
                   checked={rememberMe}
+                  disabled={isLockedOut}
                   onChange={(e) => setRememberMe(e.target.checked)}
                   className="w-4 h-4 rounded bg-[#0b1424] border-slate-700 text-blue-600 focus:ring-0"
                 />
@@ -241,13 +324,18 @@ export const LoginPage = () => {
 
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || isLockedOut}
               className={`w-full py-3 rounded-xl font-bold text-sm text-white bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-600/30 transition-all flex items-center justify-center gap-2 ${
-                isLoading ? 'opacity-70 cursor-not-allowed' : 'active:scale-[0.99]'
+                isLoading || isLockedOut ? 'opacity-70 cursor-not-allowed' : 'active:scale-[0.99]'
               }`}
             >
               {isLoading ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              ) : isLockedOut ? (
+                <>
+                  <ShieldAlert className="w-4 h-4 text-rose-300" />
+                  <span>Locked ({secondsRemaining}s)</span>
+                </>
               ) : (
                 <>
                   <span>Sign In</span>

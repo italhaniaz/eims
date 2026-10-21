@@ -492,6 +492,24 @@ export const DataService = {
     return sampleTemplateData
   },
 
+  logAuditEvent(action, user = null, status = 'Success', ip = null) {
+    const store = getStoredData()
+    const userEmail = user || getActiveUserEmail()
+    const auditEntry = {
+      id: `log-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      action,
+      user: userEmail,
+      ip: ip || `192.168.1.${Math.floor(100 + Math.random() * 50)}`,
+      timestamp: new Date().toLocaleString(),
+      status
+    }
+    if (!store.auditLogs) store.auditLogs = []
+    store.auditLogs.unshift(auditEntry)
+    if (store.auditLogs.length > 100) store.auditLogs.pop()
+    saveStoredData(store)
+    return auditEntry
+  },
+
   importData(incomingData) {
     if (!incomingData || typeof incomingData !== 'object') {
       throw new Error('Invalid JSON database format.')

@@ -27,7 +27,7 @@ import { useToast } from '../../../context/ToastContext'
 import Modal from '../../../components/common/Modal'
 
 export const FeesView = ({ currentInstitute }) => {
-  const { fees = [], students = [], addItem, updateItem } = useAppData()
+  const { fees = [], students = [], addItem, updateItem, logAuditEvent } = useAppData()
   const { toast } = useToast()
   const instStudents = students.filter(s => !s.instituteId || s.instituteId === currentInstitute?.id)
 
@@ -44,15 +44,44 @@ export const FeesView = ({ currentInstitute }) => {
   const [currentPage, setCurrentPage] = useState(1)
   const pageSize = 8
 
-  // Standard Voucher Form
+  // Standard Voucher Form with Scholarship & Concession Engine
   const [formData, setFormData] = useState({
     studentName: instStudents[0]?.name || '',
     rollNumber: instStudents[0]?.rollNumber || '',
     className: '10th Grade',
+    grossAmount: 15000,
+    concessionType: 'None', // 'None' | 'Kinship / Sibling (25%)' | 'Merit Scholarship (50%)' | 'Need-Based Financial Aid (100%)' | 'Faculty Ward (50%)'
+    discountAmount: 0,
     amount: 15000,
     dueDate: '2026-10-30',
     status: 'Pending'
   })
+
+  // Concession calculation handler
+  const handleConcessionChange = (concessionType, gross = formData.grossAmount) => {
+    let rate = 0
+    if (concessionType === 'Kinship / Sibling (25%)') rate = 0.25
+    else if (concessionType === 'Merit Scholarship (50%)') rate = 0.50
+    else if (concessionType === 'Need-Based Financial Aid (100%)') rate = 1.00
+    else if (concessionType === 'Faculty Ward (50%)') rate = 0.50
+
+    const grossNum = Number(gross) || 0
+    const discountAmount = Math.round(grossNum * rate)
+    const net = Math.max(0, grossNum - discountAmount)
+
+    setFormData(prev => ({
+      ...prev,
+      grossAmount: grossNum,
+      concessionType,
+      discountAmount,
+      amount: net
+    }))
+  }
+
+  const handleGrossAmountChange = (val) => {
+    const grossNum = Number(val) || 0
+    handleConcessionChange(formData.concessionType, grossNum)
+  }
 
   // Batch Fee Generator Form
   const [batchData, setBatchData] = useState({
@@ -87,17 +116,23 @@ export const FeesView = ({ currentInstitute }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!formData.studentName || !formData.amount) {
-      toast.error('Please enter student name and fee amount.')
+    if (!formData.studentName || formData.amount === undefined || formData.amount === null) {
+      toast.error('Please enter student name and fee details.')
       return
     }
 
     await addItem('fees', {
       ...formData,
       amount: Number(formData.amount),
+      grossAmount: Number(formData.grossAmount),
+      discountAmount: Number(formData.discountAmount),
+      concessionType: formData.concessionType,
       instituteId: currentInstitute?.id || 'inst-1',
       paymentDate: formData.status === 'Paid' ? new Date().toISOString().split('T')[0] : null
     })
+    if (logAuditEvent) {
+      logAuditEvent(`Fee challan issued for ${formData.studentName} (Net: Rs. ${formData.amount})`, 'Cashier', 'Success')
+    }
     toast.success(`Fee challan issued for ${formData.studentName}!`)
     setIsModalOpen(false)
   }
@@ -139,6 +174,9 @@ export const FeesView = ({ currentInstitute }) => {
       status: 'Paid',
       paymentDate: new Date().toISOString().split('T')[0]
     })
+    if (logAuditEvent) {
+      logAuditEvent(`Marked fee paid for ${fee.studentName} (Rs. ${fee.amount})`, 'Fee Cashier', 'Success')
+    }
     toast.success(`Challan for ${fee.studentName} marked as Paid.`)
   }
 
@@ -216,6 +254,9 @@ export const FeesView = ({ currentInstitute }) => {
       cashier: 'Fee Counter Operator'
     }
 
+    if (logAuditEvent) {
+      logAuditEvent(`POS counter fee payment collected for ${posData.studentName} (Rs. ${payable})`, 'POS Cashier', 'Success')
+    }
     toast.success(`POS Collection Successful! Rs. ${payable.toLocaleString()} received.`)
     setIsPosModalOpen(false)
     setPosReceipt(receiptObj)
@@ -692,6 +733,32 @@ export const FeesView = ({ currentInstitute }) => {
               </div>
             </div>
 
+            {/* Quick Concession Buttons */}
+            <div className="flex items-center gap-1.5 flex-wrap p-2 bg-slate-50 border border-slate-200 rounded-lg">
+              <span className="text-[10px] text-slate-500 font-bold uppercase">Quick Concession:</span>
+              <button
+                type="button"
+                onClick={() => setPosData({ ...posData, discount: Math.round(posData.amount * 0.25), cashierNotes: 'Kinship Concession (25%)' })}
+                className="text-[10px] px-2 py-0.5 bg-white border border-slate-200 hover:bg-indigo-50 hover:border-indigo-300 text-slate-700 rounded font-medium transition-colors cursor-pointer"
+              >
+                Kinship (25%)
+              </button>
+              <button
+                type="button"
+                onClick={() => setPosData({ ...posData, discount: Math.round(posData.amount * 0.50), cashierNotes: 'Merit Scholarship (50%)' })}
+                className="text-[10px] px-2 py-0.5 bg-white border border-slate-200 hover:bg-indigo-50 hover:border-indigo-300 text-slate-700 rounded font-medium transition-colors cursor-pointer"
+              >
+                Merit (50%)
+              </button>
+              <button
+                type="button"
+                onClick={() => setPosData({ ...posData, discount: posData.amount, cashierNotes: 'Need-Based Full Aid (100%)' })}
+                className="text-[10px] px-2 py-0.5 bg-white border border-slate-200 hover:bg-indigo-50 hover:border-indigo-300 text-slate-700 rounded font-medium transition-colors cursor-pointer"
+              >
+                Need-Based (100%)
+              </button>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Payment Method</label>
@@ -868,14 +935,49 @@ export const FeesView = ({ currentInstitute }) => {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Fee Amount (Rs.) *</label>
+              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Standard Tuition Fee (Rs.) *</label>
               <input
                 type="number"
                 required
-                value={formData.amount}
-                onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
+                min="0"
+                value={formData.grossAmount}
+                onChange={(e) => handleGrossAmountChange(e.target.value)}
                 className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 font-mono"
               />
+            </div>
+          </div>
+
+          {/* Scholarship & Concession Selector */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Scholarship / Fee Concession Category</label>
+            <select
+              value={formData.concessionType}
+              onChange={(e) => handleConcessionChange(e.target.value)}
+              className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 bg-white font-medium text-slate-700"
+            >
+              <option value="None">Standard Full Fee (No Concession)</option>
+              <option value="Kinship / Sibling (25%)">Kinship / Sibling Concession (25% Off)</option>
+              <option value="Merit Scholarship (50%)">Merit Scholarship (Top 5% Student - 50% Off)</option>
+              <option value="Need-Based Financial Aid (100%)">Need-Based Financial Aid (Full 100% Free)</option>
+              <option value="Faculty Ward (50%)">Faculty / Staff Child Concession (50% Off)</option>
+            </select>
+          </div>
+
+          {/* Real-time Calculation Breakdown Preview */}
+          <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5 text-xs">
+            <div className="flex justify-between text-slate-600">
+              <span>Gross Tuition Amount:</span>
+              <span className="font-mono font-semibold">Rs. {Number(formData.grossAmount).toLocaleString()}</span>
+            </div>
+            {formData.discountAmount > 0 && (
+              <div className="flex justify-between text-emerald-700 font-medium">
+                <span>Concession Deduction ({formData.concessionType}):</span>
+                <span className="font-mono font-bold">-Rs. {Number(formData.discountAmount).toLocaleString()}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-slate-900 font-bold pt-1 border-t border-slate-200 text-sm">
+              <span>Net Payable Challan:</span>
+              <span className="font-mono text-emerald-700">Rs. {Number(formData.amount).toLocaleString()}</span>
             </div>
           </div>
 
@@ -960,13 +1062,19 @@ export const FeesView = ({ currentInstitute }) => {
                   <table className="w-full text-[10px] border border-slate-200 mt-2">
                     <tbody>
                       <tr className="border-b">
-                        <td className="p-1 text-slate-600">Tuition Fee</td>
-                        <td className="p-1 text-right font-mono font-semibold">Rs. {Number(selectedVoucher.amount) - 2000}</td>
+                        <td className="p-1 text-slate-600">Base Tuition Fee</td>
+                        <td className="p-1 text-right font-mono font-semibold">
+                          Rs. {Number(selectedVoucher.grossAmount || selectedVoucher.amount).toLocaleString()}
+                        </td>
                       </tr>
-                      <tr className="border-b">
-                        <td className="p-1 text-slate-600">Lab / Exam Fund</td>
-                        <td className="p-1 text-right font-mono font-semibold">Rs. 2,000</td>
-                      </tr>
+                      {selectedVoucher.concessionType && selectedVoucher.concessionType !== 'None' && (
+                        <tr className="border-b bg-emerald-50/70 text-emerald-800 font-semibold">
+                          <td className="p-1">{selectedVoucher.concessionType}</td>
+                          <td className="p-1 text-right font-mono text-emerald-700">
+                            -Rs. {Number(selectedVoucher.discountAmount || 0).toLocaleString()}
+                          </td>
+                        </tr>
+                      )}
                       <tr className="bg-slate-50 font-bold border-t border-slate-800">
                         <td className="p-1">Payable by Due Date</td>
                         <td className="p-1 text-right font-mono text-xs">Rs. {Number(selectedVoucher.amount).toLocaleString()}</td>
