@@ -47,7 +47,12 @@ import {
   RefreshCw, 
   FileWarning,
   Building2,
-  BookOpen
+  BookOpen,
+  HelpCircle,
+  FileUp,
+  MapPin,
+  CreditCard,
+  Briefcase
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
@@ -72,9 +77,13 @@ export const StudentsView = ({ currentInstitute }) => {
   const { toast } = useToast()
   const fileInputRef = useRef(null)
   const csvInputRef = useRef(null)
+  const bFormDocInputRef = useRef(null)
+  const resultDocInputRef = useRef(null)
+  const tcDocInputRef = useRef(null)
 
-  // Loading & Error States
+  // Loading States
   const [isLoading, setIsLoading] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Academic Sessions Management (Previous, Current, Next)
   const defaultSessions = useMemo(() => [
@@ -210,6 +219,12 @@ export const StudentsView = ({ currentInstitute }) => {
   // Row Action Dropdown Menu Trigger
   const [openMenuStudentId, setOpenMenuStudentId] = useState(null)
 
+  // Admission Wizard Step State (1: Student, 2: Guardian, 3: Academic, 4: Fees, 5: Medical, 6: Documents)
+  const [activeStep, setActiveStep] = useState(1)
+  const [formErrors, setFormErrors] = useState({})
+  const [isDiscardConfirmOpen, setIsDiscardConfirmOpen] = useState(false)
+  const [isFormDirty, setIsFormDirty] = useState(false)
+
   // Modals & Drawers States
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingStudent, setEditingStudent] = useState(null)
@@ -238,37 +253,188 @@ export const StudentsView = ({ currentInstitute }) => {
   // CSV Validation Error Report Modal
   const [csvErrorModal, setCsvErrorModal] = useState(null)
 
-  // Form State for Add / Edit
-  const [formData, setFormData] = useState({
+  // Initial Form Data State with Clean Production Defaults
+  const initialFormState = {
+    // Step 1: Student
     name: '',
-    rollNumber: '',
-    className: '',
-    section: 'A',
+    dob: '',
     gender: 'Male',
-    fatherName: '',
-    fatherCnic: '',
+    bFormCnic: '',
     address: '',
+    city: 'Lahore',
     email: '',
     phone: '',
-    bloodGroup: 'B+',
-    emergencyContact: '',
-    status: 'Active',
-    feeStatus: 'Paid',
-    attendanceRate: '',
     photoUrl: null,
-    medicalAlert: 'None',
-    emergencyDoctorPhone: '',
-    vaccinationStatus: 'Fully Vaccinated',
+
+    // Step 2: Guardian
+    fatherName: '',
+    fatherCnic: '',
+    fatherOccupation: '',
+    motherName: '',
+    motherPhone: '',
+    guardianPhone: '',
+    guardianWhatsapp: '',
+    emergencyContact: '',
+    emergencyContactRelation: 'Father',
+
+    // Step 3: Academic (School vs College vs University)
     academicSession: '2026-2027',
+    admissionDate: new Date().toISOString().split('T')[0],
+    admissionType: 'New Admission', // 'New Admission' | 'Transfer Admission'
+    previousSchool: '',
+    className: '', // Starts empty, required!
+    section: '', // Starts empty, required!
+    rollNumber: '', // Auto-generated read-only
+
+    // College Specific
+    studyGroup: '',
+    boardRollNumber: '',
+    matricMarks: '',
+
+    // University Specific
+    degreeProgram: '',
     department: '',
-    batch: ''
-  })
+    semester: 'Semester 1',
+    batch: 'Fall 2026',
+    previousDegree: '',
+    previousCgpa: '',
+
+    // Step 4: Fees
+    feePlan: 'Standard Monthly',
+    feeStatus: 'Pending', // Strictly Pending!
+    discountScholarship: 'None (0%)',
+
+    // Step 5: Medical
+    bloodGroup: '', // Strictly empty default "Select"
+    medicalAlert: 'None',
+    medicalAlertOther: '',
+    allergies: '',
+    currentMedication: '',
+    medicalConditionDetails: '',
+    emergencyDoctorPhone: '',
+    vaccinationStatus: 'Unknown / Not provided', // Strictly Unknown / Not provided!
+
+    // Step 6: Documents
+    bFormDocName: null,
+    resultDocName: null,
+    tcDocName: null,
+    status: 'Active'
+  }
+
+  const [formData, setFormData] = useState(initialFormState)
+
+  // Real Campus Student Pool (Excluding any legacy seed/demo records)
+  const campusStudents = useMemo(() => {
+    const demoNames = ['Hamza Farooq', 'Ayesha Siddiqui', 'Daniyal Tariq', 'Zainab Fatima', 'Bilal Ahmed Khan', 'Ahmed Raza']
+    const demoRolls = ['STD-101', 'COL-201', 'STD-103', 'REG-401', 'STD-105', 'BHS-2024-001', 'BHS-2024-002', 'STD-1001', 'COL-2002', 'REG-3003']
+
+    return students.filter(s => {
+      if (demoNames.includes(s.name) || demoRolls.includes(s.rollNumber)) return false
+      return !s.instituteId || !currentInstitute?.id || s.instituteId === currentInstitute?.id || currentInstitute?.id === 'inst-default'
+    })
+  }, [students, currentInstitute?.id])
+
+  // Dynamic Level Determination & Adaptive Tier Vocabulary
+  const currentLevelKey = useMemo(() => {
+    if (selectedLevelFilter !== 'all') return selectedLevelFilter
+    if (activeProgramLevel && activeProgramLevel !== 'all') {
+      if (['elementary', 'secondary', 'higher-secondary', 'school'].includes(activeProgramLevel)) return 'school'
+      if (activeProgramLevel === 'college') return 'college'
+      if (activeProgramLevel === 'university') return 'university'
+    }
+    return 'school'
+  }, [selectedLevelFilter, activeProgramLevel])
+
+  const tierVocabulary = useMemo(() => {
+    switch (currentLevelKey) {
+      case 'college':
+        return {
+          levelName: 'Higher Secondary / College',
+          idLabel: 'Board Roll No',
+          idPlaceholder: 'e.g. COL-001',
+          groupLabel: 'Academic Year',
+          groupPlaceholder: 'e.g. 1st Year (11th Grade)',
+          subGroupLabel: 'Study Group',
+          subGroupPlaceholder: 'e.g. FSc Pre-Medical / Pre-Engineering / ICS',
+          unitLabel: 'Section'
+        }
+      case 'university':
+        return {
+          levelName: 'Undergraduate / University',
+          idLabel: 'Registration / CMS No',
+          idPlaceholder: 'e.g. REG-001',
+          groupLabel: 'Degree Program',
+          groupPlaceholder: 'e.g. BS Computer Science',
+          subGroupLabel: 'Current Semester',
+          subGroupPlaceholder: 'e.g. Semester 1',
+          unitLabel: 'Batch / Section'
+        }
+      case 'school':
+      default:
+        return {
+          levelName: 'Primary / Secondary School',
+          idLabel: 'Admission Roll No',
+          idPlaceholder: 'e.g. STD-001',
+          groupLabel: 'Class / Grade',
+          groupPlaceholder: 'e.g. Class 1 / 10th Grade',
+          subGroupLabel: 'Section',
+          subGroupPlaceholder: 'e.g. Section A',
+          unitLabel: 'Section'
+        }
+    }
+  }, [currentLevelKey])
+
+  // Sequential Roll Number Calculation starting from 1
+  const calculateNextRollNumber = (levelKey) => {
+    const prefix = levelKey === 'university' ? 'REG' : levelKey === 'college' ? 'COL' : 'STD'
+    const regex = new RegExp(`^${prefix}-(\\d+)`, 'i')
+    let max = 0
+    campusStudents.forEach(s => {
+      const match = (s.rollNumber || '').match(regex)
+      if (match) {
+        const val = parseInt(match[1], 10)
+        if (val > max) max = val
+      }
+    })
+    const nextVal = max + 1
+    return `${prefix}-${String(nextVal).padStart(3, '0')}` // STD-001, STD-002...
+  }
+
+  // Distinct classes and sections available from DB classes
+  const availableClasses = useMemo(() => {
+    const set = new Set()
+    classes.forEach(c => {
+      if (c.name) set.add(c.name)
+    })
+    campusStudents.forEach(s => {
+      if (s.className) set.add(s.className)
+    })
+    return Array.from(set).sort()
+  }, [classes, campusStudents])
+
+  // Dynamic sections strictly tied to currently selected class in form
+  const dynamicSectionsForSelectedClass = useMemo(() => {
+    if (!formData.className) return []
+    const matchingClassObj = classes.find(c => c.name === formData.className)
+    if (matchingClassObj) {
+      const parsedSecs = normalizeClassSections(matchingClassObj)
+      if (parsedSecs.length > 0) {
+        return parsedSecs.map(s => s.name || s)
+      }
+    }
+    // Fallback if class exists but sections unconfigured
+    return ['A', 'B', 'C']
+  }, [classes, formData.className])
 
   // Keyboard accessibility: Escape key closes active modals and menus
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
-        setIsModalOpen(false)
+        if (isModalOpen && isFormDirty) {
+          setIsDiscardConfirmOpen(true)
+        } else {
+          setIsModalOpen(false)
+        }
         setSelectedProfile(null)
         setSelectedAdmissionSlip(null)
         setSelectedIdCard(null)
@@ -293,74 +459,50 @@ export const StudentsView = ({ currentInstitute }) => {
       window.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('click', handleWindowClick)
     }
-  }, [])
+  }, [isModalOpen, isFormDirty])
 
-  // Dynamic Level Determination & Adaptive Tier Vocabulary
-  const currentLevelKey = useMemo(() => {
-    if (selectedLevelFilter !== 'all') return selectedLevelFilter
-    if (activeProgramLevel && activeProgramLevel !== 'all') {
-      if (['elementary', 'secondary', 'higher-secondary', 'school'].includes(activeProgramLevel)) return 'school'
-      if (activeProgramLevel === 'college') return 'college'
-      if (activeProgramLevel === 'university') return 'university'
+  // Pakistani Phone Number Validator (+92 3XX XXXXXXX or 03XXXXXXXXX)
+  const validatePakistaniPhone = (phone) => {
+    if (!phone) return true // optional if empty, checked in required validation
+    const clean = phone.replace(/[\s\-\(\)]/g, '')
+    const regex = /^(\+92|0092|92)?3[0-9]{9}$/
+    return regex.test(clean)
+  }
+
+  // Format phone to clean +92 3XX XXXXXXX
+  const formatPhoneNumber = (value) => {
+    const digits = value.replace(/\D/g, '')
+    if (digits.startsWith('923')) {
+      const sub = digits.slice(2)
+      return `+92 ${sub.slice(0, 3)} ${sub.slice(3, 10)}`.trim()
+    } else if (digits.startsWith('03')) {
+      const sub = digits.slice(1)
+      return `+92 ${sub.slice(0, 3)} ${sub.slice(3, 10)}`.trim()
+    } else if (digits.startsWith('3')) {
+      return `+92 ${digits.slice(0, 3)} ${digits.slice(3, 10)}`.trim()
     }
-    return 'school'
-  }, [selectedLevelFilter, activeProgramLevel])
+    return value
+  }
 
-  const tierVocabulary = useMemo(() => {
-    switch (currentLevelKey) {
-      case 'college':
-        return {
-          levelName: 'Higher Secondary / College',
-          idLabel: 'Board Roll No',
-          idPlaceholder: 'e.g. COL-001',
-          groupLabel: 'Academic Year',
-          groupPlaceholder: 'e.g. 1st Year (FSc)',
-          subGroupLabel: 'Study Group',
-          subGroupPlaceholder: 'e.g. Pre-Medical / Pre-Engineering / ICS',
-          unitLabel: 'Section'
-        }
-      case 'university':
-        return {
-          levelName: 'Undergraduate / University',
-          idLabel: 'Registration / CMS No',
-          idPlaceholder: 'e.g. REG-001',
-          groupLabel: 'Degree Program',
-          groupPlaceholder: 'e.g. BS Computer Science',
-          subGroupLabel: 'Current Semester',
-          subGroupPlaceholder: 'e.g. Semester 1',
-          unitLabel: 'Batch / Section'
-        }
-      case 'school':
-      default:
-        return {
-          levelName: 'Primary / Secondary School',
-          idLabel: 'Admission Roll No',
-          idPlaceholder: 'e.g. STD-001',
-          groupLabel: 'Class / Grade',
-          groupPlaceholder: 'e.g. Class 1',
-          subGroupLabel: 'Section',
-          subGroupPlaceholder: 'e.g. Section A',
-          unitLabel: 'Section'
-        }
-    }
-  }, [currentLevelKey])
-
-  // Photo Upload Handler (Converts image to Data URL)
+  // Photo Upload Handler with Crop / Framing & 2MB Limit
   const handlePhotoUpload = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please select a valid image file (JPG/PNG).')
+
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      toast.error('Invalid image type. Please select a genuine JPG, PNG or WEBP photograph.')
       return
     }
     if (file.size > 2 * 1024 * 1024) {
-      toast.warning('Image size is larger than 2MB. Please select a smaller photo.')
+      toast.error('Photo file size exceeds 2MB limit. Please upload a compressed image.')
       return
     }
+
     const reader = new FileReader()
     reader.onload = (event) => {
       setFormData(prev => ({ ...prev, photoUrl: event.target?.result }))
-      toast.info('Student photo attached.')
+      setIsFormDirty(true)
+      toast.success('Passport size ID photo attached successfully.')
     }
     reader.readAsDataURL(file)
   }
@@ -368,67 +510,26 @@ export const StudentsView = ({ currentInstitute }) => {
   const removePhoto = () => {
     setFormData(prev => ({ ...prev, photoUrl: null }))
     if (fileInputRef.current) fileInputRef.current.value = ''
+    setIsFormDirty(true)
   }
 
-  // Real Campus Student Pool (Excluding any legacy seed/demo records)
-  const campusStudents = useMemo(() => {
-    const demoNames = ['Hamza Farooq', 'Ayesha Siddiqui', 'Daniyal Tariq', 'Zainab Fatima', 'Bilal Ahmed Khan', 'Ahmed Raza']
-    const demoRolls = ['STD-101', 'COL-201', 'STD-103', 'REG-401', 'STD-105', 'BHS-2024-001', 'BHS-2024-002', 'STD-1001', 'COL-2002', 'REG-3003']
-
-    return students.filter(s => {
-      if (demoNames.includes(s.name) || demoRolls.includes(s.rollNumber)) return false
-      return !s.instituteId || !currentInstitute?.id || s.instituteId === currentInstitute?.id || currentInstitute?.id === 'inst-default'
-    })
-  }, [students, currentInstitute?.id])
-
-  // Sequential Roll Number Calculation starting from 1
-  const calculateNextRollNumber = (levelKey) => {
-    const prefix = levelKey === 'university' ? 'REG' : levelKey === 'college' ? 'COL' : 'STD'
-    const regex = new RegExp(`^${prefix}-(\\d+)`, 'i')
-    let max = 0
-    campusStudents.forEach(s => {
-      const match = (s.rollNumber || '').match(regex)
-      if (match) {
-        const val = parseInt(match[1], 10)
-        if (val > max) max = val
-      }
-    })
-    const nextVal = max + 1
-    return `${prefix}-${String(nextVal).padStart(3, '0')}` // STD-001, STD-002...
-  }
-
-  // Distinct classes and sections available from DB classes AND campusStudents
-  const availableClasses = useMemo(() => {
-    const set = new Set()
-    classes.forEach(c => {
-      if (c.name) set.add(c.name)
-    })
-    campusStudents.forEach(s => {
-      if (s.className) set.add(s.className)
-    })
-    return Array.from(set).sort()
-  }, [classes, campusStudents])
-
-  const availableSections = useMemo(() => {
-    const set = new Set()
-    classes.forEach(c => {
-      const secs = normalizeClassSections(c)
-      secs.forEach(sc => {
-        if (sc.name) set.add(sc.name)
-      })
-    })
-    campusStudents.forEach(s => {
-      if (s.section) set.add(s.section)
-    })
-    if (set.size === 0) {
-      set.add('A')
-      set.add('B')
+  // Document Upload Handlers (B-Form, Result, TC)
+  const handleDocUpload = (key, nameKey) => (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Document file exceeds 5MB limit.')
+      return
     }
-    return Array.from(set).sort()
-  }, [classes, campusStudents])
+    setFormData(prev => ({
+      ...prev,
+      [nameKey]: file.name
+    }))
+    setIsFormDirty(true)
+    toast.success(`Attached document: "${file.name}"`)
+  }
 
   // Multi-Filter & Search Engine
-  // Real data is strictly filtered by Session, Level, Class, Section, Status, Gender, Fee, Medical Alert, and Search query
   const filteredAndSorted = useMemo(() => {
     const list = campusStudents.filter(s => {
       const query = searchTerm.toLowerCase().trim()
@@ -443,45 +544,37 @@ export const StudentsView = ({ currentInstitute }) => {
 
       if (!matchesSearch) return false
 
-      // Academic Session filter (strict match)
       if (academicSession && s.academicSession) {
         if (s.academicSession !== academicSession) return false
       }
 
-      // Level / Tier filter
       if (selectedLevelFilter !== 'all') {
         const studentLevel = detectProgramLevel(s.className)
         if (studentLevel !== selectedLevelFilter && studentLevel !== 'all') return false
       }
 
-      // Class / Program filter
       if (selectedClassFilter !== 'ALL' && s.className !== selectedClassFilter) {
         return false
       }
 
-      // Section filter
       if (selectedSectionFilter !== 'ALL' && s.section !== selectedSectionFilter) {
         return false
       }
 
-      // Status filter
       if (selectedStatusFilter !== 'ALL') {
         const currentStatus = s.status || 'Active'
         if (currentStatus !== selectedStatusFilter) return false
       }
 
-      // Gender filter
       if (selectedGenderFilter !== 'ALL') {
         const currentGender = s.gender || 'Male'
         if (currentGender !== selectedGenderFilter) return false
       }
 
-      // Fee Status filter
       if (selectedFeeFilter !== 'ALL' && s.feeStatus !== selectedFeeFilter) {
         return false
       }
 
-      // Medical Alerts filter
       if (selectedMedicalFilter === 'Alerts' && (!s.medicalAlert || s.medicalAlert === 'None')) {
         return false
       }
@@ -591,7 +684,6 @@ export const StudentsView = ({ currentInstitute }) => {
     }
     const cleanName = newSessionData.name.trim()
 
-    // Check duplicate
     if (sessionsList.some(s => s.name.toLowerCase() === cleanName.toLowerCase())) {
       toast.error(`Session "${cleanName}" already exists.`)
       return
@@ -628,7 +720,7 @@ export const StudentsView = ({ currentInstitute }) => {
     toast.success(`Academic session "${cleanName}" created successfully!`)
   }
 
-  // Open Add Modal with Empty Check Prerequisite & Counter starting from 1
+  // Open Add Modal with Clean Defaults & Roll Number from 1
   const openAddModal = () => {
     const hasConfiguredClasses = classes && classes.length > 0
     const hasConfiguredSessions = sessionsList && sessionsList.length > 0
@@ -641,32 +733,20 @@ export const StudentsView = ({ currentInstitute }) => {
 
     setEditingStudent(null)
     const generatedRoll = calculateNextRollNumber(currentLevelKey)
-    const defaultClassName = classes[0]?.name || ''
 
     setFormData({
-      name: '',
+      ...initialFormState,
       rollNumber: generatedRoll,
-      className: defaultClassName,
-      section: 'A',
-      gender: 'Male',
-      fatherName: '',
-      fatherCnic: '',
-      address: '',
-      email: '',
-      phone: '',
-      bloodGroup: 'B+',
-      emergencyContact: '',
-      status: 'Active',
-      feeStatus: 'Paid',
-      attendanceRate: '',
-      photoUrl: null,
-      medicalAlert: 'None',
-      emergencyDoctorPhone: '',
-      vaccinationStatus: 'Fully Vaccinated',
       academicSession: academicSession || '2026-2027',
-      department: currentLevelKey === 'university' ? 'Computer Science' : '',
-      batch: currentLevelKey === 'university' ? 'Batch 1' : ''
+      className: '', // Starts empty, required!
+      section: '',   // Starts empty, required!
+      bloodGroup: '', // Default "Select"
+      feeStatus: 'Pending', // Default "Pending"
+      vaccinationStatus: 'Unknown / Not provided' // Default Unknown
     })
+    setFormErrors({})
+    setActiveStep(1)
+    setIsFormDirty(false)
     setIsModalOpen(true)
   }
 
@@ -674,46 +754,101 @@ export const StudentsView = ({ currentInstitute }) => {
   const openEditModal = (s) => {
     setEditingStudent(s)
     setFormData({
-      name: s.name || '',
-      rollNumber: s.rollNumber || '',
+      ...initialFormState,
+      ...s,
       className: s.className || '',
-      section: s.section || 'A',
-      gender: s.gender || 'Male',
-      fatherName: s.fatherName || '',
-      fatherCnic: s.fatherCnic || '',
-      address: s.address || '',
-      email: s.email || '',
-      phone: s.phone || '',
-      bloodGroup: s.bloodGroup || 'B+',
-      emergencyContact: s.emergencyContact || '',
-      status: s.status || 'Active',
-      feeStatus: s.feeStatus || 'Paid',
-      attendanceRate: s.attendanceRate || '',
-      photoUrl: s.photoUrl || null,
+      section: s.section || '',
+      bloodGroup: s.bloodGroup || '',
+      feeStatus: s.feeStatus || 'Pending',
+      vaccinationStatus: s.vaccinationStatus || 'Unknown / Not provided',
       medicalAlert: s.medicalAlert || 'None',
-      emergencyDoctorPhone: s.emergencyDoctorPhone || '',
-      vaccinationStatus: s.vaccinationStatus || 'Fully Vaccinated',
-      academicSession: s.academicSession || academicSession || '2026-2027',
-      department: s.department || '',
-      batch: s.batch || ''
+      medicalAlertOther: s.medicalAlertOther || ''
     })
+    setFormErrors({})
+    setActiveStep(1)
+    setIsFormDirty(false)
     setIsModalOpen(true)
   }
 
-  // Handle Form Submit
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    if (!formData.name.trim() || !formData.rollNumber.trim()) {
-      toast.error('Student Name and Roll / Registration Number are required.')
+  // Field Level Validation per Step
+  const validateStep = (stepNumber) => {
+    const errs = {}
+
+    if (stepNumber === 1) {
+      if (!formData.name.trim()) errs.name = 'Student Full Name is required.'
+      if (!formData.dob) errs.dob = 'Date of birth is required.'
+      if (!formData.gender) errs.gender = 'Gender is required.'
+      if (!formData.bFormCnic.trim()) errs.bFormCnic = 'B-Form / CNIC number is required.'
+      if (!formData.address.trim()) errs.address = 'Residential address is required.'
+      if (!formData.city.trim()) errs.city = 'City is required.'
+      if (formData.phone && !validatePakistaniPhone(formData.phone)) {
+        errs.phone = 'Invalid phone. Format: +92 3XX XXXXXXX'
+      }
+    } else if (stepNumber === 2) {
+      if (!formData.fatherName.trim()) errs.fatherName = 'Father / Guardian name is required.'
+      if (!formData.guardianPhone.trim()) {
+        errs.guardianPhone = 'Guardian phone number is required.'
+      } else if (!validatePakistaniPhone(formData.guardianPhone)) {
+        errs.guardianPhone = 'Invalid phone. Format: +92 3XX XXXXXXX'
+      }
+      if (formData.guardianWhatsapp && !validatePakistaniPhone(formData.guardianWhatsapp)) {
+        errs.guardianWhatsapp = 'Invalid WhatsApp number. Format: +92 3XX XXXXXXX'
+      }
+      if (formData.emergencyContact && !validatePakistaniPhone(formData.emergencyContact)) {
+        errs.emergencyContact = 'Invalid emergency number. Format: +92 3XX XXXXXXX'
+      }
+    } else if (stepNumber === 3) {
+      if (!formData.className) errs.className = `Please select ${tierVocabulary.groupLabel}.`
+      if (!formData.section) errs.section = `Please select ${tierVocabulary.unitLabel}.`
+      if (!formData.academicSession) errs.academicSession = 'Academic session is required.'
+
+      if (currentLevelKey === 'college') {
+        if (!formData.matricMarks.trim()) errs.matricMarks = 'Matric marks / percentage is required.'
+      } else if (currentLevelKey === 'university') {
+        if (!formData.department.trim()) errs.department = 'Academic department is required.'
+        if (!formData.previousDegree.trim()) errs.previousDegree = 'Previous degree & CGPA are required.'
+      }
+    } else if (stepNumber === 4) {
+      if (!formData.feePlan) errs.feePlan = 'Please select a fee plan.'
+    } else if (stepNumber === 5) {
+      if (formData.medicalAlert === 'Other' && !formData.medicalAlertOther.trim()) {
+        errs.medicalAlertOther = 'Please specify the medical condition details.'
+      }
+      if (formData.emergencyDoctorPhone && !validatePakistaniPhone(formData.emergencyDoctorPhone)) {
+        errs.emergencyDoctorPhone = 'Invalid doctor phone. Format: +92 3XX XXXXXXX'
+      }
+    }
+
+    setFormErrors(errs)
+    return Object.keys(errs).length === 0
+  }
+
+  // Next Step Action with Validation Gate
+  const handleNextStep = () => {
+    if (validateStep(activeStep)) {
+      setActiveStep(prev => Math.min(prev + 1, 6))
+    } else {
+      toast.error('Please resolve the required highlighted fields before proceeding.')
+    }
+  }
+
+  // Handle Form Submission (Supports Standard Enroll, Save as Draft, Save & Add Another, Enroll & Print ID)
+  const executeFormSubmit = async (mode = 'standard') => {
+    // Validate all critical steps
+    const isStep1Valid = validateStep(1)
+    const isStep2Valid = validateStep(2)
+    const isStep3Valid = validateStep(3)
+
+    if (!isStep1Valid || !isStep2Valid || !isStep3Valid) {
+      toast.error('Please complete all required fields in Student, Guardian, and Academic steps.')
+      if (!isStep1Valid) setActiveStep(1)
+      else if (!isStep2Valid) setActiveStep(2)
+      else setActiveStep(3)
       return
     }
 
-    if (!formData.className) {
-      toast.error('Class / Degree Program is required. Pehle class banayein.')
-      return
-    }
-
-    const cleanRoll = formData.rollNumber.trim()
+    setIsSubmitting(true)
+    const cleanRoll = formData.rollNumber.trim() || calculateNextRollNumber(currentLevelKey)
 
     // Duplicate Check
     const isDuplicate = students.some(s => 
@@ -724,28 +859,74 @@ export const StudentsView = ({ currentInstitute }) => {
 
     if (isDuplicate) {
       toast.error(`Identifier "${cleanRoll}" already exists for another student!`)
+      setIsSubmitting(false)
       return
     }
+
+    const effectiveStatus = mode === 'draft' ? 'Withdrawn' : (formData.status || 'Active')
+    const finalMedicalAlert = formData.medicalAlert === 'Other' ? (formData.medicalAlertOther || 'Other Condition') : formData.medicalAlert
 
     const payload = {
       ...formData,
       rollNumber: cleanRoll,
+      status: effectiveStatus,
+      medicalAlert: finalMedicalAlert,
       academicSession: formData.academicSession || academicSession,
       instituteId: currentInstitute?.id || 'inst-1',
       updatedAt: new Date().toISOString()
     }
 
-    if (editingStudent) {
-      await updateItem('students', editingStudent.id, payload)
-      toast.success(`Student profile for "${formData.name}" updated successfully.`)
-    } else {
-      await addItem('students', {
-        ...payload,
-        createdAt: new Date().toISOString()
-      })
-      toast.success(`Student "${formData.name}" enrolled successfully!`)
+    try {
+      let createdOrUpdated = null
+      if (editingStudent) {
+        await updateItem('students', editingStudent.id, payload)
+        createdOrUpdated = { ...editingStudent, ...payload }
+        toast.success(`Student profile for "${formData.name}" updated successfully.`)
+      } else {
+        createdOrUpdated = await addItem('students', {
+          ...payload,
+          createdAt: new Date().toISOString()
+        })
+        toast.success(`Student "${formData.name}" enrolled successfully!`)
+      }
+
+      setIsFormDirty(false)
+
+      if (mode === 'addAnother') {
+        const nextRoll = calculateNextRollNumber(currentLevelKey)
+        setFormData({
+          ...initialFormState,
+          rollNumber: nextRoll,
+          academicSession: academicSession,
+          className: '',
+          section: '',
+          bloodGroup: '',
+          feeStatus: 'Pending',
+          vaccinationStatus: 'Unknown / Not provided'
+        })
+        setActiveStep(1)
+        toast.info(`Ready to enroll next student (${nextRoll}).`)
+      } else if (mode === 'printId') {
+        setIsModalOpen(false)
+        setSelectedIdCard(createdOrUpdated || payload)
+      } else {
+        setIsModalOpen(false)
+      }
+    } catch (err) {
+      console.error(err)
+      toast.error('Failed to save student admission record. Please try again.')
+    } finally {
+      setIsSubmitting(false)
     }
-    setIsModalOpen(false)
+  }
+
+  // Cancel / Close Request with Discard Confirmation
+  const handleCancelModal = () => {
+    if (isFormDirty) {
+      setIsDiscardConfirmOpen(true)
+    } else {
+      setIsModalOpen(false)
+    }
   }
 
   // Single Delete
@@ -838,7 +1019,7 @@ export const StudentsView = ({ currentInstitute }) => {
       'Academic Session'
     ]
     const sampleRows = [
-      ['Student Name', calculateNextRollNumber(currentLevelKey), availableClasses[0] || 'Class 1', 'A', 'Male', 'Guardian Name', 'student@example.com', '+92 300 0000000', '+92 300 0000000', 'B+', 'Active', 'Paid', '', 'None', '', 'Fully Vaccinated', academicSession]
+      ['Student Name', calculateNextRollNumber(currentLevelKey), availableClasses[0] || 'Class 1', 'A', 'Male', 'Guardian Name', 'student@example.com', '+92 300 0000000', '+92 300 0000000', '', 'Active', 'Pending', '', 'None', '', 'Unknown / Not provided', academicSession]
     ]
 
     const csvContent = [headers.join(','), ...sampleRows.map(r => r.map(f => `"${f}"`).join(','))].join('\n')
@@ -923,13 +1104,13 @@ export const StudentsView = ({ currentInstitute }) => {
             email: email || '',
             phone: phone || '',
             emergencyContact: emergencyContact || phone || '',
-            bloodGroup: bloodGroup || 'B+',
+            bloodGroup: bloodGroup || '',
             status: status || 'Active',
-            feeStatus: feeStatus || 'Paid',
+            feeStatus: feeStatus || 'Pending',
             attendanceRate: attendanceRate || '',
             medicalAlert: medicalAlert || 'None',
             emergencyDoctorPhone: doctorPhone || '',
-            vaccinationStatus: vaccination || 'Fully Vaccinated',
+            vaccinationStatus: vaccination || 'Unknown / Not provided',
             academicSession: rowSession || academicSession || '2026-2027',
             instituteId: currentInstitute?.id || 'inst-1',
             createdAt: new Date().toISOString()
@@ -992,13 +1173,13 @@ export const StudentsView = ({ currentInstitute }) => {
       `"${s.fatherName || ''}"`,
       `"${s.email || ''}"`,
       `"${s.phone || s.emergencyContact || ''}"`,
-      `"${s.bloodGroup || 'B+'}"`,
+      `"${s.bloodGroup || ''}"`,
       `"${s.status || 'Active'}"`,
-      `"${s.feeStatus || 'Paid'}"`,
+      `"${s.feeStatus || 'Pending'}"`,
       `"${s.attendanceRate || ''}"`,
       `"${s.medicalAlert || 'None'}"`,
       `"${s.emergencyDoctorPhone || ''}"`,
-      `"${s.vaccinationStatus || 'Fully Vaccinated'}"`,
+      `"${s.vaccinationStatus || 'Unknown / Not provided'}"`,
       `"${s.academicSession || academicSession}"`
     ])
 
@@ -1060,6 +1241,16 @@ export const StudentsView = ({ currentInstitute }) => {
         )
     }
   }
+
+  // Admission Step Definitions for Multi-Step Wizard
+  const ADMISSION_STEPS = [
+    { id: 1, title: 'Student', subtitle: 'Profile & Bio', icon: User },
+    { id: 2, title: 'Guardian', subtitle: 'Family Contacts', icon: Users },
+    { id: 3, title: 'Academic', subtitle: tierVocabulary.levelName, icon: GraduationCap },
+    { id: 4, title: 'Fees', subtitle: 'Plan & Billing', icon: Award },
+    { id: 5, title: 'Medical', subtitle: 'Sentinel Record', icon: HeartPulse },
+    { id: 6, title: 'Documents', subtitle: 'Uploads & Verification', icon: FileCheck }
+  ]
 
   return (
     <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
@@ -1292,8 +1483,8 @@ export const StudentsView = ({ currentInstitute }) => {
                 className="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white text-slate-700 font-medium focus:outline-none cursor-pointer"
               >
                 <option value="ALL">All {tierVocabulary.unitLabel}s</option>
-                {availableSections.map(sec => (
-                  <option key={sec} value={sec}>Section / Batch {sec}</option>
+                {availableClasses.map(sec => (
+                  <option key={sec} value={sec}>Unit {sec}</option>
                 ))}
               </select>
 
@@ -1626,7 +1817,7 @@ export const StudentsView = ({ currentInstitute }) => {
                       <td className="px-5 py-3.5 whitespace-nowrap">
                         <div className="flex items-center gap-1.5">
                           <span className="text-xs font-semibold text-slate-800">
-                            {s.className} ({s.section || 'A'})
+                            {s.className} {s.section ? `(${s.section})` : ''}
                           </span>
                           <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 uppercase font-semibold">
                             {detectProgramLevel(s.className)}
@@ -1635,7 +1826,7 @@ export const StudentsView = ({ currentInstitute }) => {
                       </td>
                       <td className="px-5 py-3.5 text-xs text-slate-600 whitespace-nowrap">
                         <div className="font-medium text-slate-800 whitespace-nowrap">
-                          {s.phone || s.emergencyContact || '—'}
+                          {s.phone || s.guardianPhone || s.emergencyContact || '—'}
                         </div>
                         {s.fatherName && (
                           <div className="text-[11px] text-slate-500 whitespace-nowrap mt-0.5">
@@ -1658,7 +1849,7 @@ export const StudentsView = ({ currentInstitute }) => {
                             ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' 
                             : 'bg-amber-50 text-amber-600 border border-amber-200'
                         }`}>
-                          {s.feeStatus || 'Paid'}
+                          {s.feeStatus || 'Pending'}
                         </span>
                       </td>
                       <td className="px-5 py-3.5 text-right whitespace-nowrap">
@@ -1781,7 +1972,7 @@ export const StudentsView = ({ currentInstitute }) => {
                   )
                 })
               ) : (
-                // Clean Empty State - No Hardcoded Data & Clean Design
+                // Clean Empty State
                 <tr>
                   <td colSpan={8} className="px-6 py-16 text-center text-slate-400">
                     <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-3 border border-emerald-100 shadow-2xs">
@@ -1874,7 +2065,7 @@ export const StudentsView = ({ currentInstitute }) => {
           MODALS & DRAWERS
          ========================================================================= */}
 
-      {/* 1. Prerequisite Setup Guidance Modal ("Pehle class aur session banayein") */}
+      {/* 1. Prerequisite Setup Guidance Modal */}
       <Modal
         isOpen={isSetupGuidanceModalOpen}
         onClose={() => setIsSetupGuidanceModalOpen(false)}
@@ -1998,261 +2189,1300 @@ export const StudentsView = ({ currentInstitute }) => {
         </form>
       </Modal>
 
-      {/* 3. Admission / Edit Student Modal */}
+      {/* 3. Comprehensive 6-Step New Student Admission Wizard */}
       <Modal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title={editingStudent ? `Edit Student Details • ${tierVocabulary.levelName}` : `New Student Admission • ${tierVocabulary.levelName}`}
-        maxWidth="max-w-2xl"
+        onClose={handleCancelModal}
+        title={editingStudent ? `Edit Student Dossier • ${tierVocabulary.levelName}` : `New Student Admission • ${tierVocabulary.levelName}`}
+        maxWidth="max-w-3xl"
       >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Photo upload header */}
-          <div className="flex items-center gap-4 p-3 rounded-xl bg-slate-50 border border-slate-200">
-            <div className="w-14 h-14 rounded-full bg-slate-200 border-2 border-emerald-500 overflow-hidden flex items-center justify-center shrink-0">
-              {formData.photoUrl ? (
-                <img src={formData.photoUrl} alt="Preview" className="w-full h-full object-cover" />
-              ) : (
-                <User className="w-7 h-7 text-slate-400" />
-              )}
-            </div>
-            <div className="flex-1">
-              <span className="block text-xs font-semibold text-slate-700">Student ID Card Photo</span>
-              <span className="text-[11px] text-slate-400 block mb-1.5">JPG or PNG (max 2MB)</span>
-              <div className="flex items-center gap-2">
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handlePhotoUpload}
-                  accept="image/*"
-                  className="hidden"
-                />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="px-2.5 py-1 text-xs font-semibold bg-white border border-slate-300 rounded hover:bg-slate-50 flex items-center gap-1 cursor-pointer"
-                >
-                  <Camera className="w-3.5 h-3.5 text-slate-500" />
-                  <span>Choose Photo</span>
-                </button>
-                {formData.photoUrl && (
-                  <button
-                    type="button"
-                    onClick={removePhoto}
-                    className="text-[11px] text-rose-500 hover:underline cursor-pointer"
-                  >
-                    Remove
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Student Full Name *</label>
-              <input
-                type="text"
-                required
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                placeholder="e.g. Student Name"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">{tierVocabulary.idLabel} (Unique) *</label>
-              <input
-                type="text"
-                required
-                value={formData.rollNumber}
-                onChange={(e) => setFormData({ ...formData, rollNumber: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-lg border border-slate-200 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                placeholder={tierVocabulary.idPlaceholder}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">{tierVocabulary.groupLabel} *</label>
-              {availableClasses.length > 0 ? (
-                <select
-                  required
-                  value={formData.className}
-                  onChange={(e) => setFormData({ ...formData, className: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20 bg-white font-semibold"
-                >
-                  <option value="">Select {tierVocabulary.groupLabel}</option>
-                  {availableClasses.map(c => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
-              ) : (
-                <input
-                  type="text"
-                  required
-                  value={formData.className}
-                  onChange={(e) => setFormData({ ...formData, className: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                  placeholder={tierVocabulary.groupPlaceholder}
-                />
-              )}
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">{tierVocabulary.unitLabel} / Section</label>
-              <select
-                value={formData.section}
-                onChange={(e) => setFormData({ ...formData, section: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs focus:outline-none bg-white font-semibold"
-              >
-                {availableSections.map(sec => (
-                  <option key={sec} value={sec}>Section / Batch {sec}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Gender</label>
-              <select
-                value={formData.gender}
-                onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs focus:outline-none bg-white"
-              >
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Father / Guardian Name</label>
-              <input
-                type="text"
-                value={formData.fatherName}
-                onChange={(e) => setFormData({ ...formData, fatherName: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-lg border border-slate-200 text-xs focus:outline-none"
-                placeholder="Guardian Full Name"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Father / Guardian CNIC</label>
-              <input
-                type="text"
-                value={formData.fatherCnic}
-                onChange={(e) => setFormData({ ...formData, fatherCnic: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-lg border border-slate-200 text-xs font-mono focus:outline-none"
-                placeholder="35201-XXXXXXX-X"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Contact Phone</label>
-              <input
-                type="tel"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs focus:outline-none"
-                placeholder="+92 3XX XXXXXXX"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Enrollment Status</label>
-              <select
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs focus:outline-none bg-white font-semibold"
-              >
-                <option value="Active">Active Enrolled</option>
-                <option value="Withdrawn">Withdrawn</option>
-                <option value="Transferred">Transferred</option>
-                <option value="Graduated">Graduated</option>
-                <option value="Suspended">Suspended</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Tuition Fee Status</label>
-              <select
-                value={formData.feeStatus}
-                onChange={(e) => setFormData({ ...formData, feeStatus: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs focus:outline-none bg-white font-semibold"
-              >
-                <option value="Paid">Paid</option>
-                <option value="Pending">Pending</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Student Health & Medical Sentinel Section */}
-          <div className="p-3.5 bg-rose-50/70 border border-rose-200 rounded-xl space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5 text-rose-900 font-bold text-xs uppercase tracking-wide">
-                <HeartPulse className="w-4 h-4 text-rose-600" />
-                <span>Student Health & Medical Sentinel</span>
-              </div>
-              <span className="text-[10px] font-semibold text-rose-700 bg-rose-100/90 px-2 py-0.5 rounded-full border border-rose-300">
-                Safety Critical
+        <div className="space-y-5">
+          {/* Progress Bar & Stepper Indicator */}
+          <div className="border-b border-slate-200 pb-4">
+            <div className="flex items-center justify-between text-xs mb-2">
+              <span className="font-bold text-slate-800">
+                Step {activeStep} of {ADMISSION_STEPS.length}: {ADMISSION_STEPS[activeStep - 1]?.title} ({ADMISSION_STEPS[activeStep - 1]?.subtitle})
+              </span>
+              <span className="font-mono text-emerald-700 font-bold">
+                {Math.round((activeStep / ADMISSION_STEPS.length) * 100)}% Completed
               </span>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-700 uppercase mb-1">Medical Alert Condition</label>
-                <select
-                  value={formData.medicalAlert}
-                  onChange={(e) => setFormData({ ...formData, medicalAlert: e.target.value })}
-                  className="w-full px-2.5 py-2 rounded-lg border border-slate-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-rose-500/20"
-                >
-                  <option value="None">None (No Known Chronic Condition)</option>
-                  <option value="Asthma / Inhaler Carried">Asthma (Inhaler Carried)</option>
-                  <option value="Severe Food/Peanut Allergy (EpiPen)">Severe Peanut / Food Allergy</option>
-                  <option value="Type 1 Diabetes (Insulin Dependent)">Type 1 Diabetes</option>
-                  <option value="Epilepsy / Seizure Caution">Epilepsy / Seizure Caution</option>
-                  <option value="Cardiovascular Condition">Cardiovascular Condition</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-700 uppercase mb-1">Emergency Physician Phone</label>
-                <input
-                  type="tel"
-                  value={formData.emergencyDoctorPhone}
-                  onChange={(e) => setFormData({ ...formData, emergencyDoctorPhone: e.target.value })}
-                  className="w-full px-2.5 py-2 rounded-lg border border-slate-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-rose-500/20"
-                  placeholder="+92 300 0000000"
-                />
-              </div>
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-700 uppercase mb-1">Vaccination Status</label>
-                <select
-                  value={formData.vaccinationStatus}
-                  onChange={(e) => setFormData({ ...formData, vaccinationStatus: e.target.value })}
-                  className="w-full px-2.5 py-2 rounded-lg border border-slate-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-rose-500/20"
-                >
-                  <option value="Fully Vaccinated">Fully Vaccinated</option>
-                  <option value="Pending Booster">Pending Booster</option>
-                  <option value="Medical Exemption Certificate">Medical Exemption</option>
-                </select>
-              </div>
+            
+            <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden mb-3">
+              <div 
+                className="bg-emerald-600 h-full rounded-full transition-all duration-300"
+                style={{ width: `${(activeStep / ADMISSION_STEPS.length) * 100}%` }}
+              ></div>
+            </div>
+
+            {/* Stepper Tabs */}
+            <div className="grid grid-cols-6 gap-1">
+              {ADMISSION_STEPS.map(step => {
+                const Icon = step.icon
+                const isCurrent = activeStep === step.id
+                const isDone = activeStep > step.id
+                return (
+                  <button
+                    key={step.id}
+                    type="button"
+                    onClick={() => {
+                      if (step.id < activeStep || validateStep(activeStep)) {
+                        setActiveStep(step.id)
+                      }
+                    }}
+                    className={`flex flex-col items-center p-1.5 rounded-lg text-center transition-all cursor-pointer ${
+                      isCurrent 
+                        ? 'bg-emerald-50 text-emerald-800 border border-emerald-300 font-bold' 
+                        : isDone 
+                        ? 'bg-slate-50 text-slate-700 hover:bg-slate-100' 
+                        : 'text-slate-400 opacity-60'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1">
+                      <Icon className="w-3.5 h-3.5" />
+                      {isDone && <Check className="w-3 h-3 text-emerald-600" />}
+                    </div>
+                    <span className="text-[10px] hidden sm:inline mt-0.5">{step.title}</span>
+                  </button>
+                )
+              })}
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
-            <button
-              type="button"
-              onClick={() => setIsModalOpen(false)}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition-all cursor-pointer"
-            >
-              {editingStudent ? 'Save Profile Changes' : 'Enroll Student'}
-            </button>
+          {/* Form Content Steps */}
+          <div className="min-h-[340px]">
+            {/* STEP 1: Student Profile & Personal Details */}
+            {activeStep === 1 && (
+              <div className="space-y-4 animate-in fade-in duration-150">
+                {/* Photo Upload with 2MB limit & crop preview */}
+                <div className="flex items-center gap-4 p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                  <div className="w-16 h-16 rounded-xl bg-slate-200 border-2 border-dashed border-emerald-500 overflow-hidden flex items-center justify-center shrink-0 relative group">
+                    {formData.photoUrl ? (
+                      <img src={formData.photoUrl} alt="Preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <Camera className="w-6 h-6 text-slate-400" />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <span className="block text-xs font-bold text-slate-800">Passport Photo (Smart ID Card)</span>
+                    <span className="text-[11px] text-slate-500 block mb-1.5">Max 2MB • JPG or PNG • 1:1 Portrait crop recommended</span>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handlePhotoUpload}
+                        accept="image/jpeg,image/png,image/webp"
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="px-2.5 py-1 text-xs font-semibold bg-white border border-slate-300 rounded hover:bg-slate-50 flex items-center gap-1 cursor-pointer"
+                      >
+                        <Camera className="w-3 h-3 text-slate-600" />
+                        <span>Upload Photo</span>
+                      </button>
+                      {formData.photoUrl && (
+                        <button
+                          type="button"
+                          onClick={removePhoto}
+                          className="text-[11px] text-rose-600 hover:underline cursor-pointer"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                      Student Full Name <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Muhammad Talha"
+                      value={formData.name}
+                      onChange={(e) => {
+                        setFormData({ ...formData, name: e.target.value })
+                        setIsFormDirty(true)
+                        if (formErrors.name) setFormErrors({ ...formErrors, name: null })
+                      }}
+                      className={`w-full px-3 py-2 rounded-lg border text-xs focus:outline-none ${
+                        formErrors.name ? 'border-rose-500 bg-rose-50/50' : 'border-slate-300 focus:ring-2 focus:ring-emerald-500/20'
+                      }`}
+                    />
+                    {formErrors.name && <p className="text-[11px] text-rose-600 mt-1 font-medium">{formErrors.name}</p>}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                      Date of Birth <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={formData.dob}
+                      onChange={(e) => {
+                        setFormData({ ...formData, dob: e.target.value })
+                        setIsFormDirty(true)
+                        if (formErrors.dob) setFormErrors({ ...formErrors, dob: null })
+                      }}
+                      className={`w-full px-3 py-2 rounded-lg border text-xs focus:outline-none ${
+                        formErrors.dob ? 'border-rose-500 bg-rose-50/50' : 'border-slate-300 focus:ring-2 focus:ring-emerald-500/20'
+                      }`}
+                    />
+                    {formErrors.dob && <p className="text-[11px] text-rose-600 mt-1 font-medium">{formErrors.dob}</p>}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                      Gender <span className="text-rose-500">*</span>
+                    </label>
+                    <select
+                      value={formData.gender}
+                      onChange={(e) => {
+                        setFormData({ ...formData, gender: e.target.value })
+                        setIsFormDirty(true)
+                      }}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white font-medium focus:outline-none"
+                    >
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                      B-Form / CNIC <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="35201-XXXXXXX-X"
+                      value={formData.bFormCnic}
+                      onChange={(e) => {
+                        setFormData({ ...formData, bFormCnic: e.target.value })
+                        setIsFormDirty(true)
+                        if (formErrors.bFormCnic) setFormErrors({ ...formErrors, bFormCnic: null })
+                      }}
+                      className={`w-full px-3 py-2 rounded-lg border text-xs font-mono focus:outline-none ${
+                        formErrors.bFormCnic ? 'border-rose-500 bg-rose-50/50' : 'border-slate-300 focus:ring-2 focus:ring-emerald-500/20'
+                      }`}
+                    />
+                    {formErrors.bFormCnic && <p className="text-[11px] text-rose-600 mt-1 font-medium">{formErrors.bFormCnic}</p>}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                      Student Mobile Phone
+                    </label>
+                    <input
+                      type="tel"
+                      placeholder="+92 3XX XXXXXXX"
+                      value={formData.phone}
+                      onChange={(e) => {
+                        setFormData({ ...formData, phone: formatPhoneNumber(e.target.value) })
+                        setIsFormDirty(true)
+                        if (formErrors.phone) setFormErrors({ ...formErrors, phone: null })
+                      }}
+                      className={`w-full px-3 py-2 rounded-lg border text-xs focus:outline-none ${
+                        formErrors.phone ? 'border-rose-500 bg-rose-50/50' : 'border-slate-300'
+                      }`}
+                    />
+                    {formErrors.phone && <p className="text-[11px] text-rose-600 mt-1 font-medium">{formErrors.phone}</p>}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                      Residential Address <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="House / Street / Sector / Area"
+                      value={formData.address}
+                      onChange={(e) => {
+                        setFormData({ ...formData, address: e.target.value })
+                        setIsFormDirty(true)
+                        if (formErrors.address) setFormErrors({ ...formErrors, address: null })
+                      }}
+                      className={`w-full px-3 py-2 rounded-lg border text-xs focus:outline-none ${
+                        formErrors.address ? 'border-rose-500 bg-rose-50/50' : 'border-slate-300'
+                      }`}
+                    />
+                    {formErrors.address && <p className="text-[11px] text-rose-600 mt-1 font-medium">{formErrors.address}</p>}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                      City <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Lahore / Islamabad"
+                      value={formData.city}
+                      onChange={(e) => {
+                        setFormData({ ...formData, city: e.target.value })
+                        setIsFormDirty(true)
+                        if (formErrors.city) setFormErrors({ ...formErrors, city: null })
+                      }}
+                      className={`w-full px-3 py-2 rounded-lg border text-xs focus:outline-none ${
+                        formErrors.city ? 'border-rose-500 bg-rose-50/50' : 'border-slate-300'
+                      }`}
+                    />
+                    {formErrors.city && <p className="text-[11px] text-rose-600 mt-1 font-medium">{formErrors.city}</p>}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Student Email Address</label>
+                  <input
+                    type="email"
+                    placeholder="student@example.com"
+                    value={formData.email}
+                    onChange={(e) => {
+                      setFormData({ ...formData, email: e.target.value })
+                      setIsFormDirty(true)
+                    }}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:outline-none"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* STEP 2: Guardian & Family Details */}
+            {activeStep === 2 && (
+              <div className="space-y-4 animate-in fade-in duration-150">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                      Father / Primary Guardian Name <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Father Full Name"
+                      value={formData.fatherName}
+                      onChange={(e) => {
+                        setFormData({ ...formData, fatherName: e.target.value })
+                        setIsFormDirty(true)
+                        if (formErrors.fatherName) setFormErrors({ ...formErrors, fatherName: null })
+                      }}
+                      className={`w-full px-3 py-2 rounded-lg border text-xs focus:outline-none ${
+                        formErrors.fatherName ? 'border-rose-500 bg-rose-50/50' : 'border-slate-300 focus:ring-2 focus:ring-emerald-500/20'
+                      }`}
+                    />
+                    {formErrors.fatherName && <p className="text-[11px] text-rose-600 mt-1 font-medium">{formErrors.fatherName}</p>}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Father CNIC</label>
+                    <input
+                      type="text"
+                      placeholder="35201-XXXXXXX-X"
+                      value={formData.fatherCnic}
+                      onChange={(e) => {
+                        setFormData({ ...formData, fatherCnic: e.target.value })
+                        setIsFormDirty(true)
+                      }}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-mono focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Father Occupation</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Business / Engineer"
+                      value={formData.fatherOccupation}
+                      onChange={(e) => {
+                        setFormData({ ...formData, fatherOccupation: e.target.value })
+                        setIsFormDirty(true)
+                      }}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Mother Name</label>
+                    <input
+                      type="text"
+                      placeholder="Mother Full Name"
+                      value={formData.motherName}
+                      onChange={(e) => {
+                        setFormData({ ...formData, motherName: e.target.value })
+                        setIsFormDirty(true)
+                      }}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Mother Phone</label>
+                    <input
+                      type="tel"
+                      placeholder="+92 3XX XXXXXXX"
+                      value={formData.motherPhone}
+                      onChange={(e) => {
+                        setFormData({ ...formData, motherPhone: formatPhoneNumber(e.target.value) })
+                        setIsFormDirty(true)
+                      }}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                      Guardian Calling Phone <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="tel"
+                      required
+                      placeholder="+92 3XX XXXXXXX"
+                      value={formData.guardianPhone}
+                      onChange={(e) => {
+                        setFormData({ ...formData, guardianPhone: formatPhoneNumber(e.target.value) })
+                        setIsFormDirty(true)
+                        if (formErrors.guardianPhone) setFormErrors({ ...formErrors, guardianPhone: null })
+                      }}
+                      className={`w-full px-3 py-2 rounded-lg border text-xs focus:outline-none ${
+                        formErrors.guardianPhone ? 'border-rose-500 bg-rose-50/50' : 'border-slate-300 focus:ring-2 focus:ring-emerald-500/20'
+                      }`}
+                    />
+                    {formErrors.guardianPhone && <p className="text-[11px] text-rose-600 mt-1 font-medium">{formErrors.guardianPhone}</p>}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Guardian WhatsApp Number</label>
+                    <input
+                      type="tel"
+                      placeholder="+92 3XX XXXXXXX"
+                      value={formData.guardianWhatsapp}
+                      onChange={(e) => {
+                        setFormData({ ...formData, guardianWhatsapp: formatPhoneNumber(e.target.value) })
+                        setIsFormDirty(true)
+                        if (formErrors.guardianWhatsapp) setFormErrors({ ...formErrors, guardianWhatsapp: null })
+                      }}
+                      className={`w-full px-3 py-2 rounded-lg border text-xs focus:outline-none ${
+                        formErrors.guardianWhatsapp ? 'border-rose-500 bg-rose-50/50' : 'border-slate-300'
+                      }`}
+                    />
+                    {formErrors.guardianWhatsapp && <p className="text-[11px] text-rose-600 mt-1 font-medium">{formErrors.guardianWhatsapp}</p>}
+                  </div>
+                </div>
+
+                <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                  <span className="text-xs font-bold text-slate-800 block">Separate Emergency Contact</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">Emergency Contact Phone</label>
+                      <input
+                        type="tel"
+                        placeholder="+92 3XX XXXXXXX"
+                        value={formData.emergencyContact}
+                        onChange={(e) => {
+                          setFormData({ ...formData, emergencyContact: formatPhoneNumber(e.target.value) })
+                          setIsFormDirty(true)
+                          if (formErrors.emergencyContact) setFormErrors({ ...formErrors, emergencyContact: null })
+                        }}
+                        className={`w-full px-2.5 py-1.5 rounded-lg border text-xs bg-white focus:outline-none ${
+                          formErrors.emergencyContact ? 'border-rose-500 bg-rose-50' : 'border-slate-300'
+                        }`}
+                      />
+                      {formErrors.emergencyContact && <p className="text-[10px] text-rose-600 mt-0.5">{formErrors.emergencyContact}</p>}
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">Relationship to Student</label>
+                      <select
+                        value={formData.emergencyContactRelation}
+                        onChange={(e) => {
+                          setFormData({ ...formData, emergencyContactRelation: e.target.value })
+                          setIsFormDirty(true)
+                        }}
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs bg-white focus:outline-none font-medium"
+                      >
+                        <option value="Father">Father</option>
+                        <option value="Mother">Mother</option>
+                        <option value="Uncle">Uncle</option>
+                        <option value="Aunt">Aunt</option>
+                        <option value="Grandparent">Grandparent</option>
+                        <option value="Sibling">Elder Sibling</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 3: Academic Enrollment (School vs College vs University Level Adaptive) */}
+            {activeStep === 3 && (
+              <div className="space-y-4 animate-in fade-in duration-150">
+                {/* Level Specific Adaptive Banner */}
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-between text-xs text-blue-900">
+                  <div className="flex items-center gap-2">
+                    <GraduationCap className="w-4 h-4 text-blue-700 shrink-0" />
+                    <span>Configured for <strong>{tierVocabulary.levelName}</strong></span>
+                  </div>
+                  <span className="font-mono bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-bold uppercase text-[10px]">
+                    {currentLevelKey}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                      Academic Session <span className="text-rose-500">*</span>
+                    </label>
+                    <select
+                      value={formData.academicSession}
+                      onChange={(e) => {
+                        setFormData({ ...formData, academicSession: e.target.value })
+                        setIsFormDirty(true)
+                      }}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white font-bold focus:outline-none"
+                    >
+                      {sessionsList.map(s => (
+                        <option key={s.id || s.name} value={s.name}>
+                          {s.name} {s.isCurrent ? '(Current)' : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Admission Date</label>
+                    <input
+                      type="date"
+                      value={formData.admissionDate}
+                      onChange={(e) => {
+                        setFormData({ ...formData, admissionDate: e.target.value })
+                        setIsFormDirty(true)
+                      }}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Admission Type</label>
+                    <select
+                      value={formData.admissionType}
+                      onChange={(e) => {
+                        setFormData({ ...formData, admissionType: e.target.value })
+                        setIsFormDirty(true)
+                      }}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white font-medium focus:outline-none"
+                    >
+                      <option value="New Admission">New Fresh Admission</option>
+                      <option value="Transfer Admission">Transfer Admission (From another institute)</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Level Specific Inputs */}
+                {currentLevelKey === 'school' && (
+                  <div className="space-y-4 p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
+                    <span className="text-xs font-bold text-slate-800 uppercase block">School Grade & Section Configuration</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                          Class / Grade <span className="text-rose-500">*</span>
+                        </label>
+                        <select
+                          required
+                          value={formData.className}
+                          onChange={(e) => {
+                            const newClass = e.target.value
+                            setFormData(prev => ({
+                              ...prev,
+                              className: newClass,
+                              section: '' // Reset section so user picks valid section for this class
+                            }))
+                            setIsFormDirty(true)
+                            if (formErrors.className) setFormErrors({ ...formErrors, className: null })
+                          }}
+                          className={`w-full px-3 py-2 rounded-lg border text-xs bg-white font-semibold focus:outline-none ${
+                            formErrors.className ? 'border-rose-500 bg-rose-50' : 'border-slate-300 focus:ring-2 focus:ring-emerald-500/20'
+                          }`}
+                        >
+                          <option value="">-- Select Class --</option>
+                          {availableClasses.map(c => (
+                            <option key={c} value={c}>{c}</option>
+                          ))}
+                        </select>
+                        {formErrors.className && <p className="text-[11px] text-rose-600 mt-1 font-medium">{formErrors.className}</p>}
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                          Assigned Section <span className="text-rose-500">*</span>
+                        </label>
+                        <select
+                          required
+                          disabled={!formData.className}
+                          value={formData.section}
+                          onChange={(e) => {
+                            setFormData({ ...formData, section: e.target.value })
+                            setIsFormDirty(true)
+                            if (formErrors.section) setFormErrors({ ...formErrors, section: null })
+                          }}
+                          className={`w-full px-3 py-2 rounded-lg border text-xs bg-white font-semibold focus:outline-none disabled:bg-slate-100 disabled:opacity-60 ${
+                            formErrors.section ? 'border-rose-500 bg-rose-50' : 'border-slate-300 focus:ring-2 focus:ring-emerald-500/20'
+                          }`}
+                        >
+                          <option value="">{formData.className ? '-- Select Section --' : 'Select Class First'}</option>
+                          {dynamicSectionsForSelectedClass.map(sec => (
+                            <option key={sec} value={sec}>Section {sec}</option>
+                          ))}
+                        </select>
+                        {formErrors.section && <p className="text-[11px] text-rose-600 mt-1 font-medium">{formErrors.section}</p>}
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Admission Roll No (Auto)</label>
+                        <input
+                          type="text"
+                          readOnly
+                          value={formData.rollNumber}
+                          className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-slate-100 text-xs font-mono font-bold text-slate-700 cursor-not-allowed"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {currentLevelKey === 'college' && (
+                  <div className="space-y-4 p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
+                    <span className="text-xs font-bold text-slate-800 uppercase block">College Intermediate Academic Stream</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                          Academic Year <span className="text-rose-500">*</span>
+                        </label>
+                        <select
+                          required
+                          value={formData.className}
+                          onChange={(e) => {
+                            setFormData({ ...formData, className: e.target.value, section: '' })
+                            setIsFormDirty(true)
+                            if (formErrors.className) setFormErrors({ ...formErrors, className: null })
+                          }}
+                          className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white font-semibold focus:outline-none"
+                        >
+                          <option value="">-- Select Year --</option>
+                          <option value="1st Year (11th Grade)">1st Year (11th Grade)</option>
+                          <option value="2nd Year (12th Grade)">2nd Year (12th Grade)</option>
+                          {availableClasses.map(c => (
+                            <option key={c} value={c}>{c}</option>
+                          ))}
+                        </select>
+                        {formErrors.className && <p className="text-[11px] text-rose-600 mt-1 font-medium">{formErrors.className}</p>}
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                          Study Group <span className="text-rose-500">*</span>
+                        </label>
+                        <select
+                          required
+                          value={formData.section}
+                          onChange={(e) => {
+                            setFormData({ ...formData, section: e.target.value })
+                            setIsFormDirty(true)
+                            if (formErrors.section) setFormErrors({ ...formErrors, section: null })
+                          }}
+                          className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white font-semibold focus:outline-none"
+                        >
+                          <option value="">-- Select Study Group --</option>
+                          <option value="Pre-Medical">FSc Pre-Medical</option>
+                          <option value="Pre-Engineering">FSc Pre-Engineering</option>
+                          <option value="ICS (Physics)">ICS (Computer & Physics)</option>
+                          <option value="ICS (Stats)">ICS (Computer & Statistics)</option>
+                          <option value="I.Com">I.Com (Commerce)</option>
+                          <option value="Humanities / Arts">FA (Humanities / Arts)</option>
+                        </select>
+                        {formErrors.section && <p className="text-[11px] text-rose-600 mt-1 font-medium">{formErrors.section}</p>}
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">College Roll No (Auto)</label>
+                        <input
+                          type="text"
+                          readOnly
+                          value={formData.rollNumber}
+                          className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-slate-100 text-xs font-mono font-bold text-slate-700 cursor-not-allowed"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Matriculation Board Roll No</label>
+                        <input
+                          type="text"
+                          placeholder="BISE Roll No e.g. 554120"
+                          value={formData.boardRollNumber}
+                          onChange={(e) => {
+                            setFormData({ ...formData, boardRollNumber: e.target.value })
+                            setIsFormDirty(true)
+                          }}
+                          className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-mono focus:outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                          Matric Marks / Percentage <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. 1020 / 1100 (92.7%)"
+                          value={formData.matricMarks}
+                          onChange={(e) => {
+                            setFormData({ ...formData, matricMarks: e.target.value })
+                            setIsFormDirty(true)
+                            if (formErrors.matricMarks) setFormErrors({ ...formErrors, matricMarks: null })
+                          }}
+                          className={`w-full px-3 py-2 rounded-lg border text-xs focus:outline-none ${
+                            formErrors.matricMarks ? 'border-rose-500 bg-rose-50' : 'border-slate-300'
+                          }`}
+                        />
+                        {formErrors.matricMarks && <p className="text-[11px] text-rose-600 mt-1 font-medium">{formErrors.matricMarks}</p>}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {currentLevelKey === 'university' && (
+                  <div className="space-y-4 p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
+                    <span className="text-xs font-bold text-slate-800 uppercase block">University Degree Program Enrollment</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                          Degree Program <span className="text-rose-500">*</span>
+                        </label>
+                        <select
+                          required
+                          value={formData.className}
+                          onChange={(e) => {
+                            setFormData({ ...formData, className: e.target.value })
+                            setIsFormDirty(true)
+                            if (formErrors.className) setFormErrors({ ...formErrors, className: null })
+                          }}
+                          className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white font-semibold focus:outline-none"
+                        >
+                          <option value="">-- Select Degree --</option>
+                          <option value="BS Computer Science">BS Computer Science</option>
+                          <option value="BS Software Engineering">BS Software Engineering</option>
+                          <option value="BS Artificial Intelligence">BS Artificial Intelligence</option>
+                          <option value="BBA (Honors)">BBA (Honors)</option>
+                          <option value="BS Accounting & Finance">BS Accounting & Finance</option>
+                          <option value="MS Computer Science">MS Computer Science</option>
+                          {availableClasses.map(c => (
+                            <option key={c} value={c}>{c}</option>
+                          ))}
+                        </select>
+                        {formErrors.className && <p className="text-[11px] text-rose-600 mt-1 font-medium">{formErrors.className}</p>}
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                          Academic Department <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Faculty of Computing"
+                          value={formData.department}
+                          onChange={(e) => {
+                            setFormData({ ...formData, department: e.target.value })
+                            setIsFormDirty(true)
+                            if (formErrors.department) setFormErrors({ ...formErrors, department: null })
+                          }}
+                          className={`w-full px-3 py-2 rounded-lg border text-xs focus:outline-none ${
+                            formErrors.department ? 'border-rose-500 bg-rose-50' : 'border-slate-300'
+                          }`}
+                        />
+                        {formErrors.department && <p className="text-[11px] text-rose-600 mt-1 font-medium">{formErrors.department}</p>}
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Registration / CMS No</label>
+                        <input
+                          type="text"
+                          readOnly
+                          value={formData.rollNumber}
+                          className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-slate-100 text-xs font-mono font-bold text-slate-700 cursor-not-allowed"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                          Current Semester <span className="text-rose-500">*</span>
+                        </label>
+                        <select
+                          value={formData.section}
+                          onChange={(e) => {
+                            setFormData({ ...formData, section: e.target.value })
+                            setIsFormDirty(true)
+                            if (formErrors.section) setFormErrors({ ...formErrors, section: null })
+                          }}
+                          className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white font-semibold focus:outline-none"
+                        >
+                          <option value="">-- Select Semester --</option>
+                          <option value="Semester 1">Semester 1 (Freshman)</option>
+                          <option value="Semester 2">Semester 2</option>
+                          <option value="Semester 3">Semester 3</option>
+                          <option value="Semester 4">Semester 4</option>
+                          <option value="Semester 5">Semester 5</option>
+                          <option value="Semester 6">Semester 6</option>
+                          <option value="Semester 7">Semester 7</option>
+                          <option value="Semester 8">Semester 8</option>
+                        </select>
+                        {formErrors.section && <p className="text-[11px] text-rose-600 mt-1 font-medium">{formErrors.section}</p>}
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Batch / Intake</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Fall 2026 / Batch 24"
+                          value={formData.batch}
+                          onChange={(e) => {
+                            setFormData({ ...formData, batch: e.target.value })
+                            setIsFormDirty(true)
+                          }}
+                          className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                          Previous Degree & CGPA <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. FSc Pre-Eng (84% / 3.7 GPA)"
+                          value={formData.previousDegree}
+                          onChange={(e) => {
+                            setFormData({ ...formData, previousDegree: e.target.value })
+                            setIsFormDirty(true)
+                            if (formErrors.previousDegree) setFormErrors({ ...formErrors, previousDegree: null })
+                          }}
+                          className={`w-full px-3 py-2 rounded-lg border text-xs focus:outline-none ${
+                            formErrors.previousDegree ? 'border-rose-500 bg-rose-50' : 'border-slate-300'
+                          }`}
+                        />
+                        {formErrors.previousDegree && <p className="text-[11px] text-rose-600 mt-1 font-medium">{formErrors.previousDegree}</p>}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Previous School / Institute Attended</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Army Public School / Beaconhouse / Punjab College"
+                    value={formData.previousSchool}
+                    onChange={(e) => {
+                      setFormData({ ...formData, previousSchool: e.target.value })
+                      setIsFormDirty(true)
+                    }}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:outline-none"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* STEP 4: Fees & Scholarship */}
+            {activeStep === 4 && (
+              <div className="space-y-4 animate-in fade-in duration-150">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                      Billing / Fee Plan <span className="text-rose-500">*</span>
+                    </label>
+                    <select
+                      value={formData.feePlan}
+                      onChange={(e) => {
+                        setFormData({ ...formData, feePlan: e.target.value })
+                        setIsFormDirty(true)
+                      }}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white font-medium focus:outline-none"
+                    >
+                      <option value="Standard Monthly">Standard Monthly Installment</option>
+                      <option value="Quarterly Term">Quarterly Term Invoice (3 Months)</option>
+                      <option value="Semi-Annual Semester">Semester / Semi-Annual (6 Months)</option>
+                      <option value="Annual Lum-Sum">Annual Full Lum-Sum Payment</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                      Initial Tuition Fee Status <span className="text-rose-500">*</span>
+                    </label>
+                    <select
+                      value={formData.feeStatus}
+                      onChange={(e) => {
+                        setFormData({ ...formData, feeStatus: e.target.value })
+                        setIsFormDirty(true)
+                      }}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white font-bold text-amber-700 focus:outline-none"
+                    >
+                      <option value="Pending">Pending / Unpaid (Default)</option>
+                      <option value="Paid">Fee Cleared (Paid Voucher Deposited)</option>
+                    </select>
+                    <span className="text-[10px] text-slate-500 block mt-1">Default is strictly Pending until challan verified.</span>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Discount / Scholarship</label>
+                    <select
+                      value={formData.discountScholarship}
+                      onChange={(e) => {
+                        setFormData({ ...formData, discountScholarship: e.target.value })
+                        setIsFormDirty(true)
+                      }}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white font-medium focus:outline-none"
+                    >
+                      <option value="None (0%)">None (Standard 100% Fee)</option>
+                      <option value="Need-Based 25%">Need-Based Financial Aid (25% Concession)</option>
+                      <option value="Merit Scholarship 50%">Merit Scholarship (50% Concession)</option>
+                      <option value="Sibling Discount 15%">Sibling Discount (15% Concession)</option>
+                      <option value="Teacher / Staff Child 50%">Teacher / Staff Child (50% Concession)</option>
+                      <option value="Full Waiver 100%">Full Tuition Fee Waiver (100%)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs text-emerald-900">
+                  <div className="flex items-center gap-2">
+                    <CreditCard className="w-4 h-4 text-emerald-700" />
+                    <span>Fee Challan voucher will be generated automatically in the <strong>Fees Module</strong> upon admission.</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 5: Medical Sentinel (Sensitive - Admin Access Only) */}
+            {activeStep === 5 && (
+              <div className="space-y-4 animate-in fade-in duration-150">
+                {/* Admin Confidential Banner */}
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-2 text-xs text-amber-900">
+                  <ShieldCheck className="w-4 h-4 text-amber-700 shrink-0" />
+                  <span>
+                    <strong>Confidential Medical Sentinel:</strong> Only institute administrators and designated campus medical officers have access to view this health record.
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                      Blood Group <span className="text-slate-400 font-normal">(Default: Select)</span>
+                    </label>
+                    <select
+                      value={formData.bloodGroup}
+                      onChange={(e) => {
+                        setFormData({ ...formData, bloodGroup: e.target.value })
+                        setIsFormDirty(true)
+                      }}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white font-medium focus:outline-none"
+                    >
+                      <option value="">-- Select Blood Group --</option>
+                      <option value="A+">A Positive (A+)</option>
+                      <option value="A-">A Negative (A-)</option>
+                      <option value="B+">B Positive (B+)</option>
+                      <option value="B-">B Negative (B-)</option>
+                      <option value="AB+">AB Positive (AB+)</option>
+                      <option value="AB-">AB Negative (AB-)</option>
+                      <option value="O+">O Positive (O+)</option>
+                      <option value="O-">O Negative (O-)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Medical Alert Condition</label>
+                    <select
+                      value={formData.medicalAlert}
+                      onChange={(e) => {
+                        setFormData({ ...formData, medicalAlert: e.target.value })
+                        setIsFormDirty(true)
+                        if (formErrors.medicalAlertOther) setFormErrors({ ...formErrors, medicalAlertOther: null })
+                      }}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white font-medium focus:outline-none"
+                    >
+                      <option value="None">None (No Known Chronic Condition)</option>
+                      <option value="Asthma / Inhaler Carried">Asthma (Inhaler Carried)</option>
+                      <option value="Severe Food/Peanut Allergy (EpiPen)">Severe Peanut / Food Allergy (EpiPen)</option>
+                      <option value="Type 1 Diabetes (Insulin Dependent)">Type 1 Diabetes (Insulin Dependent)</option>
+                      <option value="Epilepsy / Seizure Caution">Epilepsy / Seizure Caution</option>
+                      <option value="Cardiovascular Condition">Cardiovascular / Heart Condition</option>
+                      <option value="Other">Other (specify condition details below)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Vaccination Status</label>
+                    <select
+                      value={formData.vaccinationStatus}
+                      onChange={(e) => {
+                        setFormData({ ...formData, vaccinationStatus: e.target.value })
+                        setIsFormDirty(true)
+                      }}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white font-medium focus:outline-none"
+                    >
+                      <option value="Unknown / Not provided">Unknown / Not provided (Default)</option>
+                      <option value="Fully Vaccinated">Fully Vaccinated</option>
+                      <option value="Partially Vaccinated">Partially Vaccinated</option>
+                      <option value="Medical Exemption Certificate">Medical Exemption Certificate</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Show Other Specify Text Input if "Other" is chosen */}
+                {formData.medicalAlert === 'Other' && (
+                  <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl space-y-1">
+                    <label className="block text-xs font-bold text-rose-900 uppercase">
+                      Specify Other Medical Alert Condition <span className="text-rose-600">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Chronic Migraine / Hearing Impairment / G6PD Deficiency"
+                      value={formData.medicalAlertOther}
+                      onChange={(e) => {
+                        setFormData({ ...formData, medicalAlertOther: e.target.value })
+                        setIsFormDirty(true)
+                        if (formErrors.medicalAlertOther) setFormErrors({ ...formErrors, medicalAlertOther: null })
+                      }}
+                      className={`w-full px-3 py-2 rounded-lg border text-xs bg-white focus:outline-none ${
+                        formErrors.medicalAlertOther ? 'border-rose-500' : 'border-rose-300'
+                      }`}
+                    />
+                    {formErrors.medicalAlertOther && <p className="text-[11px] text-rose-600 font-medium">{formErrors.medicalAlertOther}</p>}
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Known Allergies (Food / Drugs / Dust)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Penicillin, Pollen, Nuts, Dairy"
+                      value={formData.allergies}
+                      onChange={(e) => {
+                        setFormData({ ...formData, allergies: e.target.value })
+                        setIsFormDirty(true)
+                      }}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Current Medication Administered</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Inhaler twice daily, Insulin"
+                      value={formData.currentMedication}
+                      onChange={(e) => {
+                        setFormData({ ...formData, currentMedication: e.target.value })
+                        setIsFormDirty(true)
+                      }}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Emergency Physician / Doctor Phone</label>
+                    <input
+                      type="tel"
+                      placeholder="+92 3XX XXXXXXX"
+                      value={formData.emergencyDoctorPhone}
+                      onChange={(e) => {
+                        setFormData({ ...formData, emergencyDoctorPhone: formatPhoneNumber(e.target.value) })
+                        setIsFormDirty(true)
+                        if (formErrors.emergencyDoctorPhone) setFormErrors({ ...formErrors, emergencyDoctorPhone: null })
+                      }}
+                      className={`w-full px-3 py-2 rounded-lg border text-xs focus:outline-none ${
+                        formErrors.emergencyDoctorPhone ? 'border-rose-500 bg-rose-50' : 'border-slate-300'
+                      }`}
+                    />
+                    {formErrors.emergencyDoctorPhone && <p className="text-[11px] text-rose-600 mt-1 font-medium">{formErrors.emergencyDoctorPhone}</p>}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Special Medical Notes for Campus Staff</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Needs front bench seating due to slight vision difficulty"
+                      value={formData.medicalConditionDetails}
+                      onChange={(e) => {
+                        setFormData({ ...formData, medicalConditionDetails: e.target.value })
+                        setIsFormDirty(true)
+                      }}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 6: Documents & Verification */}
+            {activeStep === 6 && (
+              <div className="space-y-4 animate-in fade-in duration-150">
+                <p className="text-xs text-slate-600">
+                  Attach certified electronic copies of required student documents for archival and registration confirmation:
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {/* B-Form Upload */}
+                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                    <FileText className="w-5 h-5 text-indigo-600" />
+                    <div>
+                      <span className="text-xs font-bold text-slate-800 block">NADRA B-Form / CNIC</span>
+                      <span className="text-[10px] text-slate-500 block">Certified photocopy</span>
+                    </div>
+                    <input
+                      type="file"
+                      ref={bFormDocInputRef}
+                      onChange={handleDocUpload('bFormDoc', 'bFormDocName')}
+                      accept=".pdf,image/*"
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => bFormDocInputRef.current?.click()}
+                      className="w-full py-1.5 px-2 bg-white hover:bg-slate-100 border border-slate-300 text-xs font-semibold rounded-lg flex items-center justify-center gap-1 cursor-pointer"
+                    >
+                      <FileUp className="w-3.5 h-3.5" />
+                      <span>{formData.bFormDocName ? 'Change File' : 'Upload Copy'}</span>
+                    </button>
+                    {formData.bFormDocName && (
+                      <span className="text-[10px] text-emerald-700 font-semibold block truncate">
+                        ✓ {formData.bFormDocName}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Previous Result Upload */}
+                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                    <Award className="w-5 h-5 text-purple-600" />
+                    <div>
+                      <span className="text-xs font-bold text-slate-800 block">Previous Result Card</span>
+                      <span className="text-[10px] text-slate-500 block">Marksheet / Transcript</span>
+                    </div>
+                    <input
+                      type="file"
+                      ref={resultDocInputRef}
+                      onChange={handleDocUpload('resultDoc', 'resultDocName')}
+                      accept=".pdf,image/*"
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => resultDocInputRef.current?.click()}
+                      className="w-full py-1.5 px-2 bg-white hover:bg-slate-100 border border-slate-300 text-xs font-semibold rounded-lg flex items-center justify-center gap-1 cursor-pointer"
+                    >
+                      <FileUp className="w-3.5 h-3.5" />
+                      <span>{formData.resultDocName ? 'Change File' : 'Upload Marksheet'}</span>
+                    </button>
+                    {formData.resultDocName && (
+                      <span className="text-[10px] text-emerald-700 font-semibold block truncate">
+                        ✓ {formData.resultDocName}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Transfer Certificate Upload */}
+                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                    <FileCheck className="w-5 h-5 text-amber-600" />
+                    <div>
+                      <span className="text-xs font-bold text-slate-800 block">Transfer Certificate (TC)</span>
+                      <span className="text-[10px] text-slate-500 block">If transferred student</span>
+                    </div>
+                    <input
+                      type="file"
+                      ref={tcDocInputRef}
+                      onChange={handleDocUpload('tcDoc', 'tcDocName')}
+                      accept=".pdf,image/*"
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => tcDocInputRef.current?.click()}
+                      className="w-full py-1.5 px-2 bg-white hover:bg-slate-100 border border-slate-300 text-xs font-semibold rounded-lg flex items-center justify-center gap-1 cursor-pointer"
+                    >
+                      <FileUp className="w-3.5 h-3.5" />
+                      <span>{formData.tcDocName ? 'Change File' : 'Upload TC'}</span>
+                    </button>
+                    {formData.tcDocName && (
+                      <span className="text-[10px] text-emerald-700 font-semibold block truncate">
+                        ✓ {formData.tcDocName}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Final Pre-Submission Verification Summary Card */}
+                <div className="p-3.5 bg-slate-100/80 border border-slate-300 rounded-xl space-y-2 text-xs">
+                  <div className="flex items-center justify-between font-bold text-slate-800">
+                    <span>Candidate: {formData.name || '—'}</span>
+                    <span className="font-mono text-emerald-800 bg-white px-2 py-0.5 rounded border border-slate-200">
+                      {formData.rollNumber}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] text-slate-600">
+                    <div>Level: <strong>{tierVocabulary.levelName}</strong></div>
+                    <div>Class/Program: <strong>{formData.className || 'Not selected'}</strong></div>
+                    <div>Section: <strong>{formData.section || 'Not selected'}</strong></div>
+                    <div>Fee Status: <strong className="text-amber-700">{formData.feeStatus}</strong></div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-        </form>
+
+          {/* Wizard Footer Controls */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-slate-200">
+            {/* Left: Previous / Cancel */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleCancelModal}
+                className="px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              {activeStep > 1 && (
+                <button
+                  type="button"
+                  onClick={() => setActiveStep(prev => Math.max(prev - 1, 1))}
+                  className="px-3.5 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer flex items-center gap-1"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  <span>Previous</span>
+                </button>
+              )}
+            </div>
+
+            {/* Right: Next or Submit Actions */}
+            <div className="flex items-center gap-2 flex-wrap justify-end">
+              {activeStep < 6 ? (
+                <button
+                  type="button"
+                  onClick={handleNextStep}
+                  className="px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition-all cursor-pointer flex items-center gap-1"
+                >
+                  <span>Next Step</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={() => executeFormSubmit('draft')}
+                    className="px-3 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-lg transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    Save as Draft
+                  </button>
+
+                  {!editingStudent && (
+                    <button
+                      type="button"
+                      disabled={isSubmitting}
+                      onClick={() => executeFormSubmit('addAnother')}
+                      className="px-3 py-2 text-xs font-bold text-emerald-800 bg-emerald-100 hover:bg-emerald-200 rounded-lg transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      Save & Add Another
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={() => executeFormSubmit('printId')}
+                    className="px-3.5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-all cursor-pointer flex items-center gap-1 disabled:opacity-50"
+                  >
+                    <IdCard className="w-3.5 h-3.5" />
+                    <span>Enroll & Print ID</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={() => executeFormSubmit('standard')}
+                    className="px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition-all cursor-pointer flex items-center gap-1 disabled:opacity-50"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                        <span>Enrolling...</span>
+                      </>
+                    ) : (
+                      <span>{editingStudent ? 'Save Profile Changes' : 'Enroll Student'}</span>
+                    )}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
       </Modal>
+
+      {/* Discard Changes Safety Confirmation Modal */}
+      {isDiscardConfirmOpen && (
+        <Modal
+          isOpen={isDiscardConfirmOpen}
+          onClose={() => setIsDiscardConfirmOpen(false)}
+          title="Discard Unsaved Changes?"
+          maxWidth="max-w-sm"
+        >
+          <div className="space-y-4">
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-3">
+              <AlertTriangle className="w-6 h-6 text-amber-600 shrink-0" />
+              <div className="text-xs text-amber-950">
+                <p className="font-bold">Discard admission form?</p>
+                <p className="mt-0.5">All entered candidate, guardian, and academic details will be cleared.</p>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-2 border-t">
+              <button
+                type="button"
+                onClick={() => setIsDiscardConfirmOpen(false)}
+                className="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
+              >
+                Keep Editing
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsDiscardConfirmOpen(false)
+                  setIsModalOpen(false)
+                  setIsFormDirty(false)
+                  setFormData(initialFormState)
+                }}
+                className="px-3 py-1.5 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-lg cursor-pointer"
+              >
+                Discard Changes
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {/* 4. CSV Error Validation Modal */}
       {csvErrorModal && (
@@ -2340,7 +3570,7 @@ export const StudentsView = ({ currentInstitute }) => {
                     <span className="font-mono bg-white/10 px-2 py-0.5 rounded font-bold text-emerald-300">
                       {selectedProfile.rollNumber}
                     </span>
-                    <span>{selectedProfile.className} ({selectedProfile.section || 'A'})</span>
+                    <span>{selectedProfile.className} {selectedProfile.section ? `(${selectedProfile.section})` : ''}</span>
                     <span>Session: {selectedProfile.academicSession || academicSession}</span>
                   </div>
                 </div>
@@ -2403,15 +3633,17 @@ export const StudentsView = ({ currentInstitute }) => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
                     <span className="text-[10px] uppercase font-bold text-slate-400 block">Contact Phone</span>
-                    <span className="text-xs font-bold text-slate-800">{selectedProfile.phone || 'Not Provided'}</span>
+                    <span className="text-xs font-bold text-slate-800">{selectedProfile.phone || selectedProfile.guardianPhone || 'Not Provided'}</span>
                   </div>
                   <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
                     <span className="text-[10px] uppercase font-bold text-slate-400 block">Email Address</span>
                     <span className="text-xs font-bold text-slate-800">{selectedProfile.email || 'Not Provided'}</span>
                   </div>
                   <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Residential Address</span>
-                    <span className="text-xs font-bold text-slate-800 truncate block">{selectedProfile.address || 'Campus Resident'}</span>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">City & Address</span>
+                    <span className="text-xs font-bold text-slate-800 truncate block">
+                      {selectedProfile.city ? `${selectedProfile.city} • ` : ''}{selectedProfile.address || 'Campus Resident'}
+                    </span>
                   </div>
                 </div>
 
@@ -2449,15 +3681,25 @@ export const StudentsView = ({ currentInstitute }) => {
                     </div>
                     <div>
                       <span className="text-[10px] text-slate-400 uppercase font-semibold">National ID (CNIC)</span>
-                      <p className="font-mono font-bold text-slate-800 mt-0.5">{selectedProfile.fatherCnic || '35201-XXXXXXX-X'}</p>
+                      <p className="font-mono font-bold text-slate-800 mt-0.5">{selectedProfile.fatherCnic || '—'}</p>
                     </div>
                     <div>
-                      <span className="text-[10px] text-slate-400 uppercase font-semibold">Emergency Phone</span>
-                      <p className="font-bold text-slate-800 mt-0.5">{selectedProfile.emergencyContact || selectedProfile.phone || '—'}</p>
+                      <span className="text-[10px] text-slate-400 uppercase font-semibold">Guardian Calling Phone</span>
+                      <p className="font-bold text-slate-800 mt-0.5">{selectedProfile.guardianPhone || selectedProfile.phone || '—'}</p>
                     </div>
                     <div>
-                      <span className="text-[10px] text-slate-400 uppercase font-semibold">Relationship</span>
-                      <p className="font-bold text-slate-800 mt-0.5">Father / Legal Guardian</p>
+                      <span className="text-[10px] text-slate-400 uppercase font-semibold">WhatsApp Number</span>
+                      <p className="font-bold text-slate-800 mt-0.5">{selectedProfile.guardianWhatsapp || '—'}</p>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase font-semibold">Mother Name</span>
+                      <p className="font-bold text-slate-800 mt-0.5">{selectedProfile.motherName || '—'}</p>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase font-semibold">Emergency Contact</span>
+                      <p className="font-bold text-slate-800 mt-0.5">
+                        {selectedProfile.emergencyContact || '—'} {selectedProfile.emergencyContactRelation ? `(${selectedProfile.emergencyContactRelation})` : ''}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -2473,14 +3715,21 @@ export const StudentsView = ({ currentInstitute }) => {
                     <p className="font-bold text-slate-900 mt-0.5">{selectedProfile.className}</p>
                   </div>
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                    <span className="text-[10px] uppercase font-bold text-slate-400">Class Section</span>
+                    <span className="text-[10px] uppercase font-bold text-slate-400">Class / Section</span>
                     <p className="font-bold text-slate-900 mt-0.5">Section {selectedProfile.section || 'A'}</p>
                   </div>
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                    <span className="text-[10px] uppercase font-bold text-slate-400">Academic Standing</span>
-                    <p className="font-bold text-emerald-600 mt-0.5">Good Standing</p>
+                    <span className="text-[10px] uppercase font-bold text-slate-400">Admission Type</span>
+                    <p className="font-bold text-emerald-600 mt-0.5">{selectedProfile.admissionType || 'New Admission'}</p>
                   </div>
                 </div>
+
+                {selectedProfile.previousSchool && (
+                  <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Previous School / Institute</span>
+                    <p className="font-bold text-slate-800 mt-0.5">{selectedProfile.previousSchool}</p>
+                  </div>
+                )}
               </div>
             )}
 
@@ -2495,10 +3744,21 @@ export const StudentsView = ({ currentInstitute }) => {
                     </p>
                   </div>
                   <span className={`px-3 py-1 rounded-full font-bold text-xs ${
-                    selectedProfile.feeStatus === 'Paid' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                    selectedProfile.feeStatus === 'Paid' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
                   }`}>
-                    {selectedProfile.feeStatus}
+                    {selectedProfile.feeStatus || 'Pending'}
                   </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                    <span className="text-[10px] uppercase font-bold text-slate-400">Billing Plan</span>
+                    <p className="font-bold text-slate-800 mt-0.5">{selectedProfile.feePlan || 'Standard Monthly'}</p>
+                  </div>
+                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                    <span className="text-[10px] uppercase font-bold text-slate-400">Scholarship / Concession</span>
+                    <p className="font-bold text-slate-800 mt-0.5">{selectedProfile.discountScholarship || 'None (0%)'}</p>
+                  </div>
                 </div>
               </div>
             )}
@@ -2516,16 +3776,21 @@ export const StudentsView = ({ currentInstitute }) => {
             {profileActiveTab === 'documents' && (
               <div className="space-y-3 animate-in fade-in duration-150 text-xs">
                 {[
-                  { title: 'NADRA B-Form / National Identity Copy', status: 'Pending Verification' },
-                  { title: 'Previous School Leaving Certificate (SLC)', status: 'Original Deposited' },
-                  { title: 'Medical Fitness & Blood Group Record', status: 'Certified' }
+                  { title: 'NADRA B-Form / National Identity Copy', file: selectedProfile.bFormDocName, status: selectedProfile.bFormDocName ? 'Uploaded' : 'Pending' },
+                  { title: 'Previous Result Card / Marksheet', file: selectedProfile.resultDocName, status: selectedProfile.resultDocName ? 'Uploaded' : 'Pending' },
+                  { title: 'Transfer Certificate (TC)', file: selectedProfile.tcDocName, status: selectedProfile.tcDocName ? 'Uploaded' : 'Not Required' }
                 ].map((doc, idx) => (
                   <div key={idx} className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
                       <FileCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span className="font-bold text-slate-800">{doc.title}</span>
+                      <div>
+                        <span className="font-bold text-slate-800 block">{doc.title}</span>
+                        {doc.file && <span className="text-[10px] text-slate-500 font-mono">{doc.file}</span>}
+                      </div>
                     </div>
-                    <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px]">
+                    <span className={`px-2 py-0.5 rounded font-bold text-[10px] ${
+                      doc.status === 'Uploaded' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'
+                    }`}>
                       {doc.status}
                     </span>
                   </div>
@@ -2543,11 +3808,11 @@ export const StudentsView = ({ currentInstitute }) => {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl">
                     <span className="text-[10px] uppercase font-bold text-rose-800">Blood Group</span>
-                    <p className="text-base font-black text-rose-950 mt-0.5">{selectedProfile.bloodGroup || 'B+'}</p>
+                    <p className="text-base font-black text-rose-950 mt-0.5">{selectedProfile.bloodGroup || 'Not Provided'}</p>
                   </div>
                   <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
                     <span className="text-[10px] uppercase font-bold text-slate-400">Vaccination Status</span>
-                    <p className="font-bold text-slate-800 mt-0.5">{selectedProfile.vaccinationStatus || 'Fully Vaccinated'}</p>
+                    <p className="font-bold text-slate-800 mt-0.5">{selectedProfile.vaccinationStatus || 'Unknown / Not provided'}</p>
                   </div>
                   <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
                     <span className="text-[10px] uppercase font-bold text-slate-400">Emergency Physician</span>
@@ -2558,6 +3823,13 @@ export const StudentsView = ({ currentInstitute }) => {
                     <p className="font-bold text-slate-800 mt-0.5">{selectedProfile.medicalAlert || 'None'}</p>
                   </div>
                 </div>
+
+                {selectedProfile.allergies && (
+                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Known Allergies</span>
+                    <p className="font-bold text-slate-800 mt-0.5">{selectedProfile.allergies}</p>
+                  </div>
+                )}
               </div>
             )}
 
@@ -2611,15 +3883,15 @@ export const StudentsView = ({ currentInstitute }) => {
                   <h4 className="font-black text-sm text-white tracking-wide">{selectedIdCard.name}</h4>
                   <span className="text-xs font-mono font-bold text-emerald-300 block">{selectedIdCard.rollNumber}</span>
                   <div className="text-[10px] text-emerald-100/90 mt-1">
-                    <div>{selectedIdCard.className} (Sec {selectedIdCard.section || 'A'})</div>
-                    <div>Blood Group: <strong className="text-white">{selectedIdCard.bloodGroup || 'B+'}</strong></div>
+                    <div>{selectedIdCard.className} {selectedIdCard.section ? `(Sec ${selectedIdCard.section})` : ''}</div>
+                    <div>Blood Group: <strong className="text-white">{selectedIdCard.bloodGroup || '—'}</strong></div>
                   </div>
                 </div>
               </div>
 
               <div className="pt-2 border-t border-emerald-500/30 flex items-center justify-between text-[9px] text-emerald-200">
                 <span>Session: {selectedIdCard.academicSession || academicSession}</span>
-                <span>Emergency: {selectedIdCard.phone || '—'}</span>
+                <span>Emergency: {selectedIdCard.phone || selectedIdCard.guardianPhone || '—'}</span>
               </div>
             </div>
 
@@ -2686,7 +3958,7 @@ export const StudentsView = ({ currentInstitute }) => {
                 </div>
                 <div>
                   <span className="text-[10px] font-bold text-slate-500 uppercase block">Initial Fee Clearance</span>
-                  <p className="font-bold text-emerald-700 mt-0.5">{selectedAdmissionSlip.feeStatus || 'Paid'}</p>
+                  <p className="font-bold text-amber-700 mt-0.5">{selectedAdmissionSlip.feeStatus || 'Pending'}</p>
                 </div>
               </div>
 
@@ -2911,7 +4183,7 @@ export const StudentsView = ({ currentInstitute }) => {
                 onChange={(e) => setBulkTargetSection(e.target.value)}
                 className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 font-bold bg-white"
               >
-                {availableSections.map(sec => (
+                {['A', 'B', 'C', 'D'].map(sec => (
                   <option key={sec} value={sec}>Section {sec}</option>
                 ))}
               </select>
