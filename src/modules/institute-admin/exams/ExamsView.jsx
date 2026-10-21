@@ -27,6 +27,7 @@ import {
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
 import Modal from '../../../components/common/Modal'
+import PrintableExamAdmitCardModal from '../../../components/common/PrintableExamAdmitCardModal'
 
 export const ExamsView = ({ currentInstitute }) => {
   const { exams = [], students = [], addItem, deleteItem, logAuditEvent } = useAppData()
@@ -42,6 +43,8 @@ export const ExamsView = ({ currentInstitute }) => {
   const [selectedReportCard, setSelectedReportCard] = useState(null)
   const [selectedPtmReportCard, setSelectedPtmReportCard] = useState(null)
   const [selectedRollNumberSlip, setSelectedRollNumberSlip] = useState(null)
+  const [isAdmitModalOpen, setIsAdmitModalOpen] = useState(false)
+  const [selectedCandidateForAdmit, setSelectedCandidateForAdmit] = useState(null)
   const [currentPage, setCurrentPage] = useState(1)
   const pageSize = 8
 
@@ -1293,6 +1296,19 @@ export const ExamsView = ({ currentInstitute }) => {
           </div>
         </Modal>
       )}
+          {/* Printable Candidate Exam Admit Card & Roll Number Slip Modal */}
+      <PrintableExamAdmitCardModal
+        isOpen={isAdmitModalOpen}
+        onClose={() => {
+          setIsAdmitModalOpen(false)
+          setSelectedCandidateForAdmit(null)
+        }}
+        selectedCandidate={selectedCandidateForAdmit}
+        allStudents={instStudents}
+        currentInstitute={currentInstitute}
+        examSchedule={dateSheet}
+        examTerm={dateSheetTerm}
+      />
     </div>
   )
 }

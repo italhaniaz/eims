@@ -53,6 +53,8 @@ import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
 import { detectProgramLevel, normalizeClassSections } from '../../../constants/academicLevels'
 import Modal from '../../../components/common/Modal'
+import PrintableStudentIdCardModal from '../../../components/common/PrintableStudentIdCardModal'
+import PrintableExamAdmitCardModal from '../../../components/common/PrintableExamAdmitCardModal'
 
 export const StudentsView = ({ currentInstitute }) => {
   const { 
@@ -212,6 +214,10 @@ export const StudentsView = ({ currentInstitute }) => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingStudent, setEditingStudent] = useState(null)
   const [selectedIdCard, setSelectedIdCard] = useState(null)
+  const [isIdCardEngineOpen, setIsIdCardEngineOpen] = useState(false)
+  const [selectedStudentForCard, setSelectedStudentForCard] = useState(null)
+  const [isAdmitCardOpen, setIsAdmitCardOpen] = useState(false)
+  const [selectedStudentForAdmit, setSelectedStudentForAdmit] = useState(null)
   const [selectedSLC, setSelectedSLC] = useState(null)
   const [selectedProfile, setSelectedProfile] = useState(null) // 7-Tab Dossier Drawer
   const [profileActiveTab, setProfileActiveTab] = useState('overview')
@@ -3014,6 +3020,29 @@ export const StudentsView = ({ currentInstitute }) => {
           </div>
         </Modal>
       )}
+          {/* Printable Smart Student ID Card Engine */}
+      <PrintableStudentIdCardModal
+        isOpen={isIdCardEngineOpen}
+        onClose={() => {
+          setIsIdCardEngineOpen(false)
+          setSelectedStudentForCard(null)
+        }}
+        selectedStudent={selectedStudentForCard}
+        allStudents={students}
+        currentInstitute={currentInstitute}
+      />
+
+      {/* Printable Candidate Exam Admit Card & Roll Number Slip */}
+      <PrintableExamAdmitCardModal
+        isOpen={isAdmitCardOpen}
+        onClose={() => {
+          setIsAdmitCardOpen(false)
+          setSelectedStudentForAdmit(null)
+        }}
+        selectedCandidate={selectedStudentForAdmit}
+        allStudents={students}
+        currentInstitute={currentInstitute}
+      />
     </div>
   )
 }

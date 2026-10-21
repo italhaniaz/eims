@@ -26,6 +26,7 @@ import {
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
 import Modal from '../../../components/common/Modal'
+import PrintableFeeChallanModal from '../../../components/common/PrintableFeeChallanModal'
 
 export const FeesView = ({ currentInstitute }) => {
   const { fees = [], students = [], addItem, updateItem, deleteItem, logAuditEvent } = useAppData()
@@ -38,6 +39,8 @@ export const FeesView = ({ currentInstitute }) => {
   const [isPosModalOpen, setIsPosModalOpen] = useState(false)
   const [isSplitModalOpen, setIsSplitModalOpen] = useState(false)
   const [selectedVoucher, setSelectedVoucher] = useState(null)
+  const [isPrintChallanOpen, setIsPrintChallanOpen] = useState(false)
+  const [selectedFeeForChallan, setSelectedFeeForChallan] = useState(null)
   const [posReceipt, setPosReceipt] = useState(null)
 
   // Split Fee Installment Plan State
