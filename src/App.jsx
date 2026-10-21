@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, lazy, Suspense } from 'react'
+import React, { useState, useEffect, lazy, Suspense } from 'react'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { AppDataProvider, useAppData } from './context/AppDataContext'
 import { ToastProvider, useToast } from './context/ToastContext'
@@ -9,6 +9,7 @@ import SuperadminNavbar from './components/layout/SuperadminNavbar'
 import InstituteAdminSidebar from './components/layout/InstituteAdminSidebar'
 import InstituteAdminNavbar from './components/layout/InstituteAdminNavbar'
 import SettingsModal from './components/common/SettingsModal'
+import CommandPaletteModal from './components/common/CommandPaletteModal'
 
 // Auth
 import LoginPage from './modules/auth/LoginPage'
@@ -110,8 +111,30 @@ const AppContent = () => {
   // Selected campus for Institute Admin
   const [selectedInstitute, setSelectedInstitute] = useState(() => institutes[0] || null)
   
-  // Settings modal
+  // Settings modal & Global Spotlight Command Palette
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [isPaletteOpen, setIsPaletteOpen] = useState(false)
+
+  // Global Keyboard Shortcut Listener for Ctrl+K / Cmd+K
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setIsPaletteOpen(prev => !prev)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
+  const handlePaletteNavigate = (route) => {
+    if (user?.role === 'superadmin') {
+      setSuperadminRoute(route)
+    } else {
+      const instRoute = route.startsWith('inst-') ? route : `inst-${route}`
+      setInstituteRoute(instRoute)
+    }
+  }
 
   // If no user is authenticated, display login page
   if (!user) {
@@ -137,6 +160,7 @@ const AppContent = () => {
             onRouteChange={setSuperadminRoute}
             onOpenSettings={() => setIsSettingsOpen(true)}
             onOpenMobileMenu={() => setSuperMobileOpen(true)}
+            onOpenCommandPalette={() => setIsPaletteOpen(true)}
           />
 
           <main className="flex-1 overflow-y-auto">
@@ -179,6 +203,13 @@ const AppContent = () => {
           isOpen={isSettingsOpen}
           onClose={() => setIsSettingsOpen(false)}
         />
+
+        <CommandPaletteModal
+          isOpen={isPaletteOpen}
+          onClose={() => setIsPaletteOpen(false)}
+          onNavigate={handlePaletteNavigate}
+          onOpenSettings={() => setIsSettingsOpen(true)}
+        />
       </div>
     )
   }
@@ -210,6 +241,7 @@ const AppContent = () => {
           onSelectInstitute={setSelectedInstitute}
           onOpenSettings={() => setIsSettingsOpen(true)}
           onOpenMobileMenu={() => setInstMobileOpen(true)}
+          onOpenCommandPalette={() => setIsPaletteOpen(true)}
           onRouteChange={setInstituteRoute}
         />
 
@@ -264,6 +296,13 @@ const AppContent = () => {
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
+      />
+
+      <CommandPaletteModal
+        isOpen={isPaletteOpen}
+        onClose={() => setIsPaletteOpen(false)}
+        onNavigate={handlePaletteNavigate}
+        onOpenSettings={() => setIsSettingsOpen(true)}
       />
     </div>
   )

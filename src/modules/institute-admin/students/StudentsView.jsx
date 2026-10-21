@@ -26,7 +26,9 @@ import {
   AlertCircle,
   FileText,
   Award,
-  CheckCircle2
+  CheckCircle2,
+  HeartPulse,
+  AlertTriangle
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
@@ -76,7 +78,10 @@ export const StudentsView = ({ currentInstitute }) => {
     emergencyContact: '',
     feeStatus: 'Paid',
     attendanceRate: '95%',
-    photoUrl: null
+    photoUrl: null,
+    medicalAlert: 'None',
+    emergencyDoctorPhone: '',
+    vaccinationStatus: 'Fully Vaccinated'
   })
 
   // Photo Upload Handler (Converts image to Data URL)
@@ -117,7 +122,10 @@ export const StudentsView = ({ currentInstitute }) => {
       emergencyContact: '',
       feeStatus: 'Paid',
       attendanceRate: '95%',
-      photoUrl: null
+      photoUrl: null,
+      medicalAlert: 'None',
+      emergencyDoctorPhone: '',
+      vaccinationStatus: 'Fully Vaccinated'
     })
     setIsModalOpen(true)
   }
@@ -135,7 +143,10 @@ export const StudentsView = ({ currentInstitute }) => {
       emergencyContact: s.emergencyContact || '',
       feeStatus: s.feeStatus || 'Paid',
       attendanceRate: s.attendanceRate || '95%',
-      photoUrl: s.photoUrl || null
+      photoUrl: s.photoUrl || null,
+      medicalAlert: s.medicalAlert || 'None',
+      emergencyDoctorPhone: s.emergencyDoctorPhone || '',
+      vaccinationStatus: s.vaccinationStatus || 'Fully Vaccinated'
     })
     setIsModalOpen(true)
   }
@@ -247,7 +258,7 @@ export const StudentsView = ({ currentInstitute }) => {
       return
     }
 
-    const headers = ['Full Name', 'Roll Number', 'Class', 'Section', 'Email', 'Phone', 'Blood Group', 'Fee Status', 'Attendance Rate']
+    const headers = ['Full Name', 'Roll Number', 'Class', 'Section', 'Email', 'Phone', 'Blood Group', 'Fee Status', 'Attendance Rate', 'Medical Alert', 'Doctor Phone', 'Vaccination']
     const rows = filteredAndSorted.map(s => [
       `"${s.name || ''}"`,
       `"${s.rollNumber || ''}"`,
@@ -257,7 +268,10 @@ export const StudentsView = ({ currentInstitute }) => {
       `"${s.phone || s.emergencyContact || ''}"`,
       `"${s.bloodGroup || 'B+'}"`,
       `"${s.feeStatus || 'Paid'}"`,
-      `"${s.attendanceRate || '95%'}"`
+      `"${s.attendanceRate || '95%'}"`,
+      `"${s.medicalAlert || 'None'}"`,
+      `"${s.emergencyDoctorPhone || ''}"`,
+      `"${s.vaccinationStatus || 'Fully Vaccinated'}"`
     ])
 
     const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
@@ -518,7 +532,18 @@ export const StudentsView = ({ currentInstitute }) => {
                           )}
                         </div>
                         <div>
-                          <div className="font-semibold text-slate-900 text-sm">{s.name}</div>
+                          <div className="font-semibold text-slate-900 text-sm flex items-center gap-1.5 flex-wrap">
+                            <span>{s.name}</span>
+                            {s.medicalAlert && s.medicalAlert !== 'None' && (
+                              <span 
+                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200"
+                                title={`Emergency Health Alert: ${s.medicalAlert}${s.emergencyDoctorPhone ? ' | Doc: ' + s.emergencyDoctorPhone : ''}`}
+                              >
+                                <HeartPulse className="w-2.5 h-2.5 text-rose-600 animate-pulse" />
+                                <span>{s.medicalAlert}</span>
+                              </span>
+                            )}
+                          </div>
                           <div className="text-[11px] text-slate-400">{s.email || 'No email registered'}</div>
                         </div>
                       </div>
@@ -536,7 +561,15 @@ export const StudentsView = ({ currentInstitute }) => {
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-3.5 text-xs text-slate-500">{s.phone || s.emergencyContact || '—'}</td>
+                    <td className="px-6 py-3.5 text-xs text-slate-500">
+                      <div>{s.phone || s.emergencyContact || '—'}</div>
+                      {s.emergencyDoctorPhone && (
+                        <div className="text-[10px] text-rose-600 font-semibold mt-0.5 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                          <span>Doc: {s.emergencyDoctorPhone}</span>
+                        </div>
+                      )}
+                    </td>
                     <td className="px-6 py-3.5">
                       <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
                         s.feeStatus === 'Paid' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-amber-50 text-amber-600 border border-amber-200'
@@ -778,6 +811,58 @@ export const StudentsView = ({ currentInstitute }) => {
             </div>
           </div>
 
+          {/* Student Health & Medical Sentinel Section */}
+          <div className="p-3.5 bg-rose-50/70 border border-rose-200 rounded-xl space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-rose-900 font-bold text-xs uppercase tracking-wide">
+                <HeartPulse className="w-4 h-4 text-rose-600" />
+                <span>Student Health & Medical Sentinel</span>
+              </div>
+              <span className="text-[10px] font-semibold text-rose-700 bg-rose-100/90 px-2 py-0.5 rounded-full border border-rose-300">
+                Safety Critical
+              </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-700 uppercase mb-1">Medical Alert Condition</label>
+                <select
+                  value={formData.medicalAlert}
+                  onChange={(e) => setFormData({ ...formData, medicalAlert: e.target.value })}
+                  className="w-full px-2.5 py-2 rounded-lg border border-slate-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                >
+                  <option value="None">None (No Known Chronic Condition)</option>
+                  <option value="Asthma / Inhaler Carried">Asthma (Inhaler Carried)</option>
+                  <option value="Severe Food/Peanut Allergy (EpiPen)">Severe Peanut / Food Allergy</option>
+                  <option value="Type 1 Diabetes (Insulin Dependent)">Type 1 Diabetes</option>
+                  <option value="Epilepsy / Seizure Caution">Epilepsy / Seizure Caution</option>
+                  <option value="Cardiovascular Condition">Cardiovascular Condition</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-700 uppercase mb-1">Emergency Physician Phone</label>
+                <input
+                  type="tel"
+                  value={formData.emergencyDoctorPhone}
+                  onChange={(e) => setFormData({ ...formData, emergencyDoctorPhone: e.target.value })}
+                  className="w-full px-2.5 py-2 rounded-lg border border-slate-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                  placeholder="+92 300 0000000"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-700 uppercase mb-1">Vaccination Status</label>
+                <select
+                  value={formData.vaccinationStatus}
+                  onChange={(e) => setFormData({ ...formData, vaccinationStatus: e.target.value })}
+                  className="w-full px-2.5 py-2 rounded-lg border border-slate-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                >
+                  <option value="Fully Vaccinated">Fully Vaccinated</option>
+                  <option value="Pending Booster">Pending Booster</option>
+                  <option value="Medical Exemption Certificate">Medical Exemption</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
           <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
             <button
               type="button"
@@ -832,6 +917,14 @@ export const StudentsView = ({ currentInstitute }) => {
                 <h3 className="text-base font-bold text-white tracking-wide">{selectedIdCard.name}</h3>
                 <span className="text-xs text-emerald-300 font-mono font-bold mt-0.5">{selectedIdCard.rollNumber}</span>
 
+                {/* Medical Alert Sentinel Banner */}
+                {selectedIdCard.medicalAlert && selectedIdCard.medicalAlert !== 'None' && (
+                  <div className="w-full mt-2.5 px-2.5 py-1.5 rounded-lg bg-rose-950/80 border border-rose-500 text-rose-200 text-[10px] text-center font-bold flex items-center justify-center gap-1.5 shadow-sm">
+                    <AlertTriangle className="w-3.5 h-3.5 text-rose-400 shrink-0 animate-pulse" />
+                    <span>MED ALERT: {selectedIdCard.medicalAlert}</span>
+                  </div>
+                )}
+
                 {/* Details Table */}
                 <div className="w-full mt-3 pt-3 border-t border-white/10 space-y-1.5 text-xs text-left">
                   <div className="flex justify-between">
@@ -845,6 +938,16 @@ export const StudentsView = ({ currentInstitute }) => {
                   <div className="flex justify-between">
                     <span className="text-slate-400">Emergency Phone:</span>
                     <span className="font-semibold text-white">{selectedIdCard.phone || '+92 300 0000000'}</span>
+                  </div>
+                  {selectedIdCard.emergencyDoctorPhone && (
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Doctor Tel:</span>
+                      <span className="font-semibold text-rose-300 font-mono">{selectedIdCard.emergencyDoctorPhone}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Immunization:</span>
+                    <span className="font-semibold text-emerald-300">{selectedIdCard.vaccinationStatus || 'Fully Vaccinated'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-400">Session:</span>
@@ -938,6 +1041,16 @@ export const StudentsView = ({ currentInstitute }) => {
                 <div className="bg-amber-50/60 p-3 rounded-lg border border-amber-200/80 text-[11px] grid grid-cols-2 gap-2">
                   <div><span className="text-slate-500">Reason for Leaving:</span> <strong className="text-slate-800">Higher Studies / Session Completion</strong></div>
                   <div><span className="text-slate-500">Academic Standing:</span> <strong className="text-emerald-700">Good Standing (Promoted)</strong></div>
+                  <div>
+                    <span className="text-slate-500">Medical Sentinel Record:</span>{' '}
+                    <strong className={selectedSLC.medicalAlert && selectedSLC.medicalAlert !== 'None' ? 'text-rose-700 font-bold' : 'text-slate-800'}>
+                      {selectedSLC.medicalAlert && selectedSLC.medicalAlert !== 'None' ? `ALERT: ${selectedSLC.medicalAlert}` : 'No Chronic Conditions Reported'}
+                    </strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Immunization Status:</span>{' '}
+                    <strong className="text-emerald-700 font-bold">{selectedSLC.vaccinationStatus || 'Fully Vaccinated (Verified)'}</strong>
+                  </div>
                 </div>
               </div>
 

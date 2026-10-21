@@ -33,6 +33,7 @@ export const InstituteAdminNavbar = ({
   onSelectInstitute, 
   onOpenSettings,
   onOpenMobileMenu,
+  onOpenCommandPalette,
   onRouteChange
 }) => {
   const { user, logout } = useAuth()
@@ -450,6 +451,19 @@ export const InstituteAdminNavbar = ({
 
       {/* Right: Settings and User Menu */}
       <div className="flex items-center gap-2 sm:gap-3">
+        {/* Quick Spotlight Search Trigger */}
+        <button
+          onClick={onOpenCommandPalette}
+          className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs text-slate-500 transition-colors shadow-2xs cursor-pointer mr-1"
+          title="Spotlight Search (Ctrl + K)"
+        >
+          <Search className="w-3.5 h-3.5 text-slate-400" />
+          <span className="text-[11px] font-medium hidden md:inline">Search or jump to...</span>
+          <kbd className="text-[9px] font-mono font-bold bg-white border border-slate-200 px-1.5 py-0.5 rounded text-slate-400 shadow-2xs">
+            Ctrl K
+          </kbd>
+        </button>
+
         <button 
           onClick={onOpenSettings}
           className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-50 transition-colors"

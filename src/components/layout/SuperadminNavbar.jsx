@@ -11,7 +11,8 @@ import {
   ShieldCheck,
   CheckCircle2,
   ExternalLink,
-  Key
+  Key,
+  Search
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { isSupabaseConfigured, getSupabaseStatus } from '../../services/supabaseClient'
@@ -21,7 +22,8 @@ export const SuperadminNavbar = ({
   currentRoute, 
   onRouteChange, 
   onOpenSettings,
-  onOpenMobileMenu 
+  onOpenMobileMenu,
+  onOpenCommandPalette
 }) => {
   const { user, logout, notificationCount, setNotificationCount } = useAuth()
   const [showNotifications, setShowNotifications] = useState(false)
@@ -94,6 +96,19 @@ export const SuperadminNavbar = ({
 
       {/* Right Side Icons */}
       <div className="flex items-center gap-3 sm:gap-4">
+        {/* Quick Spotlight Search Trigger */}
+        <button
+          onClick={onOpenCommandPalette}
+          className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs text-slate-500 transition-colors shadow-2xs cursor-pointer"
+          title="Spotlight Search (Ctrl + K)"
+        >
+          <Search className="w-3.5 h-3.5 text-slate-400" />
+          <span className="text-[11px] font-medium">Search or jump to...</span>
+          <kbd className="text-[9px] font-mono font-bold bg-white border border-slate-200 px-1.5 py-0.5 rounded text-slate-400 shadow-2xs">
+            Ctrl K
+          </kbd>
+        </button>
+
         {/* Supabase Connection Status Pill */}
         <button 
           onClick={onOpenSettings}
