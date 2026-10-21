@@ -464,6 +464,16 @@ export const InstituteAdminNavbar = ({
           </kbd>
         </button>
 
+        {/* Mobile Spotlight Search Trigger */}
+        <button
+          onClick={onOpenCommandPalette}
+          className="sm:hidden p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+          title="Search (Tap to open)"
+          aria-label="Open search"
+        >
+          <Search className="w-4 h-4 text-slate-600" />
+        </button>
+
         <button 
           onClick={onOpenSettings}
           className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-50 transition-colors"

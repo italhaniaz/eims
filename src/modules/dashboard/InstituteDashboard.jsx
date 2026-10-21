@@ -21,6 +21,7 @@ import {
   X
 } from 'lucide-react'
 import StatCard from '../../components/common/StatCard'
+import { CampusSetupWizard } from '../../components/common/CampusSetupWizard'
 import { useAppData } from '../../context/AppDataContext'
 import { normalizeClassSections, detectProgramLevel } from '../../constants/academicLevels'
 
@@ -276,6 +277,9 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
           </button>
         </div>
       )}
+
+      {/* Layman-Friendly Interactive Campus Setup Wizard */}
+      <CampusSetupWizard currentInstitute={currentInstitute} onRouteChange={onRouteChange} />
 
       {/* KPI Cards - Real dynamic calculations with Show all + Eye + Add actions */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
