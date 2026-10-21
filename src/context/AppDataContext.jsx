@@ -53,6 +53,28 @@ export const AppDataProvider = ({ children }) => {
     return updated
   }
 
+  // Attendance Persistence Handlers
+  const saveAttendance = (date, classKey, records) => {
+    const res = DataService.saveAttendance(date, classKey, records)
+    refreshData()
+    return res
+  }
+
+  const getAttendance = (date, classKey) => {
+    return DataService.getAttendance(date, classKey)
+  }
+
+  // Timetable Persistence Handlers
+  const saveTimetable = (classKey, schedule) => {
+    const res = DataService.saveTimetable(classKey, schedule)
+    refreshData()
+    return res
+  }
+
+  const getTimetable = (classKey) => {
+    return DataService.getTimetable(classKey)
+  }
+
   // Quick Action: generate and download report
   const generateReport = () => {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
@@ -101,23 +123,24 @@ export const AppDataProvider = ({ children }) => {
     })
   }
 
-  // Send communication blast helper
   const sendCommunicationBlast = (blastData) => {
-    const logItem = {
+    const newLog = {
       id: `comm-${Date.now()}`,
-      channel: blastData.channel || 'SMS',
-      recipientGroup: blastData.recipientGroup,
-      message: blastData.message,
-      sentAt: new Date().toLocaleString(),
-      status: 'Delivered'
+      title: blastData.title,
+      channel: blastData.channel,
+      audience: blastData.audience,
+      recipientsCount: blastData.recipientsCount || 120,
+      timestamp: new Date().toLocaleString(),
+      status: 'Delivered',
+      messagePreview: blastData.message
     }
-    addItem('communicationLogs', logItem)
-    addItem('recentActivity', {
-      text: `Sent ${blastData.channel} blast to ${blastData.recipientGroup}: "${blastData.message.slice(0, 30)}..."`,
-      time: 'Just now',
-      type: 'communication',
-      dotColor: '#8b5cf6'
-    })
+
+    const currentLogs = data.communicationLogs || []
+    const updated = [newLog, ...currentLogs]
+    
+    DataService.addItem('communicationLogs', newLog)
+    refreshData()
+    return newLog
   }
 
   // Dynamic calculated stats
@@ -146,6 +169,10 @@ export const AppDataProvider = ({ children }) => {
         teachers: data.teachers || [],
         classes: data.classes || [],
         fees: data.fees || [],
+        exams: data.exams || [],
+        notices: data.notices || [],
+        timetable: data.timetable || {},
+        attendance: data.attendance || {},
         transport: data.transport || [],
         library: data.library || [],
         admissionsPipeline: data.admissionsPipeline || [],
@@ -162,6 +189,10 @@ export const AppDataProvider = ({ children }) => {
         resetToZero,
         loadSampleTemplate,
         importData,
+        saveAttendance,
+        getAttendance,
+        saveTimetable,
+        getTimetable,
         generateReport,
         sendCommunicationBlast
       }}
@@ -178,3 +209,5 @@ export const useAppData = () => {
   }
   return context
 }
+
+export default AppDataContext

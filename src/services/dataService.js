@@ -22,6 +22,10 @@ const cleanZeroData = {
   teachers: [],
   classes: [],
   fees: [],
+  exams: [],
+  notices: [],
+  timetable: {},
+  attendance: {},
   transport: [],
   library: [],
   admissionsPipeline: [],
@@ -29,7 +33,7 @@ const cleanZeroData = {
   communicationLogs: []
 }
 
-// Optional rich sample template for preview
+// Rich sample template for preview
 export const sampleTemplateData = {
   stats: {
     totalUsers: 231,
@@ -59,12 +63,12 @@ export const sampleTemplateData = {
       code: 'CSM-002', 
       city: 'Lahore',
       province: 'Punjab',
-      email: 'city.model@sms.edu', 
-      phone: '+92 42 35841234', 
-      address: 'Block C, Model Town, Lahore', 
+      email: 'info@cityschool.edu', 
+      phone: '+92 42 35889900', 
+      address: 'Model Town C Block, Lahore', 
       affiliatedBoard: 'BISE Lahore',
       status: 'Active',
-      principal: 'Prof. Tariq Mehmood',
+      principal: 'Mrs. Samina Khurram',
       totalStudents: 980,
       totalTeachers: 52
     },
@@ -74,19 +78,21 @@ export const sampleTemplateData = {
       code: 'RIA-003', 
       city: 'Rawalpindi',
       province: 'Punjab',
-      email: 'roots.intl@sms.edu', 
-      phone: '+92 51 4458901', 
-      address: 'Sector H-8/4, Islamabad/Rawalpindi', 
-      affiliatedBoard: 'Cambridge Assessment (CAIE)',
+      email: 'rawalpindi@roots.edu', 
+      phone: '+92 51 4455667', 
+      address: 'Harley Street, Rawalpindi Cantt', 
+      affiliatedBoard: 'Federal Board (FBISE)',
       status: 'Active',
-      principal: 'Mrs. Ayesha Siddiqui',
-      totalStudents: 1150,
-      totalTeachers: 64
+      principal: 'Engr. Kamran Raza',
+      totalStudents: 850,
+      totalTeachers: 45
     }
   ],
   departments: [
-    { id: 'dept-1', name: 'Department of Computer Science', code: 'DCS', instituteId: 'inst-1', headName: 'Engr. Imran Khan', studentsCount: 420 },
-    { id: 'dept-2', name: 'Department of Sciences (Pre-Med / Eng)', code: 'DSCI', instituteId: 'inst-1', headName: 'Dr. Fatima Noor', studentsCount: 510 }
+    { id: 'dept-1', name: 'Faculty of Natural Sciences', code: 'SCI-01', head: 'Dr. Fatima Noor', totalTeachers: 24, status: 'Active' },
+    { id: 'dept-2', name: 'Department of Computer Science & Robotics', code: 'CS-02', head: 'Engr. Imran Qureshi', totalTeachers: 16, status: 'Active' },
+    { id: 'dept-3', name: 'Department of Mathematics & Statistics', code: 'MTH-03', head: 'Prof. Tariq Jamil', totalTeachers: 14, status: 'Active' },
+    { id: 'dept-4', name: 'Faculty of Humanities & Languages', code: 'HUM-04', head: 'Ms. Ayesha Siddiqa', totalTeachers: 14, status: 'Active' }
   ],
   examinationBodies: [
     { id: 'ex-1', name: 'BISE Lahore (Board of Intermediate & Secondary Education)', code: 'BISE-LHR', type: 'Provincial Board', region: 'Lahore' },
@@ -129,6 +135,72 @@ export const sampleTemplateData = {
   fees: [
     { id: 'fee-1', instituteId: 'inst-1', studentName: 'Hamza Farooq', rollNumber: 'BHS-2024-001', className: '10th Grade', amount: 15000, dueDate: '2026-10-25', status: 'Paid', paymentDate: '2026-10-18' }
   ],
+  exams: [
+    {
+      id: 'ex-1',
+      instituteId: 'inst-1',
+      studentName: 'Hamza Farooq',
+      rollNumber: 'BHS-2024-001',
+      className: '10th Grade',
+      term: 'Midterm Examination 2026',
+      date: '2026-10-15',
+      subjects: [
+        { name: 'Mathematics', maxMarks: 100, obtained: 92, grade: 'A+' },
+        { name: 'Physics', maxMarks: 100, obtained: 88, grade: 'A' },
+        { name: 'Chemistry', maxMarks: 100, obtained: 85, grade: 'A' },
+        { name: 'English Literature', maxMarks: 100, obtained: 90, grade: 'A+' },
+        { name: 'Computer Science', maxMarks: 100, obtained: 95, grade: 'A+' }
+      ],
+      totalObtained: 450,
+      totalMax: 500,
+      percentage: '90.0%',
+      overallGrade: 'A+',
+      remarks: 'Outstanding performance! Exemplary conduct in academics.'
+    }
+  ],
+  notices: [
+    {
+      id: 'not-1',
+      instituteId: 'inst-1',
+      title: 'Upcoming Midterm Examination Schedule Announcement',
+      category: 'Exam',
+      date: '2026-10-20',
+      audience: 'All Students & Parents',
+      pinned: true,
+      content: 'Midterm examinations for classes 9, 10, 11 and 12 will commence from next Monday. Roll number slips and date sheets are issued to all students.'
+    },
+    {
+      id: 'not-2',
+      instituteId: 'inst-1',
+      title: 'Parent-Teacher Conference (PTC) Meeting',
+      category: 'General',
+      date: '2026-10-24',
+      audience: 'Parents',
+      pinned: false,
+      content: 'Parent-Teacher meeting is scheduled for Saturday between 09:00 AM to 01:00 PM. Parents are encouraged to discuss their child academic performance and attendance.'
+    },
+    {
+      id: 'not-3',
+      instituteId: 'inst-1',
+      title: 'Fall Semester Fee Submission Reminder',
+      category: 'Urgent',
+      date: '2026-10-28',
+      audience: 'Students',
+      pinned: false,
+      content: 'All parents and guardians are requested to clear pending tuition fee dues on or before the due date to avoid late fee surcharges.'
+    }
+  ],
+  timetable: {
+    '10th Grade': {
+      'Monday-P1': { subject: 'Mathematics', teacher: 'Prof. Tariq', room: 'R-101' },
+      'Monday-P2': { subject: 'Physics', teacher: 'Dr. Fatima', room: 'Lab 1' },
+      'Monday-P3': { subject: 'English', teacher: 'Ms. Ayesha', room: 'R-101' },
+      'Monday-P4': { subject: 'Chemistry', teacher: 'Dr. Rashid', room: 'Lab 2' },
+      'Monday-P5': { subject: 'Computer Sc.', teacher: 'Engr. Imran', room: 'Comp Lab' },
+      'Monday-P6': { subject: 'Pakistan Studies', teacher: 'Mr. Asif', room: 'R-101' }
+    }
+  },
+  attendance: {},
   transport: [
     { id: 'tr-1', vehicleNo: 'LEA-4890', busName: 'Bus #01 (Gulberg - Model Town)', driverName: 'Muhammad Rafiq', driverPhone: '+92 301 5566778', capacity: 35, assignedStudents: 32, routePath: 'Campus -> Main Blvd -> Model Town C Block', status: 'Active' },
     { id: 'tr-2', vehicleNo: 'LES-9921', busName: 'Bus #02 (Johar Town - Wapda Town)', driverName: 'Aslam Pervaiz', driverPhone: '+92 321 4455667', capacity: 40, assignedStudents: 38, routePath: 'Campus -> Canal Road -> Johar Town', status: 'Active' }
@@ -233,11 +305,10 @@ export const DataService = {
     if (!store[collectionName]) store[collectionName] = []
     store[collectionName].unshift(newItem)
 
-    // Activity log
-    const label = newItem.name || newItem.title || newItem.vehicleNo || newItem.rollNumber || newItem.studentName || 'Item'
+    // Activity log entry
     const activity = {
       id: `act-${Date.now()}`,
-      text: `Added ${collectionName.replace(/([A-Z])/g, ' $1').toLowerCase()}: ${label}`,
+      text: `Added new ${collectionName.replace(/([A-Z])/g, ' $1').toLowerCase()}: ${newItem.name || newItem.title || newItem.studentName || 'Record'}`,
       time: 'Just now',
       type: collectionName,
       dotColor: '#3b82f6'
@@ -245,18 +316,6 @@ export const DataService = {
     if (!store.recentActivity) store.recentActivity = []
     store.recentActivity.unshift(activity)
     if (store.recentActivity.length > 20) store.recentActivity.pop()
-
-    // Audit log
-    if (!store.auditLogs) store.auditLogs = []
-    store.auditLogs.unshift({
-      id: `log-${Date.now()}`,
-      action: `Created ${collectionName}`,
-      user: 'Administrator',
-      ip: '192.168.1.' + Math.floor(100 + Math.random() * 50),
-      timestamp: new Date().toISOString().replace('T', ' ').slice(0, 16),
-      status: 'Success'
-    })
-    if (store.auditLogs.length > 30) store.auditLogs.pop()
 
     saveStoredData(store)
     return newItem
@@ -324,6 +383,34 @@ export const DataService = {
       saveStoredData(store)
     }
     return true
+  },
+
+  saveAttendance(date, classKey, records) {
+    const store = getStoredData()
+    if (!store.attendance) store.attendance = {}
+    const key = `${date}_${classKey}`
+    store.attendance[key] = records
+    saveStoredData(store)
+    return store.attendance
+  },
+
+  getAttendance(date, classKey) {
+    const store = getStoredData()
+    const key = `${date}_${classKey}`
+    return (store.attendance && store.attendance[key]) || null
+  },
+
+  saveTimetable(classKey, schedule) {
+    const store = getStoredData()
+    if (!store.timetable) store.timetable = {}
+    store.timetable[classKey] = schedule
+    saveStoredData(store)
+    return store.timetable
+  },
+
+  getTimetable(classKey) {
+    const store = getStoredData()
+    return (store.timetable && store.timetable[classKey]) || null
   },
 
   resetToZero() {

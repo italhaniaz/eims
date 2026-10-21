@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { 
   Receipt, 
   Plus, 
@@ -13,22 +13,36 @@ import {
   DollarSign,
   CheckCircle2,
   Calendar,
-  Building
+  Building,
+  Download,
+  Layers,
+  ChevronLeft,
+  ChevronRight,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
 import Modal from '../../../components/common/Modal'
 
 export const FeesView = ({ currentInstitute }) => {
-  const { fees, students, addItem, updateItem } = useAppData()
+  const { fees = [], students = [], addItem, updateItem } = useAppData()
   const { toast } = useToast()
   const instStudents = students.filter(s => !s.instituteId || s.instituteId === currentInstitute?.id)
 
   const [searchTerm, setSearchTerm] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isBatchModalOpen, setIsBatchModalOpen] = useState(false)
   const [isPosModalOpen, setIsPosModalOpen] = useState(false)
   const [selectedVoucher, setSelectedVoucher] = useState(null)
   const [posReceipt, setPosReceipt] = useState(null)
+
+  // Sorting & Pagination
+  const [sortField, setSortField] = useState('studentName')
+  const [sortDirection, setSortDirection] = useState('asc')
+  const [currentPage, setCurrentPage] = useState(1)
+  const pageSize = 8
 
   // Standard Voucher Form
   const [formData, setFormData] = useState({
@@ -38,6 +52,14 @@ export const FeesView = ({ currentInstitute }) => {
     amount: 15000,
     dueDate: '2026-10-30',
     status: 'Pending'
+  })
+
+  // Batch Fee Generator Form
+  const [batchData, setBatchData] = useState({
+    targetClass: '10th Grade',
+    feeTitle: 'Monthly Tuition Fee',
+    amount: 15000,
+    dueDate: '2026-11-10'
   })
 
   // POS Cashier Terminal State
@@ -72,6 +94,7 @@ export const FeesView = ({ currentInstitute }) => {
 
     await addItem('fees', {
       ...formData,
+      amount: Number(formData.amount),
       instituteId: currentInstitute?.id || 'inst-1',
       paymentDate: formData.status === 'Paid' ? new Date().toISOString().split('T')[0] : null
     })
@@ -79,15 +102,47 @@ export const FeesView = ({ currentInstitute }) => {
     setIsModalOpen(false)
   }
 
+  // Handle Batch Fee Generation for an entire class
+  const handleGenerateBatchFees = async (e) => {
+    e.preventDefault()
+    const targetStudents = instStudents.filter(s => 
+      batchData.targetClass === 'All Classes' || 
+      (s.className || '').toLowerCase().includes(batchData.targetClass.toLowerCase())
+    )
+
+    if (targetStudents.length === 0) {
+      toast.warning(`No students found enrolled in ${batchData.targetClass}.`)
+      return
+    }
+
+    let generatedCount = 0
+    for (const std of targetStudents) {
+      await addItem('fees', {
+        studentName: std.name,
+        rollNumber: std.rollNumber,
+        className: std.className || batchData.targetClass,
+        amount: Number(batchData.amount),
+        feeTitle: batchData.feeTitle,
+        dueDate: batchData.dueDate,
+        status: 'Pending',
+        instituteId: currentInstitute?.id || 'inst-1'
+      })
+      generatedCount++
+    }
+
+    toast.success(`Generated ${generatedCount} fee challans for ${batchData.targetClass}!`)
+    setIsBatchModalOpen(false)
+  }
+
   const markPaid = async (fee) => {
     await updateItem('fees', fee.id, {
       status: 'Paid',
       paymentDate: new Date().toISOString().split('T')[0]
     })
-    toast.success(`Payment verified and marked as Paid for ${fee.studentName}`)
+    toast.success(`Challan for ${fee.studentName} marked as Paid.`)
   }
 
-  // Open POS modal with a pre-selected fee voucher or fresh
+  // Open POS Cashier Terminal
   const openPosCashier = (fee = null) => {
     if (fee) {
       setPosData({
@@ -166,19 +221,87 @@ export const FeesView = ({ currentInstitute }) => {
     setPosReceipt(receiptObj)
   }
 
-  const filtered = fees.filter(f =>
-    (!f.instituteId || f.instituteId === currentInstitute?.id) &&
-    (f.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     f.rollNumber.toLowerCase().includes(searchTerm.toLowerCase()))
-  )
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortDirection(prev => (prev === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortField(field)
+      setSortDirection('asc')
+    }
+  }
 
-  const totalCollected = filtered
+  // Filter and sort fee vouchers
+  const filteredAndSorted = useMemo(() => {
+    const list = fees.filter(f =>
+      (!f.instituteId || f.instituteId === currentInstitute?.id) &&
+      ((f.studentName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+       (f.rollNumber || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+       (f.className || '').toLowerCase().includes(searchTerm.toLowerCase()))
+    )
+
+    return list.sort((a, b) => {
+      let valA = a[sortField] || ''
+      let valB = b[sortField] || ''
+
+      if (sortField === 'amount') {
+        valA = Number(valA || 0)
+        valB = Number(valB || 0)
+      } else {
+        if (typeof valA === 'string') valA = valA.toLowerCase()
+        if (typeof valB === 'string') valB = valB.toLowerCase()
+      }
+
+      if (valA < valB) return sortDirection === 'asc' ? -1 : 1
+      if (valA > valB) return sortDirection === 'asc' ? 1 : -1
+      return 0
+    })
+  }, [fees, currentInstitute?.id, searchTerm, sortField, sortDirection])
+
+  const totalCollected = filteredAndSorted
     .filter(f => f.status === 'Paid')
     .reduce((sum, f) => sum + Number(f.amount || 0), 0)
 
-  const totalPending = filtered
+  const totalPending = filteredAndSorted
     .filter(f => f.status !== 'Paid')
     .reduce((sum, f) => sum + Number(f.amount || 0), 0)
+
+  // Pagination calculation
+  const totalVouchers = filteredAndSorted.length
+  const totalPages = Math.max(1, Math.ceil(totalVouchers / pageSize))
+  const paginatedFees = useMemo(() => {
+    const start = (currentPage - 1) * pageSize
+    return filteredAndSorted.slice(start, start + pageSize)
+  }, [filteredAndSorted, currentPage, pageSize])
+
+  // CSV Export for Fees
+  const exportFeesCSV = () => {
+    if (filteredAndSorted.length === 0) {
+      toast.warning('No fee records to export.')
+      return
+    }
+
+    const headers = ['Student Name', 'Roll Number', 'Class', 'Amount (PKR)', 'Due Date', 'Status', 'Payment Date']
+    const rows = filteredAndSorted.map(f => [
+      `"${f.studentName || ''}"`,
+      `"${f.rollNumber || ''}"`,
+      `"${f.className || ''}"`,
+      `"${f.amount || 0}"`,
+      `"${f.dueDate || ''}"`,
+      `"${f.status || 'Pending'}"`,
+      `"${f.paymentDate || '—'}"`
+    ])
+
+    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `fee_records_${new Date().toISOString().slice(0, 10)}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    toast.success(`Exported ${filteredAndSorted.length} fee vouchers to CSV.`)
+  }
 
   return (
     <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
@@ -188,26 +311,46 @@ export const FeesView = ({ currentInstitute }) => {
             <Receipt className="w-5 h-5 text-emerald-600" />
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">Fee Management & POS Cashier Terminal</h1>
           </div>
-          <p className="text-xs text-slate-500 mt-1">Issue official 3-copy bank vouchers, fast POS counter fee collections, and print receipts</p>
+          <p className="text-xs text-slate-500 mt-1">Batch fee challans, 3-copy bank vouchers, and instant POS counter fee collections</p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            type="button"
+            onClick={exportFeesCSV}
+            className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 transition-all cursor-pointer"
+            title="Download fee register CSV"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Export CSV</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsBatchModalOpen(true)}
+            className="flex items-center gap-2 px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold shadow transition-all cursor-pointer"
+            title="Generate fee vouchers for an entire class at once"
+          >
+            <Layers className="w-3.5 h-3.5 text-amber-300" />
+            <span>Batch Fee Generator</span>
+          </button>
+
           <button
             type="button"
             onClick={() => openPosCashier()}
-            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold shadow-sm transition-all cursor-pointer"
+            className="flex items-center gap-2 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold shadow transition-all cursor-pointer"
           >
-            <Zap className="w-4 h-4 text-amber-300" />
-            <span>Fast POS Cashier Counter</span>
+            <Zap className="w-3.5 h-3.5 text-amber-300" />
+            <span>POS Cashier Counter</span>
           </button>
 
           <button
             type="button"
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold shadow-sm transition-all cursor-pointer"
+            className="flex items-center gap-2 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow transition-all cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
-            <span>Generate New Fee Challan</span>
+            <Plus className="w-3.5 h-3.5" />
+            <span>New Challan</span>
           </button>
         </div>
       </div>
@@ -236,59 +379,103 @@ export const FeesView = ({ currentInstitute }) => {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-50/50">
           <div className="relative w-full max-w-md">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Search challans by student or roll no..."
+              placeholder="Search challans by student name, roll number, or grade..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none"
+              onChange={(e) => {
+                setSearchTerm(e.target.value)
+                setCurrentPage(1)
+              }}
+              className="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none bg-white"
             />
           </div>
-          <span className="text-xs text-slate-400 font-medium whitespace-nowrap">Total: {filtered.length} vouchers</span>
+          <span className="text-xs text-slate-500 font-semibold bg-slate-100 px-3 py-1.5 rounded-full whitespace-nowrap">
+            Total Vouchers: {totalVouchers}
+          </span>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm min-w-[650px]">
-            <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-semibold border-b">
+          <table className="w-full text-left text-sm min-w-[700px]">
+            <thead className="bg-slate-50 text-slate-600 text-[11px] uppercase tracking-wider font-bold border-b border-slate-200">
               <tr>
-                <th className="px-6 py-4">Student</th>
-                <th className="px-6 py-4">Roll Number</th>
-                <th className="px-6 py-4">Amount</th>
-                <th className="px-6 py-4">Due Date</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4 text-right">Actions</th>
+                <th onClick={() => handleSort('studentName')} className="px-6 py-3.5 cursor-pointer hover:bg-slate-100 select-none">
+                  <div className="flex items-center gap-1.5">
+                    <span>Student</span>
+                    {sortField === 'studentName' ? (
+                      sortDirection === 'asc' ? <ArrowUp className="w-3 h-3 text-emerald-600" /> : <ArrowDown className="w-3 h-3 text-emerald-600" />
+                    ) : (
+                      <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                    )}
+                  </div>
+                </th>
+                <th onClick={() => handleSort('rollNumber')} className="px-6 py-3.5 cursor-pointer hover:bg-slate-100 select-none">
+                  <div className="flex items-center gap-1.5">
+                    <span>Roll Number</span>
+                    {sortField === 'rollNumber' ? (
+                      sortDirection === 'asc' ? <ArrowUp className="w-3 h-3 text-emerald-600" /> : <ArrowDown className="w-3 h-3 text-emerald-600" />
+                    ) : (
+                      <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                    )}
+                  </div>
+                </th>
+                <th onClick={() => handleSort('amount')} className="px-6 py-3.5 cursor-pointer hover:bg-slate-100 select-none">
+                  <div className="flex items-center gap-1.5">
+                    <span>Amount</span>
+                    {sortField === 'amount' ? (
+                      sortDirection === 'asc' ? <ArrowUp className="w-3 h-3 text-emerald-600" /> : <ArrowDown className="w-3 h-3 text-emerald-600" />
+                    ) : (
+                      <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                    )}
+                  </div>
+                </th>
+                <th className="px-6 py-3.5">Due Date</th>
+                <th onClick={() => handleSort('status')} className="px-6 py-3.5 cursor-pointer hover:bg-slate-100 select-none">
+                  <div className="flex items-center gap-1.5">
+                    <span>Status</span>
+                    {sortField === 'status' ? (
+                      sortDirection === 'asc' ? <ArrowUp className="w-3 h-3 text-emerald-600" /> : <ArrowDown className="w-3 h-3 text-emerald-600" />
+                    ) : (
+                      <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                    )}
+                  </div>
+                </th>
+                <th className="px-6 py-3.5 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filtered.length > 0 ? (
-                filtered.map(f => (
-                  <tr key={f.id} className="hover:bg-slate-50/70">
-                    <td className="px-6 py-4 font-semibold text-slate-900">{f.studentName}</td>
-                    <td className="px-6 py-4 font-mono text-xs text-slate-500">{f.rollNumber}</td>
-                    <td className="px-6 py-4 font-mono font-bold text-slate-900">Rs. {Number(f.amount).toLocaleString()}</td>
-                    <td className="px-6 py-4 text-slate-500 text-xs">{f.dueDate}</td>
-                    <td className="px-6 py-4">
+              {paginatedFees.length > 0 ? (
+                paginatedFees.map(f => (
+                  <tr key={f.id} className="hover:bg-slate-50/70 transition-colors">
+                    <td className="px-6 py-3.5 font-semibold text-slate-900">
+                      <div>{f.studentName}</div>
+                      <div className="text-[11px] text-slate-400 font-normal">{f.className}</div>
+                    </td>
+                    <td className="px-6 py-3.5 font-mono text-xs text-slate-500">{f.rollNumber}</td>
+                    <td className="px-6 py-3.5 font-mono font-bold text-slate-900">Rs. {Number(f.amount).toLocaleString()}</td>
+                    <td className="px-6 py-3.5 text-slate-500 text-xs">{f.dueDate}</td>
+                    <td className="px-6 py-3.5">
                       {f.status === 'Paid' ? (
-                        <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-semibold">
+                        <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-bold">
                           Paid
                         </span>
                       ) : (
-                        <span className="px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-xs font-semibold">
+                        <span className="px-2.5 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-xs font-bold">
                           Pending
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-right space-x-2">
+                    <td className="px-6 py-3.5 text-right space-x-1.5">
                       {f.status !== 'Paid' && (
                         <>
                           <button
                             type="button"
                             onClick={() => openPosCashier(f)}
-                            className="px-2.5 py-1.5 text-xs font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-md transition-colors cursor-pointer"
+                            className="px-2.5 py-1 text-xs font-bold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-md transition-colors cursor-pointer"
                             title="Collect Fee via POS Counter"
                           >
                             ⚡ POS Collect
@@ -296,7 +483,7 @@ export const FeesView = ({ currentInstitute }) => {
                           <button
                             type="button"
                             onClick={() => markPaid(f)}
-                            className="px-2.5 py-1.5 text-xs font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-md transition-colors cursor-pointer"
+                            className="px-2.5 py-1 text-xs font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-md transition-colors cursor-pointer"
                           >
                             Mark Paid
                           </button>
@@ -305,7 +492,7 @@ export const FeesView = ({ currentInstitute }) => {
                       <button
                         type="button"
                         onClick={() => setSelectedVoucher(f)}
-                        className="px-2.5 py-1.5 text-xs font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-md transition-colors inline-flex items-center gap-1 cursor-pointer"
+                        className="px-2.5 py-1 text-xs font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-md transition-colors inline-flex items-center gap-1 cursor-pointer"
                       >
                         <Printer className="w-3.5 h-3.5" />
                         <span>Challan</span>
@@ -315,7 +502,7 @@ export const FeesView = ({ currentInstitute }) => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="6" className="text-center py-8 text-slate-400 text-xs">
+                  <td colSpan="6" className="text-center py-12 text-slate-400 text-xs">
                     No fee vouchers found matching criteria.
                   </td>
                 </tr>
@@ -323,53 +510,137 @@ export const FeesView = ({ currentInstitute }) => {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between p-4 bg-slate-50/50 border-t border-slate-100 text-xs text-slate-500">
+            <div>
+              Showing Page <span className="font-semibold text-slate-700">{currentPage}</span> of <span className="font-semibold text-slate-700">{totalPages}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+                disabled={currentPage === 1}
+                className="px-2.5 py-1.5 rounded border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`w-7 h-7 rounded font-semibold ${
+                    currentPage === page
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+              <button
+                onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="px-2.5 py-1.5 rounded border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Fast POS Cashier Counter Modal */}
+      {/* Batch Fee Generator Modal */}
+      <Modal
+        isOpen={isBatchModalOpen}
+        onClose={() => setIsBatchModalOpen(false)}
+        title="Batch Fee Challan Generator for Entire Class"
+      >
+        <form onSubmit={handleGenerateBatchFees} className="space-y-4">
+          <div className="p-3 bg-purple-50 rounded-xl border border-purple-200 text-xs text-purple-900 flex items-start gap-2">
+            <Zap className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
+            <span>
+              This will automatically generate individual fee vouchers for all active students enrolled in the selected class with 1-click.
+            </span>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Target Class *</label>
+            <select
+              value={batchData.targetClass}
+              onChange={(e) => setBatchData({ ...batchData, targetClass: e.target.value })}
+              className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+            >
+              <option value="10th Grade">10th Grade</option>
+              <option value="9th Grade">9th Grade</option>
+              <option value="11th Grade (ICS)">11th Grade (ICS)</option>
+              <option value="12th Grade (Pre-Med)">12th Grade (Pre-Med)</option>
+              <option value="All Classes">All Classes (Entire Campus)</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Fee Challan Title / Term *</label>
+            <input
+              type="text"
+              required
+              value={batchData.feeTitle}
+              onChange={(e) => setBatchData({ ...batchData, feeTitle: e.target.value })}
+              className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+              placeholder="e.g. October 2026 Monthly Tuition"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Fee Amount (PKR) *</label>
+              <input
+                type="number"
+                required
+                min="0"
+                value={batchData.amount}
+                onChange={(e) => setBatchData({ ...batchData, amount: e.target.value })}
+                className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 font-mono focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Due Date *</label>
+              <input
+                type="date"
+                required
+                value={batchData.dueDate}
+                onChange={(e) => setBatchData({ ...batchData, dueDate: e.target.value })}
+                className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
+            <button type="button" onClick={() => setIsBatchModalOpen(false)} className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg">
+              Cancel
+            </button>
+            <button type="submit" className="px-5 py-2 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow">
+              Generate All Vouchers
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* POS Cashier Terminal Modal */}
       {isPosModalOpen && (
         <Modal
           isOpen={isPosModalOpen}
           onClose={() => setIsPosModalOpen(false)}
-          title="Point of Sale (POS) - Quick Fee Collection Counter"
-          maxWidth="max-w-xl"
+          title="⚡ Fast POS Fee Cashier Counter"
+          maxWidth="max-w-2xl"
         >
           <form onSubmit={handleProcessPosPayment} className="space-y-4">
-            <div className="p-3 bg-indigo-50/70 border border-indigo-100 rounded-xl flex items-center justify-between text-xs text-indigo-900">
-              <div className="flex items-center gap-2">
-                <Zap className="w-4 h-4 text-amber-500 shrink-0" />
-                <span className="font-semibold">Cashier POS Terminal Active</span>
+            <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl flex items-center justify-between">
+              <div>
+                <span className="text-xs font-bold text-indigo-900 uppercase tracking-wide">POS Counter Collection Mode</span>
+                <p className="text-[11px] text-indigo-600">Quick counter collection with automatic change calculation and printable receipt</p>
               </div>
-              <span className="font-mono text-[11px] text-indigo-600">{currentInstitute?.name || 'Main Campus'}</span>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Select Voucher or Student</label>
-              <select
-                value={posData.selectedFeeId}
-                onChange={(e) => {
-                  const selectedId = e.target.value
-                  const chosenFee = fees.find(f => f.id === selectedId)
-                  if (chosenFee) {
-                    setPosData(prev => ({
-                      ...prev,
-                      selectedFeeId: selectedId,
-                      studentName: chosenFee.studentName,
-                      rollNumber: chosenFee.rollNumber,
-                      className: chosenFee.className || '10th Grade',
-                      amount: Number(chosenFee.amount || 0),
-                      cashTendered: Number(chosenFee.amount || 0)
-                    }))
-                  }
-                }}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm bg-white"
-              >
-                <option value="">-- Choose Existing Pending Challan --</option>
-                {fees.filter(f => f.status !== 'Paid').map(f => (
-                  <option key={f.id} value={f.id}>
-                    {f.studentName} ({f.rollNumber}) - Rs. {Number(f.amount).toLocaleString()}
-                  </option>
-                ))}
-              </select>
+              <Banknote className="w-8 h-8 text-indigo-500 opacity-80" />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -377,47 +648,45 @@ export const FeesView = ({ currentInstitute }) => {
                 <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Student Name</label>
                 <input
                   type="text"
-                  required
+                  readOnly
                   value={posData.studentName}
-                  onChange={(e) => setPosData({ ...posData, studentName: e.target.value })}
-                  className="w-full px-3.5 py-2 rounded-lg border border-slate-200 text-sm"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 bg-slate-50 font-bold"
                 />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Roll Number</label>
                 <input
                   type="text"
-                  required
+                  readOnly
                   value={posData.rollNumber}
-                  onChange={(e) => setPosData({ ...posData, rollNumber: e.target.value })}
-                  className="w-full px-3.5 py-2 rounded-lg border border-slate-200 text-sm font-mono"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 bg-slate-50 font-mono"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Fee Amount (PKR)</label>
+                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Total Fee (Rs.)</label>
                 <input
                   type="number"
-                  required
+                  readOnly
                   value={posData.amount}
-                  onChange={(e) => setPosData({ ...posData, amount: Number(e.target.value) })}
-                  className="w-full px-3.5 py-2 rounded-lg border border-slate-200 text-sm font-bold"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 bg-slate-50 font-mono font-bold text-slate-800"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Discount (PKR)</label>
+                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Discount (Rs.)</label>
                 <input
                   type="number"
+                  min="0"
                   value={posData.discount}
                   onChange={(e) => setPosData({ ...posData, discount: Number(e.target.value) })}
-                  className="w-full px-3.5 py-2 rounded-lg border border-slate-200 text-sm text-emerald-600 font-bold"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 font-mono"
                 />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Net Payable</label>
-                <div className="w-full px-3.5 py-2 rounded-lg bg-slate-100 border border-slate-200 text-sm font-black text-slate-900 font-mono">
+                <div className="px-3 py-2 text-sm rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold font-mono">
                   Rs. {Math.max(0, posData.amount - posData.discount).toLocaleString()}
                 </div>
               </div>
@@ -429,32 +698,36 @@ export const FeesView = ({ currentInstitute }) => {
                 <select
                   value={posData.paymentMethod}
                   onChange={(e) => setPosData({ ...posData, paymentMethod: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm bg-white"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200"
                 >
-                  <option value="Cash">💵 Cash Counter</option>
-                  <option value="POS Card">💳 Credit/Debit Card (POS)</option>
-                  <option value="JazzCash / EasyPaisa">📱 Mobile Wallet (JazzCash / EasyPaisa)</option>
-                  <option value="Bank Transfer">🏦 Direct Bank Transfer</option>
+                  <option value="Cash">Cash at Counter</option>
+                  <option value="Online / Bank Transfer">Online / Bank Transfer</option>
+                  <option value="Debit Card">Debit / POS Card</option>
                 </select>
               </div>
-
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Cash Tendered (PKR)</label>
+                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Cash Tendered (Rs.)</label>
                 <input
                   type="number"
+                  required
                   value={posData.cashTendered}
-                  onChange={(e) => setPosData({ ...posData, cashTendered: Number(e.target.value) })}
-                  className="w-full px-3.5 py-2 rounded-lg border border-slate-200 text-sm font-bold"
+                  onChange={(e) => setPosData({ ...posData, cashTendered: e.target.value })}
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 font-mono font-bold"
+                  placeholder="e.g. 15000"
                 />
-                {Number(posData.cashTendered) > Math.max(0, posData.amount - posData.discount) && (
-                  <span className="text-[11px] text-emerald-600 font-semibold mt-1 block">
-                    Change to return: Rs. {(Number(posData.cashTendered) - Math.max(0, posData.amount - posData.discount)).toLocaleString()}
-                  </span>
-                )}
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-3 border-t">
+            {posData.paymentMethod === 'Cash' && posData.cashTendered && (
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-center text-xs">
+                <span className="font-semibold text-slate-600">Change Due to Customer:</span>
+                <span className="font-mono text-base font-black text-blue-700">
+                  Rs. {Math.max(0, Number(posData.cashTendered) - Math.max(0, posData.amount - posData.discount)).toLocaleString()}
+                </span>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
               <button
                 type="button"
                 onClick={() => setIsPosModalOpen(false)}
@@ -464,92 +737,86 @@ export const FeesView = ({ currentInstitute }) => {
               </button>
               <button
                 type="submit"
-                className="px-5 py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-md flex items-center gap-1.5 cursor-pointer"
+                className="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow cursor-pointer flex items-center gap-1.5"
               >
                 <CheckCircle2 className="w-4 h-4" />
-                <span>Collect & Print Receipt</span>
+                <span>Confirm Payment & Print Receipt</span>
               </button>
             </div>
           </form>
         </Modal>
       )}
 
-      {/* POS Thermal-Style Receipt Modal */}
+      {/* POS Thermal Receipt Modal */}
       {posReceipt && (
         <Modal
           isOpen={Boolean(posReceipt)}
           onClose={() => setPosReceipt(null)}
-          title="Cashier POS Fee Receipt"
-          maxWidth="max-w-md"
+          title="POS Counter Payment Receipt"
         >
           <div className="space-y-4">
-            <div className="p-5 border-2 border-dashed border-slate-800 rounded-xl bg-white text-slate-900 font-mono text-xs space-y-3">
-              <div className="text-center border-b pb-3">
-                <h3 className="font-bold text-base uppercase tracking-tight">{currentInstitute?.name || 'CENTRAL HIGH SCHOOL'}</h3>
-                <p className="text-[10px] text-slate-500 uppercase">Fee Counter POS Terminal</p>
-                <p className="text-[11px] font-bold text-emerald-600 mt-1">*** PAYMENT RECEIVED ***</p>
+            <div className="max-w-xs mx-auto p-4 bg-white border-2 border-slate-300 rounded-xl font-mono text-xs space-y-2 shadow-inner print:border-black">
+              <div className="text-center pb-2 border-b">
+                <h4 className="font-black text-sm uppercase">{currentInstitute?.name || 'CENTRAL HIGH SCHOOL'}</h4>
+                <p className="text-[10px] text-slate-500">Official POS Fee Collection Voucher</p>
+                <span className="text-[10px] text-slate-400 block mt-1">Receipt: {posReceipt.receiptNo}</span>
               </div>
 
               <div className="space-y-1 text-[11px]">
                 <div className="flex justify-between">
-                  <span>Receipt No:</span>
-                  <span className="font-bold">{posReceipt.receiptNo}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Date/Time:</span>
+                  <span className="text-slate-500">Date:</span>
                   <span>{posReceipt.date}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Student Name:</span>
+                  <span className="text-slate-500">Student:</span>
                   <span className="font-bold">{posReceipt.studentName}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Roll No:</span>
+                  <span className="text-slate-500">Roll No:</span>
                   <span>{posReceipt.rollNumber}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Payment Mode:</span>
-                  <span className="font-bold">{posReceipt.paymentMethod}</span>
+                  <span className="text-slate-500">Class:</span>
+                  <span>{posReceipt.className}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Mode:</span>
+                  <span>{posReceipt.paymentMethod}</span>
                 </div>
               </div>
 
-              <div className="border-t border-b py-2 space-y-1">
+              <div className="pt-2 border-t space-y-1 text-xs">
                 <div className="flex justify-between">
-                  <span>Tuition / Exam Fee:</span>
-                  <span>Rs. {Number(posReceipt.amount).toLocaleString()}</span>
+                  <span>Gross Fee:</span>
+                  <span>Rs. {posReceipt.amount.toLocaleString()}</span>
                 </div>
-                {Number(posReceipt.discount) > 0 && (
+                {posReceipt.discount > 0 && (
                   <div className="flex justify-between text-emerald-600">
-                    <span>Discount / Concession:</span>
-                    <span>- Rs. {Number(posReceipt.discount).toLocaleString()}</span>
+                    <span>Discount:</span>
+                    <span>- Rs. {posReceipt.discount.toLocaleString()}</span>
                   </div>
                 )}
-                <div className="flex justify-between font-bold text-sm pt-1 border-t">
+                <div className="flex justify-between font-black text-sm border-t pt-1">
                   <span>Total Paid:</span>
-                  <span>Rs. {Number(posReceipt.finalPaid).toLocaleString()}</span>
+                  <span>Rs. {posReceipt.finalPaid.toLocaleString()}</span>
                 </div>
-                {posReceipt.paymentMethod === 'Cash' && (
-                  <>
-                    <div className="flex justify-between text-[10px] text-slate-500">
-                      <span>Cash Tendered:</span>
-                      <span>Rs. {Number(posReceipt.cashTendered).toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between text-[10px] text-slate-500">
-                      <span>Change Given:</span>
-                      <span>Rs. {Number(posReceipt.changeDue).toLocaleString()}</span>
-                    </div>
-                  </>
-                )}
+                <div className="flex justify-between text-[11px] text-slate-500">
+                  <span>Cash Tendered:</span>
+                  <span>Rs. {Number(posReceipt.cashTendered).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-[11px] text-slate-500">
+                  <span>Change Return:</span>
+                  <span>Rs. {posReceipt.changeDue.toLocaleString()}</span>
+                </div>
               </div>
 
-              <div className="text-center pt-2 text-[10px] text-slate-500 space-y-1">
-                <p>Status: VERIFIED & CLEARED</p>
-                <p>Thank you! Keep this receipt for your records.</p>
-                <p className="font-bold pt-2 border-t">Cashier: {posReceipt.cashier}</p>
+              <div className="text-center pt-3 border-t text-[10px] text-slate-400">
+                <p>Payment Received with Thanks</p>
+                <p className="mt-1 font-bold text-slate-600">System Generated Verified Slip</p>
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 print:hidden">
+            <div className="flex justify-end gap-3 pt-2">
               <button
                 type="button"
                 onClick={() => setPosReceipt(null)}
@@ -560,69 +827,58 @@ export const FeesView = ({ currentInstitute }) => {
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="px-5 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-black rounded-lg flex items-center gap-1.5 shadow cursor-pointer"
+                className="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg flex items-center gap-1.5 shadow cursor-pointer"
               >
                 <Printer className="w-3.5 h-3.5" />
-                <span>Print POS Receipt</span>
+                <span>Print Counter Slip</span>
               </button>
             </div>
           </div>
         </Modal>
       )}
 
-      {/* Generate Challan Modal */}
+      {/* Standard Issue Voucher Modal */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Generate Fee Challan Voucher"
+        title="Generate New Fee Challan"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Student</label>
-            {instStudents && instStudents.length > 0 ? (
-              <select
-                value={formData.studentName}
-                onChange={(e) => handleStudentSelect(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm bg-white"
-              >
-                <option value="">Select Enrolled Student...</option>
-                {instStudents.map(s => (
-                  <option key={s.id} value={s.name}>{s.name} ({s.rollNumber})</option>
-                ))}
-              </select>
-            ) : (
-              <input
-                type="text"
-                required
-                value={formData.studentName}
-                onChange={(e) => setFormData({ ...formData, studentName: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm"
-                placeholder="e.g. Bilal Ahmed"
-              />
-            )}
+            <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Select Student *</label>
+            <select
+              value={formData.studentName}
+              onChange={(e) => handleStudentSelect(e.target.value)}
+              className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200"
+            >
+              {instStudents.map(s => (
+                <option key={s.id} value={s.name}>{s.name} ({s.rollNumber})</option>
+              ))}
+            </select>
           </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Roll Number</label>
               <input
                 type="text"
-                required
+                readOnly
                 value={formData.rollNumber}
-                onChange={(e) => setFormData({ ...formData, rollNumber: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm font-mono"
+                className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 bg-slate-50 font-mono"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Total Fee Amount (PKR)</label>
+              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Fee Amount (Rs.) *</label>
               <input
                 type="number"
                 required
                 value={formData.amount}
                 onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm"
+                className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 font-mono"
               />
             </div>
           </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Due Date</label>
@@ -631,24 +887,25 @@ export const FeesView = ({ currentInstitute }) => {
                 required
                 value={formData.dueDate}
                 onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm"
+                className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Payment Status</label>
+              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Status</label>
               <select
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm bg-white"
+                className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200"
               >
                 <option value="Pending">Pending</option>
                 <option value="Paid">Paid</option>
               </select>
             </div>
           </div>
-          <div className="flex justify-end gap-3 pt-3 border-t">
-            <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm text-slate-600 cursor-pointer">Cancel</button>
-            <button type="submit" className="px-5 py-2 text-sm text-white bg-emerald-600 rounded-lg font-semibold cursor-pointer">Issue Voucher</button>
+
+          <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
+            <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer">Cancel</button>
+            <button type="submit" className="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow cursor-pointer">Issue Voucher</button>
           </div>
         </form>
       </Modal>

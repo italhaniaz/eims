@@ -11,8 +11,7 @@ export const AuthProvider = ({ children }) => {
     } catch (e) {
       console.error(e)
     }
-    // Default active user is Superadmin as in the screenshot:
-    // "admin" / "admin"
+    // Default active user is Superadmin
     return {
       id: 'usr-1',
       name: 'admin',
@@ -32,6 +31,30 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('sms_auth_user', JSON.stringify(user))
     } else {
       localStorage.removeItem('sms_auth_user')
+    }
+  }, [user])
+
+  // Inactivity auto-logout (30 minutes of idle time for institutional security)
+  useEffect(() => {
+    if (!user) return
+
+    let timeoutId
+    const IDLE_TIMEOUT_MS = 30 * 60 * 1000 // 30 minutes
+
+    const resetTimer = () => {
+      clearTimeout(timeoutId)
+      timeoutId = setTimeout(() => {
+        logout()
+      }, IDLE_TIMEOUT_MS)
+    }
+
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart']
+    events.forEach(evt => window.addEventListener(evt, resetTimer, { passive: true }))
+    resetTimer()
+
+    return () => {
+      clearTimeout(timeoutId)
+      events.forEach(evt => window.removeEventListener(evt, resetTimer))
     }
   }, [user])
 
@@ -83,3 +106,5 @@ export const useAuth = () => {
   }
   return context
 }
+
+export default AuthContext

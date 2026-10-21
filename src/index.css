@@ -38,3 +38,48 @@
 .transition-smooth {
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* Official Clean Print Styling Rules */
+@media print {
+  /* Hide all dashboard chrome and navigation elements */
+  nav,
+  aside,
+  header,
+  button,
+  .no-print,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Flatten modal overlays for paper printing */
+  .fixed,
+  .backdrop-blur-sm,
+  .bg-black\/60 {
+    position: static !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Crisp monochrome borders */
+  .border,
+  .border-2 {
+    border-color: #000000 !important;
+  }
+
+  .break-inside-avoid {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+}
