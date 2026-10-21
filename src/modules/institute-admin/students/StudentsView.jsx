@@ -93,7 +93,14 @@ export const StudentsView = ({ currentInstitute }) => {
   const activeLevelObj = programLevels.find(l => l.id === activeProgramLevel)
 
   const filtered = students.filter(s => {
-    const matchesCampus = !s.instituteId || s.instituteId === currentInstitute?.id
+    const matchesCampus = 
+      !s.instituteId || 
+      !currentInstitute?.id || 
+      s.instituteId === currentInstitute.id || 
+      ((s.instituteId === 'inst-1' || s.instituteId === 'inst-default') &&
+       (currentInstitute.id === 'inst-1' || currentInstitute.id === 'inst-default')) ||
+      (institutes || []).length <= 1
+
     const matchesSearch = s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       s.rollNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       s.className.toLowerCase().includes(searchTerm.toLowerCase())
@@ -265,6 +272,16 @@ export const StudentsView = ({ currentInstitute }) => {
                 placeholder="e.g. 10th Grade, 5th Grade, F.Sc..."
               />
               <datalist id="classSuggestions">
+                {classes.filter(c => 
+                  !c.instituteId || 
+                  !currentInstitute?.id || 
+                  c.instituteId === currentInstitute.id || 
+                  ((c.instituteId === 'inst-1' || c.instituteId === 'inst-default') &&
+                   (currentInstitute.id === 'inst-1' || currentInstitute.id === 'inst-default')) ||
+                  (institutes || []).length <= 1
+                ).map(c => (
+                  <option key={c.id} value={c.name} />
+                ))}
                 <option value="1st Grade (Primary Section)" />
                 <option value="5th Grade (Primary Section)" />
                 <option value="8th Grade (Middle Section)" />

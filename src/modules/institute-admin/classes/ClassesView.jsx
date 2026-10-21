@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { 
   BookOpen, 
   Plus, 
@@ -17,28 +17,54 @@ import {
   CheckCircle2, 
   X, 
   ChevronRight,
-  School
+  School,
+  AlertCircle,
+  Wand2,
+  Check,
+  UserCheck
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
-import { detectProgramLevel, normalizeClassSections } from '../../../constants/academicLevels'
+import { 
+  detectProgramLevel, 
+  normalizeClassSections, 
+  PROGRAM_LEVELS, 
+  getDefaultClassesForTier 
+} from '../../../constants/academicLevels'
 import Modal from '../../../components/common/Modal'
 
 export const ClassesView = ({ currentInstitute }) => {
   const { 
-    classes, 
+    classes = [], 
+    students = [],
+    teachers = [],
+    institutes = [],
     addItem, 
     updateItem, 
     deleteItem,
-    activeProgramLevel,
-    setActiveProgramLevel,
-    programLevels = []
+    activeProgramLevel = 'all',
+    setActiveProgramLevel
   } = useAppData()
 
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedLevelTab, setSelectedLevelTab] = useState('all') // 'all' | 'elementary' | 'secondary' | 'higher-secondary' | 'college' | 'university'
+  const [selectedLevelTab, setSelectedLevelTab] = useState(activeProgramLevel || 'all')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingClass, setEditingClass] = useState(null)
   const [toastMessage, setToastMessage] = useState(null)
+  const [validationError, setValidationError] = useState('')
+
+  // Two-way synchronization with global navbar program level
+  useEffect(() => {
+    if (activeProgramLevel && activeProgramLevel !== selectedLevelTab) {
+      setSelectedLevelTab(activeProgramLevel)
+    }
+  }, [activeProgramLevel])
+
+  const handleTabChange = (tabId) => {
+    setSelectedLevelTab(tabId)
+    if (setActiveProgramLevel) {
+      setActiveProgramLevel(tabId)
+    }
+  }
 
   // Quick Section Modal (to add a single section to an existing class)
   const [quickSectionClass, setQuickSectionClass] = useState(null)
@@ -61,6 +87,19 @@ export const ClassesView = ({ currentInstitute }) => {
 
   const [customSectionInput, setCustomSectionInput] = useState('')
 
+  // Registered faculty in current campus
+  const instTeachers = teachers.filter(t => {
+    if (!t.instituteId) return true
+    if (!currentInstitute?.id) return true
+    if (t.instituteId === currentInstitute.id) return true
+    if ((t.instituteId === 'inst-1' || t.instituteId === 'inst-default') &&
+        (currentInstitute.id === 'inst-1' || currentInstitute.id === 'inst-default')) {
+      return true
+    }
+    if ((institutes || []).length <= 1) return true
+    return false
+  })
+
   const triggerToast = (msg) => {
     setToastMessage(msg)
     setTimeout(() => setToastMessage(null), 3500)
@@ -68,7 +107,8 @@ export const ClassesView = ({ currentInstitute }) => {
 
   const openAddModal = () => {
     setEditingClass(null)
-    const initialLevel = activeProgramLevel !== 'all' ? activeProgramLevel : 'secondary'
+    setValidationError('')
+    const initialLevel = selectedLevelTab !== 'all' ? selectedLevelTab : (activeProgramLevel !== 'all' ? activeProgramLevel : 'secondary')
     setFormData({
       name: '',
       programLevel: initialLevel,
@@ -82,6 +122,7 @@ export const ClassesView = ({ currentInstitute }) => {
 
   const openEditModal = (c) => {
     setEditingClass(c)
+    setValidationError('')
     const existingSections = normalizeClassSections(c)
     setFormData({
       name: c.name,
@@ -95,8 +136,9 @@ export const ClassesView = ({ currentInstitute }) => {
 
   // Quick Preset adder for section builder
   const addSectionPreset = (presetName) => {
-    if (formData.sections.some(s => s.name.toLowerCase() === presetName.toLowerCase())) {
-      triggerToast(`Section "${presetName}" is already added.`)
+    setValidationError('')
+    if (formData.sections.some(s => s.name.trim().toLowerCase() === presetName.trim().toLowerCase())) {
+      triggerToast(`Section "${presetName}" is already in the list.`)
       return
     }
 
@@ -136,38 +178,102 @@ export const ClassesView = ({ currentInstitute }) => {
   }
 
   const updateSectionInForm = (secId, field, val) => {
+    setValidationError('')
     setFormData(prev => ({
       ...prev,
       sections: prev.sections.map(s => s.id === secId ? { ...s, [field]: val } : s)
     }))
   }
 
+  // Calculate live enrolled count of students in a given class & section
+  const getLiveEnrolledCount = (className, sectionName) => {
+    return students.filter(s => {
+      const matchInst = !s.instituteId || s.instituteId === currentInstitute?.id
+      if (!matchInst) return false
+      const matchClass = (s.className || '').toLowerCase().trim() === className.toLowerCase().trim()
+      const matchSec = !sectionName || (s.section || '').toLowerCase().trim() === sectionName.toLowerCase().trim()
+      return matchClass && matchSec
+    }).length
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!formData.name.trim()) return
+    setValidationError('')
+
+    if (!formData.name.trim()) {
+      setValidationError('Please provide a class name.')
+      return
+    }
+
+    if (!formData.sections || formData.sections.length === 0) {
+      setValidationError('At least one section must be configured.')
+      return
+    }
+
+    // Duplicate section name check
+    const sectionNames = formData.sections.map(s => s.name.trim().toLowerCase())
+    const uniqueNames = new Set(sectionNames)
+    if (uniqueNames.size !== sectionNames.length) {
+      setValidationError('Section names within the same class must be unique (e.g. Super Section, Section A, Section B).')
+      return
+    }
+
+    // Capacity validation
+    for (const sec of formData.sections) {
+      if (!sec.name.trim()) {
+        setValidationError('All sections must have a valid name.')
+        return
+      }
+      if (Number(sec.capacity) <= 0) {
+        setValidationError(`Section "${sec.name}" capacity must be greater than zero.`)
+        return
+      }
+    }
 
     const totalCapacity = formData.sections.reduce((sum, s) => sum + Number(s.capacity || 0), 0)
-    const totalEnrolled = formData.sections.reduce((sum, s) => sum + Number(s.enrolled || 0), 0)
     const primarySectionName = formData.sections.map(s => s.name).join(', ')
+
+    // Populate live enrolled counts
+    const enrichedSections = formData.sections.map(s => ({
+      ...s,
+      capacity: Number(s.capacity || 40),
+      enrolled: getLiveEnrolledCount(formData.name.trim(), s.name.trim())
+    }))
+
+    const totalEnrolled = enrichedSections.reduce((sum, s) => sum + Number(s.enrolled || 0), 0)
 
     const payload = {
       name: formData.name.trim(),
       programLevel: formData.programLevel,
-      sections: formData.sections,
+      sections: enrichedSections,
       section: primarySectionName,
       capacity: totalCapacity,
       enrolled: totalEnrolled,
-      roomNo: formData.sections[0]?.roomNo || 'Room 101',
-      classTeacher: formData.sections[0]?.classTeacher || 'Teacher In-Charge',
+      roomNo: enrichedSections[0]?.roomNo || 'Room 101',
+      classTeacher: enrichedSections[0]?.classTeacher || (instTeachers[0]?.name || 'Teacher In-Charge'),
       instituteId: currentInstitute?.id || 'inst-1'
     }
 
     if (editingClass) {
       await updateItem('classes', editingClass.id, payload)
-      triggerToast(`Class "${payload.name}" updated with ${formData.sections.length} sections!`)
+      triggerToast(`Class "${payload.name}" updated successfully with ${formData.sections.length} sections!`)
     } else {
       await addItem('classes', payload)
       triggerToast(`Class "${payload.name}" created with ${formData.sections.length} sections!`)
+
+      // Auto-switch view to the tier of the newly created class so it is immediately visible to user
+      const targetTier = payload.programLevel || detectProgramLevel(payload.name)
+      if (targetTier && targetTier !== 'all') {
+        setSelectedLevelTab(targetTier)
+        if (setActiveProgramLevel) {
+          setActiveProgramLevel(targetTier)
+        }
+      } else {
+        setSelectedLevelTab('all')
+        if (setActiveProgramLevel) {
+          setActiveProgramLevel('all')
+        }
+      }
     }
     setIsModalOpen(false)
   }
@@ -185,6 +291,13 @@ export const ClassesView = ({ currentInstitute }) => {
     if (!quickSectionData.name.trim() || !quickSectionClass) return
 
     const currentSections = normalizeClassSections(quickSectionClass)
+    
+    // Duplicate check
+    if (currentSections.some(s => s.name.toLowerCase().trim() === quickSectionData.name.toLowerCase().trim())) {
+      triggerToast(`Section "${quickSectionData.name}" already exists in ${quickSectionClass.name}.`)
+      return
+    }
+
     const newSection = {
       id: `sec-${Date.now()}`,
       name: quickSectionData.name.trim(),
@@ -229,6 +342,45 @@ export const ClassesView = ({ currentInstitute }) => {
     }
   }
 
+  // 1-Click Standard Classes Preset Generator
+  const handleGeneratePresetClasses = async (targetTier) => {
+    const tierToGenerate = targetTier === 'all' ? 'elementary' : targetTier
+    const templates = getDefaultClassesForTier(tierToGenerate)
+
+    if (!templates || templates.length === 0) {
+      triggerToast(`No predefined template available for tier "${tierToGenerate}".`)
+      return
+    }
+
+    if (!window.confirm(`Generate standard classes & custom sections for "${tierToGenerate.toUpperCase()}"? This will create ${templates.length} pre-configured classes.`)) {
+      return
+    }
+
+    let createdCount = 0
+    for (const tpl of templates) {
+      // Check if class with this name already exists
+      const exists = classes.some(c => 
+        (!c.instituteId || c.instituteId === currentInstitute?.id) && 
+        c.name.toLowerCase().trim() === tpl.name.toLowerCase().trim()
+      )
+      if (!exists) {
+        const enriched = {
+          ...tpl,
+          instituteId: currentInstitute?.id || 'inst-1',
+          section: tpl.sections.map(s => s.name).join(', '),
+          capacity: tpl.sections.reduce((sum, s) => sum + Number(s.capacity || 0), 0),
+          enrolled: 0,
+          roomNo: tpl.sections[0]?.roomNo || 'Room 101',
+          classTeacher: instTeachers[0]?.name || 'Teacher In-Charge'
+        }
+        await addItem('classes', enriched)
+        createdCount++
+      }
+    }
+
+    triggerToast(`Standard setup generated! ${createdCount} classes added to ${tierToGenerate.toUpperCase()}.`)
+  }
+
   // Export Classes and Sections Directory
   const handleExportCSV = () => {
     const rows = [
@@ -236,21 +388,22 @@ export const ClassesView = ({ currentInstitute }) => {
       ['Institute:', currentInstitute?.name || 'Main Campus'],
       ['Generated At:', new Date().toLocaleString()],
       [''],
-      ['Program Level', 'Class Title', 'Section Name', 'Room No', 'Enrolled', 'Max Capacity', 'Teacher In-Charge']
+      ['Program Level', 'Class Title', 'Section Name', 'Room No', 'Enrolled Students', 'Max Capacity', 'Teacher In-Charge']
     ]
 
     classes.forEach(c => {
       const lvl = c.programLevel || detectProgramLevel(c.name)
       const secList = normalizeClassSections(c)
       secList.forEach(s => {
+        const liveEnrolled = getLiveEnrolledCount(c.name, s.name)
         rows.push([
           lvl.toUpperCase(),
           c.name,
           s.name,
           s.roomNo || 'Room 101',
-          s.enrolled || 0,
+          liveEnrolled,
           s.capacity || 40,
-          s.classTeacher || 'Teacher'
+          s.classTeacher || 'Teacher In-Charge'
         ])
       })
     })
@@ -283,21 +436,34 @@ export const ClassesView = ({ currentInstitute }) => {
     }
   }
 
-  // Filter classes
-  const filtered = classes.filter(c => {
-    const matchesCampus = !c.instituteId || c.instituteId === currentInstitute?.id
-    if (!matchesCampus) return false
+  // Effective Active Filter Tier (Tab takes direct precedence and is 2-way synced)
+  const effectiveFilterTier = selectedLevelTab
 
+  // Filter classes cleanly and safely without dropping records due to ID naming differences
+  const campusClasses = classes.filter(c => {
+    if (!c.instituteId) return true
+    if (!currentInstitute?.id) return true
+    if (c.instituteId === currentInstitute.id) return true
+    // Standard default campus fallbacks
+    if ((c.instituteId === 'inst-1' || c.instituteId === 'inst-default') &&
+        (currentInstitute.id === 'inst-1' || currentInstitute.id === 'inst-default')) {
+      return true
+    }
+    // Single campus mode: if there's at most 1 institute in system, all classes belong to current view
+    if ((institutes || []).length <= 1) return true
+    return false
+  })
+
+  const filtered = campusClasses.filter(c => {
     const cLevel = c.programLevel || detectProgramLevel(c.name)
 
-    // Tab filter
-    if (selectedLevelTab !== 'all' && cLevel !== selectedLevelTab) {
-      return false
-    }
-
-    // Global navbar filter (if selected)
-    if (activeProgramLevel !== 'all' && cLevel !== activeProgramLevel) {
-      return false
+    // Tier filtering: if 'all', show everything
+    if (effectiveFilterTier !== 'all') {
+      const directMatch = c.programLevel === effectiveFilterTier
+      const nameMatch = detectProgramLevel(c.name) === effectiveFilterTier
+      if (!directMatch && !nameMatch && cLevel !== 'all') {
+        return false
+      }
     }
 
     if (!searchTerm) return true
@@ -305,14 +471,24 @@ export const ClassesView = ({ currentInstitute }) => {
     const secList = normalizeClassSections(c)
     return (
       c.name.toLowerCase().includes(term) ||
+      (c.programLevel && c.programLevel.toLowerCase().includes(term)) ||
       cLevel.toLowerCase().includes(term) ||
       secList.some(s => s.name.toLowerCase().includes(term) || (s.classTeacher && s.classTeacher.toLowerCase().includes(term)))
     )
   })
 
-  // Calculate totals
-  const totalSectionsCount = classes.reduce((sum, c) => sum + normalizeClassSections(c).length, 0)
-  const totalCapacityCount = classes.reduce((sum, c) => sum + (c.capacity || 40), 0)
+  // Dynamic Tier-Aware Statistics
+  const tierClassesCount = filtered.length
+  const tierSectionsCount = filtered.reduce((sum, c) => sum + normalizeClassSections(c).length, 0)
+  const tierCapacityCount = filtered.reduce((sum, c) => {
+    const secs = normalizeClassSections(c)
+    return sum + secs.reduce((acc, s) => acc + Number(s.capacity || 0), 0)
+  }, 0)
+
+  const totalCampusSectionsCount = campusClasses.reduce((sum, c) => sum + normalizeClassSections(c).length, 0)
+  const totalCampusCapacityCount = campusClasses.reduce((sum, c) => sum + Number(c.capacity || 40), 0)
+
+  const activeLevelMeta = PROGRAM_LEVELS.find(l => l.id === effectiveFilterTier) || PROGRAM_LEVELS[0]
 
   return (
     <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
@@ -320,12 +496,12 @@ export const ClassesView = ({ currentInstitute }) => {
       {toastMessage && (
         <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl flex items-center justify-between shadow-xs animate-in fade-in slide-in-from-top-2">
           <div className="flex items-center gap-2.5">
-            <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
             <span className="text-sm font-medium">{toastMessage}</span>
           </div>
           <button 
             onClick={() => setToastMessage(null)}
-            className="text-xs text-emerald-700 underline font-medium"
+            className="text-xs text-emerald-700 underline font-medium hover:text-emerald-900 ml-4"
           >
             Dismiss
           </button>
@@ -338,16 +514,28 @@ export const ClassesView = ({ currentInstitute }) => {
           <div className="flex items-center gap-2 text-emerald-600 text-xs font-semibold uppercase tracking-wider">
             <BookOpen className="w-4 h-4" />
             <span>Classroom & Section Allocations</span>
+            <span className="text-slate-300">•</span>
+            <span className="text-slate-500 font-normal">{activeLevelMeta.title}</span>
           </div>
           <h1 className="text-2xl font-bold text-slate-900 mt-1 tracking-tight">
             Classes & Custom Sections
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Configure flexible section names (e.g. Super Section, Section A, Star Section, Morning/Evening batches) tailored to each educational level from Primary to BS.
+            Configure flexible class sections (e.g. Super Section, Star Section, Section A, Morning/Evening batches) tailored to each educational tier.
           </p>
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap w-full sm:w-auto">
+          {effectiveFilterTier !== 'all' && (
+            <button
+              onClick={() => handleGeneratePresetClasses(effectiveFilterTier)}
+              className="flex-1 sm:flex-none px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold shadow-xs transition-all duration-150 flex items-center justify-center gap-1.5 active:scale-95 border border-slate-200"
+              title={`Auto-generate standard classes for ${activeLevelMeta.shortTitle}`}
+            >
+              <Wand2 className="w-3.5 h-3.5 text-indigo-600" />
+              <span>Scaffold Tier</span>
+            </button>
+          )}
           <button
             onClick={openAddModal}
             className="flex-1 sm:flex-none px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-xs hover:shadow transition-all duration-150 flex items-center justify-center gap-1.5 active:scale-95"
@@ -365,35 +553,41 @@ export const ClassesView = ({ currentInstitute }) => {
         </div>
       </div>
 
-      {/* Top 3 Summary Metrics */}
+      {/* Top 3 Summary Metrics - Aware of Tier Filter */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs">
           <span className="text-xs text-slate-400 font-medium">Registered Classes</span>
           <div className="flex items-baseline justify-between mt-1">
-            <span className="text-2xl font-bold text-slate-900">{classes.length} Classes</span>
-            <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">Across Tiers</span>
+            <span className="text-2xl font-bold text-slate-900">{tierClassesCount} Classes</span>
+            <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+              {effectiveFilterTier === 'all' ? `${campusClasses.length} Total` : `${activeLevelMeta.shortTitle}`}
+            </span>
           </div>
         </div>
         <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs">
           <span className="text-xs text-slate-400 font-medium">Configured Sections</span>
           <div className="flex items-baseline justify-between mt-1">
-            <span className="text-2xl font-bold text-slate-900">{totalSectionsCount} Sections</span>
-            <span className="text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">Custom Named</span>
+            <span className="text-2xl font-bold text-slate-900">{tierSectionsCount} Sections</span>
+            <span className="text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
+              {effectiveFilterTier === 'all' ? 'All Tiers' : `${tierSectionsCount} Active`}
+            </span>
           </div>
         </div>
         <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs">
           <span className="text-xs text-slate-400 font-medium">Seating Capacity</span>
           <div className="flex items-baseline justify-between mt-1">
-            <span className="text-2xl font-bold text-slate-900">{totalCapacityCount} Seats</span>
-            <span className="text-[11px] font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">Total Desks</span>
+            <span className="text-2xl font-bold text-slate-900">{tierCapacityCount} Seats</span>
+            <span className="text-[11px] font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">
+              {effectiveFilterTier === 'all' ? `${totalCampusCapacityCount} Desks` : `${tierCapacityCount} Desks`}
+            </span>
           </div>
         </div>
       </div>
 
       {/* Filter Tabs & Search Controls */}
       <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
-        {/* Tier Tabs */}
-        <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl w-full sm:w-auto overflow-x-auto">
+        {/* Tier Tabs (Two-way linked with global navbar) */}
+        <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl w-full sm:w-auto overflow-x-auto scrollbar-none">
           {[
             { id: 'all', label: 'All Levels' },
             { id: 'elementary', label: 'Elementary (1-8)' },
@@ -404,9 +598,9 @@ export const ClassesView = ({ currentInstitute }) => {
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setSelectedLevelTab(tab.id)}
+              onClick={() => handleTabChange(tab.id)}
               className={`px-3 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-all ${
-                selectedLevelTab === tab.id
+                effectiveFilterTier === tab.id
                   ? 'bg-white text-slate-900 shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
@@ -443,7 +637,9 @@ export const ClassesView = ({ currentInstitute }) => {
           {filtered.map(c => {
             const cLevel = c.programLevel || detectProgramLevel(c.name)
             const secList = normalizeClassSections(c)
-            const totalEnrolled = secList.reduce((acc, s) => acc + Number(s.enrolled || 0), 0)
+            
+            // Calculate live totals across sections
+            const totalEnrolled = secList.reduce((acc, s) => acc + getLiveEnrolledCount(c.name, s.name), 0)
             const totalCapacity = secList.reduce((acc, s) => acc + Number(s.capacity || 40), 0)
             const fillPct = Math.min(100, Math.round((totalEnrolled / Math.max(1, totalCapacity)) * 100))
 
@@ -467,8 +663,8 @@ export const ClassesView = ({ currentInstitute }) => {
                   {/* Class Name */}
                   <h3 className="text-lg font-bold text-slate-900 tracking-tight">{c.name}</h3>
                   <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
-                    <span>Primary In-Charge:</span>
-                    <strong className="text-slate-700 font-medium">{c.classTeacher || 'Assigned Staff'}</strong>
+                    <span>In-Charge:</span>
+                    <strong className="text-slate-700 font-medium">{c.classTeacher || 'Teacher In-Charge'}</strong>
                   </p>
 
                   {/* Capacity Bar */}
@@ -492,7 +688,12 @@ export const ClassesView = ({ currentInstitute }) => {
                       <button
                         onClick={() => {
                           setQuickSectionClass(c)
-                          setQuickSectionData({ name: '', roomNo: `Room ${100 + secList.length + 1}`, capacity: 40, classTeacher: '' })
+                          setQuickSectionData({ 
+                            name: '', 
+                            roomNo: `Room ${100 + secList.length + 1}`, 
+                            capacity: 40, 
+                            classTeacher: instTeachers[0]?.name || '' 
+                          })
                         }}
                         className="text-[11px] font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-0.5 hover:underline"
                       >
@@ -504,6 +705,10 @@ export const ClassesView = ({ currentInstitute }) => {
                     <div className="space-y-2">
                       {secList.map((sec, sIdx) => {
                         const isSuper = sec.name.toLowerCase().includes('super') || sec.name.toLowerCase().includes('star')
+                        const secEnrolled = getLiveEnrolledCount(c.name, sec.name)
+                        const secCapacity = Number(sec.capacity || 40)
+                        const isFull = secEnrolled >= secCapacity
+
                         return (
                           <div 
                             key={sec.id || sIdx}
@@ -520,15 +725,22 @@ export const ClassesView = ({ currentInstitute }) => {
                                 <span className="w-2 h-2 rounded-full bg-slate-300 shrink-0"></span>
                               )}
                               <div className="truncate">
-                                <span className="font-bold text-slate-800">{sec.name}</span>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-bold text-slate-800">{sec.name}</span>
+                                  {isFull && (
+                                    <span className="text-[9px] bg-rose-100 text-rose-700 px-1.5 py-0.2 rounded font-semibold">
+                                      Full
+                                    </span>
+                                  )}
+                                </div>
                                 <div className="text-[10px] text-slate-400 flex items-center gap-1.5 mt-0.5">
                                   <span>{sec.roomNo || 'Room 101'}</span>
                                   <span>•</span>
-                                  <span>Cap: {sec.capacity || 40}</span>
+                                  <span className="font-mono text-slate-600">{secEnrolled}/{secCapacity} Enrolled</span>
                                   {sec.classTeacher && (
                                     <>
                                       <span>•</span>
-                                      <span className="truncate max-w-[80px]">{sec.classTeacher}</span>
+                                      <span className="truncate max-w-[100px] text-slate-500 font-medium">{sec.classTeacher}</span>
                                     </>
                                   )}
                                 </div>
@@ -540,7 +752,7 @@ export const ClassesView = ({ currentInstitute }) => {
                               <button
                                 onClick={() => handleDeleteSection(c, sec.id, sec.name)}
                                 title="Remove section"
-                                className="text-slate-400 hover:text-rose-500 p-1 rounded transition-colors"
+                                className="text-slate-400 hover:text-rose-500 p-1 rounded transition-colors shrink-0 ml-1"
                               >
                                 <X className="w-3 h-3" />
                               </button>
@@ -574,23 +786,59 @@ export const ClassesView = ({ currentInstitute }) => {
           })}
         </div>
       ) : (
-        <div className="bg-white rounded-2xl p-12 border border-slate-200/80 text-center flex flex-col items-center justify-center space-y-3 shadow-xs">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-1">
-            <BookOpen className="w-6 h-6" />
+        <div className="bg-white rounded-2xl p-10 sm:p-14 border border-slate-200/80 text-center flex flex-col items-center justify-center space-y-4 shadow-xs">
+          <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-inner">
+            <BookOpen className="w-7 h-7" />
           </div>
-          <h3 className="text-base font-bold text-slate-800">No Classes Configured for this Tier</h3>
-          <p className="text-xs text-slate-400 max-w-sm">
-            You can configure classes (e.g. 10th Grade Matric, Grade 5, F.Sc Pre-Med, BSCS) and customize their sections (Super Section, Section A, B, etc.).
-          </p>
-          <button
-            onClick={openAddModal}
-            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-xs transition-all flex items-center gap-1.5 mt-2"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Create First Class & Sections</span>
-          </button>
+          <div className="max-w-md">
+            <h3 className="text-lg font-bold text-slate-800">
+              No Classes Configured for {activeLevelMeta.title}
+            </h3>
+            <p className="text-xs text-slate-500 mt-1">
+              {campusClasses.length > 0 
+                ? `You have ${campusClasses.length} registered class(es) in other tiers. You can view all classes or scaffold standard classes for ${activeLevelMeta.shortTitle}.`
+                : `You can instantly create standard classes with custom sections using the 1-click scaffold wizard, or configure custom classes from scratch.`
+              }
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center gap-3 pt-2 flex-wrap justify-center">
+            {campusClasses.length > 0 && effectiveFilterTier !== 'all' && (
+              <button
+                onClick={() => handleTabChange('all')}
+                className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all border border-slate-200"
+              >
+                <span>View All Campus Classes ({campusClasses.length})</span>
+              </button>
+            )}
+            {effectiveFilterTier !== 'all' && (
+              <button
+                onClick={() => handleGeneratePresetClasses(effectiveFilterTier)}
+                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all flex items-center gap-2 active:scale-95"
+              >
+                <Wand2 className="w-4 h-4" />
+                <span>Auto-Scaffold {activeLevelMeta.shortTitle} Standard Classes</span>
+              </button>
+            )}
+            <button
+              onClick={openAddModal}
+              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-all flex items-center gap-1.5 active:scale-95"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Create First Custom Class</span>
+            </button>
+          </div>
         </div>
       )}
+
+      {/* Datalist for registered faculty members */}
+      <datalist id="inst-faculty-list">
+        {instTeachers.map((t, idx) => (
+          <option key={t.id || idx} value={t.name}>
+            {t.designation ? `${t.designation} (${t.department || 'Academic'})` : 'Faculty Member'}
+          </option>
+        ))}
+      </datalist>
 
       {/* Modal 1: Create / Edit Class with Multi-Section Builder */}
       <Modal
@@ -600,6 +848,13 @@ export const ClassesView = ({ currentInstitute }) => {
         maxWidth="max-w-2xl"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
+          {validationError && (
+            <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{validationError}</span>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Target Educational Tier</label>
@@ -635,7 +890,7 @@ export const ClassesView = ({ currentInstitute }) => {
                 <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
                   Custom Class Sections ({formData.sections.length})
                 </label>
-                <p className="text-[11px] text-slate-400">Add or rename sections according to your school's naming rules</p>
+                <p className="text-[11px] text-slate-400">Add, rename, or assign specific teachers & rooms to each section</p>
               </div>
 
               {/* Quick Presets Buttons */}
@@ -693,6 +948,7 @@ export const ClassesView = ({ currentInstitute }) => {
                       value={sec.name}
                       onChange={(e) => updateSectionInForm(sec.id, 'name', e.target.value)}
                       className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-800"
+                      placeholder="e.g. Super Section"
                     />
                   </div>
                   <div className="w-24">
@@ -709,6 +965,7 @@ export const ClassesView = ({ currentInstitute }) => {
                     <label className="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">Capacity</label>
                     <input
                       type="number"
+                      min="1"
                       value={sec.capacity}
                       onChange={(e) => updateSectionInForm(sec.id, 'capacity', e.target.value)}
                       className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs"
@@ -718,10 +975,11 @@ export const ClassesView = ({ currentInstitute }) => {
                     <label className="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">Section Teacher</label>
                     <input
                       type="text"
+                      list="inst-faculty-list"
                       value={sec.classTeacher}
                       onChange={(e) => updateSectionInForm(sec.id, 'classTeacher', e.target.value)}
                       className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs"
-                      placeholder="e.g. Dr. Fatima"
+                      placeholder="Select or enter teacher..."
                     />
                   </div>
                   <button
@@ -804,6 +1062,7 @@ export const ClassesView = ({ currentInstitute }) => {
                 <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Max Capacity</label>
                 <input
                   type="number"
+                  min="1"
                   value={quickSectionData.capacity}
                   onChange={(e) => setQuickSectionData({ ...quickSectionData, capacity: e.target.value })}
                   className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm"
@@ -815,7 +1074,8 @@ export const ClassesView = ({ currentInstitute }) => {
               <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Section Teacher In-Charge</label>
               <input
                 type="text"
-                placeholder="e.g. Dr. Ayesha Siddiqui"
+                list="inst-faculty-list"
+                placeholder="Select or enter teacher name..."
                 value={quickSectionData.classTeacher}
                 onChange={(e) => setQuickSectionData({ ...quickSectionData, classTeacher: e.target.value })}
                 className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm"

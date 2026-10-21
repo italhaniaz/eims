@@ -326,19 +326,31 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
         </div>
 
         {classes.filter(c => {
-          const matchesCampus = !c.instituteId || c.instituteId === currentInstitute?.id
+          const matchesCampus = 
+            !c.instituteId || 
+            !currentInstitute?.id || 
+            c.instituteId === currentInstitute.id || 
+            ((c.instituteId === 'inst-1' || c.instituteId === 'inst-default') &&
+             (currentInstitute.id === 'inst-1' || currentInstitute.id === 'inst-default')) ||
+            (institutes || []).length <= 1
           if (!matchesCampus) return false
           if (activeProgramLevel === 'all') return true
           const cLevel = c.programLevel || detectProgramLevel(c.name)
-          return cLevel === activeProgramLevel
+          return cLevel === activeProgramLevel || detectProgramLevel(c.name) === activeProgramLevel
         }).length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {classes.filter(c => {
-              const matchesCampus = !c.instituteId || c.instituteId === currentInstitute?.id
+              const matchesCampus = 
+                !c.instituteId || 
+                !currentInstitute?.id || 
+                c.instituteId === currentInstitute.id || 
+                ((c.instituteId === 'inst-1' || c.instituteId === 'inst-default') &&
+                 (currentInstitute.id === 'inst-1' || currentInstitute.id === 'inst-default')) ||
+                (institutes || []).length <= 1
               if (!matchesCampus) return false
               if (activeProgramLevel === 'all') return true
               const cLevel = c.programLevel || detectProgramLevel(c.name)
-              return cLevel === activeProgramLevel
+              return cLevel === activeProgramLevel || detectProgramLevel(c.name) === activeProgramLevel
             }).map(cls => {
               const secList = normalizeClassSections(cls)
               const cLevel = cls.programLevel || detectProgramLevel(cls.name)

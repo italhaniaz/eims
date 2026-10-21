@@ -133,8 +133,8 @@ const AppContent = () => {
 
   // 2. INSTITUTE ADMIN PORTAL (Dedicated School Level Management)
   const activeCampus = selectedInstitute || institutes[0] || {
-    id: 'inst-default',
-    name: 'Main Campus',
+    id: user?.instituteId || 'inst-1',
+    name: user?.instituteName || 'Main Campus',
     code: 'SCH-001',
     address: 'Central Campus'
   }
