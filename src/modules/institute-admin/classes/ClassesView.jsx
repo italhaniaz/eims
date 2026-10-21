@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react'
+import React, { useState } from 'react'
 import { 
   BookOpen, 
   Plus, 
@@ -17,9 +17,13 @@ import {
   CheckCircle2, 
   X, 
   ChevronRight,
-  School
+  School,
+  ArrowRight,
+  UserCheck,
+  RefreshCw
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
+import { useToast } from '../../../context/ToastContext'
 import { detectProgramLevel, normalizeClassSections } from '../../../constants/academicLevels'
 import Modal from '../../../components/common/Modal'
 
@@ -35,11 +39,24 @@ export const ClassesView = ({ currentInstitute }) => {
     programLevels = []
   } = useAppData()
 
+  const { toast } = useToast()
+
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedLevelTab, setSelectedLevelTab] = useState('all') // 'all' | 'elementary' | 'secondary' | 'higher-secondary' | 'college' | 'university'
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingClass, setEditingClass] = useState(null)
   const [toastMessage, setToastMessage] = useState(null)
+
+  // Annual Promotion Modal State
+  const [isPromotionModalOpen, setIsPromotionModalOpen] = useState(false)
+  const [promotionSourceClass, setPromotionSourceClass] = useState('10th Grade')
+  const [promotionTargetClass, setPromotionTargetClass] = useState('11th Grade (FSc / ICS)')
+  const [selectedStudentIds, setSelectedStudentIds] = useState([])
+
+  const sourceStudents = students.filter(s => 
+    (!s.instituteId || s.instituteId === currentInstitute?.id) && 
+    (s.className?.toLowerCase().includes(promotionSourceClass.toLowerCase()) || !promotionSourceClass)
+  )
 
   // Quick Section Modal (to add a single section to an existing class)
   const [quickSectionClass, setQuickSectionClass] = useState(null)
@@ -349,6 +366,19 @@ export const ClassesView = ({ currentInstitute }) => {
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap w-full sm:w-auto">
+          <button
+            onClick={() => {
+              const sourceStd = students.filter(s => s.className?.toLowerCase().includes(promotionSourceClass.toLowerCase()))
+              setSelectedStudentIds(sourceStd.map(s => s.id))
+              setIsPromotionModalOpen(true)
+            }}
+            className="flex-1 sm:flex-none px-4 py-2.5 bg-slate-900 hover:bg-black text-white rounded-xl text-xs font-semibold shadow-xs hover:shadow transition-all duration-150 flex items-center justify-center gap-1.5 active:scale-95"
+            title="Batch Promote / Roll Over Students to Next Academic Session"
+          >
+            <RefreshCw className="w-3.5 h-3.5 text-amber-400" />
+            <span>Annual Session Promotion</span>
+          </button>
+
           <button
             onClick={openAddModal}
             className="flex-1 sm:flex-none px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-xs hover:shadow transition-all duration-150 flex items-center justify-center gap-1.5 active:scale-95"
@@ -843,6 +873,166 @@ export const ClassesView = ({ currentInstitute }) => {
               </button>
             </div>
           </form>
+        </Modal>
+      )}
+
+      {/* Annual Session Promotion & Migration Modal */}
+      {isPromotionModalOpen && (
+        <Modal
+          isOpen={isPromotionModalOpen}
+          onClose={() => setIsPromotionModalOpen(false)}
+          title="Annual Student Promotion & Academic Year Rollover"
+        >
+          <div className="space-y-4">
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 text-xs text-amber-900">
+              <span className="font-bold block mb-1">Academic Rollover Protocol:</span>
+              Promote enrolled students who passed their examinations into the next academic tier or graduate senior classes to Alumni status.
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Source Class (Current) *</label>
+                <select
+                  value={promotionSourceClass}
+                  onChange={(e) => {
+                    const sc = e.target.value
+                    setPromotionSourceClass(sc)
+                    const st = students.filter(s => s.className?.toLowerCase().includes(sc.toLowerCase()))
+                    setSelectedStudentIds(st.map(s => s.id))
+                  }}
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 bg-white"
+                >
+                  <option value="9th Grade">9th Grade (Secondary)</option>
+                  <option value="10th Grade">10th Grade (Matriculation)</option>
+                  <option value="11th Grade">11th Grade (Intermediate)</option>
+                  <option value="12th Grade">12th Grade (Intermediate Final)</option>
+                  <option value="Grade 8">Grade 8 (Middle)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Destination Target Class *</label>
+                <select
+                  value={promotionTargetClass}
+                  onChange={(e) => setPromotionTargetClass(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 bg-white font-medium"
+                >
+                  <option value="10th Grade">10th Grade (Matriculation)</option>
+                  <option value="11th Grade (FSc / ICS)">11th Grade (FSc / ICS)</option>
+                  <option value="12th Grade">12th Grade</option>
+                  <option value="Alumni / Graduated">Alumni / Graduated (Pass Out)</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Students Selection List */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  Students in {promotionSourceClass} ({sourceStudents.length})
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (selectedStudentIds.length === sourceStudents.length) {
+                      setSelectedStudentIds([])
+                    } else {
+                      setSelectedStudentIds(sourceStudents.map(s => s.id))
+                    }
+                  }}
+                  className="text-xs text-emerald-700 font-semibold hover:underline"
+                >
+                  {selectedStudentIds.length === sourceStudents.length ? 'Deselect All' : 'Select All'}
+                </button>
+              </div>
+
+              <div className="border border-slate-200 rounded-xl overflow-hidden max-h-56 overflow-y-auto">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-slate-50 text-slate-500 uppercase font-semibold">
+                    <tr>
+                      <th className="p-2.5 w-10">Select</th>
+                      <th className="p-2.5">Roll No</th>
+                      <th className="p-2.5">Student Name</th>
+                      <th className="p-2.5">Current Class</th>
+                      <th className="p-2.5">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 bg-white">
+                    {sourceStudents.length > 0 ? (
+                      sourceStudents.map(s => {
+                        const isSelected = selectedStudentIds.includes(s.id)
+                        return (
+                          <tr key={s.id} className="hover:bg-slate-50">
+                            <td className="p-2.5">
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedStudentIds([...selectedStudentIds, s.id])
+                                  } else {
+                                    setSelectedStudentIds(selectedStudentIds.filter(id => id !== s.id))
+                                  }
+                                }}
+                                className="rounded text-emerald-600"
+                              />
+                            </td>
+                            <td className="p-2.5 font-mono font-bold text-slate-700">{s.rollNumber}</td>
+                            <td className="p-2.5 font-bold text-slate-900">{s.name}</td>
+                            <td className="p-2.5 text-slate-600">{s.className}</td>
+                            <td className="p-2.5">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700">Eligible</span>
+                            </td>
+                          </tr>
+                        )
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan={5} className="p-6 text-center text-slate-400">
+                          No students currently registered in {promotionSourceClass}.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+              <span className="text-xs text-slate-500 font-medium">
+                Selected: <strong className="text-emerald-700">{selectedStudentIds.length}</strong> of {sourceStudents.length} students
+              </span>
+
+              <div className="flex gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setIsPromotionModalOpen(false)}
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (selectedStudentIds.length === 0) {
+                      toast.warning('Please select at least one student to promote.')
+                      return
+                    }
+                    for (const id of selectedStudentIds) {
+                      await updateItem('students', id, { className: promotionTargetClass })
+                    }
+                    toast.success(`Successfully migrated ${selectedStudentIds.length} students to ${promotionTargetClass}!`)
+                    setIsPromotionModalOpen(false)
+                  }}
+                  className="px-5 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-black rounded-lg shadow-sm flex items-center gap-1.5"
+                >
+                  <ArrowRight className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Execute Annual Promotion ({selectedStudentIds.length})</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </Modal>
       )}
     </div>

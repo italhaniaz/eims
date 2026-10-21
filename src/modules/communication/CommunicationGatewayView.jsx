@@ -1,5 +1,18 @@
 import React, { useState, useMemo } from 'react'
-import { MessageSquare, Send, CheckCircle2, PhoneCall, Smartphone, History, Zap, Check, Users, Calculator } from 'lucide-react'
+import { 
+  MessageSquare, 
+  Send, 
+  CheckCircle2, 
+  PhoneCall, 
+  Smartphone, 
+  History, 
+  Zap, 
+  Check, 
+  Users, 
+  Calculator, 
+  Download,
+  Filter
+} from 'lucide-react'
 import { useAppData } from '../../context/AppDataContext'
 import { useToast } from '../../context/ToastContext'
 
@@ -9,6 +22,8 @@ export const CommunicationGatewayView = () => {
 
   const [channel, setChannel] = useState('SMS')
   const [recipientGroup, setRecipientGroup] = useState('All Parents & Guardians')
+  const [targetClass, setTargetClass] = useState('10th Grade')
+  const [customNumbers, setCustomNumbers] = useState('')
   const [message, setMessage] = useState('')
 
   const quickTemplates = [
@@ -30,9 +45,20 @@ export const CommunicationGatewayView = () => {
     }
   ]
 
+  // Distinct classes for dynamic targeting
+  const availableClasses = useMemo(() => {
+    const set = new Set(students.map(s => s.className).filter(Boolean))
+    return Array.from(set)
+  }, [students])
+
   // Dynamic recipient calculation
   const estimatedRecipients = useMemo(() => {
     switch (recipientGroup) {
+      case 'Specific Class Roster':
+        return students.filter(s => s.className === targetClass).length || 1
+      case 'Custom Phone Number(s)':
+        const nums = customNumbers.split(',').map(n => n.trim()).filter(Boolean)
+        return nums.length || 1
       case 'Fee Defaulters Parents':
         return fees.filter(f => f.status !== 'Paid').length || 1
       case 'All Teaching Faculty':
@@ -44,7 +70,7 @@ export const CommunicationGatewayView = () => {
       default:
         return students.length || 1
     }
-  }, [recipientGroup, students.length, teachers.length, fees])
+  }, [recipientGroup, targetClass, customNumbers, students, teachers.length, fees])
 
   // SMS Characters & Page Estimation (Standard 160 GSM-7 characters per SMS page)
   const charCount = message.length
@@ -64,15 +90,51 @@ export const CommunicationGatewayView = () => {
       return
     }
 
+    const finalAudience = recipientGroup === 'Specific Class Roster' 
+      ? `Parents of ${targetClass}` 
+      : recipientGroup === 'Custom Phone Number(s)'
+      ? `Custom (${estimatedRecipients} numbers)`
+      : recipientGroup
+
     sendCommunicationBlast({
       channel,
-      recipientGroup,
+      recipientGroup: finalAudience,
       message,
       recipientsCount: estimatedRecipients
     })
 
     toast.success(`Broadcast dispatched via ${channel} to ${estimatedRecipients} recipients (${smsPages} SMS unit(s) each)!`)
     setMessage('')
+  }
+
+  // Export Dispatch History CSV
+  const exportDispatchHistoryCSV = () => {
+    if (communicationLogs.length === 0) {
+      toast.warning('No dispatch logs available to export.')
+      return
+    }
+
+    const headers = ['ID', 'Channel', 'Recipient Audience', 'Recipients Count', 'Message Preview', 'Timestamp', 'Status']
+    const rows = communicationLogs.map(l => [
+      `"${l.id || ''}"`,
+      `"${l.channel || 'SMS'}"`,
+      `"${l.audience || l.recipientGroup || ''}"`,
+      `"${l.recipientsCount || 1}"`,
+      `"${(l.message || l.messagePreview || '').replace(/"/g, '""')}"`,
+      `"${l.timestamp || l.sentAt || ''}"`,
+      `"${l.status || 'Delivered'}"`
+    ])
+
+    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `SMS_Dispatch_Audit_${new Date().toISOString().split('T')[0]}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    toast.success('Communication dispatch audit log downloaded.')
   }
 
   return (
@@ -84,7 +146,9 @@ export const CommunicationGatewayView = () => {
             <MessageSquare className="w-5 h-5 text-purple-600" />
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">SMS & WhatsApp Communication Gateway</h1>
           </div>
-          <p className="text-xs text-slate-500 mt-1">Broadcast automated SMS, WhatsApp alerts, and emergency notifications to parents & staff</p>
+          <p className="text-xs text-slate-500 mt-1">
+            Broadcast automated SMS, WhatsApp alerts, class-targeted notifications, and telecom delivery audit
+          </p>
         </div>
 
         <div className="flex items-center gap-2 text-xs font-semibold">
@@ -148,12 +212,47 @@ export const CommunicationGatewayView = () => {
                 className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-xs font-medium bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20"
               >
                 <option value="All Parents & Guardians">All Registered Parents & Guardians</option>
+                <option value="Specific Class Roster">Target Specific Class / Grade Section</option>
                 <option value="Fee Defaulters Parents">Fee Defaulters Parents Only</option>
                 <option value="Class 9 & 10 Parents">Class 9 & 10 Matric Parents</option>
                 <option value="Class 11 & 12 Parents">Class 11 & 12 Intermediate Parents</option>
                 <option value="All Teaching Faculty">All Teaching Staff & Faculty</option>
+                <option value="Custom Phone Number(s)">Custom Direct Mobile Numbers</option>
               </select>
             </div>
+
+            {/* If Specific Class Selected */}
+            {recipientGroup === 'Specific Class Roster' && (
+              <div className="p-3 bg-purple-50/60 border border-purple-200 rounded-xl space-y-1.5 animate-in fade-in">
+                <label className="block text-xs font-semibold text-purple-900">Select Specific Class Section:</label>
+                <select
+                  value={targetClass}
+                  onChange={(e) => setTargetClass(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-purple-200 bg-white"
+                >
+                  {availableClasses.map(cls => (
+                    <option key={cls} value={cls}>{cls}</option>
+                  ))}
+                </select>
+                <span className="text-[10px] text-purple-700 block">
+                  Only guardians of students enrolled in {targetClass} will receive this communication.
+                </span>
+              </div>
+            )}
+
+            {/* If Custom Numbers Selected */}
+            {recipientGroup === 'Custom Phone Number(s)' && (
+              <div className="p-3 bg-purple-50/60 border border-purple-200 rounded-xl space-y-1.5 animate-in fade-in">
+                <label className="block text-xs font-semibold text-purple-900">Enter Comma-Separated Phone Numbers:</label>
+                <input
+                  type="text"
+                  placeholder="+92 300 1234567, +92 321 7654321"
+                  value={customNumbers}
+                  onChange={(e) => setCustomNumbers(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-purple-200 bg-white font-mono"
+                />
+              </div>
+            )}
 
             {/* Message Text with Live Character Counter */}
             <div>
@@ -231,7 +330,16 @@ export const CommunicationGatewayView = () => {
                 <History className="w-4 h-4 text-slate-400" />
                 <span>Recent Dispatches</span>
               </h3>
-              <span className="text-[10px] text-slate-400 font-mono">{communicationLogs.length} dispatches</span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={exportDispatchHistoryCSV}
+                  className="p-1.5 text-slate-400 hover:text-purple-600 rounded transition-colors"
+                  title="Export Dispatch Audit CSV"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                </button>
+                <span className="text-[10px] text-slate-400 font-mono">{communicationLogs.length} logs</span>
+              </div>
             </div>
 
             <div className="space-y-2 max-h-48 overflow-y-auto text-xs">
