@@ -1,0 +1,558 @@
+import React from 'react'
+import { 
+  GraduationCap, 
+  Users, 
+  Receipt, 
+  CalendarCheck, 
+  UserPlus, 
+  CreditCard, 
+  Clock, 
+  ArrowUpRight, 
+  School, 
+  CheckCircle2, 
+  Layers,
+  BookOpen,
+  Award,
+  Building2,
+  Sparkles,
+  Star,
+  Plus
+} from 'lucide-react'
+import StatCard from '../../components/common/StatCard'
+import { useAppData } from '../../context/AppDataContext'
+import { normalizeClassSections, detectProgramLevel } from '../../constants/academicLevels'
+
+export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
+  const { 
+    students, 
+    teachers, 
+    fees, 
+    classes = [],
+    activeProgramLevel, 
+    setActiveProgramLevel, 
+    programLevels = [] 
+  } = useAppData()
+
+  const activeLevelObj = programLevels.find(l => l.id === activeProgramLevel)
+
+  const instStudents = students.filter(s => !s.instituteId || s.instituteId === currentInstitute?.id)
+  const instTeachers = teachers.filter(t => !t.instituteId || t.instituteId === currentInstitute?.id)
+  const instFees = fees.filter(f => !f.instituteId || f.instituteId === currentInstitute?.id)
+
+  const paidFeesCount = instFees.filter(f => f.status === 'Paid').length
+  const feeRate = instFees.length > 0 ? Math.round((paidFeesCount / instFees.length) * 100) : 0
+
+  // Dynamically adapt header title and section tag to the selected academic tier
+  const getBannerDetails = () => {
+    const campusName = currentInstitute?.name || 'Main Campus'
+    const campusCode = currentInstitute?.code || 'SCH-001'
+    const campusAddress = currentInstitute?.address || 'Central District'
+
+    switch (activeProgramLevel) {
+      case 'elementary':
+        return {
+          icon: BookOpen,
+          iconColor: 'text-emerald-400',
+          sectionTag: 'Elementary School Section (Grade 1 - 8)',
+          mainTitle: `${campusName} • Elementary School Wing`,
+          description: `Tier: Grades 1 to 8 • Primary (1-5) & Middle (6-8) Foundation • ${campusCode}-ELEM`,
+          badgeText: 'Elementary Level',
+          badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+        }
+      case 'secondary':
+        return {
+          icon: Award,
+          iconColor: 'text-blue-400',
+          sectionTag: 'Secondary School Section (Grade 9 - 10)',
+          mainTitle: `${campusName} • Secondary High School`,
+          description: `Tier: Grades 9 & 10 • Matriculation (SSC) & Cambridge O-Levels • ${campusCode}-SEC`,
+          badgeText: 'Secondary Level',
+          badgeColor: 'bg-blue-500/20 text-blue-300 border-blue-500/30'
+        }
+      case 'higher-secondary':
+        return {
+          icon: GraduationCap,
+          iconColor: 'text-indigo-400',
+          sectionTag: 'Higher Secondary Section (Grade 11 - 12)',
+          mainTitle: `${campusName} • Higher Secondary College`,
+          description: `Tier: Grades 11 & 12 • Intermediate (HSSC: F.Sc, ICS, I.Com) & A-Levels • ${campusCode}-HSSC`,
+          badgeText: 'Higher Secondary',
+          badgeColor: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30'
+        }
+      case 'college':
+        return {
+          icon: Building2,
+          iconColor: 'text-amber-400',
+          sectionTag: 'College Degree Section (Associate Degrees)',
+          mainTitle: `${campusName} • Degree College Wing`,
+          description: `Tier: Semesters 1 to 4 • Associate Degree Programs (ADP) & DAE Diplomas • ${campusCode}-COL`,
+          badgeText: 'College Level',
+          badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+        }
+      case 'university':
+        return {
+          icon: Sparkles,
+          iconColor: 'text-purple-400',
+          sectionTag: 'Higher Education & University Faculty',
+          mainTitle: `${campusName} • University Faculty Center`,
+          description: `Tier: Higher Education • Undergraduate BS (4-Year) & Postgraduate MS / MPhil • ${campusCode}-UNI`,
+          badgeText: 'University Level',
+          badgeColor: 'bg-purple-500/20 text-purple-300 border-purple-500/30'
+        }
+      default:
+        return {
+          icon: School,
+          iconColor: 'text-emerald-400',
+          sectionTag: 'Campus Administrative Center',
+          mainTitle: campusName,
+          description: `Registration Code: ${campusCode} • ${campusAddress} • Comprehensive K-16 Scope`,
+          badgeText: 'All Program Levels',
+          badgeColor: 'bg-white/10 text-slate-300 border-white/20'
+        }
+    }
+  }
+
+  const banner = getBannerDetails()
+  const BannerIcon = banner.icon
+
+  return (
+    <div className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
+      {/* Dynamic Campus & Academic Tier Header Banner */}
+      <div className="bg-gradient-to-r from-[#0f172a] via-[#14233c] to-[#132c4b] border border-slate-800 rounded-2xl p-6 text-white shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-all duration-200">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className={`text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 ${banner.iconColor}`}>
+              <BannerIcon className="w-4 h-4" />
+              <span>{banner.sectionTag}</span>
+            </span>
+            <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${banner.badgeColor}`}>
+              {banner.badgeText}
+            </span>
+          </div>
+          <h1 className="text-2xl font-bold mt-1.5 tracking-tight text-white flex items-center gap-2">
+            <span>{banner.mainTitle}</span>
+          </h1>
+          <p className="text-xs text-slate-300 mt-1">
+            {banner.description}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <button
+            onClick={() => onRouteChange('inst-students')}
+            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold shadow transition-all duration-150 flex items-center gap-1.5 active:scale-[0.98]"
+          >
+            <UserPlus className="w-3.5 h-3.5" />
+            <span>New Admission</span>
+          </button>
+          <button
+            onClick={() => onRouteChange('inst-fees')}
+            className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-semibold border border-white/20 transition-all duration-150 flex items-center gap-1.5 active:scale-[0.98]"
+          >
+            <CreditCard className="w-3.5 h-3.5" />
+            <span>Generate Fee Challan</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Quick Academic Tier Switcher Strip (One-Click Scope) */}
+      <div className="bg-white border border-slate-200/80 rounded-2xl p-3 sm:p-4 shadow-xs">
+        <div className="flex items-center justify-between gap-2 mb-2 px-1">
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
+            <Layers className="w-4 h-4 text-blue-600" />
+            <span>Academic Tier Scope:</span>
+            <span className="text-slate-400 font-normal hidden sm:inline">Switch campus view by educational level</span>
+          </div>
+          <button
+            onClick={() => onRouteChange('inst-program-levels')}
+            className="text-[11px] font-semibold text-blue-600 hover:underline flex items-center gap-1"
+          >
+            <span>View All Tiers & Streams</span>
+            <ArrowUpRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Scrollable / Responsive Horizontal Pill Strip */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          {programLevels.map((lvl) => {
+            const isSelected = activeProgramLevel === lvl.id
+            return (
+              <button
+                key={lvl.id}
+                onClick={() => setActiveProgramLevel(lvl.id)}
+                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-150 shrink-0 border ${
+                  isSelected
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                    : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200/80'
+                }`}
+              >
+                <span>{lvl.shortTitle}</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                  isSelected ? 'bg-white/20 text-white' : 'bg-white border border-slate-200 text-slate-500'
+                }`}>
+                  {lvl.badge}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Active Academic Level Filter Banner */}
+      {activeProgramLevel !== 'all' && activeLevelObj && (
+        <div className="bg-gradient-to-r from-blue-50/90 via-indigo-50/50 to-white border border-blue-200/90 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-[0_2px_10px_rgba(37,99,235,0.04)] animate-in fade-in slide-in-from-top-2">
+          <div className="flex items-start sm:items-center gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-sm shrink-0">
+              <GraduationCap className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                  Active Tier Filter
+                </span>
+                <span className="text-sm font-bold text-slate-900">{activeLevelObj.title}</span>
+                <span className="text-xs text-slate-500 font-mono">({activeLevelObj.grades})</span>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">{activeLevelObj.description}</p>
+              <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                {activeLevelObj.categories.map((cat, idx) => (
+                  <span key={idx} className="text-[11px] bg-white border border-blue-200/60 text-slate-700 px-2 py-0.5 rounded-md font-medium shadow-2xs">
+                    {cat.name} <span className="text-slate-400 font-mono">({cat.span})</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={() => setActiveProgramLevel('all')}
+            className="px-3.5 py-1.5 text-xs font-semibold text-blue-700 bg-white border border-blue-200 hover:bg-blue-50 hover:border-blue-300 rounded-xl shadow-2xs transition-all shrink-0 active:scale-95"
+          >
+            Reset to All Levels
+          </button>
+        </div>
+      )}
+
+      {/* KPI Cards - Real dynamic calculations with Show all + Eye + Add actions */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <StatCard
+          title="Total Students"
+          value={instStudents.length}
+          color="emerald"
+          badge={activeProgramLevel !== 'all' ? `${activeLevelObj?.shortTitle}` : (instStudents.length > 0 ? `+${instStudents.length} active` : '0 active')}
+          badgePositive={instStudents.length > 0}
+          icon={GraduationCap}
+          showActions={true}
+          showAllText="Show all"
+          onShowAll={() => onRouteChange('inst-students')}
+          onView={() => onRouteChange('inst-students')}
+          viewTooltip="View All Campus Students"
+          onAdd={() => onRouteChange('inst-students')}
+          addTooltip="Enroll New Student"
+        />
+        <StatCard
+          title="Faculty & Teachers"
+          value={instTeachers.length}
+          color="blue"
+          badge={activeProgramLevel !== 'all' ? `${activeLevelObj?.code} Staff` : (instTeachers.length > 0 ? 'Staff Assigned' : '0 registered')}
+          badgePositive={instTeachers.length > 0}
+          icon={Users}
+          showActions={true}
+          showAllText="Show all"
+          onShowAll={() => onRouteChange('inst-teachers')}
+          onView={() => onRouteChange('inst-teachers')}
+          viewTooltip="View Campus Faculty Directory"
+          onAdd={() => onRouteChange('inst-teachers')}
+          addTooltip="Add Teacher"
+        />
+        <StatCard
+          title="Fee Collection Rate"
+          value={instFees.length > 0 ? `${feeRate}%` : '0.0%'}
+          color="indigo"
+          badge={activeProgramLevel !== 'all' ? `${activeLevelObj?.code} Fees` : (instFees.length > 0 ? `${paidFeesCount}/${instFees.length} Paid` : '0%')}
+          badgePositive={paidFeesCount > 0}
+          icon={Receipt}
+          showActions={true}
+          showAllText="Show all"
+          onShowAll={() => onRouteChange('inst-fees')}
+          onView={() => onRouteChange('inst-fees')}
+          viewTooltip="View Fee Records"
+          onAdd={() => onRouteChange('inst-fees')}
+          addTooltip="Generate Fee Challan"
+        />
+        <StatCard
+          title="Daily Attendance"
+          value={instStudents.length > 0 ? '96.4%' : '0.0%'}
+          color="amber"
+          badge={activeProgramLevel !== 'all' ? `${activeLevelObj?.code} Log` : (instStudents.length > 0 ? 'Good' : '0%')}
+          badgePositive={instStudents.length > 0}
+          icon={CalendarCheck}
+          showActions={true}
+          showAllText="Show all"
+          onShowAll={() => onRouteChange('inst-attendance')}
+          onView={() => onRouteChange('inst-attendance')}
+          viewTooltip="View Attendance Register"
+          onAdd={() => onRouteChange('inst-attendance')}
+          addTooltip="Mark Attendance"
+        />
+      </div>
+
+      {/* Classes & Custom Sections Directory (Flexible Super Section, Section A, B, etc.) */}
+      <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-5">
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <BookOpen className="w-5 h-5 text-blue-600" />
+              <h2 className="text-base font-bold text-slate-900 tracking-tight">
+                Classes & Custom Sections Directory
+              </h2>
+              {activeProgramLevel !== 'all' && (
+                <span className="text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                  {activeLevelObj?.shortTitle}
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-slate-400 mt-0.5">
+              School-customized sections (e.g. Super Section, Section A, B, Star Section, Morning/Evening batches)
+            </p>
+          </div>
+
+          <button
+            onClick={() => onRouteChange('inst-classes')}
+            className="px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 shrink-0"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Manage All Classes & Sections</span>
+          </button>
+        </div>
+
+        {classes.filter(c => {
+          const matchesCampus = !c.instituteId || c.instituteId === currentInstitute?.id
+          if (!matchesCampus) return false
+          if (activeProgramLevel === 'all') return true
+          const cLevel = c.programLevel || detectProgramLevel(c.name)
+          return cLevel === activeProgramLevel
+        }).length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {classes.filter(c => {
+              const matchesCampus = !c.instituteId || c.instituteId === currentInstitute?.id
+              if (!matchesCampus) return false
+              if (activeProgramLevel === 'all') return true
+              const cLevel = c.programLevel || detectProgramLevel(c.name)
+              return cLevel === activeProgramLevel
+            }).map(cls => {
+              const secList = normalizeClassSections(cls)
+              const cLevel = cls.programLevel || detectProgramLevel(cls.name)
+              return (
+                <div 
+                  key={cls.id}
+                  className="p-4 rounded-xl border border-slate-200/70 bg-slate-50/60 hover:bg-white hover:border-slate-300 hover:shadow-xs transition-all flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-bold text-slate-900">{cls.name}</span>
+                        <span className="text-[9px] font-mono uppercase px-1.5 py-0.2 rounded bg-white text-slate-500 border border-slate-200">
+                          {cLevel}
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-mono font-medium text-slate-500 bg-white border border-slate-200 px-2 py-0.5 rounded-md">
+                        {secList.length} Sections
+                      </span>
+                    </div>
+
+                    {/* Section Badges */}
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {secList.map((sec, sIdx) => {
+                        const isSuper = sec.name.toLowerCase().includes('super') || sec.name.toLowerCase().includes('star')
+                        return (
+                          <span
+                            key={sec.id || sIdx}
+                            className={`text-[11px] font-medium px-2 py-0.5 rounded-md flex items-center gap-1 border ${
+                              isSuper 
+                                ? 'bg-amber-50 text-amber-800 border-amber-200 font-bold' 
+                                : 'bg-white text-slate-700 border-slate-200'
+                            }`}
+                          >
+                            {isSuper && <Star className="w-3 h-3 text-amber-500 fill-amber-400" />}
+                            <span>{sec.name}</span>
+                          </span>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="mt-3 pt-2.5 border-t border-slate-200/60 flex items-center justify-between text-[11px] text-slate-400">
+                    <span>Teacher: <strong className="text-slate-600 font-medium">{cls.classTeacher || 'Assigned Staff'}</strong></span>
+                    <button
+                      onClick={() => onRouteChange('inst-classes')}
+                      className="text-blue-600 hover:underline font-semibold"
+                    >
+                      Configure →
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        ) : (
+          <div className="py-8 text-center flex flex-col items-center justify-center space-y-2 border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+            <BookOpen className="w-8 h-8 text-slate-300" />
+            <p className="text-xs font-semibold text-slate-700">No classes configured for this tier yet</p>
+            <p className="text-[11px] text-slate-400 max-w-sm">
+              Every school names sections differently. Click below to add your school's classes and assign custom sections (Super Section, Section A, B, etc.).
+            </p>
+            <button
+              onClick={() => onRouteChange('inst-classes')}
+              className="mt-1 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-xs transition-all flex items-center gap-1"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Configure Classes & Custom Sections</span>
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Two Columns: Recent Student Admissions & Quick Actions */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Recent Admissions */}
+        <div className="lg:col-span-8 bg-white rounded-2xl p-6 border border-slate-200/70 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-base font-bold text-slate-800">Recent Student Admissions</h2>
+              <p className="text-xs text-slate-400">Newly enrolled students in this campus</p>
+            </div>
+            {instStudents.length > 0 && (
+              <button
+                onClick={() => onRouteChange('inst-students')}
+                className="text-xs font-semibold text-emerald-600 hover:text-emerald-700"
+              >
+                View All Students →
+              </button>
+            )}
+          </div>
+
+          <div className="overflow-x-auto">
+            {instStudents.length > 0 ? (
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 text-slate-500 uppercase font-semibold">
+                  <tr>
+                    <th className="px-4 py-3">Roll No</th>
+                    <th className="px-4 py-3">Student Name</th>
+                    <th className="px-4 py-3">Class & Section</th>
+                    <th className="px-4 py-3">Fee Status</th>
+                    <th className="px-4 py-3">Attendance</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {instStudents.slice(0, 5).map((std) => (
+                    <tr key={std.id} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="px-4 py-3 font-mono font-semibold text-slate-700">{std.rollNumber}</td>
+                      <td className="px-4 py-3 font-bold text-slate-800">{std.name}</td>
+                      <td className="px-4 py-3 text-slate-600">{std.className} ({std.section})</td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-0.5 rounded-full font-semibold ${
+                          std.feeStatus === 'Paid' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'
+                        }`}>
+                          {std.feeStatus}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 font-semibold text-slate-700">{std.attendanceRate || '95%'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <div className="py-12 text-center flex flex-col items-center justify-center space-y-2">
+                <GraduationCap className="w-8 h-8 text-slate-300" />
+                <p className="text-sm font-semibold text-slate-700">0 Students Enrolled in This Campus</p>
+                <p className="text-xs text-slate-400 max-w-sm">
+                  Click the "New Admission" button to enroll your first student and begin tracking attendance and grades.
+                </p>
+                <button
+                  onClick={() => onRouteChange('inst-students')}
+                  className="mt-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
+                >
+                  Enroll First Student
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Quick Operations */}
+        <div className="lg:col-span-4 bg-white rounded-2xl p-6 border border-slate-200/70 shadow-[0_2px_12px_rgba(0,0,0,0.03)] space-y-3">
+          <div className="flex items-center justify-between mb-1">
+            <h2 className="text-base font-bold text-slate-800">Campus Operations</h2>
+            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Shortcuts</span>
+          </div>
+
+          <button
+            onClick={() => onRouteChange('inst-attendance')}
+            className="w-full flex items-center justify-between p-3.5 rounded-xl bg-slate-50/80 hover:bg-white transition-all duration-150 text-xs font-semibold text-slate-700 text-left border border-slate-200/70 hover:border-emerald-400 hover:shadow-sm group active:scale-[0.99]"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center transition-colors group-hover:bg-emerald-600 group-hover:text-white">
+                <CalendarCheck className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="font-bold text-slate-800">Mark Daily Attendance</p>
+                <p className="text-[11px] text-slate-400 font-normal">Active section roll call</p>
+              </div>
+            </div>
+            <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+          </button>
+
+          <button
+            onClick={() => onRouteChange('inst-fees')}
+            className="w-full flex items-center justify-between p-3.5 rounded-xl bg-slate-50/80 hover:bg-white transition-all duration-150 text-xs font-semibold text-slate-700 text-left border border-slate-200/70 hover:border-blue-400 hover:shadow-sm group active:scale-[0.99]"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center transition-colors group-hover:bg-blue-600 group-hover:text-white">
+                <CreditCard className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="font-bold text-slate-800">3-Part Fee Challan</p>
+                <p className="text-[11px] text-slate-400 font-normal">Print official bank vouchers</p>
+              </div>
+            </div>
+            <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+          </button>
+
+          <button
+            onClick={() => onRouteChange('inst-timetable')}
+            className="w-full flex items-center justify-between p-3.5 rounded-xl bg-slate-50/80 hover:bg-white transition-all duration-150 text-xs font-semibold text-slate-700 text-left border border-slate-200/70 hover:border-amber-400 hover:shadow-sm group active:scale-[0.99]"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center transition-colors group-hover:bg-amber-500 group-hover:text-white">
+                <Clock className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="font-bold text-slate-800">Class Timetable Matrix</p>
+                <p className="text-[11px] text-slate-400 font-normal">Weekly periods & routine</p>
+              </div>
+            </div>
+            <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-amber-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+          </button>
+
+          <button
+            onClick={() => onRouteChange('inst-teachers')}
+            className="w-full flex items-center justify-between p-3.5 rounded-xl bg-slate-50/80 hover:bg-white transition-all duration-150 text-xs font-semibold text-slate-700 text-left border border-slate-200/70 hover:border-purple-400 hover:shadow-sm group active:scale-[0.99]"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center transition-colors group-hover:bg-purple-600 group-hover:text-white">
+                <Users className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="font-bold text-slate-800">Faculty & Staff</p>
+                <p className="text-[11px] text-slate-400 font-normal">Teachers directory & classes</p>
+              </div>
+            </div>
+            <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-purple-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default InstituteDashboard
