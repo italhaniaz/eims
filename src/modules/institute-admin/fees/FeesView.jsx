@@ -1040,7 +1040,34 @@ export const FeesView = ({ currentInstitute }) => {
           title="POS Counter Payment Receipt"
         >
           <div className="space-y-4">
-            <div className="max-w-xs mx-auto p-4 bg-white border-2 border-slate-300 rounded-xl font-mono text-xs space-y-2 shadow-inner print:border-black">
+            {/* Print Specific CSS Rules */}
+            <style>{`
+              @media print {
+                body * {
+                  visibility: hidden !important;
+                }
+                #printable-pos-receipt, #printable-pos-receipt * {
+                  visibility: visible !important;
+                }
+                #printable-pos-receipt {
+                  position: absolute !important;
+                  left: 0 !important;
+                  top: 0 !important;
+                  width: 80mm !important;
+                  margin: 0 !important;
+                  padding: 4mm !important;
+                  background: white !important;
+                }
+                .no-print {
+                  display: none !important;
+                }
+                @page {
+                  size: 80mm auto;
+                  margin: 3mm;
+                }
+              }
+            `}</style>
+            <div id="printable-pos-receipt" className="max-w-xs mx-auto p-4 bg-white border-2 border-slate-300 rounded-xl font-mono text-xs space-y-2 shadow-inner print:border-black">
               <div className="text-center pb-2 border-b">
                 <h4 className="font-black text-sm uppercase">{currentInstitute?.name || 'CENTRAL HIGH SCHOOL'}</h4>
                 <p className="text-[10px] text-slate-500">Official POS Fee Collection Voucher</p>
@@ -1415,7 +1442,34 @@ export const FeesView = ({ currentInstitute }) => {
           maxWidth="max-w-4xl"
         >
           <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-2 border-slate-800 p-3 rounded-xl bg-white print:border-black text-[11px]">
+            {/* Print Specific CSS Rules */}
+            <style>{`
+              @media print {
+                body * {
+                  visibility: hidden !important;
+                }
+                #printable-voucher-root, #printable-voucher-root * {
+                  visibility: visible !important;
+                }
+                #printable-voucher-root {
+                  position: absolute !important;
+                  left: 0 !important;
+                  top: 0 !important;
+                  width: 100% !important;
+                  margin: 0 !important;
+                  padding: 6mm !important;
+                  background: white !important;
+                }
+                .no-print {
+                  display: none !important;
+                }
+                @page {
+                  size: A4 landscape;
+                  margin: 6mm;
+                }
+              }
+            `}</style>
+            <div id="printable-voucher-root" className="grid grid-cols-1 md:grid-cols-3 gap-4 border-2 border-slate-800 p-3 rounded-xl bg-white print:border-black text-[11px]">
               {['Bank Copy', 'Institute Copy', 'Student Copy'].map((copyTitle, idx) => (
                 <div key={copyTitle} className={`space-y-2 p-2.5 ${idx !== 0 ? 'border-t md:border-t-0 md:border-l border-dashed border-slate-400' : ''}`}>
                   <div className="text-center pb-2 border-b border-slate-200">

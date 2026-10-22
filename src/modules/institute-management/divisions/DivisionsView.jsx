@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react'
+import React, { useState } from 'react'
 import { FolderTree, Plus, Search, Edit2, Trash2, CheckCircle2, MapPin } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
 import Modal from '../../../components/common/Modal'

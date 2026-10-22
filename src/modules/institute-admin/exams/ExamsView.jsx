@@ -1115,7 +1115,34 @@ export const ExamsView = ({ currentInstitute }) => {
           maxWidth="max-w-xl"
         >
           <div className="space-y-4">
-            <div className="p-6 bg-white border-2 border-slate-800 rounded-xl space-y-4 font-sans">
+            {/* Print Specific CSS Rules */}
+            <style>{`
+              @media print {
+                body * {
+                  visibility: hidden !important;
+                }
+                #printable-dmc-single, #printable-dmc-single * {
+                  visibility: visible !important;
+                }
+                #printable-dmc-single {
+                  position: absolute !important;
+                  left: 0 !important;
+                  top: 0 !important;
+                  width: 100% !important;
+                  margin: 0 !important;
+                  padding: 8mm !important;
+                  background: white !important;
+                }
+                .no-print {
+                  display: none !important;
+                }
+                @page {
+                  size: A4 portrait;
+                  margin: 8mm;
+                }
+              }
+            `}</style>
+            <div id="printable-dmc-single" className="p-6 bg-white border-2 border-slate-800 rounded-xl space-y-4 font-sans">
               <div className="text-center border-b pb-3">
                 <h3 className="text-base font-black uppercase tracking-wider text-slate-900">
                   {currentInstitute?.name || 'CENTRAL HIGH SCHOOL SYSTEM'}
@@ -1219,7 +1246,34 @@ export const ExamsView = ({ currentInstitute }) => {
               </span>
             </div>
 
-            <div className="max-h-[60vh] overflow-y-auto space-y-6 pr-1">
+            {/* Print Specific CSS Rules */}
+            <style>{`
+              @media print {
+                body * {
+                  visibility: hidden !important;
+                }
+                #printable-batch-dmc-root, #printable-batch-dmc-root * {
+                  visibility: visible !important;
+                }
+                #printable-batch-dmc-root {
+                  position: absolute !important;
+                  left: 0 !important;
+                  top: 0 !important;
+                  width: 100% !important;
+                  margin: 0 !important;
+                  padding: 6mm !important;
+                  background: white !important;
+                }
+                .no-print {
+                  display: none !important;
+                }
+                @page {
+                  size: A4 portrait;
+                  margin: 6mm;
+                }
+              }
+            `}</style>
+            <div id="printable-batch-dmc-root" className="max-h-[60vh] overflow-y-auto space-y-6 pr-1">
               {batchExamsList.map((exam, index) => (
                 <div 
                   key={exam.id || index}

@@ -1,4 +1,4 @@
-﻿import React from 'react'
+import React from 'react'
 import { Eye, Plus } from 'lucide-react'
 
 // Pre-defined Tailwind class maps ensuring 100% static analysis compatibility

@@ -241,8 +241,45 @@ export const TimetableView = ({ currentInstitute }) => {
         </div>
       </div>
 
-      {/* Routine Banner Info */}
-      <div className="bg-slate-50 border border-slate-200/80 rounded-xl px-4 py-2.5 flex items-center justify-between text-xs text-slate-600">
+      {/* Print Specific CSS Rules */}
+      <style>{`
+        @media print {
+          body * {
+            visibility: hidden !important;
+          }
+          #printable-timetable-root, #printable-timetable-root * {
+            visibility: visible !important;
+          }
+          #printable-timetable-root {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 10mm !important;
+            background: white !important;
+          }
+          .no-print {
+            display: none !important;
+          }
+          @page {
+            size: A4 landscape;
+            margin: 8mm;
+          }
+        }
+      `}</style>
+
+      {/* Printable Wrapper */}
+      <div id="printable-timetable-root" className="space-y-4">
+        {/* Printable Official Header */}
+        <div className="hidden print:block text-center border-b pb-3 mb-2">
+          <h2 className="text-xl font-bold uppercase tracking-wider text-slate-900">{currentInstitute?.name || 'CENTRAL INSTITUTE OF LEARNING'}</h2>
+          <p className="text-xs font-semibold text-slate-600 uppercase tracking-widest mt-0.5">Official Academic Routine & Master Timetable</p>
+          <p className="text-xs text-slate-500 font-medium mt-1">Class: <strong className="text-slate-800">{selectedClass}</strong> | Section: <strong className="text-slate-800">{selectedSection}</strong> {currentSectionObj?.roomNo ? '| Room: ' + currentSectionObj.roomNo : ''}</p>
+        </div>
+
+        {/* Routine Banner Info */}
+        <div className="bg-slate-50 border border-slate-200/80 rounded-xl px-4 py-2.5 flex items-center justify-between text-xs text-slate-600">
         <div className="flex items-center gap-3">
           <span className="font-bold text-slate-800 flex items-center gap-1.5">
             <Layers className="w-4 h-4 text-emerald-600" />
@@ -322,6 +359,7 @@ export const TimetableView = ({ currentInstitute }) => {
             </tbody>
           </table>
         </div>
+      </div>
       </div>
 
       {/* Faculty list datalist */}

@@ -3972,7 +3972,34 @@ export const StudentsView = ({ currentInstitute }) => {
           maxWidth="max-w-2xl"
         >
           <div className="space-y-4">
-            <div className="p-6 bg-white border-2 border-slate-800 rounded-xl space-y-4 shadow-sm text-slate-900">
+                      {/* Print Specific CSS Rules */}
+          <style>{`
+            @media print {
+              body * {
+                visibility: hidden !important;
+              }
+              #printable-admission-slip, #printable-admission-slip * {
+                visibility: visible !important;
+              }
+              #printable-admission-slip {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 10mm !important;
+                background: white !important;
+              }
+              .no-print {
+                display: none !important;
+              }
+              @page {
+                size: A4 portrait;
+                margin: 8mm;
+              }
+            }
+          `}</style>
+            <div id="printable-admission-slip" className="p-6 bg-white border-2 border-slate-800 rounded-xl space-y-4 shadow-sm text-slate-900">
               <div className="text-center pb-3 border-b-2 border-slate-800">
                 <h2 className="text-base font-black tracking-wider uppercase">{currentInstitute?.name || 'CENTRAL INSTITUTE OF LEARNING'}</h2>
                 <span className="text-xs font-bold text-slate-600 tracking-wide block mt-0.5">OFFICIAL ADMISSION CONFIRMATION & ROSTER SLIP</span>
@@ -4051,7 +4078,34 @@ export const StudentsView = ({ currentInstitute }) => {
           maxWidth="max-w-2xl"
         >
           <div className="space-y-4">
-            <div className="p-6 bg-amber-50/50 border-2 border-amber-900/40 rounded-xl space-y-4 text-slate-900 shadow-sm">
+            {/* Print Specific CSS Rules */}
+            <style>{`
+              @media print {
+                body * {
+                  visibility: hidden !important;
+                }
+                #printable-slc-certificate, #printable-slc-certificate * {
+                  visibility: visible !important;
+                }
+                #printable-slc-certificate {
+                  position: absolute !important;
+                  left: 0 !important;
+                  top: 0 !important;
+                  width: 100% !important;
+                  margin: 0 !important;
+                  padding: 10mm !important;
+                  background: white !important;
+                }
+                .no-print {
+                  display: none !important;
+                }
+                @page {
+                  size: A4 portrait;
+                  margin: 8mm;
+                }
+              }
+            `}</style>
+            <div id="printable-slc-certificate" className="p-6 bg-amber-50/50 border-2 border-amber-900/40 rounded-xl space-y-4 text-slate-900 shadow-sm">
               <div className="text-center pb-3 border-b-2 border-amber-900/40">
                 <h2 className="text-base font-black uppercase text-amber-950">{currentInstitute?.name || 'CENTRAL EDUCATIONAL BOARD'}</h2>
                 <span className="text-xs font-bold text-amber-800 tracking-wider uppercase block mt-0.5">SCHOOL LEAVING CERTIFICATE</span>

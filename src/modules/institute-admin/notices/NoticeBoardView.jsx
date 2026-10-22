@@ -350,7 +350,34 @@ export const NoticeBoardView = ({ currentInstitute }) => {
           maxWidth="max-w-2xl"
         >
           <div className="space-y-4">
-            <div className="p-8 bg-white border-2 border-slate-900 rounded-xl space-y-6 font-serif text-slate-900 print:border-black print:p-8">
+            {/* Print Specific CSS Rules */}
+            <style>{`
+              @media print {
+                body * {
+                  visibility: hidden !important;
+                }
+                #printable-notice-circular, #printable-notice-circular * {
+                  visibility: visible !important;
+                }
+                #printable-notice-circular {
+                  position: absolute !important;
+                  left: 0 !important;
+                  top: 0 !important;
+                  width: 100% !important;
+                  margin: 0 !important;
+                  padding: 10mm !important;
+                  background: white !important;
+                }
+                .no-print {
+                  display: none !important;
+                }
+                @page {
+                  size: A4 portrait;
+                  margin: 8mm;
+                }
+              }
+            `}</style>
+            <div id="printable-notice-circular" className="p-8 bg-white border-2 border-slate-900 rounded-xl space-y-6 font-serif text-slate-900 print:border-black print:p-8">
               {/* Header Letterhead */}
               <div className="text-center border-b-2 border-slate-900 pb-4 space-y-1">
                 <div className="w-12 h-12 mx-auto rounded-full bg-slate-900 text-white flex items-center justify-center mb-2">
