@@ -1,7 +1,8 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react'
+import React, { useState, useEffect, Suspense } from 'react'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { AppDataProvider, useAppData } from './context/AppDataContext'
 import { ToastProvider, useToast } from './context/ToastContext'
+import { lazyWithRetry } from './utils/lazyWithRetry'
 
 // Layout components
 import SuperadminSidebar from './components/layout/SuperadminSidebar'
@@ -16,46 +17,46 @@ import ErrorBoundary from './components/common/ErrorBoundary'
 // Auth
 import LoginPage from './modules/auth/LoginPage'
 
-// Lazy-loaded Views for Bundle Performance & Code Splitting
-const SuperadminDashboard = lazy(() => import('./modules/dashboard/SuperadminDashboard'))
-const InstitutesView = lazy(() => import('./modules/institute-management/institutes/InstitutesView'))
-const ModulesControlView = lazy(() => import('./modules/platform/modules/ModulesControlView'))
-const SecurityCenterView = lazy(() => import('./modules/platform/security/SecurityCenterView'))
-const CrossInstituteAnalyticsView = lazy(() => import('./modules/platform/analytics/CrossInstituteAnalyticsView'))
-const SubscriptionsBillingView = lazy(() => import('./modules/platform/billing/SubscriptionsBillingView'))
-const GlobalTemplatesView = lazy(() => import('./modules/platform/templates/GlobalTemplatesView'))
-const BackupDataView = lazy(() => import('./modules/platform/backup/BackupDataView'))
-const SystemHealthView = lazy(() => import('./modules/platform/health/SystemHealthView'))
-const SupportApprovalsView = lazy(() => import('./modules/platform/support/SupportApprovalsView'))
-const DepartmentsView = lazy(() => import('./modules/institute-management/departments/DepartmentsView'))
-const ExaminationBodiesView = lazy(() => import('./modules/institute-management/examination-bodies/ExaminationBodiesView'))
-const AcademicYearsView = lazy(() => import('./modules/academics/academic-years/AcademicYearsView'))
-const ProgramTypesView = lazy(() => import('./modules/academics/program-types/ProgramTypesView'))
-const ProgramsView = lazy(() => import('./modules/academics/programs/ProgramsView'))
-const SubjectsView = lazy(() => import('./modules/academics/subjects/SubjectsView'))
-const StudySchemesView = lazy(() => import('./modules/academics/study-schemes/StudySchemesView'))
-const UsersManagementView = lazy(() => import('./modules/users-management/UsersManagementView'))
-const NoticeBroadcasterView = lazy(() => import('./modules/announcements/NoticeBroadcasterView'))
+// Lazy-loaded Views for Bundle Performance & Code Splitting (with resilient auto-retry)
+const SuperadminDashboard = lazyWithRetry(() => import('./modules/dashboard/SuperadminDashboard'), 'superadmin-dashboard')
+const InstitutesView = lazyWithRetry(() => import('./modules/institute-management/institutes/InstitutesView'), 'institutes-view')
+const ModulesControlView = lazyWithRetry(() => import('./modules/platform/modules/ModulesControlView'), 'modules-control')
+const SecurityCenterView = lazyWithRetry(() => import('./modules/platform/security/SecurityCenterView'), 'security-center')
+const CrossInstituteAnalyticsView = lazyWithRetry(() => import('./modules/platform/analytics/CrossInstituteAnalyticsView'), 'cross-institute-analytics')
+const SubscriptionsBillingView = lazyWithRetry(() => import('./modules/platform/billing/SubscriptionsBillingView'), 'subscriptions-billing')
+const GlobalTemplatesView = lazyWithRetry(() => import('./modules/platform/templates/GlobalTemplatesView'), 'global-templates')
+const BackupDataView = lazyWithRetry(() => import('./modules/platform/backup/BackupDataView'), 'backup-data')
+const SystemHealthView = lazyWithRetry(() => import('./modules/platform/health/SystemHealthView'), 'system-health')
+const SupportApprovalsView = lazyWithRetry(() => import('./modules/platform/support/SupportApprovalsView'), 'support-approvals')
+const DepartmentsView = lazyWithRetry(() => import('./modules/institute-management/departments/DepartmentsView'), 'departments-view')
+const ExaminationBodiesView = lazyWithRetry(() => import('./modules/institute-management/examination-bodies/ExaminationBodiesView'), 'examination-bodies')
+const AcademicYearsView = lazyWithRetry(() => import('./modules/academics/academic-years/AcademicYearsView'), 'academic-years')
+const ProgramTypesView = lazyWithRetry(() => import('./modules/academics/program-types/ProgramTypesView'), 'program-types')
+const ProgramsView = lazyWithRetry(() => import('./modules/academics/programs/ProgramsView'), 'programs-view')
+const SubjectsView = lazyWithRetry(() => import('./modules/academics/subjects/SubjectsView'), 'subjects-view')
+const StudySchemesView = lazyWithRetry(() => import('./modules/academics/study-schemes/StudySchemesView'), 'study-schemes')
+const UsersManagementView = lazyWithRetry(() => import('./modules/users-management/UsersManagementView'), 'users-management')
+const NoticeBroadcasterView = lazyWithRetry(() => import('./modules/announcements/NoticeBroadcasterView'), 'notice-broadcaster')
 
 // Institute Admin Views
-const InstituteDashboard = lazy(() => import('./modules/dashboard/InstituteDashboard'))
-const StudentsView = lazy(() => import('./modules/institute-admin/students/StudentsView'))
-const TeachersView = lazy(() => import('./modules/institute-admin/teachers/TeachersView'))
-const ClassesView = lazy(() => import('./modules/institute-admin/classes/ClassesView'))
-const TimetableView = lazy(() => import('./modules/institute-admin/timetable/TimetableView'))
-const AttendanceView = lazy(() => import('./modules/institute-admin/attendance/AttendanceView'))
-const FeesView = lazy(() => import('./modules/institute-admin/fees/FeesView'))
-const ExamsView = lazy(() => import('./modules/institute-admin/exams/ExamsView'))
-const NoticeBoardView = lazy(() => import('./modules/institute-admin/notices/NoticeBoardView'))
-const ProgramLevelsView = lazy(() => import('./modules/academics/ProgramLevelsView'))
+const InstituteDashboard = lazyWithRetry(() => import('./modules/dashboard/InstituteDashboard'), 'institute-dashboard')
+const StudentsView = lazyWithRetry(() => import('./modules/institute-admin/students/StudentsView'), 'students-view')
+const TeachersView = lazyWithRetry(() => import('./modules/institute-admin/teachers/TeachersView'), 'teachers-view')
+const ClassesView = lazyWithRetry(() => import('./modules/institute-admin/classes/ClassesView'), 'classes-view')
+const TimetableView = lazyWithRetry(() => import('./modules/institute-admin/timetable/TimetableView'), 'timetable-view')
+const AttendanceView = lazyWithRetry(() => import('./modules/institute-admin/attendance/AttendanceView'), 'attendance-view')
+const FeesView = lazyWithRetry(() => import('./modules/institute-admin/fees/FeesView'), 'fees-view')
+const ExamsView = lazyWithRetry(() => import('./modules/institute-admin/exams/ExamsView'), 'exams-view')
+const NoticeBoardView = lazyWithRetry(() => import('./modules/institute-admin/notices/NoticeBoardView'), 'notice-board-view')
+const ProgramLevelsView = lazyWithRetry(() => import('./modules/academics/ProgramLevelsView'), 'program-levels-view')
 
 // High-Demand Modern Operations Modules
-const FinancialAnalyticsView = lazy(() => import('./modules/finance/FinancialAnalyticsView'))
-const TransportView = lazy(() => import('./modules/transport/TransportView'))
-const LibraryView = lazy(() => import('./modules/library/LibraryView'))
-const AdmissionsPipelineView = lazy(() => import('./modules/admissions-pipeline/AdmissionsPipelineView'))
-const CommunicationGatewayView = lazy(() => import('./modules/communication/CommunicationGatewayView'))
-const AuditLogsView = lazy(() => import('./modules/audit-logs/AuditLogsView'))
+const FinancialAnalyticsView = lazyWithRetry(() => import('./modules/finance/FinancialAnalyticsView'), 'finance-view')
+const TransportView = lazyWithRetry(() => import('./modules/transport/TransportView'), 'transport-view')
+const LibraryView = lazyWithRetry(() => import('./modules/library/LibraryView'), 'library-view')
+const AdmissionsPipelineView = lazyWithRetry(() => import('./modules/admissions-pipeline/AdmissionsPipelineView'), 'admissions-pipeline')
+const CommunicationGatewayView = lazyWithRetry(() => import('./modules/communication/CommunicationGatewayView'), 'communication-gateway')
+const AuditLogsView = lazyWithRetry(() => import('./modules/audit-logs/AuditLogsView'), 'audit-logs')
 
 // Executive Minimal Loading Fallback
 const ModuleLoader = () => (
