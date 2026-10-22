@@ -207,8 +207,8 @@ export const ProgramLevelsView = ({ currentInstitute }) => {
     if (lvl.id === 'all') return false
 
     // Tab filter
-    if (activeTab === 'school' && !['elementary', 'secondary'].includes(lvl.id)) return false
-    if (activeTab === 'college' && !['higher-secondary', 'college'].includes(lvl.id)) return false
+    if (activeTab === 'school' && !['preschool', 'elementary', 'secondary'].includes(lvl.id)) return false
+    if (activeTab === 'higher-secondary' && lvl.id !== 'higher-secondary') return false
     if (activeTab === 'university' && lvl.id !== 'university') return false
 
     // Search filter
@@ -332,10 +332,10 @@ export const ProgramLevelsView = ({ currentInstitute }) => {
         {/* Tier Tabs */}
         <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl w-full sm:w-auto overflow-x-auto">
           {[
-            { id: 'all', label: 'All 5 Tiers' },
+            { id: 'all', label: 'All Tiers' },
             { id: 'school', label: 'School (Grades 1-10)' },
-            { id: 'college', label: 'College / Inter (11-14)' },
-            { id: 'university', label: 'Higher Ed (BS/MS)' }
+            { id: 'higher-secondary', label: 'Higher Secondary (11-12)' },
+            { id: 'university', label: 'Undergraduates (BS)' }
           ].map((tab) => (
             <button
               key={tab.id}
@@ -597,8 +597,7 @@ export const ProgramLevelsView = ({ currentInstitute }) => {
               <option value="elementary">Elementary Level (Grade 1 - 8)</option>
               <option value="secondary">Secondary Level (Grade 9 - 10)</option>
               <option value="higher-secondary">Higher Secondary Level (Grade 11 - 12)</option>
-              <option value="college">College Level (Associate Degrees)</option>
-              <option value="university">University Level (BS / MS)</option>
+              <option value="university">Undergraduate Level (BS Honors)</option>
             </select>
           </div>
 

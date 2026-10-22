@@ -787,8 +787,7 @@ export const ClassesView = ({ currentInstitute }) => {
             { id: 'elementary', label: 'Elementary (1-8)' },
             { id: 'secondary', label: 'Secondary (9-10)' },
             { id: 'higher-secondary', label: 'HSSC (11-12)' },
-            { id: 'college', label: 'College (ADP)' },
-            { id: 'university', label: 'University (BS/MS)' }
+            { id: 'university', label: 'Undergraduates' }
           ].map(tab => (
             <button
               key={tab.id}

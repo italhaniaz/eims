@@ -31,16 +31,10 @@ export const PROGRAM_LEVELS = [
         subjects: ['Pre-Medical', 'Pre-Engineering', 'Computer Science (ICS)', 'Commerce (I.Com)', 'A-Levels'] 
       },
       { 
-        name: 'College Education', 
-        span: 'Associate Degrees', 
-        board: 'Affiliated University',
-        subjects: ['ADP in Computer Science', 'ADP in Business Administration', 'Technical Engineering (DAE)'] 
-      },
-      { 
-        name: 'University Education', 
-        span: 'Undergraduate & Graduate', 
+        name: 'Undergraduate Education', 
+        span: 'Undergraduates (BS)', 
         board: 'Higher Education Commission (HEC)',
-        subjects: ['BS Computer Science', 'BS Software Engineering', 'BBA Honors', 'MS / MPhil Programs'] 
+        subjects: ['BS Computer Science', 'BS Software Engineering', 'BBA Honors', 'BS Accounting & Finance'] 
       }
     ]
   },
@@ -171,49 +165,16 @@ export const PROGRAM_LEVELS = [
     ]
   },
   {
-    id: 'college',
-    tierNumber: 4,
-    title: 'College Level',
-    shortTitle: 'College (ADP)',
-    code: 'COLLEGE',
-    badge: 'Associate Degrees',
-    bracket: 'Higher College',
-    description: '2-Year Associate Degree Programs (ADP) and 3-Year Technical Engineering Diplomas (DAE).',
-    grades: 'Semester 1 to 4',
-    typicalAge: '18 - 20 Years',
-    color: 'amber',
-    categories: [
-      { 
-        name: 'ADP in Computer Science (ADP-CS)', 
-        span: '2-Year Degree (4 Semesters)', 
-        board: 'Affiliated Public University',
-        subjects: ['Programming Fundamentals', 'Object Oriented Programming', 'Database Systems', 'Data Communication & Networks']
-      },
-      { 
-        name: 'ADP in Business Administration (ADP-BBA)', 
-        span: '2-Year Degree (4 Semesters)', 
-        board: 'Affiliated Public University',
-        subjects: ['Financial Accounting', 'Principles of Marketing', 'Business Communication', 'Macroeconomics']
-      },
-      { 
-        name: 'DAE (Diploma of Associate Engineering)', 
-        span: '3-Year Technical Diploma', 
-        board: 'Punjab Board of Technical Education (PBTE)',
-        subjects: ['Applied Electrical Technology', 'Mechanical Engineering Workshop', 'Electronics Circuits', 'Industrial Management']
-      }
-    ]
-  },
-  {
     id: 'university',
-    tierNumber: 5,
-    title: 'University Level',
-    shortTitle: 'University (BS/MS)',
-    code: 'UNI',
-    badge: 'Higher Ed (HEC)',
-    bracket: 'University Faculty',
-    description: '4-Year Bachelor of Science (BS Honors) and 2-Year Postgraduate Masters / MPhil degree programs.',
-    grades: 'BS / MS / MPhil',
-    typicalAge: '19 - 24+ Years',
+    tierNumber: 4,
+    title: 'Undergraduate Level',
+    shortTitle: 'Undergraduates',
+    code: 'UG',
+    badge: 'Undergraduate',
+    bracket: 'Undergraduate Studies',
+    description: '4-Year Bachelor of Science (BS Honors) undergraduate degree programs and higher studies.',
+    grades: 'BS / Undergraduate',
+    typicalAge: '19 - 23+ Years',
     color: 'purple',
     categories: [
       { 
@@ -235,10 +196,10 @@ export const PROGRAM_LEVELS = [
         subjects: ['Strategic Management', 'Corporate Finance', 'Human Resource Management', 'Supply Chain & Operations']
       },
       { 
-        name: 'MS / MPhil Programs', 
-        span: '2-Year Postgraduate (4 Semesters)', 
+        name: 'BS Accounting & Finance (BSAF)', 
+        span: '4-Year Degree (8 Semesters)', 
         board: 'Higher Education Commission (HEC) Recognized',
-        subjects: ['Advanced Research Methodologies', 'Distributed Computing', 'Deep Learning & Neural Networks', 'MPhil Thesis']
+        subjects: ['Financial Reporting', 'Auditing & Assurance', 'Cost Management', 'Corporate Taxation']
       }
     ]
   }

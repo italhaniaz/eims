@@ -783,8 +783,7 @@ export const ClassModal = ({
                         <option value="elementary">Elementary (Grade 1 - 8)</option>
                         <option value="secondary">Secondary (Grade 9 - 10 / Matric)</option>
                         <option value="higher-secondary">Higher Secondary (Grade 11 - 12 / Inter)</option>
-                        <option value="college">College (Associate Degree / ADP)</option>
-                        <option value="university">University (BS / MS Honors)</option>
+                        <option value="university">Undergraduate (BS Honors)</option>
                       </select>
                     </div>
 

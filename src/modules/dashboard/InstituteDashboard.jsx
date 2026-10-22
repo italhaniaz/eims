@@ -103,10 +103,10 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
         return {
           icon: Sparkles,
           iconColor: 'text-purple-400',
-          sectionTag: 'Higher Education & University Faculty',
-          mainTitle: `${campusName} • University Faculty Center`,
-          description: `Tier: Higher Education • Undergraduate BS (4-Year) & Postgraduate MS / MPhil • ${campusCode}-UNI`,
-          badgeText: 'University Level',
+          sectionTag: 'Undergraduate Degree Programs (BS / Honors)',
+          mainTitle: `${campusName} • Undergraduate Faculty Center`,
+          description: `Tier: Undergraduate Higher Education • 4-Year BS Honors Degree Programs • ${campusCode}-UG`,
+          badgeText: 'Undergraduate Level',
           badgeColor: 'bg-purple-500/20 text-purple-300 border-purple-500/30'
         }
       default:
