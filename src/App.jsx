@@ -69,33 +69,81 @@ const AppContent = () => {
   const { user } = useAuth()
   const { institutes } = useAppData()
 
-  // Helper to extract initial route from window.location.hash
-  const getInitialRoute = (defaultRoute) => {
+  // Allowed route registry for strict portal isolation
+  const VALID_SUPERADMIN_ROUTES = [
+    'dashboard', 'institutes', 'platform-modules', 'security-center',
+    'cross-institute-analytics', 'platform-billing', 'global-templates',
+    'backup-data', 'system-health', 'support-approvals', 'departments',
+    'examination-bodies', 'academic-years', 'program-types', 'programs',
+    'subjects', 'study-schemes', 'finance', 'transport', 'library',
+    'admissions-pipeline', 'communication', 'audit-logs', 'announcements',
+    'users-all', 'users-roles'
+  ]
+
+  const VALID_INSTITUTE_ROUTES = [
+    'inst-dashboard', 'inst-students', 'inst-teachers', 'inst-classes',
+    'inst-timetable', 'inst-attendance', 'inst-fees', 'inst-exams',
+    'inst-program-levels', 'inst-notices', 'inst-admissions',
+    'inst-transport', 'inst-library'
+  ]
+
+  // Helpers to safely extract valid initial routes per portal role
+  const getInitialSuperadminRoute = () => {
     if (typeof window !== 'undefined' && window.location.hash) {
       const cleanHash = window.location.hash.replace(/^#\/?/, '')
-      if (cleanHash) return cleanHash
+      if (VALID_SUPERADMIN_ROUTES.includes(cleanHash)) return cleanHash
     }
-    return defaultRoute
+    return 'dashboard'
+  }
+
+  const getInitialInstituteRoute = () => {
+    if (typeof window !== 'undefined' && window.location.hash) {
+      const cleanHash = window.location.hash.replace(/^#\/?/, '')
+      if (VALID_INSTITUTE_ROUTES.includes(cleanHash)) return cleanHash
+    }
+    return 'inst-dashboard'
   }
 
   // Routing state synced with Browser History & Hash
-  const [superadminRoute, setSuperadminRouteState] = useState(() => getInitialRoute('dashboard'))
-  const [instituteRoute, setInstituteRouteState] = useState(() => getInitialRoute('inst-dashboard'))
+  const [superadminRoute, setSuperadminRouteState] = useState(getInitialSuperadminRoute)
+  const [instituteRoute, setInstituteRouteState] = useState(getInitialInstituteRoute)
 
   // Route setters that update the browser URL hash without full reload
   const setSuperadminRoute = (route) => {
-    setSuperadminRouteState(route)
+    const valid = VALID_SUPERADMIN_ROUTES.includes(route) ? route : 'dashboard'
+    setSuperadminRouteState(valid)
     if (typeof window !== 'undefined') {
-      window.location.hash = `#${route}`
+      window.location.hash = `#${valid}`
     }
   }
 
   const setInstituteRoute = (route) => {
-    setInstituteRouteState(route)
+    const valid = VALID_INSTITUTE_ROUTES.includes(route) ? route : 'inst-dashboard'
+    setInstituteRouteState(valid)
     if (typeof window !== 'undefined') {
-      window.location.hash = `#${route}`
+      window.location.hash = `#${valid}`
     }
   }
+
+  // Synchronize route when user role changes or authenticates
+  useEffect(() => {
+    if (!user) return
+    const currentHash = typeof window !== 'undefined' ? window.location.hash.replace(/^#\/?/, '') : ''
+
+    if (user.role === 'institute_admin') {
+      if (!VALID_INSTITUTE_ROUTES.includes(currentHash)) {
+        setInstituteRoute('inst-dashboard')
+      } else {
+        setInstituteRouteState(currentHash)
+      }
+    } else if (user.role === 'superadmin') {
+      if (!VALID_SUPERADMIN_ROUTES.includes(currentHash)) {
+        setSuperadminRoute('dashboard')
+      } else {
+        setSuperadminRouteState(currentHash)
+      }
+    }
+  }, [user?.role, user?.id])
 
   // Synchronize on browser Back/Forward (popstate & hashchange)
   useEffect(() => {
@@ -103,9 +151,17 @@ const AppContent = () => {
       const hash = window.location.hash.replace(/^#\/?/, '')
       if (hash) {
         if (user?.role === 'superadmin') {
-          setSuperadminRouteState(hash)
+          if (VALID_SUPERADMIN_ROUTES.includes(hash)) {
+            setSuperadminRouteState(hash)
+          } else {
+            setSuperadminRoute('dashboard')
+          }
         } else if (user?.role === 'institute_admin') {
-          setInstituteRouteState(hash)
+          if (VALID_INSTITUTE_ROUTES.includes(hash)) {
+            setInstituteRouteState(hash)
+          } else {
+            setInstituteRoute('inst-dashboard')
+          }
         }
       }
     }
@@ -180,7 +236,7 @@ const AppContent = () => {
             <main className="flex-1 overflow-y-auto">
               <ErrorBoundary onNavigateHome={() => setSuperadminRoute('dashboard')}>
                 <Suspense fallback={<ModuleLoader />}>
-                  {superadminRoute === 'dashboard' && (
+                  {(!VALID_SUPERADMIN_ROUTES.includes(superadminRoute) || superadminRoute === 'dashboard') && (
                     <SuperadminDashboard
                       onRouteChange={setSuperadminRoute}
                       onOpenSettings={() => setIsSettingsOpen(true)}
@@ -298,7 +354,7 @@ const AppContent = () => {
           <main className="flex-1 overflow-y-auto">
             <ErrorBoundary onNavigateHome={() => setInstituteRoute('inst-dashboard')}>
               <Suspense fallback={<ModuleLoader />}>
-                {instituteRoute === 'inst-dashboard' && (
+                {(!VALID_INSTITUTE_ROUTES.includes(instituteRoute) || instituteRoute === 'inst-dashboard') && (
                   <InstituteDashboard
                     currentInstitute={activeCampus}
                     onRouteChange={setInstituteRoute}
