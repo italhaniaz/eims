@@ -4140,6 +4140,9 @@ export const StudentsView = ({ currentInstitute }) => {
               <div className="text-xs text-rose-900">
                 <p className="font-bold">Are you sure you want to delete this student?</p>
                 <p className="mt-0.5">This will permanently remove <strong>{studentToDelete.name}</strong> ({studentToDelete.rollNumber}) from the active roster.</p>
+                <p className="mt-1 text-[11px] text-rose-800 font-semibold bg-rose-100/60 p-1.5 rounded-lg border border-rose-200">
+                  ⚠️ Note: Deleting this student affects and removes their historical daily attendance records, exam results, and fee ledgers.
+                </p>
               </div>
             </div>
             <div className="flex justify-end gap-2 pt-2 border-t">
@@ -4314,6 +4317,9 @@ export const StudentsView = ({ currentInstitute }) => {
               <div className="text-xs text-rose-900">
                 <p className="font-bold">Permanent Bulk Action</p>
                 <p className="mt-0.5">Are you sure you want to permanently delete all <strong>{selectedIds.length}</strong> selected student records? This action cannot be undone.</p>
+                <p className="mt-1 text-[11px] text-rose-800 font-semibold bg-rose-100/60 p-1.5 rounded-lg border border-rose-200">
+                  ⚠️ Note: Deleting these students will permanently purge their linked attendance entries, examination slips, and fee vouchers.
+                </p>
               </div>
             </div>
             <div className="flex justify-end gap-2 pt-2 border-t">

@@ -1,4 +1,4 @@
-import { supabase, isSupabaseConfigured } from './supabaseClient'
+import { supabase, isSupabaseConfigured } from './supabaseClient.js'
 
 // Initial clean state with ZERO entries so user can enter all records themselves:
 const cleanZeroData = {
