@@ -27,7 +27,9 @@ import {
   Sliders,
   BarChart3,
   CreditCard,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Activity,
+  LifeBuoy
 } from 'lucide-react'
 import { useAppData } from '../../context/AppDataContext'
 import { useAuth } from '../../context/AuthContext'
@@ -106,6 +108,30 @@ export const CommandPaletteModal = ({ isOpen, onClose, onNavigate, onOpenSetting
           route: 'platform-billing', 
           icon: CreditCard, 
           keywords: ['billing', 'subscriptions', 'plans', 'invoices', 'mrr', 'arr', 'pkr', 'ledger'] 
+        },
+        { 
+          id: 'nav-backup-data', 
+          title: 'Backup, Restore & Data Operations', 
+          category: 'Operations & Health', 
+          route: 'backup-data', 
+          icon: Database, 
+          keywords: ['backup', 'restore', 'snapshot', 'export', 'import', 'retention', 'purge'] 
+        },
+        { 
+          id: 'nav-system-health', 
+          title: 'System Health & Diagnostic Monitor', 
+          category: 'Operations & Health', 
+          route: 'system-health', 
+          icon: Activity, 
+          keywords: ['health', 'telemetry', 'uptime', 'latency', 'storage', 'errors', 'logs', 'api'] 
+        },
+        { 
+          id: 'nav-support-approvals', 
+          title: 'Support Desk & Approval Queue', 
+          category: 'Operations & Health', 
+          route: 'support-approvals', 
+          icon: LifeBuoy, 
+          keywords: ['support', 'tickets', 'approvals', 'petitions', 'notifications', 'terms', 'privacy', 'faqs'] 
         },
         { 
           id: 'nav-inst', 

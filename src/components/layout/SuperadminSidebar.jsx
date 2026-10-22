@@ -29,7 +29,10 @@ import {
   Sliders,
   BarChart3,
   CreditCard,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Database,
+  Activity,
+  LifeBuoy
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
@@ -47,6 +50,7 @@ export const SuperadminSidebar = ({
   const isUserRoute = ['users-all', 'users-roles'].includes(currentRoute)
   const isInstituteRoute = ['departments', 'examination-bodies'].includes(currentRoute)
   const isAcademicsRoute = ['academic-years', 'program-types', 'programs', 'subjects', 'study-schemes'].includes(currentRoute)
+  const isOperationsRoute = ['backup-data', 'system-health', 'support-approvals'].includes(currentRoute)
   const isEnterpriseRoute = ['finance', 'transport', 'library', 'admissions-pipeline', 'communication', 'audit-logs', 'announcements'].includes(currentRoute)
 
   // Accordion states with smart auto-open for active routes
@@ -55,6 +59,7 @@ export const SuperadminSidebar = ({
   const [usersOpen, setUsersOpen] = useState(isUserRoute)
   const [instituteOpen, setInstituteOpen] = useState(isInstituteRoute)
   const [academicsOpen, setAcademicsOpen] = useState(isAcademicsRoute)
+  const [operationsOpen, setOperationsOpen] = useState(isOperationsRoute)
   const [enterpriseOpen, setEnterpriseOpen] = useState(isEnterpriseRoute)
 
   // Auto-expand section when navigated
@@ -64,6 +69,7 @@ export const SuperadminSidebar = ({
     if (isUserRoute) setUsersOpen(true)
     if (isInstituteRoute) setInstituteOpen(true)
     if (isAcademicsRoute) setAcademicsOpen(true)
+    if (isOperationsRoute) setOperationsOpen(true)
     if (isEnterpriseRoute) setEnterpriseOpen(true)
   }, [currentRoute])
 
@@ -385,6 +391,57 @@ export const SuperadminSidebar = ({
                 >
                   <FileText className="w-3.5 h-3.5 opacity-70" />
                   <span>Study Schemes</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Operations & Health Accordion */}
+          <div>
+            <button
+              onClick={() => {
+                if (collapsed) setCollapsed(false)
+                setOperationsOpen(!operationsOpen)
+              }}
+              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-[#243150] transition-colors cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <Database className="w-[18px] h-[18px] text-cyan-400 shrink-0" />
+                {(!collapsed || isMobileOpen) && <span>Operations & Health</span>}
+              </div>
+              {(!collapsed || isMobileOpen) && (
+                operationsOpen ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />
+              )}
+            </button>
+
+            {(!collapsed || isMobileOpen) && operationsOpen && (
+              <div className="mt-1 pl-4 pr-1 space-y-0.5 border-l border-[#2e3d64] ml-5">
+                <button
+                  onClick={() => handleNavClick('backup-data')}
+                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
+                    isRouteActive('backup-data') ? 'text-white font-medium bg-[#243150]' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <Database className="w-3.5 h-3.5 opacity-70" />
+                  <span>Backup & Data Operations</span>
+                </button>
+                <button
+                  onClick={() => handleNavClick('system-health')}
+                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
+                    isRouteActive('system-health') ? 'text-white font-medium bg-[#243150]' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <Activity className="w-3.5 h-3.5 opacity-70" />
+                  <span>System Health Monitor</span>
+                </button>
+                <button
+                  onClick={() => handleNavClick('support-approvals')}
+                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
+                    isRouteActive('support-approvals') ? 'text-white font-medium bg-[#243150]' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <LifeBuoy className="w-3.5 h-3.5 opacity-70" />
+                  <span>Support & Approvals</span>
                 </button>
               </div>
             )}

@@ -65,6 +65,9 @@ export const SuperadminNavbar = ({
       case 'global-templates': return 'Platform Control / Global Master Templates'
       case 'cross-institute-analytics': return 'Analytics & Business / Cross-Institute Analytics'
       case 'platform-billing': return 'Analytics & Business / Subscriptions & Billing'
+      case 'backup-data': return 'Operations & Health / Backup & Data Operations'
+      case 'system-health': return 'Operations & Health / System Health Monitor'
+      case 'support-approvals': return 'Operations & Health / Support Desk & Approval Queue'
       case 'institutes': return 'Platform Control / Institutes & Campuses'
       case 'departments': return 'Institute Structure / Departments'
       case 'examination-bodies': return 'Institute Structure / Examination Bodies'
@@ -176,6 +179,17 @@ export const SuperadminNavbar = ({
                     No unread notifications.
                   </div>
                 )}
+              </div>
+              <div className="px-4 py-2 border-t border-slate-100 bg-slate-50/50">
+                <button
+                  onClick={() => {
+                    onRouteChange('support-approvals')
+                    setShowNotifications(false)
+                  }}
+                  className="text-xs text-blue-600 hover:text-blue-800 font-semibold cursor-pointer w-full text-center"
+                >
+                  View Notification Center & Approvals →
+                </button>
               </div>
             </div>
           )}
