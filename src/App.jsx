@@ -33,7 +33,7 @@ const ExaminationBodiesView = lazyWithRetry(() => import('./modules/institute-ma
 const AcademicYearsView = lazyWithRetry(() => import('./modules/academics/academic-years/AcademicYearsView'), 'academic-years')
 const ProgramTypesView = lazyWithRetry(() => import('./modules/academics/program-types/ProgramTypesView'), 'program-types')
 const ProgramsView = lazyWithRetry(() => import('./modules/academics/programs/ProgramsView'), 'programs-view')
-const SubjectsView = lazyWithRetry(() => import('./modules/academics/subjects/SubjectsView'), 'subjects-view')
+const SubjectsView = lazyWithRetry(() => import('./modules/institute-admin/subjects/SubjectsView'), 'subjects-view')
 const StudySchemesView = lazyWithRetry(() => import('./modules/academics/study-schemes/StudySchemesView'), 'study-schemes')
 const UsersManagementView = lazyWithRetry(() => import('./modules/users-management/UsersManagementView'), 'users-management')
 const NoticeBroadcasterView = lazyWithRetry(() => import('./modules/announcements/NoticeBroadcasterView'), 'notice-broadcaster')
@@ -84,7 +84,7 @@ const AppContent = () => {
   const VALID_INSTITUTE_ROUTES = [
     'inst-dashboard', 'inst-students', 'inst-teachers', 'inst-classes',
     'inst-timetable', 'inst-attendance', 'inst-fees', 'inst-exams',
-    'inst-program-levels', 'inst-notices', 'inst-admissions',
+    'inst-subjects', 'inst-program-levels', 'inst-notices', 'inst-admissions',
     'inst-transport', 'inst-library'
   ]
 
@@ -387,6 +387,9 @@ const AppContent = () => {
                 )}
                 {instituteRoute === 'inst-exams' && (
                   <ExamsView currentInstitute={activeCampus} />
+                )}
+                {instituteRoute === 'inst-subjects' && (
+                  <SubjectsView currentInstitute={activeCampus} />
                 )}
                 {instituteRoute === 'inst-program-levels' && (
                   <ProgramLevelsView currentInstitute={activeCampus} />

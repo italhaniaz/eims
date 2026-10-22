@@ -49,7 +49,7 @@ export const SuperadminSidebar = ({
   const isAnalyticsRoute = ['cross-institute-analytics', 'platform-billing'].includes(currentRoute)
   const isUserRoute = ['users-all', 'users-roles'].includes(currentRoute)
   const isInstituteRoute = ['departments', 'examination-bodies'].includes(currentRoute)
-  const isAcademicsRoute = ['academic-years', 'program-types', 'programs', 'subjects', 'study-schemes'].includes(currentRoute)
+  const isAcademicsRoute = ['academic-years', 'program-types', 'programs', 'study-schemes'].includes(currentRoute)
   const isOperationsRoute = ['backup-data', 'system-health', 'support-approvals'].includes(currentRoute)
   const isEnterpriseRoute = ['finance', 'transport', 'library', 'admissions-pipeline', 'communication', 'audit-logs', 'announcements'].includes(currentRoute)
 
@@ -382,15 +382,6 @@ export const SuperadminSidebar = ({
                 >
                   <BookOpen className="w-3.5 h-3.5 opacity-70" />
                   <span>Programs</span>
-                </button>
-                <button
-                  onClick={() => handleNavClick('subjects')}
-                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
-                    isRouteActive('subjects') ? 'text-white font-medium bg-[#243150]' : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  <Bookmark className="w-3.5 h-3.5 opacity-70" />
-                  <span>Subjects</span>
                 </button>
                 <button
                   onClick={() => handleNavClick('study-schemes')}

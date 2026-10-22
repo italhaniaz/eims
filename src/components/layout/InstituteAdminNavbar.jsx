@@ -168,6 +168,7 @@ export const InstituteAdminNavbar = ({
       case 'inst-attendance': return 'Daily Attendance'
       case 'inst-fees': return 'Fee Invoices & Payments'
       case 'inst-exams': return 'Examinations & Marks'
+      case 'inst-subjects': return 'Academic Curriculum & Subjects'
       case 'inst-notices': return 'Campus Notice Board'
       case 'inst-admissions': return 'Inquiries & Leads'
       case 'inst-transport': return 'Campus Transport & Vans'

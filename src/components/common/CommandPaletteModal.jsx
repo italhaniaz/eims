@@ -236,14 +236,6 @@ export const CommandPaletteModal = ({ isOpen, onClose, onNavigate, onOpenSetting
           route: 'program-types', 
           icon: BookOpen, 
           keywords: ['curriculum', 'program types', 'k-12', 'higher education', 'matric', 'inter'] 
-        },
-        { 
-          id: 'nav-subjects', 
-          title: 'Subjects & Course Catalog', 
-          category: 'Academics', 
-          route: 'subjects', 
-          icon: BookOpen, 
-          keywords: ['subjects', 'courses', 'syllabus', 'mazameen'] 
         }
       ]
     } else {
@@ -311,6 +303,14 @@ export const CommandPaletteModal = ({ isOpen, onClose, onNavigate, onOpenSetting
           route: 'inst-exams', 
           icon: Award, 
           keywords: ['exams', 'imtihan', 'paper', 'datesheet', 'result', 'admit card', 'marks', 'parcha'] 
+        },
+        { 
+          id: 'nav-inst-sub', 
+          title: 'Academic Curriculum & Subjects', 
+          category: 'Academics', 
+          route: 'inst-subjects', 
+          icon: BookOpen, 
+          keywords: ['subjects', 'courses', 'curriculum', 'syllabus', 'mazameen', 'credit hours', 'theory', 'lab'] 
         },
         { 
           id: 'nav-not', 

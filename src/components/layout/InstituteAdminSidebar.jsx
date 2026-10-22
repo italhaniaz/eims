@@ -4,6 +4,7 @@ import {
   GraduationCap, 
   Users, 
   BookOpen, 
+  Bookmark,
   CalendarCheck, 
   Receipt, 
   Award,
@@ -33,7 +34,7 @@ export const InstituteAdminSidebar = ({
   const [collapsed, setCollapsed] = useState(false)
 
   const isStudentRoute = ['inst-students', 'inst-admissions', 'inst-teachers', 'inst-classes'].includes(currentRoute)
-  const isAcademicRoute = ['inst-timetable', 'inst-attendance', 'inst-exams', 'inst-notices', 'inst-program-levels'].includes(currentRoute)
+  const isAcademicRoute = ['inst-timetable', 'inst-attendance', 'inst-exams', 'inst-subjects', 'inst-notices', 'inst-program-levels'].includes(currentRoute)
   const isServicesRoute = ['inst-fees', 'inst-transport', 'inst-library'].includes(currentRoute)
 
   const [studentOpen, setStudentOpen] = useState(isStudentRoute)
@@ -239,6 +240,15 @@ export const InstituteAdminSidebar = ({
                 >
                   <Award className="w-3.5 h-3.5 opacity-80 text-rose-400 shrink-0" />
                   <span className="truncate">Examinations & Marks</span>
+                </button>
+                <button
+                  onClick={() => handleNavClick('inst-subjects')}
+                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors ${
+                    isRouteActive('inst-subjects') ? 'text-white font-medium bg-[#1e2f54]' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <Bookmark className="w-3.5 h-3.5 opacity-80 text-blue-400 shrink-0" />
+                  <span className="truncate">Curriculum & Subjects</span>
                 </button>
                 <button
                   onClick={() => handleNavClick('inst-notices')}
