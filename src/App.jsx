@@ -273,7 +273,10 @@ const AppContent = () => {
                 />
               )}
               {instituteRoute === 'inst-attendance' && (
-                <AttendanceView currentInstitute={activeCampus} />
+                <AttendanceView 
+                  currentInstitute={activeCampus} 
+                  onRouteChange={setInstituteRoute}
+                />
               )}
               {instituteRoute === 'inst-fees' && (
                 <FeesView currentInstitute={activeCampus} />

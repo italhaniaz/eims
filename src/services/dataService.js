@@ -639,3 +639,6 @@ export const DataService = {
     }
   }
 }
+
+export default DataService
+
