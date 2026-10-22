@@ -114,7 +114,7 @@ export const AppDataProvider = ({ children }) => {
   const generateReport = () => {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
     const reportData = [
-      ['School Management System - Executive Platform Audit Report'],
+      ['Educational Institute Management System - Executive Platform Audit Report'],
       ['Generated At:', new Date().toLocaleString()],
       [''],
       ['Global Platform Metrics'],
