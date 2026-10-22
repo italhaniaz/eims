@@ -220,6 +220,56 @@ export const sampleTemplateData = {
 const STORAGE_KEY = 'sms_database_v3_enterprise'
 
 // Load from LocalStorage or initialize with ZERO state
+// Helper to compute real numbers from actual database entities
+export const computeRealStats = (data = {}) => {
+  const users = data.users || []
+  const institutes = data.institutes || []
+  const activeUsers = users.filter(u => u.status === 'Active')
+
+  // Real active sessions: based on actual active users in system
+  const activeSessions = users.length > 0 ? Math.max(activeUsers.length, 1) : 0
+
+  // Real month-over-month growth rate computation based on actual joined / created dates
+  const now = new Date()
+  const currentYear = now.getFullYear()
+  const currentMonth = now.getMonth()
+
+  const currentMonthCount = institutes.filter(inst => {
+    const d = inst.createdAt ? new Date(inst.createdAt) : (inst.joinedDate ? new Date(inst.joinedDate) : null)
+    return d && d.getFullYear() === currentYear && d.getMonth() === currentMonth
+  }).length
+
+  const prevMonthCount = institutes.filter(inst => {
+    const d = inst.createdAt ? new Date(inst.createdAt) : (inst.joinedDate ? new Date(inst.joinedDate) : null)
+    if (!d) return false
+    return currentMonth === 0
+      ? (d.getFullYear() === currentYear - 1 && d.getMonth() === 11)
+      : (d.getFullYear() === currentYear && d.getMonth() === currentMonth - 1)
+  }).length
+
+  let growthRate = '0.0%'
+  let growthLabel = 'MoM Trend'
+  if (prevMonthCount > 0) {
+    const pct = ((currentMonthCount - prevMonthCount) / prevMonthCount) * 100
+    growthRate = `${pct >= 0 ? '+' : ''}${pct.toFixed(1)}%`
+    growthLabel = `${growthRate} MoM`
+  } else if (currentMonthCount > 0) {
+    growthRate = `+${currentMonthCount * 100}%`
+    growthLabel = 'New Onboard'
+  } else if (institutes.length > 0) {
+    growthRate = '+0.0%'
+    growthLabel = 'Stable MoM'
+  }
+
+  return {
+    totalUsers: users.length,
+    totalInstitutes: institutes.length,
+    activeSessions,
+    growthRate,
+    growthLabel
+  }
+}
+
 export const getStoredData = () => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
@@ -283,12 +333,7 @@ export const getStoredData = () => {
       return {
         ...cleanZeroData,
         ...parsed,
-        stats: {
-          totalUsers: (parsed.users || []).length,
-          totalInstitutes: (parsed.institutes || []).length,
-          activeSessions: (parsed.users || []).length > 0 ? (parsed.users || []).length * 4 + 2 : 0,
-          growthRate: (parsed.institutes || []).length > 0 ? `${((parsed.institutes || []).length * 11.4).toFixed(1)}%` : '0.0%'
-        }
+        stats: computeRealStats(parsed)
       }
     }
   } catch (e) {
@@ -302,12 +347,7 @@ export const getStoredData = () => {
 
 export const saveStoredData = (data) => {
   try {
-    const updatedStats = {
-      totalUsers: (data.users || []).length,
-      totalInstitutes: (data.institutes || []).length,
-      activeSessions: (data.users || []).length > 0 ? (data.users || []).length * 4 + 2 : 0,
-      growthRate: (data.institutes || []).length > 0 ? `${((data.institutes || []).length * 11.4).toFixed(1)}%` : '0.0%'
-    }
+    const updatedStats = computeRealStats(data)
     const payload = {
       ...data,
       stats: updatedStats

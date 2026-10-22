@@ -687,7 +687,34 @@ export const TransportView = () => {
           maxWidth="max-w-2xl"
         >
           <div className="space-y-4">
-            <div className="p-8 bg-white border-2 border-slate-900 rounded-xl space-y-5 text-slate-900 font-sans print:border-black print:p-8">
+            {/* Print Specific CSS Rules */}
+            <style>{`
+              @media print {
+                body * {
+                  visibility: hidden !important;
+                }
+                #printable-transport-cert, #printable-transport-cert * {
+                  visibility: visible !important;
+                }
+                #printable-transport-cert {
+                  position: absolute !important;
+                  left: 0 !important;
+                  top: 0 !important;
+                  width: 100% !important;
+                  margin: 0 !important;
+                  padding: 8mm !important;
+                  background: white !important;
+                }
+                .no-print {
+                  display: none !important;
+                }
+                @page {
+                  size: A4 portrait;
+                  margin: 8mm;
+                }
+              }
+            `}</style>
+            <div id="printable-transport-cert" className="p-8 bg-white border-2 border-slate-900 rounded-xl space-y-5 text-slate-900 font-sans print:border-black print:p-8">
               {/* Official Header */}
               <div className="text-center border-b-2 border-slate-900 pb-4 space-y-1">
                 <div className="w-12 h-12 mx-auto rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center mb-1">
@@ -826,7 +853,34 @@ export const TransportView = () => {
           title="Printable Student Digital Bus Pass"
         >
           <div className="space-y-4">
-            <div className="max-w-sm mx-auto p-5 bg-gradient-to-br from-amber-400 via-amber-300 to-yellow-400 border-2 border-slate-900 rounded-2xl shadow-xl text-slate-950 font-sans print:shadow-none print:border-black">
+            {/* Print Specific CSS Rules */}
+            <style>{`
+              @media print {
+                body * {
+                  visibility: hidden !important;
+                }
+                #printable-student-bus-pass, #printable-student-bus-pass * {
+                  visibility: visible !important;
+                }
+                #printable-student-bus-pass {
+                  position: absolute !important;
+                  left: 0 !important;
+                  top: 0 !important;
+                  width: 90mm !important;
+                  margin: 0 auto !important;
+                  padding: 6mm !important;
+                  background: white !important;
+                }
+                .no-print {
+                  display: none !important;
+                }
+                @page {
+                  size: 100mm 150mm;
+                  margin: 4mm;
+                }
+              }
+            `}</style>
+            <div id="printable-student-bus-pass" className="max-w-sm mx-auto p-5 bg-gradient-to-br from-amber-400 via-amber-300 to-yellow-400 border-2 border-slate-900 rounded-2xl shadow-xl text-slate-950 font-sans print:shadow-none print:border-black">
               {/* Pass Header */}
               <div className="flex items-center justify-between border-b-2 border-slate-900 pb-3">
                 <div className="flex items-center gap-2">

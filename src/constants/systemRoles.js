@@ -244,6 +244,94 @@ export const DEFAULT_RBAC_PERMISSIONS = [
     student: false,
     parent: false
   },
+  {
+    id: 'perm-lifecycle-wizard',
+    category: 'Main Platform Governance',
+    label: 'Institute Onboarding Wizard & Multi-Campus Lifecycle Governance',
+    superadmin: true,
+    institute_admin: false,
+    teacher: false,
+    accountant: false,
+    student: false,
+    parent: false
+  },
+  {
+    id: 'perm-module-matrix',
+    category: 'Main Platform Governance',
+    label: 'Cross-Institute Feature Flags Matrix & Module Quota Limits',
+    superadmin: true,
+    institute_admin: false,
+    teacher: false,
+    accountant: false,
+    student: false,
+    parent: false
+  },
+  {
+    id: 'perm-impersonation',
+    category: 'Main Platform Governance',
+    label: 'Direct Campus Delegation & Superadmin Impersonation Engine',
+    superadmin: true,
+    institute_admin: false,
+    teacher: false,
+    accountant: false,
+    student: false,
+    parent: false
+  },
+  {
+    id: 'perm-system-settings',
+    category: 'Main Platform Governance',
+    label: 'Platform System Settings, Localization & Gateway Secrets',
+    superadmin: true,
+    institute_admin: false,
+    teacher: false,
+    accountant: false,
+    student: false,
+    parent: false
+  },
+  {
+    id: 'perm-security-center',
+    category: 'Main Platform Governance',
+    label: 'Enterprise Security Center, Session Governance & Force Logout',
+    superadmin: true,
+    institute_admin: false,
+    teacher: false,
+    accountant: false,
+    student: false,
+    parent: false
+  },
+  {
+    id: 'perm-cross-analytics',
+    category: 'Main Platform Governance',
+    label: 'Cross-Institute Comparative Analytics, Attendance & Fee Recovery',
+    superadmin: true,
+    institute_admin: false,
+    teacher: false,
+    accountant: false,
+    student: false,
+    parent: false
+  },
+  {
+    id: 'perm-subscription-billing',
+    category: 'Main Platform Governance',
+    label: 'Platform Subscriptions, Plans Catalog & Revenue Ledger',
+    superadmin: true,
+    institute_admin: false,
+    teacher: false,
+    accountant: false,
+    student: false,
+    parent: false
+  },
+  {
+    id: 'perm-global-templates',
+    category: 'Main Platform Governance',
+    label: 'Global Master Data Standards, Curriculum & Templates Push',
+    superadmin: true,
+    institute_admin: false,
+    teacher: false,
+    accountant: false,
+    student: false,
+    parent: false
+  },
 
   // 2. CAMPUS OPERATIONAL FEATURES (Institute Admin & Campus Staff)
   {

@@ -863,17 +863,34 @@ export const StudentsView = ({ currentInstitute }) => {
     setIsSubmitting(true)
     const cleanRoll = formData.rollNumber.trim() || calculateNextRollNumber(currentLevelKey)
 
-    // Duplicate Check
-    const isDuplicate = students.some(s => 
+    // 1. Roll Number Duplicate Check
+    const isDuplicateRoll = students.some(s => 
       s.rollNumber?.toLowerCase() === cleanRoll.toLowerCase() &&
       (!editingStudent || s.id !== editingStudent.id) &&
       (!s.instituteId || s.instituteId === currentInstitute?.id)
     )
 
-    if (isDuplicate) {
-      toast.error(`Identifier "${cleanRoll}" already exists for another student!`)
+    if (isDuplicateRoll) {
+      toast.error(`Roll Number "${cleanRoll}" already exists for another student in this campus!`)
       setIsSubmitting(false)
       return
+    }
+
+    // 2. NADRA B-Form / CNIC Duplicate Check
+    const cleanBForm = (formData.bFormCnic || '').replace(/[^0-9]/g, '')
+    if (cleanBForm.length >= 9) {
+      const duplicateBForm = students.find(s => {
+        if (editingStudent && s.id === editingStudent.id) return false
+        if (s.instituteId && currentInstitute?.id && s.instituteId !== currentInstitute.id) return false
+        const exClean = (s.bFormCnic || '').replace(/[^0-9]/g, '')
+        return exClean && exClean === cleanBForm
+      })
+
+      if (duplicateBForm) {
+        toast.error(`Identity Conflict: A student with B-Form/CNIC "${formData.bFormCnic}" already exists: ${duplicateBForm.name} (${duplicateBForm.rollNumber} - ${duplicateBForm.className})!`)
+        setIsSubmitting(false)
+        return
+      }
     }
 
     const effectiveStatus = mode === 'draft' ? 'Withdrawn' : (formData.status || 'Active')
@@ -1677,10 +1694,16 @@ export const StudentsView = ({ currentInstitute }) => {
           </div>
         )}
 
+        {/* Mobile Swipe Hint for Layman Users */}
+        <div className="md:hidden flex items-center justify-between px-4 py-1.5 bg-slate-50/90 border-b border-slate-200 text-[11px] text-slate-500 font-medium no-print">
+          <span className="font-semibold text-slate-700">Student Roster</span>
+          <span className="text-emerald-700 font-bold">Swipe horizontally for actions & status →</span>
+        </div>
+
         {/* Main Table View */}
         <div className="overflow-x-auto min-w-full">
           <table className="w-full text-left text-xs sm:text-sm min-w-[950px]">
-            <thead className="bg-slate-50 text-slate-600 text-[11px] uppercase tracking-wider font-bold border-b border-slate-200">
+            <thead className="bg-slate-50 text-slate-600 text-[11px] uppercase tracking-wider font-bold border-b border-slate-200 sticky top-0 z-10 shadow-2xs">
               <tr>
                 <th className="px-4 py-3.5 w-10 text-center whitespace-nowrap">
                   <input
@@ -2403,6 +2426,25 @@ export const StudentsView = ({ currentInstitute }) => {
                       }`}
                     />
                     {formErrors.bFormCnic && <p className="text-[11px] text-rose-600 mt-1 font-medium">{formErrors.bFormCnic}</p>}
+                    {(() => {
+                      const clean = (formData.bFormCnic || '').replace(/[^0-9]/g, '')
+                      if (clean.length >= 9) {
+                        const matched = students.find(s => {
+                          if (editingStudent && s.id === editingStudent.id) return false
+                          if (s.instituteId && currentInstitute?.id && s.instituteId !== currentInstitute.id) return false
+                          const ex = (s.bFormCnic || '').replace(/[^0-9]/g, '')
+                          return ex && ex === clean
+                        })
+                        if (matched) {
+                          return (
+                            <p className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 p-1 rounded mt-1 font-semibold">
+                              ⚠️ Warning: Matches existing student <strong>{matched.name}</strong> ({matched.rollNumber})
+                            </p>
+                          )
+                        }
+                      }
+                      return null
+                    })()}
                   </div>
 
                   <div>
@@ -3972,7 +4014,34 @@ export const StudentsView = ({ currentInstitute }) => {
           maxWidth="max-w-2xl"
         >
           <div className="space-y-4">
-            <div className="p-6 bg-white border-2 border-slate-800 rounded-xl space-y-4 shadow-sm text-slate-900">
+                      {/* Print Specific CSS Rules */}
+          <style>{`
+            @media print {
+              body * {
+                visibility: hidden !important;
+              }
+              #printable-admission-slip, #printable-admission-slip * {
+                visibility: visible !important;
+              }
+              #printable-admission-slip {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 10mm !important;
+                background: white !important;
+              }
+              .no-print {
+                display: none !important;
+              }
+              @page {
+                size: A4 portrait;
+                margin: 8mm;
+              }
+            }
+          `}</style>
+            <div id="printable-admission-slip" className="p-6 bg-white border-2 border-slate-800 rounded-xl space-y-4 shadow-sm text-slate-900">
               <div className="text-center pb-3 border-b-2 border-slate-800">
                 <h2 className="text-base font-black tracking-wider uppercase">{currentInstitute?.name || 'CENTRAL INSTITUTE OF LEARNING'}</h2>
                 <span className="text-xs font-bold text-slate-600 tracking-wide block mt-0.5">OFFICIAL ADMISSION CONFIRMATION & ROSTER SLIP</span>
@@ -4051,7 +4120,34 @@ export const StudentsView = ({ currentInstitute }) => {
           maxWidth="max-w-2xl"
         >
           <div className="space-y-4">
-            <div className="p-6 bg-amber-50/50 border-2 border-amber-900/40 rounded-xl space-y-4 text-slate-900 shadow-sm">
+            {/* Print Specific CSS Rules */}
+            <style>{`
+              @media print {
+                body * {
+                  visibility: hidden !important;
+                }
+                #printable-slc-certificate, #printable-slc-certificate * {
+                  visibility: visible !important;
+                }
+                #printable-slc-certificate {
+                  position: absolute !important;
+                  left: 0 !important;
+                  top: 0 !important;
+                  width: 100% !important;
+                  margin: 0 !important;
+                  padding: 10mm !important;
+                  background: white !important;
+                }
+                .no-print {
+                  display: none !important;
+                }
+                @page {
+                  size: A4 portrait;
+                  margin: 8mm;
+                }
+              }
+            `}</style>
+            <div id="printable-slc-certificate" className="p-6 bg-amber-50/50 border-2 border-amber-900/40 rounded-xl space-y-4 text-slate-900 shadow-sm">
               <div className="text-center pb-3 border-b-2 border-amber-900/40">
                 <h2 className="text-base font-black uppercase text-amber-950">{currentInstitute?.name || 'CENTRAL EDUCATIONAL BOARD'}</h2>
                 <span className="text-xs font-bold text-amber-800 tracking-wider uppercase block mt-0.5">SCHOOL LEAVING CERTIFICATE</span>

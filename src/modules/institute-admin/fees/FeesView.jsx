@@ -5,7 +5,8 @@ import {
   Search, 
   CheckCircle, 
   Clock, 
-  Printer, 
+  Printer,
+  MessageSquare, 
   CreditCard, 
   School,
   Zap,
@@ -57,6 +58,16 @@ export const FeesView = ({ currentInstitute }) => {
       { partNo: 2, amount: 15000, dueDate: '2026-12-10' }
     ]
   })
+
+  // Fee Status Filter Tab & Overdue Defaulters
+  const [feeFilterTab, setFeeFilterTab] = useState('all') // 'all' | 'pending' | 'overdue' | 'paid'
+
+  const isFeeOverdue = (fee) => {
+    if (!fee || fee.status === 'Paid') return false
+    if (!fee.dueDate) return false
+    const due = new Date(fee.dueDate + 'T23:59:59')
+    return due < new Date()
+  }
 
   // Sorting & Pagination
   const [sortField, setSortField] = useState('studentName')
@@ -121,7 +132,9 @@ export const FeesView = ({ currentInstitute }) => {
     paymentMethod: 'Cash',
     cashTendered: '',
     discount: 0,
-    cashierNotes: ''
+    cashierNotes: '',
+    sendSmsAlert: true,
+    guardianPhone: ''
   })
 
   const handleStudentSelect = (studentName) => {
@@ -157,26 +170,43 @@ export const FeesView = ({ currentInstitute }) => {
     setIsModalOpen(false)
   }
 
-  // Handle Batch Fee Generation for an entire class
+  // Handle Batch Fee Generation for an entire class with duplicate guard
   const handleGenerateBatchFees = async (e) => {
     e.preventDefault()
-    const targetStudents = instStudents.filter(s => 
-      batchData.targetClass === 'All Classes' || 
-      (s.className || '').toLowerCase().includes(batchData.targetClass.toLowerCase())
-    )
+    const targetStudents = instStudents.filter(s => {
+      if (s.status && s.status !== 'Active') return false
+      if (batchData.targetClass === 'All Classes') return true
+      return (s.className || '').toLowerCase().includes(batchData.targetClass.toLowerCase())
+    })
 
     if (targetStudents.length === 0) {
-      toast.warning(`No students found enrolled in ${batchData.targetClass}.`)
+      toast.warning(`No active students found enrolled in ${batchData.targetClass}.`)
       return
     }
 
     let generatedCount = 0
+    let skippedCount = 0
+
     for (const std of targetStudents) {
+      const alreadyHas = fees.some(f => 
+        f.studentName?.toLowerCase() === std.name?.toLowerCase() &&
+        f.feeTitle?.toLowerCase() === batchData.feeTitle?.toLowerCase() &&
+        (!f.instituteId || f.instituteId === currentInstitute?.id)
+      )
+
+      if (alreadyHas) {
+        skippedCount++
+        continue
+      }
+
       await addItem('fees', {
         studentName: std.name,
         rollNumber: std.rollNumber,
         className: std.className || batchData.targetClass,
         amount: Number(batchData.amount),
+        grossAmount: Number(batchData.amount),
+        discountAmount: 0,
+        concessionType: 'None',
         feeTitle: batchData.feeTitle,
         dueDate: batchData.dueDate,
         status: 'Pending',
@@ -185,7 +215,15 @@ export const FeesView = ({ currentInstitute }) => {
       generatedCount++
     }
 
-    toast.success(`Generated ${generatedCount} fee challans for ${batchData.targetClass}!`)
+    if (logAuditEvent) {
+      logAuditEvent(`Bulk fee billing generated: ${generatedCount} vouchers for ${batchData.targetClass} (${batchData.feeTitle})`, 'Fee Bursar', 'Success')
+    }
+
+    if (generatedCount > 0) {
+      toast.success(`Generated ${generatedCount} monthly fee challans for ${batchData.targetClass}! (${skippedCount} already billed)`)
+    } else {
+      toast.info(`All ${skippedCount} students in ${batchData.targetClass} are already billed for "${batchData.feeTitle}".`)
+    }
     setIsBatchModalOpen(false)
   }
 
@@ -372,6 +410,7 @@ export const FeesView = ({ currentInstitute }) => {
   // Open POS Cashier Terminal
   const openPosCashier = (fee = null) => {
     if (fee) {
+      const matchedStd = instStudents.find(s => s.rollNumber === fee.rollNumber || s.name === fee.studentName)
       setPosData({
         selectedFeeId: fee.id,
         studentName: fee.studentName,
@@ -381,11 +420,14 @@ export const FeesView = ({ currentInstitute }) => {
         paymentMethod: 'Cash',
         cashTendered: Number(fee.amount || 0),
         discount: 0,
-        cashierNotes: 'Counter Cash Collection'
+        cashierNotes: 'Counter Cash Collection',
+        sendSmsAlert: true,
+        guardianPhone: matchedStd?.guardianPhone || matchedStd?.phone || '+92 300 1234567'
       })
     } else {
       const pendingFees = fees.filter(f => f.status !== 'Paid' && (!f.instituteId || f.instituteId === currentInstitute?.id))
       const first = pendingFees[0]
+      const matchedStd = instStudents.find(s => s.rollNumber === first?.rollNumber || s.name === first?.studentName) || instStudents[0]
       setPosData({
         selectedFeeId: first?.id || '',
         studentName: first?.studentName || instStudents[0]?.name || '',
@@ -395,7 +437,9 @@ export const FeesView = ({ currentInstitute }) => {
         paymentMethod: 'Cash',
         cashTendered: Number(first?.amount || 15000),
         discount: 0,
-        cashierNotes: 'Counter Cash Collection'
+        cashierNotes: 'Counter Cash Collection',
+        sendSmsAlert: true,
+        guardianPhone: matchedStd?.guardianPhone || matchedStd?.phone || '+92 300 1234567'
       })
     }
     setIsPosModalOpen(true)
@@ -439,8 +483,27 @@ export const FeesView = ({ currentInstitute }) => {
       cashTendered: posData.cashTendered,
       changeDue: Math.max(0, Number(posData.cashTendered) - payable),
       paymentMethod: posData.paymentMethod,
+      phone: posData.guardianPhone || '',
       date: new Date().toLocaleString(),
       cashier: 'Fee Counter Operator'
+    }
+
+    if (posData.sendSmsAlert) {
+      const commEntry = {
+        id: `comm-fee-${Date.now()}`,
+        title: `Fee Payment Receipt #${receiptObj.receiptNo}`,
+        channel: 'SMS & WhatsApp Gateway',
+        audience: `Guardian of ${posData.studentName} (${posData.guardianPhone || 'Phone Registered'})`,
+        recipientsCount: 1,
+        timestamp: new Date().toLocaleString(),
+        status: 'Delivered',
+        messagePreview: `Official Payment Receipt: Received Rs. ${payable.toLocaleString()} for ${posData.studentName} (${posData.rollNumber}). Slip #${receiptObj.receiptNo}. Thank you.`
+      }
+      try {
+        await addItem('communicationLogs', commEntry)
+      } catch (err) {
+        console.error('Failed to log comm entry:', err)
+      }
     }
 
     if (logAuditEvent) {
@@ -462,12 +525,20 @@ export const FeesView = ({ currentInstitute }) => {
 
   // Filter and sort fee vouchers
   const filteredAndSorted = useMemo(() => {
-    const list = fees.filter(f =>
+    let list = fees.filter(f =>
       (!f.instituteId || f.instituteId === currentInstitute?.id) &&
       ((f.studentName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
        (f.rollNumber || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
        (f.className || '').toLowerCase().includes(searchTerm.toLowerCase()))
     )
+
+    if (feeFilterTab === 'pending') {
+      list = list.filter(f => f.status !== 'Paid')
+    } else if (feeFilterTab === 'overdue') {
+      list = list.filter(f => isFeeOverdue(f))
+    } else if (feeFilterTab === 'paid') {
+      list = list.filter(f => f.status === 'Paid')
+    }
 
     return list.sort((a, b) => {
       let valA = a[sortField] || ''
@@ -485,15 +556,37 @@ export const FeesView = ({ currentInstitute }) => {
       if (valA > valB) return sortDirection === 'asc' ? 1 : -1
       return 0
     })
-  }, [fees, currentInstitute?.id, searchTerm, sortField, sortDirection])
+  }, [fees, currentInstitute?.id, searchTerm, sortField, sortDirection, feeFilterTab])
 
-  const totalCollected = filteredAndSorted
+  const allInstFees = useMemo(() => {
+    return fees.filter(f => !f.instituteId || f.instituteId === currentInstitute?.id)
+  }, [fees, currentInstitute?.id])
+
+  const totalCollected = allInstFees
     .filter(f => f.status === 'Paid')
     .reduce((sum, f) => sum + Number(f.amount || 0), 0)
 
-  const totalPending = filteredAndSorted
+  const totalPending = allInstFees
     .filter(f => f.status !== 'Paid')
     .reduce((sum, f) => sum + Number(f.amount || 0), 0)
+
+  const defaultersList = useMemo(() => {
+    return allInstFees.filter(f => isFeeOverdue(f))
+  }, [allInstFees])
+
+  const totalDefaultersAmount = defaultersList.reduce((sum, f) => sum + Number(f.amount || 0), 0)
+
+  // Today's counter collections
+  const todayPaid = useMemo(() => {
+    const todayStr = new Date().toISOString().slice(0, 10)
+    return allInstFees.filter(f => f.status === 'Paid' && (f.paymentDate || '').startsWith(todayStr))
+  }, [allInstFees])
+
+  const todayCashAmount = todayPaid
+    .filter(f => (f.paymentMethod || 'Cash').toLowerCase().includes('cash'))
+    .reduce((sum, f) => sum + Number(f.amount || 0), 0)
+
+  const todayTotalAmount = todayPaid.reduce((sum, f) => sum + Number(f.amount || 0), 0)
 
   // Pagination calculation
   const totalVouchers = filteredAndSorted.length
@@ -595,31 +688,122 @@ export const FeesView = ({ currentInstitute }) => {
         </div>
       </div>
 
-      {/* Summary Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-xl flex items-center justify-between">
+      {/* Summary Stats: 4-Card Operational Ledger Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-emerald-50/80 border border-emerald-200/80 p-4 rounded-2xl flex items-center justify-between shadow-2xs">
           <div>
-            <span className="text-xs text-emerald-600 font-semibold uppercase tracking-wider">Total Fee Collected</span>
-            <p className="text-2xl font-bold text-emerald-900 mt-1">Rs. {totalCollected.toLocaleString()}</p>
+            <span className="text-[11px] text-emerald-700 font-bold uppercase tracking-wider">Total Collections</span>
+            <p className="text-xl sm:text-2xl font-black text-emerald-950 mt-1">Rs. {totalCollected.toLocaleString()}</p>
+            <span className="text-[10px] text-emerald-600 font-medium">All settled accounts</span>
           </div>
-          <div className="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
             <CheckCircle className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="bg-amber-50 border border-amber-100 p-4 rounded-xl flex items-center justify-between">
+        <div className="bg-amber-50/80 border border-amber-200/80 p-4 rounded-2xl flex items-center justify-between shadow-2xs">
           <div>
-            <span className="text-xs text-amber-600 font-semibold uppercase tracking-wider">Pending Invoices</span>
-            <p className="text-2xl font-bold text-amber-900 mt-1">Rs. {totalPending.toLocaleString()}</p>
+            <span className="text-[11px] text-amber-700 font-bold uppercase tracking-wider">Pending Dues</span>
+            <p className="text-xl sm:text-2xl font-black text-amber-950 mt-1">Rs. {totalPending.toLocaleString()}</p>
+            <span className="text-[10px] text-amber-600 font-medium">Within valid due period</span>
           </div>
-          <div className="w-10 h-10 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
             <Clock className="w-5 h-5" />
+          </div>
+        </div>
+
+        <div 
+          onClick={() => { setFeeFilterTab('overdue'); setCurrentPage(1); }}
+          className="bg-rose-50/90 border border-rose-200 p-4 rounded-2xl flex items-center justify-between shadow-2xs cursor-pointer hover:ring-2 hover:ring-rose-300 transition-all group"
+          title="Click to view all overdue defaulters"
+        >
+          <div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] text-rose-700 font-bold uppercase tracking-wider">Overdue Defaulters</span>
+              <span className="w-2 h-2 rounded-full bg-rose-600 animate-pulse"></span>
+            </div>
+            <p className="text-xl sm:text-2xl font-black text-rose-950 mt-1">Rs. {totalDefaultersAmount.toLocaleString()}</p>
+            <span className="text-[10px] text-rose-700 font-bold group-hover:underline">
+              {defaultersList.length} Students Overdue →
+            </span>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center shrink-0">
+            <Clock className="w-5 h-5" />
+          </div>
+        </div>
+
+        <div className="bg-indigo-50/80 border border-indigo-200/80 p-4 rounded-2xl flex items-center justify-between shadow-2xs">
+          <div>
+            <span className="text-[11px] text-indigo-700 font-bold uppercase tracking-wider">Today's Counter Cash</span>
+            <p className="text-xl sm:text-2xl font-black text-indigo-950 mt-1">Rs. {todayTotalAmount.toLocaleString()}</p>
+            <span className="text-[10px] text-indigo-600 font-medium">
+              {todayPaid.length} transaction{todayPaid.length === 1 ? '' : 's'} recorded today
+            </span>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0">
+            <Zap className="w-5 h-5" />
           </div>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      {/* Table with Tab Filters & Sticky Headers */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        {/* Category Tabs */}
+        <div className="flex items-center gap-1.5 px-4 pt-3 pb-1 border-b border-slate-200 bg-white overflow-x-auto">
+          <button
+            type="button"
+            onClick={() => { setFeeFilterTab('all'); setCurrentPage(1); }}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              feeFilterTab === 'all'
+                ? 'bg-slate-900 text-white shadow-2xs'
+                : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            All Vouchers ({allInstFees.length})
+          </button>
+
+          <button
+            type="button"
+            onClick={() => { setFeeFilterTab('pending'); setCurrentPage(1); }}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              feeFilterTab === 'pending'
+                ? 'bg-amber-600 text-white shadow-2xs'
+                : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            Pending Due ({allInstFees.filter(f => f.status !== 'Paid').length})
+          </button>
+
+          <button
+            type="button"
+            onClick={() => { setFeeFilterTab('overdue'); setCurrentPage(1); }}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+              feeFilterTab === 'overdue'
+                ? 'bg-rose-600 text-white shadow-2xs'
+                : 'text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200'
+            }`}
+          >
+            <span>Overdue Defaulters</span>
+            <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+              feeFilterTab === 'overdue' ? 'bg-white text-rose-800' : 'bg-rose-200 text-rose-900'
+            }`}>
+              {defaultersList.length}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => { setFeeFilterTab('paid'); setCurrentPage(1); }}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              feeFilterTab === 'paid'
+                ? 'bg-emerald-600 text-white shadow-2xs'
+                : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            Paid & Settled ({allInstFees.filter(f => f.status === 'Paid').length})
+          </button>
+        </div>
+
         <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-50/50">
           <div className="relative w-full max-w-md">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -641,7 +825,7 @@ export const FeesView = ({ currentInstitute }) => {
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm min-w-[700px]">
-            <thead className="bg-slate-50 text-slate-600 text-[11px] uppercase tracking-wider font-bold border-b border-slate-200">
+            <thead className="bg-slate-50 text-slate-600 text-[11px] uppercase tracking-wider font-bold border-b border-slate-200 sticky top-0 z-10 shadow-2xs">
               <tr>
                 <th onClick={() => handleSort('studentName')} className="px-6 py-3.5 cursor-pointer hover:bg-slate-100 select-none">
                   <div className="flex items-center gap-1.5">
@@ -711,6 +895,11 @@ export const FeesView = ({ currentInstitute }) => {
                         <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-bold">
                           Paid
                         </span>
+                      ) : isFeeOverdue(f) ? (
+                        <span className="px-2.5 py-0.5 bg-rose-50 text-rose-700 border border-rose-300 rounded-full text-xs font-black inline-flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse"></span>
+                          <span>Overdue (Defaulter)</span>
+                        </span>
                       ) : (
                         <span className="px-2.5 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-xs font-bold">
                           Pending
@@ -735,6 +924,24 @@ export const FeesView = ({ currentInstitute }) => {
                           >
                             Mark Paid
                           </button>
+                          {isFeeOverdue(f) && (
+                            <a
+                              href={`https://wa.me/?text=${encodeURIComponent(
+                                `*FEE OVERDUE NOTICE - ${currentInstitute?.name || 'CENTRAL SCHOOL'}*` +
+                                `\nDear Guardian,` +
+                                `\nThe tuition fee voucher for *${f.studentName}* (${f.rollNumber}) of *Rs. ${Number(f.amount).toLocaleString()}* was due on *${f.dueDate}*.` +
+                                `\nLate payment fine of Rs. 500 is applicable. Please clear outstanding dues immediately to avoid suspension of academic portal services.` +
+                                `\nThank you.`
+                              )}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-2 py-1 text-xs font-bold bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 rounded-md transition-colors cursor-pointer inline-flex items-center gap-1"
+                              title="Send WhatsApp Overdue Fee Reminder to Guardian"
+                            >
+                              <MessageSquare className="w-3 h-3 text-rose-600" />
+                              <span>Overdue Reminder</span>
+                            </a>
+                          )}
                           {!f.installmentInfo?.isInstallment && (
                             <button
                               type="button"
@@ -1012,6 +1219,37 @@ export const FeesView = ({ currentInstitute }) => {
               </div>
             )}
 
+            {/* Instant SMS / WhatsApp Notification Toggle */}
+            <div className="p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl space-y-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={posData.sendSmsAlert}
+                  onChange={(e) => setPosData({ ...posData, sendSmsAlert: e.target.checked })}
+                  className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                />
+                <span className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
+                  <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Dispatch Instant SMS & WhatsApp Receipt to Guardian</span>
+                </span>
+              </label>
+
+              {posData.sendSmsAlert && (
+                <div className="pt-1">
+                  <label className="block text-[10px] font-semibold text-emerald-900 uppercase mb-0.5">
+                    Guardian Mobile Number:
+                  </label>
+                  <input
+                    type="tel"
+                    value={posData.guardianPhone}
+                    onChange={(e) => setPosData({ ...posData, guardianPhone: e.target.value })}
+                    placeholder="+92 300 1234567"
+                    className="w-full px-3 py-1.5 text-xs rounded-lg border border-emerald-300 bg-white font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  />
+                </div>
+              )}
+            </div>
+
             <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
               <button
                 type="button"
@@ -1040,7 +1278,34 @@ export const FeesView = ({ currentInstitute }) => {
           title="POS Counter Payment Receipt"
         >
           <div className="space-y-4">
-            <div className="max-w-xs mx-auto p-4 bg-white border-2 border-slate-300 rounded-xl font-mono text-xs space-y-2 shadow-inner print:border-black">
+            {/* Print Specific CSS Rules */}
+            <style>{`
+              @media print {
+                body * {
+                  visibility: hidden !important;
+                }
+                #printable-pos-receipt, #printable-pos-receipt * {
+                  visibility: visible !important;
+                }
+                #printable-pos-receipt {
+                  position: absolute !important;
+                  left: 0 !important;
+                  top: 0 !important;
+                  width: 80mm !important;
+                  margin: 0 !important;
+                  padding: 4mm !important;
+                  background: white !important;
+                }
+                .no-print {
+                  display: none !important;
+                }
+                @page {
+                  size: 80mm auto;
+                  margin: 3mm;
+                }
+              }
+            `}</style>
+            <div id="printable-pos-receipt" className="max-w-xs mx-auto p-4 bg-white border-2 border-slate-300 rounded-xl font-mono text-xs space-y-2 shadow-inner print:border-black">
               <div className="text-center pb-2 border-b">
                 <h4 className="font-black text-sm uppercase">{currentInstitute?.name || 'CENTRAL HIGH SCHOOL'}</h4>
                 <p className="text-[10px] text-slate-500">Official POS Fee Collection Voucher</p>
@@ -1101,7 +1366,7 @@ export const FeesView = ({ currentInstitute }) => {
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-2">
+            <div className="flex flex-wrap items-center justify-end gap-2.5 pt-2">
               <button
                 type="button"
                 onClick={() => setPosReceipt(null)}
@@ -1109,10 +1374,30 @@ export const FeesView = ({ currentInstitute }) => {
               >
                 Close
               </button>
+              <a
+                href={`https://wa.me/${(posReceipt.phone || '').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
+                  `*OFFICIAL FEE PAYMENT RECEIPT*` +
+                  `\nInstitute: ${currentInstitute?.name || 'CENTRAL SCHOOL'}` +
+                  `\nReceipt No: ${posReceipt.receiptNo}` +
+                  `\nStudent: ${posReceipt.studentName} (${posReceipt.rollNumber})` +
+                  `\nClass: ${posReceipt.className}` +
+                  `\nAmount Paid: Rs. ${posReceipt.finalPaid.toLocaleString()}` +
+                  `\nPayment Mode: ${posReceipt.paymentMethod}` +
+                  `\nDate: ${posReceipt.date}` +
+                  `\nStatus: Verified & Settled. Thank you!`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3.5 py-2 text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-lg flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+                title="Send receipt confirmation directly via WhatsApp"
+              >
+                <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Send via WhatsApp</span>
+              </a>
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg flex items-center gap-1.5 shadow cursor-pointer"
+                className="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg flex items-center gap-1.5 shadow cursor-pointer"
               >
                 <Printer className="w-3.5 h-3.5" />
                 <span>Print Counter Slip</span>
@@ -1415,7 +1700,34 @@ export const FeesView = ({ currentInstitute }) => {
           maxWidth="max-w-4xl"
         >
           <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-2 border-slate-800 p-3 rounded-xl bg-white print:border-black text-[11px]">
+            {/* Print Specific CSS Rules */}
+            <style>{`
+              @media print {
+                body * {
+                  visibility: hidden !important;
+                }
+                #printable-voucher-root, #printable-voucher-root * {
+                  visibility: visible !important;
+                }
+                #printable-voucher-root {
+                  position: absolute !important;
+                  left: 0 !important;
+                  top: 0 !important;
+                  width: 100% !important;
+                  margin: 0 !important;
+                  padding: 6mm !important;
+                  background: white !important;
+                }
+                .no-print {
+                  display: none !important;
+                }
+                @page {
+                  size: A4 landscape;
+                  margin: 6mm;
+                }
+              }
+            `}</style>
+            <div id="printable-voucher-root" className="grid grid-cols-1 md:grid-cols-3 gap-4 border-2 border-slate-800 p-3 rounded-xl bg-white print:border-black text-[11px]">
               {['Bank Copy', 'Institute Copy', 'Student Copy'].map((copyTitle, idx) => (
                 <div key={copyTitle} className={`space-y-2 p-2.5 ${idx !== 0 ? 'border-t md:border-t-0 md:border-l border-dashed border-slate-400' : ''}`}>
                   <div className="text-center pb-2 border-b border-slate-200">

@@ -7,25 +7,29 @@ import {
   ChevronDown, 
   ChevronUp, 
   ChevronLeft, 
-  ChevronRight,
-  School,
-  Network,
-  FileCheck,
-  Calendar,
-  Layers,
-  BookOpen,
-  Bookmark,
-  FileText,
-  LogOut,
-  X,
-  Megaphone,
-  DollarSign,
-  Bus,
-  BookMarked,
-  UserCheck,
-  MessageSquare,
-  ShieldCheck,
-  Briefcase
+  ChevronRight, 
+  School, 
+  Network, 
+  FileCheck, 
+  Calendar, 
+  Layers, 
+  BookOpen, 
+  Bookmark, 
+  FileText, 
+  LogOut, 
+  X, 
+  Megaphone, 
+  DollarSign, 
+  Bus, 
+  BookMarked, 
+  UserCheck, 
+  MessageSquare, 
+  ShieldCheck, 
+  Briefcase,
+  Sliders,
+  BarChart3,
+  CreditCard,
+  FileSpreadsheet
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
@@ -38,12 +42,16 @@ export const SuperadminSidebar = ({
   const { user, logout } = useAuth()
   const [collapsed, setCollapsed] = useState(false)
   
+  const isPlatformRoute = ['institutes', 'platform-modules', 'security-center', 'global-templates'].includes(currentRoute)
+  const isAnalyticsRoute = ['cross-institute-analytics', 'platform-billing'].includes(currentRoute)
   const isUserRoute = ['users-all', 'users-roles'].includes(currentRoute)
-  const isInstituteRoute = ['institutes', 'departments', 'examination-bodies'].includes(currentRoute)
+  const isInstituteRoute = ['departments', 'examination-bodies'].includes(currentRoute)
   const isAcademicsRoute = ['academic-years', 'program-types', 'programs', 'subjects', 'study-schemes'].includes(currentRoute)
   const isEnterpriseRoute = ['finance', 'transport', 'library', 'admissions-pipeline', 'communication', 'audit-logs', 'announcements'].includes(currentRoute)
 
   // Accordion states with smart auto-open for active routes
+  const [platformOpen, setPlatformOpen] = useState(isPlatformRoute)
+  const [analyticsOpen, setAnalyticsOpen] = useState(isAnalyticsRoute)
   const [usersOpen, setUsersOpen] = useState(isUserRoute)
   const [instituteOpen, setInstituteOpen] = useState(isInstituteRoute)
   const [academicsOpen, setAcademicsOpen] = useState(isAcademicsRoute)
@@ -51,6 +59,8 @@ export const SuperadminSidebar = ({
 
   // Auto-expand section when navigated
   React.useEffect(() => {
+    if (isPlatformRoute) setPlatformOpen(true)
+    if (isAnalyticsRoute) setAnalyticsOpen(true)
     if (isUserRoute) setUsersOpen(true)
     if (isInstituteRoute) setInstituteOpen(true)
     if (isAcademicsRoute) setAcademicsOpen(true)
@@ -97,7 +107,7 @@ export const SuperadminSidebar = ({
           {/* Mobile Close Button */}
           <button 
             onClick={onCloseMobile}
-            className="lg:hidden text-slate-400 hover:text-white p-1 rounded hover:bg-[#253252] transition-colors ml-auto"
+            className="lg:hidden text-slate-400 hover:text-white p-1 rounded hover:bg-[#253252] transition-colors ml-auto cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -105,7 +115,7 @@ export const SuperadminSidebar = ({
           {/* Desktop Collapse Button */}
           <button 
             onClick={() => setCollapsed(!collapsed)}
-            className="hidden lg:block text-slate-400 hover:text-white p-1 rounded hover:bg-[#253252] transition-colors ml-auto"
+            className="hidden lg:block text-slate-400 hover:text-white p-1 rounded hover:bg-[#253252] transition-colors ml-auto cursor-pointer"
             title={collapsed ? "Expand Sidebar" : "Collapse Sidebar"}
           >
             {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -117,7 +127,7 @@ export const SuperadminSidebar = ({
           {/* Dashboard */}
           <button
             onClick={() => handleNavClick('dashboard')}
-            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg transition-all text-left ${
+            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg transition-all text-left cursor-pointer ${
               isRouteActive('dashboard')
                 ? 'bg-white text-[#1a233a] font-semibold shadow-sm'
                 : 'text-slate-300 hover:text-white hover:bg-[#243150]'
@@ -127,6 +137,108 @@ export const SuperadminSidebar = ({
             {(!collapsed || isMobileOpen) && <span>Dashboard</span>}
           </button>
 
+          {/* Platform Control Accordion */}
+          <div>
+            <button
+              onClick={() => {
+                if (collapsed) setCollapsed(false)
+                setPlatformOpen(!platformOpen)
+              }}
+              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-[#243150] transition-colors cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <Sliders className="w-[18px] h-[18px] text-blue-400 shrink-0" />
+                {(!collapsed || isMobileOpen) && <span>Platform Control</span>}
+              </div>
+              {(!collapsed || isMobileOpen) && (
+                platformOpen ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />
+              )}
+            </button>
+
+            {(!collapsed || isMobileOpen) && platformOpen && (
+              <div className="mt-1 pl-4 pr-1 space-y-0.5 border-l border-[#2e3d64] ml-5">
+                <button
+                  onClick={() => handleNavClick('institutes')}
+                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
+                    isRouteActive('institutes') ? 'text-white font-medium bg-[#243150]' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <School className="w-3.5 h-3.5 opacity-70" />
+                  <span>Institutes & Campuses</span>
+                </button>
+                <button
+                  onClick={() => handleNavClick('platform-modules')}
+                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
+                    isRouteActive('platform-modules') ? 'text-white font-medium bg-[#243150]' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <Sliders className="w-3.5 h-3.5 opacity-70" />
+                  <span>Module Control Matrix</span>
+                </button>
+                <button
+                  onClick={() => handleNavClick('security-center')}
+                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
+                    isRouteActive('security-center') ? 'text-white font-medium bg-[#243150]' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 opacity-70" />
+                  <span>Security Center</span>
+                </button>
+                <button
+                  onClick={() => handleNavClick('global-templates')}
+                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
+                    isRouteActive('global-templates') ? 'text-white font-medium bg-[#243150]' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5 opacity-70" />
+                  <span>Global Master Templates</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Analytics & Business Accordion */}
+          <div>
+            <button
+              onClick={() => {
+                if (collapsed) setCollapsed(false)
+                setAnalyticsOpen(!analyticsOpen)
+              }}
+              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-[#243150] transition-colors cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <BarChart3 className="w-[18px] h-[18px] text-emerald-400 shrink-0" />
+                {(!collapsed || isMobileOpen) && <span>Analytics & Business</span>}
+              </div>
+              {(!collapsed || isMobileOpen) && (
+                analyticsOpen ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />
+              )}
+            </button>
+
+            {(!collapsed || isMobileOpen) && analyticsOpen && (
+              <div className="mt-1 pl-4 pr-1 space-y-0.5 border-l border-[#2e3d64] ml-5">
+                <button
+                  onClick={() => handleNavClick('cross-institute-analytics')}
+                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
+                    isRouteActive('cross-institute-analytics') ? 'text-white font-medium bg-[#243150]' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <BarChart3 className="w-3.5 h-3.5 opacity-70" />
+                  <span>Cross-Institute Analytics</span>
+                </button>
+                <button
+                  onClick={() => handleNavClick('platform-billing')}
+                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
+                    isRouteActive('platform-billing') ? 'text-white font-medium bg-[#243150]' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <CreditCard className="w-3.5 h-3.5 opacity-70" />
+                  <span>Subscriptions & Billing</span>
+                </button>
+              </div>
+            )}
+          </div>
+
           {/* Users Management */}
           <div>
             <button
@@ -134,7 +246,7 @@ export const SuperadminSidebar = ({
                 if (collapsed) setCollapsed(false)
                 setUsersOpen(!usersOpen)
               }}
-              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-[#243150] transition-colors"
+              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-[#243150] transition-colors cursor-pointer"
             >
               <div className="flex items-center gap-3">
                 <Users className="w-[18px] h-[18px] text-slate-400 shrink-0" />
@@ -149,7 +261,7 @@ export const SuperadminSidebar = ({
               <div className="mt-1 pl-9 pr-1 space-y-1">
                 <button
                   onClick={() => handleNavClick('users-all')}
-                  className={`w-full text-left py-2 px-3 rounded-md text-[13px] transition-colors ${
+                  className={`w-full text-left py-2 px-3 rounded-md text-[13px] transition-colors cursor-pointer ${
                     isRouteActive('users-all') ? 'text-white font-medium bg-[#243150]' : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
@@ -157,7 +269,7 @@ export const SuperadminSidebar = ({
                 </button>
                 <button
                   onClick={() => handleNavClick('users-roles')}
-                  className={`w-full text-left py-2 px-3 rounded-md text-[13px] transition-colors ${
+                  className={`w-full text-left py-2 px-3 rounded-md text-[13px] transition-colors cursor-pointer ${
                     isRouteActive('users-roles') ? 'text-white font-medium bg-[#243150]' : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
@@ -174,11 +286,11 @@ export const SuperadminSidebar = ({
                 if (collapsed) setCollapsed(false)
                 setInstituteOpen(!instituteOpen)
               }}
-              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-[#243150] transition-colors"
+              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-[#243150] transition-colors cursor-pointer"
             >
               <div className="flex items-center gap-3">
                 <Building2 className="w-[18px] h-[18px] text-slate-400 shrink-0" />
-                {(!collapsed || isMobileOpen) && <span>Institute Management</span>}
+                {(!collapsed || isMobileOpen) && <span>Institute Structure</span>}
               </div>
               {(!collapsed || isMobileOpen) && (
                 instituteOpen ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />
@@ -188,17 +300,8 @@ export const SuperadminSidebar = ({
             {(!collapsed || isMobileOpen) && instituteOpen && (
               <div className="mt-1 pl-4 pr-1 space-y-0.5 border-l border-[#2e3d64] ml-5">
                 <button
-                  onClick={() => handleNavClick('institutes')}
-                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors ${
-                    isRouteActive('institutes') ? 'text-white font-medium bg-[#243150]' : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  <School className="w-3.5 h-3.5 opacity-70" />
-                  <span>Institutes</span>
-                </button>
-                <button
                   onClick={() => handleNavClick('departments')}
-                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors ${
+                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
                     isRouteActive('departments') ? 'text-white font-medium bg-[#243150]' : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
@@ -207,7 +310,7 @@ export const SuperadminSidebar = ({
                 </button>
                 <button
                   onClick={() => handleNavClick('examination-bodies')}
-                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors ${
+                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
                     isRouteActive('examination-bodies') ? 'text-white font-medium bg-[#243150]' : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
@@ -225,7 +328,7 @@ export const SuperadminSidebar = ({
                 if (collapsed) setCollapsed(false)
                 setAcademicsOpen(!academicsOpen)
               }}
-              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-[#243150] transition-colors"
+              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-[#243150] transition-colors cursor-pointer"
             >
               <div className="flex items-center gap-3">
                 <GraduationCap className="w-[18px] h-[18px] text-slate-400 shrink-0" />
@@ -240,7 +343,7 @@ export const SuperadminSidebar = ({
               <div className="mt-1 pl-4 pr-1 space-y-0.5 border-l border-[#2e3d64] ml-5">
                 <button
                   onClick={() => handleNavClick('academic-years')}
-                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors ${
+                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
                     isRouteActive('academic-years') ? 'text-white font-medium bg-[#243150]' : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
@@ -249,7 +352,7 @@ export const SuperadminSidebar = ({
                 </button>
                 <button
                   onClick={() => handleNavClick('program-types')}
-                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors ${
+                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
                     isRouteActive('program-types') ? 'text-white font-medium bg-[#243150]' : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
@@ -258,7 +361,7 @@ export const SuperadminSidebar = ({
                 </button>
                 <button
                   onClick={() => handleNavClick('programs')}
-                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors ${
+                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
                     isRouteActive('programs') ? 'text-white font-medium bg-[#243150]' : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
@@ -267,7 +370,7 @@ export const SuperadminSidebar = ({
                 </button>
                 <button
                   onClick={() => handleNavClick('subjects')}
-                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors ${
+                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
                     isRouteActive('subjects') ? 'text-white font-medium bg-[#243150]' : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
@@ -276,7 +379,7 @@ export const SuperadminSidebar = ({
                 </button>
                 <button
                   onClick={() => handleNavClick('study-schemes')}
-                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors ${
+                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
                     isRouteActive('study-schemes') ? 'text-white font-medium bg-[#243150]' : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
@@ -294,7 +397,7 @@ export const SuperadminSidebar = ({
                 if (collapsed) setCollapsed(false)
                 setEnterpriseOpen(!enterpriseOpen)
               }}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg transition-colors ${
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg transition-colors cursor-pointer ${
                 isEnterpriseRoute 
                   ? 'text-white bg-[#243150]/70 font-medium' 
                   : 'text-slate-300 hover:text-white hover:bg-[#243150]'
@@ -313,7 +416,7 @@ export const SuperadminSidebar = ({
               <div className="mt-1 pl-4 pr-1 space-y-0.5 border-l border-[#2e3d64] ml-5">
                 <button
                   onClick={() => handleNavClick('finance')}
-                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors ${
+                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
                     isRouteActive('finance') ? 'text-white font-medium bg-[#243150]' : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
@@ -322,7 +425,7 @@ export const SuperadminSidebar = ({
                 </button>
                 <button
                   onClick={() => handleNavClick('transport')}
-                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors ${
+                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
                     isRouteActive('transport') ? 'text-white font-medium bg-[#243150]' : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
@@ -331,7 +434,7 @@ export const SuperadminSidebar = ({
                 </button>
                 <button
                   onClick={() => handleNavClick('library')}
-                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors ${
+                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
                     isRouteActive('library') ? 'text-white font-medium bg-[#243150]' : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
@@ -340,7 +443,7 @@ export const SuperadminSidebar = ({
                 </button>
                 <button
                   onClick={() => handleNavClick('admissions-pipeline')}
-                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors ${
+                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
                     isRouteActive('admissions-pipeline') ? 'text-white font-medium bg-[#243150]' : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
@@ -349,7 +452,7 @@ export const SuperadminSidebar = ({
                 </button>
                 <button
                   onClick={() => handleNavClick('communication')}
-                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors ${
+                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
                     isRouteActive('communication') ? 'text-white font-medium bg-[#243150]' : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
@@ -358,7 +461,7 @@ export const SuperadminSidebar = ({
                 </button>
                 <button
                   onClick={() => handleNavClick('audit-logs')}
-                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors ${
+                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
                     isRouteActive('audit-logs') ? 'text-white font-medium bg-[#243150]' : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
@@ -367,7 +470,7 @@ export const SuperadminSidebar = ({
                 </button>
                 <button
                   onClick={() => handleNavClick('announcements')}
-                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors ${
+                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
                     isRouteActive('announcements') ? 'text-white font-medium bg-[#243150]' : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
@@ -383,7 +486,7 @@ export const SuperadminSidebar = ({
         <div className="p-3 border-t border-[#263353] bg-[#141b2d]">
           <button
             onClick={logout}
-            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors text-xs font-semibold"
+            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors text-xs font-semibold cursor-pointer"
           >
             <LogOut className="w-4 h-4 shrink-0" />
             {(!collapsed || isMobileOpen) && <span>Sign Out</span>}

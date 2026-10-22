@@ -323,7 +323,7 @@ export const ExamsView = ({ currentInstitute }) => {
           <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs sm:text-sm min-w-[700px]">
-                <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-semibold border-b">
+                <thead className="bg-slate-50 text-slate-600 text-xs uppercase font-bold border-b border-slate-200 sticky top-0 z-10 shadow-2xs">
                   <tr>
                     <th className="px-6 py-4">Student & Roll No</th>
                     <th className="px-6 py-4">Class</th>
@@ -851,9 +851,15 @@ export const ExamsView = ({ currentInstitute }) => {
                   <span className="text-slate-400 block text-[10px] uppercase font-bold">Grade & Group</span>
                   <strong className="text-slate-800">{selectedRollNumberSlip.className} (Science Group)</strong>
                 </div>
-                <div className="col-span-2 pt-1 border-t border-slate-200">
-                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Allotted Examination Center</span>
-                  <strong className="text-slate-800">{selectedRollNumberSlip.center}</strong>
+                <div className="col-span-2 pt-1.5 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <span className="text-slate-400 block text-[10px] uppercase font-bold">Allotted Examination Center</span>
+                    <strong className="text-slate-800">{selectedRollNumberSlip.center}</strong>
+                  </div>
+                  <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-50 border border-emerald-300 text-[10px] font-bold text-emerald-900">
+                    <span>BISE Attendance Clearance:</span>
+                    <span className="font-mono text-emerald-800">87.5% (Eligible & Cleared)</span>
+                  </div>
                 </div>
               </div>
 
@@ -1115,7 +1121,34 @@ export const ExamsView = ({ currentInstitute }) => {
           maxWidth="max-w-xl"
         >
           <div className="space-y-4">
-            <div className="p-6 bg-white border-2 border-slate-800 rounded-xl space-y-4 font-sans">
+            {/* Print Specific CSS Rules */}
+            <style>{`
+              @media print {
+                body * {
+                  visibility: hidden !important;
+                }
+                #printable-dmc-single, #printable-dmc-single * {
+                  visibility: visible !important;
+                }
+                #printable-dmc-single {
+                  position: absolute !important;
+                  left: 0 !important;
+                  top: 0 !important;
+                  width: 100% !important;
+                  margin: 0 !important;
+                  padding: 8mm !important;
+                  background: white !important;
+                }
+                .no-print {
+                  display: none !important;
+                }
+                @page {
+                  size: A4 portrait;
+                  margin: 8mm;
+                }
+              }
+            `}</style>
+            <div id="printable-dmc-single" className="p-6 bg-white border-2 border-slate-800 rounded-xl space-y-4 font-sans">
               <div className="text-center border-b pb-3">
                 <h3 className="text-base font-black uppercase tracking-wider text-slate-900">
                   {currentInstitute?.name || 'CENTRAL HIGH SCHOOL SYSTEM'}
@@ -1219,7 +1252,34 @@ export const ExamsView = ({ currentInstitute }) => {
               </span>
             </div>
 
-            <div className="max-h-[60vh] overflow-y-auto space-y-6 pr-1">
+            {/* Print Specific CSS Rules */}
+            <style>{`
+              @media print {
+                body * {
+                  visibility: hidden !important;
+                }
+                #printable-batch-dmc-root, #printable-batch-dmc-root * {
+                  visibility: visible !important;
+                }
+                #printable-batch-dmc-root {
+                  position: absolute !important;
+                  left: 0 !important;
+                  top: 0 !important;
+                  width: 100% !important;
+                  margin: 0 !important;
+                  padding: 6mm !important;
+                  background: white !important;
+                }
+                .no-print {
+                  display: none !important;
+                }
+                @page {
+                  size: A4 portrait;
+                  margin: 6mm;
+                }
+              }
+            `}</style>
+            <div id="printable-batch-dmc-root" className="max-h-[60vh] overflow-y-auto space-y-6 pr-1">
               {batchExamsList.map((exam, index) => (
                 <div 
                   key={exam.id || index}

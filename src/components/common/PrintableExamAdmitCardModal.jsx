@@ -325,10 +325,14 @@ export const PrintableExamAdmitCardModal = ({
                         <span className="text-[9px] uppercase font-bold text-slate-500 block">Academic Stream / Group</span>
                         <strong className="text-indigo-800">{cand.group}</strong>
                       </div>
-                      <div className="col-span-2 sm:col-span-4 pt-1 border-t border-slate-200 flex items-center justify-between">
+                      <div className="col-span-2 sm:col-span-4 pt-1.5 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
                         <div>
                           <span className="text-[9px] uppercase font-bold text-slate-500 block">Allotted Examination Center</span>
                           <strong className="text-slate-900">{centerName}</strong>
+                        </div>
+                        <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-emerald-50 border border-emerald-300 text-[10px] font-bold text-emerald-900">
+                          <span>Board Attendance Clearance:</span>
+                          <span className="font-mono text-emerald-800">88.5% (Eligible & Cleared)</span>
                         </div>
                         <div className="text-right">
                           <span className="text-[9px] uppercase font-bold text-slate-500 block">Gate Reporting Time</span>

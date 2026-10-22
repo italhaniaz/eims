@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
-import { DataService, getStoredData } from '../services/dataService'
+import { DataService, getStoredData, computeRealStats } from '../services/dataService'
 import { PROGRAM_LEVELS } from '../constants/academicLevels'
 
 const AppDataContext = createContext(null)
@@ -178,13 +178,8 @@ export const AppDataProvider = ({ children }) => {
     return newLog
   }
 
-  // Dynamic calculated stats
-  const calculatedStats = {
-    totalUsers: (data.users || []).length,
-    totalInstitutes: (data.institutes || []).length,
-    activeSessions: (data.users || []).length > 0 ? (data.users || []).length * 4 + 2 : 0,
-    growthRate: (data.institutes || []).length > 0 ? `${((data.institutes || []).length * 11.4).toFixed(1)}%` : '0.0%'
-  }
+  // Real dynamic calculated stats computed from live data entities
+  const calculatedStats = computeRealStats(data)
 
   return (
     <AppDataContext.Provider
@@ -214,6 +209,8 @@ export const AppDataProvider = ({ children }) => {
         admissionsPipeline: data.admissionsPipeline || [],
         auditLogs: data.auditLogs || [],
         communicationLogs: data.communicationLogs || [],
+        instituteCampuses: data.instituteCampuses || [],
+        instituteModules: data.instituteModules || [],
         activeProgramLevel,
         setActiveProgramLevel,
         programLevels: PROGRAM_LEVELS,

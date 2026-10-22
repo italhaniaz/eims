@@ -390,6 +390,33 @@ export const FinancialAnalyticsView = () => {
           title="Official Fee Overdue Recovery Demand Notice"
         >
           <div className="space-y-4">
+            {/* Print Specific CSS Rules */}
+            <style>{`
+              @media print {
+                body * {
+                  visibility: hidden !important;
+                }
+                #printable-demand-notice, #printable-demand-notice * {
+                  visibility: visible !important;
+                }
+                #printable-demand-notice {
+                  position: absolute !important;
+                  left: 0 !important;
+                  top: 0 !important;
+                  width: 100% !important;
+                  margin: 0 !important;
+                  padding: 8mm !important;
+                  background: white !important;
+                }
+                .no-print {
+                  display: none !important;
+                }
+                @page {
+                  size: A4 portrait;
+                  margin: 8mm;
+                }
+              }
+            `}</style>
             <div 
               id="printable-demand-notice" 
               className="p-6 bg-white border-2 border-slate-300 rounded-2xl space-y-4 print:border-black"
