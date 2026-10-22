@@ -83,6 +83,8 @@ export const InstituteAdminNavbar = ({
 
   const getLevelIcon = (id, className = "w-4 h-4") => {
     switch (id) {
+      case 'preschool':
+        return <Sparkles className={className} />
       case 'elementary':
         return <BookOpen className={className} />
       case 'secondary':
@@ -100,6 +102,8 @@ export const InstituteAdminNavbar = ({
 
   const getLevelColorBadge = (id) => {
     switch (id) {
+      case 'preschool':
+        return 'bg-pink-50 text-pink-700 border-pink-200'
       case 'elementary':
         return 'bg-emerald-50 text-emerald-700 border-emerald-200'
       case 'secondary':

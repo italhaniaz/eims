@@ -45,6 +45,27 @@ export const PROGRAM_LEVELS = [
     ]
   },
   {
+    id: 'preschool',
+    tierNumber: 0.5,
+    title: 'Pre-School / Early Years',
+    shortTitle: 'Pre-School (Playgroup, Nursery, Prep, KG)',
+    code: 'PRE',
+    badge: 'Playgroup - KG',
+    bracket: 'Early Childhood Care (ECCE)',
+    description: 'Foundational Early Childhood Education (Playgroup, Nursery, Prep, KG) focused on motor, phonetic, and sensory development.',
+    grades: 'Playgroup, Nursery, Prep, KG',
+    typicalAge: '2.5 - 5 Years',
+    color: 'pink',
+    categories: [
+      { 
+        name: 'Early Years Foundation', 
+        span: 'Playgroup - KG', 
+        board: 'Early Years Foundation Stage (EYFS)',
+        subjects: ['English Phonics & Rhymes', 'Basic Numbers & Counting', 'Sensory & Motor Skills', 'Visual Art & Play', 'Urdu Haroof-e-Tahajji'] 
+      }
+    ]
+  },
+  {
     id: 'elementary',
     tierNumber: 1,
     title: 'Elementary Level',
@@ -228,6 +249,16 @@ export const detectProgramLevel = (className = '') => {
   const normalized = className.toLowerCase().trim()
 
   if (
+    normalized.includes('playgroup') || normalized.includes('nursery') ||
+    normalized.includes('prep') || normalized.includes('kindergarten') ||
+    normalized.includes('kg') || normalized.includes('pre-school') ||
+    normalized.includes('preschool') || normalized.includes('montessori') ||
+    normalized.includes('ecce')
+  ) {
+    return 'preschool'
+  }
+
+  if (
     normalized.includes('1st year') || normalized.includes('2nd year') ||
     normalized.includes('11th') || normalized.includes('12th') || 
     normalized.includes('fsc') || normalized.includes('f.sc') || 
@@ -307,69 +338,103 @@ export const normalizeClassSections = (c) => {
 
 // Built-in presets for 1-Click Standard Tier Classes Setup
 export const TIER_DEFAULT_CLASSES = {
+  preschool: [
+    {
+      name: 'Playgroup',
+      programLevel: 'preschool',
+      sections: [
+        { id: 'sec-pg-1', name: 'Section A', roomNo: 'Room 001', capacity: 25, enrolled: 0, classTeacher: '', shift: 'Morning', gender: 'Co-ed', medium: 'English' },
+        { id: 'sec-pg-2', name: 'Section B', roomNo: 'Room 002', capacity: 25, enrolled: 0, classTeacher: '', shift: 'Morning', gender: 'Co-ed', medium: 'English' }
+      ]
+    },
+    {
+      name: 'Nursery',
+      programLevel: 'preschool',
+      sections: [
+        { id: 'sec-nur-1', name: 'Section A', roomNo: 'Room 003', capacity: 25, enrolled: 0, classTeacher: '', shift: 'Morning', gender: 'Co-ed', medium: 'English' },
+        { id: 'sec-nur-2', name: 'Section B', roomNo: 'Room 004', capacity: 25, enrolled: 0, classTeacher: '', shift: 'Morning', gender: 'Co-ed', medium: 'English' }
+      ]
+    },
+    {
+      name: 'Prep',
+      programLevel: 'preschool',
+      sections: [
+        { id: 'sec-prep-1', name: 'Section A', roomNo: 'Room 005', capacity: 30, enrolled: 0, classTeacher: '', shift: 'Morning', gender: 'Co-ed', medium: 'English' },
+        { id: 'sec-prep-2', name: 'Section B', roomNo: 'Room 006', capacity: 30, enrolled: 0, classTeacher: '', shift: 'Morning', gender: 'Co-ed', medium: 'English' }
+      ]
+    },
+    {
+      name: 'Kindergarten (KG)',
+      programLevel: 'preschool',
+      sections: [
+        { id: 'sec-kg-1', name: 'Section A', roomNo: 'Room 007', capacity: 30, enrolled: 0, classTeacher: '', shift: 'Morning', gender: 'Co-ed', medium: 'English' },
+        { id: 'sec-kg-2', name: 'Section B', roomNo: 'Room 008', capacity: 30, enrolled: 0, classTeacher: '', shift: 'Morning', gender: 'Co-ed', medium: 'English' }
+      ]
+    }
+  ],
   elementary: [
     {
       name: '1st Grade (Primary)',
       programLevel: 'elementary',
       sections: [
-        { id: 'sec-1g-1', name: 'Super Section', roomNo: 'Room 101', capacity: 35, enrolled: 0, classTeacher: '' },
-        { id: 'sec-1g-2', name: 'Section A', roomNo: 'Room 102', capacity: 35, enrolled: 0, classTeacher: '' }
+        { id: 'sec-1g-1', name: 'Section A', roomNo: 'Room 101', capacity: 35, enrolled: 0, classTeacher: '', shift: 'Morning', gender: 'Co-ed', medium: 'English' },
+        { id: 'sec-1g-2', name: 'Section B', roomNo: 'Room 102', capacity: 35, enrolled: 0, classTeacher: '', shift: 'Morning', gender: 'Co-ed', medium: 'English' }
       ]
     },
     {
       name: '2nd Grade (Primary)',
       programLevel: 'elementary',
       sections: [
-        { id: 'sec-2g-1', name: 'Super Section', roomNo: 'Room 103', capacity: 35, enrolled: 0, classTeacher: '' },
-        { id: 'sec-2g-2', name: 'Section A', roomNo: 'Room 104', capacity: 35, enrolled: 0, classTeacher: '' }
+        { id: 'sec-2g-1', name: 'Section A', roomNo: 'Room 103', capacity: 35, enrolled: 0, classTeacher: '', shift: 'Morning', gender: 'Co-ed', medium: 'English' },
+        { id: 'sec-2g-2', name: 'Section B', roomNo: 'Room 104', capacity: 35, enrolled: 0, classTeacher: '', shift: 'Morning', gender: 'Co-ed', medium: 'English' }
       ]
     },
     {
       name: '3rd Grade (Primary)',
       programLevel: 'elementary',
       sections: [
-        { id: 'sec-3g-1', name: 'Super Section', roomNo: 'Room 105', capacity: 35, enrolled: 0, classTeacher: '' },
-        { id: 'sec-3g-2', name: 'Section A', roomNo: 'Room 106', capacity: 35, enrolled: 0, classTeacher: '' }
+        { id: 'sec-3g-1', name: 'Section A', roomNo: 'Room 105', capacity: 35, enrolled: 0, classTeacher: '', shift: 'Morning', gender: 'Co-ed', medium: 'English' },
+        { id: 'sec-3g-2', name: 'Section B', roomNo: 'Room 106', capacity: 35, enrolled: 0, classTeacher: '', shift: 'Morning', gender: 'Co-ed', medium: 'English' }
       ]
     },
     {
       name: '4th Grade (Primary)',
       programLevel: 'elementary',
       sections: [
-        { id: 'sec-4g-1', name: 'Super Section', roomNo: 'Room 107', capacity: 35, enrolled: 0, classTeacher: '' },
-        { id: 'sec-4g-2', name: 'Section A', roomNo: 'Room 108', capacity: 35, enrolled: 0, classTeacher: '' }
+        { id: 'sec-4g-1', name: 'Section A', roomNo: 'Room 107', capacity: 35, enrolled: 0, classTeacher: '', shift: 'Morning', gender: 'Co-ed', medium: 'English' },
+        { id: 'sec-4g-2', name: 'Section B', roomNo: 'Room 108', capacity: 35, enrolled: 0, classTeacher: '', shift: 'Morning', gender: 'Co-ed', medium: 'English' }
       ]
     },
     {
       name: '5th Grade (Primary)',
       programLevel: 'elementary',
       sections: [
-        { id: 'sec-5g-1', name: 'Super Section', roomNo: 'Room 109', capacity: 35, enrolled: 0, classTeacher: '' },
-        { id: 'sec-5g-2', name: 'Section A', roomNo: 'Room 110', capacity: 35, enrolled: 0, classTeacher: '' }
+        { id: 'sec-5g-1', name: 'Section A', roomNo: 'Room 109', capacity: 35, enrolled: 0, classTeacher: '', shift: 'Morning', gender: 'Co-ed', medium: 'English' },
+        { id: 'sec-5g-2', name: 'Section B', roomNo: 'Room 110', capacity: 35, enrolled: 0, classTeacher: '', shift: 'Morning', gender: 'Co-ed', medium: 'English' }
       ]
     },
     {
       name: '6th Grade (Middle)',
       programLevel: 'elementary',
       sections: [
-        { id: 'sec-6g-1', name: 'Super Section', roomNo: 'Room 201', capacity: 40, enrolled: 0, classTeacher: '' },
-        { id: 'sec-6g-2', name: 'Section A', roomNo: 'Room 202', capacity: 40, enrolled: 0, classTeacher: '' }
+        { id: 'sec-6g-1', name: 'Section A', roomNo: 'Room 201', capacity: 40, enrolled: 0, classTeacher: '', shift: 'Morning', gender: 'Co-ed', medium: 'English' },
+        { id: 'sec-6g-2', name: 'Section B', roomNo: 'Room 202', capacity: 40, enrolled: 0, classTeacher: '', shift: 'Morning', gender: 'Co-ed', medium: 'English' }
       ]
     },
     {
       name: '7th Grade (Middle)',
       programLevel: 'elementary',
       sections: [
-        { id: 'sec-7g-1', name: 'Super Section', roomNo: 'Room 203', capacity: 40, enrolled: 0, classTeacher: '' },
-        { id: 'sec-7g-2', name: 'Section A', roomNo: 'Room 204', capacity: 40, enrolled: 0, classTeacher: '' }
+        { id: 'sec-7g-1', name: 'Section A', roomNo: 'Room 203', capacity: 40, enrolled: 0, classTeacher: '', shift: 'Morning', gender: 'Co-ed', medium: 'English' },
+        { id: 'sec-7g-2', name: 'Section B', roomNo: 'Room 204', capacity: 40, enrolled: 0, classTeacher: '', shift: 'Morning', gender: 'Co-ed', medium: 'English' }
       ]
     },
     {
       name: '8th Grade (Middle)',
       programLevel: 'elementary',
       sections: [
-        { id: 'sec-8g-1', name: 'Super Section', roomNo: 'Room 205', capacity: 40, enrolled: 0, classTeacher: '' },
-        { id: 'sec-8g-2', name: 'Section A', roomNo: 'Room 206', capacity: 40, enrolled: 0, classTeacher: '' }
+        { id: 'sec-8g-1', name: 'Section A', roomNo: 'Room 205', capacity: 40, enrolled: 0, classTeacher: '', shift: 'Morning', gender: 'Co-ed', medium: 'English' },
+        { id: 'sec-8g-2', name: 'Section B', roomNo: 'Room 206', capacity: 40, enrolled: 0, classTeacher: '', shift: 'Morning', gender: 'Co-ed', medium: 'English' }
       ]
     }
   ],
@@ -378,18 +443,16 @@ export const TIER_DEFAULT_CLASSES = {
       name: '9th Grade (Matric Science)',
       programLevel: 'secondary',
       sections: [
-        { id: 'sec-9s-1', name: 'Super Section', roomNo: 'Room 301', capacity: 40, enrolled: 0, classTeacher: '' },
-        { id: 'sec-9s-2', name: 'Section A', roomNo: 'Room 302', capacity: 40, enrolled: 0, classTeacher: '' },
-        { id: 'sec-9s-3', name: 'Section B', roomNo: 'Room 303', capacity: 40, enrolled: 0, classTeacher: '' }
+        { id: 'sec-9s-1', name: 'Section A', roomNo: 'Room 301', capacity: 40, enrolled: 0, classTeacher: '', shift: 'Morning', gender: 'Boys', medium: 'English' },
+        { id: 'sec-9s-2', name: 'Section B', roomNo: 'Room 302', capacity: 40, enrolled: 0, classTeacher: '', shift: 'Morning', gender: 'Girls', medium: 'English' }
       ]
     },
     {
       name: '10th Grade (Matric Science)',
       programLevel: 'secondary',
       sections: [
-        { id: 'sec-10s-1', name: 'Super Section', roomNo: 'Room 304', capacity: 40, enrolled: 0, classTeacher: '' },
-        { id: 'sec-10s-2', name: 'Section A', roomNo: 'Room 305', capacity: 40, enrolled: 0, classTeacher: '' },
-        { id: 'sec-10s-3', name: 'Section B', roomNo: 'Room 306', capacity: 40, enrolled: 0, classTeacher: '' }
+        { id: 'sec-10s-1', name: 'Section A', roomNo: 'Room 303', capacity: 40, enrolled: 0, classTeacher: '', shift: 'Morning', gender: 'Boys', medium: 'English' },
+        { id: 'sec-10s-2', name: 'Section B', roomNo: 'Room 304', capacity: 40, enrolled: 0, classTeacher: '', shift: 'Morning', gender: 'Girls', medium: 'English' }
       ]
     }
   ],
@@ -397,25 +460,26 @@ export const TIER_DEFAULT_CLASSES = {
     {
       name: '11th Grade (F.Sc Pre-Medical)',
       programLevel: 'higher-secondary',
+      group: 'Pre-Medical',
       sections: [
-        { id: 'sec-11m-1', name: 'Super Section', roomNo: 'Hall 401', capacity: 45, enrolled: 0, classTeacher: '' },
-        { id: 'sec-11m-2', name: 'Section A', roomNo: 'Hall 402', capacity: 45, enrolled: 0, classTeacher: '' }
+        { id: 'sec-11m-1', name: 'Section A', roomNo: 'Hall 401', capacity: 45, enrolled: 0, classTeacher: '', shift: 'Morning', gender: 'Co-ed', medium: 'English' },
+        { id: 'sec-11m-2', name: 'Section B', roomNo: 'Hall 402', capacity: 45, enrolled: 0, classTeacher: '', shift: 'Morning', gender: 'Co-ed', medium: 'English' }
       ]
     },
     {
       name: '11th Grade (ICS Computer Science)',
       programLevel: 'higher-secondary',
+      group: 'ICS',
       sections: [
-        { id: 'sec-11c-1', name: 'Super Section', roomNo: 'Hall 403', capacity: 45, enrolled: 0, classTeacher: '' },
-        { id: 'sec-11c-2', name: 'Section A', roomNo: 'Hall 404', capacity: 45, enrolled: 0, classTeacher: '' }
+        { id: 'sec-11c-1', name: 'Section A', roomNo: 'Hall 403', capacity: 45, enrolled: 0, classTeacher: '', shift: 'Morning', gender: 'Co-ed', medium: 'English' }
       ]
     },
     {
       name: '12th Grade (F.Sc Pre-Engineering)',
       programLevel: 'higher-secondary',
+      group: 'Pre-Engineering',
       sections: [
-        { id: 'sec-12e-1', name: 'Super Section', roomNo: 'Hall 405', capacity: 45, enrolled: 0, classTeacher: '' },
-        { id: 'sec-12e-2', name: 'Section A', roomNo: 'Hall 406', capacity: 45, enrolled: 0, classTeacher: '' }
+        { id: 'sec-12e-1', name: 'Section A', roomNo: 'Hall 405', capacity: 45, enrolled: 0, classTeacher: '', shift: 'Morning', gender: 'Co-ed', medium: 'English' }
       ]
     }
   ],
@@ -424,15 +488,15 @@ export const TIER_DEFAULT_CLASSES = {
       name: 'ADP in Computer Science (ADP-CS)',
       programLevel: 'college',
       sections: [
-        { id: 'sec-adp-1', name: 'Morning Batch', roomNo: 'Block B-101', capacity: 50, enrolled: 0, classTeacher: '' },
-        { id: 'sec-adp-2', name: 'Evening Batch', roomNo: 'Block B-102', capacity: 50, enrolled: 0, classTeacher: '' }
+        { id: 'sec-adp-1', name: 'Morning Batch', roomNo: 'Block B-101', capacity: 50, enrolled: 0, classTeacher: '', shift: 'Morning', gender: 'Co-ed', medium: 'English' },
+        { id: 'sec-adp-2', name: 'Evening Batch', roomNo: 'Block B-102', capacity: 50, enrolled: 0, classTeacher: '', shift: 'Evening', gender: 'Co-ed', medium: 'English' }
       ]
     },
     {
       name: 'ADP in Business Administration (ADP-BBA)',
       programLevel: 'college',
       sections: [
-        { id: 'sec-adpb-1', name: 'Morning Batch', roomNo: 'Block B-103', capacity: 50, enrolled: 0, classTeacher: '' }
+        { id: 'sec-adpb-1', name: 'Morning Batch', roomNo: 'Block B-103', capacity: 50, enrolled: 0, classTeacher: '', shift: 'Morning', gender: 'Co-ed', medium: 'English' }
       ]
     }
   ],
@@ -441,16 +505,15 @@ export const TIER_DEFAULT_CLASSES = {
       name: 'BS Computer Science (BSCS)',
       programLevel: 'university',
       sections: [
-        { id: 'sec-bscs-1', name: 'Super Section', roomNo: 'Lab Complex 1', capacity: 50, enrolled: 0, classTeacher: '' },
-        { id: 'sec-bscs-2', name: 'Section Alpha', roomNo: 'Lab Complex 2', capacity: 50, enrolled: 0, classTeacher: '' }
+        { id: 'sec-bscs-1', name: 'Section Alpha', roomNo: 'Lab Complex 1', capacity: 50, enrolled: 0, classTeacher: '', shift: 'Morning', gender: 'Co-ed', medium: 'English' },
+        { id: 'sec-bscs-2', name: 'Section Beta', roomNo: 'Lab Complex 2', capacity: 50, enrolled: 0, classTeacher: '', shift: 'Morning', gender: 'Co-ed', medium: 'English' }
       ]
     },
     {
       name: 'BS Software Engineering (BSSE)',
       programLevel: 'university',
       sections: [
-        { id: 'sec-bsse-1', name: 'Super Section', roomNo: 'Software Hall 1', capacity: 45, enrolled: 0, classTeacher: '' },
-        { id: 'sec-bsse-2', name: 'Section Alpha', roomNo: 'Software Hall 2', capacity: 45, enrolled: 0, classTeacher: '' }
+        { id: 'sec-bsse-1', name: 'Section Alpha', roomNo: 'Software Hall 1', capacity: 45, enrolled: 0, classTeacher: '', shift: 'Morning', gender: 'Co-ed', medium: 'English' }
       ]
     }
   ]

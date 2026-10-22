@@ -126,9 +126,7 @@ export const sampleTemplateData = {
   ],
   students: [],
   teachers: [],
-  classes: [
-    { id: 'cls-1', instituteId: 'inst-1', name: 'Class 10', section: 'A - Science', roomNo: 'Room 101', capacity: 40, enrolled: 35, classTeacher: 'Dr. Shahida Parveen' }
-  ],
+  classes: [],
   fees: [
     { id: 'fee-1', instituteId: 'inst-1', studentName: 'Hamza Farooq', rollNumber: 'BHS-2024-001', className: '10th Grade', amount: 15000, dueDate: '2026-10-25', status: 'Paid', paymentDate: '2026-10-18' }
   ],
@@ -266,6 +264,21 @@ export const getStoredData = () => {
         )
         if (filteredTeachers.length !== parsed.teachers.length) {
           parsed.teachers = filteredTeachers
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed))
+        }
+      }
+      if (Array.isArray(parsed.classes)) {
+        const demoClassIds = ['cls-1', 'cls-demo']
+        const demoClassNames = ['9th grade', 'Class 10']
+        const filteredClasses = parsed.classes.filter(c => {
+          if (demoClassIds.includes(c.id)) return false
+          const cNameLower = (c.name || '').toLowerCase()
+          if (demoClassNames.some(d => d.toLowerCase() === cNameLower)) return false
+          if (c.section && typeof c.section === 'string' && c.section.toLowerCase().includes('super section') && cNameLower.includes('9th')) return false
+          return true
+        })
+        if (filteredClasses.length !== parsed.classes.length) {
+          parsed.classes = filteredClasses
           localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed))
         }
       }

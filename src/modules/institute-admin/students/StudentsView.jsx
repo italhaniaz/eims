@@ -412,19 +412,32 @@ export const StudentsView = ({ currentInstitute }) => {
     return Array.from(set).sort()
   }, [classes, campusStudents])
 
-  // Dynamic sections strictly tied to currently selected class in form
+  // Dynamic sections strictly tied to currently selected class in form with remaining capacity
   const dynamicSectionsForSelectedClass = useMemo(() => {
     if (!formData.className) return []
     const matchingClassObj = classes.find(c => c.name === formData.className)
     if (matchingClassObj) {
       const parsedSecs = normalizeClassSections(matchingClassObj)
-      if (parsedSecs.length > 0) {
-        return parsedSecs.map(s => s.name || s)
-      }
+      return parsedSecs.map(s => {
+        const secName = typeof s === 'string' ? s : (s.name || 'A')
+        const enrolled = campusStudents.filter(st => 
+          st.className === formData.className && 
+          st.section === secName &&
+          st.status !== 'Withdrawn'
+        ).length
+        const cap = Number(s.capacity || 40)
+        const seatsLeft = Math.max(0, cap - enrolled)
+        return {
+          name: secName,
+          capacity: cap,
+          enrolled,
+          seatsLeft,
+          isFull: enrolled >= cap
+        }
+      })
     }
-    // Fallback if class exists but sections unconfigured
-    return ['A', 'B', 'C']
-  }, [classes, formData.className])
+    return [{ name: 'A', capacity: 40, enrolled: 0, seatsLeft: 40, isFull: false }]
+  }, [classes, formData.className, campusStudents])
 
   // Keyboard accessibility: Escape key closes active modals and menus
   useEffect(() => {
@@ -2757,9 +2770,22 @@ export const StudentsView = ({ currentInstitute }) => {
                         >
                           <option value="">{formData.className ? '-- Select Section --' : 'Select Class First'}</option>
                           {dynamicSectionsForSelectedClass.map(sec => (
-                            <option key={sec} value={sec}>Section {sec}</option>
+                            <option key={sec.name} value={sec.name}>
+                              Section {sec.name} ({sec.isFull ? 'FULL • 0 seats' : `${sec.seatsLeft} seats left`})
+                            </option>
                           ))}
                         </select>
+                        {(() => {
+                          const activeSecObj = dynamicSectionsForSelectedClass.find(s => s.name === formData.section)
+                          if (activeSecObj?.isFull) {
+                            return (
+                              <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-md mt-1 font-medium flex items-center gap-1">
+                                <span>⚠️ Notice: Section {formData.section} has reached full capacity ({activeSecObj.enrolled}/{activeSecObj.capacity} seats).</span>
+                              </p>
+                            )
+                          }
+                          return null
+                        })()}
                         {formErrors.section && <p className="text-[11px] text-rose-600 mt-1 font-medium">{formErrors.section}</p>}
                       </div>
 

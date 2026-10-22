@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { 
   BookOpen, 
   Plus, 
@@ -14,6 +14,7 @@ import {
   Award, 
   Building2, 
   Download, 
+  Upload,
   CheckCircle2, 
   X, 
   ChevronRight,
@@ -21,9 +22,20 @@ import {
   AlertCircle,
   Wand2,
   Check,
-  UserCheck
+  UserCheck,
+  Calendar,
+  ArrowRightLeft,
+  Copy,
+  Printer,
+  Archive,
+  ArrowUpDown,
+  Filter,
+  Eye,
+  ShieldAlert,
+  RotateCcw
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
+import { useToast } from '../../../context/ToastContext'
 import { 
   detectProgramLevel, 
   normalizeClassSections, 
@@ -31,6 +43,13 @@ import {
   getDefaultClassesForTier 
 } from '../../../constants/academicLevels'
 import Modal from '../../../components/common/Modal'
+import { ClassModal } from './ClassModal'
+import { SectionModal } from './SectionModal'
+import { SectionRosterDrawer } from './SectionRosterDrawer'
+import { ClassPromotionModal } from './ClassPromotionModal'
+import { ClassProfileModal } from './ClassProfileModal'
+import { RoomsRegisterModal } from './RoomsRegisterModal'
+import { ClassCsvImportModal } from './ClassCsvImportModal'
 
 export const ClassesView = ({ currentInstitute }) => {
   const { 
@@ -38,6 +57,7 @@ export const ClassesView = ({ currentInstitute }) => {
     students = [],
     teachers = [],
     institutes = [],
+    academicYears = [],
     addItem, 
     updateItem, 
     deleteItem,
@@ -45,14 +65,35 @@ export const ClassesView = ({ currentInstitute }) => {
     setActiveProgramLevel
   } = useAppData()
 
-  const [searchTerm, setSearchTerm] = useState('')
-  const [selectedLevelTab, setSelectedLevelTab] = useState(activeProgramLevel || 'all')
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [editingClass, setEditingClass] = useState(null)
-  const [toastMessage, setToastMessage] = useState(null)
-  const [validationError, setValidationError] = useState('')
+  const { toast } = useToast()
 
-  // Two-way synchronization with global navbar program level
+  // Academic Sessions Management
+  const defaultSessions = [
+    { id: 'sess-prev', name: '2025-2026', isCurrent: false },
+    { id: 'sess-curr', name: '2026-2027', isCurrent: true },
+    { id: 'sess-next', name: '2027-2028', isCurrent: false }
+  ]
+
+  const [sessionsList, setSessionsList] = useState(() => {
+    try {
+      const stored = localStorage.getItem('sms_academic_sessions')
+      if (stored) return JSON.parse(stored)
+    } catch (e) {}
+    return defaultSessions
+  })
+
+  const currentActiveSessionName = useMemo(() => {
+    const cur = sessionsList.find(s => s.isCurrent)
+    return cur ? cur.name : (sessionsList[0]?.name || '2026-2027')
+  }, [sessionsList])
+
+  const [selectedSession, setSelectedSession] = useState(currentActiveSessionName)
+  const [isAddSessionModalOpen, setIsAddSessionModalOpen] = useState(false)
+  const [newSessionInput, setNewSessionInput] = useState('')
+
+  // Level Tabs state (Two-way linked with global navbar)
+  const [selectedLevelTab, setSelectedLevelTab] = useState(activeProgramLevel || 'all')
+
   useEffect(() => {
     if (activeProgramLevel && activeProgramLevel !== selectedLevelTab) {
       setSelectedLevelTab(activeProgramLevel)
@@ -66,126 +107,35 @@ export const ClassesView = ({ currentInstitute }) => {
     }
   }
 
-  // Quick Section Modal (to add a single section to an existing class)
-  const [quickSectionClass, setQuickSectionClass] = useState(null)
-  const [quickSectionData, setQuickSectionData] = useState({
-    name: '',
-    roomNo: '',
-    capacity: 40,
-    classTeacher: ''
-  })
+  // Search & Sorting
+  const [searchTerm, setSearchTerm] = useState('')
+  const [sortField, setSortField] = useState('numericName') // 'numericName' | 'capacity' | 'enrolled'
+  const [sortDirection, setSortDirection] = useState('asc')
 
-  // Class Form Data with multi-section list
-  const [formData, setFormData] = useState({
-    name: '',
-    programLevel: 'secondary',
-    sections: [
-      { id: 'sec-1', name: 'Super Section', roomNo: 'Room 101', capacity: 35, enrolled: 0, classTeacher: '' },
-      { id: 'sec-2', name: 'Section A', roomNo: 'Room 102', capacity: 40, enrolled: 0, classTeacher: '' }
-    ]
-  })
+  // Modals & Drawers
+  const [isClassModalOpen, setIsClassModalOpen] = useState(false)
+  const [editingClass, setEditingClass] = useState(null)
 
-  const [customSectionInput, setCustomSectionInput] = useState('')
+  const [isSectionModalOpen, setIsSectionModalOpen] = useState(false)
+  const [sectionModalTargetClass, setSectionModalTargetClass] = useState(null)
+  const [editingSection, setEditingSection] = useState(null)
 
-  // Registered faculty in current campus
-  const instTeachers = teachers.filter(t => {
-    if (!t.instituteId) return true
-    if (!currentInstitute?.id) return true
-    if (t.instituteId === currentInstitute.id) return true
-    if ((t.instituteId === 'inst-1' || t.instituteId === 'inst-default') &&
-        (currentInstitute.id === 'inst-1' || currentInstitute.id === 'inst-default')) {
-      return true
-    }
-    if ((institutes || []).length <= 1) return true
-    return false
-  })
+  const [rosterDrawerData, setRosterDrawerData] = useState(null) // { classItem, sectionItem }
 
-  const triggerToast = (msg) => {
-    setToastMessage(msg)
-    setTimeout(() => setToastMessage(null), 3500)
-  }
+  const [isPromotionModalOpen, setIsPromotionModalOpen] = useState(false)
+  const [profileModalClass, setProfileModalClass] = useState(null)
+  const [isRoomsModalOpen, setIsRoomsModalOpen] = useState(false)
+  const [isCsvImportOpen, setIsCsvImportOpen] = useState(false)
 
-  const openAddModal = () => {
-    setEditingClass(null)
-    setValidationError('')
-    const initialLevel = selectedLevelTab !== 'all' ? selectedLevelTab : (activeProgramLevel !== 'all' ? activeProgramLevel : 'secondary')
-    setFormData({
-      name: '',
-      programLevel: initialLevel,
-      sections: [
-        { id: `sec-${Date.now()}-1`, name: 'Super Section', roomNo: 'Room 101', capacity: 35, enrolled: 0, classTeacher: '' },
-        { id: `sec-${Date.now()}-2`, name: 'Section A', roomNo: 'Room 102', capacity: 40, enrolled: 0, classTeacher: '' }
-      ]
-    })
-    setIsModalOpen(true)
-  }
+  // Delete & Archive Safety Modal
+  const [classToDelete, setClassToDelete] = useState(null)
 
-  const openEditModal = (c) => {
-    setEditingClass(c)
-    setValidationError('')
-    const existingSections = normalizeClassSections(c)
-    setFormData({
-      name: c.name,
-      programLevel: c.programLevel || detectProgramLevel(c.name),
-      sections: existingSections.length > 0 ? existingSections : [
-        { id: `sec-${Date.now()}`, name: 'Section A', roomNo: c.roomNo || 'Room 101', capacity: c.capacity || 40, enrolled: c.enrolled || 0, classTeacher: c.classTeacher || '' }
-      ]
-    })
-    setIsModalOpen(true)
-  }
+  // Filtered teachers for this campus
+  const instTeachers = useMemo(() => {
+    return teachers.filter(t => !t.instituteId || t.instituteId === currentInstitute?.id)
+  }, [teachers, currentInstitute?.id])
 
-  // Quick Preset adder for section builder
-  const addSectionPreset = (presetName) => {
-    setValidationError('')
-    if (formData.sections.some(s => s.name.trim().toLowerCase() === presetName.trim().toLowerCase())) {
-      triggerToast(`Section "${presetName}" is already in the list.`)
-      return
-    }
-
-    const nextRoomNum = 100 + formData.sections.length + 1
-    const newSec = {
-      id: `sec-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
-      name: presetName,
-      roomNo: `Room ${nextRoomNum}`,
-      capacity: 40,
-      enrolled: 0,
-      classTeacher: ''
-    }
-
-    setFormData(prev => ({
-      ...prev,
-      sections: [...prev.sections, newSec]
-    }))
-  }
-
-  const addCustomSection = (e) => {
-    if (e) e.preventDefault()
-    if (!customSectionInput.trim()) return
-
-    addSectionPreset(customSectionInput.trim())
-    setCustomSectionInput('')
-  }
-
-  const removeSectionFromForm = (secId) => {
-    if (formData.sections.length <= 1) {
-      triggerToast('A class must have at least one section.')
-      return
-    }
-    setFormData(prev => ({
-      ...prev,
-      sections: prev.sections.filter(s => s.id !== secId)
-    }))
-  }
-
-  const updateSectionInForm = (secId, field, val) => {
-    setValidationError('')
-    setFormData(prev => ({
-      ...prev,
-      sections: prev.sections.map(s => s.id === secId ? { ...s, [field]: val } : s)
-    }))
-  }
-
-  // Calculate live enrolled count of students in a given class & section
+  // Count live enrolled students for a specific class & section
   const getLiveEnrolledCount = (className, sectionName) => {
     return students.filter(s => {
       const matchInst = !s.instituteId || s.instituteId === currentInstitute?.id
@@ -196,159 +146,315 @@ export const ClassesView = ({ currentInstitute }) => {
     }).length
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setValidationError('')
-
-    if (!formData.name.trim()) {
-      setValidationError('Please provide a class name.')
-      return
-    }
-
-    if (!formData.sections || formData.sections.length === 0) {
-      setValidationError('At least one section must be configured.')
-      return
-    }
-
-    // Duplicate section name check
-    const sectionNames = formData.sections.map(s => s.name.trim().toLowerCase())
-    const uniqueNames = new Set(sectionNames)
-    if (uniqueNames.size !== sectionNames.length) {
-      setValidationError('Section names within the same class must be unique (e.g. Super Section, Section A, Section B).')
-      return
-    }
-
-    // Capacity validation
-    for (const sec of formData.sections) {
-      if (!sec.name.trim()) {
-        setValidationError('All sections must have a valid name.')
-        return
+  // Filter campus classes for current institute and session
+  const campusClasses = useMemo(() => {
+    return classes.filter(c => {
+      const matchInst = !c.instituteId || c.instituteId === currentInstitute?.id
+      if (!matchInst) return false
+      // Filter by session if specified on class
+      if (c.academicSession && selectedSession) {
+        if (c.academicSession !== selectedSession) return false
       }
-      if (Number(sec.capacity) <= 0) {
-        setValidationError(`Section "${sec.name}" capacity must be greater than zero.`)
-        return
-      }
-    }
+      return true
+    })
+  }, [classes, currentInstitute?.id, selectedSession])
 
-    const totalCapacity = formData.sections.reduce((sum, s) => sum + Number(s.capacity || 0), 0)
-    const primarySectionName = formData.sections.map(s => s.name).join(', ')
+  // Filter by level tab & search term, then apply natural numeric sorting
+  const filteredClasses = useMemo(() => {
+    let list = campusClasses.filter(c => {
+      const cLevel = c.programLevel || detectProgramLevel(c.name)
 
-    // Populate live enrolled counts
-    const enrichedSections = formData.sections.map(s => ({
-      ...s,
-      capacity: Number(s.capacity || 40),
-      enrolled: getLiveEnrolledCount(formData.name.trim(), s.name.trim())
-    }))
-
-    const totalEnrolled = enrichedSections.reduce((sum, s) => sum + Number(s.enrolled || 0), 0)
-
-    const payload = {
-      name: formData.name.trim(),
-      programLevel: formData.programLevel,
-      sections: enrichedSections,
-      section: primarySectionName,
-      capacity: totalCapacity,
-      enrolled: totalEnrolled,
-      roomNo: enrichedSections[0]?.roomNo || 'Room 101',
-      classTeacher: enrichedSections[0]?.classTeacher || (instTeachers[0]?.name || 'Teacher In-Charge'),
-      instituteId: currentInstitute?.id || 'inst-1'
-    }
-
-    if (editingClass) {
-      await updateItem('classes', editingClass.id, payload)
-      triggerToast(`Class "${payload.name}" updated successfully with ${formData.sections.length} sections!`)
-    } else {
-      await addItem('classes', payload)
-      triggerToast(`Class "${payload.name}" created with ${formData.sections.length} sections!`)
-
-      // Auto-switch view to the tier of the newly created class so it is immediately visible to user
-      const targetTier = payload.programLevel || detectProgramLevel(payload.name)
-      if (targetTier && targetTier !== 'all') {
-        setSelectedLevelTab(targetTier)
-        if (setActiveProgramLevel) {
-          setActiveProgramLevel(targetTier)
+      if (selectedLevelTab !== 'all') {
+        if (c.programLevel) {
+          if (c.programLevel !== selectedLevelTab) return false
+        } else {
+          if (detectProgramLevel(c.name) !== selectedLevelTab) return false
         }
+      }
+
+      if (searchTerm.trim()) {
+        const term = searchTerm.toLowerCase()
+        const secs = normalizeClassSections(c)
+        const matchName = c.name.toLowerCase().includes(term)
+        const matchSec = secs.some(s => 
+          s.name.toLowerCase().includes(term) || 
+          (s.roomNo && s.roomNo.toLowerCase().includes(term)) ||
+          (s.classTeacher && s.classTeacher.toLowerCase().includes(term))
+        )
+        if (!matchName && !matchSec) return false
+      }
+
+      return true
+    })
+
+    // Natural numeric sorting: "Class 2" before "Class 10"
+    return list.sort((a, b) => {
+      if (sortField === 'numericName') {
+        const res = a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
+        return sortDirection === 'asc' ? res : -res
+      }
+      if (sortField === 'capacity') {
+        const capA = (a.sections || []).reduce((sum, s) => sum + Number(s.capacity || 0), 0)
+        const capB = (b.sections || []).reduce((sum, s) => sum + Number(s.capacity || 0), 0)
+        return sortDirection === 'asc' ? capA - capB : capB - capA
+      }
+      return 0
+    })
+  }, [campusClasses, selectedLevelTab, searchTerm, sortField, sortDirection])
+
+  // Real KPI Metrics derived strictly from filtered classes
+  const kpiClassesCount = filteredClasses.length
+  const kpiSectionsCount = filteredClasses.reduce((sum, c) => sum + normalizeClassSections(c).length, 0)
+  const kpiCapacityCount = filteredClasses.reduce((sum, c) => {
+    const secs = normalizeClassSections(c)
+    return sum + secs.reduce((acc, s) => acc + Number(s.capacity || 0), 0)
+  }, 0)
+  const kpiEnrolledCount = filteredClasses.reduce((sum, c) => {
+    const secs = normalizeClassSections(c)
+    return sum + secs.reduce((acc, s) => acc + getLiveEnrolledCount(c.name, s.name), 0)
+  }, 0)
+  const kpiFillPct = kpiCapacityCount > 0 ? Math.round((kpiEnrolledCount / kpiCapacityCount) * 100) : 0
+
+  // Handle Add New Academic Session
+  const handleAddNewSession = (e) => {
+    e.preventDefault()
+    const clean = newSessionInput.trim()
+    if (!clean) return
+    if (sessionsList.some(s => s.name.toLowerCase() === clean.toLowerCase())) {
+      toast.warning(`Session "${clean}" already exists.`)
+      return
+    }
+
+    const updated = [
+      ...sessionsList,
+      { id: `sess-${Date.now()}`, name: clean, isCurrent: false }
+    ]
+    setSessionsList(updated)
+    try {
+      localStorage.setItem('sms_academic_sessions', JSON.stringify(updated))
+    } catch (err) {}
+    setSelectedSession(clean)
+    setNewSessionInput('')
+    setIsAddSessionModalOpen(false)
+    toast.success(`Academic session "${clean}" created and selected!`)
+  }
+
+  // Handle Save Class (Add or Edit)
+  const handleSaveClass = async (classData) => {
+    try {
+      const payload = {
+        ...classData,
+        instituteId: currentInstitute?.id || 'inst-1',
+        academicSession: selectedSession
+      }
+
+      if (editingClass) {
+        await updateItem('classes', editingClass.id, payload)
+        toast.success(`Class "${payload.name}" updated successfully!`)
       } else {
-        setSelectedLevelTab('all')
-        if (setActiveProgramLevel) {
-          setActiveProgramLevel('all')
+        await addItem('classes', payload)
+        toast.success(`Class "${payload.name}" created with ${payload.sections.length} section(s)!`)
+        
+        // Auto-switch tab to class's level if currently on another tab
+        if (payload.programLevel && payload.programLevel !== selectedLevelTab && selectedLevelTab !== 'all') {
+          handleTabChange(payload.programLevel)
         }
       }
-    }
-    setIsModalOpen(false)
-  }
-
-  const handleDelete = async (id, className) => {
-    if (window.confirm(`Delete class "${className}" and all its assigned sections?`)) {
-      await deleteItem('classes', id)
-      triggerToast(`Class "${className}" deleted.`)
+      setIsClassModalOpen(false)
+      setEditingClass(null)
+    } catch (err) {
+      toast.error('Failed to save class. Please try again.')
     }
   }
 
-  // Quick add section directly from a class card
-  const handleQuickAddSectionSubmit = async (e) => {
-    e.preventDefault()
-    if (!quickSectionData.name.trim() || !quickSectionClass) return
+  // Handle Save Section (Add or Edit single section on a class)
+  const handleSaveSection = async (sectionData) => {
+    if (!sectionModalTargetClass) return
+    try {
+      const currentSecs = normalizeClassSections(sectionModalTargetClass)
+      let updatedSecs = []
 
-    const currentSections = normalizeClassSections(quickSectionClass)
-    
-    // Duplicate check
-    if (currentSections.some(s => s.name.toLowerCase().trim() === quickSectionData.name.toLowerCase().trim())) {
-      triggerToast(`Section "${quickSectionData.name}" already exists in ${quickSectionClass.name}.`)
-      return
+      if (editingSection) {
+        updatedSecs = currentSecs.map(s => s.id === editingSection.id ? sectionData : s)
+      } else {
+        updatedSecs = [...currentSecs, sectionData]
+      }
+
+      const totalCap = updatedSecs.reduce((sum, s) => sum + Number(s.capacity || 0), 0)
+      const payload = {
+        ...sectionModalTargetClass,
+        sections: updatedSecs,
+        section: updatedSecs.map(s => s.name).join(', '),
+        capacity: totalCap,
+        updatedAt: new Date().toISOString()
+      }
+
+      await updateItem('classes', sectionModalTargetClass.id, payload)
+      toast.success(`Section "${sectionData.name}" saved in ${sectionModalTargetClass.name}!`)
+      setIsSectionModalOpen(false)
+      setSectionModalTargetClass(null)
+      setEditingSection(null)
+    } catch (err) {
+      toast.error('Failed to save section.')
     }
-
-    const newSection = {
-      id: `sec-${Date.now()}`,
-      name: quickSectionData.name.trim(),
-      roomNo: quickSectionData.roomNo || `Room ${100 + currentSections.length + 1}`,
-      capacity: Number(quickSectionData.capacity || 40),
-      enrolled: 0,
-      classTeacher: quickSectionData.classTeacher || ''
-    }
-
-    const updatedSections = [...currentSections, newSection]
-    const payload = {
-      ...quickSectionClass,
-      sections: updatedSections,
-      section: updatedSections.map(s => s.name).join(', '),
-      capacity: updatedSections.reduce((acc, s) => acc + Number(s.capacity || 0), 0)
-    }
-
-    await updateItem('classes', quickSectionClass.id, payload)
-    triggerToast(`Added "${newSection.name}" to ${quickSectionClass.name}!`)
-    setQuickSectionClass(null)
-    setQuickSectionData({ name: '', roomNo: '', capacity: 40, classTeacher: '' })
   }
 
-  // Delete an individual section directly from a class card
+  // Delete Individual Section with Safety Check
   const handleDeleteSection = async (classItem, secId, secName) => {
-    const currentSections = normalizeClassSections(classItem)
-    if (currentSections.length <= 1) {
-      triggerToast('Cannot delete the last remaining section of this class.')
+    const currentSecs = normalizeClassSections(classItem)
+    if (currentSecs.length <= 1) {
+      toast.warning('A class must contain at least one configured section.')
       return
     }
 
-    if (window.confirm(`Remove section "${secName}" from ${classItem.name}?`)) {
-      const updatedSections = currentSections.filter(s => s.id !== secId)
+    const enrolled = getLiveEnrolledCount(classItem.name, secName)
+    if (enrolled > 0) {
+      toast.error(`Cannot delete "${secName}": ${enrolled} student(s) currently enrolled. Transfer students first or archive.`)
+      return
+    }
+
+    if (window.confirm(`Delete section "${secName}" from ${classItem.name}?`)) {
+      const updatedSecs = currentSecs.filter(s => s.id !== secId)
       const payload = {
         ...classItem,
-        sections: updatedSections,
-        section: updatedSections.map(s => s.name).join(', '),
-        capacity: updatedSections.reduce((acc, s) => acc + Number(s.capacity || 0), 0)
+        sections: updatedSecs,
+        section: updatedSecs.map(s => s.name).join(', '),
+        capacity: updatedSecs.reduce((sum, s) => sum + Number(s.capacity || 0), 0)
       }
       await updateItem('classes', classItem.id, payload)
-      triggerToast(`Section "${secName}" removed.`)
+      toast.info(`Section "${secName}" removed.`)
     }
   }
 
-  // 1-Click Standard Classes Preset Generator
+  // Delete Class with Student Enrollment Guard
+  const initiateDeleteClass = (c) => {
+    const enrolled = getLiveEnrolledCount(c.name, '')
+    setClassToDelete({ ...c, enrolled })
+  }
+
+  const confirmDeleteClass = async () => {
+    if (!classToDelete) return
+    if (classToDelete.enrolled > 0) {
+      toast.error(`Cannot delete "${classToDelete.name}": ${classToDelete.enrolled} students are actively enrolled. Transfer students or archive class instead.`)
+      return
+    }
+
+    await deleteItem('classes', classToDelete.id)
+    toast.info(`Class "${classToDelete.name}" deleted.`)
+    setClassToDelete(null)
+  }
+
+  // Archive Class
+  const handleArchiveClass = async (c) => {
+    await updateItem('classes', c.id, { isArchived: true, status: 'Archived' })
+    toast.info(`Class "${c.name}" archived.`)
+    setClassToDelete(null)
+  }
+
+  // Move Single Student to Another Section
+  const handleMoveStudent = async (studentId, className, newSectionName) => {
+    await updateItem('students', studentId, { section: newSectionName })
+    toast.success(`Student reassigned to Section ${newSectionName}!`)
+    if (rosterDrawerData) {
+      // Refresh drawer target section count
+      const updatedClass = classes.find(c => c.id === rosterDrawerData.classItem.id)
+      const updatedSec = (updatedClass?.sections || []).find(s => s.name === rosterDrawerData.sectionItem.name)
+      if (updatedSec) {
+        setRosterDrawerData({ classItem: updatedClass, sectionItem: updatedSec })
+      }
+    }
+  }
+
+  // Bulk Move Multiple Students
+  const handleBulkMoveStudents = async (studentIds, className, newSectionName) => {
+    for (const id of studentIds) {
+      await updateItem('students', id, { section: newSectionName })
+    }
+    toast.success(`${studentIds.length} student(s) transferred to Section ${newSectionName}!`)
+  }
+
+  // Auto-Distribute Students Evenly Across Sections
+  const handleAutoDistribute = async (classId) => {
+    const targetClass = classes.find(c => c.id === classId)
+    if (!targetClass) return
+
+    const secs = normalizeClassSections(targetClass)
+    if (secs.length <= 1) {
+      toast.warning('Class only has 1 section. Add more sections to balance.')
+      return
+    }
+
+    const classStudents = students.filter(s => 
+      (!s.instituteId || s.instituteId === currentInstitute?.id) &&
+      (s.className || '').toLowerCase().trim() === targetClass.name.toLowerCase().trim()
+    )
+
+    if (classStudents.length === 0) {
+      toast.warning('No enrolled students in this class to distribute.')
+      return
+    }
+
+    // Round-robin assignment across sections
+    for (let i = 0; i < classStudents.length; i++) {
+      const assignedSec = secs[i % secs.length].name
+      await updateItem('students', classStudents[i].id, { section: assignedSec })
+    }
+
+    toast.success(`Balanced ${classStudents.length} students evenly across ${secs.length} sections!`)
+  }
+
+  // Promote Class to Next Grade
+  const handlePromoteClass = async ({ sourceClass, targetClass, students: promotingStudents, newSession }) => {
+    for (const st of promotingStudents) {
+      await updateItem('students', st.id, {
+        className: targetClass.name,
+        section: targetClass.sections?.[0]?.name || 'Section A',
+        academicSession: newSession
+      })
+    }
+    toast.success(`Successfully promoted ${promotingStudents.length} students from ${sourceClass.name} to ${targetClass.name} (${newSession})!`)
+  }
+
+  // Clone Classes to Next Session
+  const handleCloneSession = async ({ fromSession, toSession, classes: classesList }) => {
+    let count = 0
+    for (const c of classesList) {
+      const clonePayload = {
+        name: c.name,
+        programLevel: c.programLevel || detectProgramLevel(c.name),
+        academicSession: toSession,
+        capacity: c.capacity,
+        enrolled: 0,
+        group: c.group || '',
+        board: c.board || '',
+        department: c.department || '',
+        subjects: c.subjects || [],
+        sections: (c.sections || []).map(s => ({ ...s, enrolled: 0 })),
+        instituteId: currentInstitute?.id || 'inst-1',
+        createdAt: new Date().toISOString()
+      }
+      await addItem('classes', clonePayload)
+      count++
+    }
+    toast.success(`Cloned ${count} classes and their sections into session ${toSession}!`)
+    setSelectedSession(toSession)
+  }
+
+  // CSV Import Confirm
+  const handleImportClassesFromCsv = async (parsedList) => {
+    for (const item of parsedList) {
+      await addItem('classes', item)
+    }
+    toast.success(`Imported ${parsedList.length} classes via CSV!`)
+  }
+
+  // 1-Click Standard Classes Preset Generator (User Triggered Only)
   const handleGeneratePresetClasses = async (targetTier) => {
     const tierToGenerate = targetTier === 'all' ? 'elementary' : targetTier
     const templates = getDefaultClassesForTier(tierToGenerate)
 
     if (!templates || templates.length === 0) {
-      triggerToast(`No predefined template available for tier "${tierToGenerate}".`)
+      toast.warning(`No predefined template available for tier "${tierToGenerate}".`)
       return
     }
 
@@ -358,158 +464,94 @@ export const ClassesView = ({ currentInstitute }) => {
 
     let createdCount = 0
     for (const tpl of templates) {
-      // Check if class with this name already exists
       const exists = classes.some(c => 
         (!c.instituteId || c.instituteId === currentInstitute?.id) && 
+        (c.academicSession || selectedSession) === selectedSession &&
         c.name.toLowerCase().trim() === tpl.name.toLowerCase().trim()
       )
       if (!exists) {
         const enriched = {
           ...tpl,
+          academicSession: selectedSession,
           instituteId: currentInstitute?.id || 'inst-1',
           section: tpl.sections.map(s => s.name).join(', '),
           capacity: tpl.sections.reduce((sum, s) => sum + Number(s.capacity || 0), 0),
           enrolled: 0,
           roomNo: tpl.sections[0]?.roomNo || 'Room 101',
-          classTeacher: instTeachers[0]?.name || 'Teacher In-Charge'
+          classTeacher: instTeachers[0]?.name || ''
         }
         await addItem('classes', enriched)
         createdCount++
       }
     }
 
-    triggerToast(`Standard setup generated! ${createdCount} classes added to ${tierToGenerate.toUpperCase()}.`)
+    toast.success(`Scaffold complete! ${createdCount} standard classes added to ${tierToGenerate.toUpperCase()}.`)
   }
 
-  // Export Classes and Sections Directory
+  // Export Filtered Classes to CSV
   const handleExportCSV = () => {
-    const rows = [
-      ['Classes & Custom Sections Directory'],
-      ['Institute:', currentInstitute?.name || 'Main Campus'],
-      ['Generated At:', new Date().toLocaleString()],
-      [''],
-      ['Program Level', 'Class Title', 'Section Name', 'Room No', 'Enrolled Students', 'Max Capacity', 'Teacher In-Charge']
+    if (filteredClasses.length === 0) {
+      toast.warning('No classes to export.')
+      return
+    }
+
+    const headers = [
+      'Class Title',
+      'Educational Tier',
+      'Academic Session',
+      'Section Name',
+      'Room Number',
+      'Shift',
+      'Gender',
+      'Medium',
+      'Enrolled Students',
+      'Max Capacity',
+      'Seats Left',
+      'Section Class Teacher'
     ]
 
-    classes.forEach(c => {
-      const lvl = c.programLevel || detectProgramLevel(c.name)
-      const secList = normalizeClassSections(c)
-      secList.forEach(s => {
-        const liveEnrolled = getLiveEnrolledCount(c.name, s.name)
+    const rows = []
+    filteredClasses.forEach(c => {
+      const secs = normalizeClassSections(c)
+      secs.forEach(s => {
+        const enrolled = getLiveEnrolledCount(c.name, s.name)
+        const cap = Number(s.capacity || 40)
         rows.push([
-          lvl.toUpperCase(),
-          c.name,
-          s.name,
-          s.roomNo || 'Room 101',
-          liveEnrolled,
-          s.capacity || 40,
-          s.classTeacher || 'Teacher In-Charge'
+          `"${c.name}"`,
+          `"${c.programLevel || detectProgramLevel(c.name)}"`,
+          `"${c.academicSession || selectedSession}"`,
+          `"${s.name}"`,
+          `"${s.roomNo || 'Room 101'}"`,
+          `"${s.shift || 'Morning'}"`,
+          `"${s.gender || 'Co-ed'}"`,
+          `"${s.medium || 'English'}"`,
+          `"${enrolled}"`,
+          `"${cap}"`,
+          `"${Math.max(0, cap - enrolled)}"`,
+          `"${s.classTeacherName || s.classTeacher || ''}"`
         ])
       })
     })
 
-    const csvContent = 'data:text/csv;charset=utf-8,' + rows.map(e => e.map(cell => `"${cell}"`).join(',')).join('\n')
-    const encodedUri = encodeURI(csvContent)
+    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
-    link.setAttribute('href', encodedUri)
-    link.setAttribute('download', `Classes_and_Sections_${new Date().toISOString().split('T')[0]}.csv`)
+    link.href = url
+    link.setAttribute('download', `Classes_and_Sections_${selectedSession}_${new Date().toISOString().split('T')[0]}.csv`)
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
-    triggerToast('Classes & Sections CSV exported successfully!')
+    toast.success('Classes & Sections CSV exported.')
   }
 
-  const getLevelBadgeStyle = (level) => {
-    switch (level) {
-      case 'elementary':
-        return 'bg-emerald-50 text-emerald-700 border-emerald-200'
-      case 'secondary':
-        return 'bg-blue-50 text-blue-700 border-blue-200'
-      case 'higher-secondary':
-        return 'bg-indigo-50 text-indigo-700 border-indigo-200'
-      case 'college':
-        return 'bg-amber-50 text-amber-700 border-amber-200'
-      case 'university':
-        return 'bg-purple-50 text-purple-700 border-purple-200'
-      default:
-        return 'bg-slate-50 text-slate-700 border-slate-200'
-    }
-  }
-
-  // Effective Active Filter Tier (Tab takes direct precedence and is 2-way synced)
-  const effectiveFilterTier = selectedLevelTab
-
-  // Filter classes cleanly and safely without dropping records due to ID naming differences
-  const campusClasses = classes.filter(c => {
-    if (!c.instituteId) return true
-    if (!currentInstitute?.id) return true
-    if (c.instituteId === currentInstitute.id) return true
-    // Standard default campus fallbacks
-    if ((c.instituteId === 'inst-1' || c.instituteId === 'inst-default') &&
-        (currentInstitute.id === 'inst-1' || currentInstitute.id === 'inst-default')) {
-      return true
-    }
-    // Single campus mode: if there's at most 1 institute in system, all classes belong to current view
-    if ((institutes || []).length <= 1) return true
-    return false
-  })
-
-  const filtered = campusClasses.filter(c => {
-    const cLevel = c.programLevel || detectProgramLevel(c.name)
-
-    // Tier filtering: if 'all', show everything
-    if (effectiveFilterTier !== 'all') {
-      const directMatch = c.programLevel === effectiveFilterTier
-      const nameMatch = detectProgramLevel(c.name) === effectiveFilterTier
-      if (!directMatch && !nameMatch && cLevel !== 'all') {
-        return false
-      }
-    }
-
-    if (!searchTerm) return true
-    const term = searchTerm.toLowerCase()
-    const secList = normalizeClassSections(c)
-    return (
-      c.name.toLowerCase().includes(term) ||
-      (c.programLevel && c.programLevel.toLowerCase().includes(term)) ||
-      cLevel.toLowerCase().includes(term) ||
-      secList.some(s => s.name.toLowerCase().includes(term) || (s.classTeacher && s.classTeacher.toLowerCase().includes(term)))
-    )
-  })
-
-  // Dynamic Tier-Aware Statistics
-  const tierClassesCount = filtered.length
-  const tierSectionsCount = filtered.reduce((sum, c) => sum + normalizeClassSections(c).length, 0)
-  const tierCapacityCount = filtered.reduce((sum, c) => {
-    const secs = normalizeClassSections(c)
-    return sum + secs.reduce((acc, s) => acc + Number(s.capacity || 0), 0)
-  }, 0)
-
-  const totalCampusSectionsCount = campusClasses.reduce((sum, c) => sum + normalizeClassSections(c).length, 0)
-  const totalCampusCapacityCount = campusClasses.reduce((sum, c) => sum + Number(c.capacity || 40), 0)
-
-  const activeLevelMeta = PROGRAM_LEVELS.find(l => l.id === effectiveFilterTier) || PROGRAM_LEVELS[0]
+  const activeLevelMeta = PROGRAM_LEVELS.find(l => l.id === selectedLevelTab) || PROGRAM_LEVELS[0]
 
   return (
     <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
-      {/* Toast Feedback */}
-      {toastMessage && (
-        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl flex items-center justify-between shadow-xs animate-in fade-in slide-in-from-top-2">
-          <div className="flex items-center gap-2.5">
-            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-            <span className="text-sm font-medium">{toastMessage}</span>
-          </div>
-          <button 
-            onClick={() => setToastMessage(null)}
-            className="text-xs text-emerald-700 underline font-medium hover:text-emerald-900 ml-4"
-          >
-            Dismiss
-          </button>
-        </div>
-      )}
-
-      {/* Header Banner */}
-      <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      
+      {/* Top Banner & Main Controls */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-emerald-600 text-xs font-semibold uppercase tracking-wider">
             <BookOpen className="w-4 h-4" />
@@ -517,92 +559,198 @@ export const ClassesView = ({ currentInstitute }) => {
             <span className="text-slate-300">•</span>
             <span className="text-slate-500 font-normal">{activeLevelMeta.title}</span>
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 mt-1 tracking-tight">
-            Classes & Custom Sections
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-0.5">
+            Classes & Sections
           </h1>
-          <p className="text-xs text-slate-500 mt-1">
-            Configure flexible class sections (e.g. Super Section, Star Section, Section A, Morning/Evening batches) tailored to each educational tier.
+          <p className="text-xs text-slate-500 mt-0.5">
+            Classroom configurations, section allocations, capacity heatmaps, subject teachers, and session transitions
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 flex-wrap w-full sm:w-auto">
-          {effectiveFilterTier !== 'all' && (
-            <button
-              onClick={() => handleGeneratePresetClasses(effectiveFilterTier)}
-              className="flex-1 sm:flex-none px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold shadow-xs transition-all duration-150 flex items-center justify-center gap-1.5 active:scale-95 border border-slate-200"
-              title={`Auto-generate standard classes for ${activeLevelMeta.shortTitle}`}
+        {/* Global Session & Action Buttons */}
+        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+          {/* Academic Session Selector */}
+          <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-2xs">
+            <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <select
+              value={selectedSession}
+              onChange={(e) => setSelectedSession(e.target.value)}
+              className="text-xs font-bold text-slate-800 bg-transparent border-none focus:outline-none cursor-pointer"
             >
-              <Wand2 className="w-3.5 h-3.5 text-indigo-600" />
-              <span>Scaffold Tier</span>
+              {sessionsList.map(sess => (
+                <option key={sess.id} value={sess.name}>
+                  {sess.name} {sess.isCurrent ? '(Current)' : ''}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={() => setIsAddSessionModalOpen(true)}
+              className="text-emerald-600 hover:text-emerald-700 p-0.5"
+              title="Add New Academic Session"
+            >
+              <Plus className="w-3.5 h-3.5" />
             </button>
-          )}
+          </div>
+
+          {/* Rooms Register */}
           <button
-            onClick={openAddModal}
-            className="flex-1 sm:flex-none px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-xs hover:shadow transition-all duration-150 flex items-center justify-center gap-1.5 active:scale-95"
+            onClick={() => setIsRoomsModalOpen(true)}
+            className="px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold border border-slate-200 shadow-2xs flex items-center gap-1.5 transition-all"
+            title="View classrooms & space register"
           >
-            <Plus className="w-4 h-4" />
-            <span>Create New Class</span>
+            <DoorOpen className="w-3.5 h-3.5 text-slate-500" />
+            <span>Spaces</span>
           </button>
+
+          {/* Promote & Clone */}
+          <button
+            onClick={() => setIsPromotionModalOpen(true)}
+            className="px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold border border-slate-200 shadow-2xs flex items-center gap-1.5 transition-all"
+            title="Promote class cohorts or clone structure to next year"
+          >
+            <GraduationCap className="w-3.5 h-3.5 text-indigo-600" />
+            <span>Promote / Clone</span>
+          </button>
+
+          {/* Import CSV */}
+          <button
+            onClick={() => setIsCsvImportOpen(true)}
+            className="px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold border border-slate-200 shadow-2xs flex items-center gap-1.5 transition-all"
+            title="Import classes and sections via CSV"
+          >
+            <Upload className="w-3.5 h-3.5 text-slate-500" />
+            <span>Import</span>
+          </button>
+
+          {/* Export CSV */}
           <button
             onClick={handleExportCSV}
-            className="flex-1 sm:flex-none px-4 py-2.5 bg-white border border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-50 rounded-xl text-xs font-semibold shadow-xs transition-all duration-150 flex items-center justify-center gap-1.5 active:scale-95"
+            className="px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold border border-slate-200 shadow-2xs flex items-center gap-1.5 transition-all"
+            title="Export filtered classes roster"
           >
             <Download className="w-3.5 h-3.5 text-slate-500" />
-            <span>Export CSV</span>
+            <span>Export</span>
+          </button>
+
+          {/* Create New Class */}
+          <button
+            onClick={() => {
+              setEditingClass(null)
+              setIsClassModalOpen(true)
+            }}
+            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all flex items-center gap-1.5 active:scale-95"
+          >
+            <Plus className="w-4 h-4" />
+            <span>+ Create New Class</span>
           </button>
         </div>
       </div>
 
-      {/* Top 3 Summary Metrics - Aware of Tier Filter */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs">
-          <span className="text-xs text-slate-400 font-medium">Registered Classes</span>
-          <div className="flex items-baseline justify-between mt-1">
-            <span className="text-2xl font-bold text-slate-900">{tierClassesCount} Classes</span>
-            <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
-              {effectiveFilterTier === 'all' ? `${campusClasses.length} Total` : `${activeLevelMeta.shortTitle}`}
+      {/* Real KPI Summary Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Card 1: Registered Classes */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Registered Classes</span>
+            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+              <BookOpen className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <span className="text-2xl font-black text-slate-900 tracking-tight">
+              {kpiClassesCount}
             </span>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              {kpiClassesCount > 0 ? `${kpiClassesCount} in ${selectedSession}` : '0 classes registered'}
+            </p>
           </div>
         </div>
-        <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs">
-          <span className="text-xs text-slate-400 font-medium">Configured Sections</span>
-          <div className="flex items-baseline justify-between mt-1">
-            <span className="text-2xl font-bold text-slate-900">{tierSectionsCount} Sections</span>
-            <span className="text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
-              {effectiveFilterTier === 'all' ? 'All Tiers' : `${tierSectionsCount} Active`}
+
+        {/* Card 2: Configured Sections */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Configured Sections</span>
+            <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+              <Layers className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <span className="text-2xl font-black text-slate-900 tracking-tight">
+              {kpiSectionsCount}
             </span>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              {kpiSectionsCount > 0 ? `${kpiSectionsCount} active classroom wings` : '0 sections configured'}
+            </p>
           </div>
         </div>
-        <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs">
-          <span className="text-xs text-slate-400 font-medium">Seating Capacity</span>
-          <div className="flex items-baseline justify-between mt-1">
-            <span className="text-2xl font-bold text-slate-900">{tierCapacityCount} Seats</span>
-            <span className="text-[11px] font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">
-              {effectiveFilterTier === 'all' ? `${totalCampusCapacityCount} Desks` : `${tierCapacityCount} Desks`}
+
+        {/* Card 3: Seating Capacity */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Seating Capacity</span>
+            <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+              <DoorOpen className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <span className="text-2xl font-black text-slate-900 tracking-tight">
+              {kpiCapacityCount} Seats
             </span>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              {kpiCapacityCount > 0 ? `${Math.max(0, kpiCapacityCount - kpiEnrolledCount)} seats available` : '0 desks configured'}
+            </p>
+          </div>
+        </div>
+
+        {/* Card 4: Enrolled vs Capacity */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Enrollment Rate</span>
+            <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+              <Users className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <div className="flex items-baseline justify-between">
+              <span className="text-2xl font-black text-slate-900 tracking-tight">
+                {kpiEnrolledCount} <span className="text-sm font-normal text-slate-400">/ {kpiCapacityCount}</span>
+              </span>
+              <span className="text-xs font-bold font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                {kpiFillPct}%
+              </span>
+            </div>
+            <div className="w-full bg-slate-100 h-1.5 rounded-full mt-2 overflow-hidden">
+              <div 
+                className={`h-full rounded-full transition-all duration-300 ${
+                  kpiFillPct >= 100 ? 'bg-rose-500' : kpiFillPct >= 80 ? 'bg-amber-400' : 'bg-emerald-500'
+                }`}
+                style={{ width: `${kpiFillPct}%` }}
+              />
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Filter Tabs & Search Controls */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
-        {/* Tier Tabs (Two-way linked with global navbar) */}
-        <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl w-full sm:w-auto overflow-x-auto scrollbar-none">
+      {/* Tier Switcher Tabs & Search Toolbar */}
+      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+        {/* Tier Tabs (Pre-School, Elementary, Secondary, HSSC, College, University) */}
+        <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl overflow-x-auto scrollbar-none text-xs">
           {[
             { id: 'all', label: 'All Levels' },
+            { id: 'preschool', label: 'Pre-School' },
             { id: 'elementary', label: 'Elementary (1-8)' },
             { id: 'secondary', label: 'Secondary (9-10)' },
             { id: 'higher-secondary', label: 'HSSC (11-12)' },
             { id: 'college', label: 'College (ADP)' },
             { id: 'university', label: 'University (BS/MS)' }
-          ].map((tab) => (
+          ].map(tab => (
             <button
               key={tab.id}
               onClick={() => handleTabChange(tab.id)}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-all ${
-                effectiveFilterTier === tab.id
-                  ? 'bg-white text-slate-900 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
+              className={`px-3 py-1.5 rounded-lg font-bold whitespace-nowrap transition-all ${
+                selectedLevelTab === tab.id
+                  ? 'bg-white text-slate-900 shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
               {tab.label}
@@ -610,153 +758,190 @@ export const ClassesView = ({ currentInstitute }) => {
           ))}
         </div>
 
-        {/* Search Input */}
-        <div className="relative w-full sm:w-72">
-          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder="Search class or section name..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-8 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
-          />
-          {searchTerm && (
+        {/* Search & Sort Controls */}
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1 sm:w-64">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search class, section, room..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-8 pr-7 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          {selectedLevelTab !== 'all' && (
             <button
-              onClick={() => setSearchTerm('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              onClick={() => handleGeneratePresetClasses(selectedLevelTab)}
+              className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-xl border border-indigo-200 transition-colors flex items-center gap-1 shrink-0"
+              title="Scaffold standard classes for this level"
             >
-              <X className="w-3.5 h-3.5" />
+              <Wand2 className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Scaffold</span>
             </button>
           )}
         </div>
       </div>
 
       {/* Classes Grid */}
-      {filtered.length > 0 ? (
+      {filteredClasses.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filtered.map(c => {
+          {filteredClasses.map(c => {
             const cLevel = c.programLevel || detectProgramLevel(c.name)
             const secList = normalizeClassSections(c)
-            
-            // Calculate live totals across sections
-            const totalEnrolled = secList.reduce((acc, s) => acc + getLiveEnrolledCount(c.name, s.name), 0)
-            const totalCapacity = secList.reduce((acc, s) => acc + Number(s.capacity || 40), 0)
-            const fillPct = Math.min(100, Math.round((totalEnrolled / Math.max(1, totalCapacity)) * 100))
+            const classEnrolled = secList.reduce((acc, s) => acc + getLiveEnrolledCount(c.name, s.name), 0)
+            const classCapacity = secList.reduce((acc, s) => acc + Number(s.capacity || 0), 0)
+            const seatsRemaining = Math.max(0, classCapacity - classEnrolled)
+            const fillPct = classCapacity > 0 ? Math.round((classEnrolled / classCapacity) * 100) : 0
+            const isFull = classEnrolled >= classCapacity
 
             return (
               <div 
-                key={c.id} 
-                className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-slate-300 transition-all flex flex-col justify-between"
+                key={c.id}
+                className="bg-white rounded-2xl p-5 border border-slate-200 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between"
               >
                 <div>
-                  {/* Top Bar: Level Badge & Class Capacity */}
-                  <div className="flex items-center justify-between gap-2 mb-3">
-                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${getLevelBadgeStyle(cLevel)}`}>
+                  {/* Card Header: Tier Badge & Seats Heatmap */}
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
                       {cLevel.replace('-', ' ')}
                     </span>
-                    <span className="text-xs text-slate-500 font-mono font-medium flex items-center gap-1">
-                      <Users className="w-3.5 h-3.5 text-slate-400" />
-                      <span>{totalEnrolled} / {totalCapacity} Seats</span>
+
+                    {/* Capacity Heatmap Badge */}
+                    <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border flex items-center gap-1 ${
+                      isFull 
+                        ? 'bg-rose-50 text-rose-700 border-rose-200' 
+                        : fillPct >= 80 
+                          ? 'bg-amber-50 text-amber-700 border-amber-200' 
+                          : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    }`}>
+                      <Users className="w-3 h-3" />
+                      <span>{seatsRemaining === 0 ? 'Full' : `${seatsRemaining} Seats Left`}</span>
                     </span>
                   </div>
 
-                  {/* Class Name */}
-                  <h3 className="text-lg font-bold text-slate-900 tracking-tight">{c.name}</h3>
-                  <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
-                    <span>In-Charge:</span>
-                    <strong className="text-slate-700 font-medium">{c.classTeacher || 'Teacher In-Charge'}</strong>
+                  {/* Class Title */}
+                  <div className="flex items-baseline justify-between mt-1">
+                    <h3 
+                      onClick={() => setProfileModalClass(c)}
+                      className="text-lg font-black text-slate-900 tracking-tight cursor-pointer hover:text-emerald-700 transition-colors"
+                      title="View Class Dossier"
+                    >
+                      {c.name}
+                    </h3>
+                    <span className="text-xs font-mono font-bold text-slate-600">
+                      {classEnrolled} / {classCapacity}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    In-Charge: <strong className="text-slate-800">{c.classTeacher || 'Teacher In-Charge'}</strong>
                   </p>
 
-                  {/* Capacity Bar */}
-                  <div className="mt-3.5">
-                    <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                      <div 
-                        className={`h-full rounded-full transition-all duration-300 ${
-                          fillPct > 90 ? 'bg-rose-500' : fillPct > 60 ? 'bg-amber-500' : 'bg-emerald-500'
-                        }`}
-                        style={{ width: `${fillPct}%` }}
-                      ></div>
-                    </div>
+                  {/* Progress Bar */}
+                  <div className="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden">
+                    <div 
+                      className={`h-full rounded-full transition-all duration-300 ${
+                        isFull ? 'bg-rose-500' : fillPct >= 80 ? 'bg-amber-400' : 'bg-emerald-500'
+                      }`}
+                      style={{ width: `${Math.min(100, fillPct)}%` }}
+                    />
                   </div>
 
                   {/* Configured Sections List */}
-                  <div className="mt-4 pt-3.5 border-t border-slate-100">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                        Assigned Sections ({secList.length})
-                      </span>
+                  <div className="mt-4 pt-3 border-t border-slate-100 space-y-2">
+                    <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                      <span>Assigned Sections ({secList.length})</span>
                       <button
                         onClick={() => {
-                          setQuickSectionClass(c)
-                          setQuickSectionData({ 
-                            name: '', 
-                            roomNo: `Room ${100 + secList.length + 1}`, 
-                            capacity: 40, 
-                            classTeacher: instTeachers[0]?.name || '' 
-                          })
+                          setSectionModalTargetClass(c)
+                          setEditingSection(null)
+                          setIsSectionModalOpen(true)
                         }}
-                        className="text-[11px] font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-0.5 hover:underline"
+                        className="text-emerald-600 hover:text-emerald-700 lowercase font-semibold flex items-center gap-0.5"
                       >
-                        <Plus className="w-3 h-3 stroke-[3]" />
-                        <span>Add Section</span>
+                        <Plus className="w-3 h-3" />
+                        <span>add section</span>
                       </button>
                     </div>
 
-                    <div className="space-y-2">
-                      {secList.map((sec, sIdx) => {
-                        const isSuper = sec.name.toLowerCase().includes('super') || sec.name.toLowerCase().includes('star')
+                    <div className="space-y-1.5">
+                      {secList.map((sec, idx) => {
                         const secEnrolled = getLiveEnrolledCount(c.name, sec.name)
-                        const secCapacity = Number(sec.capacity || 40)
-                        const isFull = secEnrolled >= secCapacity
+                        const secCap = Number(sec.capacity || 40)
+                        const isSecFull = secEnrolled >= secCap
 
                         return (
                           <div 
-                            key={sec.id || sIdx}
-                            className={`p-2.5 rounded-xl border flex items-center justify-between text-xs transition-colors ${
-                              isSuper 
-                                ? 'bg-amber-50/60 border-amber-200/80 shadow-2xs' 
-                                : 'bg-slate-50/80 border-slate-200/60 hover:bg-slate-50'
-                            }`}
+                            key={sec.id || idx}
+                            className="p-2.5 rounded-xl border border-slate-200/80 bg-slate-50/60 hover:bg-slate-50 transition-colors flex items-center justify-between text-xs"
                           >
-                            <div className="flex items-center gap-2 min-w-0">
-                              {isSuper ? (
-                                <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-400 shrink-0" />
-                              ) : (
-                                <span className="w-2 h-2 rounded-full bg-slate-300 shrink-0"></span>
-                              )}
+                            <div 
+                              onClick={() => setRosterDrawerData({ classItem: c, sectionItem: sec })}
+                              className="flex items-center gap-2 cursor-pointer truncate flex-1"
+                              title="Click to view section student roster"
+                            >
+                              <div className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-[10px] shrink-0">
+                                {sec.name.replace(/Section\s*/i, '').charAt(0) || 'A'}
+                              </div>
                               <div className="truncate">
-                                <div className="flex items-center gap-2">
-                                  <span className="font-bold text-slate-800">{sec.name}</span>
-                                  {isFull && (
-                                    <span className="text-[9px] bg-rose-100 text-rose-700 px-1.5 py-0.2 rounded font-semibold">
-                                      Full
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="text-[10px] text-slate-400 flex items-center gap-1.5 mt-0.5">
+                                <span className="font-bold text-slate-800 block truncate">{sec.name}</span>
+                                <span className="text-[10px] text-slate-400 flex items-center gap-1">
                                   <span>{sec.roomNo || 'Room 101'}</span>
                                   <span>•</span>
-                                  <span className="font-mono text-slate-600">{secEnrolled}/{secCapacity} Enrolled</span>
-                                  {sec.classTeacher && (
+                                  <span className="font-mono text-slate-600">{secEnrolled}/{secCap} Enrolled</span>
+                                  {sec.classTeacherName && (
                                     <>
                                       <span>•</span>
-                                      <span className="truncate max-w-[100px] text-slate-500 font-medium">{sec.classTeacher}</span>
+                                      <span className="truncate max-w-[80px]">{sec.classTeacherName}</span>
                                     </>
                                   )}
-                                </div>
+                                </span>
                               </div>
                             </div>
 
-                            {/* Delete single section */}
-                            {secList.length > 1 && (
+                            <div className="flex items-center gap-1 shrink-0 ml-2">
+                              {isSecFull ? (
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
+                                  Full
+                                </span>
+                              ) : (
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                  {secCap - secEnrolled} Free
+                                </span>
+                              )}
+
                               <button
-                                onClick={() => handleDeleteSection(c, sec.id, sec.name)}
-                                title="Remove section"
-                                className="text-slate-400 hover:text-rose-500 p-1 rounded transition-colors shrink-0 ml-1"
+                                onClick={() => {
+                                  setSectionModalTargetClass(c)
+                                  setEditingSection(sec)
+                                  setIsSectionModalOpen(true)
+                                }}
+                                className="p-1 text-slate-400 hover:text-emerald-600 rounded"
+                                title="Edit Section"
                               >
-                                <X className="w-3 h-3" />
+                                <Edit2 className="w-3 h-3" />
                               </button>
-                            )}
+
+                              {secList.length > 1 && (
+                                <button
+                                  onClick={() => handleDeleteSection(c, sec.id, sec.name)}
+                                  className="p-1 text-slate-400 hover:text-rose-600 rounded"
+                                  title="Remove Section"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              )}
+                            </div>
                           </div>
                         )
                       })}
@@ -764,18 +949,33 @@ export const ClassesView = ({ currentInstitute }) => {
                   </div>
                 </div>
 
-                {/* Card Actions */}
-                <div className="mt-5 pt-3.5 border-t border-slate-100 flex items-center justify-between gap-2">
-                  <button 
-                    onClick={() => openEditModal(c)}
-                    className="flex-1 py-1.5 px-3 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
-                  >
-                    <Edit2 className="w-3.5 h-3.5 text-slate-500" />
-                    <span>Edit Class</span>
-                  </button>
-                  <button 
-                    onClick={() => handleDelete(c.id, c.name)}
-                    className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                {/* Card Footer Actions */}
+                <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1 flex-1">
+                    <button
+                      onClick={() => setProfileModalClass(c)}
+                      className="py-1.5 px-3 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors"
+                      title="View Class Dossier"
+                    >
+                      <Eye className="w-3.5 h-3.5 text-slate-500" />
+                      <span>Dossier</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditingClass(c)
+                        setIsClassModalOpen(true)
+                      }}
+                      className="py-1.5 px-3 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors"
+                      title="Edit Class"
+                    >
+                      <Edit2 className="w-3.5 h-3.5 text-slate-500" />
+                      <span>Edit</span>
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={() => initiateDeleteClass(c)}
+                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
                     title="Delete Class"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -786,320 +986,234 @@ export const ClassesView = ({ currentInstitute }) => {
           })}
         </div>
       ) : (
-        <div className="bg-white rounded-2xl p-10 sm:p-14 border border-slate-200/80 text-center flex flex-col items-center justify-center space-y-4 shadow-xs">
-          <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-inner">
-            <BookOpen className="w-7 h-7" />
+        /* Clean Zero Empty State */
+        <div className="bg-white rounded-2xl p-12 border border-slate-200 text-center shadow-2xs max-w-xl mx-auto space-y-4">
+          <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto shadow-inner">
+            <BookOpen className="w-8 h-8" />
           </div>
-          <div className="max-w-md">
-            <h3 className="text-lg font-bold text-slate-800">
+          <div>
+            <h3 className="text-base font-bold text-slate-800">
               No Classes Configured for {activeLevelMeta.title}
             </h3>
-            <p className="text-xs text-slate-500 mt-1">
-              {campusClasses.length > 0 
-                ? `You have ${campusClasses.length} registered class(es) in other tiers. You can view all classes or scaffold standard classes for ${activeLevelMeta.shortTitle}.`
-                : `You can instantly create standard classes with custom sections using the 1-click scaffold wizard, or configure custom classes from scratch.`
-              }
+            <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+              Get started by creating your first custom class or scaffold standard grade levels for session {selectedSession}.
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center gap-3 pt-2 flex-wrap justify-center">
-            {campusClasses.length > 0 && effectiveFilterTier !== 'all' && (
+          <div className="flex items-center justify-center gap-3 pt-2 flex-wrap">
+            {selectedLevelTab !== 'all' && (
               <button
-                onClick={() => handleTabChange('all')}
-                className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all border border-slate-200"
+                onClick={() => handleGeneratePresetClasses(selectedLevelTab)}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all flex items-center gap-1.5 active:scale-95"
               >
-                <span>View All Campus Classes ({campusClasses.length})</span>
-              </button>
-            )}
-            {effectiveFilterTier !== 'all' && (
-              <button
-                onClick={() => handleGeneratePresetClasses(effectiveFilterTier)}
-                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all flex items-center gap-2 active:scale-95"
-              >
-                <Wand2 className="w-4 h-4" />
-                <span>Auto-Scaffold {activeLevelMeta.shortTitle} Standard Classes</span>
+                <Wand2 className="w-3.5 h-3.5" />
+                <span>Scaffold {activeLevelMeta.shortTitle}</span>
               </button>
             )}
             <button
-              onClick={openAddModal}
-              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-all flex items-center gap-1.5 active:scale-95"
+              onClick={() => {
+                setEditingClass(null)
+                setIsClassModalOpen(true)
+              }}
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all flex items-center gap-1.5 active:scale-95"
             >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Create First Custom Class</span>
+              <Plus className="w-4 h-4" />
+              <span>Create Your First Class</span>
             </button>
           </div>
         </div>
       )}
 
-      {/* Datalist for registered faculty members */}
-      <datalist id="inst-faculty-list">
-        {instTeachers.map((t, idx) => (
-          <option key={t.id || idx} value={t.name}>
-            {t.designation ? `${t.designation} (${t.department || 'Academic'})` : 'Faculty Member'}
-          </option>
-        ))}
-      </datalist>
-
-      {/* Modal 1: Create / Edit Class with Multi-Section Builder */}
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title={editingClass ? `Edit Class: ${editingClass.name}` : 'Create New Class & Custom Sections'}
-        maxWidth="max-w-2xl"
-      >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {validationError && (
-            <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>{validationError}</span>
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Target Educational Tier</label>
-              <select
-                value={formData.programLevel}
-                onChange={(e) => setFormData({ ...formData, programLevel: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm bg-white"
-              >
-                <option value="elementary">Elementary Level (Grade 1 - 8)</option>
-                <option value="secondary">Secondary Level (Grade 9 - 10 / Matric)</option>
-                <option value="higher-secondary">Higher Secondary Level (Grade 11 - 12 / Inter)</option>
-                <option value="college">College Level (Associate Degrees / ADP)</option>
-                <option value="university">University Level (BS / MS)</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Class Title</label>
-              <input
-                type="text"
-                required
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm"
-                placeholder="e.g. 10th Grade, Grade 5, F.Sc Pre-Med, BSCS"
-              />
-            </div>
-          </div>
-
-          {/* Custom Sections Builder Header */}
-          <div className="pt-3 border-t border-slate-100">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-2">
-              <div>
-                <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
-                  Custom Class Sections ({formData.sections.length})
-                </label>
-                <p className="text-[11px] text-slate-400">Add, rename, or assign specific teachers & rooms to each section</p>
-              </div>
-
-              {/* Quick Presets Buttons */}
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-[10px] text-slate-400 font-semibold mr-0.5">Quick Presets:</span>
-                {['Super Section', 'Star Section', 'Section A', 'Section B', 'Section C', 'Morning Batch', 'Evening Batch'].map(preset => (
-                  <button
-                    key={preset}
-                    type="button"
-                    onClick={() => addSectionPreset(preset)}
-                    className="text-[10px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-0.5 rounded transition-colors"
-                  >
-                    + {preset}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Custom Section Adder Input */}
-            <div className="flex items-center gap-2 mb-3">
-              <input
-                type="text"
-                placeholder="Or type custom section name (e.g. Section Rose, Boys Wing A)..."
-                value={customSectionInput}
-                onChange={(e) => setCustomSectionInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    addCustomSection()
-                  }
-                }}
-                className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-              />
-              <button
-                type="button"
-                onClick={addCustomSection}
-                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-semibold transition-colors"
-              >
-                Add Custom
-              </button>
-            </div>
-
-            {/* Configured Sections List */}
-            <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
-              {formData.sections.map((sec, idx) => (
-                <div 
-                  key={sec.id || idx}
-                  className="p-3 bg-slate-50/80 rounded-xl border border-slate-200/70 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5"
-                >
-                  <div className="flex-1">
-                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">Section Name</label>
-                    <input
-                      type="text"
-                      required
-                      value={sec.name}
-                      onChange={(e) => updateSectionInForm(sec.id, 'name', e.target.value)}
-                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-800"
-                      placeholder="e.g. Super Section"
-                    />
-                  </div>
-                  <div className="w-24">
-                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">Room</label>
-                    <input
-                      type="text"
-                      value={sec.roomNo}
-                      onChange={(e) => updateSectionInForm(sec.id, 'roomNo', e.target.value)}
-                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs"
-                      placeholder="Room 101"
-                    />
-                  </div>
-                  <div className="w-20">
-                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">Capacity</label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={sec.capacity}
-                      onChange={(e) => updateSectionInForm(sec.id, 'capacity', e.target.value)}
-                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">Section Teacher</label>
-                    <input
-                      type="text"
-                      list="inst-faculty-list"
-                      value={sec.classTeacher}
-                      onChange={(e) => updateSectionInForm(sec.id, 'classTeacher', e.target.value)}
-                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs"
-                      placeholder="Select or enter teacher..."
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => removeSectionFromForm(sec.id)}
-                    title="Remove this section"
-                    className="p-1.5 text-slate-400 hover:text-rose-600 rounded transition-colors self-end sm:self-center mt-2 sm:mt-4"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-            <button 
-              type="button" 
-              onClick={() => setIsModalOpen(false)} 
-              className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
-            >
-              Cancel
-            </button>
-            <button 
-              type="submit" 
-              className="px-5 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition-colors"
-            >
-              Save Class & Sections
-            </button>
-          </div>
-        </form>
-      </Modal>
-
-      {/* Modal 2: Quick Section Adder (To add a section to an existing class) */}
-      {quickSectionClass && (
+      {/* Modal 1: Add New Academic Session */}
+      {isAddSessionModalOpen && (
         <Modal
-          isOpen={Boolean(quickSectionClass)}
-          onClose={() => setQuickSectionClass(null)}
-          title={`Add New Section to: ${quickSectionClass.name}`}
+          isOpen={isAddSessionModalOpen}
+          onClose={() => setIsAddSessionModalOpen(false)}
+          title="Add New Academic Session"
           maxWidth="max-w-md"
         >
-          <form onSubmit={handleQuickAddSectionSubmit} className="space-y-4">
+          <form onSubmit={handleAddNewSession} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Section Name</label>
+              <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                Session Name (e.g. 2027-2028) *
+              </label>
               <input
                 type="text"
                 required
-                placeholder="e.g. Super Section, Section C, Morning Batch..."
-                value={quickSectionData.name}
-                onChange={(e) => setQuickSectionData({ ...quickSectionData, name: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm"
-              />
-              <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                <span className="text-[10px] text-slate-400 font-semibold">Presets:</span>
-                {['Super Section', 'Section B', 'Section C', 'Evening Batch'].map(preset => (
-                  <button
-                    key={preset}
-                    type="button"
-                    onClick={() => setQuickSectionData({ ...quickSectionData, name: preset })}
-                    className="text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-0.5 rounded font-medium transition-colors"
-                  >
-                    {preset}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Room / Hall</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Room 104"
-                  value={quickSectionData.roomNo}
-                  onChange={(e) => setQuickSectionData({ ...quickSectionData, roomNo: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Max Capacity</label>
-                <input
-                  type="number"
-                  min="1"
-                  value={quickSectionData.capacity}
-                  onChange={(e) => setQuickSectionData({ ...quickSectionData, capacity: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Section Teacher In-Charge</label>
-              <input
-                type="text"
-                list="inst-faculty-list"
-                placeholder="Select or enter teacher name..."
-                value={quickSectionData.classTeacher}
-                onChange={(e) => setQuickSectionData({ ...quickSectionData, classTeacher: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm"
+                value={newSessionInput}
+                onChange={(e) => setNewSessionInput(e.target.value)}
+                placeholder="2027-2028"
+                className="w-full px-3 py-2 text-xs font-mono font-bold rounded-xl border border-slate-200"
               />
             </div>
 
-            <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
+            <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
               <button
                 type="button"
-                onClick={() => setQuickSectionClass(null)}
-                className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                onClick={() => setIsAddSessionModalOpen(false)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition-colors"
+                className="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-sm"
               >
-                Add Section
+                Create Session
               </button>
             </div>
           </form>
         </Modal>
       )}
+
+      {/* Modal 2: Create / Edit Class Modal */}
+      <ClassModal
+        isOpen={isClassModalOpen}
+        onClose={() => {
+          setIsClassModalOpen(false)
+          setEditingClass(null)
+        }}
+        editingClass={editingClass}
+        teachers={instTeachers}
+        classes={campusClasses}
+        currentInstitute={currentInstitute}
+        currentLevel={selectedLevelTab}
+        currentSession={selectedSession}
+        onSaveClass={handleSaveClass}
+      />
+
+      {/* Modal 3: Create / Edit Section Modal */}
+      <SectionModal
+        isOpen={isSectionModalOpen}
+        onClose={() => {
+          setIsSectionModalOpen(false)
+          setSectionModalTargetClass(null)
+          setEditingSection(null)
+        }}
+        targetClass={sectionModalTargetClass}
+        editingSection={editingSection}
+        allClasses={campusClasses}
+        teachers={instTeachers}
+        currentEnrolled={
+          sectionModalTargetClass && editingSection 
+            ? getLiveEnrolledCount(sectionModalTargetClass.name, editingSection.name) 
+            : 0
+        }
+        onSaveSection={handleSaveSection}
+      />
+
+      {/* Drawer: Section Student Roster & Seating */}
+      {rosterDrawerData && (
+        <SectionRosterDrawer
+          isOpen={Boolean(rosterDrawerData)}
+          onClose={() => setRosterDrawerData(null)}
+          targetClass={rosterDrawerData.classItem}
+          targetSection={rosterDrawerData.sectionItem}
+          allClasses={campusClasses}
+          students={students}
+          currentInstitute={currentInstitute}
+          onMoveStudent={handleMoveStudent}
+          onBulkMoveStudents={handleBulkMoveStudents}
+          onAutoDistribute={handleAutoDistribute}
+        />
+      )}
+
+      {/* Modal 4: Class Promotion & Structure Clone */}
+      <ClassPromotionModal
+        isOpen={isPromotionModalOpen}
+        onClose={() => setIsPromotionModalOpen(false)}
+        classes={campusClasses}
+        students={students}
+        currentSession={selectedSession}
+        onPromoteClass={handlePromoteClass}
+        onCloneSession={handleCloneSession}
+      />
+
+      {/* Modal 5: Class Profile Dossier & Desk Roll Slips */}
+      <ClassProfileModal
+        isOpen={Boolean(profileModalClass)}
+        onClose={() => setProfileModalClass(null)}
+        classItem={profileModalClass}
+        teachers={instTeachers}
+        students={students}
+        currentInstitute={currentInstitute}
+      />
+
+      {/* Modal 6: Rooms & Space Register */}
+      <RoomsRegisterModal
+        isOpen={isRoomsModalOpen}
+        onClose={() => setIsRoomsModalOpen(false)}
+        classes={campusClasses}
+      />
+
+      {/* Modal 7: CSV Import */}
+      <ClassCsvImportModal
+        isOpen={isCsvImportOpen}
+        onClose={() => setIsCsvImportOpen(false)}
+        currentInstitute={currentInstitute}
+        currentSession={selectedSession}
+        onImportClasses={handleImportClassesFromCsv}
+      />
+
+      {/* Modal 8: Delete / Archive Safety Warning */}
+      {classToDelete && (
+        <Modal
+          isOpen={Boolean(classToDelete)}
+          onClose={() => setClassToDelete(null)}
+          title={`Delete Class: ${classToDelete.name}`}
+          maxWidth="max-w-md"
+        >
+          <div className="space-y-4 text-xs">
+            {classToDelete.enrolled > 0 ? (
+              <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 space-y-2">
+                <div className="flex items-center gap-2 font-bold text-rose-900">
+                  <ShieldAlert className="w-4 h-4 text-rose-600" />
+                  <span>Active Student Enrollments Detected</span>
+                </div>
+                <p>
+                  Class <strong className="text-slate-900">{classToDelete.name}</strong> currently has <strong>{classToDelete.enrolled}</strong> active enrolled student(s).
+                </p>
+                <p>
+                  System safety rules strictly block deleting classes with enrolled students to prevent orphan records. You can <strong>Archive</strong> this class to hide it from new admissions while preserving records.
+                </p>
+              </div>
+            ) : (
+              <p className="text-slate-600">
+                Are you sure you want to permanently delete class <strong className="text-slate-900">{classToDelete.name}</strong> and all its configured sections? This action cannot be undone.
+              </p>
+            )}
+
+            <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setClassToDelete(null)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
+              >
+                Cancel
+              </button>
+              {classToDelete.enrolled > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => handleArchiveClass(classToDelete)}
+                  className="px-5 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl shadow-sm flex items-center gap-1.5"
+                >
+                  <Archive className="w-3.5 h-3.5" />
+                  <span>Archive Class Instead</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={confirmDeleteClass}
+                  className="px-5 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-sm"
+                >
+                  Confirm & Delete
+                </button>
+              )}
+            </div>
+          </div>
+        </Modal>
+      )}
+
     </div>
   )
 }

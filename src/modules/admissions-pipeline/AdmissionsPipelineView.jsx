@@ -1919,13 +1919,36 @@ export const AdmissionsPipelineView = ({ currentInstitute }) => {
                 >
                   <option value="">-- Select Class / Program --</option>
                   {availableClassesForLevel.length > 0 ? (
-                    availableClassesForLevel.map(c => (
-                      <option key={c} value={c}>{c}</option>
-                    ))
+                    availableClassesForLevel.map(c => {
+                      const matchClass = classes.find(cl => cl.name === c)
+                      const cap = matchClass ? (matchClass.capacity || (matchClass.sections || []).reduce((sum, s) => sum + Number(s.capacity || 0), 0)) : 40
+                      const enrolled = students.filter(st => st.className === c && st.status !== 'Withdrawn').length
+                      const seatsLeft = Math.max(0, cap - enrolled)
+                      return (
+                        <option key={c} value={c}>
+                          {c} ({seatsLeft > 0 ? `${seatsLeft} seats left` : 'FULL • Waitlist'})
+                        </option>
+                      )
+                    })
                   ) : (
                     <option value="" disabled>No classes created yet</option>
                   )}
                 </select>
+                {(() => {
+                  if (!formData.gradeApplied) return null
+                  const matchClass = classes.find(cl => cl.name === formData.gradeApplied)
+                  if (!matchClass) return null
+                  const cap = matchClass.capacity || (matchClass.sections || []).reduce((sum, s) => sum + Number(s.capacity || 0), 0)
+                  const enrolled = students.filter(st => st.className === formData.gradeApplied && st.status !== 'Withdrawn').length
+                  if (enrolled >= cap) {
+                    return (
+                      <p className="text-[10px] text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded mt-1 font-semibold">
+                        ⚠️ Notice: {formData.gradeApplied} is at full capacity ({enrolled}/{cap} seats). Inquiry will be routed to the Priority Waitlist.
+                      </p>
+                    )
+                  }
+                  return null
+                })()}
                 {formErrors.gradeApplied && <p className="text-[10px] text-rose-600 mt-0.5">{formErrors.gradeApplied}</p>}
                 {availableClasses.length === 0 && (
                   <p className="text-[10px] text-amber-700 mt-1 font-semibold flex items-center gap-1">
