@@ -24,7 +24,10 @@ import {
   Sparkles,
   School,
   FileText,
-  Sliders
+  Sliders,
+  BarChart3,
+  CreditCard,
+  FileSpreadsheet
 } from 'lucide-react'
 import { useAppData } from '../../context/AppDataContext'
 import { useAuth } from '../../context/AuthContext'
@@ -79,6 +82,30 @@ export const CommandPaletteModal = ({ isOpen, onClose, onNavigate, onOpenSetting
           route: 'security-center', 
           icon: ShieldCheck, 
           keywords: ['security', 'sessions', 'logout', 'history', 'ip', 'allowlist', '2fa', 'password', 'policy'] 
+        },
+        { 
+          id: 'nav-global-templates', 
+          title: 'Global Master Data & Templates', 
+          category: 'Platform Control', 
+          route: 'global-templates', 
+          icon: FileSpreadsheet, 
+          keywords: ['templates', 'standards', 'grading', 'fee heads', 'designations', 'subjects', 'curriculum'] 
+        },
+        { 
+          id: 'nav-cross-analytics', 
+          title: 'Cross-Institute Comparative Analytics', 
+          category: 'Analytics & Business', 
+          route: 'cross-institute-analytics', 
+          icon: BarChart3, 
+          keywords: ['analytics', 'comparison', 'attendance', 'recovery', 'growth', 'kpi', 'reports'] 
+        },
+        { 
+          id: 'nav-platform-billing', 
+          title: 'Subscriptions & Revenue Operations', 
+          category: 'Analytics & Business', 
+          route: 'platform-billing', 
+          icon: CreditCard, 
+          keywords: ['billing', 'subscriptions', 'plans', 'invoices', 'mrr', 'arr', 'pkr', 'ledger'] 
         },
         { 
           id: 'nav-inst', 

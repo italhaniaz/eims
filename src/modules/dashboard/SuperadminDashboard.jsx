@@ -28,6 +28,7 @@ import {
 import StatCard from '../../components/common/StatCard'
 import Modal from '../../components/common/Modal'
 import { useAppData } from '../../context/AppDataContext'
+import { AnalyticsService } from '../../services/analyticsService'
 
 export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
   const { 
@@ -162,7 +163,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
   }
 
   const handleGenerateReport = () => {
-    generateReport()
+    AnalyticsService.exportExecutiveReportCSV()
     setReportSuccess(true)
     setTimeout(() => setReportSuccess(false), 3500)
   }

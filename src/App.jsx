@@ -20,6 +20,9 @@ const SuperadminDashboard = lazy(() => import('./modules/dashboard/SuperadminDas
 const InstitutesView = lazy(() => import('./modules/institute-management/institutes/InstitutesView'))
 const ModulesControlView = lazy(() => import('./modules/platform/modules/ModulesControlView'))
 const SecurityCenterView = lazy(() => import('./modules/platform/security/SecurityCenterView'))
+const CrossInstituteAnalyticsView = lazy(() => import('./modules/platform/analytics/CrossInstituteAnalyticsView'))
+const SubscriptionsBillingView = lazy(() => import('./modules/platform/billing/SubscriptionsBillingView'))
+const GlobalTemplatesView = lazy(() => import('./modules/platform/templates/GlobalTemplatesView'))
 const DepartmentsView = lazy(() => import('./modules/institute-management/departments/DepartmentsView'))
 const ExaminationBodiesView = lazy(() => import('./modules/institute-management/examination-bodies/ExaminationBodiesView'))
 const AcademicYearsView = lazy(() => import('./modules/academics/academic-years/AcademicYearsView'))
@@ -186,6 +189,15 @@ const AppContent = () => {
                 )}
                 {superadminRoute === 'security-center' && (
                   <SecurityCenterView />
+                )}
+                {superadminRoute === 'cross-institute-analytics' && (
+                  <CrossInstituteAnalyticsView />
+                )}
+                {superadminRoute === 'platform-billing' && (
+                  <SubscriptionsBillingView />
+                )}
+                {superadminRoute === 'global-templates' && (
+                  <GlobalTemplatesView />
                 )}
                 {superadminRoute === 'departments' && <DepartmentsView />}
                 {superadminRoute === 'examination-bodies' && <ExaminationBodiesView />}

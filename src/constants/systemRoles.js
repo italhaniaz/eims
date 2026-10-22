@@ -299,6 +299,39 @@ export const DEFAULT_RBAC_PERMISSIONS = [
     student: false,
     parent: false
   },
+  {
+    id: 'perm-cross-analytics',
+    category: 'Main Platform Governance',
+    label: 'Cross-Institute Comparative Analytics, Attendance & Fee Recovery',
+    superadmin: true,
+    institute_admin: false,
+    teacher: false,
+    accountant: false,
+    student: false,
+    parent: false
+  },
+  {
+    id: 'perm-subscription-billing',
+    category: 'Main Platform Governance',
+    label: 'Platform Subscriptions, Plans Catalog & Revenue Ledger',
+    superadmin: true,
+    institute_admin: false,
+    teacher: false,
+    accountant: false,
+    student: false,
+    parent: false
+  },
+  {
+    id: 'perm-global-templates',
+    category: 'Main Platform Governance',
+    label: 'Global Master Data Standards, Curriculum & Templates Push',
+    superadmin: true,
+    institute_admin: false,
+    teacher: false,
+    accountant: false,
+    student: false,
+    parent: false
+  },
 
   // 2. CAMPUS OPERATIONAL FEATURES (Institute Admin & Campus Staff)
   {

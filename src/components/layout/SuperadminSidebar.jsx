@@ -26,7 +26,10 @@ import {
   MessageSquare, 
   ShieldCheck, 
   Briefcase,
-  Sliders
+  Sliders,
+  BarChart3,
+  CreditCard,
+  FileSpreadsheet
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
@@ -39,7 +42,8 @@ export const SuperadminSidebar = ({
   const { user, logout } = useAuth()
   const [collapsed, setCollapsed] = useState(false)
   
-  const isPlatformRoute = ['institutes', 'platform-modules', 'security-center'].includes(currentRoute)
+  const isPlatformRoute = ['institutes', 'platform-modules', 'security-center', 'global-templates'].includes(currentRoute)
+  const isAnalyticsRoute = ['cross-institute-analytics', 'platform-billing'].includes(currentRoute)
   const isUserRoute = ['users-all', 'users-roles'].includes(currentRoute)
   const isInstituteRoute = ['departments', 'examination-bodies'].includes(currentRoute)
   const isAcademicsRoute = ['academic-years', 'program-types', 'programs', 'subjects', 'study-schemes'].includes(currentRoute)
@@ -47,6 +51,7 @@ export const SuperadminSidebar = ({
 
   // Accordion states with smart auto-open for active routes
   const [platformOpen, setPlatformOpen] = useState(isPlatformRoute)
+  const [analyticsOpen, setAnalyticsOpen] = useState(isAnalyticsRoute)
   const [usersOpen, setUsersOpen] = useState(isUserRoute)
   const [instituteOpen, setInstituteOpen] = useState(isInstituteRoute)
   const [academicsOpen, setAcademicsOpen] = useState(isAcademicsRoute)
@@ -55,6 +60,7 @@ export const SuperadminSidebar = ({
   // Auto-expand section when navigated
   React.useEffect(() => {
     if (isPlatformRoute) setPlatformOpen(true)
+    if (isAnalyticsRoute) setAnalyticsOpen(true)
     if (isUserRoute) setUsersOpen(true)
     if (isInstituteRoute) setInstituteOpen(true)
     if (isAcademicsRoute) setAcademicsOpen(true)
@@ -177,6 +183,57 @@ export const SuperadminSidebar = ({
                 >
                   <ShieldCheck className="w-3.5 h-3.5 opacity-70" />
                   <span>Security Center</span>
+                </button>
+                <button
+                  onClick={() => handleNavClick('global-templates')}
+                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
+                    isRouteActive('global-templates') ? 'text-white font-medium bg-[#243150]' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5 opacity-70" />
+                  <span>Global Master Templates</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Analytics & Business Accordion */}
+          <div>
+            <button
+              onClick={() => {
+                if (collapsed) setCollapsed(false)
+                setAnalyticsOpen(!analyticsOpen)
+              }}
+              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-[#243150] transition-colors cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <BarChart3 className="w-[18px] h-[18px] text-emerald-400 shrink-0" />
+                {(!collapsed || isMobileOpen) && <span>Analytics & Business</span>}
+              </div>
+              {(!collapsed || isMobileOpen) && (
+                analyticsOpen ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />
+              )}
+            </button>
+
+            {(!collapsed || isMobileOpen) && analyticsOpen && (
+              <div className="mt-1 pl-4 pr-1 space-y-0.5 border-l border-[#2e3d64] ml-5">
+                <button
+                  onClick={() => handleNavClick('cross-institute-analytics')}
+                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
+                    isRouteActive('cross-institute-analytics') ? 'text-white font-medium bg-[#243150]' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <BarChart3 className="w-3.5 h-3.5 opacity-70" />
+                  <span>Cross-Institute Analytics</span>
+                </button>
+                <button
+                  onClick={() => handleNavClick('platform-billing')}
+                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
+                    isRouteActive('platform-billing') ? 'text-white font-medium bg-[#243150]' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <CreditCard className="w-3.5 h-3.5 opacity-70" />
+                  <span>Subscriptions & Billing</span>
                 </button>
               </div>
             )}

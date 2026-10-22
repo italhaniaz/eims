@@ -475,6 +475,458 @@ app.get('/api/activity', async (req, res) => {
   res.json([])
 })
 
+// =========================================================================
+// 9. Billing, Subscriptions & Invoicing Stores & Endpoints
+// =========================================================================
+let subscriptionPlans = [
+  {
+    id: 'plan-basic',
+    name: 'Basic Tier',
+    tier: 'Basic',
+    pricePKR: 15000,
+    billingCycle: 'monthly',
+    maxStudents: 500,
+    maxCampuses: 1,
+    maxUsers: 25,
+    storageGB: 2,
+    features: ['students', 'fees', 'exams', 'attendance'],
+    isActive: true
+  },
+  {
+    id: 'plan-pro',
+    name: 'Professional Tier',
+    tier: 'Pro',
+    pricePKR: 35000,
+    billingCycle: 'monthly',
+    maxStudents: 2000,
+    maxCampuses: 3,
+    maxUsers: 80,
+    storageGB: 10,
+    features: ['students', 'fees', 'exams', 'attendance', 'library', 'communication', 'payroll'],
+    isActive: true
+  },
+  {
+    id: 'plan-enterprise',
+    name: 'Enterprise Tier',
+    tier: 'Enterprise',
+    pricePKR: 75000,
+    billingCycle: 'monthly',
+    maxStudents: 10000,
+    maxCampuses: 15,
+    maxUsers: 500,
+    storageGB: 50,
+    features: ['students', 'fees', 'exams', 'attendance', 'library', 'communication', 'payroll', 'transport', 'hostel', 'inventory', 'admissions'],
+    isActive: true
+  }
+]
+
+let instituteSubscriptions = [
+  {
+    id: 'sub-1',
+    instituteId: 'c1000000-0000-0000-0000-000000000001',
+    instituteName: 'Beaconhouse Central High School',
+    planId: 'plan-enterprise',
+    planName: 'Enterprise Tier',
+    status: 'ACTIVE',
+    billingCycle: 'monthly',
+    pricePKR: 75000,
+    startDate: '2026-08-01',
+    renewalDate: '2026-11-01',
+    trialEndsAt: null,
+    autoRenew: true
+  },
+  {
+    id: 'sub-2',
+    instituteId: 'c1000000-0000-0000-0000-000000000002',
+    instituteName: 'City School Model Town Campus',
+    planId: 'plan-pro',
+    planName: 'Professional Tier',
+    status: 'ACTIVE',
+    billingCycle: 'monthly',
+    pricePKR: 35000,
+    startDate: '2026-09-01',
+    renewalDate: '2026-11-05',
+    trialEndsAt: null,
+    autoRenew: true
+  },
+  {
+    id: 'sub-3',
+    instituteId: 'c1000000-0000-0000-0000-000000000003',
+    instituteName: 'Roots International Academy',
+    planId: 'plan-basic',
+    planName: 'Basic Tier',
+    status: 'TRIAL',
+    billingCycle: 'monthly',
+    pricePKR: 15000,
+    startDate: '2026-10-12',
+    renewalDate: '2026-10-26',
+    trialEndsAt: '2026-10-26',
+    autoRenew: false
+  }
+]
+
+let platformInvoices = [
+  {
+    id: 'inv-001',
+    invoiceNumber: 'INV-2026-001',
+    instituteId: 'c1000000-0000-0000-0000-000000000001',
+    instituteName: 'Beaconhouse Central High School',
+    planName: 'Enterprise Tier',
+    amountPKR: 75000,
+    status: 'PAID',
+    issueDate: '2026-09-25',
+    dueDate: '2026-10-05',
+    paidDate: '2026-09-28',
+    paymentMethod: '1Link / 1Bill',
+    transactionRef: 'TXN-1LINK-992144'
+  },
+  {
+    id: 'inv-002',
+    invoiceNumber: 'INV-2026-002',
+    instituteId: 'c1000000-0000-0000-0000-000000000002',
+    instituteName: 'City School Model Town Campus',
+    planName: 'Professional Tier',
+    amountPKR: 35000,
+    status: 'PAID',
+    issueDate: '2026-09-28',
+    dueDate: '2026-10-08',
+    paidDate: '2026-10-02',
+    paymentMethod: 'JazzCash Corporate',
+    transactionRef: 'TXN-JC-881203'
+  },
+  {
+    id: 'inv-003',
+    invoiceNumber: 'INV-2026-003',
+    instituteId: 'c1000000-0000-0000-0000-000000000003',
+    instituteName: 'Roots International Academy',
+    planName: 'Basic Tier',
+    amountPKR: 15000,
+    status: 'PENDING',
+    issueDate: '2026-10-18',
+    dueDate: '2026-10-28',
+    paidDate: null,
+    paymentMethod: 'Pending Voucher Payment',
+    transactionRef: null
+  }
+]
+
+// Billing Overview KPI
+app.get('/api/billing/overview', (req, res) => {
+  const activeSubs = instituteSubscriptions.filter(s => s.status === 'ACTIVE')
+  const trialSubs = instituteSubscriptions.filter(s => s.status === 'TRIAL')
+  const overdueInvoices = platformInvoices.filter(i => i.status === 'OVERDUE')
+  const mrrPKR = activeSubs.reduce((sum, s) => sum + (s.pricePKR || 0), 0)
+  const arrPKR = mrrPKR * 12
+
+  res.json({
+    mrrPKR,
+    arrPKR,
+    totalSubscriptions: instituteSubscriptions.length,
+    activeCount: activeSubs.length,
+    trialCount: trialSubs.length,
+    overdueInvoicesCount: overdueInvoices.length,
+    totalInvoices: platformInvoices.length
+  })
+})
+
+// Plans CRUD
+app.get('/api/billing/plans', (req, res) => {
+  res.json(subscriptionPlans)
+})
+
+app.post('/api/billing/plans', (req, res) => {
+  const newPlan = {
+    id: 'plan-' + Date.now(),
+    name: req.body.name || 'Custom Plan',
+    tier: req.body.tier || 'Custom',
+    pricePKR: parseFloat(req.body.pricePKR) || 20000,
+    billingCycle: req.body.billingCycle || 'monthly',
+    maxStudents: parseInt(req.body.maxStudents) || 1000,
+    maxCampuses: parseInt(req.body.maxCampuses) || 2,
+    maxUsers: parseInt(req.body.maxUsers) || 50,
+    storageGB: parseInt(req.body.storageGB) || 5,
+    features: Array.isArray(req.body.features) ? req.body.features : ['students', 'fees'],
+    isActive: true
+  }
+  subscriptionPlans.push(newPlan)
+  res.json({ success: true, plan: newPlan, message: 'Subscription plan created successfully.' })
+})
+
+app.put('/api/billing/plans/:id', (req, res) => {
+  const idx = subscriptionPlans.findIndex(p => p.id === req.params.id)
+  if (idx !== -1) {
+    subscriptionPlans[idx] = { ...subscriptionPlans[idx], ...req.body }
+    return res.json({ success: true, plan: subscriptionPlans[idx], message: 'Subscription plan updated successfully.' })
+  }
+  res.status(404).json({ error: 'Plan not found' })
+})
+
+app.delete('/api/billing/plans/:id', (req, res) => {
+  subscriptionPlans = subscriptionPlans.filter(p => p.id !== req.params.id)
+  res.json({ success: true, message: 'Plan removed.' })
+})
+
+// Subscriptions Endpoints
+app.get('/api/billing/subscriptions', (req, res) => {
+  res.json(instituteSubscriptions)
+})
+
+app.post('/api/billing/subscriptions', (req, res) => {
+  const sub = {
+    id: 'sub-' + Date.now(),
+    instituteId: req.body.instituteId,
+    instituteName: req.body.instituteName,
+    planId: req.body.planId,
+    planName: req.body.planName,
+    status: req.body.status || 'ACTIVE',
+    billingCycle: req.body.billingCycle || 'monthly',
+    pricePKR: parseFloat(req.body.pricePKR) || 25000,
+    startDate: req.body.startDate || new Date().toISOString().slice(0, 10),
+    renewalDate: req.body.renewalDate,
+    autoRenew: req.body.autoRenew !== false
+  }
+  instituteSubscriptions.push(sub)
+  res.json({ success: true, subscription: sub })
+})
+
+app.post('/api/billing/subscriptions/:id/renew', (req, res) => {
+  const sub = instituteSubscriptions.find(s => s.id === req.params.id)
+  if (sub) {
+    const nextDate = new Date()
+    nextDate.setMonth(nextDate.getMonth() + 1)
+    sub.status = 'ACTIVE'
+    sub.renewalDate = nextDate.toISOString().slice(0, 10)
+    return res.json({ success: true, subscription: sub, message: `Subscription for ${sub.instituteName} renewed.` })
+  }
+  res.status(404).json({ error: 'Subscription not found' })
+})
+
+app.post('/api/billing/subscriptions/:id/extend-trial', (req, res) => {
+  const sub = instituteSubscriptions.find(s => s.id === req.params.id)
+  if (sub) {
+    const extendDate = new Date()
+    extendDate.setDate(extendDate.getDate() + 14)
+    sub.status = 'TRIAL'
+    sub.trialEndsAt = extendDate.toISOString().slice(0, 10)
+    sub.renewalDate = extendDate.toISOString().slice(0, 10)
+    return res.json({ success: true, subscription: sub, message: `14-Day trial extension granted to ${sub.instituteName}.` })
+  }
+  res.status(404).json({ error: 'Subscription not found' })
+})
+
+// Invoices Endpoints
+app.get('/api/billing/invoices', (req, res) => {
+  res.json(platformInvoices)
+})
+
+app.post('/api/billing/invoices/:id/pay', (req, res) => {
+  const inv = platformInvoices.find(i => i.id === req.params.id)
+  if (inv) {
+    inv.status = 'PAID'
+    inv.paidDate = new Date().toISOString().slice(0, 10)
+    inv.transactionRef = 'TXN-CONFIRM-' + Math.floor(100000 + Math.random() * 900000)
+    return res.json({ success: true, invoice: inv, message: `Invoice ${inv.invoiceNumber} recorded as PAID in PKR.` })
+  }
+  res.status(404).json({ error: 'Invoice not found' })
+})
+
+app.post('/api/billing/invoices/:id/remind', (req, res) => {
+  const inv = platformInvoices.find(i => i.id === req.params.id)
+  if (inv) {
+    return res.json({ success: true, message: `Automated payment reminder dispatched to ${inv.instituteName} for ${inv.invoiceNumber}.` })
+  }
+  res.status(404).json({ error: 'Invoice not found' })
+})
+
+// =========================================================================
+// 10. Global Master Data & Templates Stores & Endpoints
+// =========================================================================
+let globalTemplates = [
+  {
+    id: 'tpl-grade-1',
+    templateType: 'GRADING_SYSTEM',
+    title: 'Standard Secondary Percentage Scale',
+    code: 'GRADE-STD-SEC',
+    description: 'Standard secondary matric & O-level letter grades with numerical bounds',
+    data: [
+      { grade: 'A+', minPercentage: 90, maxPercentage: 100, points: 4.0, remarks: 'Outstanding Achievement' },
+      { grade: 'A', minPercentage: 80, maxPercentage: 89, points: 3.7, remarks: 'Excellent Mastery' },
+      { grade: 'B', minPercentage: 70, maxPercentage: 79, points: 3.0, remarks: 'Very Good' },
+      { grade: 'C', minPercentage: 60, maxPercentage: 69, points: 2.0, remarks: 'Satisfactory' },
+      { grade: 'D', minPercentage: 50, maxPercentage: 59, points: 1.0, remarks: 'Pass Threshold' },
+      { grade: 'F', minPercentage: 0, maxPercentage: 49, points: 0.0, remarks: 'Fail / Re-sit' }
+    ],
+    isDefault: true,
+    pushedCount: 3,
+    lastPushedAt: new Date(Date.now() - 5 * 86400000).toISOString()
+  },
+  {
+    id: 'tpl-grade-2',
+    templateType: 'GRADING_SYSTEM',
+    title: 'HEC 4.0 GPA Higher Education Scale',
+    code: 'GRADE-HEC-GPA',
+    description: 'Higher Education Commission standardized semester GPA scale',
+    data: [
+      { grade: 'A', minPercentage: 85, maxPercentage: 100, points: 4.0, remarks: 'High Honors' },
+      { grade: 'A-', minPercentage: 80, maxPercentage: 84, points: 3.67, remarks: 'Honors' },
+      { grade: 'B+', minPercentage: 75, maxPercentage: 79, points: 3.33, remarks: 'Superior' },
+      { grade: 'B', minPercentage: 71, maxPercentage: 74, points: 3.0, remarks: 'Good' },
+      { grade: 'B-', minPercentage: 68, maxPercentage: 70, points: 2.67, remarks: 'Above Average' },
+      { grade: 'C+', minPercentage: 64, maxPercentage: 67, points: 2.33, remarks: 'Average' },
+      { grade: 'C', minPercentage: 60, maxPercentage: 63, points: 2.0, remarks: 'Satisfactory' },
+      { grade: 'F', minPercentage: 0, maxPercentage: 59, points: 0.0, remarks: 'Failing Grade' }
+    ],
+    isDefault: false,
+    pushedCount: 1,
+    lastPushedAt: new Date(Date.now() - 12 * 86400000).toISOString()
+  },
+  {
+    id: 'tpl-fee-1',
+    templateType: 'FEE_HEAD',
+    title: 'Comprehensive School Fee Heads',
+    code: 'FEE-COMP-SCH',
+    description: 'Pre-configured standard school fee heads in PKR',
+    data: [
+      { name: 'Monthly Tuition Fee', category: 'Academic', defaultAmount: 12000, refundable: false },
+      { name: 'Computer & IT Lab Fee', category: 'Facilities', defaultAmount: 1500, refundable: false },
+      { name: 'Library Dues & Journal Fund', category: 'Academic', defaultAmount: 800, refundable: false },
+      { name: 'Transport & Bus Logistics', category: 'Transport', defaultAmount: 4500, refundable: false },
+      { name: 'Annual Examination Charge', category: 'Exam', defaultAmount: 3000, refundable: false },
+      { name: 'Security Deposit (Admission)', category: 'Registration', defaultAmount: 10000, refundable: true }
+    ],
+    isDefault: true,
+    pushedCount: 3,
+    lastPushedAt: new Date(Date.now() - 6 * 86400000).toISOString()
+  },
+  {
+    id: 'tpl-desig-1',
+    templateType: 'DESIGNATION',
+    title: 'Standard Academic & Campus Staff Designations',
+    code: 'DESIG-CORP-STD',
+    description: 'Standardized designations and administrative pay tiers',
+    data: [
+      { title: 'Executive Principal / Rector', department: 'Executive Management', level: 'Grade 20', role: 'Head of Institute' },
+      { title: 'Vice Principal / Academic Dean', department: 'Academic Affairs', level: 'Grade 19', role: 'Academic Direction' },
+      { title: 'Head of Department (HoD)', department: 'Academic Departments', level: 'Grade 18', role: 'Faculty Management' },
+      { title: 'Senior Subject Lecturer', department: 'Faculty', level: 'Grade 17', role: 'Instruction & Mentorship' },
+      { title: 'Laboratory Demonstrator', department: 'Science Laboratories', level: 'Grade 14', role: 'Lab Supervision' },
+      { title: 'Chief Campus Accountant', department: 'Accounts & Finance', level: 'Grade 16', role: 'Finance & Cashier' },
+      { title: 'Central Librarian', department: 'Library', level: 'Grade 15', role: 'Book & Resource Catalog' },
+      { title: 'Transport & Fleet Supervisor', department: 'Logistics', level: 'Grade 12', role: 'Fleet & Routes' }
+    ],
+    isDefault: true,
+    pushedCount: 3,
+    lastPushedAt: new Date(Date.now() - 8 * 86400000).toISOString()
+  },
+  {
+    id: 'tpl-subj-1',
+    templateType: 'SUBJECT_TEMPLATE',
+    title: 'Core National Secondary Curriculum',
+    code: 'SUBJ-NAT-SEC',
+    description: 'Standard secondary school subjects with credit hours and standardized codes',
+    data: [
+      { name: 'Mathematics & Algebra', code: 'MTH-101', credits: 4, category: 'Core Science' },
+      { name: 'Physics & Practical Lab', code: 'PHY-101', credits: 4, category: 'Core Science' },
+      { name: 'Chemistry & Laboratory', code: 'CHM-101', credits: 4, category: 'Core Science' },
+      { name: 'Biology & Life Sciences', code: 'BIO-101', credits: 4, category: 'Core Science' },
+      { name: 'Computer Science & Programming', code: 'CSC-101', credits: 4, category: 'Technical' },
+      { name: 'English Language & Composition', code: 'ENG-101', credits: 3, category: 'Humanities' },
+      { name: 'Islamic Studies / Ethics', code: 'ISL-101', credits: 2, category: 'Social Studies' },
+      { name: 'Pakistan Studies & History', code: 'PKS-101', credits: 2, category: 'Social Studies' }
+    ],
+    isDefault: true,
+    pushedCount: 3,
+    lastPushedAt: new Date(Date.now() - 4 * 86400000).toISOString()
+  }
+]
+
+let scheduledReports = [
+  {
+    id: 'sch-rep-1',
+    title: 'Weekly Multi-Campus Executive Briefing',
+    frequency: 'WEEKLY',
+    format: 'PDF',
+    recipients: 'governance@schoolms.com, audit@schoolms.com',
+    isActive: true,
+    lastRunAt: new Date(Date.now() - 2 * 86400000).toISOString(),
+    nextRunAt: new Date(Date.now() + 5 * 86400000).toISOString()
+  }
+]
+
+app.get('/api/templates', (req, res) => {
+  res.json(globalTemplates)
+})
+
+app.post('/api/templates', (req, res) => {
+  const newTpl = {
+    id: 'tpl-' + Date.now(),
+    templateType: req.body.templateType,
+    title: req.body.title,
+    code: req.body.code || 'TPL-' + Math.floor(100 + Math.random() * 900),
+    description: req.body.description || '',
+    data: req.body.data || [],
+    isDefault: !!req.body.isDefault,
+    pushedCount: 0,
+    lastPushedAt: null
+  }
+  globalTemplates.push(newTpl)
+  res.json({ success: true, template: newTpl, message: 'Global template created successfully.' })
+})
+
+app.put('/api/templates/:id', (req, res) => {
+  const idx = globalTemplates.findIndex(t => t.id === req.params.id)
+  if (idx !== -1) {
+    globalTemplates[idx] = { ...globalTemplates[idx], ...req.body, lastPushedAt: new Date().toISOString() }
+    return res.json({ success: true, template: globalTemplates[idx], message: 'Template updated.' })
+  }
+  res.status(404).json({ error: 'Template not found' })
+})
+
+app.delete('/api/templates/:id', (req, res) => {
+  globalTemplates = globalTemplates.filter(t => t.id !== req.params.id)
+  res.json({ success: true, message: 'Template deleted.' })
+})
+
+app.post('/api/templates/:id/push', (req, res) => {
+  const { targetInstituteIds = [] } = req.body
+  const tpl = globalTemplates.find(t => t.id === req.params.id)
+  if (!tpl) return res.status(404).json({ error: 'Template not found' })
+
+  tpl.pushedCount = (tpl.pushedCount || 0) + (targetInstituteIds.length || 1)
+  tpl.lastPushedAt = new Date().toISOString()
+
+  res.json({
+    success: true,
+    message: `Template "${tpl.title}" successfully pushed to ${targetInstituteIds.length || 1} institute(s).`,
+    template: tpl
+  })
+})
+
+// Scheduled Reports
+app.get('/api/reports/scheduled', (req, res) => {
+  res.json(scheduledReports)
+})
+
+app.post('/api/reports/scheduled', (req, res) => {
+  const report = {
+    id: 'sch-' + Date.now(),
+    title: req.body.title || 'Automated Executive Briefing',
+    frequency: req.body.frequency || 'WEEKLY',
+    format: req.body.format || 'PDF',
+    recipients: req.body.recipients || 'admin@schoolms.com',
+    isActive: true,
+    lastRunAt: null,
+    nextRunAt: new Date(Date.now() + 7 * 86400000).toISOString()
+  }
+  scheduledReports.push(report)
+  res.json({ success: true, report, message: 'Scheduled executive report established successfully.' })
+})
+
+app.delete('/api/reports/scheduled/:id', (req, res) => {
+  scheduledReports = scheduledReports.filter(r => r.id !== req.params.id)
+  res.json({ success: true, message: 'Report schedule cancelled.' })
+})
+
 app.listen(PORT, () => {
   console.log(`[SMS Backend] Node.js Server listening on http://localhost:${PORT}`)
 })
