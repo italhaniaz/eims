@@ -244,6 +244,39 @@ export const DEFAULT_RBAC_PERMISSIONS = [
     student: false,
     parent: false
   },
+  {
+    id: 'perm-lifecycle-wizard',
+    category: 'Main Platform Governance',
+    label: 'Institute Onboarding Wizard & Multi-Campus Lifecycle Governance',
+    superadmin: true,
+    institute_admin: false,
+    teacher: false,
+    accountant: false,
+    student: false,
+    parent: false
+  },
+  {
+    id: 'perm-module-matrix',
+    category: 'Main Platform Governance',
+    label: 'Cross-Institute Feature Flags Matrix & Module Quota Limits',
+    superadmin: true,
+    institute_admin: false,
+    teacher: false,
+    accountant: false,
+    student: false,
+    parent: false
+  },
+  {
+    id: 'perm-impersonation',
+    category: 'Main Platform Governance',
+    label: 'Direct Campus Delegation & Superadmin Impersonation Engine',
+    superadmin: true,
+    institute_admin: false,
+    teacher: false,
+    accountant: false,
+    student: false,
+    parent: false
+  },
 
   // 2. CAMPUS OPERATIONAL FEATURES (Institute Admin & Campus Staff)
   {

@@ -8,6 +8,7 @@ import {
   FileText, 
   ListFilter, 
   Settings,
+  Sliders,
   Plus,
   CheckCircle,
   Clock,
@@ -311,7 +312,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           value={stats.activeSessions ? stats.activeSessions.toLocaleString() : '0'}
           color="emerald"
           icon={TrendingUp}
-          badge={stats.activeSessions > 0 ? `+${stats.activeSessions * 2}% live` : 'Real-time'}
+          badge={stats.activeSessions > 0 ? `${stats.activeSessions} live session${stats.activeSessions > 1 ? 's' : ''}` : '0 sessions'}
           badgePositive={true}
           showActions={true}
           showAllText="Show all"
@@ -327,7 +328,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           value={stats.growthRate || '0.0%'}
           color="amber"
           icon={ArrowUpRight}
-          badge={stats.totalInstitutes > 0 ? '+5.4% YoY' : 'Real-time'}
+          badge={stats.growthLabel || 'MoM Rate'}
           badgePositive={true}
           showActions={true}
           showAllText="Show all"
@@ -394,6 +395,27 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           </div>
 
           <div className="space-y-2.5">
+            {/* 0. Module Control & Feature Flags Matrix */}
+            <button
+              onClick={() => onRouteChange('platform-modules')}
+              className="w-full flex items-center justify-between p-3 sm:p-3.5 rounded-xl bg-slate-50/80 hover:bg-white border border-slate-200/70 hover:border-blue-400 hover:shadow-sm text-slate-700 font-medium text-sm transition-all duration-150 group active:scale-[0.99] text-left cursor-pointer"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 transition-colors group-hover:bg-blue-600 group-hover:text-white">
+                  <Sliders className="w-4 h-4" />
+                </div>
+                <div className="truncate">
+                  <span className="block font-semibold text-slate-800 text-xs sm:text-sm group-hover:text-blue-600 transition-colors truncate">
+                    Module Control & Feature Matrix
+                  </span>
+                  <span className="block text-[11px] text-slate-400 font-normal truncate">
+                    Govern 10 platform modules & student/storage quotas
+                  </span>
+                </div>
+              </div>
+              <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0 ml-2" />
+            </button>
+
             {/* 1. Roles & Permissions (RBAC Matrix) */}
             <button
               onClick={() => onRouteChange('users-roles')}

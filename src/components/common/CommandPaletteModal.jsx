@@ -23,7 +23,8 @@ import {
   Clock,
   Sparkles,
   School,
-  FileText
+  FileText,
+  Sliders
 } from 'lucide-react'
 import { useAppData } from '../../context/AppDataContext'
 import { useAuth } from '../../context/AuthContext'
@@ -62,6 +63,14 @@ export const CommandPaletteModal = ({ isOpen, onClose, onNavigate, onOpenSetting
           route: 'dashboard', 
           icon: Building2, 
           keywords: ['overview', 'executive', 'stats', 'analytics', 'dashboard', 'main'] 
+        },
+        { 
+          id: 'nav-platform-modules', 
+          title: 'Module Control & Feature Flags Matrix', 
+          category: 'Platform Control', 
+          route: 'platform-modules', 
+          icon: Sliders, 
+          keywords: ['modules', 'matrix', 'features', 'flags', 'quotas', 'storage', 'limits', 'control'] 
         },
         { 
           id: 'nav-inst', 

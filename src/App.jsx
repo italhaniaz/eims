@@ -10,6 +10,7 @@ import InstituteAdminSidebar from './components/layout/InstituteAdminSidebar'
 import InstituteAdminNavbar from './components/layout/InstituteAdminNavbar'
 import SettingsModal from './components/common/SettingsModal'
 import CommandPaletteModal from './components/common/CommandPaletteModal'
+import ImpersonationBanner from './components/common/ImpersonationBanner'
 
 // Auth
 import LoginPage from './modules/auth/LoginPage'
@@ -17,6 +18,7 @@ import LoginPage from './modules/auth/LoginPage'
 // Lazy-loaded Views for Bundle Performance & Code Splitting
 const SuperadminDashboard = lazy(() => import('./modules/dashboard/SuperadminDashboard'))
 const InstitutesView = lazy(() => import('./modules/institute-management/institutes/InstitutesView'))
+const ModulesControlView = lazy(() => import('./modules/platform/modules/ModulesControlView'))
 const DepartmentsView = lazy(() => import('./modules/institute-management/departments/DepartmentsView'))
 const ExaminationBodiesView = lazy(() => import('./modules/institute-management/examination-bodies/ExaminationBodiesView'))
 const AcademicYearsView = lazy(() => import('./modules/academics/academic-years/AcademicYearsView'))
@@ -144,58 +146,66 @@ const AppContent = () => {
   // 1. SUPERADMIN PORTAL
   if (user.role === 'superadmin') {
     return (
-      <div className="flex h-screen w-screen overflow-hidden bg-[#f4f7fb]">
-        {/* Dark Navy Sidebar with Mobile Drawer support */}
-        <SuperadminSidebar
-          currentRoute={superadminRoute}
-          onRouteChange={setSuperadminRoute}
-          isMobileOpen={superMobileOpen}
-          onCloseMobile={() => setSuperMobileOpen(false)}
-        />
+      <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#f4f7fb]">
+        {/* Floating Impersonation Delegation Banner */}
+        <ImpersonationBanner />
 
-        {/* Main Content Area */}
-        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          <SuperadminNavbar
+        <div className="flex flex-1 min-h-0 overflow-hidden">
+          {/* Dark Navy Sidebar with Mobile Drawer support */}
+          <SuperadminSidebar
             currentRoute={superadminRoute}
             onRouteChange={setSuperadminRoute}
-            onOpenSettings={() => setIsSettingsOpen(true)}
-            onOpenMobileMenu={() => setSuperMobileOpen(true)}
-            onOpenCommandPalette={() => setIsPaletteOpen(true)}
+            isMobileOpen={superMobileOpen}
+            onCloseMobile={() => setSuperMobileOpen(false)}
           />
 
-          <main className="flex-1 overflow-y-auto">
-            <Suspense fallback={<ModuleLoader />}>
-              {superadminRoute === 'dashboard' && (
-                <SuperadminDashboard
-                  onRouteChange={setSuperadminRoute}
-                  onOpenSettings={() => setIsSettingsOpen(true)}
-                />
-              )}
-              {superadminRoute === 'institutes' && (
-                <InstitutesView />
-              )}
-              {superadminRoute === 'departments' && <DepartmentsView />}
-              {superadminRoute === 'examination-bodies' && <ExaminationBodiesView />}
-              {superadminRoute === 'academic-years' && <AcademicYearsView />}
-              {superadminRoute === 'program-types' && <ProgramTypesView />}
-              {superadminRoute === 'programs' && <ProgramsView />}
-              {superadminRoute === 'subjects' && <SubjectsView />}
-              {superadminRoute === 'study-schemes' && <StudySchemesView />}
-              {superadminRoute === 'finance' && <FinancialAnalyticsView />}
-              {superadminRoute === 'transport' && <TransportView />}
-              {superadminRoute === 'library' && <LibraryView />}
-              {superadminRoute === 'admissions-pipeline' && <AdmissionsPipelineView />}
-              {superadminRoute === 'communication' && <CommunicationGatewayView />}
-              {superadminRoute === 'audit-logs' && <AuditLogsView />}
-              {superadminRoute === 'announcements' && <NoticeBroadcasterView />}
-              {superadminRoute === 'users-all' && (
-                <UsersManagementView defaultTab="all" />
-              )}
-              {superadminRoute === 'users-roles' && (
-                <UsersManagementView defaultTab="roles" />
-              )}
-            </Suspense>
-          </main>
+          {/* Main Content Area */}
+          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+            <SuperadminNavbar
+              currentRoute={superadminRoute}
+              onRouteChange={setSuperadminRoute}
+              onOpenSettings={() => setIsSettingsOpen(true)}
+              onOpenMobileMenu={() => setSuperMobileOpen(true)}
+              onOpenCommandPalette={() => setIsPaletteOpen(true)}
+            />
+
+            <main className="flex-1 overflow-y-auto">
+              <Suspense fallback={<ModuleLoader />}>
+                {superadminRoute === 'dashboard' && (
+                  <SuperadminDashboard
+                    onRouteChange={setSuperadminRoute}
+                    onOpenSettings={() => setIsSettingsOpen(true)}
+                  />
+                )}
+                {superadminRoute === 'institutes' && (
+                  <InstitutesView />
+                )}
+                {superadminRoute === 'platform-modules' && (
+                  <ModulesControlView />
+                )}
+                {superadminRoute === 'departments' && <DepartmentsView />}
+                {superadminRoute === 'examination-bodies' && <ExaminationBodiesView />}
+                {superadminRoute === 'academic-years' && <AcademicYearsView />}
+                {superadminRoute === 'program-types' && <ProgramTypesView />}
+                {superadminRoute === 'programs' && <ProgramsView />}
+                {superadminRoute === 'subjects' && <SubjectsView />}
+                {superadminRoute === 'study-schemes' && <StudySchemesView />}
+                {superadminRoute === 'finance' && <FinancialAnalyticsView />}
+                {superadminRoute === 'transport' && <TransportView />}
+                {superadminRoute === 'library' && <LibraryView />}
+                {superadminRoute === 'admissions-pipeline' && <AdmissionsPipelineView />}
+                {superadminRoute === 'communication' && <CommunicationGatewayView />}
+                {superadminRoute === 'audit-logs' && <AuditLogsView />}
+                {superadminRoute === 'announcements' && <NoticeBroadcasterView />}
+                {superadminRoute === 'users-all' && (
+                  <UsersManagementView defaultTab="all" />
+                )}
+                {superadminRoute === 'users-roles' && (
+                  <UsersManagementView defaultTab="roles" />
+                )}
+              </Suspense>
+            </main>
+          </div>
         </div>
 
         {/* Global Settings & Supabase Configuration Modal */}
@@ -229,74 +239,79 @@ const AppContent = () => {
       })
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#f4f7fb]">
-      {/* Institute Admin Sidebar */}
-      <InstituteAdminSidebar
-        currentRoute={instituteRoute}
-        onRouteChange={setInstituteRoute}
-        instituteName={activeCampus?.name}
-        isMobileOpen={instMobileOpen}
-        onCloseMobile={() => setInstMobileOpen(false)}
-      />
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#f4f7fb]">
+      {/* Floating Impersonation Delegation Banner */}
+      <ImpersonationBanner />
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <InstituteAdminNavbar
+      <div className="flex flex-1 min-h-0 overflow-hidden">
+        {/* Institute Admin Sidebar */}
+        <InstituteAdminSidebar
           currentRoute={instituteRoute}
-          selectedInstitute={activeCampus}
-          onSelectInstitute={setSelectedInstitute}
-          onOpenSettings={() => setIsSettingsOpen(true)}
-          onOpenMobileMenu={() => setInstMobileOpen(true)}
-          onOpenCommandPalette={() => setIsPaletteOpen(true)}
           onRouteChange={setInstituteRoute}
+          instituteName={activeCampus?.name}
+          isMobileOpen={instMobileOpen}
+          onCloseMobile={() => setInstMobileOpen(false)}
         />
 
-        <main className="flex-1 overflow-y-auto">
-          <Suspense fallback={<ModuleLoader />}>
-            {instituteRoute === 'inst-dashboard' && (
-              <InstituteDashboard
-                currentInstitute={activeCampus}
-                onRouteChange={setInstituteRoute}
-              />
-            )}
-            {instituteRoute === 'inst-students' && (
-              <StudentsView currentInstitute={activeCampus} />
-            )}
-            {instituteRoute === 'inst-teachers' && (
-              <TeachersView currentInstitute={activeCampus} />
-            )}
-            {instituteRoute === 'inst-classes' && (
-              <ClassesView currentInstitute={activeCampus} />
-            )}
-            {instituteRoute === 'inst-timetable' && (
-              <TimetableView currentInstitute={activeCampus} />
-            )}
-            {instituteRoute === 'inst-attendance' && (
-              <AttendanceView currentInstitute={activeCampus} />
-            )}
-            {instituteRoute === 'inst-fees' && (
-              <FeesView currentInstitute={activeCampus} />
-            )}
-            {instituteRoute === 'inst-exams' && (
-              <ExamsView currentInstitute={activeCampus} />
-            )}
-            {instituteRoute === 'inst-program-levels' && (
-              <ProgramLevelsView currentInstitute={activeCampus} />
-            )}
-            {instituteRoute === 'inst-notices' && (
-              <NoticeBoardView currentInstitute={activeCampus} />
-            )}
-            {instituteRoute === 'inst-admissions' && (
-              <AdmissionsPipelineView currentInstitute={activeCampus} />
-            )}
-            {instituteRoute === 'inst-transport' && (
-              <TransportView currentInstitute={activeCampus} />
-            )}
-            {instituteRoute === 'inst-library' && (
-              <LibraryView currentInstitute={activeCampus} />
-            )}
-          </Suspense>
-        </main>
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          <InstituteAdminNavbar
+            currentRoute={instituteRoute}
+            selectedInstitute={activeCampus}
+            onSelectInstitute={setSelectedInstitute}
+            onOpenSettings={() => setIsSettingsOpen(true)}
+            onOpenMobileMenu={() => setInstMobileOpen(true)}
+            onOpenCommandPalette={() => setIsPaletteOpen(true)}
+            onRouteChange={setInstituteRoute}
+          />
+
+          <main className="flex-1 overflow-y-auto">
+            <Suspense fallback={<ModuleLoader />}>
+              {instituteRoute === 'inst-dashboard' && (
+                <InstituteDashboard
+                  currentInstitute={activeCampus}
+                  onRouteChange={setInstituteRoute}
+                />
+              )}
+              {instituteRoute === 'inst-students' && (
+                <StudentsView currentInstitute={activeCampus} />
+              )}
+              {instituteRoute === 'inst-teachers' && (
+                <TeachersView currentInstitute={activeCampus} />
+              )}
+              {instituteRoute === 'inst-classes' && (
+                <ClassesView currentInstitute={activeCampus} />
+              )}
+              {instituteRoute === 'inst-timetable' && (
+                <TimetableView currentInstitute={activeCampus} />
+              )}
+              {instituteRoute === 'inst-attendance' && (
+                <AttendanceView currentInstitute={activeCampus} />
+              )}
+              {instituteRoute === 'inst-fees' && (
+                <FeesView currentInstitute={activeCampus} />
+              )}
+              {instituteRoute === 'inst-exams' && (
+                <ExamsView currentInstitute={activeCampus} />
+              )}
+              {instituteRoute === 'inst-program-levels' && (
+                <ProgramLevelsView currentInstitute={activeCampus} />
+              )}
+              {instituteRoute === 'inst-notices' && (
+                <NoticeBoardView currentInstitute={activeCampus} />
+              )}
+              {instituteRoute === 'inst-admissions' && (
+                <AdmissionsPipelineView currentInstitute={activeCampus} />
+              )}
+              {instituteRoute === 'inst-transport' && (
+                <TransportView currentInstitute={activeCampus} />
+              )}
+              {instituteRoute === 'inst-library' && (
+                <LibraryView currentInstitute={activeCampus} />
+              )}
+            </Suspense>
+          </main>
+        </div>
       </div>
 
       <SettingsModal
