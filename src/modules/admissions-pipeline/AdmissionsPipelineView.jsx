@@ -17,6 +17,7 @@ import {
   Printer, 
   School, 
   Award, 
+  GraduationCap,
   X,
   Filter,
   ArrowUpDown,

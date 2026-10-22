@@ -26,7 +26,8 @@ import {
   GraduationCap,
   ArrowRight,
   UserCheck,
-  LayoutGrid
+  LayoutGrid,
+  School
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
 import { normalizeClassSections } from '../../../constants/academicLevels'
@@ -51,7 +52,7 @@ import SubstituteTeacherModal from './SubstituteTeacherModal'
 import TimetableVersionsModal from './TimetableVersionsModal'
 import TimetablePrintModal from './TimetablePrintModal'
 
-export const TimetableView = ({ currentInstitute }) => {
+export const TimetableView = ({ currentInstitute, onRouteChange }) => {
   const { 
     classes = [], 
     teachers = [], 
@@ -619,13 +620,14 @@ export const TimetableView = ({ currentInstitute }) => {
                 No educational classes have been configured yet. Set up classes, sections, and curriculum subjects in Classes & Sections before scheduling routines.
               </p>
               <div>
-                <a
-                  href="#inst-classes"
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm"
+                <button
+                  type="button"
+                  onClick={() => onRouteChange?.('inst-classes')}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
                 >
                   <span>Go to Classes & Sections</span>
                   <ArrowRight className="w-3.5 h-3.5" />
-                </a>
+                </button>
               </div>
             </div>
           )}
