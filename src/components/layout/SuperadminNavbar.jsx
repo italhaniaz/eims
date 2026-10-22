@@ -17,6 +17,7 @@ import {
 import { useAuth } from '../../context/AuthContext'
 import { isSupabaseConfigured, getSupabaseStatus } from '../../services/supabaseClient'
 import ChangePasswordModal from '../common/ChangePasswordModal'
+import CloudSyncBadge from '../common/CloudSyncBadge'
 
 export const SuperadminNavbar = ({ 
   currentRoute, 
@@ -119,16 +120,8 @@ export const SuperadminNavbar = ({
           <Search className="w-4 h-4 text-slate-600" />
         </button>
 
-        {/* Supabase Connection Status Pill */}
-        <button 
-          onClick={onOpenSettings}
-          className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border transition-colors bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
-          title="Click to view Supabase database settings"
-        >
-          <Database className={`w-3.5 h-3.5 ${isSupabaseConfigured ? 'text-emerald-500' : 'text-blue-500'}`} />
-          <span>{isSupabaseConfigured ? 'Supabase Connected' : 'Supabase Ready'}</span>
-          <span className={`w-1.5 h-1.5 rounded-full ${isSupabaseConfigured ? 'bg-emerald-500 animate-pulse' : 'bg-blue-400'}`}></span>
-        </button>
+        {/* Cloud & Offline Synchronization Status Badge */}
+        <CloudSyncBadge onOpenSettings={onOpenSettings} />
 
         {/* Notification Bell with Red Badge "3" */}
         <div className="relative" ref={notifRef}>

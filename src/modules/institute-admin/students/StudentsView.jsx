@@ -863,17 +863,34 @@ export const StudentsView = ({ currentInstitute }) => {
     setIsSubmitting(true)
     const cleanRoll = formData.rollNumber.trim() || calculateNextRollNumber(currentLevelKey)
 
-    // Duplicate Check
-    const isDuplicate = students.some(s => 
+    // 1. Roll Number Duplicate Check
+    const isDuplicateRoll = students.some(s => 
       s.rollNumber?.toLowerCase() === cleanRoll.toLowerCase() &&
       (!editingStudent || s.id !== editingStudent.id) &&
       (!s.instituteId || s.instituteId === currentInstitute?.id)
     )
 
-    if (isDuplicate) {
-      toast.error(`Identifier "${cleanRoll}" already exists for another student!`)
+    if (isDuplicateRoll) {
+      toast.error(`Roll Number "${cleanRoll}" already exists for another student in this campus!`)
       setIsSubmitting(false)
       return
+    }
+
+    // 2. NADRA B-Form / CNIC Duplicate Check
+    const cleanBForm = (formData.bFormCnic || '').replace(/[^0-9]/g, '')
+    if (cleanBForm.length >= 9) {
+      const duplicateBForm = students.find(s => {
+        if (editingStudent && s.id === editingStudent.id) return false
+        if (s.instituteId && currentInstitute?.id && s.instituteId !== currentInstitute.id) return false
+        const exClean = (s.bFormCnic || '').replace(/[^0-9]/g, '')
+        return exClean && exClean === cleanBForm
+      })
+
+      if (duplicateBForm) {
+        toast.error(`Identity Conflict: A student with B-Form/CNIC "${formData.bFormCnic}" already exists: ${duplicateBForm.name} (${duplicateBForm.rollNumber} - ${duplicateBForm.className})!`)
+        setIsSubmitting(false)
+        return
+      }
     }
 
     const effectiveStatus = mode === 'draft' ? 'Withdrawn' : (formData.status || 'Active')
@@ -1677,6 +1694,12 @@ export const StudentsView = ({ currentInstitute }) => {
           </div>
         )}
 
+        {/* Mobile Swipe Hint for Layman Users */}
+        <div className="md:hidden flex items-center justify-between px-4 py-1.5 bg-slate-50/90 border-b border-slate-200 text-[11px] text-slate-500 font-medium no-print">
+          <span className="font-semibold text-slate-700">Student Roster</span>
+          <span className="text-emerald-700 font-bold">Swipe horizontally for actions & status →</span>
+        </div>
+
         {/* Main Table View */}
         <div className="overflow-x-auto min-w-full">
           <table className="w-full text-left text-xs sm:text-sm min-w-[950px]">
@@ -2403,6 +2426,25 @@ export const StudentsView = ({ currentInstitute }) => {
                       }`}
                     />
                     {formErrors.bFormCnic && <p className="text-[11px] text-rose-600 mt-1 font-medium">{formErrors.bFormCnic}</p>}
+                    {(() => {
+                      const clean = (formData.bFormCnic || '').replace(/[^0-9]/g, '')
+                      if (clean.length >= 9) {
+                        const matched = students.find(s => {
+                          if (editingStudent && s.id === editingStudent.id) return false
+                          if (s.instituteId && currentInstitute?.id && s.instituteId !== currentInstitute.id) return false
+                          const ex = (s.bFormCnic || '').replace(/[^0-9]/g, '')
+                          return ex && ex === clean
+                        })
+                        if (matched) {
+                          return (
+                            <p className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 p-1 rounded mt-1 font-semibold">
+                              ⚠️ Warning: Matches existing student <strong>{matched.name}</strong> ({matched.rollNumber})
+                            </p>
+                          )
+                        }
+                      }
+                      return null
+                    })()}
                   </div>
 
                   <div>

@@ -214,13 +214,19 @@ const AppContent = () => {
     )
   }
 
-  // 2. INSTITUTE ADMIN PORTAL (Dedicated School Level Management)
-  const activeCampus = selectedInstitute || institutes[0] || {
-    id: user?.instituteId || 'inst-1',
-    name: user?.instituteName || 'Main Campus',
-    code: 'SCH-001',
-    address: 'Central Campus'
-  }
+  // 2. INSTITUTE ADMIN PORTAL (Dedicated Multi-Tenant Scoped Management)
+  const scopedInstitute = user?.instituteId 
+    ? institutes.find(i => i.id === user.instituteId) || { id: user.instituteId, name: user.instituteName || 'Designated Campus', code: 'CAMPUS' }
+    : null
+
+  const activeCampus = (user?.role === 'institute_admin' && scopedInstitute)
+    ? scopedInstitute
+    : (selectedInstitute || institutes[0] || {
+        id: user?.instituteId || 'inst-1',
+        name: user?.instituteName || 'Main Campus',
+        code: 'SCH-001',
+        address: 'Central Campus'
+      })
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#f4f7fb]">

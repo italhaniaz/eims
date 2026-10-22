@@ -303,6 +303,11 @@ export const TimetableView = ({ currentInstitute }) => {
 
       {/* Routine Grid Table */}
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+        {/* Mobile Swipe Hint for Layman Users */}
+        <div className="sm:hidden flex items-center justify-between px-3.5 py-1.5 bg-slate-50/90 border-b border-slate-200 text-[11px] text-slate-500 font-medium no-print">
+          <span className="font-semibold text-slate-700">Weekly Schedule</span>
+          <span className="text-emerald-700 font-bold">Swipe horizontally for all periods →</span>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs min-w-[700px]">
             <thead className="bg-slate-50 text-slate-600 uppercase font-bold border-b border-slate-200">

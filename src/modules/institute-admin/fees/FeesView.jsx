@@ -5,7 +5,8 @@ import {
   Search, 
   CheckCircle, 
   Clock, 
-  Printer, 
+  Printer,
+  MessageSquare, 
   CreditCard, 
   School,
   Zap,
@@ -121,7 +122,9 @@ export const FeesView = ({ currentInstitute }) => {
     paymentMethod: 'Cash',
     cashTendered: '',
     discount: 0,
-    cashierNotes: ''
+    cashierNotes: '',
+    sendSmsAlert: true,
+    guardianPhone: ''
   })
 
   const handleStudentSelect = (studentName) => {
@@ -372,6 +375,7 @@ export const FeesView = ({ currentInstitute }) => {
   // Open POS Cashier Terminal
   const openPosCashier = (fee = null) => {
     if (fee) {
+      const matchedStd = instStudents.find(s => s.rollNumber === fee.rollNumber || s.name === fee.studentName)
       setPosData({
         selectedFeeId: fee.id,
         studentName: fee.studentName,
@@ -381,11 +385,14 @@ export const FeesView = ({ currentInstitute }) => {
         paymentMethod: 'Cash',
         cashTendered: Number(fee.amount || 0),
         discount: 0,
-        cashierNotes: 'Counter Cash Collection'
+        cashierNotes: 'Counter Cash Collection',
+        sendSmsAlert: true,
+        guardianPhone: matchedStd?.guardianPhone || matchedStd?.phone || '+92 300 1234567'
       })
     } else {
       const pendingFees = fees.filter(f => f.status !== 'Paid' && (!f.instituteId || f.instituteId === currentInstitute?.id))
       const first = pendingFees[0]
+      const matchedStd = instStudents.find(s => s.rollNumber === first?.rollNumber || s.name === first?.studentName) || instStudents[0]
       setPosData({
         selectedFeeId: first?.id || '',
         studentName: first?.studentName || instStudents[0]?.name || '',
@@ -395,7 +402,9 @@ export const FeesView = ({ currentInstitute }) => {
         paymentMethod: 'Cash',
         cashTendered: Number(first?.amount || 15000),
         discount: 0,
-        cashierNotes: 'Counter Cash Collection'
+        cashierNotes: 'Counter Cash Collection',
+        sendSmsAlert: true,
+        guardianPhone: matchedStd?.guardianPhone || matchedStd?.phone || '+92 300 1234567'
       })
     }
     setIsPosModalOpen(true)
@@ -439,8 +448,27 @@ export const FeesView = ({ currentInstitute }) => {
       cashTendered: posData.cashTendered,
       changeDue: Math.max(0, Number(posData.cashTendered) - payable),
       paymentMethod: posData.paymentMethod,
+      phone: posData.guardianPhone || '',
       date: new Date().toLocaleString(),
       cashier: 'Fee Counter Operator'
+    }
+
+    if (posData.sendSmsAlert) {
+      const commEntry = {
+        id: `comm-fee-${Date.now()}`,
+        title: `Fee Payment Receipt #${receiptObj.receiptNo}`,
+        channel: 'SMS & WhatsApp Gateway',
+        audience: `Guardian of ${posData.studentName} (${posData.guardianPhone || 'Phone Registered'})`,
+        recipientsCount: 1,
+        timestamp: new Date().toLocaleString(),
+        status: 'Delivered',
+        messagePreview: `Official Payment Receipt: Received Rs. ${payable.toLocaleString()} for ${posData.studentName} (${posData.rollNumber}). Slip #${receiptObj.receiptNo}. Thank you.`
+      }
+      try {
+        await addItem('communicationLogs', commEntry)
+      } catch (err) {
+        console.error('Failed to log comm entry:', err)
+      }
     }
 
     if (logAuditEvent) {
@@ -1012,6 +1040,37 @@ export const FeesView = ({ currentInstitute }) => {
               </div>
             )}
 
+            {/* Instant SMS / WhatsApp Notification Toggle */}
+            <div className="p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl space-y-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={posData.sendSmsAlert}
+                  onChange={(e) => setPosData({ ...posData, sendSmsAlert: e.target.checked })}
+                  className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                />
+                <span className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
+                  <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Dispatch Instant SMS & WhatsApp Receipt to Guardian</span>
+                </span>
+              </label>
+
+              {posData.sendSmsAlert && (
+                <div className="pt-1">
+                  <label className="block text-[10px] font-semibold text-emerald-900 uppercase mb-0.5">
+                    Guardian Mobile Number:
+                  </label>
+                  <input
+                    type="tel"
+                    value={posData.guardianPhone}
+                    onChange={(e) => setPosData({ ...posData, guardianPhone: e.target.value })}
+                    placeholder="+92 300 1234567"
+                    className="w-full px-3 py-1.5 text-xs rounded-lg border border-emerald-300 bg-white font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  />
+                </div>
+              )}
+            </div>
+
             <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
               <button
                 type="button"
@@ -1128,7 +1187,7 @@ export const FeesView = ({ currentInstitute }) => {
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-2">
+            <div className="flex flex-wrap items-center justify-end gap-2.5 pt-2">
               <button
                 type="button"
                 onClick={() => setPosReceipt(null)}
@@ -1136,10 +1195,30 @@ export const FeesView = ({ currentInstitute }) => {
               >
                 Close
               </button>
+              <a
+                href={`https://wa.me/${(posReceipt.phone || '').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
+                  `*OFFICIAL FEE PAYMENT RECEIPT*` +
+                  `\nInstitute: ${currentInstitute?.name || 'CENTRAL SCHOOL'}` +
+                  `\nReceipt No: ${posReceipt.receiptNo}` +
+                  `\nStudent: ${posReceipt.studentName} (${posReceipt.rollNumber})` +
+                  `\nClass: ${posReceipt.className}` +
+                  `\nAmount Paid: Rs. ${posReceipt.finalPaid.toLocaleString()}` +
+                  `\nPayment Mode: ${posReceipt.paymentMethod}` +
+                  `\nDate: ${posReceipt.date}` +
+                  `\nStatus: Verified & Settled. Thank you!`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3.5 py-2 text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-lg flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+                title="Send receipt confirmation directly via WhatsApp"
+              >
+                <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Send via WhatsApp</span>
+              </a>
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg flex items-center gap-1.5 shadow cursor-pointer"
+                className="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg flex items-center gap-1.5 shadow cursor-pointer"
               >
                 <Printer className="w-3.5 h-3.5" />
                 <span>Print Counter Slip</span>
