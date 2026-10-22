@@ -13,6 +13,7 @@ import {
   Layers
 } from 'lucide-react'
 import Modal from '../../../components/common/Modal'
+import { getCampusRooms } from '../../../constants/campusRooms'
 
 export const SectionModal = ({
   isOpen,
@@ -24,12 +25,16 @@ export const SectionModal = ({
   currentEnrolled = 0,
   onSaveSection
 }) => {
+  const isHssc = targetClass?.programLevel === 'higher-secondary'
+  const campusRooms = useMemo(() => getCampusRooms(), [])
+
   const [formData, setFormData] = useState({
     name: '',
     shift: 'Morning',
     gender: 'Co-ed',
     medium: 'English',
-    roomNo: '',
+    group: 'General',
+    roomNo: 'Room 101',
     capacity: 40,
     classTeacherId: '',
     classTeacherName: '',
@@ -56,6 +61,11 @@ export const SectionModal = ({
     return map
   }, [allClasses, targetClass?.id, editingSection])
 
+  // Existing sections for target class
+  const existingSecs = useMemo(() => {
+    return Array.isArray(targetClass?.sections) ? targetClass.sections : []
+  }, [targetClass])
+
   // Populate form
   useEffect(() => {
     if (editingSection) {
@@ -64,7 +74,8 @@ export const SectionModal = ({
         shift: editingSection.shift || 'Morning',
         gender: editingSection.gender || 'Co-ed',
         medium: editingSection.medium || 'English',
-        roomNo: editingSection.roomNo || '',
+        group: editingSection.group || targetClass?.group || (isHssc ? 'Pre-Medical' : 'General'),
+        roomNo: editingSection.roomNo || (campusRooms[0]?.name || 'Room 101'),
         capacity: Number(editingSection.capacity || 40),
         classTeacherId: editingSection.classTeacherId || '',
         classTeacherName: editingSection.classTeacherName || editingSection.classTeacher || '',
@@ -73,15 +84,15 @@ export const SectionModal = ({
         subjectTeachers: editingSection.subjectTeachers || {}
       })
     } else {
-      const existingSecs = Array.isArray(targetClass?.sections) ? targetClass.sections : []
-      const nextRoom = 100 + existingSecs.length + 1
+      const nextRoom = campusRooms[existingSecs.length % campusRooms.length]?.name || 'Room 101'
       const nextLetter = String.fromCharCode(65 + existingSecs.length)
       setFormData({
         name: `Section ${nextLetter}`,
         shift: targetClass?.shift || 'Morning',
         gender: 'Co-ed',
         medium: targetClass?.medium || 'English',
-        roomNo: `Room ${nextRoom}`,
+        group: targetClass?.group || (isHssc ? 'Pre-Medical' : 'General'),
+        roomNo: nextRoom,
         capacity: 40,
         classTeacherId: '',
         classTeacherName: '',
@@ -91,10 +102,10 @@ export const SectionModal = ({
       })
     }
     setValidationError('')
-  }, [editingSection, targetClass, isOpen])
+  }, [editingSection, targetClass, isOpen, campusRooms, isHssc, existingSecs.length])
 
   const handleSubmit = (e) => {
-    e.preventDefault()
+    if (e) e.preventDefault()
     setValidationError('')
 
     const secName = formData.name.trim()
@@ -104,13 +115,18 @@ export const SectionModal = ({
     }
 
     // Check duplicate section name in same class
-    const existingSecs = Array.isArray(targetClass?.sections) ? targetClass.sections : []
     const isDuplicateName = existingSecs.some(s => 
       (!editingSection || s.id !== editingSection.id) &&
       s.name.toLowerCase().trim() === secName.toLowerCase()
     )
     if (isDuplicateName) {
       setValidationError(`Section "${secName}" already exists in ${targetClass?.name}.`)
+      return
+    }
+
+    // If HSSC, group is required
+    if (isHssc && (!formData.group || !formData.group.trim())) {
+      setValidationError('HSSC study group (Pre-Medical, Pre-Engineering, ICS, etc.) is required.')
       return
     }
 
@@ -146,7 +162,7 @@ export const SectionModal = ({
     // Check Single Class Teacher rule
     if (formData.classTeacherId && busyClassTeachers.has(formData.classTeacherId)) {
       const conflict = busyClassTeachers.get(formData.classTeacherId)
-      setValidationError(`Teacher conflict: Selected teacher is already the designated Class Teacher for ${conflict.className} (${conflict.sectionName}). Only one class teacher assignment is allowed per faculty member.`)
+      setValidationError(`Teacher conflict: Selected teacher is already designated Class Teacher for ${conflict.className} (${conflict.sectionName}). Only one class teacher assignment is allowed per faculty member.`)
       return
     }
 
@@ -156,6 +172,7 @@ export const SectionModal = ({
       shift: formData.shift,
       gender: formData.gender,
       medium: formData.medium,
+      group: formData.group || 'General',
       roomNo: formData.roomNo.trim() || 'Room 101',
       capacity: capNum,
       enrolled: editingSection?.enrolled || currentEnrolled || 0,
@@ -173,19 +190,29 @@ export const SectionModal = ({
   if (!isOpen) return null
 
   const classSubjects = Array.isArray(targetClass?.subjects) ? targetClass.subjects : []
+  const availablePresets = ['Super Section', 'Star Section', 'Section A', 'Section B', 'Section C', 'Section D']
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={editingSection ? `Edit Section: ${editingSection.name} (${targetClass?.name})` : `Add New Section to: ${targetClass?.name}`}
+      title={
+        <div className="flex items-center justify-between gap-3 pr-6">
+          <span className="font-bold text-slate-900">
+            {editingSection ? `Edit Section: ${editingSection.name} (${targetClass?.name})` : `Add New Section to: ${targetClass?.name}`}
+          </span>
+          <span className="font-mono text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+            {editingSection?.enrolled || currentEnrolled || 0} / {formData.capacity} Enrolled
+          </span>
+        </div>
+      }
       maxWidth="max-w-2xl"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {validationError && (
           <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-            <span className="font-medium">{validationError}</span>
+            <span className="font-semibold">{validationError}</span>
           </div>
         )}
 
@@ -199,21 +226,42 @@ export const SectionModal = ({
             required
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                handleSubmit()
+              }
+            }}
             className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-            placeholder="e.g. Section A, Morning Batch, Green Wing"
+            placeholder="e.g. Section A, Super Section, Star Section..."
           />
           <div className="flex items-center gap-1.5 mt-2 flex-wrap">
             <span className="text-[10px] text-slate-400 font-semibold">Quick Presets:</span>
-            {['Section A', 'Section B', 'Section C', 'Section D', 'Morning Batch', 'Evening Batch'].map(preset => (
-              <button
-                key={preset}
-                type="button"
-                onClick={() => setFormData({ ...formData, name: preset })}
-                className="text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-0.5 rounded font-semibold transition-colors"
-              >
-                {preset}
-              </button>
-            ))}
+            {availablePresets.map(preset => {
+              const isUsed = existingSecs.some(s => (!editingSection || s.id !== editingSection.id) && s.name?.toLowerCase().trim() === preset.toLowerCase())
+              return (
+                <button
+                  key={preset}
+                  type="button"
+                  disabled={isUsed}
+                  onClick={() => {
+                    setFormData({ 
+                      ...formData, 
+                      name: preset,
+                      badge: preset.includes('Super') ? 'Super Section' : preset.includes('Star') ? 'Star Section' : formData.badge
+                    })
+                  }}
+                  className={`text-[10px] px-2 py-0.5 rounded font-semibold transition-colors ${
+                    isUsed 
+                      ? 'bg-slate-100 text-slate-400 cursor-not-allowed line-through' 
+                      : 'bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 border border-slate-200'
+                  }`}
+                  title={isUsed ? 'Already added to this class' : `Use preset ${preset}`}
+                >
+                  {preset}
+                </button>
+              )
+            })}
           </div>
         </div>
 
@@ -228,7 +276,6 @@ export const SectionModal = ({
             >
               <option value="Morning">Morning Shift</option>
               <option value="Evening">Evening Shift</option>
-              <option value="Weekend">Weekend Shift</option>
             </select>
           </div>
 
@@ -259,26 +306,49 @@ export const SectionModal = ({
           </div>
         </div>
 
-        {/* Room & Capacity */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+        {/* Group (for HSSC / General), Room (Dropdown) & Capacity */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+          <div>
+            <label className="block text-slate-600 font-semibold mb-1">
+              Study Group {isHssc && <span className="text-rose-500">*</span>}
+            </label>
+            <select
+              value={formData.group || 'General'}
+              onChange={(e) => setFormData({ ...formData, group: e.target.value })}
+              className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white font-medium"
+            >
+              <option value="General">General</option>
+              <option value="Pre-Medical">F.Sc Pre-Medical</option>
+              <option value="Pre-Engineering">F.Sc Pre-Engineering</option>
+              <option value="ICS">ICS (Computer Science)</option>
+              <option value="I.Com">I.Com (Commerce)</option>
+              <option value="Arts / Humanities">FA (Arts & Humanities)</option>
+              <option value="Cambridge">Cambridge A/O Levels</option>
+            </select>
+          </div>
+
           <div>
             <label className="block text-slate-600 font-semibold mb-1">Classroom / Room Number *</label>
-            <input
-              type="text"
+            <select
               required
               value={formData.roomNo}
               onChange={(e) => setFormData({ ...formData, roomNo: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl border border-slate-200 font-medium"
-              placeholder="e.g. Room 101, Science Lab 2"
-            />
+              className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white font-mono text-xs"
+            >
+              {campusRooms.map(r => (
+                <option key={r.id} value={r.name}>
+                  {r.name} ({r.floor} • Cap: {r.capacity})
+                </option>
+              ))}
+            </select>
             <span className="text-[10px] text-slate-400 mt-0.5 block">
-              Checked for double-booking conflicts across shift.
+              Checked for double-booking conflicts per shift.
             </span>
           </div>
 
           <div>
             <label className="block text-slate-600 font-semibold mb-1">
-              Max Seating Capacity * {currentEnrolled > 0 && <span className="text-emerald-600 font-normal">({currentEnrolled} Enrolled)</span>}
+              Max Seating Capacity *
             </label>
             <input
               type="number"
@@ -289,7 +359,7 @@ export const SectionModal = ({
               className="w-full px-3 py-2 rounded-xl border border-slate-200 font-mono font-bold"
             />
             <span className="text-[10px] text-slate-400 mt-0.5 block">
-              Cannot be set lower than {currentEnrolled} currently enrolled student(s).
+              Min: {Math.max(1, currentEnrolled)} desk(s).
             </span>
           </div>
         </div>
@@ -317,7 +387,7 @@ export const SectionModal = ({
                   const info = isBusy ? busyClassTeachers.get(t.id) : null
                   return (
                     <option key={t.id} value={t.id} disabled={isBusy}>
-                      {t.name} ({t.empId}) {isBusy ? `• Already in ${info.className}` : ''}
+                      {t.name} ({t.empId}) {isBusy ? `• Already in ${info.className} (${info.sectionName})` : ''}
                     </option>
                   )
                 })}

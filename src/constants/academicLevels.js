@@ -522,3 +522,109 @@ export const TIER_DEFAULT_CLASSES = {
 export const getDefaultClassesForTier = (tierId) => {
   return TIER_DEFAULT_CLASSES[tierId] || []
 }
+
+// Standard preset class names selectable from dropdown
+export const STANDARD_TIER_CLASS_NAMES = {
+  preschool: [
+    'Playgroup',
+    'Nursery',
+    'Prep',
+    'Kindergarten (KG)',
+    'Montessori Junior',
+    'Montessori Senior',
+    'Early Childhood Care (ECCE)'
+  ],
+  elementary: [
+    'Grade 1 (Primary)',
+    'Grade 2 (Primary)',
+    'Grade 3 (Primary)',
+    'Grade 4 (Primary)',
+    'Grade 5 (Primary)',
+    'Grade 6 (Middle)',
+    'Grade 7 (Middle)',
+    'Grade 8 (Middle)',
+    'Class 1',
+    'Class 2',
+    'Class 3',
+    'Class 4',
+    'Class 5',
+    'Class 6',
+    'Class 7',
+    'Class 8'
+  ],
+  secondary: [
+    '9th Grade (Matric Science)',
+    '9th Grade (Matric Arts)',
+    '10th Grade (Matric Science)',
+    '10th Grade (Matric Arts)',
+    'Cambridge O-Level (O-1)',
+    'Cambridge O-Level (O-2)'
+  ],
+  'higher-secondary': [
+    '11th Grade (F.Sc Pre-Medical)',
+    '11th Grade (F.Sc Pre-Engineering)',
+    '11th Grade (ICS Computer Science)',
+    '11th Grade (I.Com Commerce)',
+    '11th Grade (FA Arts & Humanities)',
+    '12th Grade (F.Sc Pre-Medical)',
+    '12th Grade (F.Sc Pre-Engineering)',
+    '12th Grade (ICS Computer Science)',
+    '12th Grade (I.Com Commerce)',
+    '12th Grade (FA Arts & Humanities)',
+    'Cambridge A-Level (AS Level)',
+    'Cambridge A-Level (A2 Level)'
+  ],
+  college: [
+    'ADP in Computer Science (ADP-CS)',
+    'ADP in Business Administration (ADP-BBA)',
+    'ADP in Accounting & Finance',
+    'ADP in Software Technology',
+    'DAE 1st Year (Associate Engineering)',
+    'DAE 2nd Year (Associate Engineering)',
+    'DAE 3rd Year (Associate Engineering)'
+  ],
+  university: [
+    'BS Computer Science (BSCS)',
+    'BS Software Engineering (BSSE)',
+    'BS Information Technology (BSIT)',
+    'BBA Honors (Business Administration)',
+    'BS Artificial Intelligence (BSAI)',
+    'BS Data Science (BSDS)',
+    'MS Computer Science (MSCS)',
+    'MS Software Engineering (MSSE)',
+    'MBA (Master of Business Administration)',
+    'MPhil Education'
+  ]
+}
+
+// Computes natural numeric sort rank based on tier & grade
+export const calculateClassSortOrder = (className = '', tierId = 'elementary') => {
+  const norm = className.toLowerCase()
+  const numMatch = norm.match(/\d+/)
+  const gradeNum = numMatch ? parseInt(numMatch[0], 10) : 0
+
+  switch (tierId) {
+    case 'preschool':
+      if (norm.includes('playgroup')) return 1
+      if (norm.includes('nursery')) return 2
+      if (norm.includes('prep')) return 3
+      if (norm.includes('kg') || norm.includes('kindergarten')) return 4
+      return 5
+    case 'elementary':
+      return gradeNum ? gradeNum * 10 : 50
+    case 'secondary':
+      if (norm.includes('9th') || norm.includes('o-1')) return 90
+      if (norm.includes('10th') || norm.includes('o-2')) return 100
+      return gradeNum ? gradeNum * 10 : 90
+    case 'higher-secondary':
+      if (norm.includes('11th') || norm.includes('as')) return 110
+      if (norm.includes('12th') || norm.includes('a2')) return 120
+      return gradeNum ? gradeNum * 10 : 110
+    case 'college':
+      return 200 + (gradeNum || 0)
+    case 'university':
+      return 300 + (gradeNum || 0)
+    default:
+      return 100
+  }
+}

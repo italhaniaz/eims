@@ -40,7 +40,8 @@ import {
   detectProgramLevel, 
   normalizeClassSections, 
   PROGRAM_LEVELS, 
-  getDefaultClassesForTier 
+  getDefaultClassesForTier,
+  calculateClassSortOrder
 } from '../../../constants/academicLevels'
 import Modal from '../../../components/common/Modal'
 import { ClassModal } from './ClassModal'
@@ -187,9 +188,14 @@ export const ClassesView = ({ currentInstitute }) => {
       return true
     })
 
-    // Natural numeric sorting: "Class 2" before "Class 10"
+    // Natural educational & numeric sorting: Nursery -> Prep -> Class 1 -> Class 10
     return list.sort((a, b) => {
       if (sortField === 'numericName') {
+        const orderA = a.sortOrder !== undefined ? a.sortOrder : calculateClassSortOrder(a.name, a.programLevel)
+        const orderB = b.sortOrder !== undefined ? b.sortOrder : calculateClassSortOrder(b.name, b.programLevel)
+        if (orderA !== orderB) {
+          return sortDirection === 'asc' ? orderA - orderB : orderB - orderA
+        }
         const res = a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
         return sortDirection === 'asc' ? res : -res
       }
