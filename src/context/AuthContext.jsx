@@ -3,35 +3,52 @@ import React, { createContext, useContext, useState, useEffect } from 'react'
 const AuthContext = createContext(null)
 
 export const AuthProvider = ({ children }) => {
-  // Preset default user or load from localStorage
+  // Load authenticated session from session or local storage
   const [user, setUser] = useState(() => {
     try {
-      const saved = localStorage.getItem('sms_auth_user')
-      if (saved) return JSON.parse(saved)
+      // 1. Check session storage for active authenticated session in current tab
+      const sessionSaved = sessionStorage.getItem('sms_auth_user')
+      if (sessionSaved) {
+        const parsed = JSON.parse(sessionSaved)
+        if (parsed && parsed.email && parsed.isExplicitLogin) {
+          return parsed
+        }
+      }
+
+      // 2. Check localStorage for remembered session
+      const localSaved = localStorage.getItem('sms_auth_user')
+      if (localSaved) {
+        const parsed = JSON.parse(localSaved)
+        // Guard: old versions stored hardcoded dummy user without isExplicitLogin
+        if (parsed && parsed.email && parsed.isExplicitLogin) {
+          return parsed
+        } else {
+          // Purge stale or legacy auto-saved dummy session
+          localStorage.removeItem('sms_auth_user')
+        }
+      }
     } catch (e) {
-      console.error(e)
+      console.error('Session retrieval error:', e)
     }
-    // Default active user is Superadmin
-    return {
-      id: 'usr-1',
-      name: 'admin',
-      roleTitle: 'admin',
-      role: 'superadmin', // 'superadmin' or 'institute_admin'
-      email: 'admin@schoolms.com',
-      password: 'admin',
-      avatar: null,
-      instituteId: 'inst-1',
-      instituteName: 'Beaconhouse Central High School'
-    }
+    // Default to unauthenticated: ALWAYS show login page on fresh visit
+    return null
   })
 
   const [notificationCount, setNotificationCount] = useState(3)
 
   useEffect(() => {
-    if (user) {
-      localStorage.setItem('sms_auth_user', JSON.stringify(user))
-    } else {
-      localStorage.removeItem('sms_auth_user')
+    try {
+      if (user) {
+        sessionStorage.setItem('sms_auth_user', JSON.stringify(user))
+        if (localStorage.getItem('sms_auth_user')) {
+          localStorage.setItem('sms_auth_user', JSON.stringify(user))
+        }
+      } else {
+        sessionStorage.removeItem('sms_auth_user')
+        localStorage.removeItem('sms_auth_user')
+      }
+    } catch (e) {
+      console.error('Storage sync error:', e)
     }
   }, [user])
 
@@ -59,34 +76,53 @@ export const AuthProvider = ({ children }) => {
     }
   }, [user])
 
-  const login = (role = 'superadmin', customEmail = '') => {
-    if (role === 'superadmin') {
-      setUser({
-        id: 'usr-1',
-        name: 'admin',
-        roleTitle: 'admin',
-        role: 'superadmin',
-        email: customEmail || 'superadmin@sms.com',
-        avatar: null,
-        instituteId: null,
-        instituteName: 'Central Headquarters'
-      })
-    } else {
-      setUser({
-        id: 'usr-2',
-        name: 'Beaconhouse Admin',
-        roleTitle: 'Institute Admin',
-        role: 'institute_admin',
-        email: customEmail || 'admin.beacon@sms.edu',
-        avatar: null,
-        instituteId: 'inst-1',
-        instituteName: 'Beaconhouse Central High School'
-      })
+  const login = (role = 'superadmin', customEmail = '', remember = false) => {
+    const userPayload = role === 'superadmin' ? {
+      id: 'usr-1',
+      name: 'Super Administrator',
+      roleTitle: 'Superadmin',
+      role: 'superadmin',
+      email: customEmail || 'admin@schoolms.com',
+      avatar: null,
+      instituteId: null,
+      instituteName: 'Central Headquarters',
+      isExplicitLogin: true,
+      loginTimestamp: new Date().toISOString()
+    } : {
+      id: 'usr-2',
+      name: 'Beaconhouse Admin',
+      roleTitle: 'Institute Admin',
+      role: 'institute_admin',
+      email: customEmail || 'admin.beacon@sms.edu',
+      avatar: null,
+      instituteId: 'inst-1',
+      instituteName: 'Beaconhouse Central High School',
+      isExplicitLogin: true,
+      loginTimestamp: new Date().toISOString()
+    }
+
+    setUser(userPayload)
+
+    try {
+      sessionStorage.setItem('sms_auth_user', JSON.stringify(userPayload))
+      if (remember) {
+        localStorage.setItem('sms_auth_user', JSON.stringify(userPayload))
+      } else {
+        localStorage.removeItem('sms_auth_user')
+      }
+    } catch (e) {
+      console.error('Storage write error:', e)
     }
   }
 
   const logout = () => {
     setUser(null)
+    try {
+      sessionStorage.removeItem('sms_auth_user')
+      localStorage.removeItem('sms_auth_user')
+    } catch (e) {
+      console.error('Storage clear error:', e)
+    }
   }
 
   const switchRole = (newRole) => {
