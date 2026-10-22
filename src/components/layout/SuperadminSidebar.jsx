@@ -153,7 +153,7 @@ export const SuperadminSidebar = ({
               className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-[#243150] transition-colors cursor-pointer"
             >
               <div className="flex items-center gap-3">
-                <Sliders className="w-[18px] h-[18px] text-blue-400 shrink-0" />
+                <Sliders className="w-[18px] h-[18px] text-slate-400 shrink-0" />
                 {(!collapsed || isMobileOpen) && <span>Platform Control</span>}
               </div>
               {(!collapsed || isMobileOpen) && (
@@ -213,7 +213,7 @@ export const SuperadminSidebar = ({
               className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-[#243150] transition-colors cursor-pointer"
             >
               <div className="flex items-center gap-3">
-                <BarChart3 className="w-[18px] h-[18px] text-emerald-400 shrink-0" />
+                <BarChart3 className="w-[18px] h-[18px] text-slate-400 shrink-0" />
                 {(!collapsed || isMobileOpen) && <span>Analytics & Business</span>}
               </div>
               {(!collapsed || isMobileOpen) && (
@@ -406,7 +406,7 @@ export const SuperadminSidebar = ({
               className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-[#243150] transition-colors cursor-pointer"
             >
               <div className="flex items-center gap-3">
-                <Database className="w-[18px] h-[18px] text-cyan-400 shrink-0" />
+                <Database className="w-[18px] h-[18px] text-slate-400 shrink-0" />
                 {(!collapsed || isMobileOpen) && <span>Operations & Health</span>}
               </div>
               {(!collapsed || isMobileOpen) && (
@@ -461,7 +461,7 @@ export const SuperadminSidebar = ({
               }`}
             >
               <div className="flex items-center gap-3">
-                <Briefcase className={`w-[18px] h-[18px] shrink-0 ${isEnterpriseRoute ? 'text-blue-400' : 'text-slate-400'}`} />
+                <Briefcase className="w-[18px] h-[18px] text-slate-400 shrink-0" />
                 {(!collapsed || isMobileOpen) && <span>Enterprise Operations</span>}
               </div>
               {(!collapsed || isMobileOpen) && (
