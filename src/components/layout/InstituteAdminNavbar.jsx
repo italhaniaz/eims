@@ -190,60 +190,50 @@ export const InstituteAdminNavbar = ({
           <Menu className="w-5 h-5" />
         </button>
 
-        {/* Campus Scoping & Switcher (Multi-Tenant Protected) */}
-        {user?.role === 'superadmin' ? (
-          <div className="relative" ref={campusRef}>
-            <button
-              onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="flex items-center gap-1.5 sm:gap-2 bg-emerald-50 text-emerald-800 border border-emerald-200/80 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-emerald-100 transition-colors"
-            >
-              <School className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-              <span className="max-w-[100px] sm:max-w-[150px] truncate">{selectedInstitute?.name || 'Main Campus'}</span>
-              <ChevronDown className="w-3.5 h-3.5 opacity-60 shrink-0" />
-            </button>
+        {/* Campus Switcher (Only visible to Superadmin scoping/impersonating campuses) */}
+        {user?.role === 'superadmin' && (
+          <>
+            <div className="relative" ref={campusRef}>
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="flex items-center gap-1.5 sm:gap-2 bg-emerald-50 text-emerald-800 border border-emerald-200/80 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-emerald-100 transition-colors"
+              >
+                <School className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <span className="max-w-[100px] sm:max-w-[150px] truncate">{selectedInstitute?.name || 'Main Campus'}</span>
+                <ChevronDown className="w-3.5 h-3.5 opacity-60 shrink-0" />
+              </button>
 
-            {dropdownOpen && (
-              <div className="absolute left-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-slate-100 py-1.5 z-50 animate-in fade-in zoom-in-95">
-                <div className="px-3 py-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                  Select Active Campus
+              {dropdownOpen && (
+                <div className="absolute left-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-slate-100 py-1.5 z-50 animate-in fade-in zoom-in-95">
+                  <div className="px-3 py-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                    Select Active Campus
+                  </div>
+                  {institutes && institutes.length > 0 ? (
+                    institutes.map((inst) => (
+                      <button
+                        key={inst.id}
+                        onClick={() => {
+                          onSelectInstitute(inst)
+                          setDropdownOpen(false)
+                        }}
+                        className={`w-full text-left px-3 py-2 text-xs transition-colors flex items-center justify-between ${
+                          selectedInstitute?.id === inst.id ? 'bg-emerald-50 text-emerald-700 font-bold' : 'hover:bg-slate-50 text-slate-700'
+                        }`}
+                      >
+                        <span className="truncate">{inst.name}</span>
+                        <span className="font-mono text-[10px] text-slate-400">{inst.code}</span>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-3 py-2 text-xs text-slate-400">No other institutes found</div>
+                  )}
                 </div>
-                {institutes && institutes.length > 0 ? (
-                  institutes.map((inst) => (
-                    <button
-                      key={inst.id}
-                      onClick={() => {
-                        onSelectInstitute(inst)
-                        setDropdownOpen(false)
-                      }}
-                      className={`w-full text-left px-3 py-2 text-xs transition-colors flex items-center justify-between ${
-                        selectedInstitute?.id === inst.id ? 'bg-emerald-50 text-emerald-700 font-bold' : 'hover:bg-slate-50 text-slate-700'
-                      }`}
-                    >
-                      <span className="truncate">{inst.name}</span>
-                      <span className="font-mono text-[10px] text-slate-400">{inst.code}</span>
-                    </button>
-                  ))
-                ) : (
-                  <div className="px-3 py-2 text-xs text-slate-400">No other institutes found</div>
-                )}
-              </div>
-            )}
-          </div>
-        ) : (
-          <div 
-            className="flex items-center gap-1.5 sm:gap-2 bg-emerald-50/90 text-emerald-900 border border-emerald-300/80 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold shadow-2xs"
-            title="Designated Campus Scoped Session"
-          >
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
-            <span className="max-w-[120px] sm:max-w-[180px] truncate">{selectedInstitute?.name || user?.instituteName || 'Designated Campus'}</span>
-            <span className="hidden sm:inline-block text-[9px] font-mono font-bold bg-white text-emerald-800 px-1.5 py-0.2 rounded border border-emerald-200">
-              {selectedInstitute?.code || 'ACTIVE'}
-            </span>
-          </div>
+              )}
+            </div>
+            {/* Vertical Divider */}
+            <div className="h-5 w-px bg-slate-200 shrink-0" />
+          </>
         )}
-
-        {/* Vertical Divider */}
-        <div className="h-5 w-px bg-slate-200 shrink-0" />
 
         {/* Program Levels Selector Dropdown (Interactive K-12 to University Scope) */}
         <div className="relative" ref={levelRef}>
@@ -461,36 +451,15 @@ export const InstituteAdminNavbar = ({
           )}
         </div>
 
-        <ChevronRight className="hidden lg:inline-block w-3.5 h-3.5 text-slate-300" />
-        <h1 className="hidden lg:inline-block text-sm font-semibold text-slate-700 truncate max-w-[280px] xl:max-w-none">
+        <ChevronRight className="hidden sm:inline-block w-3.5 h-3.5 text-slate-300 shrink-0" />
+        <h1 className="text-sm font-semibold text-slate-800 truncate max-w-[220px] sm:max-w-none">
           {getRouteTitle()}
         </h1>
       </div>
 
       {/* Right: Settings and User Menu */}
       <div className="flex items-center gap-2 sm:gap-3">
-        {/* Quick Spotlight Search Trigger */}
-        <button
-          onClick={onOpenCommandPalette}
-          className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs text-slate-500 transition-colors shadow-2xs cursor-pointer mr-1"
-          title="Spotlight Search (Ctrl + K)"
-        >
-          <Search className="w-3.5 h-3.5 text-slate-400" />
-          <span className="text-[11px] font-medium hidden md:inline">Search or jump to...</span>
-          <kbd className="text-[9px] font-mono font-bold bg-white border border-slate-200 px-1.5 py-0.5 rounded text-slate-400 shadow-2xs">
-            Ctrl K
-          </kbd>
-        </button>
 
-        {/* Mobile Spotlight Search Trigger */}
-        <button
-          onClick={onOpenCommandPalette}
-          className="sm:hidden p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-          title="Search (Tap to open)"
-          aria-label="Open search"
-        >
-          <Search className="w-4 h-4 text-slate-600" />
-        </button>
 
         {/* Cloud & Offline Synchronization Status Badge */}
         <CloudSyncBadge onOpenSettings={onOpenSettings} />
