@@ -251,12 +251,13 @@ export const InstituteAdminSidebar = ({
                 </button>
                 <button
                   onClick={() => handleNavClick('inst-program-levels')}
+                  title="Academic Program Levels"
                   className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors ${
                     isRouteActive('inst-program-levels') ? 'text-white font-medium bg-[#1e2f54]' : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
                   <GraduationCap className="w-3.5 h-3.5 opacity-80 text-blue-400 shrink-0" />
-                  <span className="truncate">Academic Program Levels</span>
+                  <span className="truncate" title="Academic Program Levels">Program Levels</span>
                 </button>
               </div>
             )}

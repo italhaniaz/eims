@@ -51,6 +51,7 @@ import { ClassPromotionModal } from './ClassPromotionModal'
 import { ClassProfileModal } from './ClassProfileModal'
 import { RoomsRegisterModal } from './RoomsRegisterModal'
 import { ClassCsvImportModal } from './ClassCsvImportModal'
+import { getAllTimetables } from '../timetable/timetableService'
 
 export const ClassesView = ({ currentInstitute }) => {
   const { 
@@ -319,6 +320,26 @@ export const ClassesView = ({ currentInstitute }) => {
       return
     }
 
+    // Check if section is used in timetable slots
+    const allTimetables = getAllTimetables()
+    const affectedPeriods = []
+    allTimetables.forEach(t => {
+      if ((t.className || '').toLowerCase().trim() === (classItem.name || '').toLowerCase().trim() &&
+          (t.sectionName || '').toLowerCase().trim() === (secName || '').toLowerCase().trim()) {
+        Object.values(t.slots || {}).forEach(s => {
+          affectedPeriods.push(`${s.day} (${s.periodNum}): ${s.subjectName}`)
+        })
+      }
+    })
+
+    if (affectedPeriods.length > 0) {
+      const sample = affectedPeriods.slice(0, 4).join('\n- ')
+      const more = affectedPeriods.length > 4 ? `\n...and ${affectedPeriods.length - 4} more` : ''
+      if (!window.confirm(`Warning: Section "${secName}" has ${affectedPeriods.length} active scheduled period(s) in the Timetable:\n- ${sample}${more}\n\nDeleting this section will also remove its scheduled routine. Proceed?`)) {
+        return
+      }
+    }
+
     if (window.confirm(`Delete section "${secName}" from ${classItem.name}?`)) {
       const updatedSecs = currentSecs.filter(s => s.id !== secId)
       const payload = {
@@ -343,6 +364,25 @@ export const ClassesView = ({ currentInstitute }) => {
     if (classToDelete.enrolled > 0) {
       toast.error(`Cannot delete "${classToDelete.name}": ${classToDelete.enrolled} students are actively enrolled. Transfer students or archive class instead.`)
       return
+    }
+
+    // Check if class is used in timetable slots
+    const allTimetables = getAllTimetables()
+    const affectedPeriods = []
+    allTimetables.forEach(t => {
+      if ((t.className || '').toLowerCase().trim() === (classToDelete.name || '').toLowerCase().trim()) {
+        Object.values(t.slots || {}).forEach(s => {
+          affectedPeriods.push(`${t.sectionName} - ${s.day} (${s.periodNum}): ${s.subjectName}`)
+        })
+      }
+    })
+
+    if (affectedPeriods.length > 0) {
+      const sample = affectedPeriods.slice(0, 4).join('\n- ')
+      const more = affectedPeriods.length > 4 ? `\n...and ${affectedPeriods.length - 4} more` : ''
+      if (!window.confirm(`Warning: Class "${classToDelete.name}" has ${affectedPeriods.length} active scheduled period(s) in the Timetable:\n- ${sample}${more}\n\nDeleting this class will remove its timetable routines. Proceed?`)) {
+        return
+      }
     }
 
     await deleteItem('classes', classToDelete.id)

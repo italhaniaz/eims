@@ -48,6 +48,7 @@ import { useToast } from '../../../context/ToastContext'
 import Modal from '../../../components/common/Modal'
 import { AddStaffModal } from './AddStaffModal'
 import { StaffProfileDrawer } from './StaffProfileDrawer'
+import { getAllTimetables } from '../timetable/timetableService'
 import { StaffIdCardModal } from './StaffIdCardModal'
 import { StaffPaySlipModal } from './StaffPaySlipModal'
 import { AppointmentLetterModal } from './AppointmentLetterModal'
@@ -383,6 +384,26 @@ export const TeachersView = ({ currentInstitute }) => {
 
   const confirmDelete = async () => {
     if (!staffToDelete) return
+
+    // Check if faculty member is scheduled in timetable
+    const allTimetables = getAllTimetables()
+    const affectedPeriods = []
+    allTimetables.forEach(t => {
+      Object.values(t.slots || {}).forEach(s => {
+        if (s.teacherId === staffToDelete.id || (s.teacherName || '').toLowerCase().trim() === (staffToDelete.name || '').toLowerCase().trim()) {
+          affectedPeriods.push(`${t.className} (${t.sectionName}) - ${s.day} ${s.periodNum}: ${s.subjectName}`)
+        }
+      })
+    })
+
+    if (affectedPeriods.length > 0) {
+      const sample = affectedPeriods.slice(0, 4).join('\n- ')
+      const more = affectedPeriods.length > 4 ? `\n...and ${affectedPeriods.length - 4} more` : ''
+      if (!window.confirm(`Warning: Faculty member "${staffToDelete.name}" is designated teacher for ${affectedPeriods.length} active period(s) in the Timetable:\n- ${sample}${more}\n\nDeleting this teacher will leave these scheduled periods unassigned. Proceed?`)) {
+        return
+      }
+    }
+
     await deleteItem('teachers', staffToDelete.id)
     toast.info(`Staff record for "${staffToDelete.name}" (${staffToDelete.empId}) removed.`)
     if (drawerStaff && drawerStaff.id === staffToDelete.id) {

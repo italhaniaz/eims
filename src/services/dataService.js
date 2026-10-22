@@ -185,16 +185,7 @@ export const sampleTemplateData = {
       content: 'All parents and guardians are requested to clear pending tuition fee dues on or before the due date to avoid late fee surcharges.'
     }
   ],
-  timetable: {
-    '10th Grade': {
-      'Monday-P1': { subject: 'Mathematics', teacher: 'Prof. Tariq', room: 'R-101' },
-      'Monday-P2': { subject: 'Physics', teacher: 'Dr. Fatima', room: 'Lab 1' },
-      'Monday-P3': { subject: 'English', teacher: 'Ms. Ayesha', room: 'R-101' },
-      'Monday-P4': { subject: 'Chemistry', teacher: 'Dr. Rashid', room: 'Lab 2' },
-      'Monday-P5': { subject: 'Computer Sc.', teacher: 'Engr. Imran', room: 'Comp Lab' },
-      'Monday-P6': { subject: 'Pakistan Studies', teacher: 'Mr. Asif', room: 'R-101' }
-    }
-  },
+  timetable: {},
   attendance: {},
   transport: [
     { id: 'tr-1', vehicleNo: 'LEA-4890', busName: 'Bus #01 (Gulberg - Model Town)', driverName: 'Muhammad Rafiq', driverPhone: '+92 301 5566778', capacity: 35, assignedStudents: 32, routePath: 'Campus -> Main Blvd -> Model Town C Block', status: 'Active' },
@@ -279,6 +270,13 @@ export const getStoredData = () => {
         })
         if (filteredClasses.length !== parsed.classes.length) {
           parsed.classes = filteredClasses
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed))
+        }
+      }
+      if (parsed.timetable) {
+        const strVal = JSON.stringify(parsed.timetable)
+        if (strVal.includes('Prof. Tariq') || strVal.includes('Dr. Fatima') || strVal.includes('Qari Sb') || strVal.includes('Engr. Imran') || strVal.includes('Library / Reading')) {
+          parsed.timetable = {}
           localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed))
         }
       }
