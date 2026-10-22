@@ -6,17 +6,13 @@ import {
   Eye, 
   EyeOff, 
   ArrowRight,
-  Database,
   AlertCircle, 
   ShieldCheck, 
-  School, 
-  Sparkles,
   ShieldAlert,
   Clock,
   AlertTriangle
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
-import { isSupabaseConfigured } from '../../services/supabaseClient'
 import { DataService } from '../../services/dataService'
 
 export const LoginPage = () => {
@@ -55,34 +51,6 @@ export const LoginPage = () => {
     const timer = setInterval(updateCountdown, 1000)
     return () => clearInterval(timer)
   }, [lockoutUntil])
-
-  const handleQuickLogin = (role) => {
-    if (isLockedOut) return
-    setAuthError('')
-    setIsLoading(true)
-    sessionStorage.removeItem('sms_auth_failed_attempts')
-    sessionStorage.removeItem('sms_auth_lockout_until')
-    setFailedAttempts(0)
-    setLockoutUntil(0)
-
-    if (role === 'superadmin') {
-      setIdentifier('admin@schoolms.com')
-      setPassword('admin123')
-      setTimeout(() => {
-        DataService.logAuditEvent('Quick Demo Sign In (Superadmin)', 'admin@schoolms.com', 'Success')
-        login('superadmin', 'admin@schoolms.com', rememberMe)
-        setIsLoading(false)
-      }, 350)
-    } else {
-      setIdentifier('admin.beacon@sms.edu')
-      setPassword('institute123')
-      setTimeout(() => {
-        DataService.logAuditEvent('Quick Demo Sign In (Institute Admin)', 'admin.beacon@sms.edu', 'Success')
-        login('institute_admin', 'admin.beacon@sms.edu', rememberMe)
-        setIsLoading(false)
-      }, 350)
-    }
-  }
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -159,7 +127,7 @@ export const LoginPage = () => {
             <Building2 className="w-7 h-7" />
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-            School Management System
+            Educational Institute Management System
           </h1>
           <p className="text-xs sm:text-sm text-slate-400 mt-1.5 flex items-center justify-center gap-1.5">
             <ShieldCheck className="w-4 h-4 text-emerald-400" />
@@ -192,47 +160,6 @@ export const LoginPage = () => {
             </div>
           ) : null}
 
-          {/* Quick Demo Credentials Switcher */}
-          <div className="mb-5 p-3.5 bg-blue-500/10 border border-blue-500/20 rounded-xl">
-            <span className="text-[11px] font-bold text-blue-300 block mb-2 uppercase tracking-wider flex items-center gap-1.5">
-              <Sparkles className="w-3 h-3 text-blue-400" />
-              1-Click Instant Demo Login
-            </span>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('superadmin')}
-                disabled={isLoading || isLockedOut}
-                className="px-3 py-2 bg-blue-600/30 hover:bg-blue-600/50 border border-blue-500/40 rounded-lg text-left transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <div className="text-xs font-semibold text-blue-100 group-hover:text-white flex items-center justify-between">
-                  <span>Superadmin</span>
-                  <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-                <div className="text-[10px] text-slate-400 mt-1 font-mono truncate">admin@schoolms.com</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('institute_admin')}
-                disabled={isLoading || isLockedOut}
-                className="px-3 py-2 bg-indigo-600/30 hover:bg-indigo-600/50 border border-indigo-500/40 rounded-lg text-left transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <div className="text-xs font-semibold text-indigo-100 group-hover:text-white flex items-center justify-between">
-                  <span>Institute Admin</span>
-                  <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-                <div className="text-[10px] text-slate-400 mt-1 font-mono truncate">admin.beacon@sms.edu</div>
-              </button>
-            </div>
-          </div>
-
-          <div className="relative flex py-1.5 items-center mb-4">
-            <div className="flex-grow border-t border-slate-800"></div>
-            <span className="flex-shrink mx-3 text-[10px] text-slate-500 uppercase tracking-widest font-semibold">Or enter manually</span>
-            <div className="flex-grow border-t border-slate-800"></div>
-          </div>
-
           {authError && !isLockedOut && (
             <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-300 text-xs flex items-center gap-2 animate-in fade-in">
               <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
@@ -259,7 +186,7 @@ export const LoginPage = () => {
                   className={`w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#0b1424] border border-slate-700 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                     isLockedOut ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
-                  placeholder="e.g. admin@schoolms.com"
+                  placeholder="Enter your email or username"
                 />
               </div>
             </div>
@@ -269,16 +196,15 @@ export const LoginPage = () => {
                 <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
                   Password
                 </label>
-                <a 
-                  href="#forgot" 
-                  onClick={(e) => { 
-                    e.preventDefault()
-                    alert('Demo passwords: admin123 (Superadmin) or institute123 (Institute Admin)') 
+                <button 
+                  type="button"
+                  onClick={() => { 
+                    alert('Please contact your platform administrator or institutional IT department to reset your password.') 
                   }} 
-                  className="text-[11px] text-blue-400 hover:underline"
+                  className="text-[11px] text-blue-400 hover:underline cursor-pointer"
                 >
                   Forgot password?
-                </a>
+                </button>
               </div>
               <div className="relative">
                 <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -294,13 +220,13 @@ export const LoginPage = () => {
                   className={`w-full pl-10 pr-10 py-2.5 rounded-xl bg-[#0b1424] border border-slate-700 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                     isLockedOut ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
-                  placeholder="e.g. admin123"
+                  placeholder="Enter your password"
                 />
                 <button
                   type="button"
                   disabled={isLockedOut}
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors cursor-pointer"
                   title={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -319,13 +245,12 @@ export const LoginPage = () => {
                 />
                 <span>Remember session</span>
               </label>
-              <span className="text-[11px] text-slate-500 font-mono">v1.0.0 Production</span>
             </div>
 
             <button
               type="submit"
               disabled={isLoading || isLockedOut}
-              className={`w-full py-3 rounded-xl font-bold text-sm text-white bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-600/30 transition-all flex items-center justify-center gap-2 ${
+              className={`w-full py-3 rounded-xl font-bold text-sm text-white bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer ${
                 isLoading || isLockedOut ? 'opacity-70 cursor-not-allowed' : 'active:scale-[0.99]'
               }`}
             >
@@ -344,16 +269,6 @@ export const LoginPage = () => {
               )}
             </button>
           </form>
-        </div>
-
-        {/* Footer info & Supabase status */}
-        <div className="text-center text-xs text-slate-500 flex items-center justify-center gap-2">
-          <Database className={`w-3.5 h-3.5 ${isSupabaseConfigured ? 'text-emerald-400' : 'text-blue-400'}`} />
-          <span>
-            {isSupabaseConfigured 
-              ? 'Backend: Connected to Supabase Database' 
-              : 'Backend: Supabase Ready (Fast Persistent Storage Mode)'}
-          </span>
         </div>
       </div>
     </div>
