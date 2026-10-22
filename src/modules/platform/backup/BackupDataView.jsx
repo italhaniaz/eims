@@ -213,31 +213,63 @@ const BackupDataView = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           icon={HardDrive}
-          label="Total Stored Backups"
+          title="Total Stored Backups"
           value={`${backups.length} Snapshots`}
-          change="Available for recovery"
+          badge="Available for recovery"
+          badgePositive={true}
           color="blue"
+          showActions={true}
+          showAllText="Show all"
+          onShowAll={() => setActiveTab('backups')}
+          onView={() => setActiveTab('backups')}
+          viewTooltip="View All Backup Snapshots"
+          onAdd={handleCreateSnapshot}
+          addTooltip="Create New Database Backup Snapshot"
         />
         <StatCard
           icon={FileCheck}
-          label="Last Completed Backup"
+          title="Last Completed Backup"
           value="Today"
-          change="Automated & verified"
+          badge="Automated & verified"
+          badgePositive={true}
           color="emerald"
+          showActions={true}
+          showAllText="Show all"
+          onShowAll={() => setActiveTab('backups')}
+          onView={() => setActiveTab('backups')}
+          viewTooltip="Inspect Last Snapshot"
+          onAdd={handleCreateSnapshot}
+          addTooltip="Trigger Manual Backup Snapshot"
         />
         <StatCard
           icon={Building}
-          label="Affiliated Campuses"
+          title="Affiliated Campuses"
           value={`${institutes.length} Available`}
-          change="For isolated export"
+          badge="Isolated export ready"
+          badgePositive={true}
           color="indigo"
+          showActions={true}
+          showAllText="Show all"
+          onShowAll={() => setActiveTab('export')}
+          onView={() => setActiveTab('export')}
+          viewTooltip="Export Institute Data Archive"
+          onAdd={handleExportIsolated}
+          addTooltip="Initiate Institute Data Export"
         />
         <StatCard
           icon={Clock}
-          label="Audit Retention Window"
+          title="Audit Retention Window"
           value={`${retentionPolicy.auditLogsDays} Days`}
-          change="Active compliance window"
+          badge="Active compliance window"
+          badgePositive={true}
           color="amber"
+          showActions={true}
+          showAllText="Show all"
+          onShowAll={() => setActiveTab('retention')}
+          onView={() => setActiveTab('retention')}
+          viewTooltip="View Retention Policies"
+          onAdd={() => setActiveTab('retention')}
+          addTooltip="Configure Retention Policy"
         />
       </div>
 

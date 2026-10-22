@@ -194,31 +194,63 @@ const SupportApprovalsView = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           icon={LifeBuoy}
-          label="Active Tickets"
+          title="Active Tickets"
           value={`${openTicketsCount} Unresolved`}
-          change="Campus inquiries"
+          badge="Campus inquiries"
+          badgePositive={openTicketsCount === 0}
           color="blue"
+          showActions={true}
+          showAllText="Show all"
+          onShowAll={() => setActiveTab('tickets')}
+          onView={() => setActiveTab('tickets')}
+          viewTooltip="View All Support Tickets"
+          onAdd={() => setIsNewTicketModalOpen(true)}
+          addTooltip="Create Support Ticket"
         />
         <StatCard
           icon={Clock}
-          label="Pending Approvals"
+          title="Pending Approvals"
           value={`${pendingApprovalsCount} Requests`}
-          change="Requires Superadmin decision"
+          badge="Superadmin decision"
+          badgePositive={pendingApprovalsCount === 0}
           color="amber"
+          showActions={true}
+          showAllText="Show all"
+          onShowAll={() => setActiveTab('approvals')}
+          onView={() => setActiveTab('approvals')}
+          viewTooltip="Review Pending Approvals"
+          onAdd={() => setActiveTab('approvals')}
+          addTooltip="Process Approval Queue"
         />
         <StatCard
           icon={CheckCircle}
-          label="Resolved Tickets"
+          title="Resolved Tickets"
           value={`${tickets.filter(t => t.status === 'RESOLVED').length} Tickets`}
-          change="Completed inquiries"
+          badge="Completed inquiries"
+          badgePositive={true}
           color="emerald"
+          showActions={true}
+          showAllText="Show all"
+          onShowAll={() => { setActiveTab('tickets'); setTicketStatusFilter('RESOLVED'); }}
+          onView={() => { setActiveTab('tickets'); setTicketStatusFilter('RESOLVED'); }}
+          viewTooltip="View Resolved Archive"
+          onAdd={() => setIsNewTicketModalOpen(true)}
+          addTooltip="Open New Ticket"
         />
         <StatCard
           icon={Bell}
-          label="Notification Stream"
+          title="Notification Stream"
           value="Synchronized"
-          change="Wired to platform bell"
+          badge="Wired to platform bell"
+          badgePositive={true}
           color="indigo"
+          showActions={true}
+          showAllText="Show all"
+          onShowAll={() => setActiveTab('notifications')}
+          onView={() => setActiveTab('notifications')}
+          viewTooltip="Inspect Notification Stream"
+          onAdd={() => setActiveTab('notifications')}
+          addTooltip="Configure System Notifications"
         />
       </div>
 

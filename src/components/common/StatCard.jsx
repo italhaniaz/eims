@@ -43,15 +43,17 @@ const COLOR_SCHEMES = {
 
 export const StatCard = ({ 
   title, 
+  label,
   value, 
   icon: Icon, 
   badge, 
+  change,
   badgePositive = true,
   color = 'blue',
   iconBg,
   iconColor,
   // Actions bottom bar matching reference design
-  showActions = false,
+  showActions = true,
   showAllText = 'Show all',
   onShowAll,
   onView,
@@ -63,14 +65,33 @@ export const StatCard = ({
   const resolvedIconBg = iconBg || scheme.iconBg
   const resolvedIconColor = iconColor || scheme.iconColor
 
-  const hasActionFooter = showActions || onShowAll || onView || onAdd
+  const cardTitle = title || label
+  const cardBadge = badge || change
+
+  const hasActionFooter = showActions !== false
+
+  const handleShowAll = (e) => {
+    if (onShowAll) onShowAll(e)
+    else if (onView) onView(e)
+  }
+
+  const handleView = (e) => {
+    if (onView) onView(e)
+    else if (onShowAll) onShowAll(e)
+  }
+
+  const handleAdd = (e) => {
+    if (onAdd) onAdd(e)
+    else if (onView) onView(e)
+    else if (onShowAll) onShowAll(e)
+  }
 
   return (
     <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-[0_2px_10px_rgba(0,0,0,0.03)] hover:shadow-md hover:border-slate-300 transition-all duration-200 flex flex-col justify-between group">
       <div>
         {/* Top Header: Title & Category Icon */}
         <div className="flex items-center justify-between mb-3">
-          <span className="text-sm font-medium text-slate-500 tracking-wide">{title}</span>
+          <span className="text-sm font-medium text-slate-500 tracking-wide">{cardTitle}</span>
           {Icon && (
             <div className={`w-9 h-9 rounded-xl ${resolvedIconBg} flex items-center justify-center ${resolvedIconColor} transition-transform duration-200 group-hover:scale-105`}>
               <Icon className="w-4 h-4" />
@@ -81,13 +102,13 @@ export const StatCard = ({
         {/* Metric Value & Optional Badge */}
         <div className="flex items-baseline justify-between gap-2">
           <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">{value}</span>
-          {badge && (
+          {cardBadge && (
             <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0 flex items-center gap-1 ${
               badgePositive 
                 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60' 
                 : 'bg-rose-50 text-rose-700 border border-rose-200/60'
             }`}>
-              {badge}
+              {cardBadge}
             </span>
           )}
         </div>
@@ -99,7 +120,7 @@ export const StatCard = ({
           {/* Show All Text Link */}
           <button
             type="button"
-            onClick={onShowAll || onView}
+            onClick={handleShowAll}
             className={`text-xs font-semibold ${scheme.showAllText} hover:underline focus:outline-none transition-colors cursor-pointer select-none`}
           >
             {showAllText}
@@ -110,7 +131,7 @@ export const StatCard = ({
             {/* Eye View Button */}
             <button
               type="button"
-              onClick={onView || onShowAll}
+              onClick={handleView}
               title={viewTooltip}
               aria-label={viewTooltip}
               className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full ${scheme.btnBg} flex items-center justify-center transition-all duration-150 hover:scale-105 active:scale-95 cursor-pointer shadow-xs`}
@@ -119,17 +140,15 @@ export const StatCard = ({
             </button>
 
             {/* Plus Add Button */}
-            {onAdd && (
-              <button
-                type="button"
-                onClick={onAdd}
-                title={addTooltip}
-                aria-label={addTooltip}
-                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full ${scheme.btnBg} flex items-center justify-center transition-all duration-150 hover:scale-105 active:scale-95 cursor-pointer shadow-xs`}
-              >
-                <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" />
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={handleAdd}
+              title={addTooltip}
+              aria-label={addTooltip}
+              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full ${scheme.btnBg} flex items-center justify-center transition-all duration-150 hover:scale-105 active:scale-95 cursor-pointer shadow-xs`}
+            >
+              <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" />
+            </button>
           </div>
         </div>
       )}
