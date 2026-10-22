@@ -362,6 +362,10 @@ export const saveStoredData = (data) => {
 
 const getActiveUserEmail = () => {
   try {
+    if (typeof sessionStorage !== 'undefined') {
+      const sessionSaved = sessionStorage.getItem('sms_auth_user')
+      if (sessionSaved) return JSON.parse(sessionSaved)?.email || 'admin@schoolms.com'
+    }
     if (typeof localStorage !== 'undefined') {
       const saved = localStorage.getItem('sms_auth_user')
       if (saved) return JSON.parse(saved)?.email || 'admin@schoolms.com'

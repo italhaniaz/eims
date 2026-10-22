@@ -25,7 +25,7 @@ export const LoginPage = () => {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [rememberMe, setRememberMe] = useState(true)
+  const [rememberMe, setRememberMe] = useState(false)
   const [authError, setAuthError] = useState('')
 
   // Brute-force Rate Limiting & Account Lockout Guard
@@ -70,7 +70,7 @@ export const LoginPage = () => {
       setPassword('admin123')
       setTimeout(() => {
         DataService.logAuditEvent('Quick Demo Sign In (Superadmin)', 'admin@schoolms.com', 'Success')
-        login('superadmin', 'admin@schoolms.com')
+        login('superadmin', 'admin@schoolms.com', rememberMe)
         setIsLoading(false)
       }, 350)
     } else {
@@ -78,7 +78,7 @@ export const LoginPage = () => {
       setPassword('institute123')
       setTimeout(() => {
         DataService.logAuditEvent('Quick Demo Sign In (Institute Admin)', 'admin.beacon@sms.edu', 'Success')
-        login('institute_admin', 'admin.beacon@sms.edu')
+        login('institute_admin', 'admin.beacon@sms.edu', rememberMe)
         setIsLoading(false)
       }, 350)
     }
@@ -120,9 +120,9 @@ export const LoginPage = () => {
         DataService.logAuditEvent('User Sign In Successful', id, 'Success')
 
         if (isSuperadmin) {
-          login('superadmin', id.includes('@') ? id : 'admin@schoolms.com')
+          login('superadmin', id.includes('@') ? id : 'admin@schoolms.com', rememberMe)
         } else {
-          login('institute_admin', id.includes('@') ? id : 'admin.beacon@sms.edu')
+          login('institute_admin', id.includes('@') ? id : 'admin.beacon@sms.edu', rememberMe)
         }
       } else {
         // Failed attempt - increment brute force counter

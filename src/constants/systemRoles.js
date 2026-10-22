@@ -332,6 +332,39 @@ export const DEFAULT_RBAC_PERMISSIONS = [
     student: false,
     parent: false
   },
+  {
+    id: 'perm-backup-data',
+    category: 'Main Platform Governance',
+    label: 'System Backup, Restore & Data Lifecycle Operations',
+    superadmin: true,
+    institute_admin: false,
+    teacher: false,
+    accountant: false,
+    student: false,
+    parent: false
+  },
+  {
+    id: 'perm-system-health',
+    category: 'Main Platform Governance',
+    label: 'System Health, Telemetry & Error Log Stream',
+    superadmin: true,
+    institute_admin: false,
+    teacher: false,
+    accountant: false,
+    student: false,
+    parent: false
+  },
+  {
+    id: 'perm-support-approvals',
+    category: 'Main Platform Governance',
+    label: 'Support Desk, Institute Approvals & Platform Content CMS',
+    superadmin: true,
+    institute_admin: false,
+    teacher: false,
+    accountant: false,
+    student: false,
+    parent: false
+  },
 
   // 2. CAMPUS OPERATIONAL FEATURES (Institute Admin & Campus Staff)
   {

@@ -24,6 +24,9 @@ const SecurityCenterView = lazy(() => import('./modules/platform/security/Securi
 const CrossInstituteAnalyticsView = lazy(() => import('./modules/platform/analytics/CrossInstituteAnalyticsView'))
 const SubscriptionsBillingView = lazy(() => import('./modules/platform/billing/SubscriptionsBillingView'))
 const GlobalTemplatesView = lazy(() => import('./modules/platform/templates/GlobalTemplatesView'))
+const BackupDataView = lazy(() => import('./modules/platform/backup/BackupDataView'))
+const SystemHealthView = lazy(() => import('./modules/platform/health/SystemHealthView'))
+const SupportApprovalsView = lazy(() => import('./modules/platform/support/SupportApprovalsView'))
 const DepartmentsView = lazy(() => import('./modules/institute-management/departments/DepartmentsView'))
 const ExaminationBodiesView = lazy(() => import('./modules/institute-management/examination-bodies/ExaminationBodiesView'))
 const AcademicYearsView = lazy(() => import('./modules/academics/academic-years/AcademicYearsView'))
@@ -201,6 +204,15 @@ const AppContent = () => {
                   {superadminRoute === 'global-templates' && (
                     <GlobalTemplatesView />
                   )}
+                  {superadminRoute === 'backup-data' && (
+                    <BackupDataView />
+                  )}
+                  {superadminRoute === 'system-health' && (
+                    <SystemHealthView />
+                  )}
+                  {superadminRoute === 'support-approvals' && (
+                    <SupportApprovalsView />
+                  )}
                   {superadminRoute === 'departments' && <DepartmentsView />}
                   {superadminRoute === 'examination-bodies' && <ExaminationBodiesView />}
                   {superadminRoute === 'academic-years' && <AcademicYearsView />}
@@ -222,8 +234,7 @@ const AppContent = () => {
                     <UsersManagementView defaultTab="roles" />
                   )}
                 </Suspense>
-              </ErrorBoundary>
-            </main>
+              </ErrorBoundary>            </main>
           </div>
         </div>
 
