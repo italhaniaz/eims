@@ -148,10 +148,24 @@ export const SettingsModal = ({ isOpen, onClose }) => {
       try {
         const parsed = JSON.parse(event.target?.result)
         const payloadToImport = (parsed && parsed.meta && parsed.data) ? parsed.data : parsed
-        importData(payloadToImport)
-        toast.success(`Database restored successfully from "${file.name}"!`)
-        setStatusMessage(`Database successfully restored from ${file.name}`)
-        setTimeout(() => setStatusMessage(''), 4000)
+        const stdCount = payloadToImport.students?.length || 0
+        const teachCount = payloadToImport.teachers?.length || 0
+        const classCount = payloadToImport.classes?.length || 0
+        const feesCount = payloadToImport.fees?.length || 0
+
+        const confirmMsg = `Backup Archive Verified:\n` +
+          `• ${stdCount} Student Profiles\n` +
+          `• ${teachCount} Faculty & Staff\n` +
+          `• ${classCount} Classes & Sections\n` +
+          `• ${feesCount} Fee Vouchers\n\n` +
+          `Proceed to restore and replace current local dataset?`
+
+        if (window.confirm(confirmMsg)) {
+          importData(payloadToImport)
+          toast.success(`Database restored successfully from "${file.name}"!`)
+          setStatusMessage(`Database successfully restored from ${file.name}`)
+          setTimeout(() => setStatusMessage(''), 4000)
+        }
       } catch (err) {
         toast.error('Failed to parse JSON backup file. Please verify file integrity.')
       }

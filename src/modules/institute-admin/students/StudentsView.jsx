@@ -1703,7 +1703,7 @@ export const StudentsView = ({ currentInstitute }) => {
         {/* Main Table View */}
         <div className="overflow-x-auto min-w-full">
           <table className="w-full text-left text-xs sm:text-sm min-w-[950px]">
-            <thead className="bg-slate-50 text-slate-600 text-[11px] uppercase tracking-wider font-bold border-b border-slate-200">
+            <thead className="bg-slate-50 text-slate-600 text-[11px] uppercase tracking-wider font-bold border-b border-slate-200 sticky top-0 z-10 shadow-2xs">
               <tr>
                 <th className="px-4 py-3.5 w-10 text-center whitespace-nowrap">
                   <input
