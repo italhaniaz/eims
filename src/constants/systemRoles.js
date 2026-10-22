@@ -277,6 +277,28 @@ export const DEFAULT_RBAC_PERMISSIONS = [
     student: false,
     parent: false
   },
+  {
+    id: 'perm-system-settings',
+    category: 'Main Platform Governance',
+    label: 'Platform System Settings, Localization & Gateway Secrets',
+    superadmin: true,
+    institute_admin: false,
+    teacher: false,
+    accountant: false,
+    student: false,
+    parent: false
+  },
+  {
+    id: 'perm-security-center',
+    category: 'Main Platform Governance',
+    label: 'Enterprise Security Center, Session Governance & Force Logout',
+    superadmin: true,
+    institute_admin: false,
+    teacher: false,
+    accountant: false,
+    student: false,
+    parent: false
+  },
 
   // 2. CAMPUS OPERATIONAL FEATURES (Institute Admin & Campus Staff)
   {

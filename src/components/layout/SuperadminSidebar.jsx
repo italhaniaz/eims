@@ -39,7 +39,7 @@ export const SuperadminSidebar = ({
   const { user, logout } = useAuth()
   const [collapsed, setCollapsed] = useState(false)
   
-  const isPlatformRoute = ['institutes', 'platform-modules'].includes(currentRoute)
+  const isPlatformRoute = ['institutes', 'platform-modules', 'security-center'].includes(currentRoute)
   const isUserRoute = ['users-all', 'users-roles'].includes(currentRoute)
   const isInstituteRoute = ['departments', 'examination-bodies'].includes(currentRoute)
   const isAcademicsRoute = ['academic-years', 'program-types', 'programs', 'subjects', 'study-schemes'].includes(currentRoute)
@@ -168,6 +168,15 @@ export const SuperadminSidebar = ({
                 >
                   <Sliders className="w-3.5 h-3.5 opacity-70" />
                   <span>Module Control Matrix</span>
+                </button>
+                <button
+                  onClick={() => handleNavClick('security-center')}
+                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
+                    isRouteActive('security-center') ? 'text-white font-medium bg-[#243150]' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 opacity-70" />
+                  <span>Security Center</span>
                 </button>
               </div>
             )}

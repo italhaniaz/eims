@@ -61,6 +61,7 @@ export const SuperadminNavbar = ({
     switch (currentRoute) {
       case 'dashboard': return 'Superadmin Overview'
       case 'platform-modules': return 'Platform Control / Module Control Matrix'
+      case 'security-center': return 'Platform Control / Security Center & Session Governance'
       case 'institutes': return 'Platform Control / Institutes & Campuses'
       case 'departments': return 'Institute Structure / Departments'
       case 'examination-bodies': return 'Institute Structure / Examination Bodies'

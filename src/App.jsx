@@ -19,6 +19,7 @@ import LoginPage from './modules/auth/LoginPage'
 const SuperadminDashboard = lazy(() => import('./modules/dashboard/SuperadminDashboard'))
 const InstitutesView = lazy(() => import('./modules/institute-management/institutes/InstitutesView'))
 const ModulesControlView = lazy(() => import('./modules/platform/modules/ModulesControlView'))
+const SecurityCenterView = lazy(() => import('./modules/platform/security/SecurityCenterView'))
 const DepartmentsView = lazy(() => import('./modules/institute-management/departments/DepartmentsView'))
 const ExaminationBodiesView = lazy(() => import('./modules/institute-management/examination-bodies/ExaminationBodiesView'))
 const AcademicYearsView = lazy(() => import('./modules/academics/academic-years/AcademicYearsView'))
@@ -182,6 +183,9 @@ const AppContent = () => {
                 )}
                 {superadminRoute === 'platform-modules' && (
                   <ModulesControlView />
+                )}
+                {superadminRoute === 'security-center' && (
+                  <SecurityCenterView />
                 )}
                 {superadminRoute === 'departments' && <DepartmentsView />}
                 {superadminRoute === 'examination-bodies' && <ExaminationBodiesView />}

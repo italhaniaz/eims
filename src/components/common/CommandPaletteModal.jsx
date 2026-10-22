@@ -73,6 +73,14 @@ export const CommandPaletteModal = ({ isOpen, onClose, onNavigate, onOpenSetting
           keywords: ['modules', 'matrix', 'features', 'flags', 'quotas', 'storage', 'limits', 'control'] 
         },
         { 
+          id: 'nav-security-center', 
+          title: 'Security Center & Session Governance', 
+          category: 'Platform Control', 
+          route: 'security-center', 
+          icon: ShieldCheck, 
+          keywords: ['security', 'sessions', 'logout', 'history', 'ip', 'allowlist', '2fa', 'password', 'policy'] 
+        },
+        { 
           id: 'nav-inst', 
           title: 'Institutes & Campus Directory', 
           category: 'Campuses', 
