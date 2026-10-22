@@ -102,13 +102,22 @@ export const SuperadminSidebar = ({
         `}
       >
         {/* Top Header */}
-        <div className="h-16 flex items-center justify-between px-5 border-b border-[#263353]/70 shrink-0">
-          {(!collapsed || isMobileOpen) && (
-            <div className="flex flex-col">
-              <span className="text-base font-bold text-white tracking-wide leading-tight">admin</span>
-              <span className="text-xs text-slate-400 font-normal">Superadmin Central</span>
+        <div className="h-16 flex items-center justify-between px-4 border-b border-[#263353]/70 shrink-0">
+          <div className="flex items-center gap-2.5 overflow-hidden">
+            <div className="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
+              <GraduationCap className="w-4 h-4" />
             </div>
-          )}
+            {(!collapsed || isMobileOpen) && (
+              <div className="flex flex-col truncate">
+                <span className="text-xs font-bold text-white tracking-wide truncate">
+                  EIMS Platform
+                </span>
+                <span className="text-[10px] text-blue-400 font-semibold uppercase tracking-wider">
+                  Super Admin
+                </span>
+              </div>
+            )}
+          </div>
           
           {/* Mobile Close Button */}
           <button 

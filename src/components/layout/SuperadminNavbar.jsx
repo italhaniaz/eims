@@ -59,7 +59,7 @@ export const SuperadminNavbar = ({
 
   const getRouteTitle = () => {
     switch (currentRoute) {
-      case 'dashboard': return 'Superadmin Overview'
+      case 'dashboard': return 'Platform Overview'
       case 'platform-modules': return 'Platform Control / Module Control Matrix'
       case 'security-center': return 'Platform Control / Security Center & Session Governance'
       case 'global-templates': return 'Platform Control / Global Master Templates'
@@ -85,7 +85,7 @@ export const SuperadminNavbar = ({
       case 'announcements': return 'Enterprise / Broadcast Directives'
       case 'users-all': return 'Users Management / All Users'
       case 'users-roles': return 'Users Management / Roles & Permissions'
-      default: return 'Portal'
+      default: return 'Platform Control'
     }
   }
 
@@ -102,13 +102,19 @@ export const SuperadminNavbar = ({
           <Menu className="w-5 h-5" />
         </button>
 
-        <span className="hidden sm:inline-block text-xs font-semibold uppercase tracking-wider text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md">
-          Superadmin Portal
-        </span>
-        <ChevronRight className="hidden sm:inline-block w-3.5 h-3.5 text-slate-300" />
-        <h1 className="text-sm font-semibold text-slate-700 capitalize truncate max-w-[200px] sm:max-w-none">
-          {getRouteTitle()}
-        </h1>
+        {getRouteTitle().includes(' / ') ? (
+          <div className="flex items-center gap-1.5 sm:gap-2 text-sm min-w-0">
+            <span className="text-slate-400 font-medium hidden md:inline truncate">{getRouteTitle().split(' / ')[0]}</span>
+            <ChevronRight className="w-3.5 h-3.5 text-slate-300 hidden md:inline shrink-0" />
+            <h1 className="font-semibold text-slate-800 truncate text-sm">
+              {getRouteTitle().split(' / ')[1]}
+            </h1>
+          </div>
+        ) : (
+          <h1 className="text-sm font-semibold text-slate-800 truncate">
+            {getRouteTitle()}
+          </h1>
+        )}
       </div>
 
       {/* Right Side Icons */}
