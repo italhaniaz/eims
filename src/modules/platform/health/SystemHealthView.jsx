@@ -136,31 +136,63 @@ const SystemHealthView = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           icon={Server}
-          label="Server Uptime"
+          title="Server Uptime"
           value={formatUptime(health.uptimeSeconds)}
-          change="99.98% SLA Availability"
+          badge="99.98% SLA Availability"
+          badgePositive={true}
           color="emerald"
+          showActions={true}
+          showAllText="Show all"
+          onShowAll={() => setActiveTab('overview')}
+          onView={() => setActiveTab('overview')}
+          viewTooltip="Inspect Platform Server Metrics"
+          onAdd={handleRefresh}
+          addTooltip="Refresh Live Telemetry"
         />
         <StatCard
           icon={Zap}
-          label="Average API Latency"
+          title="Average API Latency"
           value={`${health.avgLatencyMs} ms`}
-          change="Node.js Express router"
+          badge="Express router"
+          badgePositive={true}
           color="blue"
+          showActions={true}
+          showAllText="Show all"
+          onShowAll={() => setActiveTab('api')}
+          onView={() => setActiveTab('api')}
+          viewTooltip="View API Endpoint Performance"
+          onAdd={handleRefresh}
+          addTooltip="Refresh API Diagnostics"
         />
         <StatCard
           icon={Cpu}
-          label="Memory Heap Usage"
+          title="Memory Heap Usage"
           value={`${health.memoryUsedMB} MB`}
-          change={`Of ${health.memoryTotalMB} MB heap pool`}
+          badge={`Of ${health.memoryTotalMB} MB heap pool`}
+          badgePositive={true}
           color="indigo"
+          showActions={true}
+          showAllText="Show all"
+          onShowAll={() => setActiveTab('system')}
+          onView={() => setActiveTab('system')}
+          viewTooltip="Inspect Memory Allocation"
+          onAdd={handleRefresh}
+          addTooltip="Re-evaluate Memory Heap"
         />
         <StatCard
           icon={Globe}
-          label="Total API Invocations"
+          title="Total API Invocations"
           value={health.totalApiRequests.toLocaleString()}
-          change={`${health.totalErrorsCount} anomalous trace(s)`}
+          badge={`${health.totalErrorsCount} anomalous trace(s)`}
+          badgePositive={health.totalErrorsCount === 0}
           color="amber"
+          showActions={true}
+          showAllText="Show all"
+          onShowAll={() => setActiveTab('errors')}
+          onView={() => setActiveTab('errors')}
+          viewTooltip="Inspect Error Traces"
+          onAdd={handleRefresh}
+          addTooltip="Trigger Telemetry Refresh"
         />
       </div>
 

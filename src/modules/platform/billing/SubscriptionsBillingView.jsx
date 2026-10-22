@@ -264,31 +264,63 @@ const SubscriptionsBillingView = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           icon={DollarSign}
-          label="Monthly Recurring Revenue"
+          title="Monthly Recurring Revenue"
           value={`PKR ${(overview?.mrrPKR || 0).toLocaleString()}`}
-          change="Live platform MRR"
+          badge="Live platform MRR"
+          badgePositive={true}
           color="emerald"
+          showActions={true}
+          showAllText="Show all"
+          onShowAll={() => setActiveTab('invoices')}
+          onView={() => setActiveTab('invoices')}
+          viewTooltip="View Revenue Ledger & Invoices"
+          onAdd={() => setIsCreateInvoiceModalOpen(true)}
+          addTooltip="Create Platform Invoice"
         />
         <StatCard
           icon={TrendingUp}
-          label="Annual Run Rate (ARR)"
+          title="Annual Run Rate (ARR)"
           value={`PKR ${(overview?.arrPKR || 0).toLocaleString()}`}
-          change="Projected annual revenue"
+          badge="Projected annual"
+          badgePositive={true}
           color="blue"
+          showActions={true}
+          showAllText="Show all"
+          onShowAll={() => setActiveTab('overview')}
+          onView={() => setActiveTab('overview')}
+          viewTooltip="View Platform Financial Overview"
+          onAdd={handleExportCSV}
+          addTooltip="Export Billing CSV Audit"
         />
         <StatCard
           icon={CreditCard}
-          label="Active Subscriptions"
+          title="Active Subscriptions"
           value={`${overview?.activeCount || 0} Institutes`}
-          change={`${overview?.trialCount || 0} active trial(s)`}
+          badge={`${overview?.trialCount || 0} active trial(s)`}
+          badgePositive={true}
           color="indigo"
+          showActions={true}
+          showAllText="Show all"
+          onShowAll={() => setActiveTab('subscriptions')}
+          onView={() => setActiveTab('subscriptions')}
+          viewTooltip="Manage Active Subscriptions"
+          onAdd={() => setIsCreateInvoiceModalOpen(true)}
+          addTooltip="Add Subscription / Invoice"
         />
         <StatCard
           icon={AlertTriangle}
-          label="Overdue Invoices"
+          title="Overdue Invoices"
           value={overview?.overdueInvoicesCount || 0}
-          change="Pending collection"
+          badge="Pending collection"
+          badgePositive={overview?.overdueInvoicesCount === 0}
           color="amber"
+          showActions={true}
+          showAllText="Show all"
+          onShowAll={() => { setActiveTab('invoices'); setInvoiceStatusFilter('OVERDUE'); }}
+          onView={() => { setActiveTab('invoices'); setInvoiceStatusFilter('OVERDUE'); }}
+          viewTooltip="View Overdue Invoices"
+          onAdd={() => setIsCreateInvoiceModalOpen(true)}
+          addTooltip="Create & Issue Invoice Reminder"
         />
       </div>
 

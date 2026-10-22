@@ -182,31 +182,63 @@ const CrossInstituteAnalyticsView = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           icon={Users}
-          label="Total Student Body"
+          title="Total Student Body"
           value={summary.totalStudents.toLocaleString()}
-          change="+12.4% vs last term"
+          badge="+12.4% vs last term"
+          badgePositive={true}
           color="blue"
+          showActions={true}
+          showAllText="Show all"
+          onShowAll={() => { setSearchTerm(''); setTypeFilter('ALL'); }}
+          onView={() => { setSearchTerm(''); setTypeFilter('ALL'); }}
+          viewTooltip="View all student enrollment telemetry"
+          onAdd={() => setIsScheduleModalOpen(true)}
+          addTooltip="Schedule briefing report"
         />
         <StatCard
           icon={GraduationCap}
-          label="Total Faculty & Staff"
+          title="Total Faculty & Staff"
           value={summary.totalTeachers.toLocaleString()}
-          change="Across all campuses"
+          badge="Across all campuses"
+          badgePositive={true}
           color="emerald"
+          showActions={true}
+          showAllText="Show all"
+          onShowAll={() => { setSearchTerm(''); setSortField('teacherCount'); setSortAsc(false); }}
+          onView={() => { setSearchTerm(''); setSortField('teacherCount'); setSortAsc(false); }}
+          viewTooltip="Sort campuses by faculty strength"
+          onAdd={() => setIsPrintModalOpen(true)}
+          addTooltip="Print executive faculty briefing"
         />
         <StatCard
           icon={Percent}
-          label="Average Attendance Rate"
+          title="Average Attendance Rate"
           value={`${summary.avgAttendance}%`}
-          change="Campus-wide daily mean"
+          badge="Campus-wide daily mean"
+          badgePositive={true}
           color="indigo"
+          showActions={true}
+          showAllText="Show all"
+          onShowAll={() => { setSearchTerm(''); setSortField('attendanceRate'); setSortAsc(false); }}
+          onView={() => { setSearchTerm(''); setSortField('attendanceRate'); setSortAsc(false); }}
+          viewTooltip="Sort campuses by attendance rate"
+          onAdd={() => handleExportCSV()}
+          addTooltip="Export attendance audit snapshot"
         />
         <StatCard
           icon={DollarSign}
-          label="Fee Recovery Ratio"
+          title="Fee Recovery Ratio"
           value={`${summary.avgFeeRecovery}%`}
-          change={`PKR ${(summary.totalCollectedPKR / 1000000).toFixed(1)}M collected`}
+          badge={`PKR ${(summary.totalCollectedPKR / 1000000).toFixed(1)}M collected`}
+          badgePositive={true}
           color="amber"
+          showActions={true}
+          showAllText="Show all"
+          onShowAll={() => { setSearchTerm(''); setSortField('feeRecoveryRate'); setSortAsc(false); }}
+          onView={() => { setSearchTerm(''); setSortField('feeRecoveryRate'); setSortAsc(false); }}
+          viewTooltip="Sort campuses by fee recovery index"
+          onAdd={() => handleExportCSV()}
+          addTooltip="Export fee reconciliation audit snapshot"
         />
       </div>
 
