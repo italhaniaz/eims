@@ -167,7 +167,7 @@ export const InstituteAdminNavbar = ({
       case 'inst-timetable': return 'Class Timetable Schedule'
       case 'inst-attendance': return 'Daily Attendance'
       case 'inst-fees': return 'Fee Invoices & Payments'
-      case 'inst-exams': return 'Examinations & Report Cards'
+      case 'inst-exams': return 'Examinations & Marks'
       case 'inst-notices': return 'Campus Notice Board'
       case 'inst-admissions': return 'Inquiries & Leads'
       case 'inst-transport': return 'Campus Transport & Vans'
@@ -462,7 +462,7 @@ export const InstituteAdminNavbar = ({
         </div>
 
         <ChevronRight className="hidden lg:inline-block w-3.5 h-3.5 text-slate-300" />
-        <h1 className="hidden lg:inline-block text-sm font-semibold text-slate-700 truncate max-w-[220px]">
+        <h1 className="hidden lg:inline-block text-sm font-semibold text-slate-700 truncate max-w-[280px] xl:max-w-none">
           {getRouteTitle()}
         </h1>
       </div>
