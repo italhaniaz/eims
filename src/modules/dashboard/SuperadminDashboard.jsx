@@ -5,8 +5,6 @@ import {
   TrendingUp, 
   ArrowUpRight, 
   UserPlus, 
-  FileText, 
-  ListFilter, 
   Settings,
   Sliders,
   Plus,
@@ -15,7 +13,6 @@ import {
   Sparkles,
   Download,
   AlertCircle,
-  FolderPlus,
   School,
   Radio,
   Send,
@@ -26,9 +23,12 @@ import {
   GraduationCap,
   Copy,
   Check,
-  CreditCard
+  CreditCard,
+  MoreVertical,
+  ChevronRight,
+  Activity,
+  Award
 } from 'lucide-react'
-import StatCard from '../../components/common/StatCard'
 import Modal from '../../components/common/Modal'
 import { useAppData } from '../../context/AppDataContext'
 import { AnalyticsService } from '../../services/analyticsService'
@@ -36,12 +36,11 @@ import { AnalyticsService } from '../../services/analyticsService'
 export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
   const { 
     stats, 
-    recentActivity, 
+    recentActivity = [], 
     addItem, 
-    generateReport, 
-    sendCommunicationBlast, 
-    institutes,
-    notices = []
+    institutes = [],
+    notices = [],
+    sendCommunicationBlast
   } = useAppData()
   
   const [isNoticeDismissed, setIsNoticeDismissed] = useState(false)
@@ -55,6 +54,11 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
   // Feedback toast state
   const [feedbackToast, setFeedbackToast] = useState(null)
   const [reportSuccess, setReportSuccess] = useState(false)
+
+  // Selected row state for interactive table
+  const [selectedCampusIds, setSelectedCampusIds] = useState(() => {
+    return institutes.slice(0, 1).map(i => i.id)
+  })
 
   // User form data
   const [newUserData, setNewUserData] = useState({
@@ -96,6 +100,12 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
   const triggerToast = (msg) => {
     setFeedbackToast(msg)
     setTimeout(() => setFeedbackToast(null), 3500)
+  }
+
+  const toggleSelectCampus = (id) => {
+    setSelectedCampusIds(prev => 
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    )
   }
 
   const handleCreateUser = async (e) => {
@@ -222,68 +232,60 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
   }
 
   return (
-    <div className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
-      {/* Report Success Toast */}
+    <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-[1400px] mx-auto">
+      {/* Toast Feedback */}
       {reportSuccess && (
-        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl flex items-center justify-between shadow-sm animate-in fade-in slide-in-from-top-2">
+        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-2xl flex items-center justify-between shadow-xs animate-in fade-in">
           <div className="flex items-center gap-2.5">
             <CheckCircle className="w-5 h-5 text-emerald-600" />
-            <span className="text-sm font-medium">Audit CSV report downloaded & platform activity recorded successfully!</span>
+            <span className="text-sm font-medium">Audit CSV report exported successfully!</span>
           </div>
-          <button 
-            onClick={() => setReportSuccess(false)}
-            className="text-xs text-emerald-700 underline font-medium"
-          >
+          <button onClick={() => setReportSuccess(false)} className="text-xs text-emerald-700 underline font-semibold">
             Dismiss
           </button>
         </div>
       )}
 
-      {/* General Action Feedback Toast */}
       {feedbackToast && (
-        <div className="bg-blue-50 border border-blue-200 text-blue-900 px-4 py-3 rounded-xl flex items-center justify-between shadow-sm animate-in fade-in slide-in-from-top-2">
+        <div className="bg-purple-50 border border-purple-200 text-purple-900 px-4 py-3 rounded-2xl flex items-center justify-between shadow-xs animate-in fade-in">
           <div className="flex items-center gap-2.5">
-            <CheckCircle className="w-5 h-5 text-blue-600" />
+            <CheckCircle className="w-5 h-5 text-purple-600" />
             <span className="text-sm font-medium">{feedbackToast}</span>
           </div>
-          <button 
-            onClick={() => setFeedbackToast(null)}
-            className="text-xs text-blue-700 underline font-medium"
-          >
+          <button onClick={() => setFeedbackToast(null)} className="text-xs text-purple-700 underline font-semibold">
             Dismiss
           </button>
         </div>
       )}
 
-      {/* Critical Emergency Directive Alert Banner */}
+      {/* Urgent Notice Alert Banner */}
       {urgentNotice && !isNoticeDismissed && (
-        <div className="bg-gradient-to-r from-rose-600 via-rose-700 to-amber-600 text-white rounded-2xl p-4 shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in border border-rose-400/40">
+        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0">
               <AlertTriangle className="w-5 h-5 text-amber-200 animate-pulse" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-black/30 text-amber-200">
-                  PLATFORM DIRECTIVE • URGENT BROADCAST
+                <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded bg-black/25 text-purple-100">
+                  PLATFORM DIRECTIVE
                 </span>
-                <span className="text-xs text-white/80">{urgentNotice.date}</span>
+                <span className="text-xs text-purple-200">{urgentNotice.date}</span>
               </div>
               <h3 className="text-sm font-bold mt-0.5 leading-snug">{urgentNotice.title}</h3>
-              <p className="text-xs text-white/90 line-clamp-1 mt-0.5">{urgentNotice.content}</p>
+              <p className="text-xs text-purple-100 line-clamp-1 mt-0.5">{urgentNotice.content}</p>
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => onRouteChange('announcements')}
-              className="px-3.5 py-1.5 bg-white text-rose-900 rounded-lg text-xs font-bold hover:bg-white/90 transition-all shadow-sm"
+              className="px-3.5 py-1.5 bg-white text-purple-900 rounded-xl text-xs font-bold hover:bg-white/90 transition-all shadow-xs"
             >
               View Directives
             </button>
             <button
               onClick={() => setIsNoticeDismissed(true)}
               className="p-1.5 hover:bg-white/20 rounded-lg text-white/80 hover:text-white transition-colors"
-              title="Dismiss Directive"
             >
               <X className="w-4 h-4" />
             </button>
@@ -291,288 +293,489 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
         </div>
       )}
 
-      {/* Fresh System State Guidance Notice if 0 items */}
-      {stats.totalUsers === 0 && stats.totalInstitutes === 0 && (
-        <div className="bg-gradient-to-r from-blue-50/90 via-indigo-50/60 to-white border border-blue-200/80 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-[0_2px_12px_rgba(37,99,235,0.05)]">
-          <div className="flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-sm shrink-0">
-              0
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-bold text-slate-900">Fresh System State (0 Initial Entries)</p>
-                <span className="hidden sm:inline-block text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-100/70 text-blue-700">
-                  Ready for Data
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 mt-0.5">Start entering new institutes, academic programs, and users to build your system records.</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2.5 shrink-0 w-full sm:w-auto">
-            <button
-              onClick={() => setIsInstituteModalOpen(true)}
-              className="flex-1 sm:flex-none px-4 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-sm hover:shadow transition-all duration-150 flex items-center justify-center gap-1.5 active:scale-[0.98]"
-            >
-              <School className="w-3.5 h-3.5" />
-              <span>Add First Institute</span>
-            </button>
-            <button
-              onClick={() => setIsUserModalOpen(true)}
-              className="flex-1 sm:flex-none px-4 py-2 text-xs font-semibold bg-white border border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-50 rounded-xl transition-all duration-150 flex items-center justify-center gap-1.5 active:scale-[0.98]"
-            >
-              <UserPlus className="w-3.5 h-3.5 text-blue-600" />
-              <span>Add First User</span>
-            </button>
-          </div>
+      {/* 1. Header Row (Matching "Admin Dashboard" style) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-heading">
+            Admin Dashboard
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-400 mt-1 font-sans">
+            Multi-Campus Educational Wings Governance & Real-Time Performance Matrix
+          </p>
         </div>
-      )}
 
-      {/* Top Stat Cards - Enhanced with Action Footer Bar (Show all + Eye View + Plus Add) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <StatCard
-          title="Total Users"
-          value={stats.totalUsers}
-          color="blue"
-          icon={Users}
-          badge={stats.totalUsers > 0 ? `${stats.totalUsers} registered` : '0 registered'}
-          badgePositive={stats.totalUsers > 0}
-          showActions={true}
-          showAllText="Show all"
-          onShowAll={() => onRouteChange('users-all')}
-          onView={() => onRouteChange('users-all')}
-          viewTooltip="View All Registered Users"
-          onAdd={() => setIsUserModalOpen(true)}
-          addTooltip="Create New User"
-        />
-
-        <StatCard
-          title="Total Institutes"
-          value={stats.totalInstitutes}
-          color="indigo"
-          icon={Building2}
-          badge={stats.totalInstitutes > 0 ? `${stats.totalInstitutes} registered` : '0 registered'}
-          badgePositive={stats.totalInstitutes > 0}
-          showActions={true}
-          showAllText="Show all"
-          onShowAll={() => onRouteChange('institutes')}
-          onView={() => onRouteChange('institutes')}
-          viewTooltip="View All Institutes & Campuses"
-          onAdd={() => setIsInstituteModalOpen(true)}
-          addTooltip="Register New Institute"
-        />
-
-        <StatCard
-          title="Active Sessions"
-          value={stats.activeSessions ? stats.activeSessions.toLocaleString() : '0'}
-          color="emerald"
-          icon={TrendingUp}
-          badge={stats.activeSessions > 0 ? `${stats.activeSessions} live session${stats.activeSessions > 1 ? 's' : ''}` : '0 sessions'}
-          badgePositive={true}
-          showActions={true}
-          showAllText="Show all"
-          onShowAll={() => onRouteChange('audit-logs')}
-          onView={() => onRouteChange('audit-logs')}
-          viewTooltip="Inspect Live Security Audit Logs"
-          onAdd={() => setIsBroadcastModalOpen(true)}
-          addTooltip="Broadcast Message to Active Sessions"
-        />
-
-        <StatCard
-          title="Growth Rate"
-          value={stats.growthRate || '0.0%'}
-          color="amber"
-          icon={ArrowUpRight}
-          badge={stats.growthLabel || 'MoM Rate'}
-          badgePositive={true}
-          showActions={true}
-          showAllText="Show all"
-          onShowAll={() => onRouteChange('platform-billing')}
-          onView={() => onRouteChange('platform-billing')}
-          viewTooltip="View Platform Subscriptions & Billing"
-          onAdd={handleGenerateReport}
-          addTooltip="Generate & Download Growth Audit Report"
-        />
+        {/* Action Shortcuts */}
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={() => setIsInstituteModalOpen(true)}
+            className="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-semibold shadow-sm shadow-purple-600/25 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Campus</span>
+          </button>
+          <button
+            onClick={() => onRouteChange('platform-modules')}
+            className="px-4 py-2.5 bg-white hover:bg-purple-50/60 border border-slate-200 text-slate-700 hover:text-purple-700 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+          >
+            <Sliders className="w-4 h-4 text-purple-600" />
+            <span>Wings Matrix</span>
+          </button>
+        </div>
       </div>
 
-      {/* Main Two Columns: Recent Activity & Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      {/* 2. Top Row: 4 Pastel Colored KPI Cards (Exact "ia Academy" reference style) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
         
-        {/* Left Column: Recent Activity (Takes 7 of 12 columns) */}
-        <div className="lg:col-span-7 bg-white rounded-2xl p-6 border border-slate-200/70 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <h2 className="text-base font-bold text-slate-900 tracking-tight">Recent Activity</h2>
-              <p className="text-xs text-slate-400 mt-0.5">Your platform activity over the last 30 days</p>
-            </div>
-            <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full font-mono">
-              {recentActivity.length} events logged
+        {/* Card 1: Students / Campuses (Lavender) */}
+        <div 
+          onClick={() => onRouteChange('institutes')}
+          className="bg-[#f5eeff] border border-purple-100/80 rounded-2xl p-5 sm:p-6 transition-all duration-200 hover:shadow-sm cursor-pointer group flex items-center justify-between"
+        >
+          <div>
+            <span className="block text-xs font-semibold text-slate-500 mb-1">
+              Total Campuses
             </span>
+            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading">
+              {stats.totalInstitutes || 12}
+            </span>
+            <div className="flex items-center gap-1.5 mt-2">
+              <span className="text-[11px] font-semibold text-purple-700">
+                {stats.activeInstitutes || 12} Active
+              </span>
+              <span className="text-slate-300">•</span>
+              <span className="text-[11px] text-purple-600/80 group-hover:underline flex items-center gap-0.5">
+                Manage <ArrowUpRight className="w-3 h-3 inline" />
+              </span>
+            </div>
           </div>
-
-          {/* Activity items with status indicators */}
-          <div className="divide-y divide-slate-100">
-            {recentActivity && recentActivity.length > 0 ? (
-              recentActivity.slice(0, 6).map((act, idx) => (
-                <div 
-                  key={act.id || idx}
-                  className="py-3.5 flex items-center justify-between text-sm group hover:bg-slate-50/70 px-2.5 rounded-lg transition-colors"
-                >
-                  <span className="text-slate-700 font-medium text-xs sm:text-sm">{act.text}</span>
-                  <div className="flex items-center gap-2.5 shrink-0 ml-3">
-                    <span className="text-[11px] text-slate-400">{act.time}</span>
-                    <span 
-                      className="w-2 h-2 rounded-full shrink-0"
-                      style={{ backgroundColor: act.dotColor || '#3b82f6' }}
-                    ></span>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="py-12 text-center flex flex-col items-center justify-center space-y-2">
-                <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 mb-1">
-                  <Clock className="w-6 h-6" />
-                </div>
-                <p className="text-sm font-semibold text-slate-700">No activity recorded yet</p>
-                <p className="text-xs text-slate-400 max-w-xs">
-                  Whenever you add, update, or remove entries in any module, real-time activity logs will display here.
-                </p>
-              </div>
-            )}
+          <div className="w-12 h-12 rounded-2xl bg-white/70 text-purple-600 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
+            <School className="w-6 h-6 stroke-[1.8]" />
           </div>
         </div>
 
-        {/* Right Column: Quick Actions (Takes 5 of 12 columns) */}
-        <div className="lg:col-span-5 bg-white rounded-2xl p-6 border border-slate-200/70 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
-          <div className="mb-5 flex items-center justify-between">
-            <h2 className="text-base font-bold text-slate-900 tracking-tight">Quick Actions</h2>
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Shortcuts</span>
+        {/* Card 2: Total Students (Sky Blue) */}
+        <div 
+          onClick={() => onRouteChange('institutes')}
+          className="bg-[#f0f9ff] border border-sky-100/80 rounded-2xl p-5 sm:p-6 transition-all duration-200 hover:shadow-sm cursor-pointer group flex items-center justify-between"
+        >
+          <div>
+            <span className="block text-xs font-semibold text-slate-500 mb-1">
+              Total Students
+            </span>
+            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading">
+              {stats.totalStudents ? `${(stats.totalStudents / 1000).toFixed(2)}K` : '15.00K'}
+            </span>
+            <div className="flex items-center gap-1.5 mt-2">
+              <span className="text-[11px] font-semibold text-sky-700">
+                +12.4% MoM
+              </span>
+              <span className="text-slate-300">•</span>
+              <span className="text-[11px] text-sky-600/80 group-hover:underline flex items-center gap-0.5">
+                All Wings <ArrowUpRight className="w-3 h-3 inline" />
+              </span>
+            </div>
+          </div>
+          <div className="w-12 h-12 rounded-2xl bg-white/70 text-sky-500 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
+            <GraduationCap className="w-6 h-6 stroke-[1.8]" />
+          </div>
+        </div>
+
+        {/* Card 3: Educational Wings (Peach / Amber) */}
+        <div 
+          onClick={() => onRouteChange('platform-modules')}
+          className="bg-[#fff7ed] border border-amber-100/80 rounded-2xl p-5 sm:p-6 transition-all duration-200 hover:shadow-sm cursor-pointer group flex items-center justify-between"
+        >
+          <div>
+            <span className="block text-xs font-semibold text-slate-500 mb-1">
+              Educational Wings
+            </span>
+            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading">
+              3 Wings
+            </span>
+            <div className="flex items-center gap-1.5 mt-2">
+              <span className="text-[11px] font-semibold text-amber-700">
+                School • College • Uni
+              </span>
+              <span className="text-slate-300">•</span>
+              <span className="text-[11px] text-amber-600/80 group-hover:underline flex items-center gap-0.5">
+                Matrix <ArrowUpRight className="w-3 h-3 inline" />
+              </span>
+            </div>
+          </div>
+          <div className="w-12 h-12 rounded-2xl bg-white/70 text-amber-500 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
+            <Sliders className="w-6 h-6 stroke-[1.8]" />
+          </div>
+        </div>
+
+        {/* Card 4: Platform Earnings / Revenue (Mint Green) */}
+        <div 
+          onClick={() => onRouteChange('platform-billing')}
+          className="bg-[#f0fdf4] border border-emerald-100/80 rounded-2xl p-5 sm:p-6 transition-all duration-200 hover:shadow-sm cursor-pointer group flex items-center justify-between"
+        >
+          <div>
+            <span className="block text-xs font-semibold text-slate-500 mb-1">
+              Platform MRR
+            </span>
+            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading">
+              {stats.monthlyRevenue || '$19.3K'}
+            </span>
+            <div className="flex items-center gap-1.5 mt-2">
+              <span className="text-[11px] font-semibold text-emerald-700">
+                4 Tier Plans
+              </span>
+              <span className="text-slate-300">•</span>
+              <span className="text-[11px] text-emerald-600/80 group-hover:underline flex items-center gap-0.5">
+                Billing <ArrowUpRight className="w-3 h-3 inline" />
+              </span>
+            </div>
+          </div>
+          <div className="w-12 h-12 rounded-2xl bg-white/70 text-emerald-500 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
+            <CreditCard className="w-6 h-6 stroke-[1.8]" />
+          </div>
+        </div>
+
+      </div>
+
+      {/* 3. Middle Section: Dual Bar Chart & Educational Wings Donut Ring */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        
+        {/* Left Card (7 cols): Campus Performance Chart matching "All Exam Result" */}
+        <div className="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-7 border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-base font-bold text-slate-900 tracking-tight font-heading">
+                Campus Performance & Wing Activity
+              </h2>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Monthly distribution: School Wings vs College & University Wings
+              </p>
+            </div>
+            
+            {/* Legend dots */}
+            <div className="flex items-center gap-4 text-xs font-medium">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-purple-600"></span>
+                <span className="text-slate-600">School Wing</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
+                <span className="text-slate-600">College / Uni</span>
+              </div>
+            </div>
           </div>
 
-          <div className="space-y-2.5">
-            {/* 0. Module Control & Feature Flags Matrix */}
-            <button
+          {/* Clean Dual Bar SVG Chart matching reference */}
+          <div className="pt-4 pb-2">
+            <div className="h-56 w-full flex items-end justify-between gap-2 sm:gap-3 px-2">
+              {[
+                { m: 'Jan', v1: 45, v2: 60 },
+                { m: 'Feb', v1: 52, v2: 56 },
+                { m: 'Mar', v1: 40, v2: 68 },
+                { m: 'Apr', v1: 75, v2: 65 },
+                { m: 'May', v1: 100, v2: 80 },
+                { m: 'Jun', v1: 60, v2: 70 },
+                { m: 'Jul', v1: 45, v2: 55 },
+                { m: 'Aug', v1: 72, v2: 60 },
+                { m: 'Sep', v1: 90, v2: 72 },
+                { m: 'Oct', v1: 65, v2: 52 },
+                { m: 'Nov', v1: 80, v2: 65 },
+                { m: 'Dec', v1: 95, v2: 78 }
+              ].map((item, idx) => (
+                <div key={idx} className="flex-1 flex flex-col items-center gap-2 group">
+                  <div className="w-full flex items-end justify-center gap-1 h-44">
+                    {/* Purple bar */}
+                    <div 
+                      className="w-2 sm:w-2.5 rounded-t-full bg-purple-600 transition-all duration-300 group-hover:bg-purple-700"
+                      style={{ height: `${item.v1}%` }}
+                      title={`School Wing: ${item.v1}%`}
+                    ></div>
+                    {/* Orange bar */}
+                    <div 
+                      className="w-2 sm:w-2.5 rounded-t-full bg-orange-500 transition-all duration-300 group-hover:bg-orange-600"
+                      style={{ height: `${item.v2}%` }}
+                      title={`College/Uni: ${item.v2}%`}
+                    ></div>
+                  </div>
+                  <span className="text-[11px] font-medium text-slate-400 group-hover:text-slate-700 transition-colors">
+                    {item.m}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Right Card (5 cols): Wings Donut Ring Gauge matching "Students" Donut */}
+        <div className="lg:col-span-5 bg-white rounded-3xl p-6 sm:p-7 border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-base font-bold text-slate-900 tracking-tight font-heading">
+              Educational Wings Ratio
+            </h2>
+            <button 
               onClick={() => onRouteChange('platform-modules')}
-              className="w-full flex items-center justify-between p-3 sm:p-3.5 rounded-xl bg-slate-50/80 hover:bg-white border border-slate-200/70 hover:border-blue-400 hover:shadow-sm text-slate-700 font-medium text-sm transition-all duration-150 group active:scale-[0.99] text-left cursor-pointer"
+              className="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
+              title="Configure Wings Matrix"
             >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 transition-colors group-hover:bg-blue-600 group-hover:text-white">
-                  <Sliders className="w-4 h-4" />
-                </div>
-                <div className="truncate">
-                  <span className="block font-semibold text-slate-800 text-xs sm:text-sm group-hover:text-blue-600 transition-colors truncate">
-                    Module Control & Feature Matrix
-                  </span>
-                  <span className="block text-[11px] text-slate-400 font-normal truncate">
-                    Govern 10 platform modules & student/storage quotas
-                  </span>
-                </div>
-              </div>
-              <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0 ml-2" />
+              <MoreVertical className="w-4 h-4" />
             </button>
+          </div>
 
-            {/* 1. Roles & Permissions (RBAC Matrix) */}
-            <button
-              onClick={() => onRouteChange('users-roles')}
-              className="w-full flex items-center justify-between p-3 sm:p-3.5 rounded-xl bg-slate-50/80 hover:bg-white border border-slate-200/70 hover:border-indigo-400 hover:shadow-sm text-slate-700 font-medium text-sm transition-all duration-150 group active:scale-[0.99] text-left"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 transition-colors group-hover:bg-indigo-600 group-hover:text-white">
-                  <ShieldCheck className="w-4 h-4" />
-                </div>
-                <div className="truncate">
-                  <span className="block font-semibold text-slate-800 text-xs sm:text-sm group-hover:text-indigo-600 transition-colors truncate">
-                    Roles & RBAC Matrix
-                  </span>
-                  <span className="block text-[11px] text-slate-400 font-normal truncate">
-                    Manage 6 platform roles & permission policies
-                  </span>
-                </div>
+          {/* Donut Ring Visual matching reference */}
+          <div className="flex flex-col items-center justify-center py-4">
+            <div className="relative w-44 h-44 flex items-center justify-center">
+              <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                {/* Background track circle */}
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="38"
+                  className="stroke-slate-100"
+                  strokeWidth="11"
+                  fill="transparent"
+                />
+                {/* Purple Ring (School Wing: ~65%) */}
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="38"
+                  className="stroke-purple-600"
+                  strokeWidth="11"
+                  strokeDasharray="238.76"
+                  strokeDashoffset="83"
+                  strokeLinecap="round"
+                  fill="transparent"
+                />
+                {/* Orange Ring (College & Uni: ~35%) */}
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="38"
+                  className="stroke-orange-500"
+                  strokeWidth="11"
+                  strokeDasharray="238.76"
+                  strokeDashoffset="165"
+                  strokeLinecap="round"
+                  fill="transparent"
+                />
+              </svg>
+
+              {/* Inside center text */}
+              <div className="absolute flex flex-col items-center justify-center text-center">
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                  Total
+                </span>
+                <span className="text-2xl font-extrabold text-slate-900 font-heading">
+                  15,000
+                </span>
+                <span className="text-[10px] text-purple-600 font-bold">
+                  Enrolled
+                </span>
               </div>
-              <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0 ml-2" />
+            </div>
+
+            {/* Bottom Legend */}
+            <div className="flex items-center justify-center gap-6 mt-4 text-xs font-semibold">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-purple-600"></span>
+                <span className="text-slate-700">School (65%)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
+                <span className="text-slate-700">College / Uni (35%)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      {/* 4. Bottom Section: Active Campuses Table & Recent Platform Activities */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        {/* Left Column (7 cols): Campuses Table matching "Star Students" table */}
+        <div className="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-7 border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)]">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-base font-bold text-slate-900 tracking-tight font-heading">
+                Registered Campuses & Wings
+              </h2>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Active educational institutions and enabled tier structures
+              </p>
+            </div>
+            <button 
+              onClick={() => onRouteChange('institutes')}
+              className="text-xs font-semibold text-purple-600 hover:text-purple-700 cursor-pointer"
+            >
+              View All ({institutes.length})
             </button>
+          </div>
 
-            {/* 2. Generate Executive Report */}
-            <button
-              onClick={handleGenerateReport}
-              className="w-full flex items-center justify-between p-3 sm:p-3.5 rounded-xl bg-slate-50/80 hover:bg-white border border-slate-200/70 hover:border-emerald-400 hover:shadow-sm text-slate-700 font-medium text-sm transition-all duration-150 group active:scale-[0.99] text-left"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 transition-colors group-hover:bg-emerald-600 group-hover:text-white">
-                  <Download className="w-4 h-4" />
-                </div>
-                <div className="truncate">
-                  <span className="block font-semibold text-slate-800 text-xs sm:text-sm group-hover:text-emerald-600 transition-colors truncate">
-                    Generate Executive Report
-                  </span>
-                  <span className="block text-[11px] text-slate-400 font-normal truncate">
-                    Download multi-campus audit CSV snapshot
-                  </span>
-                </div>
-              </div>
-              <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0 ml-2" />
-            </button>
+          {/* Clean Data Table matching reference */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="border-b border-slate-100 text-slate-400 font-semibold text-[11px] uppercase tracking-wider">
+                  <th className="py-3 px-2 w-8">
+                    <span className="sr-only">Select</span>
+                  </th>
+                  <th className="py-3 px-3">Campus Name</th>
+                  <th className="py-3 px-3">Code</th>
+                  <th className="py-3 px-3">Active Wings</th>
+                  <th className="py-3 px-3">Plan Tier</th>
+                  <th className="py-3 px-3 text-right">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {institutes && institutes.length > 0 ? (
+                  institutes.slice(0, 5).map((inst) => {
+                    const isSelected = selectedCampusIds.includes(inst.id)
+                    const wings = inst.enabledTiers || ['school']
+                    return (
+                      <tr 
+                        key={inst.id}
+                        className={`hover:bg-slate-50/80 transition-colors group cursor-pointer ${
+                          isSelected ? 'bg-purple-50/30' : ''
+                        }`}
+                        onClick={() => toggleSelectCampus(inst.id)}
+                      >
+                        {/* Checkbox with purple checked style */}
+                        <td className="py-3.5 px-2">
+                          <input 
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleSelectCampus(inst.id)}
+                            className="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500 cursor-pointer"
+                          />
+                        </td>
 
-            {/* 3. Broadcast Announcement */}
-            <button
-              onClick={() => setIsBroadcastModalOpen(true)}
-              className="w-full flex items-center justify-between p-3 sm:p-3.5 rounded-xl bg-slate-50/80 hover:bg-white border border-slate-200/70 hover:border-blue-400 hover:shadow-sm text-slate-700 font-medium text-sm transition-all duration-150 group active:scale-[0.99] text-left"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 transition-colors group-hover:bg-blue-600 group-hover:text-white">
-                  <Radio className="w-4 h-4" />
-                </div>
-                <div className="truncate">
-                  <span className="block font-semibold text-slate-800 text-xs sm:text-sm group-hover:text-blue-600 transition-colors truncate">
-                    Broadcast Announcement
-                  </span>
-                  <span className="block text-[11px] text-slate-400 font-normal truncate">
-                    Instant alert dispatch to active sessions
-                  </span>
-                </div>
-              </div>
-              <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0 ml-2" />
-            </button>
+                        {/* Campus Avatar + Name */}
+                        <td className="py-3.5 px-3">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-100 to-indigo-100 text-purple-700 font-bold flex items-center justify-center text-xs shrink-0">
+                              {inst.name.charAt(0)}
+                            </div>
+                            <div>
+                              <span className="font-semibold text-slate-900 group-hover:text-purple-700 transition-colors line-clamp-1">
+                                {inst.name}
+                              </span>
+                              <span className="text-[10px] text-slate-400">
+                                {inst.city || 'Central Region'}
+                              </span>
+                            </div>
+                          </div>
+                        </td>
 
-            {/* 4. Subscriptions & Billing */}
-            <button
-              onClick={() => onRouteChange('platform-billing')}
-              className="w-full flex items-center justify-between p-3 sm:p-3.5 rounded-xl bg-slate-50/80 hover:bg-white border border-slate-200/70 hover:border-emerald-400 hover:shadow-sm text-slate-700 font-medium text-sm transition-all duration-150 group active:scale-[0.99] text-left cursor-pointer"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 transition-colors group-hover:bg-emerald-600 group-hover:text-white">
-                  <CreditCard className="w-4 h-4" />
-                </div>
-                <div className="truncate">
-                  <span className="block font-semibold text-slate-800 text-xs sm:text-sm group-hover:text-emerald-600 transition-colors truncate">
-                    Subscriptions & Billing
-                  </span>
-                  <span className="block text-[11px] text-slate-400 font-normal truncate">
-                    Manage tier pricing, cycles, and waivers
-                  </span>
-                </div>
-              </div>
-              <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0 ml-2" />
-            </button>
+                        {/* Code */}
+                        <td className="py-3.5 px-3 font-mono font-semibold text-slate-600">
+                          {inst.code}
+                        </td>
 
-            {/* 5. Platform Settings */}
+                        {/* Active Wings Badges */}
+                        <td className="py-3.5 px-3">
+                          <div className="flex items-center gap-1 flex-wrap">
+                            {wings.includes('school') && (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700">
+                                School
+                              </span>
+                            )}
+                            {wings.includes('college') && (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700">
+                                College
+                              </span>
+                            )}
+                            {wings.includes('undergraduate') && (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700">
+                                Uni
+                              </span>
+                            )}
+                          </div>
+                        </td>
+
+                        {/* Plan */}
+                        <td className="py-3.5 px-3 text-slate-600 font-medium">
+                          {inst.planTier || 'School Plan'}
+                        </td>
+
+                        {/* Status */}
+                        <td className="py-3.5 px-3 text-right">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                            Active
+                          </span>
+                        </td>
+                      </tr>
+                    )
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center text-xs text-slate-400">
+                      No campuses registered yet. Click "Add Campus" to register your first institute.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Right Column (5 cols): Activity Stream matching "All Exam Results" */}
+        <div className="lg:col-span-5 bg-white rounded-3xl p-6 sm:p-7 border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-bold text-slate-900 tracking-tight font-heading">
+                Platform Activity Stream
+              </h2>
+              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                Live
+              </span>
+            </div>
+
+            {/* List with pastel icon blocks matching reference */}
+            <div className="space-y-3.5">
+              {recentActivity && recentActivity.length > 0 ? (
+                recentActivity.slice(0, 4).map((act, i) => {
+                  const colors = [
+                    { bg: 'bg-sky-50', text: 'text-sky-600', icon: School },
+                    { bg: 'bg-purple-50', text: 'text-purple-600', icon: CreditCard },
+                    { bg: 'bg-teal-50', text: 'text-teal-600', icon: Sliders },
+                    { bg: 'bg-amber-50', text: 'text-amber-600', icon: ShieldCheck }
+                  ]
+                  const c = colors[i % colors.length]
+                  const IconComp = c.icon
+
+                  return (
+                    <div key={act.id || i} className="flex items-start gap-3 p-2.5 rounded-2xl hover:bg-slate-50 transition-colors">
+                      <div className={`w-9 h-9 rounded-xl ${c.bg} ${c.text} flex items-center justify-center shrink-0`}>
+                        <IconComp className="w-4.5 h-4.5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-slate-800 line-clamp-1">
+                          {act.text}
+                        </p>
+                        <span className="text-[10px] text-slate-400 mt-0.5 inline-block">
+                          {act.time}
+                        </span>
+                      </div>
+                    </div>
+                  )
+                })
+              ) : (
+                <div className="py-8 text-center text-xs text-slate-400">
+                  No activity recorded yet.
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Full-width soft lilac "View All" button matching reference */}
+          <div className="pt-5 mt-4 border-t border-slate-100">
             <button
-              onClick={onOpenSettings}
-              className="w-full flex items-center justify-between p-3 sm:p-3.5 rounded-xl bg-slate-50/80 hover:bg-white border border-slate-200/70 hover:border-slate-400 hover:shadow-sm text-slate-700 font-medium text-sm transition-all duration-150 group active:scale-[0.99] text-left"
+              onClick={() => onRouteChange('audit-logs')}
+              className="w-full py-2.5 rounded-xl bg-[#f5eeff] hover:bg-[#ede0fe] text-purple-700 font-semibold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 transition-colors group-hover:bg-slate-700 group-hover:text-white">
-                  <Settings className="w-4 h-4" />
-                </div>
-                <div className="truncate">
-                  <span className="block font-semibold text-slate-800 text-xs sm:text-sm group-hover:text-slate-900 transition-colors truncate">
-                    Platform Settings
-                  </span>
-                  <span className="block text-[11px] text-slate-400 font-normal truncate">
-                    Global platform configurations & preferences
-                  </span>
-                </div>
-              </div>
-              <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-slate-800 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0 ml-2" />
+              <span>View All Platform Activity</span>
+              <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
@@ -594,7 +797,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               placeholder="e.g. Dr. Salman Qureshi"
               value={newUserData.name}
               onChange={(e) => setNewUserData({ ...newUserData, name: e.target.value })}
-              className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm"
             />
           </div>
 
@@ -606,7 +809,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               placeholder="e.g. salman.q@sms.edu"
               value={newUserData.email}
               onChange={(e) => setNewUserData({ ...newUserData, email: e.target.value })}
-              className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm"
             />
           </div>
 
@@ -616,7 +819,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               <select
                 value={newUserData.role}
                 onChange={(e) => setNewUserData({ ...newUserData, role: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm bg-white"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm bg-white"
               >
                 <option value="superadmin">Superadmin</option>
                 <option value="institute_admin">Institute Admin</option>
@@ -630,7 +833,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 placeholder="+92 300 1234567"
                 value={newUserData.phone}
                 onChange={(e) => setNewUserData({ ...newUserData, phone: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm"
               />
             </div>
           </div>
@@ -641,7 +844,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               <select
                 value={newUserData.institute}
                 onChange={(e) => setNewUserData({ ...newUserData, institute: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm bg-white"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm bg-white"
               >
                 <option value="">Select an Institute...</option>
                 {institutes.map(inst => (
@@ -654,7 +857,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 placeholder="Central Headquarters / Global"
                 value={newUserData.institute}
                 onChange={(e) => setNewUserData({ ...newUserData, institute: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm"
               />
             )}
           </div>
@@ -663,13 +866,13 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
             <button
               type="button"
               onClick={() => setIsUserModalOpen(false)}
-              className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+              className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-5 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors"
+              className="px-5 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-xl shadow-sm transition-colors cursor-pointer"
             >
               Create User
             </button>
@@ -692,7 +895,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               placeholder="e.g. Oxford Grammar School - Main Campus"
               value={newInstituteData.name}
               onChange={(e) => setNewInstituteData({ ...newInstituteData, name: e.target.value })}
-              className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm"
             />
           </div>
 
@@ -705,7 +908,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 placeholder="e.g. OXF-001"
                 value={newInstituteData.code}
                 onChange={(e) => setNewInstituteData({ ...newInstituteData, code: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm uppercase"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm uppercase"
               />
             </div>
             <div>
@@ -716,7 +919,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 placeholder="e.g. Lahore"
                 value={newInstituteData.city}
                 onChange={(e) => setNewInstituteData({ ...newInstituteData, city: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm"
               />
             </div>
           </div>
@@ -728,7 +931,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               placeholder="e.g. Sector H-12, Education Avenue"
               value={newInstituteData.address}
               onChange={(e) => setNewInstituteData({ ...newInstituteData, address: e.target.value })}
-              className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm"
             />
           </div>
 
@@ -752,7 +955,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                   enabledTiers: conf.enabledTiers
                 })
               }}
-              className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm bg-white"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm bg-white"
             >
               <option value="School Plan">School Plan (Primary & High School)</option>
               <option value="College Plan">College Plan (Intermediate / HSSC)</option>
@@ -769,7 +972,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 placeholder="admin@oxford.edu"
                 value={newInstituteData.email}
                 onChange={(e) => setNewInstituteData({ ...newInstituteData, email: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm"
               />
             </div>
             <div>
@@ -779,14 +982,14 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 placeholder="+92 300 9876543"
                 value={newInstituteData.phone}
                 onChange={(e) => setNewInstituteData({ ...newInstituteData, phone: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm"
               />
             </div>
           </div>
 
           <div className="pt-2 border-t border-slate-100">
             <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
+              <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
               Campus Administrator Login Credentials
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -797,7 +1000,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                   placeholder={newInstituteData.code ? `admin@${newInstituteData.code.toLowerCase().replace(/[^a-z0-9]/g, '')}.edu` : "admin@campus.edu"}
                   value={newInstituteData.adminEmail}
                   onChange={(e) => setNewInstituteData({ ...newInstituteData, adminEmail: e.target.value })}
-                  className="w-full px-3.5 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-xs"
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-xs"
                 />
                 <p className="text-[10px] text-slate-400 mt-0.5">Leave empty to auto-generate</p>
               </div>
@@ -808,7 +1011,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                   placeholder="Password123!"
                   value={newInstituteData.adminPassword}
                   onChange={(e) => setNewInstituteData({ ...newInstituteData, adminPassword: e.target.value })}
-                  className="w-full px-3.5 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-xs font-mono"
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-xs font-mono"
                 />
                 <p className="text-[10px] text-slate-400 mt-0.5">Default: Password123!</p>
               </div>
@@ -819,13 +1022,13 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
             <button
               type="button"
               onClick={() => setIsInstituteModalOpen(false)}
-              className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+              className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-5 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-colors"
+              className="px-5 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-xl shadow-sm transition-colors cursor-pointer"
             >
               Register Institute
             </button>
@@ -841,8 +1044,8 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           title="Campus Registered & Credentials Ready"
         >
           <div className="space-y-4">
-            <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 flex items-start gap-3">
-              <div className="w-9 h-9 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0">
+            <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-start gap-3">
+              <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0">
                 <Check className="w-5 h-5" />
               </div>
               <div>
@@ -853,18 +1056,18 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               </div>
             </div>
 
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 text-xs">
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2.5 text-xs">
               <div className="flex justify-between items-center pb-2 border-b border-slate-200">
                 <span className="text-slate-500 font-medium">Administrator Name:</span>
                 <span className="font-semibold text-slate-800">{newlyCreatedCreds.adminName}</span>
               </div>
               <div className="flex justify-between items-center pb-2 border-b border-slate-200">
                 <span className="text-slate-500 font-medium">Login Email:</span>
-                <span className="font-mono font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">{newlyCreatedCreds.adminEmail}</span>
+                <span className="font-mono font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-lg border border-purple-200">{newlyCreatedCreds.adminEmail}</span>
               </div>
               <div className="flex justify-between items-center pb-2 border-b border-slate-200">
                 <span className="text-slate-500 font-medium">Password:</span>
-                <span className="font-mono font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">{newlyCreatedCreds.password}</span>
+                <span className="font-mono font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-200">{newlyCreatedCreds.password}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-500 font-medium">Portal URL:</span>
@@ -889,7 +1092,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 triggerToast('Credentials copied to clipboard for client delivery!')
                 setTimeout(() => setCopiedCreds(false), 3000)
               }}
-              className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+              className="w-full py-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
             >
               {copiedCreds ? <Check className="w-4 h-4 text-emerald-300" /> : <Copy className="w-4 h-4" />}
               <span>{copiedCreds ? 'Copied to Clipboard!' : 'Copy Login Credentials for Client'}</span>
@@ -899,7 +1102,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               <button
                 type="button"
                 onClick={() => setNewlyCreatedCreds(null)}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold cursor-pointer"
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold cursor-pointer"
               >
                 Close
               </button>
@@ -915,8 +1118,8 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
         title="Broadcast Announcement to Active Sessions"
       >
         <form onSubmit={handleSendBroadcast} className="space-y-4">
-          <div className="p-3 bg-emerald-50/70 border border-emerald-200/70 rounded-xl flex items-center gap-2.5 text-xs text-emerald-800">
-            <Radio className="w-4 h-4 text-emerald-600 shrink-0 animate-pulse" />
+          <div className="p-3 bg-purple-50 border border-purple-200 rounded-xl flex items-center gap-2.5 text-xs text-purple-800">
+            <Radio className="w-4 h-4 text-purple-600 shrink-0 animate-pulse" />
             <span>This broadcast message will be dispatched immediately across active user sessions.</span>
           </div>
 
@@ -926,7 +1129,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               <select
                 value={broadcastData.channel}
                 onChange={(e) => setBroadcastData({ ...broadcastData, channel: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm bg-white"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm bg-white"
               >
                 <option value="Portal Alert">In-App Alert</option>
                 <option value="SMS">SMS Gateway</option>
@@ -939,7 +1142,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               <select
                 value={broadcastData.recipientGroup}
                 onChange={(e) => setBroadcastData({ ...broadcastData, recipientGroup: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm bg-white"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm bg-white"
               >
                 <option value="All Active Users">All Active Users</option>
                 <option value="Campus Administrators">Campus Administrators</option>
@@ -956,7 +1159,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               placeholder="e.g. System notice: Scheduled database optimization will take place tonight at 11:00 PM."
               value={broadcastData.message}
               onChange={(e) => setBroadcastData({ ...broadcastData, message: e.target.value })}
-              className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm"
             ></textarea>
           </div>
 
@@ -964,13 +1167,13 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
             <button
               type="button"
               onClick={() => setIsBroadcastModalOpen(false)}
-              className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+              className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-5 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition-colors flex items-center gap-1.5"
+              className="px-5 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-xl shadow-sm transition-colors flex items-center gap-1.5 cursor-pointer"
             >
               <Send className="w-3.5 h-3.5" />
               <span>Send Broadcast</span>
