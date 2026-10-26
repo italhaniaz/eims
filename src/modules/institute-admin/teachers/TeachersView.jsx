@@ -878,9 +878,15 @@ export const TeachersView = ({ currentInstitute }) => {
               className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white font-medium text-slate-700"
             >
               <option value="All Levels">All Academic Levels</option>
-              <option value="school">Primary / Secondary School</option>
-              <option value="college">Higher Secondary / College</option>
-              <option value="university">University / Higher Ed</option>
+              {(currentInstitute?.enabledTiers || ['school']).includes('school') && (
+                <option value="school">Primary / Secondary School</option>
+              )}
+              {(currentInstitute?.enabledTiers || ['school']).includes('college') && (
+                <option value="college">Higher Secondary / College</option>
+              )}
+              {(currentInstitute?.enabledTiers || ['school']).includes('undergraduate') && (
+                <option value="university">University / Higher Ed</option>
+              )}
             </select>
           </div>
 

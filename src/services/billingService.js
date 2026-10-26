@@ -430,7 +430,7 @@ export const BillingService = {
   // SUPER ADMIN OVERRIDE 3: Switch Plan & Enabled Tiers
   async updateSubscriptionPlan(id, planId, enabledTiers = null, pricePKR = null) {
     const subs = await this.getSubscriptions()
-    const sub = subs.find(s => s.id === id)
+    const sub = subs.find(s => s.id === id || s.instituteId === id)
     const plans = await this.getPlans()
     const targetPlan = plans.find(p => p.id === planId)
 

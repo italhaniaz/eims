@@ -218,6 +218,114 @@ export const PlatformService = {
     return true
   },
 
+  // 3b. Toggle Educational Wing (School / College / Undergraduate) for an institute
+  async toggleInstituteWing(instituteId, wingKey, enabled) {
+    const store = getStoredData()
+    const inst = (store.institutes || []).find(i => i.id === instituteId)
+    if (!inst) throw new Error('Institute not found')
+
+    let currentTiers = inst.enabledTiers || (
+      inst.type === 'School' ? ['school'] :
+      inst.type === 'College' ? ['college'] :
+      inst.type === 'University' ? ['undergraduate'] : ['school']
+    )
+
+    let updatedTiers
+    if (enabled) {
+      updatedTiers = Array.from(new Set([...currentTiers, wingKey]))
+    } else {
+      updatedTiers = currentTiers.filter(t => t !== wingKey)
+      if (updatedTiers.length === 0) {
+        throw new Error('An institute must have at least one active educational wing.')
+      }
+    }
+
+    inst.enabledTiers = updatedTiers
+
+    // Auto-update plan and type to reflect enabled wings
+    if (updatedTiers.length > 1) {
+      inst.planTier = 'Custom Hybrid Plan'
+      inst.planType = 'CUSTOM'
+      inst.type = 'Custom Group'
+    } else if (updatedTiers.includes('school')) {
+      inst.planTier = 'School Plan'
+      inst.planType = 'SCHOOL'
+      inst.type = 'School'
+    } else if (updatedTiers.includes('college')) {
+      inst.planTier = 'College Plan'
+      inst.planType = 'COLLEGE'
+      inst.type = 'College'
+    } else if (updatedTiers.includes('undergraduate')) {
+      inst.planTier = 'University Plan'
+      inst.planType = 'UNIVERSITY'
+      inst.type = 'University'
+    }
+
+    saveStoredData(store)
+
+    // Synchronize subscription record
+    try {
+      const subs = JSON.parse(localStorage.getItem('sms_institute_subscriptions') || '[]')
+      const targetSub = subs.find(s => s.instituteId === instituteId)
+      if (targetSub) {
+        targetSub.enabledTiers = updatedTiers
+        targetSub.planName = inst.planTier
+        targetSub.planId = updatedTiers.length > 1 ? 'plan-custom' :
+          updatedTiers.includes('school') ? 'plan-school' :
+          updatedTiers.includes('college') ? 'plan-college' : 'plan-university'
+        localStorage.setItem('sms_institute_subscriptions', JSON.stringify(subs))
+      }
+    } catch {}
+
+    DataService.logAuditEvent(
+      `Toggled educational wing "${wingKey}" to ${enabled ? 'ENABLED' : 'DISABLED'} for ${inst.name} (${inst.code})`,
+      'Super Administrator',
+      'Success'
+    )
+
+    return { success: true, institute: inst, updatedTiers }
+  },
+
+  // 3c. Comprehensive Update of Institute Wings & Subscription Plan
+  async updateInstituteWingsAndPlan(instituteId, { enabledTiers, planTier, planType, type }) {
+    const store = getStoredData()
+    const inst = (store.institutes || []).find(i => i.id === instituteId)
+    if (!inst) throw new Error('Institute not found')
+
+    if (!enabledTiers || enabledTiers.length === 0) {
+      throw new Error('Please select at least one educational wing.')
+    }
+
+    inst.enabledTiers = enabledTiers
+    inst.planTier = planTier || (enabledTiers.length > 1 ? 'Custom Hybrid Plan' : enabledTiers.includes('school') ? 'School Plan' : enabledTiers.includes('college') ? 'College Plan' : 'University Plan')
+    inst.planType = planType || (enabledTiers.length > 1 ? 'CUSTOM' : enabledTiers.includes('school') ? 'SCHOOL' : enabledTiers.includes('college') ? 'COLLEGE' : 'UNIVERSITY')
+    inst.type = type || (enabledTiers.length > 1 ? 'Custom Group' : enabledTiers.includes('school') ? 'School' : enabledTiers.includes('college') ? 'College' : 'University')
+
+    saveStoredData(store)
+
+    // Synchronize subscription record
+    try {
+      const subs = JSON.parse(localStorage.getItem('sms_institute_subscriptions') || '[]')
+      const targetSub = subs.find(s => s.instituteId === instituteId)
+      if (targetSub) {
+        targetSub.enabledTiers = enabledTiers
+        targetSub.planName = inst.planTier
+        targetSub.planId = enabledTiers.length > 1 ? 'plan-custom' :
+          enabledTiers.includes('school') ? 'plan-school' :
+          enabledTiers.includes('college') ? 'plan-college' : 'plan-university'
+        localStorage.setItem('sms_institute_subscriptions', JSON.stringify(subs))
+      }
+    } catch {}
+
+    DataService.logAuditEvent(
+      `Updated wings [${enabledTiers.join(', ')}] and plan "${inst.planTier}" for ${inst.name}`,
+      'Super Administrator',
+      'Success'
+    )
+
+    return { success: true, institute: inst }
+  },
+
   // 4. Bulk update a module across all or selected institutes
   async bulkApplyModuleStatus(moduleKey, enabled, instituteIds = []) {
     const store = getStoredData()

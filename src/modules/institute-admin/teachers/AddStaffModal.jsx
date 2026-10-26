@@ -872,9 +872,15 @@ export const AddStaffModal = ({
                   }}
                   className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white font-bold"
                 >
-                  <option value="school">Primary & Secondary School</option>
-                  <option value="college">Higher Secondary / College Wing</option>
-                  <option value="university">University / Higher Education</option>
+                  {(currentInstitute?.enabledTiers || ['school']).includes('school') && (
+                    <option value="school">Primary & Secondary School</option>
+                  )}
+                  {(currentInstitute?.enabledTiers || ['school']).includes('college') && (
+                    <option value="college">Higher Secondary / College Wing</option>
+                  )}
+                  {(currentInstitute?.enabledTiers || ['school']).includes('undergraduate') && (
+                    <option value="university">University / Higher Education</option>
+                  )}
                 </select>
               </div>
 

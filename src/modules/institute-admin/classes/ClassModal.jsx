@@ -779,11 +779,19 @@ export const ClassModal = ({
                         onChange={(e) => handleTierChange(e.target.value)}
                         className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-100 disabled:cursor-not-allowed"
                       >
-                        <option value="preschool">Pre-School (Playgroup - KG)</option>
-                        <option value="elementary">Elementary (Grade 1 - 8)</option>
-                        <option value="secondary">Secondary (Grade 9 - 10 / Matric)</option>
-                        <option value="higher-secondary">Higher Secondary (Grade 11 - 12 / Inter)</option>
-                        <option value="university">Undergraduate (BS Honors)</option>
+                        {(currentInstitute?.enabledTiers || ['school']).includes('school') && (
+                          <>
+                            <option value="preschool">Pre-School (Playgroup - KG)</option>
+                            <option value="elementary">Elementary (Grade 1 - 8)</option>
+                            <option value="secondary">Secondary (Grade 9 - 10 / Matric)</option>
+                          </>
+                        )}
+                        {(currentInstitute?.enabledTiers || ['school']).includes('college') && (
+                          <option value="higher-secondary">Higher Secondary (Grade 11 - 12 / Inter)</option>
+                        )}
+                        {(currentInstitute?.enabledTiers || ['school']).includes('undergraduate') && (
+                          <option value="university">Undergraduate (BS Honors)</option>
+                        )}
                       </select>
                     </div>
 

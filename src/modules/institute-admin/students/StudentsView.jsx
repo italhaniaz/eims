@@ -1462,13 +1462,13 @@ export const StudentsView = ({ currentInstitute }) => {
               />
             </div>
 
-            {/* Level Switcher Tabs - Synced with Global activeProgramLevel */}
+            {/* Level Switcher Tabs - Synced with Global activeProgramLevel & enabledTiers */}
             <div className="flex items-center gap-1 p-1 bg-slate-200/70 rounded-lg text-xs font-semibold text-slate-600">
               {[
                 { key: 'all', label: 'All Levels' },
-                { key: 'school', label: 'School' },
-                { key: 'college', label: 'College' },
-                { key: 'university', label: 'University' }
+                ...((currentInstitute?.enabledTiers || ['school']).includes('school') ? [{ key: 'school', label: 'School' }] : []),
+                ...((currentInstitute?.enabledTiers || ['school']).includes('college') ? [{ key: 'college', label: 'College' }] : []),
+                ...((currentInstitute?.enabledTiers || ['school']).includes('undergraduate') ? [{ key: 'university', label: 'University' }] : [])
               ].map(lvl => (
                 <button
                   key={lvl.key}

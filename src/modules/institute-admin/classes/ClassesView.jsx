@@ -93,7 +93,30 @@ export const ClassesView = ({ currentInstitute }) => {
   const [isAddSessionModalOpen, setIsAddSessionModalOpen] = useState(false)
   const [newSessionInput, setNewSessionInput] = useState('')
 
-  // Level Tabs state (Two-way linked with global navbar)
+  // Level Tabs state (Two-way linked with global navbar & institute enabled tiers)
+  const instEnabledTiers = currentInstitute?.enabledTiers || (
+    currentInstitute?.type === 'School' ? ['school'] :
+    currentInstitute?.type === 'College' ? ['college'] :
+    currentInstitute?.type === 'University' ? ['undergraduate'] :
+    ['school']
+  )
+
+  const availableTabs = useMemo(() => {
+    const tabs = [{ id: 'all', label: 'All Levels' }]
+    if (instEnabledTiers.includes('school')) {
+      tabs.push({ id: 'preschool', label: 'Pre-School' })
+      tabs.push({ id: 'elementary', label: 'Elementary (1-8)' })
+      tabs.push({ id: 'secondary', label: 'Secondary (9-10)' })
+    }
+    if (instEnabledTiers.includes('college')) {
+      tabs.push({ id: 'higher-secondary', label: 'HSSC (11-12)' })
+    }
+    if (instEnabledTiers.includes('undergraduate')) {
+      tabs.push({ id: 'university', label: 'Undergraduates' })
+    }
+    return tabs
+  }, [instEnabledTiers])
+
   const [selectedLevelTab, setSelectedLevelTab] = useState(activeProgramLevel || 'all')
 
   useEffect(() => {
@@ -781,14 +804,7 @@ export const ClassesView = ({ currentInstitute }) => {
       <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
         {/* Tier Tabs (Pre-School, Elementary, Secondary, HSSC, College, University) */}
         <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl overflow-x-auto scrollbar-none text-xs">
-          {[
-            { id: 'all', label: 'All Levels' },
-            { id: 'preschool', label: 'Pre-School' },
-            { id: 'elementary', label: 'Elementary (1-8)' },
-            { id: 'secondary', label: 'Secondary (9-10)' },
-            { id: 'higher-secondary', label: 'HSSC (11-12)' },
-            { id: 'university', label: 'Undergraduates' }
-          ].map(tab => (
+          {availableTabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => handleTabChange(tab.id)}
