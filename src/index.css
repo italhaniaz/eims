@@ -4,9 +4,18 @@
 
 @layer base {
   body {
-    @apply bg-[#f8fafc] text-slate-800 font-sans antialiased;
+    @apply bg-[#f8fafc] text-slate-800 antialiased;
+    font-family: 'Geist', 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+    letter-spacing: -0.012em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     margin: 0;
     padding: 0;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Outfit', 'Geist', system-ui, sans-serif;
+    letter-spacing: -0.025em;
   }
 }
 
@@ -41,7 +50,6 @@
 
 /* Official Clean Print Styling Rules */
 @media print {
-  /* Hide all dashboard chrome and navigation elements */
   nav,
   aside,
   header,
@@ -58,7 +66,6 @@
     padding: 0 !important;
   }
 
-  /* Flatten modal overlays for paper printing */
   .fixed,
   .backdrop-blur-sm,
   .bg-black\/60 {
@@ -72,7 +79,6 @@
     max-width: 100% !important;
   }
 
-  /* Crisp monochrome borders */
   .border,
   .border-2 {
     border-color: #000000 !important;
