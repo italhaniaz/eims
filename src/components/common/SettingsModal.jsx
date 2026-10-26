@@ -41,8 +41,8 @@ export const SettingsModal = ({ isOpen, onClose }) => {
   const [activeTab, setActiveTab] = useState('general') // general, localization, smtp, sms, payment, maintenance, database
 
   // Supabase states
-  const [supabaseUrl, setSupabaseUrl] = useState(() => import.meta.env.VITE_SUPABASE_URL || '')
-  const [supabaseKey, setSupabaseKey] = useState(() => import.meta.env.VITE_SUPABASE_ANON_KEY || '')
+  const [supabaseUrl, setSupabaseUrl] = useState(() => (typeof import.meta !== 'undefined' && import.meta?.env?.VITE_SUPABASE_URL) || '')
+  const [supabaseKey, setSupabaseKey] = useState(() => (typeof import.meta !== 'undefined' && import.meta?.env?.VITE_SUPABASE_ANON_KEY) || '')
   const [statusMessage, setStatusMessage] = useState('')
   const [testingSupabase, setTestingSupabase] = useState(false)
 
