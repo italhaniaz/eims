@@ -3,20 +3,28 @@ import {
   Bell, 
   Settings, 
   User, 
-  Database, 
   ChevronRight,
   Menu,
-  Sparkles,
   LogOut,
   ShieldCheck,
-  CheckCircle2,
-  ExternalLink,
   Key,
-  Search
+  Search,
+  LayoutDashboard,
+  Building2,
+  Sliders,
+  BarChart3,
+  CreditCard,
+  Users as UsersIcon,
+  Activity,
+  Database,
+  MessageSquare,
+  Megaphone,
+  FileSpreadsheet,
+  Lock
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useAppData } from '../../context/AppDataContext'
-import { isSupabaseConfigured, getSupabaseStatus } from '../../services/supabaseClient'
+import { getSupabaseStatus } from '../../services/supabaseClient'
 import ChangePasswordModal from '../common/ChangePasswordModal'
 import CloudSyncBadge from '../common/CloudSyncBadge'
 
@@ -33,12 +41,11 @@ export const SuperadminNavbar = ({
   const [showProfileMenu, setShowProfileMenu] = useState(false)
   const [showPasswordModal, setShowPasswordModal] = useState(false)
   const [clearedNotifications, setClearedNotifications] = useState(false)
-  const supabaseInfo = getSupabaseStatus()
   
   const profileRef = useRef(null)
   const notifRef = useRef(null)
 
-  // Real dynamic notification count based on urgent notices and recent activity events
+  // Real dynamic notification count
   const unreadCount = clearedNotifications 
     ? 0 
     : (notices.filter(n => n.pinned || n.category === 'Urgent').length + Math.min(recentActivity.length, 2))
@@ -57,104 +64,103 @@ export const SuperadminNavbar = ({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const getRouteTitle = () => {
+  // Page title and icon mapping matching clean reference
+  const getPageInfo = () => {
     switch (currentRoute) {
-      case 'dashboard': return 'Platform Overview'
-      case 'platform-modules': return 'Platform Control / Module Control Matrix'
-      case 'security-center': return 'Platform Control / Security Center & Session Governance'
-      case 'global-templates': return 'Platform Control / Global Master Templates'
-      case 'cross-institute-analytics': return 'Analytics & Business / Cross-Institute Analytics'
-      case 'platform-billing': return 'Analytics & Business / Subscriptions & Billing'
-      case 'backup-data': return 'Operations & Health / Backup & Data Operations'
-      case 'system-health': return 'Operations & Health / System Health Monitor'
-      case 'support-approvals': return 'Operations & Health / Support Desk & Approval Queue'
-      case 'institutes': return 'Platform Control / Institutes & Campuses'
-      case 'departments': return 'Institute Structure / Departments'
-      case 'examination-bodies': return 'Institute Structure / Examination Bodies'
-      case 'academic-years': return 'Academics / Academic Years'
-      case 'program-types': return 'Academics / Program Types'
-      case 'programs': return 'Academics / Programs'
-      case 'subjects': return 'Academics / Subjects'
-      case 'study-schemes': return 'Academics / Study Schemes'
-      case 'finance': return 'Enterprise / Financial Analytics & Intelligence'
-      case 'transport': return 'Enterprise / Transport & Fleet Operations'
-      case 'library': return 'Enterprise / Central Digital Library'
-      case 'admissions-pipeline': return 'Enterprise / Admissions Pipeline & CRM'
-      case 'communication': return 'Enterprise / SMS & WhatsApp Gateway'
-      case 'audit-logs': return 'Enterprise / Security & System Audit Logs'
-      case 'announcements': return 'Enterprise / Broadcast Directives'
-      case 'users-all': return 'Users Management / All Users'
-      case 'users-roles': return 'Users Management / Roles & Permissions'
-      default: return 'Platform Control'
+      case 'dashboard':
+        return { title: 'Dashboard', icon: LayoutDashboard }
+      case 'institutes':
+        return { title: 'Campuses & Institutes', icon: Building2 }
+      case 'platform-modules':
+        return { title: 'Educational Wings Matrix', icon: Sliders }
+      case 'platform-billing':
+        return { title: 'Subscriptions & Billing', icon: CreditCard }
+      case 'cross-institute-analytics':
+        return { title: 'Cross-Campus Analytics', icon: BarChart3 }
+      case 'users-all':
+        return { title: 'All Platform Users', icon: UsersIcon }
+      case 'users-roles':
+        return { title: 'Roles & Permissions', icon: ShieldCheck }
+      case 'security-center':
+        return { title: 'Security & Access Control', icon: Lock }
+      case 'system-health':
+        return { title: 'System Health Monitor', icon: Activity }
+      case 'audit-logs':
+        return { title: 'Audit & Security Logs', icon: ShieldCheck }
+      case 'backup-data':
+        return { title: 'Backup & Data Operations', icon: Database }
+      case 'communication':
+        return { title: 'SMS & Gateway Alerts', icon: MessageSquare }
+      case 'announcements':
+        return { title: 'Broadcast Directives', icon: Megaphone }
+      case 'global-templates':
+        return { title: 'Global Master Templates', icon: FileSpreadsheet }
+      default:
+        return { title: 'Super Admin Portal', icon: LayoutDashboard }
     }
   }
 
+  const { title, icon: PageIcon } = getPageInfo()
+
   return (
-    <header className="h-16 bg-white border-b border-slate-100 px-4 md:px-6 flex items-center justify-between sticky top-0 z-30 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
-      {/* Left: Mobile Hamburger & Breadcrumbs */}
+    <header className="h-16 bg-white border-b border-slate-200/80 px-4 md:px-7 flex items-center justify-between sticky top-0 z-30 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+      {/* Left: Mobile Hamburger & Clean Bold Page Title */}
       <div className="flex items-center gap-3">
         {/* Mobile Hamburger Button */}
         <button
           onClick={onOpenMobileMenu}
-          className="p-2 -ml-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 lg:hidden transition-colors cursor-pointer"
+          className="p-2 -ml-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 lg:hidden transition-colors cursor-pointer"
           title="Open Menu"
         >
           <Menu className="w-5 h-5" />
         </button>
 
-        {getRouteTitle().includes(' / ') ? (
-          <div className="flex items-center gap-1.5 sm:gap-2 text-sm min-w-0">
-            <span className="text-slate-400 font-medium hidden md:inline truncate">{getRouteTitle().split(' / ')[0]}</span>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-300 hidden md:inline shrink-0" />
-            <h1 className="font-semibold text-slate-800 truncate text-sm">
-              {getRouteTitle().split(' / ')[1]}
-            </h1>
-          </div>
-        ) : (
-          <h1 className="text-sm font-semibold text-slate-800 truncate">
-            {getRouteTitle()}
+        {/* Clean Page Title with Icon */}
+        <div className="flex items-center gap-2.5">
+          <PageIcon className="w-5 h-5 text-violet-600 shrink-0" />
+          <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight font-heading">
+            {title}
           </h1>
-        )}
+        </div>
       </div>
 
-      {/* Right Side Icons */}
-      <div className="flex items-center gap-3 sm:gap-4">
+      {/* Right Side Utilities */}
+      <div className="flex items-center gap-2 sm:gap-3">
         {/* Quick Spotlight Search Trigger */}
         <button
           onClick={onOpenCommandPalette}
-          className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs text-slate-500 transition-colors shadow-2xs cursor-pointer"
+          className="hidden sm:flex items-center gap-2.5 px-3 py-1.5 rounded-xl border border-slate-200/80 bg-slate-50/80 hover:bg-slate-100 text-xs text-slate-400 hover:text-slate-600 transition-all cursor-pointer"
           title="Spotlight Search (Ctrl + K)"
         >
           <Search className="w-3.5 h-3.5 text-slate-400" />
-          <span className="text-[11px] font-medium">Search or jump to...</span>
-          <kbd className="text-[9px] font-mono font-bold bg-white border border-slate-200 px-1.5 py-0.5 rounded text-slate-400 shadow-2xs">
+          <span className="text-[11px] font-medium text-slate-500">Search or jump to...</span>
+          <kbd className="text-[10px] font-mono font-semibold bg-white border border-slate-200 px-1.5 py-0.5 rounded text-slate-400 shadow-2xs">
             Ctrl K
           </kbd>
         </button>
 
-        {/* Mobile Spotlight Search Trigger */}
+        {/* Mobile Search Button */}
         <button
           onClick={onOpenCommandPalette}
-          className="sm:hidden p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-          title="Search (Tap to open)"
-          aria-label="Open search"
+          className="sm:hidden p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+          title="Search"
         >
           <Search className="w-4 h-4 text-slate-600" />
         </button>
 
-        {/* Cloud & Offline Synchronization Status Badge */}
+        {/* Cloud & Supabase Sync Status */}
         <CloudSyncBadge onOpenSettings={onOpenSettings} />
 
-        {/* Notification Bell with Dynamic Real Badge */}
+        {/* Notification Bell */}
         <div className="relative" ref={notifRef}>
           <button 
             onClick={() => setShowNotifications(!showNotifications)}
-            className="relative p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-50 transition-colors cursor-pointer"
+            className="relative p-2 text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer"
             title="Notifications"
           >
-            <Bell className="w-5 h-5 text-slate-400" />
+            <Bell className="w-4.5 h-4.5 text-slate-500" />
             {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 w-4 h-4 bg-rose-500 text-white rounded-full text-[10px] font-bold flex items-center justify-center ring-2 ring-white">
+              <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-violet-600 text-white rounded-full text-[10px] font-bold flex items-center justify-center ring-2 ring-white">
                 {unreadCount}
               </span>
             )}
@@ -162,12 +168,12 @@ export const SuperadminNavbar = ({
 
           {/* Notifications Dropdown */}
           {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-slate-100 py-2 z-50 animate-in fade-in zoom-in-95">
-              <div className="px-4 py-2 border-b border-slate-100 flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-700 uppercase">System Notifications</span>
+            <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50 animate-in fade-in zoom-in-95">
+              <div className="px-4 py-2.5 border-b border-slate-100 flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">Notifications</span>
                 <button 
                   onClick={() => setClearedNotifications(true)}
-                  className="text-[11px] text-blue-600 hover:underline cursor-pointer font-medium"
+                  className="text-[11px] text-violet-600 hover:text-violet-700 font-semibold cursor-pointer"
                 >
                   Mark all read
                 </button>
@@ -181,7 +187,7 @@ export const SuperadminNavbar = ({
                     </div>
                   ))
                 ) : (
-                  <div className="px-4 py-4 text-center text-xs text-slate-400">
+                  <div className="px-4 py-6 text-center text-xs text-slate-400">
                     No unread notifications.
                   </div>
                 )}
@@ -192,42 +198,42 @@ export const SuperadminNavbar = ({
                     onRouteChange('support-approvals')
                     setShowNotifications(false)
                   }}
-                  className="text-xs text-blue-600 hover:text-blue-800 font-semibold cursor-pointer w-full text-center"
+                  className="text-xs text-violet-600 hover:text-violet-800 font-semibold cursor-pointer w-full text-center"
                 >
-                  View Notification Center & Approvals →
+                  View Approvals & Requests →
                 </button>
               </div>
             </div>
           )}
         </div>
 
-        {/* Settings Gear Icon */}
+        {/* Settings Gear */}
         <button 
           onClick={onOpenSettings}
-          className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-50 transition-colors cursor-pointer"
-          title="System Settings & Supabase Configuration"
+          className="p-2 text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer"
+          title="System Settings"
         >
-          <Settings className="w-5 h-5 text-slate-400" />
+          <Settings className="w-4.5 h-4.5 text-slate-500" />
         </button>
 
-        {/* User Profile Avatar with Executive Dropdown */}
-        <div className="relative" ref={profileRef}>
+        {/* Profile Avatar with Dropdown */}
+        <div className="relative ml-1" ref={profileRef}>
           <button 
             onClick={() => setShowProfileMenu(!showProfileMenu)}
-            className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white cursor-pointer hover:ring-2 hover:ring-blue-300 transition-all shadow-sm focus:outline-none"
-            title="Superadmin Profile"
+            className="w-9 h-9 rounded-full bg-gradient-to-tr from-violet-600 to-purple-500 text-white font-bold flex items-center justify-center text-xs cursor-pointer ring-2 ring-violet-200/80 hover:ring-violet-400 shadow-sm transition-all focus:outline-none"
+            title="Super Admin Profile"
           >
-            <User className="w-4 h-4 text-white" />
+            <span>SA</span>
           </button>
 
-          {/* Profile Popover Menu */}
+          {/* Profile Menu Popover */}
           {showProfileMenu && (
             <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50 animate-in fade-in zoom-in-95">
               <div className="px-4 py-3 border-b border-slate-100">
-                <p className="text-xs font-bold text-slate-900 leading-tight">Super Administrator</p>
+                <p className="text-xs font-bold text-slate-900">Super Administrator</p>
                 <p className="text-[11px] text-slate-400 font-mono mt-0.5 truncate">{user?.email || 'admin@schoolms.com'}</p>
-                <span className="inline-block mt-2 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-50 text-blue-700">
-                  Global Superadmin
+                <span className="inline-block mt-2 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 border border-violet-100">
+                  Global Super Admin
                 </span>
               </div>
 
@@ -239,8 +245,8 @@ export const SuperadminNavbar = ({
                   }}
                   className="w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 transition-colors cursor-pointer"
                 >
-                  <Key className="w-3.5 h-3.5 text-blue-600" />
-                  <span>Change Password & Security</span>
+                  <Key className="w-3.5 h-3.5 text-violet-600" />
+                  <span>Change Password</span>
                 </button>
 
                 <button
@@ -251,7 +257,7 @@ export const SuperadminNavbar = ({
                   className="w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 transition-colors cursor-pointer"
                 >
                   <Settings className="w-3.5 h-3.5 text-slate-500" />
-                  <span>System & Supabase Settings</span>
+                  <span>Platform Settings</span>
                 </button>
               </div>
 
