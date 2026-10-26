@@ -8,11 +8,6 @@
     margin: 0;
     padding: 0;
   }
-  
-  ::selection {
-    background-color: #ede9fe;
-    color: #6d28d9;
-  }
 }
 
 /* Custom sleek scrollbar */
