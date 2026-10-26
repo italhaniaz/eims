@@ -71,7 +71,7 @@ export const InstituteAdminSidebar = ({
           fixed lg:static top-0 bottom-0 left-0 z-50
           ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
           ${collapsed ? 'lg:w-20' : 'w-64'} 
-          min-h-screen bg-[#111c30] text-slate-300 flex flex-col 
+          h-full max-h-screen bg-[#111c30] text-slate-300 flex flex-col 
           transition-all duration-300 shrink-0 border-r border-[#1e2d4d] select-none
         `}
       >

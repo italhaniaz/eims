@@ -3,14 +3,20 @@
 @tailwind utilities;
 
 @layer base {
+  html, body, #root {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
   body {
     @apply bg-[#f8fafc] text-slate-800 antialiased;
     font-family: 'Geist', 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
     letter-spacing: -0.012em;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    margin: 0;
-    padding: 0;
   }
 
   h1, h2, h3, h4, h5, h6 {

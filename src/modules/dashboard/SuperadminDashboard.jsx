@@ -232,7 +232,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
   }
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-[1400px] mx-auto">
+    <div className="p-4 sm:p-6 md:p-8 pb-16 space-y-6 max-w-[1400px] mx-auto">
       {/* Toast Feedback */}
       {reportSuccess && (
         <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-2xl flex items-center justify-between shadow-xs animate-in fade-in">
@@ -590,10 +590,10 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
       </div>
 
       {/* 4. Bottom Section: Active Campuses Table & Recent Platform Activities */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         
         {/* Left Column (7 cols): Campuses Table matching "Star Students" table */}
-        <div className="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-7 border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)]">
+        <div className="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-7 border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] flex flex-col justify-between">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-base font-bold text-slate-900 tracking-tight font-heading">
@@ -716,6 +716,17 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 )}
               </tbody>
             </table>
+          </div>
+          {/* Clean Table Footer matching reference */}
+          <div className="pt-4 mt-auto border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+            <span>Showing {Math.min(5, (institutes || []).length)} of {(institutes || []).length} registered campuses</span>
+            <button 
+              onClick={() => onRouteChange('institutes')}
+              className="text-purple-600 font-semibold hover:text-purple-700 hover:underline cursor-pointer flex items-center gap-1"
+            >
+              <span>Manage Campuses</span>
+              <span>&rarr;</span>
+            </button>
           </div>
         </div>
 

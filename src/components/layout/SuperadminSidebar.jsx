@@ -74,7 +74,7 @@ export const SuperadminSidebar = ({
           fixed lg:static top-0 bottom-0 left-0 z-50
           ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
           ${collapsed ? 'lg:w-20' : 'w-64'} 
-          min-h-screen bg-white text-slate-700 flex flex-col 
+          h-full max-h-screen bg-white text-slate-700 flex flex-col 
           transition-all duration-300 shrink-0 border-r border-slate-100 shadow-[1px_0_15px_rgba(0,0,0,0.02)] select-none
         `}
       >
