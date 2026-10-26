@@ -157,7 +157,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
       case 'superadmin':
         return 'bg-purple-50 text-purple-700 border-purple-200'
       case 'institute_admin':
-        return 'bg-blue-50 text-blue-700 border-blue-200'
+        return 'bg-[#f5eeff] text-purple-700 border-purple-200'
       case 'teacher':
         return 'bg-emerald-50 text-emerald-700 border-emerald-200'
       case 'accountant':
@@ -200,7 +200,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
       {/* Header Banner */}
       <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-blue-600 text-xs font-semibold uppercase tracking-wider">
+          <div className="flex items-center gap-2 text-purple-600 text-xs font-semibold uppercase tracking-wider">
             <ShieldCheck className="w-4 h-4" />
             <span>Platform Access Control & Security</span>
           </div>
@@ -233,7 +233,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
           {activeTab === 'all' && (
             <button
               onClick={openAddModal}
-              className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-xs transition-all active:scale-95"
+              className="flex items-center gap-1.5 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-semibold shadow-xs transition-all active:scale-95"
             >
               <Plus className="w-4 h-4" />
               <span>Add New User</span>
@@ -253,7 +253,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
                 placeholder="Search user by name, email, or school affiliation..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-slate-50"
+                className="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 bg-slate-50"
               />
             </div>
 
@@ -262,7 +262,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
               <select
                 value={roleFilter}
                 onChange={(e) => setRoleFilter(e.target.value)}
-                className="px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white"
+                className="px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 bg-white"
               >
                 <option value="ALL">All Roles ({users.length})</option>
                 {SYSTEM_ROLES.map(r => (
@@ -293,7 +293,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
                       <tr key={u.id} className="hover:bg-slate-50/70 transition-colors">
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs uppercase shadow-2xs">
+                            <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-xs uppercase shadow-2xs">
                               {u.name.charAt(0)}
                             </div>
                             <div>
@@ -330,7 +330,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
                           <div className="flex items-center justify-end gap-2">
                             <button 
                               onClick={() => openEditModal(u)} 
-                              className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
                               title="Edit user"
                             >
                               <Edit2 className="w-4 h-4" />
@@ -357,7 +357,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
                       </p>
                       <button
                         onClick={openAddModal}
-                        className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-semibold shadow hover:bg-blue-700 transition-all active:scale-95"
+                        className="mt-3 px-4 py-2 bg-purple-600 text-white rounded-xl text-xs font-semibold shadow hover:bg-purple-700 transition-all active:scale-95"
                       >
                         Add New User
                       </button>
@@ -398,7 +398,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
                     onClick={() => setSelectedRoleCard(r.id)}
                     className={`p-3.5 rounded-2xl border text-left transition-all relative overflow-hidden flex flex-col justify-between ${
                       isSelected 
-                        ? 'bg-white border-blue-600 shadow-md ring-2 ring-blue-500/20' 
+                        ? 'bg-white border-purple-600 shadow-md ring-2 ring-purple-500/20' 
                         : 'bg-white hover:bg-slate-50/80 border-slate-200/80 shadow-2xs'
                     }`}
                   >
@@ -420,7 +420,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
                     </div>
 
                     <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px]">
-                      <span className={`font-semibold ${isSelected ? 'text-blue-600' : 'text-slate-400'}`}>
+                      <span className={`font-semibold ${isSelected ? 'text-purple-600' : 'text-slate-400'}`}>
                         {isSelected ? 'Viewing' : 'Inspect'}
                       </span>
                       <ChevronRight className="w-3 h-3 text-slate-400" />
@@ -517,7 +517,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
               <span className="px-2.5 py-1 bg-purple-100/70 text-purple-800 rounded-lg font-mono font-bold text-[10px] border border-purple-200">
                 Superadmin: Master Control
               </span>
-              <span className="px-2.5 py-1 bg-blue-100/70 text-blue-800 rounded-lg font-mono font-bold text-[10px] border border-blue-200">
+              <span className="px-2.5 py-1 bg-purple-100/70 text-purple-800 rounded-lg font-mono font-bold text-[10px] border border-purple-200">
                 Configurable RBAC
               </span>
               <button
@@ -536,7 +536,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
             <div className="p-5 border-b border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
                 <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
-                  <Sliders className="w-4 h-4 text-blue-600" />
+                  <Sliders className="w-4 h-4 text-purple-600" />
                   <span>Granular Role-Based Access Control (RBAC) Matrix</span>
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
@@ -560,7 +560,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
                         <span className="text-[10px] text-purple-600/80 font-medium">Root Authority</span>
                       </div>
                     </th>
-                    <th className="px-4 py-4 text-center text-blue-700">Institute Admin</th>
+                    <th className="px-4 py-4 text-center text-purple-700">Institute Admin</th>
                     <th className="px-4 py-4 text-center text-emerald-700">Teacher</th>
                     <th className="px-4 py-4 text-center text-amber-700">Accountant</th>
                     <th className="px-4 py-4 text-center text-indigo-700">Student</th>
@@ -596,7 +596,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
                           onClick={() => togglePermission(p.id, 'institute_admin')}
                           className={`w-7 h-7 rounded-lg inline-flex items-center justify-center transition-all ${
                             p.institute_admin 
-                              ? 'bg-blue-600 text-white shadow-xs hover:bg-blue-700' 
+                              ? 'bg-purple-600 text-white shadow-xs hover:bg-purple-700' 
                               : 'bg-slate-100 text-slate-300 hover:bg-slate-200 hover:text-slate-500'
                           }`}
                           title={`Institute Admin: ${p.institute_admin ? 'Granted' : 'Revoked'}`}
@@ -692,7 +692,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
+              className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm"
               placeholder="e.g. Dr. Shahida Parveen, Hamza Farooq"
             />
           </div>
@@ -704,7 +704,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
               required
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
+              className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm"
               placeholder="e.g. user@schoolms.edu"
             />
           </div>
@@ -715,7 +715,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
               <select
                 value={formData.role}
                 onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm bg-white font-medium"
+                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm bg-white font-medium"
               >
                 {SYSTEM_ROLES.map(r => (
                   <option key={r.id} value={r.id}>{r.name}</option>
@@ -728,7 +728,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
                 type="text"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
+                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm"
                 placeholder="+92 300 1234567"
               />
             </div>
@@ -740,7 +740,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
               <select
                 value={formData.institute}
                 onChange={(e) => setFormData({ ...formData, institute: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm bg-white"
+                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm bg-white"
               >
                 <option value="">Central Headquarters (Global / Superadmin)</option>
                 {institutes.map(inst => (
@@ -752,7 +752,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
                 type="text"
                 value={formData.institute}
                 onChange={(e) => setFormData({ ...formData, institute: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
+                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm"
                 placeholder="Main Campus"
               />
             )}
@@ -768,7 +768,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
             </button>
             <button 
               type="submit" 
-              className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-xs transition-colors"
+              className="px-5 py-2 text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow-xs transition-colors"
             >
               {editingUser ? 'Update Profile' : 'Save User'}
             </button>

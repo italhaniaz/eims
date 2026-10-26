@@ -287,7 +287,7 @@ export const ModulesControlView = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <Sliders className="w-5 h-5 text-blue-600" />
+            <Sliders className="w-5 h-5 text-purple-600" />
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">Cross-Institute Module Control & Feature Flags</h1>
           </div>
           <p className="text-xs text-slate-500 mt-1">
@@ -311,7 +311,7 @@ export const ModulesControlView = () => {
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Institutes Governed</span>
             <span className="text-xl font-bold text-slate-900 mt-1 block">{institutes.length}</span>
           </div>
-          <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+          <div className="w-9 h-9 rounded-lg bg-[#f5eeff] text-purple-600 flex items-center justify-center">
             <Building2 className="w-5 h-5" />
           </div>
         </div>
@@ -354,11 +354,11 @@ export const ModulesControlView = () => {
             onClick={() => setActiveControlTab('wings')}
             className={`py-3 text-sm font-medium border-b-2 flex items-center gap-2 transition-colors cursor-pointer ${
               activeControlTab === 'wings'
-                ? 'border-blue-600 text-blue-600 font-semibold'
+                ? 'border-purple-600 text-purple-600 font-semibold'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
-            <GraduationCap className="w-4 h-4 text-blue-600" />
+            <GraduationCap className="w-4 h-4 text-purple-600" />
             <span>Educational Wings Matrix (School • College • University)</span>
           </button>
 
@@ -366,7 +366,7 @@ export const ModulesControlView = () => {
             onClick={() => setActiveControlTab('features')}
             className={`py-3 text-sm font-medium border-b-2 flex items-center gap-2 transition-colors cursor-pointer ${
               activeControlTab === 'features'
-                ? 'border-blue-600 text-blue-600 font-semibold'
+                ? 'border-purple-600 text-purple-600 font-semibold'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
@@ -379,9 +379,9 @@ export const ModulesControlView = () => {
       {/* TAB 1: EDUCATIONAL WINGS & TIER MATRIX (DEFAULT) */}
       {activeControlTab === 'wings' && (
         <div className="space-y-4">
-          <div className="bg-gradient-to-r from-blue-50/80 via-indigo-50/50 to-white border border-blue-200/80 rounded-2xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 shadow-2xs">
+          <div className="bg-gradient-to-r from-[#f5eeff] via-indigo-50/50 to-white border border-purple-200/80 rounded-2xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 shadow-2xs">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <div className="w-9 h-9 rounded-xl bg-purple-600 text-white flex items-center justify-center shrink-0 shadow-xs">
                 <School className="w-4 h-4" />
               </div>
               <div>
@@ -446,7 +446,7 @@ export const ModulesControlView = () => {
 
                           {/* Plan Badge */}
                           <td className="py-3.5 px-3">
-                            <span className="inline-flex px-2 py-0.5 rounded-md text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                            <span className="inline-flex px-2 py-0.5 rounded-md text-[11px] font-bold bg-[#f5eeff] text-purple-700 border border-purple-200">
                               {inst.planTier || 'School Plan'}
                             </span>
                           </td>
@@ -458,7 +458,7 @@ export const ModulesControlView = () => {
                               onClick={() => handleToggleWing(inst.id, 'school')}
                               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs ${
                                 isSchoolOn
-                                  ? 'bg-blue-600 text-white hover:bg-blue-700 ring-2 ring-blue-500/20'
+                                  ? 'bg-purple-600 text-white hover:bg-purple-700 ring-2 ring-purple-500/20'
                                   : 'bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600'
                               }`}
                               title={isSchoolOn ? 'School Wing Active (Click to disable)' : 'School Wing Disabled (Click to activate)'}
@@ -525,7 +525,7 @@ export const ModulesControlView = () => {
                             <button
                               type="button"
                               onClick={() => handleOpenWingsModal(inst)}
-                              className="px-2.5 py-1.5 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 rounded-lg text-xs font-semibold border border-slate-200 transition-colors cursor-pointer"
+                              className="px-2.5 py-1.5 bg-slate-100 hover:bg-purple-50 text-slate-700 hover:text-purple-700 rounded-lg text-xs font-semibold border border-slate-200 transition-colors cursor-pointer"
                             >
                               Configure
                             </button>
@@ -551,9 +551,9 @@ export const ModulesControlView = () => {
       {activeControlTab === 'features' && (
         <div className="space-y-4">
       {/* Bulk Action Controls Bar */}
-      <div className="bg-gradient-to-r from-blue-50/80 via-indigo-50/60 to-white border border-blue-200/80 rounded-2xl p-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 shadow-2xs">
+      <div className="bg-gradient-to-r from-[#f5eeff] via-indigo-50/60 to-white border border-purple-200/80 rounded-2xl p-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 shadow-2xs">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0">
+          <div className="w-8 h-8 rounded-lg bg-purple-600 text-white flex items-center justify-center shrink-0">
             <Sparkles className="w-4 h-4" />
           </div>
           <div>
@@ -584,7 +584,7 @@ export const ModulesControlView = () => {
 
           <button
             onClick={handleBulkApply}
-            className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-sm transition-all cursor-pointer"
+            className="px-4 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-lg shadow-sm transition-all cursor-pointer"
           >
             Apply to Filtered ({filteredInstitutes.length})
           </button>
@@ -600,7 +600,7 @@ export const ModulesControlView = () => {
             placeholder="Search institute name or code..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            className="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
           />
         </div>
 
@@ -668,7 +668,7 @@ export const ModulesControlView = () => {
                       <td className="py-3 px-3 text-center border-r border-slate-100">
                         <button
                           onClick={() => openQuotaModal(inst)}
-                          className="px-2 py-1 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 rounded-md font-bold text-[11px] transition-colors border border-slate-200"
+                          className="px-2 py-1 bg-slate-100 hover:bg-purple-50 text-slate-700 hover:text-purple-700 rounded-md font-bold text-[11px] transition-colors border border-slate-200"
                           title="Configure Max Students, Users, Storage"
                         >
                           <Edit3 className="w-3 h-3 inline mr-1" />
@@ -721,7 +721,7 @@ export const ModulesControlView = () => {
           maxWidth="max-w-lg"
         >
           <form onSubmit={handleSaveWingsAndPlan} className="space-y-4">
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-900">
+            <div className="p-3 bg-[#f5eeff] border border-purple-200 rounded-xl text-xs text-purple-900">
               Select which educational wings are licensed for <strong>{wingsTargetInstitute.name}</strong>. Unselected wings will be disabled across the portal.
             </div>
 
@@ -733,12 +733,12 @@ export const ModulesControlView = () => {
                 onClick={() => handleToggleWingInForm('school')}
                 className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
                   wingsForm.enabledTiers.includes('school')
-                    ? 'bg-blue-50/70 border-blue-300 ring-1 ring-blue-500/20'
+                    ? 'bg-[#f5eeff]/70 border-purple-300 ring-1 ring-purple-500/20'
                     : 'bg-white border-slate-200 hover:bg-slate-50'
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
+                  <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center font-bold">
                     <School className="w-4 h-4" />
                   </div>
                   <div>
@@ -750,7 +750,7 @@ export const ModulesControlView = () => {
                   type="checkbox" 
                   checked={wingsForm.enabledTiers.includes('school')} 
                   onChange={() => {}} 
-                  className="w-4 h-4 rounded text-blue-600 pointer-events-none"
+                  className="w-4 h-4 rounded text-purple-600 pointer-events-none"
                 />
               </div>
 
@@ -830,7 +830,7 @@ export const ModulesControlView = () => {
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm cursor-pointer"
+                className="px-5 py-2 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow-sm cursor-pointer"
               >
                 Save Wing Licenses
               </button>
@@ -860,7 +860,7 @@ export const ModulesControlView = () => {
                   step="50"
                   value={quotaForm.quotaStudents}
                   onChange={(e) => setQuotaForm({ ...quotaForm, quotaStudents: parseInt(e.target.value) || 0 })}
-                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-bold"
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 font-bold"
                 />
               </div>
 
@@ -872,7 +872,7 @@ export const ModulesControlView = () => {
                   step="5"
                   value={quotaForm.quotaUsers}
                   onChange={(e) => setQuotaForm({ ...quotaForm, quotaUsers: parseInt(e.target.value) || 0 })}
-                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-bold"
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 font-bold"
                 />
               </div>
             </div>
@@ -886,7 +886,7 @@ export const ModulesControlView = () => {
                   max="50"
                   value={quotaForm.quotaCampuses}
                   onChange={(e) => setQuotaForm({ ...quotaForm, quotaCampuses: parseInt(e.target.value) || 1 })}
-                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-bold"
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 font-bold"
                 />
               </div>
 
@@ -898,7 +898,7 @@ export const ModulesControlView = () => {
                   step="512"
                   value={quotaForm.quotaStorageMb}
                   onChange={(e) => setQuotaForm({ ...quotaForm, quotaStorageMb: parseInt(e.target.value) || 512 })}
-                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-bold"
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 font-bold"
                 />
               </div>
             </div>
@@ -913,7 +913,7 @@ export const ModulesControlView = () => {
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm"
+                className="px-5 py-2 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow-sm"
               >
                 Save Quotas
               </button>

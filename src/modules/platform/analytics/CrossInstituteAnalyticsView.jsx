@@ -113,7 +113,7 @@ const CrossInstituteAnalyticsView = () => {
     return (
       <div className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto flex items-center justify-center min-h-[400px]">
         <div className="text-center space-y-3">
-          <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <div className="w-8 h-8 border-3 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
           <p className="text-sm font-medium text-slate-500">Aggregating cross-institute telemetry & audit metrics...</p>
         </div>
       </div>
@@ -140,7 +140,7 @@ const CrossInstituteAnalyticsView = () => {
       {/* Header Banner */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-[#1b253d] to-[#151f38] text-white p-6 rounded-2xl shadow-sm border border-slate-800">
         <div>
-          <div className="flex items-center gap-2.5 text-blue-400 font-semibold text-xs uppercase tracking-wider mb-1">
+          <div className="flex items-center gap-2.5 text-purple-600 font-semibold text-xs uppercase tracking-wider mb-1">
             <BarChart3 className="w-4 h-4" />
             Multi-Campus Telemetry & Intelligence
           </div>
@@ -162,7 +162,7 @@ const CrossInstituteAnalyticsView = () => {
 
           <button
             onClick={() => setIsPrintModalOpen(true)}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs sm:text-sm shadow-sm transition-colors cursor-pointer"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-medium text-xs sm:text-sm shadow-sm transition-colors cursor-pointer"
           >
             <Printer className="w-4 h-4" />
             <span>Print Executive Briefing</span>
@@ -266,14 +266,14 @@ const CrossInstituteAnalyticsView = () => {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-white p-4.5 rounded-2xl border border-blue-200/80 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-blue-500/20 text-blue-600 flex items-center justify-center shrink-0">
+        <div className="bg-gradient-to-br from-purple-500/10 via-purple-500/5 to-white p-4.5 rounded-2xl border border-purple-200/80 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-[#f5eeff]0/20 text-purple-600 flex items-center justify-center shrink-0">
             <Building className="w-6 h-6" />
           </div>
           <div className="min-w-0">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-blue-800 block">Largest Student Population</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-purple-800 block">Largest Student Population</span>
             <h4 className="text-sm font-bold text-slate-800 truncate">{topPerformers.largestEnrollment?.name}</h4>
-            <span className="text-xs font-semibold text-blue-700">{topPerformers.largestEnrollment?.studentCount.toLocaleString()} Enrolled Students</span>
+            <span className="text-xs font-semibold text-purple-700">{topPerformers.largestEnrollment?.studentCount.toLocaleString()} Enrolled Students</span>
           </div>
         </div>
       </div>
@@ -319,7 +319,7 @@ const CrossInstituteAnalyticsView = () => {
             placeholder="Search institute or code..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
+            className="w-full pl-9 pr-4 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white"
           />
         </div>
       </div>
@@ -408,7 +408,7 @@ const CrossInstituteAnalyticsView = () => {
                       <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
                         <div
                           className={`h-full rounded-full ${
-                            inst.attendanceRate >= 90 ? 'bg-emerald-500' : inst.attendanceRate >= 80 ? 'bg-blue-500' : 'bg-amber-500'
+                            inst.attendanceRate >= 90 ? 'bg-emerald-500' : inst.attendanceRate >= 80 ? 'bg-[#f5eeff]0' : 'bg-amber-500'
                           }`}
                           style={{ width: `${Math.min(100, inst.attendanceRate)}%` }}
                         />
@@ -439,7 +439,7 @@ const CrossInstituteAnalyticsView = () => {
                         inst.health === 'Excellent'
                           ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                           : inst.health === 'Good'
-                          ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                          ? 'bg-[#f5eeff] text-purple-700 border border-purple-200'
                           : 'bg-amber-50 text-amber-700 border border-amber-200'
                       }`}
                     >
@@ -459,7 +459,7 @@ const CrossInstituteAnalyticsView = () => {
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-              <Percent className="w-4 h-4 text-blue-600" />
+              <Percent className="w-4 h-4 text-purple-600" />
               Attendance Performance Distribution (%)
             </h4>
             <span className="text-xs text-slate-400">Target: ≥ 90%</span>
@@ -475,7 +475,7 @@ const CrossInstituteAnalyticsView = () => {
                 <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all duration-500 ${
-                      inst.attendanceRate >= 90 ? 'bg-gradient-to-r from-blue-500 to-emerald-500' : 'bg-blue-500'
+                      inst.attendanceRate >= 90 ? 'bg-gradient-to-r from-blue-500 to-emerald-500' : 'bg-[#f5eeff]0'
                     }`}
                     style={{ width: `${inst.attendanceRate}%` }}
                   />
@@ -527,7 +527,7 @@ const CrossInstituteAnalyticsView = () => {
             {/* Modal Header */}
             <div className="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
               <div className="flex items-center gap-2.5">
-                <Printer className="w-5 h-5 text-blue-600" />
+                <Printer className="w-5 h-5 text-purple-600" />
                 <h3 className="font-bold text-slate-800 text-sm sm:text-base">Printable Multi-Campus Executive Briefing</h3>
               </div>
               <button
@@ -543,7 +543,7 @@ const CrossInstituteAnalyticsView = () => {
               {/* Document Header */}
               <div className="border-b-2 border-slate-900 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <div className="text-xs uppercase tracking-widest font-bold text-blue-700">Confidential Executive Intelligence</div>
+                  <div className="text-xs uppercase tracking-widest font-bold text-purple-700">Confidential Executive Intelligence</div>
                   <h2 className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5">Educational Institute Management System</h2>
                   <p className="text-xs text-slate-600 mt-1">Central Oversight & Cross-Institute Performance Briefing</p>
                 </div>
@@ -562,7 +562,7 @@ const CrossInstituteAnalyticsView = () => {
                 </div>
                 <div>
                   <span className="text-[11px] text-slate-500 uppercase font-semibold block">Combined Student Body</span>
-                  <span className="text-lg font-bold text-blue-700">{summary.totalStudents.toLocaleString()}</span>
+                  <span className="text-lg font-bold text-purple-700">{summary.totalStudents.toLocaleString()}</span>
                 </div>
                 <div>
                   <span className="text-[11px] text-slate-500 uppercase font-semibold block">Avg Attendance Rate</span>
@@ -631,7 +631,7 @@ const CrossInstituteAnalyticsView = () => {
                   window.print()
                   setIsPrintModalOpen(false)
                 }}
-                className="flex items-center gap-2 px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs sm:text-sm shadow-sm transition-colors cursor-pointer"
+                className="flex items-center gap-2 px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs sm:text-sm shadow-sm transition-colors cursor-pointer"
               >
                 <Printer className="w-4 h-4" />
                 <span>Print / Save as PDF</span>
@@ -656,7 +656,7 @@ const CrossInstituteAnalyticsView = () => {
               required
               value={scheduleForm.title}
               onChange={(e) => setScheduleForm({ ...scheduleForm, title: e.target.value })}
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none"
             />
           </div>
 
@@ -666,7 +666,7 @@ const CrossInstituteAnalyticsView = () => {
               <select
                 value={scheduleForm.frequency}
                 onChange={(e) => setScheduleForm({ ...scheduleForm, frequency: e.target.value })}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
+                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none bg-white"
               >
                 <option value="DAILY">Daily (Morning 08:00 PKT)</option>
                 <option value="WEEKLY">Weekly (Every Monday)</option>
@@ -678,7 +678,7 @@ const CrossInstituteAnalyticsView = () => {
               <select
                 value={scheduleForm.format}
                 onChange={(e) => setScheduleForm({ ...scheduleForm, format: e.target.value })}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
+                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none bg-white"
               >
                 <option value="PDF">PDF Executive Briefing</option>
                 <option value="CSV">Raw CSV Multi-Sheet Data</option>
@@ -693,12 +693,12 @@ const CrossInstituteAnalyticsView = () => {
               required
               value={scheduleForm.recipients}
               onChange={(e) => setScheduleForm({ ...scheduleForm, recipients: e.target.value })}
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none"
               placeholder="admin@schoolms.com, ceo@sms.edu"
             />
           </div>
 
-          <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-800 space-y-1">
+          <div className="p-3 bg-[#f5eeff] border border-purple-200 rounded-xl text-xs text-purple-800 space-y-1">
             <span className="font-semibold block">Automated Dispatch Protocol</span>
             <p>Reports are generated in background cron and dispatched via the configured SMTP gateway in PKR values.</p>
           </div>
@@ -713,7 +713,7 @@ const CrossInstituteAnalyticsView = () => {
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs sm:text-sm shadow-sm transition-colors cursor-pointer"
+              className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs sm:text-sm shadow-sm transition-colors cursor-pointer"
             >
               Confirm Schedule
             </button>

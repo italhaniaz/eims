@@ -88,7 +88,7 @@ const SystemHealthView = () => {
     return (
       <div className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto flex items-center justify-center min-h-[400px]">
         <div className="text-center space-y-3">
-          <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <div className="w-8 h-8 border-3 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
           <p className="text-sm font-medium text-slate-500">Querying Express cluster & database telemetry...</p>
         </div>
       </div>
@@ -203,7 +203,7 @@ const SystemHealthView = () => {
             onClick={() => setActiveTab('overview')}
             className={`py-3 border-b-2 flex items-center gap-2 transition-colors cursor-pointer shrink-0 ${
               activeTab === 'overview'
-                ? 'border-blue-600 text-blue-600 font-semibold'
+                ? 'border-purple-600 text-purple-600 font-semibold'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
@@ -215,7 +215,7 @@ const SystemHealthView = () => {
             onClick={() => setActiveTab('storage')}
             className={`py-3 border-b-2 flex items-center gap-2 transition-colors cursor-pointer shrink-0 ${
               activeTab === 'storage'
-                ? 'border-blue-600 text-blue-600 font-semibold'
+                ? 'border-purple-600 text-purple-600 font-semibold'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
@@ -227,7 +227,7 @@ const SystemHealthView = () => {
             onClick={() => setActiveTab('errors')}
             className={`py-3 border-b-2 flex items-center gap-2 transition-colors cursor-pointer shrink-0 ${
               activeTab === 'errors'
-                ? 'border-blue-600 text-blue-600 font-semibold'
+                ? 'border-purple-600 text-purple-600 font-semibold'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
@@ -262,7 +262,7 @@ const SystemHealthView = () => {
 
               <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
+                  <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center font-bold">
                     <Server className="w-4 h-4" />
                   </div>
                   <div>
@@ -363,7 +363,7 @@ const SystemHealthView = () => {
                         </div>
                         <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
                           <div
-                            className="bg-blue-600 h-full rounded-full"
+                            className="bg-purple-600 h-full rounded-full"
                             style={{ width: `${Math.min(100, item.usagePercent * 10)}%` }}
                           />
                         </div>
@@ -393,7 +393,7 @@ const SystemHealthView = () => {
                   onClick={() => setSeverityFilter(sev)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
                     severityFilter === sev
-                      ? 'bg-blue-600 text-white shadow-xs'
+                      ? 'bg-purple-600 text-white shadow-xs'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
@@ -410,7 +410,7 @@ const SystemHealthView = () => {
                   placeholder="Search error messages..."
                   value={errorSearch}
                   onChange={(e) => setErrorSearch(e.target.value)}
-                  className="w-full pl-9 pr-4 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
+                  className="w-full pl-9 pr-4 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white"
                 />
               </div>
 
@@ -447,7 +447,7 @@ const SystemHealthView = () => {
                                 ? 'bg-rose-100 text-rose-800'
                                 : err.severity === 'WARNING'
                                 ? 'bg-amber-100 text-amber-800'
-                                : 'bg-blue-100 text-blue-800'
+                                : 'bg-purple-100 text-purple-800'
                             }`}
                           >
                             {err.severity}
@@ -464,7 +464,7 @@ const SystemHealthView = () => {
                           {err.stackTrace && (
                             <button
                               onClick={() => setSelectedError(err)}
-                              className="text-xs text-blue-600 hover:underline font-semibold cursor-pointer"
+                              className="text-xs text-purple-600 hover:underline font-semibold cursor-pointer"
                             >
                               Stack Trace
                             </button>

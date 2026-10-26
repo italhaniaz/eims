@@ -342,7 +342,7 @@ const SubscriptionsBillingView = () => {
     return (
       <div className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto flex items-center justify-center min-h-[400px]">
         <div className="text-center space-y-3">
-          <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <div className="w-8 h-8 border-3 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
           <p className="text-sm font-medium text-slate-500">Loading multi-campus billing ledgers & subscription quotas...</p>
         </div>
       </div>
@@ -369,7 +369,7 @@ const SubscriptionsBillingView = () => {
       {/* Header Banner */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-[#1b253d] to-[#151f38] text-white p-6 rounded-2xl shadow-sm border border-slate-800">
         <div>
-          <div className="flex items-center gap-2.5 text-blue-400 font-semibold text-xs uppercase tracking-wider mb-1">
+          <div className="flex items-center gap-2.5 text-purple-600 font-semibold text-xs uppercase tracking-wider mb-1">
             <CreditCard className="w-4 h-4" />
             Platform Monetization & Plan Governance
           </div>
@@ -382,7 +382,7 @@ const SubscriptionsBillingView = () => {
         <div className="flex items-center gap-3">
           <button
             onClick={handleOpenCreatePlan}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs sm:text-sm shadow-sm transition-colors cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs sm:text-sm shadow-sm transition-colors cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Create New Plan</span>
@@ -487,7 +487,7 @@ const SubscriptionsBillingView = () => {
             onClick={() => setActiveTab('plans')}
             className={`py-3 text-sm font-medium border-b-2 flex items-center gap-2 transition-colors cursor-pointer ${
               activeTab === 'plans'
-                ? 'border-blue-600 text-blue-600 font-semibold'
+                ? 'border-purple-600 text-purple-600 font-semibold'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
@@ -502,7 +502,7 @@ const SubscriptionsBillingView = () => {
             }}
             className={`py-3 text-sm font-medium border-b-2 flex items-center gap-2 transition-colors cursor-pointer ${
               activeTab === 'subscriptions'
-                ? 'border-blue-600 text-blue-600 font-semibold'
+                ? 'border-purple-600 text-purple-600 font-semibold'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
@@ -517,7 +517,7 @@ const SubscriptionsBillingView = () => {
             }}
             className={`py-3 text-sm font-medium border-b-2 flex items-center gap-2 transition-colors cursor-pointer ${
               activeTab === 'invoices'
-                ? 'border-blue-600 text-blue-600 font-semibold'
+                ? 'border-purple-600 text-purple-600 font-semibold'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
@@ -539,7 +539,7 @@ const SubscriptionsBillingView = () => {
                   onClick={() => setStatusFilter(status)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
                     statusFilter === status
-                      ? 'bg-blue-600 text-white shadow-xs'
+                      ? 'bg-purple-600 text-white shadow-xs'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
@@ -555,7 +555,7 @@ const SubscriptionsBillingView = () => {
                 placeholder="Search institute or plan..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
+                className="w-full pl-9 pr-4 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white"
               />
             </div>
           </div>
@@ -584,7 +584,7 @@ const SubscriptionsBillingView = () => {
                         <div className="flex items-center gap-1 mt-1">
                           {(sub.enabledTiers || ['school']).map(tier => (
                             <span key={tier} className={`text-[9px] font-bold px-1.5 py-0.2 rounded uppercase tracking-wider ${
-                              tier === 'school' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                              tier === 'school' ? 'bg-[#f5eeff] text-purple-700 border border-purple-200' :
                               tier === 'college' ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' :
                               'bg-purple-50 text-purple-700 border border-purple-200'
                             }`}>
@@ -620,7 +620,7 @@ const SubscriptionsBillingView = () => {
                           </span>
                         )}
                         {sub.extendedUntil && !sub.isWaived && (
-                          <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-1.5 py-0.2 rounded inline-block mt-0.5">
+                          <span className="text-[10px] font-bold text-purple-700 bg-purple-100 px-1.5 py-0.2 rounded inline-block mt-0.5">
                             Grace: {sub.extendedUntil}
                           </span>
                         )}
@@ -638,7 +638,7 @@ const SubscriptionsBillingView = () => {
                               : sub.status === 'ACTIVE'
                               ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                               : sub.status === 'TRIAL'
-                              ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                              ? 'bg-[#f5eeff] text-purple-700 border border-purple-200'
                               : 'bg-rose-50 text-rose-700 border border-rose-200'
                           }`}
                         >
@@ -662,10 +662,10 @@ const SubscriptionsBillingView = () => {
                           <button
                             type="button"
                             onClick={() => handleOpenExtendModal(sub)}
-                            className="px-2 py-1 text-xs rounded-lg bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 font-semibold transition-colors cursor-pointer flex items-center gap-1"
+                            className="px-2 py-1 text-xs rounded-lg bg-[#f5eeff] text-purple-700 border border-purple-200 hover:bg-purple-100 font-semibold transition-colors cursor-pointer flex items-center gap-1"
                             title="Extend payment due date"
                           >
-                            <CalendarPlus className="w-3 h-3 text-blue-600" />
+                            <CalendarPlus className="w-3 h-3 text-purple-600" />
                             <span>Extend</span>
                           </button>
 
@@ -712,7 +712,7 @@ const SubscriptionsBillingView = () => {
             </div>
             <button
               onClick={handleOpenCreatePlan}
-              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-xs transition-colors cursor-pointer"
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs shadow-xs transition-colors cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Create Custom Tier</span>
@@ -728,11 +728,11 @@ const SubscriptionsBillingView = () => {
 
               const tierThemes = {
                 'School': {
-                  cardBorder: 'border-blue-200 hover:border-blue-400 hover:shadow-md',
-                  badgeBg: 'bg-blue-50 text-blue-700 border-blue-200',
+                  cardBorder: 'border-purple-200 hover:border-blue-400 hover:shadow-md',
+                  badgeBg: 'bg-[#f5eeff] text-purple-700 border-purple-200',
                   icon: School,
-                  iconBg: 'bg-blue-100 text-blue-600',
-                  btnStyle: 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200',
+                  iconBg: 'bg-purple-100 text-purple-600',
+                  btnStyle: 'bg-[#f5eeff] hover:bg-purple-100 text-purple-700 border-purple-200',
                   wings: 'School Wing (Primary to Matric / O-Levels)'
                 },
                 'College': {
@@ -790,7 +790,7 @@ const SubscriptionsBillingView = () => {
                       <div className="flex items-center gap-0.5">
                         <button
                           onClick={() => handleOpenEditPlan(plan)}
-                          className="p-1 rounded-md text-slate-400 hover:text-blue-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                          className="p-1 rounded-md text-slate-400 hover:text-purple-600 hover:bg-slate-100 transition-colors cursor-pointer"
                           title="Edit Pricing & Limits"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
@@ -893,7 +893,7 @@ const SubscriptionsBillingView = () => {
                   onClick={() => setStatusFilter(status)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
                     statusFilter === status
-                      ? 'bg-blue-600 text-white shadow-xs'
+                      ? 'bg-purple-600 text-white shadow-xs'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
@@ -909,7 +909,7 @@ const SubscriptionsBillingView = () => {
                 placeholder="Search invoice number or institute..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
+                className="w-full pl-9 pr-4 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white"
               />
             </div>
           </div>
@@ -1017,7 +1017,7 @@ const SubscriptionsBillingView = () => {
                 required
                 value={planForm.name}
                 onChange={(e) => setPlanForm({ ...planForm, name: e.target.value })}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none"
                 placeholder="e.g. Campus Pro"
               />
             </div>
@@ -1026,7 +1026,7 @@ const SubscriptionsBillingView = () => {
               <select
                 value={planForm.tier}
                 onChange={(e) => setPlanForm({ ...planForm, tier: e.target.value })}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
+                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none bg-white"
               >
                 <option value="Basic">Basic Tier</option>
                 <option value="Pro">Professional Tier</option>
@@ -1044,7 +1044,7 @@ const SubscriptionsBillingView = () => {
                 min="0"
                 value={planForm.pricePKR}
                 onChange={(e) => setPlanForm({ ...planForm, pricePKR: e.target.value })}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono"
+                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none font-mono"
               />
             </div>
             <div>
@@ -1052,7 +1052,7 @@ const SubscriptionsBillingView = () => {
               <select
                 value={planForm.billingCycle}
                 onChange={(e) => setPlanForm({ ...planForm, billingCycle: e.target.value })}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
+                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none bg-white"
               >
                 <option value="monthly">Monthly Cycle</option>
                 <option value="annual">Annual Prepaid</option>
@@ -1113,7 +1113,7 @@ const SubscriptionsBillingView = () => {
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs sm:text-sm shadow-sm transition-colors cursor-pointer"
+              className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs sm:text-sm shadow-sm transition-colors cursor-pointer"
             >
               {editingPlan ? 'Save Plan Updates' : 'Publish Plan'}
             </button>
@@ -1175,8 +1175,8 @@ const SubscriptionsBillingView = () => {
         maxWidth="max-w-md"
       >
         <form onSubmit={handleConfirmExtend} className="space-y-4">
-          <div className="p-3.5 bg-blue-50 rounded-xl border border-blue-200 flex items-start gap-3">
-            <Clock className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+          <div className="p-3.5 bg-[#f5eeff] rounded-xl border border-purple-200 flex items-start gap-3">
+            <Clock className="w-5 h-5 text-purple-600 shrink-0 mt-0.5" />
             <div className="text-xs text-blue-900">
               <span className="font-bold block">Grace Period Extension</span>
               Current renewal date for <strong>{extendingSub?.instituteName}</strong> is <strong>{extendingSub?.renewalDate}</strong>.
@@ -1193,7 +1193,7 @@ const SubscriptionsBillingView = () => {
                   onClick={() => handleSelectDays(days)}
                   className={`py-2 rounded-xl border text-xs font-bold transition-all ${
                     extendDays === days
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                      ? 'bg-purple-600 text-white border-purple-600 shadow-xs'
                       : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                   }`}
                 >
@@ -1210,7 +1210,7 @@ const SubscriptionsBillingView = () => {
               required
               value={customExtendDate}
               onChange={(e) => setCustomExtendDate(e.target.value)}
-              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none"
             />
           </div>
 
@@ -1224,7 +1224,7 @@ const SubscriptionsBillingView = () => {
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm transition-colors cursor-pointer"
+              className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-sm transition-colors cursor-pointer"
             >
               Save New Deadline
             </button>
@@ -1415,7 +1415,7 @@ const SubscriptionsBillingView = () => {
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm"
+                className="px-4 py-2 text-xs font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow-sm"
               >
                 Issue Invoice
               </button>

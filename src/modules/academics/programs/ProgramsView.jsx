@@ -69,7 +69,7 @@ export const ProgramsView = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-blue-600" />
+            <BookOpen className="w-5 h-5 text-purple-600" />
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">Academic Programs</h1>
           </div>
           <p className="text-xs text-slate-500 mt-1">Manage curricular streams: Pre-Medical, Pre-Engineering, ICS, Commerce</p>
@@ -77,7 +77,7 @@ export const ProgramsView = () => {
 
         <button
           onClick={openAddModal}
-          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium shadow-sm transition-all"
+          className="flex items-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium shadow-sm transition-all"
         >
           <Plus className="w-4 h-4" />
           <span>Add New Program</span>
@@ -93,7 +93,7 @@ export const ProgramsView = () => {
               placeholder="Search programs..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
             />
           </div>
         </div>
@@ -117,11 +117,11 @@ export const ProgramsView = () => {
                   <td className="px-6 py-4 font-mono text-xs text-slate-600">
                     <span className="px-2 py-0.5 bg-slate-100 rounded">{p.code}</span>
                   </td>
-                  <td className="px-6 py-4 text-xs font-medium text-blue-600">{type?.name || 'Higher Secondary'}</td>
+                  <td className="px-6 py-4 text-xs font-medium text-purple-600">{type?.name || 'Higher Secondary'}</td>
                   <td className="px-6 py-4 text-xs text-slate-600">{p.duration || '2 Years'}</td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <button onClick={() => openEditModal(p)} className="p-1.5 text-slate-400 hover:text-blue-600">
+                      <button onClick={() => openEditModal(p)} className="p-1.5 text-slate-400 hover:text-purple-600">
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button onClick={() => handleDelete(p.id)} className="p-1.5 text-slate-400 hover:text-rose-600">
@@ -180,7 +180,7 @@ export const ProgramsView = () => {
           </div>
           <div className="flex justify-end gap-3 pt-3 border-t">
             <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm text-slate-600">Cancel</button>
-            <button type="submit" className="px-5 py-2 text-sm text-white bg-blue-600 rounded-lg">Save</button>
+            <button type="submit" className="px-5 py-2 text-sm text-white bg-purple-600 rounded-lg">Save</button>
           </div>
         </form>
       </Modal>

@@ -61,7 +61,7 @@ export const ProgramTypesView = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <Layers className="w-5 h-5 text-blue-600" />
+            <Layers className="w-5 h-5 text-purple-600" />
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">Program Types</h1>
           </div>
           <p className="text-xs text-slate-500 mt-1">Configure degree levels: Secondary, Higher Secondary, Cambridge O/A Levels</p>
@@ -69,7 +69,7 @@ export const ProgramTypesView = () => {
 
         <button
           onClick={openAddModal}
-          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium shadow-sm transition-all"
+          className="flex items-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium shadow-sm transition-all"
         >
           <Plus className="w-4 h-4" />
           <span>Add Program Type</span>
@@ -80,7 +80,7 @@ export const ProgramTypesView = () => {
         {filtered.map(t => (
           <div key={t.id} className="bg-white rounded-xl p-5 border border-slate-100 shadow-sm flex flex-col justify-between">
             <div>
-              <span className="font-mono text-xs px-2 py-0.5 bg-blue-50 text-blue-700 font-bold rounded">
+              <span className="font-mono text-xs px-2 py-0.5 bg-[#f5eeff] text-purple-700 font-bold rounded">
                 {t.code}
               </span>
               <h3 className="text-base font-bold text-slate-800 mt-3">{t.name}</h3>
@@ -89,7 +89,7 @@ export const ProgramTypesView = () => {
             <div className="mt-4 pt-3 border-t border-slate-50 flex items-center justify-between">
               <span className="text-[11px] text-slate-500 uppercase font-medium">{t.level}</span>
               <div className="flex gap-1">
-                <button onClick={() => openEditModal(t)} className="p-1 text-slate-400 hover:text-blue-600">
+                <button onClick={() => openEditModal(t)} className="p-1 text-slate-400 hover:text-purple-600">
                   <Edit2 className="w-4 h-4" />
                 </button>
                 <button onClick={() => handleDelete(t.id)} className="p-1 text-slate-400 hover:text-rose-600">
@@ -144,7 +144,7 @@ export const ProgramTypesView = () => {
           </div>
           <div className="flex justify-end gap-3 pt-3 border-t">
             <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm text-slate-600">Cancel</button>
-            <button type="submit" className="px-5 py-2 text-sm text-white bg-blue-600 rounded-lg">Save</button>
+            <button type="submit" className="px-5 py-2 text-sm text-white bg-purple-600 rounded-lg">Save</button>
           </div>
         </form>
       </Modal>

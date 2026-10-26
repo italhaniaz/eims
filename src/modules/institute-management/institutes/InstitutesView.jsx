@@ -1,5 +1,7 @@
 import React, { useState, useMemo } from 'react'
 import { 
+  LayoutGrid,
+  List,
   Building2, 
   Plus, 
   Search, 
@@ -75,7 +77,8 @@ export const InstitutesView = () => {
   // Search & Filter
   const [searchTerm, setSearchTerm] = useState('')
   const [lifecycleFilter, setLifecycleFilter] = useState('ALL') // ALL, Active, Suspended, Archived
-  const [typeFilter, setTypeFilter] = useState('ALL') // ALL, School, College, University
+  const [typeFilter, setTypeFilter] = useState('ALL')
+  const [viewMode, setViewMode] = useState('grid') // 'grid' | 'table' // ALL, School, College, University
 
   // Sorting & Pagination
   const [sortField, setSortField] = useState('name')
@@ -559,7 +562,7 @@ export const InstitutesView = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <Building2 className="w-5 h-5 text-blue-600" />
+            <Building2 className="w-5 h-5 text-purple-600" />
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">Institutes Lifecycle & Campuses</h1>
           </div>
           <p className="text-xs text-slate-500 mt-1">
@@ -570,7 +573,7 @@ export const InstitutesView = () => {
         <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={exportInstitutesCSV}
-            className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold border border-slate-200/80 shadow-2xs transition-all cursor-pointer"
             title="Export institutes to CSV"
           >
             <Download className="w-3.5 h-3.5" />
@@ -579,7 +582,7 @@ export const InstitutesView = () => {
 
           <button
             onClick={() => setIsBackupModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-lg text-xs font-bold shadow-sm transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-[#f5eeff] hover:bg-[#ede0fe] text-purple-700 border border-purple-200/60 rounded-xl text-xs font-semibold shadow-2xs transition-all cursor-pointer"
             title="One-Click Campus Snapshot & Disaster Recovery"
           >
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-200" />
@@ -588,7 +591,7 @@ export const InstitutesView = () => {
 
           <button
             onClick={openOnboardingWizard}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-sm transition-all cursor-pointer active:scale-95"
+            className="flex items-center gap-2 px-4.5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-semibold shadow-xs transition-all cursor-pointer active:scale-95"
           >
             <Plus className="w-4 h-4" />
             <span>Onboard New Institute (Wizard)</span>
@@ -597,10 +600,10 @@ export const InstitutesView = () => {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+      <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
         {/* Search */}
         <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-purple-600 absolute left-3.5 top-1/2 -translate-y-1/2 stroke-[2.2]" />
           <input
             type="text"
             placeholder="Search by institute name, code, or city..."
@@ -609,7 +612,7 @@ export const InstitutesView = () => {
               setSearchTerm(e.target.value)
               setCurrentPage(1)
             }}
-            className="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm rounded-full bg-[#f8fafc] border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all placeholder-slate-400"
           />
         </div>
 
@@ -651,7 +654,35 @@ export const InstitutesView = () => {
             </select>
           </div>
 
-          <span className="text-xs font-semibold bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg whitespace-nowrap">
+          {/* View Mode Toggle */}
+          <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200/60">
+            <button
+              type="button"
+              onClick={() => setViewMode('grid')}
+              className={`p-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                viewMode === 'grid'
+                  ? 'bg-white text-purple-700 shadow-2xs'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+              title="Cards Grid View"
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('table')}
+              className={`p-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                viewMode === 'table'
+                  ? 'bg-white text-purple-700 shadow-2xs'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+              title="Table View"
+            >
+              <List className="w-4 h-4" />
+            </button>
+          </div>
+
+          <span className="text-xs font-bold bg-[#f5eeff] text-purple-700 border border-purple-100 px-3.5 py-2 rounded-xl whitespace-nowrap">
             Total: {totalInstitutes}
           </span>
         </div>
@@ -660,7 +691,10 @@ export const InstitutesView = () => {
       {/* Institutes Cards Grid */}
       {paginatedInstitutes.length > 0 ? (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          
+          {viewMode === 'grid' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
             {paginatedInstitutes.map((inst) => {
               const instLifecycle = inst.lifecycleStatus || (inst.status === 'Suspended' ? 'Suspended' : 'Active')
               const isSuspended = instLifecycle === 'Suspended'
@@ -669,17 +703,14 @@ export const InstitutesView = () => {
               return (
                 <div 
                   key={inst.id} 
-                  className={`bg-white rounded-2xl border transition-all flex flex-col justify-between overflow-hidden shadow-sm hover:shadow-md ${
+                  className={`bg-white rounded-3xl border transition-all flex flex-col justify-between overflow-hidden shadow-[0_2px_15px_rgba(0,0,0,0.02)] hover:shadow-md ${
                     isSuspended ? 'border-rose-300 ring-1 ring-rose-200 bg-rose-50/10' :
-                    isArchived ? 'border-slate-300 opacity-80 bg-slate-50/40' : 'border-slate-200/90'
+                    isArchived ? 'border-slate-200 opacity-80 bg-slate-50/40' : 'border-slate-100'
                   }`}
                 >
                   <div className="p-6">
                     <div className="flex items-start justify-between">
-                      <div 
-                        className="w-11 h-11 rounded-xl flex items-center justify-center font-bold text-base shadow-sm text-white"
-                        style={{ backgroundColor: inst.primaryColor || '#2563eb' }}
-                      >
+                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-100 to-indigo-100 text-purple-700 flex items-center justify-center font-bold text-lg shadow-2xs shrink-0">
                         {inst.type === 'University' ? (
                           <GraduationCap className="w-6 h-6" />
                         ) : inst.type === 'College' ? (
@@ -690,7 +721,7 @@ export const InstitutesView = () => {
                       </div>
 
                       <div className="flex items-center gap-1.5 flex-wrap justify-end">
-                        <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                        <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-[#f5eeff] text-purple-700 border border-purple-200">
                           {inst.type || 'School'}
                         </span>
                         <span className="font-mono text-xs font-semibold px-2 py-0.5 bg-slate-100 text-slate-600 rounded border border-slate-200">
@@ -734,7 +765,7 @@ export const InstitutesView = () => {
                         <button
                           type="button"
                           onClick={() => handleOpenCredentialsModal(inst)}
-                          className="font-mono text-[11px] text-blue-700 bg-blue-50 hover:bg-blue-100 px-2 py-0.5 rounded font-semibold truncate max-w-[170px] cursor-pointer flex items-center gap-1"
+                          className="font-mono text-[11px] text-purple-700 bg-[#f5eeff] hover:bg-[#ede0fe] px-2 py-0.5 rounded font-semibold truncate max-w-[170px] cursor-pointer flex items-center gap-1"
                           title="Click to view full login password"
                         >
                           <span>admin@{inst.slug || inst.code?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'campus'}.edu</span>
@@ -776,7 +807,7 @@ export const InstitutesView = () => {
                           setViewingDetails(inst)
                           setDetailsTab('overview')
                         }}
-                        className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors"
+                        className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#f5eeff] hover:bg-[#ede0fe] text-purple-700 text-xs font-semibold transition-colors cursor-pointer flex-1"
                       >
                         <Eye className="w-3.5 h-3.5" />
                         <span>View Details</span>
@@ -785,7 +816,7 @@ export const InstitutesView = () => {
                       <button
                         onClick={() => handleImpersonate(inst)}
                         disabled={isSuspended}
-                        className="flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-md text-xs font-bold shadow-2xs transition-all cursor-pointer"
+                        className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl text-xs font-semibold shadow-xs transition-all cursor-pointer flex-1"
                         title="1-Click Direct Delegation / Impersonation (60 min session)"
                       >
                         <UserCheck className="w-3.5 h-3.5" />
@@ -843,7 +874,7 @@ export const InstitutesView = () => {
                         </button>
                         <button
                           onClick={() => openEditModal(inst)}
-                          className="p-1 text-slate-400 hover:text-blue-600 rounded hover:bg-white transition-colors"
+                          className="p-1 text-slate-400 hover:text-purple-600 rounded hover:bg-white transition-colors"
                           title="Edit Basic Profile"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
@@ -861,7 +892,119 @@ export const InstitutesView = () => {
                 </div>
               )
             })}
-          </div>
+            </div>
+          ) : (
+            /* Clean Data Table matching reference */
+            <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-100 text-slate-400 font-semibold text-[11px] uppercase tracking-wider bg-slate-50/50">
+                      <th className="py-3.5 px-4">Campus & Code</th>
+                      <th className="py-3.5 px-4">Tier & Plan</th>
+                      <th className="py-3.5 px-4">Principal / Head</th>
+                      <th className="py-3.5 px-4 text-center">Students / Faculty</th>
+                      <th className="py-3.5 px-4 text-center">Status</th>
+                      <th className="py-3.5 px-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {paginatedInstitutes.map((inst) => {
+                      const instLifecycle = inst.lifecycleStatus || (inst.status === 'Suspended' ? 'Suspended' : 'Active')
+                      const isSuspended = instLifecycle === 'Suspended'
+                      const isArchived = instLifecycle === 'Archived'
+
+                      return (
+                        <tr 
+                          key={inst.id}
+                          className="hover:bg-purple-50/20 transition-colors group cursor-pointer"
+                          onClick={() => {
+                            setViewingDetails(inst)
+                            setDetailsTab('overview')
+                          }}
+                        >
+                          {/* Campus & Code */}
+                          <td className="py-4 px-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-100 to-indigo-100 text-purple-700 font-bold flex items-center justify-center text-sm shadow-2xs shrink-0">
+                                {inst.name.charAt(0)}
+                              </div>
+                              <div>
+                                <span className="font-bold text-slate-900 group-hover:text-purple-700 transition-colors text-sm line-clamp-1">
+                                  {inst.name}
+                                </span>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <span className="font-mono text-[10px] text-slate-400 font-semibold">{inst.code}</span>
+                                  <span className="text-[10px] text-slate-400">• {inst.city || 'Central Region'}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Tier & Plan */}
+                          <td className="py-4 px-4">
+                            <div className="flex flex-col gap-1 items-start">
+                              <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-[#f5eeff] text-purple-700 border border-purple-100">
+                                {inst.type || 'School'}
+                              </span>
+                              <span className="text-[11px] text-slate-500 font-medium">{inst.planTier || 'School Plan'}</span>
+                            </div>
+                          </td>
+
+                          {/* Principal */}
+                          <td className="py-4 px-4 text-slate-700 font-medium">
+                            <span className="truncate block max-w-[160px]">{inst.principal || 'In-Charge Principal'}</span>
+                            <span className="text-[10px] text-slate-400">{inst.email || '—'}</span>
+                          </td>
+
+                          {/* Students / Staff */}
+                          <td className="py-4 px-4 text-center">
+                            <span className="font-bold text-slate-800 text-xs">{inst.totalStudents || 0}</span>
+                            <span className="text-[10px] text-slate-400 block">{inst.totalTeachers || 0} faculty</span>
+                          </td>
+
+                          {/* Status */}
+                          <td className="py-4 px-4 text-center">
+                            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border ${
+                              isSuspended ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                              isArchived ? 'bg-slate-100 text-slate-600 border-slate-300' :
+                              'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            }`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${isSuspended ? 'bg-rose-500' : isArchived ? 'bg-slate-400' : 'bg-emerald-500'}`}></span>
+                              {instLifecycle}
+                            </span>
+                          </td>
+
+                          {/* Actions */}
+                          <td className="py-4 px-4 text-right" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={() => {
+                                  setViewingDetails(inst)
+                                  setDetailsTab('overview')
+                                }}
+                                className="px-2.5 py-1.5 rounded-xl bg-[#f5eeff] hover:bg-[#ede0fe] text-purple-700 text-xs font-semibold transition-colors cursor-pointer"
+                              >
+                                View
+                              </button>
+                              <button
+                                onClick={() => handleImpersonate(inst)}
+                                disabled={isSuspended}
+                                className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 disabled:opacity-40 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer flex items-center gap-1"
+                              >
+                                <UserCheck className="w-3.5 h-3.5" />
+                                <span>Login</span>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
 
           {/* Pagination */}
           {totalPages > 1 && (
@@ -883,7 +1026,7 @@ export const InstitutesView = () => {
                     onClick={() => setCurrentPage(page)}
                     className={`w-7 h-7 rounded font-semibold ${
                       currentPage === page
-                        ? 'bg-blue-600 text-white'
+                        ? 'bg-purple-600 text-white'
                         : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
                     }`}
                   >
@@ -910,7 +1053,7 @@ export const InstitutesView = () => {
           </p>
           <button
             onClick={openOnboardingWizard}
-            className="mt-4 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow transition-all inline-flex items-center gap-2 cursor-pointer"
+            className="mt-4 px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold shadow transition-all inline-flex items-center gap-2 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Launch Onboarding Wizard</span>
@@ -929,11 +1072,11 @@ export const InstitutesView = () => {
         <div className="space-y-5">
           {/* Progress Indicators */}
           <div className="flex items-center justify-between border-b border-slate-100 pb-3 text-xs">
-            <span className={`font-bold ${wizardStep === 1 ? 'text-blue-600' : 'text-slate-400'}`}>1. Type & Profile</span>
-            <span className={`font-bold ${wizardStep === 2 ? 'text-blue-600' : 'text-slate-400'}`}>2. Campuses</span>
-            <span className={`font-bold ${wizardStep === 3 ? 'text-blue-600' : 'text-slate-400'}`}>3. Branding</span>
-            <span className={`font-bold ${wizardStep === 4 ? 'text-blue-600' : 'text-slate-400'}`}>4. Administrator</span>
-            <span className={`font-bold ${wizardStep === 5 ? 'text-blue-600' : 'text-slate-400'}`}>5. Plan & Quotas</span>
+            <span className={`font-bold ${wizardStep === 1 ? 'text-purple-600' : 'text-slate-400'}`}>1. Type & Profile</span>
+            <span className={`font-bold ${wizardStep === 2 ? 'text-purple-600' : 'text-slate-400'}`}>2. Campuses</span>
+            <span className={`font-bold ${wizardStep === 3 ? 'text-purple-600' : 'text-slate-400'}`}>3. Branding</span>
+            <span className={`font-bold ${wizardStep === 4 ? 'text-purple-600' : 'text-slate-400'}`}>4. Administrator</span>
+            <span className={`font-bold ${wizardStep === 5 ? 'text-purple-600' : 'text-slate-400'}`}>5. Plan & Quotas</span>
           </div>
 
           {/* Step 1: Type & Profile */}
@@ -943,7 +1086,7 @@ export const InstitutesView = () => {
                 <label className="block text-xs font-semibold text-slate-600 uppercase mb-1.5">Educational Tier / Institute Plan Type *</label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[
-                    { id: 'School', label: 'School Plan', icon: School, defaultTiers: ['school'], planName: 'School Plan', color: 'text-blue-600' },
+                    { id: 'School', label: 'School Plan', icon: School, defaultTiers: ['school'], planName: 'School Plan', color: 'text-purple-600' },
                     { id: 'College', label: 'College Plan', icon: Building2, defaultTiers: ['college'], planName: 'College Plan', color: 'text-indigo-600' },
                     { id: 'University', label: 'University Plan', icon: GraduationCap, defaultTiers: ['undergraduate'], planName: 'University Plan', color: 'text-purple-600' },
                     { id: 'Custom', label: 'Custom Hybrid', icon: Layers, defaultTiers: ['school', 'college'], planName: 'Custom Hybrid Plan', color: 'text-amber-600' }
@@ -963,7 +1106,7 @@ export const InstitutesView = () => {
                         })}
                         className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center gap-1.5 cursor-pointer ${
                           isSelected 
-                            ? 'border-blue-600 bg-blue-50 text-blue-800 font-bold ring-2 ring-blue-500/20' 
+                            ? 'border-purple-600 bg-[#f5eeff] text-purple-800 font-bold ring-2 ring-purple-500/20' 
                             : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
                         }`}
                       >
@@ -1004,7 +1147,7 @@ export const InstitutesView = () => {
                                 }
                                 setWizardData({ ...wizardData, enabledTiers: updated })
                               }}
-                              className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+                              className="w-4 h-4 text-purple-600 rounded border-slate-300 focus:ring-purple-500"
                             />
                             <WingIcon className="w-4 h-4 text-indigo-600 shrink-0" />
                             <div>
@@ -1027,7 +1170,7 @@ export const InstitutesView = () => {
                   placeholder="e.g. Beaconhouse Central High School"
                   value={wizardData.name}
                   onChange={(e) => handleWizardNameChange(e.target.value)}
-                  className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
                 />
               </div>
 
@@ -1040,7 +1183,7 @@ export const InstitutesView = () => {
                     placeholder="e.g. BHS-001"
                     value={wizardData.code}
                     onChange={(e) => setWizardData({ ...wizardData, code: e.target.value.toUpperCase() })}
-                    className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 font-mono uppercase focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 font-mono uppercase focus:outline-none focus:ring-2 focus:ring-purple-500/20"
                   />
                 </div>
                 <div>
@@ -1050,7 +1193,7 @@ export const InstitutesView = () => {
                     placeholder="e.g. Dr. Shahida Parveen"
                     value={wizardData.principal}
                     onChange={(e) => setWizardData({ ...wizardData, principal: e.target.value })}
-                    className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
                   />
                 </div>
               </div>
@@ -1061,7 +1204,7 @@ export const InstitutesView = () => {
                   <select
                     value={wizardData.affiliatedBoard}
                     onChange={(e) => setWizardData({ ...wizardData, affiliatedBoard: e.target.value })}
-                    className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
                   >
                     {examinationBodies.length > 0 ? (
                       examinationBodies.map(ex => <option key={ex.id} value={ex.code || ex.name}>{ex.name}</option>)
@@ -1080,7 +1223,7 @@ export const InstitutesView = () => {
                   <select
                     value={wizardData.divisionId}
                     onChange={(e) => setWizardData({ ...wizardData, divisionId: e.target.value })}
-                    className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
                   >
                     {divisions.length > 0 ? (
                       divisions.map(d => <option key={d.id} value={d.id}>{d.name}</option>)
@@ -1103,7 +1246,7 @@ export const InstitutesView = () => {
                     type="text"
                     value={wizardData.city}
                     onChange={(e) => setWizardData({ ...wizardData, city: e.target.value })}
-                    className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
                   />
                 </div>
                 <div>
@@ -1112,7 +1255,7 @@ export const InstitutesView = () => {
                     type="text"
                     value={wizardData.province}
                     onChange={(e) => setWizardData({ ...wizardData, province: e.target.value })}
-                    className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
                   />
                 </div>
               </div>
@@ -1124,7 +1267,7 @@ export const InstitutesView = () => {
                   placeholder="e.g. Gulberg III, Main Boulevard, Lahore"
                   value={wizardData.address}
                   onChange={(e) => setWizardData({ ...wizardData, address: e.target.value })}
-                  className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
                 />
               </div>
 
@@ -1144,7 +1287,7 @@ export const InstitutesView = () => {
                         ]
                       })
                     }}
-                    className="text-[11px] font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                    className="text-[11px] font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1"
                   >
                     <Plus className="w-3 h-3" />
                     <span>Add Branch</span>
@@ -1251,7 +1394,7 @@ export const InstitutesView = () => {
           {/* Step 4: Primary Administrator Account */}
           {wizardStep === 4 && (
             <div className="space-y-4">
-              <div className="p-3 bg-blue-50/80 border border-blue-200 rounded-xl text-xs text-blue-800">
+              <div className="p-3 bg-[#f5eeff]/80 border border-purple-200 rounded-xl text-xs text-purple-800">
                 <span className="font-bold">Initial Administrator Account:</span> This user will receive root administrative privileges to oversee student admissions, staff payroll, and daily campus routines for this institute.
               </div>
 
@@ -1262,7 +1405,7 @@ export const InstitutesView = () => {
                   placeholder="e.g. Dr. Shahida Parveen (Principal)"
                   value={wizardData.adminName}
                   onChange={(e) => setWizardData({ ...wizardData, adminName: e.target.value })}
-                  className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
                 />
               </div>
 
@@ -1274,7 +1417,7 @@ export const InstitutesView = () => {
                   placeholder="admin.beacon@sms.edu"
                   value={wizardData.adminEmail}
                   onChange={(e) => setWizardData({ ...wizardData, adminEmail: e.target.value })}
-                  className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
                 />
               </div>
 
@@ -1285,7 +1428,7 @@ export const InstitutesView = () => {
                   required
                   value={wizardData.adminPassword}
                   onChange={(e) => setWizardData({ ...wizardData, adminPassword: e.target.value })}
-                  className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 font-mono focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 font-mono focus:outline-none focus:ring-2 focus:ring-purple-500/20"
                 />
               </div>
             </div>
@@ -1367,7 +1510,7 @@ export const InstitutesView = () => {
               <button
                 type="button"
                 onClick={handleNextStep}
-                className="px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-all"
+                className="px-5 py-2 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow-sm transition-all"
               >
                 Continue
               </button>
@@ -1585,7 +1728,7 @@ export const InstitutesView = () => {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-slate-400">Login Email:</span>
-                <span className="font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">{newlyCreatedCreds.adminEmail}</span>
+                <span className="font-mono font-bold text-purple-700 bg-[#f5eeff] px-2 py-0.5 rounded">{newlyCreatedCreds.adminEmail}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-slate-400">Password:</span>
@@ -1600,7 +1743,7 @@ export const InstitutesView = () => {
             <button
               type="button"
               onClick={() => handleCopyCredentials(newlyCreatedCreds, newlyCreatedCreds)}
-              className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+              className="w-full py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
             >
               <Copy className="w-4 h-4" />
               <span>Copy Login Credentials to Send to Client</span>
@@ -1640,7 +1783,7 @@ export const InstitutesView = () => {
                 placeholder="Minimum 6 characters"
                 value={newAdminPassword}
                 onChange={(e) => setNewAdminPassword(e.target.value)}
-                className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 font-mono focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 font-mono focus:outline-none focus:ring-2 focus:ring-purple-500/20"
               />
             </div>
 
@@ -1681,7 +1824,7 @@ export const InstitutesView = () => {
                   key={tab}
                   onClick={() => setDetailsTab(tab)}
                   className={`px-3 py-1.5 rounded-lg font-bold capitalize transition-colors ${
-                    detailsTab === tab ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'text-slate-500 hover:text-slate-900'
+                    detailsTab === tab ? 'bg-[#f5eeff] text-purple-700 border border-purple-200' : 'text-slate-500 hover:text-slate-900'
                   }`}
                 >
                   {tab}
@@ -1694,7 +1837,7 @@ export const InstitutesView = () => {
               <div className="space-y-3">
                 <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between">
                   <div>
-                    <span className="font-mono text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded font-bold">
+                    <span className="font-mono text-xs px-2 py-0.5 bg-purple-100 text-purple-800 rounded font-bold">
                       {viewingDetails.code}
                     </span>
                     <h4 className="text-sm font-bold text-slate-900 mt-1">{viewingDetails.name}</h4>
@@ -1716,7 +1859,7 @@ export const InstitutesView = () => {
                   </div>
                   <div className="p-2.5 bg-white rounded-lg border border-slate-200">
                     <span className="text-[10px] text-slate-400 block uppercase font-bold">Official Email</span>
-                    <span className="font-semibold text-blue-600 truncate block">{viewingDetails.email || '—'}</span>
+                    <span className="font-semibold text-purple-600 truncate block">{viewingDetails.email || '—'}</span>
                   </div>
                   <div className="p-2.5 bg-white rounded-lg border border-slate-200">
                     <span className="text-[10px] text-slate-400 block uppercase font-bold">Contact Phone</span>
@@ -1735,7 +1878,7 @@ export const InstitutesView = () => {
                     <div>
                       <div className="flex items-center gap-1.5">
                         <span className="font-bold text-slate-800">Main Campus</span>
-                        <span className="text-[10px] font-bold bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">HQ</span>
+                        <span className="text-[10px] font-bold bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">HQ</span>
                       </div>
                       <p className="text-slate-500 text-[11px] mt-0.5">{viewingDetails.address || `${viewingDetails.city}, Pakistan`}</p>
                     </div>
@@ -1868,7 +2011,7 @@ export const InstitutesView = () => {
                 required
                 value={editFormData.name}
                 onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-                className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
               />
             </div>
 
@@ -1928,7 +2071,7 @@ export const InstitutesView = () => {
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm"
+                className="px-5 py-2 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow-sm"
               >
                 Save Changes
               </button>
@@ -1953,7 +2096,7 @@ export const InstitutesView = () => {
           <div className="flex items-center gap-3">
             <button
               onClick={handleDownloadSnapshot}
-              className="flex-1 py-2.5 px-4 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-xl text-xs font-bold border border-blue-200 flex items-center justify-center gap-2 transition-all"
+              className="flex-1 py-2.5 px-4 bg-[#f5eeff] text-purple-700 hover:bg-[#ede0fe] rounded-xl text-xs font-bold border border-purple-200 flex items-center justify-center gap-2 transition-all"
             >
               <Download className="w-4 h-4" />
               <span>Download Snapshot</span>

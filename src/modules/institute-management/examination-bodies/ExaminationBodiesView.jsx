@@ -68,7 +68,7 @@ export const ExaminationBodiesView = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <FileCheck className="w-5 h-5 text-blue-600" />
+            <FileCheck className="w-5 h-5 text-purple-600" />
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">Examination Bodies</h1>
           </div>
           <p className="text-xs text-slate-500 mt-1">Configure affiliated examination boards, Cambridge CAIE, and federal bodies</p>
@@ -76,7 +76,7 @@ export const ExaminationBodiesView = () => {
 
         <button
           onClick={openAddModal}
-          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium shadow-sm transition-all"
+          className="flex items-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium shadow-sm transition-all"
         >
           <Plus className="w-4 h-4" />
           <span>Add Examination Body</span>
@@ -92,7 +92,7 @@ export const ExaminationBodiesView = () => {
             placeholder="Search exam board or abbreviation..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
           />
         </div>
         <span className="text-xs text-slate-400 font-medium">Total: {filteredBodies.length} bodies</span>
@@ -111,7 +111,7 @@ export const ExaminationBodiesView = () => {
                   <span className="font-mono text-xs px-2 py-0.5 bg-slate-100 text-slate-700 font-bold rounded">
                     {body.code}
                   </span>
-                  <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded font-medium">
+                  <span className="text-xs text-purple-600 bg-[#f5eeff] px-2 py-0.5 rounded font-medium">
                     {body.type}
                   </span>
                 </div>
@@ -126,7 +126,7 @@ export const ExaminationBodiesView = () => {
             <div className="flex items-center gap-1">
               <button
                 onClick={() => openEditModal(body)}
-                className="p-1.5 text-slate-400 hover:text-blue-600 rounded hover:bg-blue-50 transition-colors"
+                className="p-1.5 text-slate-400 hover:text-purple-600 rounded hover:bg-purple-50 transition-colors"
               >
                 <Edit2 className="w-4 h-4" />
               </button>
@@ -156,7 +156,7 @@ export const ExaminationBodiesView = () => {
               placeholder="e.g. BISE Lahore Board of Intermediate & Secondary Education"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
+              className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm"
             />
           </div>
 
@@ -169,7 +169,7 @@ export const ExaminationBodiesView = () => {
                 placeholder="e.g. BISE-LHR"
                 value={formData.code}
                 onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm font-mono uppercase"
+                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm font-mono uppercase"
               />
             </div>
             <div>
@@ -177,7 +177,7 @@ export const ExaminationBodiesView = () => {
               <select
                 value={formData.type}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm bg-white"
+                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm bg-white"
               >
                 <option value="Provincial Board">Provincial Board</option>
                 <option value="Federal Board">Federal Board</option>
@@ -194,7 +194,7 @@ export const ExaminationBodiesView = () => {
               placeholder="e.g. Lahore Division, Punjab"
               value={formData.region}
               onChange={(e) => setFormData({ ...formData, region: e.target.value })}
-              className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
+              className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm"
             />
           </div>
 
@@ -208,7 +208,7 @@ export const ExaminationBodiesView = () => {
             </button>
             <button
               type="submit"
-              className="px-5 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors"
+              className="px-5 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow-sm transition-colors"
             >
               {editingBody ? 'Save Changes' : 'Create Body'}
             </button>

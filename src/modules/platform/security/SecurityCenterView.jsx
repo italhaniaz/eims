@@ -203,7 +203,7 @@ export const SecurityCenterView = () => {
             <span className="text-xl font-bold text-slate-900 mt-1 block">{policy.sessionTimeoutMinutes} min</span>
             <span className="text-[10px] text-slate-400 font-semibold mt-0.5 inline-block">Auto-revocation rule</span>
           </div>
-          <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+          <div className="w-9 h-9 rounded-lg bg-[#f5eeff] text-purple-600 flex items-center justify-center">
             <Clock className="w-5 h-5" />
           </div>
         </div>
@@ -248,7 +248,7 @@ export const SecurityCenterView = () => {
               onClick={() => setActiveTab(t.key)}
               className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 isActive 
-                  ? 'bg-blue-600 text-white shadow-sm' 
+                  ? 'bg-purple-600 text-white shadow-sm' 
                   : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
               }`}
             >
@@ -301,7 +301,7 @@ export const SecurityCenterView = () => {
                       <td className="py-3.5 px-4">
                         <div className="flex items-center gap-2.5">
                           <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-white shrink-0 ${
-                            s.userRole === 'superadmin' ? 'bg-purple-600' : 'bg-blue-600'
+                            s.userRole === 'superadmin' ? 'bg-purple-600' : 'bg-purple-600'
                           }`}>
                             {s.userRole === 'superadmin' ? 'SA' : 'IA'}
                           </div>
@@ -309,7 +309,7 @@ export const SecurityCenterView = () => {
                             <span className="font-bold text-slate-900 block">{s.userName || s.userEmail}</span>
                             <span className="text-[11px] text-slate-400 font-mono block">{s.userEmail}</span>
                             {s.instituteName && (
-                              <span className="text-[10px] text-blue-600 font-medium block">{s.instituteName}</span>
+                              <span className="text-[10px] text-purple-600 font-medium block">{s.instituteName}</span>
                             )}
                           </div>
                         </div>
@@ -376,7 +376,7 @@ export const SecurityCenterView = () => {
                 placeholder="Search by email, IP address, or location..."
                 value={historySearch}
                 onChange={(e) => setHistorySearch(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                className="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
               />
             </div>
 
@@ -468,7 +468,7 @@ export const SecurityCenterView = () => {
                 <select
                   value={policy.minPasswordLength}
                   onChange={(e) => setPolicy({ ...policy, minPasswordLength: parseInt(e.target.value) })}
-                  className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-bold"
+                  className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 font-bold"
                 >
                   <option value={8}>8 Characters (Standard)</option>
                   <option value={10}>10 Characters (Enhanced)</option>
@@ -484,7 +484,7 @@ export const SecurityCenterView = () => {
                 <select
                   value={policy.passwordExpiryDays}
                   onChange={(e) => setPolicy({ ...policy, passwordExpiryDays: parseInt(e.target.value) })}
-                  className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-bold"
+                  className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 font-bold"
                 >
                   <option value={30}>30 Days (Strict Banking Standard)</option>
                   <option value={60}>60 Days</option>
@@ -501,7 +501,7 @@ export const SecurityCenterView = () => {
                 <select
                   value={policy.sessionTimeoutMinutes}
                   onChange={(e) => setPolicy({ ...policy, sessionTimeoutMinutes: parseInt(e.target.value) })}
-                  className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-bold"
+                  className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 font-bold"
                 >
                   <option value={15}>15 Minutes</option>
                   <option value={30}>30 Minutes (Recommended)</option>
@@ -521,7 +521,7 @@ export const SecurityCenterView = () => {
                   type="checkbox"
                   checked={policy.requireUppercase}
                   onChange={(e) => setPolicy({ ...policy, requireUppercase: e.target.checked })}
-                  className="rounded text-blue-600 focus:ring-blue-500"
+                  className="rounded text-purple-600 focus:ring-purple-500"
                 />
                 <span>Require at least one uppercase character (A-Z)</span>
               </label>
@@ -531,7 +531,7 @@ export const SecurityCenterView = () => {
                   type="checkbox"
                   checked={policy.requireNumbers}
                   onChange={(e) => setPolicy({ ...policy, requireNumbers: e.target.checked })}
-                  className="rounded text-blue-600 focus:ring-blue-500"
+                  className="rounded text-purple-600 focus:ring-purple-500"
                 />
                 <span>Require numeric characters (0-9)</span>
               </label>
@@ -541,7 +541,7 @@ export const SecurityCenterView = () => {
                   type="checkbox"
                   checked={policy.requireSymbols}
                   onChange={(e) => setPolicy({ ...policy, requireSymbols: e.target.checked })}
-                  className="rounded text-blue-600 focus:ring-blue-500"
+                  className="rounded text-purple-600 focus:ring-purple-500"
                 />
                 <span>Require special symbols (@, #, $, %, ^, &)</span>
               </label>
@@ -568,7 +568,7 @@ export const SecurityCenterView = () => {
           <div className="flex justify-end pt-3 border-t border-slate-100">
             <button
               type="submit"
-              className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-sm transition-all cursor-pointer"
+              className="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold shadow-sm transition-all cursor-pointer"
             >
               Save Password Policy & 2FA Rules
             </button>
@@ -607,14 +607,14 @@ export const SecurityCenterView = () => {
               value={policy.ipAllowlist}
               onChange={(e) => setPolicy({ ...policy, ipAllowlist: e.target.value })}
               placeholder="127.0.0.1, 192.168.1.0/24, 10.0.0.0/8"
-              className="w-full p-3 text-xs font-mono rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              className="w-full p-3 text-xs font-mono rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
             />
           </div>
 
           <div className="flex justify-end pt-2 border-t border-slate-100">
             <button
               type="submit"
-              className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-sm transition-all cursor-pointer"
+              className="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold shadow-sm transition-all cursor-pointer"
             >
               Update IP Allowlist
             </button>

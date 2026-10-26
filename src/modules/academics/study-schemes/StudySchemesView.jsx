@@ -68,7 +68,7 @@ export const StudySchemesView = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <FileText className="w-5 h-5 text-blue-600" />
+            <FileText className="w-5 h-5 text-purple-600" />
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">Study Schemes</h1>
           </div>
           <p className="text-xs text-slate-500 mt-1">Configure syllabus structures, semester plans, and credit distribution</p>
@@ -76,7 +76,7 @@ export const StudySchemesView = () => {
 
         <button
           onClick={openAddModal}
-          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium shadow-sm transition-all"
+          className="flex items-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium shadow-sm transition-all"
         >
           <Plus className="w-4 h-4" />
           <span>Add Study Scheme</span>
@@ -99,12 +99,12 @@ export const StudySchemesView = () => {
                 <h3 className="text-base font-bold text-slate-800 mt-3">{sc.name}</h3>
                 <div className="mt-4 pt-3 border-t border-slate-50 space-y-1.5 text-xs text-slate-600">
                   <p>Program: <strong className="text-slate-800">{prog?.name || 'Pre-Medical'}</strong></p>
-                  <p>Academic Session: <strong className="text-blue-600">{year?.name || '2025 - 2026'}</strong></p>
+                  <p>Academic Session: <strong className="text-purple-600">{year?.name || '2025 - 2026'}</strong></p>
                 </div>
               </div>
 
               <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
-                <button onClick={() => openEditModal(sc)} className="p-1.5 text-slate-400 hover:text-blue-600">
+                <button onClick={() => openEditModal(sc)} className="p-1.5 text-slate-400 hover:text-purple-600">
                   <Edit2 className="w-4 h-4" />
                 </button>
                 <button onClick={() => handleDelete(sc.id)} className="p-1.5 text-slate-400 hover:text-rose-600">
@@ -161,7 +161,7 @@ export const StudySchemesView = () => {
           </div>
           <div className="flex justify-end gap-3 pt-3 border-t">
             <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm text-slate-600">Cancel</button>
-            <button type="submit" className="px-5 py-2 text-sm text-white bg-blue-600 rounded-lg">Save</button>
+            <button type="submit" className="px-5 py-2 text-sm text-white bg-purple-600 rounded-lg">Save</button>
           </div>
         </form>
       </Modal>

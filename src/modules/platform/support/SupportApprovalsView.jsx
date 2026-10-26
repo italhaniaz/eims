@@ -151,7 +151,7 @@ const SupportApprovalsView = () => {
     return (
       <div className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto flex items-center justify-center min-h-[400px]">
         <div className="text-center space-y-3">
-          <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <div className="w-8 h-8 border-3 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
           <p className="text-sm font-medium text-slate-500">Loading support ticketing & approval governance queues...</p>
         </div>
       </div>
@@ -261,7 +261,7 @@ const SupportApprovalsView = () => {
             onClick={() => setActiveTab('tickets')}
             className={`py-3 border-b-2 flex items-center gap-2 transition-colors cursor-pointer shrink-0 ${
               activeTab === 'tickets'
-                ? 'border-blue-600 text-blue-600 font-semibold'
+                ? 'border-purple-600 text-purple-600 font-semibold'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
@@ -273,7 +273,7 @@ const SupportApprovalsView = () => {
             onClick={() => setActiveTab('approvals')}
             className={`py-3 border-b-2 flex items-center gap-2 transition-colors cursor-pointer shrink-0 ${
               activeTab === 'approvals'
-                ? 'border-blue-600 text-blue-600 font-semibold'
+                ? 'border-purple-600 text-purple-600 font-semibold'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
@@ -285,7 +285,7 @@ const SupportApprovalsView = () => {
             onClick={() => setActiveTab('notifications')}
             className={`py-3 border-b-2 flex items-center gap-2 transition-colors cursor-pointer shrink-0 ${
               activeTab === 'notifications'
-                ? 'border-blue-600 text-blue-600 font-semibold'
+                ? 'border-purple-600 text-purple-600 font-semibold'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
@@ -297,7 +297,7 @@ const SupportApprovalsView = () => {
             onClick={() => setActiveTab('content')}
             className={`py-3 border-b-2 flex items-center gap-2 transition-colors cursor-pointer shrink-0 ${
               activeTab === 'content'
-                ? 'border-blue-600 text-blue-600 font-semibold'
+                ? 'border-purple-600 text-purple-600 font-semibold'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
@@ -353,7 +353,7 @@ const SupportApprovalsView = () => {
                       <span
                         className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                           tkt.status === 'OPEN'
-                            ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                            ? 'bg-[#f5eeff] text-purple-700 border border-purple-200'
                             : tkt.status === 'IN_PROGRESS'
                             ? 'bg-amber-50 text-amber-700 border border-amber-200'
                             : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
@@ -365,7 +365,7 @@ const SupportApprovalsView = () => {
                     <td className="py-3.5 px-4 text-right">
                       <button
                         onClick={() => handleOpenTicketThread(tkt)}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-colors cursor-pointer ml-auto"
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs transition-colors cursor-pointer ml-auto"
                       >
                         <MessageSquare className="w-3.5 h-3.5" />
                         <span>Reply Thread</span>
@@ -415,7 +415,7 @@ const SupportApprovalsView = () => {
                 </div>
 
                 {appr.reviewerNotes && (
-                  <p className="text-xs text-blue-700 mt-1">
+                  <p className="text-xs text-purple-700 mt-1">
                     <strong>Reviewer Decision Note:</strong> {appr.reviewerNotes}
                   </p>
                 )}
@@ -428,7 +428,7 @@ const SupportApprovalsView = () => {
                       setSelectedApproval(appr)
                       setApprovalNotes('')
                     }}
-                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-sm transition-colors cursor-pointer"
+                    className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs shadow-sm transition-colors cursor-pointer"
                   >
                     Review Petition
                   </button>
@@ -450,14 +450,14 @@ const SupportApprovalsView = () => {
           </div>
 
           <div className="space-y-3">
-            <div className="p-4 rounded-xl bg-blue-50/70 border border-blue-200 flex items-start gap-3">
-              <Bell className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+            <div className="p-4 rounded-xl bg-[#f5eeff]/70 border border-purple-200 flex items-start gap-3">
+              <Bell className="w-5 h-5 text-purple-600 shrink-0 mt-0.5" />
               <div>
                 <span className="text-xs font-bold text-blue-950 block">Pending Affiliation Petition</span>
-                <p className="text-xs text-blue-800 mt-0.5">
+                <p className="text-xs text-purple-800 mt-0.5">
                   Lahore Grammar Collegiate System has submitted an application for multi-campus affiliation.
                 </p>
-                <span className="text-[10px] text-blue-600 font-semibold mt-1 block">6 hours ago</span>
+                <span className="text-[10px] text-purple-600 font-semibold mt-1 block">6 hours ago</span>
               </div>
             </div>
 
@@ -508,7 +508,7 @@ const SupportApprovalsView = () => {
                 }}
                 className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
                   selectedContentKey === p.key
-                    ? 'bg-blue-50 text-blue-700'
+                    ? 'bg-[#f5eeff] text-purple-700'
                     : 'text-slate-600 hover:bg-slate-50'
                 }`}
               >
@@ -528,7 +528,7 @@ const SupportApprovalsView = () => {
                 onClick={() => setIsEditingContent(!isEditingContent)}
                 className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-50 transition-colors cursor-pointer"
               >
-                <Edit2 className="w-3.5 h-3.5 text-blue-600" />
+                <Edit2 className="w-3.5 h-3.5 text-purple-600" />
                 <span>{isEditingContent ? 'Preview Markdown' : 'Edit Document'}</span>
               </button>
             </div>
@@ -541,7 +541,7 @@ const SupportApprovalsView = () => {
                     type="text"
                     value={contentDraft.title}
                     onChange={(e) => setContentDraft({ ...contentDraft, title: e.target.value })}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -550,7 +550,7 @@ const SupportApprovalsView = () => {
                     rows="12"
                     value={contentDraft.content}
                     onChange={(e) => setContentDraft({ ...contentDraft, content: e.target.value })}
-                    className="w-full px-3 py-2 text-xs font-mono border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full px-3 py-2 text-xs font-mono border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none"
                   />
                 </div>
                 <div className="flex justify-end gap-2">
@@ -562,7 +562,7 @@ const SupportApprovalsView = () => {
                   </button>
                   <button
                     onClick={handleSaveContent}
-                    className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-sm transition-colors cursor-pointer"
+                    className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs shadow-sm transition-colors cursor-pointer"
                   >
                     Save Changes
                   </button>
@@ -590,7 +590,7 @@ const SupportApprovalsView = () => {
               <span className="font-bold text-slate-900">{selectedTicket?.instituteName}</span>
               <p className="text-slate-500">{selectedTicket?.subject}</p>
             </div>
-            <span className="font-semibold text-blue-700 uppercase">{selectedTicket?.status}</span>
+            <span className="font-semibold text-purple-700 uppercase">{selectedTicket?.status}</span>
           </div>
 
           {/* Conversation history */}
@@ -600,7 +600,7 @@ const SupportApprovalsView = () => {
                 key={idx}
                 className={`p-3 rounded-xl text-xs space-y-1 ${
                   msg.role === 'Superadmin'
-                    ? 'bg-blue-50 text-blue-900 border border-blue-200 ml-6'
+                    ? 'bg-[#f5eeff] text-blue-900 border border-purple-200 ml-6'
                     : 'bg-slate-100 text-slate-800 mr-6'
                 }`}
               >
@@ -621,7 +621,7 @@ const SupportApprovalsView = () => {
               placeholder="Type your response to the campus administrator..."
               value={replyText}
               onChange={(e) => setReplyText(e.target.value)}
-              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none"
             />
 
             <div className="flex items-center justify-between">
@@ -641,7 +641,7 @@ const SupportApprovalsView = () => {
               <button
                 type="submit"
                 disabled={isSendingReply}
-                className="flex items-center gap-2 px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-sm transition-colors cursor-pointer"
+                className="flex items-center gap-2 px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs shadow-sm transition-colors cursor-pointer"
               >
                 <Send className="w-3.5 h-3.5" />
                 <span>{isSendingReply ? 'Sending...' : 'Send Reply'}</span>
@@ -677,7 +677,7 @@ const SupportApprovalsView = () => {
               value={approvalNotes}
               onChange={(e) => setApprovalNotes(e.target.value)}
               placeholder="State any conditions or reason for approval/rejection..."
-              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none"
             />
           </div>
 

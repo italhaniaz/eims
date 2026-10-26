@@ -165,7 +165,7 @@ const BackupDataView = () => {
     return (
       <div className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto flex items-center justify-center min-h-[400px]">
         <div className="text-center space-y-3">
-          <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <div className="w-8 h-8 border-3 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
           <p className="text-sm font-medium text-slate-500">Loading backup archives & data governance...</p>
         </div>
       </div>
@@ -202,7 +202,7 @@ const BackupDataView = () => {
 
         <button
           onClick={handleCreateSnapshot}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs sm:text-sm shadow-sm transition-colors cursor-pointer self-start md:self-auto"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs sm:text-sm shadow-sm transition-colors cursor-pointer self-start md:self-auto"
         >
           <Download className="w-4 h-4" />
           <span>Create Instant Snapshot</span>
@@ -280,7 +280,7 @@ const BackupDataView = () => {
             onClick={() => setActiveTab('backups')}
             className={`py-3 border-b-2 flex items-center gap-2 transition-colors cursor-pointer shrink-0 ${
               activeTab === 'backups'
-                ? 'border-blue-600 text-blue-600 font-semibold'
+                ? 'border-purple-600 text-purple-600 font-semibold'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
@@ -292,7 +292,7 @@ const BackupDataView = () => {
             onClick={() => setActiveTab('export-isolated')}
             className={`py-3 border-b-2 flex items-center gap-2 transition-colors cursor-pointer shrink-0 ${
               activeTab === 'export-isolated'
-                ? 'border-blue-600 text-blue-600 font-semibold'
+                ? 'border-purple-600 text-purple-600 font-semibold'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
@@ -304,7 +304,7 @@ const BackupDataView = () => {
             onClick={() => setActiveTab('bulk-import')}
             className={`py-3 border-b-2 flex items-center gap-2 transition-colors cursor-pointer shrink-0 ${
               activeTab === 'bulk-import'
-                ? 'border-blue-600 text-blue-600 font-semibold'
+                ? 'border-purple-600 text-purple-600 font-semibold'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
@@ -316,7 +316,7 @@ const BackupDataView = () => {
             onClick={() => setActiveTab('retention')}
             className={`py-3 border-b-2 flex items-center gap-2 transition-colors cursor-pointer shrink-0 ${
               activeTab === 'retention'
-                ? 'border-blue-600 text-blue-600 font-semibold'
+                ? 'border-purple-600 text-purple-600 font-semibold'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
@@ -331,7 +331,7 @@ const BackupDataView = () => {
         <div className="space-y-6">
           {/* Upload & Restore Card */}
           <div className="bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl p-6 text-center">
-            <Upload className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+            <Upload className="w-8 h-8 text-purple-600 mx-auto mb-2" />
             <h3 className="text-sm font-bold text-slate-900">Upload Platform Backup Snapshot to Restore</h3>
             <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
               Select a valid JSON database snapshot file (.json). The system will execute structural validation and prompt for confirmation before restoring.
@@ -422,7 +422,7 @@ const BackupDataView = () => {
               <select
                 value={selectedInstituteId}
                 onChange={(e) => setSelectedInstituteId(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
+                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none bg-white"
               >
                 {institutes.map((inst) => (
                   <option key={inst.id} value={inst.id}>
@@ -444,7 +444,7 @@ const BackupDataView = () => {
 
             <button
               onClick={handleExportIsolated}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs sm:text-sm shadow-sm transition-colors cursor-pointer"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs sm:text-sm shadow-sm transition-colors cursor-pointer"
             >
               <Download className="w-4 h-4" />
               <span>Export Isolated Campus Archive</span>
@@ -488,13 +488,13 @@ const BackupDataView = () => {
                 value={csvContent}
                 onChange={(e) => setCsvContent(e.target.value)}
                 placeholder="name,rollNumber,email,gender\nAhmed Khan,STD-1001,ahmed@mail.com,Male\nAyesha Malik,,ayesha@mail.com,Female"
-                className="w-full px-3 py-2 text-xs font-mono border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full px-3 py-2 text-xs font-mono border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none"
               />
             </div>
 
             <button
               onClick={handleValidateCSV}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-sm transition-colors cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs shadow-sm transition-colors cursor-pointer"
             >
               <FileCheck className="w-4 h-4" />
               <span>Validate & Preview CSV</span>
@@ -582,7 +582,7 @@ const BackupDataView = () => {
                 max="3650"
                 value={retentionPolicy.auditLogsDays}
                 onChange={(e) => setRetentionPolicy({ ...retentionPolicy, auditLogsDays: parseInt(e.target.value) || 90 })}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none"
               />
             </div>
 
@@ -596,7 +596,7 @@ const BackupDataView = () => {
                 max="3650"
                 value={retentionPolicy.loginHistoryDays}
                 onChange={(e) => setRetentionPolicy({ ...retentionPolicy, loginHistoryDays: parseInt(e.target.value) || 180 })}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none"
               />
             </div>
 
@@ -610,7 +610,7 @@ const BackupDataView = () => {
                 max="3650"
                 value={retentionPolicy.backupSnapshotsDays}
                 onChange={(e) => setRetentionPolicy({ ...retentionPolicy, backupSnapshotsDays: parseInt(e.target.value) || 365 })}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none"
               />
             </div>
 
@@ -620,7 +620,7 @@ const BackupDataView = () => {
                 id="autoPurge"
                 checked={retentionPolicy.autoPurgeEnabled}
                 onChange={(e) => setRetentionPolicy({ ...retentionPolicy, autoPurgeEnabled: e.target.checked })}
-                className="rounded text-blue-600 focus:ring-blue-500"
+                className="rounded text-purple-600 focus:ring-purple-500"
               />
               <label htmlFor="autoPurge" className="text-xs font-medium text-slate-700">
                 Enable Automated Nightly Purge of Expired Audit Records
@@ -631,7 +631,7 @@ const BackupDataView = () => {
           <div className="pt-3 border-t border-slate-100 flex justify-end">
             <button
               type="submit"
-              className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs sm:text-sm shadow-sm transition-colors cursor-pointer"
+              className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs sm:text-sm shadow-sm transition-colors cursor-pointer"
             >
               Save Retention Policy
             </button>

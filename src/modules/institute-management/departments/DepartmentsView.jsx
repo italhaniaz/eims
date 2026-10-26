@@ -71,7 +71,7 @@ export const DepartmentsView = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <Network className="w-5 h-5 text-blue-600" />
+            <Network className="w-5 h-5 text-purple-600" />
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">Academic Departments</h1>
           </div>
           <p className="text-xs text-slate-500 mt-1">Manage faculties, subjects divisions, and department heads</p>
@@ -79,7 +79,7 @@ export const DepartmentsView = () => {
 
         <button
           onClick={openAddModal}
-          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium shadow-sm transition-all"
+          className="flex items-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium shadow-sm transition-all"
         >
           <Plus className="w-4 h-4" />
           <span>Add New Department</span>
@@ -95,7 +95,7 @@ export const DepartmentsView = () => {
             placeholder="Search department name or head..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
           />
         </div>
         <span className="text-xs text-slate-400 font-medium">Total: {filteredDepts.length} departments</span>
@@ -138,7 +138,7 @@ export const DepartmentsView = () => {
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => openEditModal(dept)}
-                    className="p-1.5 text-slate-400 hover:text-blue-600 rounded hover:bg-blue-50 transition-colors"
+                    className="p-1.5 text-slate-400 hover:text-purple-600 rounded hover:bg-purple-50 transition-colors"
                   >
                     <Edit2 className="w-4 h-4" />
                   </button>
@@ -170,7 +170,7 @@ export const DepartmentsView = () => {
               placeholder="e.g. Department of Computer Science"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
+              className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm"
             />
           </div>
 
@@ -183,7 +183,7 @@ export const DepartmentsView = () => {
                 placeholder="e.g. DCS"
                 value={formData.code}
                 onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm font-mono uppercase"
+                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm font-mono uppercase"
               />
             </div>
             <div>
@@ -193,7 +193,7 @@ export const DepartmentsView = () => {
                 placeholder="e.g. Engr. Imran Khan"
                 value={formData.headName}
                 onChange={(e) => setFormData({ ...formData, headName: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
+                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm"
               />
             </div>
           </div>
@@ -203,7 +203,7 @@ export const DepartmentsView = () => {
             <select
               value={formData.instituteId}
               onChange={(e) => setFormData({ ...formData, instituteId: e.target.value })}
-              className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm bg-white"
+              className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm bg-white"
             >
               {institutes.map(i => (
                 <option key={i.id} value={i.id}>{i.name} ({i.code})</option>
@@ -221,7 +221,7 @@ export const DepartmentsView = () => {
             </button>
             <button
               type="submit"
-              className="px-5 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors"
+              className="px-5 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow-sm transition-colors"
             >
               {editingDept ? 'Save Changes' : 'Create Department'}
             </button>

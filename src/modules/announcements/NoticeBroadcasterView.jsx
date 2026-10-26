@@ -65,7 +65,7 @@ export const NoticeBroadcasterView = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <Megaphone className="w-5 h-5 text-blue-600" />
+            <Megaphone className="w-5 h-5 text-purple-600" />
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">Platform Broadcast & Circulars</h1>
           </div>
           <p className="text-xs text-slate-500 mt-1">Broadcast official directives, policy announcements, and circulars to campuses</p>
@@ -73,7 +73,7 @@ export const NoticeBroadcasterView = () => {
 
         <button
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold shadow-sm transition-all"
+          className="flex items-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-semibold shadow-sm transition-all"
         >
           <Send className="w-4 h-4" />
           <span>Broadcast New Circular</span>
@@ -94,7 +94,7 @@ export const NoticeBroadcasterView = () => {
             <div className="space-y-1.5 flex-1">
               <div className="flex items-center gap-2">
                 <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                  b.priority === 'High' ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-blue-50 text-blue-700 border border-blue-200'
+                  b.priority === 'High' ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-[#f5eeff] text-purple-700 border border-purple-200'
                 }`}>
                   {b.priority} Priority
                 </span>
@@ -178,7 +178,7 @@ export const NoticeBroadcasterView = () => {
 
           <div className="flex justify-end gap-3 pt-3 border-t">
             <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm text-slate-600">Cancel</button>
-            <button type="submit" className="px-5 py-2 text-sm text-white bg-blue-600 rounded-lg font-semibold flex items-center gap-1.5">
+            <button type="submit" className="px-5 py-2 text-sm text-white bg-purple-600 rounded-lg font-semibold flex items-center gap-1.5">
               <Send className="w-3.5 h-3.5" />
               <span>Broadcast Now</span>
             </button>

@@ -271,11 +271,11 @@ export const FinancialAnalyticsView = () => {
                           className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1 transition-colors ${
                             isReminded 
                               ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
-                              : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                              : 'bg-[#f5eeff] text-purple-700 hover:bg-[#ede0fe]'
                           }`}
                           title="Dispatch SMS Reminder"
                         >
-                          {isReminded ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Send className="w-3.5 h-3.5 text-blue-600" />}
+                          {isReminded ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Send className="w-3.5 h-3.5 text-purple-600" />}
                           <span>{isReminded ? 'Reminded ✓' : 'Send SMS'}</span>
                         </button>
 

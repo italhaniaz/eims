@@ -213,7 +213,7 @@ const GlobalTemplatesView = () => {
     return (
       <div className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto flex items-center justify-center min-h-[400px]">
         <div className="text-center space-y-3">
-          <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <div className="w-8 h-8 border-3 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
           <p className="text-sm font-medium text-slate-500">Loading global academic master data & templates...</p>
         </div>
       </div>
@@ -250,7 +250,7 @@ const GlobalTemplatesView = () => {
 
         <button
           onClick={handleOpenCreateModal}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs sm:text-sm shadow-sm transition-colors cursor-pointer self-start md:self-auto"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs sm:text-sm shadow-sm transition-colors cursor-pointer self-start md:self-auto"
         >
           <Plus className="w-4 h-4" />
           <span>New Master Template</span>
@@ -264,7 +264,7 @@ const GlobalTemplatesView = () => {
             onClick={() => setActiveTab('GRADING_SYSTEM')}
             className={`py-3 border-b-2 flex items-center gap-2 transition-colors cursor-pointer shrink-0 ${
               activeTab === 'GRADING_SYSTEM'
-                ? 'border-blue-600 text-blue-600 font-semibold'
+                ? 'border-purple-600 text-purple-600 font-semibold'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
@@ -276,7 +276,7 @@ const GlobalTemplatesView = () => {
             onClick={() => setActiveTab('FEE_HEAD')}
             className={`py-3 border-b-2 flex items-center gap-2 transition-colors cursor-pointer shrink-0 ${
               activeTab === 'FEE_HEAD'
-                ? 'border-blue-600 text-blue-600 font-semibold'
+                ? 'border-purple-600 text-purple-600 font-semibold'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
@@ -288,7 +288,7 @@ const GlobalTemplatesView = () => {
             onClick={() => setActiveTab('DESIGNATION')}
             className={`py-3 border-b-2 flex items-center gap-2 transition-colors cursor-pointer shrink-0 ${
               activeTab === 'DESIGNATION'
-                ? 'border-blue-600 text-blue-600 font-semibold'
+                ? 'border-purple-600 text-purple-600 font-semibold'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
@@ -300,7 +300,7 @@ const GlobalTemplatesView = () => {
             onClick={() => setActiveTab('SUBJECT_TEMPLATE')}
             className={`py-3 border-b-2 flex items-center gap-2 transition-colors cursor-pointer shrink-0 ${
               activeTab === 'SUBJECT_TEMPLATE'
-                ? 'border-blue-600 text-blue-600 font-semibold'
+                ? 'border-purple-600 text-purple-600 font-semibold'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
@@ -319,7 +319,7 @@ const GlobalTemplatesView = () => {
             placeholder="Search master templates by name or code..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
+            className="w-full pl-9 pr-4 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white"
           />
         </div>
 
@@ -338,7 +338,7 @@ const GlobalTemplatesView = () => {
             {/* Top row */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-[#f5eeff] text-purple-600 flex items-center justify-center shrink-0">
                   {tpl.templateType === 'GRADING_SYSTEM' && <Award className="w-5 h-5" />}
                   {tpl.templateType === 'FEE_HEAD' && <DollarSign className="w-5 h-5" />}
                   {tpl.templateType === 'DESIGNATION' && <Briefcase className="w-5 h-5" />}
@@ -348,7 +348,7 @@ const GlobalTemplatesView = () => {
                   <div className="flex items-center gap-2">
                     <h3 className="text-base font-bold text-slate-900">{tpl.title}</h3>
                     {tpl.isDefault && (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 uppercase">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#f5eeff] text-purple-700 border border-purple-200 uppercase">
                         Default System Matrix
                       </span>
                     )}
@@ -367,7 +367,7 @@ const GlobalTemplatesView = () => {
               <div className="flex items-center gap-2 self-end sm:self-auto">
                 <button
                   onClick={() => handleOpenPushModal(tpl)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-xs transition-colors cursor-pointer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs shadow-xs transition-colors cursor-pointer"
                   title="Push this template to selected institutes"
                 >
                   <Send className="w-3.5 h-3.5" />
@@ -375,7 +375,7 @@ const GlobalTemplatesView = () => {
                 </button>
                 <button
                   onClick={() => handleOpenEditModal(tpl)}
-                  className="p-1.5 rounded-xl border border-slate-200 text-slate-500 hover:text-blue-600 hover:bg-slate-50 transition-colors cursor-pointer"
+                  className="p-1.5 rounded-xl border border-slate-200 text-slate-500 hover:text-purple-600 hover:bg-slate-50 transition-colors cursor-pointer"
                   title="Edit Template"
                 >
                   <Edit2 className="w-4 h-4" />
@@ -408,7 +408,7 @@ const GlobalTemplatesView = () => {
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
                   {tpl.data.map((item, idx) => (
                     <div key={idx} className="bg-white p-2.5 rounded-lg border border-slate-200 text-center">
-                      <span className="text-sm font-black text-blue-600 block">{item.grade}</span>
+                      <span className="text-sm font-black text-purple-600 block">{item.grade}</span>
                       <span className="text-xs font-semibold text-slate-800 block">{item.minPercentage}% - {item.maxPercentage}%</span>
                       <span className="text-[10px] text-slate-400 font-mono block">GPA: {item.points}</span>
                     </div>
@@ -454,7 +454,7 @@ const GlobalTemplatesView = () => {
                   {tpl.data.map((item, idx) => (
                     <div key={idx} className="bg-white p-2.5 rounded-lg border border-slate-200">
                       <div className="flex items-center justify-between">
-                        <span className="font-mono text-[10px] bg-blue-50 text-blue-700 px-1 rounded">{item.code}</span>
+                        <span className="font-mono text-[10px] bg-[#f5eeff] text-purple-700 px-1 rounded">{item.code}</span>
                         <span className="text-[10px] text-slate-400 font-semibold">{item.credits} Credits</span>
                       </div>
                       <span className="text-xs font-bold text-slate-900 block mt-1 truncate">{item.name}</span>
@@ -476,8 +476,8 @@ const GlobalTemplatesView = () => {
         maxWidth="max-w-xl"
       >
         <div className="space-y-4">
-          <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-800 flex items-start gap-2">
-            <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+          <div className="p-3 bg-[#f5eeff] border border-purple-200 rounded-xl text-xs text-purple-800 flex items-start gap-2">
+            <Info className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
             <div>
               <span className="font-semibold block">Push Synchronization Notice</span>
               <p>
@@ -494,7 +494,7 @@ const GlobalTemplatesView = () => {
               <button
                 type="button"
                 onClick={handleSelectAllInstitutes}
-                className="text-xs text-blue-600 hover:text-blue-800 font-semibold cursor-pointer"
+                className="text-xs text-purple-600 hover:text-purple-800 font-semibold cursor-pointer"
               >
                 {selectedInstituteIds.length === institutes.length ? 'Deselect All' : 'Select All'}
               </button>
@@ -508,7 +508,7 @@ const GlobalTemplatesView = () => {
                     key={inst.id}
                     className={`flex items-center justify-between p-2.5 rounded-lg border text-xs cursor-pointer transition-colors ${
                       isSelected
-                        ? 'bg-blue-50/80 border-blue-300 text-blue-900 font-semibold'
+                        ? 'bg-[#f5eeff]/80 border-purple-300 text-blue-900 font-semibold'
                         : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
                     }`}
                   >
@@ -517,7 +517,7 @@ const GlobalTemplatesView = () => {
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => handleToggleInstituteSelect(inst.id)}
-                        className="rounded text-blue-600 focus:ring-blue-500"
+                        className="rounded text-purple-600 focus:ring-purple-500"
                       />
                       <div>
                         <span>{inst.name}</span>
@@ -547,7 +547,7 @@ const GlobalTemplatesView = () => {
               type="button"
               disabled={isPushing || selectedInstituteIds.length === 0}
               onClick={handleExecutePush}
-              className="flex items-center gap-2 px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-semibold text-xs sm:text-sm shadow-sm transition-colors cursor-pointer"
+              className="flex items-center gap-2 px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-semibold text-xs sm:text-sm shadow-sm transition-colors cursor-pointer"
             >
               {isPushing ? (
                 <>
@@ -581,7 +581,7 @@ const GlobalTemplatesView = () => {
                 required
                 value={templateForm.title}
                 onChange={(e) => setTemplateForm({ ...templateForm, title: e.target.value })}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none"
                 placeholder="e.g. Standard O-Level Scale"
               />
             </div>
@@ -591,7 +591,7 @@ const GlobalTemplatesView = () => {
                 type="text"
                 value={templateForm.code}
                 onChange={(e) => setTemplateForm({ ...templateForm, code: e.target.value })}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono"
+                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none font-mono"
               />
             </div>
           </div>
@@ -608,7 +608,7 @@ const GlobalTemplatesView = () => {
                   data: getDefaultItemsForType(t)
                 })
               }}
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
+              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none bg-white"
             >
               <option value="GRADING_SYSTEM">Grading System & Scale</option>
               <option value="FEE_HEAD">Fee-Head Templates (PKR)</option>
@@ -623,7 +623,7 @@ const GlobalTemplatesView = () => {
               rows="2"
               value={templateForm.description}
               onChange={(e) => setTemplateForm({ ...templateForm, description: e.target.value })}
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none"
               placeholder="Provide context or guidance on applying this template..."
             />
           </div>
@@ -634,7 +634,7 @@ const GlobalTemplatesView = () => {
               id="isDefault"
               checked={templateForm.isDefault}
               onChange={(e) => setTemplateForm({ ...templateForm, isDefault: e.target.checked })}
-              className="rounded text-blue-600 focus:ring-blue-500"
+              className="rounded text-purple-600 focus:ring-purple-500"
             />
             <label htmlFor="isDefault" className="text-xs font-medium text-slate-700">
               Set as Platform Default Matrix for New Institutes
@@ -651,7 +651,7 @@ const GlobalTemplatesView = () => {
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs sm:text-sm shadow-sm transition-colors cursor-pointer"
+              className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs sm:text-sm shadow-sm transition-colors cursor-pointer"
             >
               {editingTemplate ? 'Save Changes' : 'Create Template'}
             </button>

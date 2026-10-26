@@ -106,7 +106,7 @@ export const AuditLogsView = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-blue-600" />
+            <ShieldCheck className="w-5 h-5 text-purple-600" />
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">System Security & Audit Trail</h1>
           </div>
           <p className="text-xs text-slate-500 mt-1">
@@ -147,7 +147,7 @@ export const AuditLogsView = () => {
               <Activity className="w-3 h-3" /> Live stream active
             </span>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-[#f5eeff] text-purple-600 flex items-center justify-center">
             <Layers className="w-5 h-5" />
           </div>
         </div>
@@ -193,7 +193,7 @@ export const AuditLogsView = () => {
               setSearchTerm(e.target.value)
               setCurrentPage(1)
             }}
-            className="w-full pl-9 pr-4 py-2 text-xs sm:text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            className="w-full pl-9 pr-4 py-2 text-xs sm:text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
           />
         </div>
 
@@ -227,7 +227,7 @@ export const AuditLogsView = () => {
                   <div className="flex items-center gap-1.5">
                     <span>Action Performed</span>
                     {sortField === 'action' ? (
-                      sortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-blue-600" /> : <ArrowDown className="w-3.5 h-3.5 text-blue-600" />
+                      sortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-purple-600" /> : <ArrowDown className="w-3.5 h-3.5 text-purple-600" />
                     ) : (
                       <ArrowUpDown className="w-3 h-3 text-slate-300" />
                     )}
@@ -240,7 +240,7 @@ export const AuditLogsView = () => {
                   <div className="flex items-center gap-1.5">
                     <span>Operator / User</span>
                     {sortField === 'user' ? (
-                      sortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-blue-600" /> : <ArrowDown className="w-3.5 h-3.5 text-blue-600" />
+                      sortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-purple-600" /> : <ArrowDown className="w-3.5 h-3.5 text-purple-600" />
                     ) : (
                       <ArrowUpDown className="w-3 h-3 text-slate-300" />
                     )}
@@ -254,7 +254,7 @@ export const AuditLogsView = () => {
                   <div className="flex items-center gap-1.5">
                     <span>Timestamp</span>
                     {sortField === 'timestamp' ? (
-                      sortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-blue-600" /> : <ArrowDown className="w-3.5 h-3.5 text-blue-600" />
+                      sortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-purple-600" /> : <ArrowDown className="w-3.5 h-3.5 text-purple-600" />
                     ) : (
                       <ArrowUpDown className="w-3 h-3 text-slate-300" />
                     )}
