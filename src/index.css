@@ -4,9 +4,14 @@
 
 @layer base {
   body {
-    @apply bg-[#f1f5f9] text-slate-800 font-sans antialiased;
+    @apply bg-[#f8fafc] text-slate-800 font-sans antialiased;
     margin: 0;
     padding: 0;
+  }
+  
+  ::selection {
+    background-color: #ede9fe;
+    color: #6d28d9;
   }
 }
 
@@ -26,12 +31,12 @@
   background: #94a3b8;
 }
 
-/* Dark sidebar scrollbar */
+/* Clean sidebar scrollbar */
 .dark-scroll::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #e2e8f0;
 }
 .dark-scroll::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: #cbd5e1;
 }
 
 /* Smooth transitions */
