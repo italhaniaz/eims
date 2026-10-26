@@ -195,7 +195,7 @@ export const InstituteAdminNavbar = ({
   }
 
   return (
-    <header className="h-16 bg-white border-b border-slate-100 px-3 md:px-6 flex items-center justify-between sticky top-0 z-30 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+    <header className="h-16 sm:h-20 min-h-[64px] sm:min-h-[80px] bg-white border-b border-slate-100 px-3.5 sm:px-6 md:px-8 flex items-center justify-between sticky top-0 z-30 shrink-0 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
       {/* Left: Mobile Hamburger, Campus Switcher, & Program Levels Dropdown */}
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         {/* Mobile Hamburger */}

@@ -22,6 +22,9 @@ export default {
           accent: '#a78bfa',
         }
       },
+      spacing: {
+        18: '4.5rem',
+      },
       fontFamily: {
         sans: ['Geist', 'Outfit', 'Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
         heading: ['Outfit', 'Geist', 'system-ui', 'sans-serif'],

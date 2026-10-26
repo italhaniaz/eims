@@ -76,7 +76,7 @@ export const InstituteAdminSidebar = ({
         `}
       >
         {/* Top Header */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-[#1e2d4d] shrink-0">
+        <div className="h-16 sm:h-20 min-h-[64px] sm:min-h-[80px] flex items-center justify-between px-4 border-b border-[#1e2d4d] shrink-0">
           {(!collapsed || isMobileOpen) && (
             <div className="flex items-center gap-2.5 overflow-hidden">
               <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">

@@ -79,7 +79,7 @@ export const SuperadminSidebar = ({
         `}
       >
         {/* Top Brand Header matching "ia Academy" style */}
-        <div className="h-18 flex items-center justify-between px-5 border-b border-slate-100 shrink-0">
+        <div className="h-16 sm:h-20 min-h-[64px] sm:min-h-[80px] flex items-center justify-between px-4 sm:px-5 border-b border-slate-100 shrink-0">
           <div className="flex items-center gap-2.5 overflow-hidden">
             <div className="w-8 h-8 rounded-full bg-purple-600/10 text-purple-600 flex items-center justify-center shrink-0 font-bold text-xs">
               <span className="font-extrabold tracking-tighter">ia</span>
