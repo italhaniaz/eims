@@ -107,7 +107,9 @@ export const InstitutesView = () => {
   // ----------------------------------------------------
   const initialWizardState = {
     // Step 1: Demographics & Type
-    type: 'School', // School, College, University
+    type: 'School', // School, College, University, Custom
+    planType: 'SCHOOL',
+    enabledTiers: ['school'],
     name: '',
     code: '',
     affiliatedBoard: examinationBodies[0]?.code || 'BISE Lahore',
@@ -864,26 +866,83 @@ export const InstitutesView = () => {
           {wizardStep === 1 && (
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1.5">Educational Tier / Institute Type *</label>
-                <div className="grid grid-cols-3 gap-3">
-                  {['School', 'College', 'University'].map((tier) => (
-                    <button
-                      key={tier}
-                      type="button"
-                      onClick={() => setWizardData({ ...wizardData, type: tier })}
-                      className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center gap-1.5 ${
-                        wizardData.type === tier 
-                          ? 'border-blue-600 bg-blue-50 text-blue-800 font-bold ring-2 ring-blue-500/20' 
-                          : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
-                      }`}
-                    >
-                      {tier === 'University' ? <GraduationCap className="w-5 h-5 text-emerald-600" /> :
-                       tier === 'College' ? <Building2 className="w-5 h-5 text-indigo-600" /> :
-                       <School className="w-5 h-5 text-blue-600" />}
-                      <span className="text-xs">{tier}</span>
-                    </button>
-                  ))}
+                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1.5">Educational Tier / Institute Plan Type *</label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[
+                    { id: 'School', label: 'School Plan', icon: School, defaultTiers: ['school'], planName: 'School Plan', color: 'text-blue-600' },
+                    { id: 'College', label: 'College Plan', icon: Building2, defaultTiers: ['college'], planName: 'College Plan', color: 'text-indigo-600' },
+                    { id: 'University', label: 'University Plan', icon: GraduationCap, defaultTiers: ['undergraduate'], planName: 'University Plan', color: 'text-purple-600' },
+                    { id: 'Custom', label: 'Custom Hybrid', icon: Layers, defaultTiers: ['school', 'college'], planName: 'Custom Hybrid Plan', color: 'text-amber-600' }
+                  ].map((tierItem) => {
+                    const TierIcon = tierItem.icon
+                    const isSelected = wizardData.type === tierItem.id
+                    return (
+                      <button
+                        key={tierItem.id}
+                        type="button"
+                        onClick={() => setWizardData({ 
+                          ...wizardData, 
+                          type: tierItem.id,
+                          planType: tierItem.id.toUpperCase(),
+                          planTier: tierItem.planName,
+                          enabledTiers: tierItem.defaultTiers
+                        })}
+                        className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center gap-1.5 cursor-pointer ${
+                          isSelected 
+                            ? 'border-blue-600 bg-blue-50 text-blue-800 font-bold ring-2 ring-blue-500/20' 
+                            : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                        }`}
+                      >
+                        <TierIcon className={`w-5 h-5 ${tierItem.color}`} />
+                        <span className="text-xs font-semibold">{tierItem.label}</span>
+                      </button>
+                    )
+                  })}
                 </div>
+
+                {/* Custom Plan: Multi-Wing Checkbox Configuration */}
+                {wizardData.type === 'Custom' && (
+                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 mt-3 space-y-2">
+                    <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
+                      Select Active Educational Wings for this Custom Client
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      {[
+                        { id: 'school', label: 'School Wing', desc: 'Primary & High School (K-10)', icon: School },
+                        { id: 'college', label: 'College Wing', desc: 'Intermediate (F.Sc, ICS, FA, A-Levels)', icon: Building2 },
+                        { id: 'undergraduate', label: 'Undergraduates Wing', desc: '4-Year BS Degrees & Semesters', icon: GraduationCap }
+                      ].map(wing => {
+                        const WingIcon = wing.icon
+                        const isChecked = (wizardData.enabledTiers || ['school', 'college']).includes(wing.id)
+                        return (
+                          <label key={wing.id} className="flex items-center gap-2 p-2 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-slate-300">
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => {
+                                const current = wizardData.enabledTiers || ['school', 'college']
+                                let updated
+                                if (current.includes(wing.id)) {
+                                  if (current.length > 1) updated = current.filter(t => t !== wing.id)
+                                  else updated = current
+                                } else {
+                                  updated = [...current, wing.id]
+                                }
+                                setWizardData({ ...wizardData, enabledTiers: updated })
+                              }}
+                              className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+                            />
+                            <WingIcon className="w-4 h-4 text-indigo-600 shrink-0" />
+                            <div>
+                              <span className="text-xs font-bold text-slate-800 block">{wing.label}</span>
+                              <span className="text-[10px] text-slate-400 block">{wing.desc}</span>
+                            </div>
+                          </label>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -1163,7 +1222,7 @@ export const InstitutesView = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-600 uppercase mb-1.5">Select Subscription Plan</label>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   {SUBSCRIPTION_PLANS.map((plan) => (
                     <button
                       key={plan.id}

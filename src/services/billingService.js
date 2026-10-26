@@ -3,100 +3,137 @@ import { DataService, getStoredData, saveStoredData } from './dataService'
 
 const API_BASE_URL = 'http://localhost:5000'
 
-const FALLBACK_PLANS = [
+export const FALLBACK_PLANS = [
   {
-    id: 'plan-basic',
-    name: 'Basic Tier',
-    tier: 'Basic',
-    pricePKR: 15000,
+    id: 'plan-school',
+    name: 'School Plan',
+    tier: 'School',
+    planCode: 'SCHOOL',
+    enabledTiers: ['school'],
+    pricePKR: 25000,
     billingCycle: 'monthly',
-    maxStudents: 500,
-    maxCampuses: 1,
-    maxUsers: 25,
-    storageGB: 2,
-    features: ['students', 'fees', 'exams', 'attendance'],
+    maxStudents: 1500,
+    maxCampuses: 2,
+    maxUsers: 50,
+    storageGB: 5,
+    features: ['students', 'fees', 'exams', 'attendance', 'classes', 'curriculum', 'timetable', 'notices'],
+    description: 'Tailored for Primary, Middle & Matric / O-Levels schools',
     isActive: true
   },
   {
-    id: 'plan-pro',
-    name: 'Professional Tier',
-    tier: 'Pro',
+    id: 'plan-college',
+    name: 'College Plan',
+    tier: 'College',
+    planCode: 'COLLEGE',
+    enabledTiers: ['college'],
     pricePKR: 35000,
     billingCycle: 'monthly',
-    maxStudents: 2000,
+    maxStudents: 3000,
     maxCampuses: 3,
-    maxUsers: 80,
+    maxUsers: 100,
     storageGB: 10,
-    features: ['students', 'fees', 'exams', 'attendance', 'library', 'communication', 'payroll'],
+    features: ['students', 'fees', 'exams', 'attendance', 'programs', 'curriculum', 'timetable', 'notices', 'admissions'],
+    description: 'Built for Intermediate, F.Sc, ICS, FA, I.Com & A-Levels colleges',
     isActive: true
   },
   {
-    id: 'plan-enterprise',
-    name: 'Enterprise Tier',
-    tier: 'Enterprise',
+    id: 'plan-university',
+    name: 'University Plan',
+    tier: 'University',
+    planCode: 'UNIVERSITY',
+    enabledTiers: ['undergraduate'],
+    pricePKR: 55000,
+    billingCycle: 'monthly',
+    maxStudents: 8000,
+    maxCampuses: 5,
+    maxUsers: 300,
+    storageGB: 25,
+    features: ['students', 'fees', 'exams', 'attendance', 'departments', 'degrees', 'semesters', 'cgpa_grading', 'credit_hours', 'library'],
+    description: 'Full Undergraduate BS degree management, Semesters, Credit Hours & CGPA',
+    isActive: true
+  },
+  {
+    id: 'plan-custom',
+    name: 'Custom Hybrid Plan',
+    tier: 'Custom',
+    planCode: 'CUSTOM',
+    enabledTiers: ['school', 'college'],
     pricePKR: 75000,
     billingCycle: 'monthly',
-    maxStudents: 10000,
+    maxStudents: 15000,
     maxCampuses: 15,
-    maxUsers: 500,
+    maxUsers: 600,
     storageGB: 50,
-    features: ['students', 'fees', 'exams', 'attendance', 'library', 'communication', 'payroll', 'transport', 'hostel', 'inventory', 'admissions'],
+    features: ['students', 'fees', 'exams', 'attendance', 'classes', 'programs', 'departments', 'semesters', 'library', 'transport', 'hostel', 'admissions'],
+    description: 'Multi-wing educational groups combining School, College, and University wings',
     isActive: true
   }
 ]
 
-const FALLBACK_SUBSCRIPTIONS = [
+export const FALLBACK_SUBSCRIPTIONS = [
   {
     id: 'sub-1',
     instituteId: 'c1000000-0000-0000-0000-000000000001',
     instituteName: 'Beaconhouse Central High School',
-    planId: 'plan-enterprise',
-    planName: 'Enterprise Tier',
+    planId: 'plan-custom',
+    planName: 'Custom Hybrid Plan',
+    enabledTiers: ['school', 'college'],
     status: 'ACTIVE',
     billingCycle: 'monthly',
     pricePKR: 75000,
     startDate: '2026-08-01',
-    renewalDate: '2026-11-01',
+    renewalDate: '2026-10-31',
     trialEndsAt: null,
-    autoRenew: true
+    autoRenew: true,
+    isWaived: false,
+    waiveReason: '',
+    extendedUntil: null
   },
   {
     id: 'sub-2',
     instituteId: 'c1000000-0000-0000-0000-000000000002',
     instituteName: 'City School Model Town Campus',
-    planId: 'plan-pro',
-    planName: 'Professional Tier',
+    planId: 'plan-school',
+    planName: 'School Plan',
+    enabledTiers: ['school'],
     status: 'ACTIVE',
     billingCycle: 'monthly',
-    pricePKR: 35000,
+    pricePKR: 25000,
     startDate: '2026-09-01',
-    renewalDate: '2026-11-05',
+    renewalDate: '2026-11-15',
     trialEndsAt: null,
-    autoRenew: true
+    autoRenew: true,
+    isWaived: false,
+    waiveReason: '',
+    extendedUntil: null
   },
   {
     id: 'sub-3',
     instituteId: 'c1000000-0000-0000-0000-000000000003',
     instituteName: 'Roots International Academy',
-    planId: 'plan-basic',
-    planName: 'Basic Tier',
-    status: 'TRIAL',
+    planId: 'plan-college',
+    planName: 'College Plan',
+    enabledTiers: ['college'],
+    status: 'ACTIVE',
     billingCycle: 'monthly',
-    pricePKR: 15000,
+    pricePKR: 35000,
     startDate: '2026-10-12',
-    renewalDate: '2026-10-26',
-    trialEndsAt: '2026-10-26',
-    autoRenew: false
+    renewalDate: '2026-10-29',
+    trialEndsAt: null,
+    autoRenew: true,
+    isWaived: false,
+    waiveReason: '',
+    extendedUntil: null
   }
 ]
 
-const FALLBACK_INVOICES = [
+export const FALLBACK_INVOICES = [
   {
     id: 'inv-001',
     invoiceNumber: 'INV-2026-001',
     instituteId: 'c1000000-0000-0000-0000-000000000001',
     instituteName: 'Beaconhouse Central High School',
-    planName: 'Enterprise Tier',
+    planName: 'Custom Hybrid Plan',
     amountPKR: 75000,
     status: 'PAID',
     issueDate: '2026-09-25',
@@ -110,8 +147,8 @@ const FALLBACK_INVOICES = [
     invoiceNumber: 'INV-2026-002',
     instituteId: 'c1000000-0000-0000-0000-000000000002',
     instituteName: 'City School Model Town Campus',
-    planName: 'Professional Tier',
-    amountPKR: 35000,
+    planName: 'School Plan',
+    amountPKR: 25000,
     status: 'PAID',
     issueDate: '2026-09-28',
     dueDate: '2026-10-08',
@@ -124,18 +161,28 @@ const FALLBACK_INVOICES = [
     invoiceNumber: 'INV-2026-003',
     instituteId: 'c1000000-0000-0000-0000-000000000003',
     instituteName: 'Roots International Academy',
-    planName: 'Basic Tier',
-    amountPKR: 15000,
+    planName: 'College Plan',
+    amountPKR: 35000,
     status: 'PENDING',
     issueDate: '2026-10-18',
-    dueDate: '2026-10-28',
+    dueDate: '2026-10-29',
     paidDate: null,
-    paymentMethod: 'Pending Voucher Payment',
+    paymentMethod: 'Pending 1Bill Payment',
     transactionRef: null
   }
 ]
 
 export const BillingService = {
+  calculateDaysRemaining(renewalDate) {
+    if (!renewalDate) return 30
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const target = new Date(renewalDate)
+    target.setHours(0, 0, 0, 0)
+    const diffTime = target - today
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  },
+
   // 1. BILLING OVERVIEW
   async getBillingOverview() {
     try {
@@ -179,7 +226,11 @@ export const BillingService = {
 
     const local = localStorage.getItem('sms_platform_plans')
     if (local) {
-      try { return JSON.parse(local) } catch {}
+      try { 
+        const parsed = JSON.parse(local)
+        // If legacy plans stored, refresh to new 4 plans
+        if (parsed && parsed.some(p => p.id === 'plan-school')) return parsed
+      } catch {}
     }
     localStorage.setItem('sms_platform_plans', JSON.stringify(FALLBACK_PLANS))
     return FALLBACK_PLANS
@@ -257,10 +308,37 @@ export const BillingService = {
 
     const local = localStorage.getItem('sms_institute_subscriptions')
     if (local) {
-      try { return JSON.parse(local) } catch {}
+      try { 
+        const parsed = JSON.parse(local)
+        if (parsed && parsed.some(s => s.planId === 'plan-custom' || s.planId === 'plan-school')) {
+          return parsed.map(s => ({
+            ...s,
+            daysRemaining: this.calculateDaysRemaining(s.renewalDate)
+          }))
+        }
+      } catch {}
     }
     localStorage.setItem('sms_institute_subscriptions', JSON.stringify(FALLBACK_SUBSCRIPTIONS))
-    return FALLBACK_SUBSCRIPTIONS
+    return FALLBACK_SUBSCRIPTIONS.map(s => ({
+      ...s,
+      daysRemaining: this.calculateDaysRemaining(s.renewalDate)
+    }))
+  },
+
+  getSubscriptionForInstitute(instituteId) {
+    const local = localStorage.getItem('sms_institute_subscriptions')
+    let subs = FALLBACK_SUBSCRIPTIONS
+    if (local) {
+      try { subs = JSON.parse(local) } catch {}
+    }
+    const sub = subs.find(s => s.instituteId === instituteId) || subs[0]
+    if (!sub) return null
+    const daysRemaining = this.calculateDaysRemaining(sub.renewalDate)
+    return {
+      ...sub,
+      daysRemaining,
+      isApproachingDeadline: daysRemaining <= 5 && daysRemaining >= 0 && !sub.isWaived
+    }
   },
 
   async updateSubscription(subData) {
@@ -290,9 +368,91 @@ export const BillingService = {
       const nextDate = new Date()
       nextDate.setMonth(nextDate.getMonth() + 1)
       sub.status = 'ACTIVE'
+      sub.isWaived = false
+      sub.waiveReason = ''
+      sub.extendedUntil = null
       sub.renewalDate = nextDate.toISOString().slice(0, 10)
       localStorage.setItem('sms_institute_subscriptions', JSON.stringify(subs))
       DataService.logActivity('Subscription Renewed', `Manually renewed subscription for ${sub.instituteName}`, 'Super Admin')
+      return { success: true, subscription: sub }
+    }
+    return { success: false }
+  },
+
+  // SUPER ADMIN OVERRIDE 1: Waive Month (Complimentary Cycle)
+  async waiveCurrentMonth(id, reason = 'Waived by Super Admin as complimentary cycle') {
+    const subs = await this.getSubscriptions()
+    const sub = subs.find(s => s.id === id)
+    if (sub) {
+      sub.isWaived = true
+      sub.waiveReason = reason
+      sub.status = 'ACTIVE'
+      
+      // Advance renewal date to next cycle
+      const nextDate = new Date(sub.renewalDate || new Date())
+      nextDate.setMonth(nextDate.getMonth() + 1)
+      sub.renewalDate = nextDate.toISOString().slice(0, 10)
+
+      localStorage.setItem('sms_institute_subscriptions', JSON.stringify(subs))
+
+      // Update pending invoice if exists
+      const invoices = await this.getInvoices()
+      const inv = invoices.find(i => i.instituteId === sub.instituteId && i.status !== 'PAID')
+      if (inv) {
+        inv.status = 'PAID'
+        inv.amountPKR = 0
+        inv.notes = `Fee waived: ${reason}`
+        inv.paymentMethod = 'Waived / Free Cycle'
+        localStorage.setItem('sms_platform_invoices', JSON.stringify(invoices))
+      }
+
+      DataService.logActivity('Platform Fee Waived', `Waived subscription charges for ${sub.instituteName}: ${reason}`, 'Super Admin')
+      return { success: true, subscription: sub }
+    }
+    return { success: false }
+  },
+
+  // SUPER ADMIN OVERRIDE 2: Extend Payment Deadline / Grace Period
+  async extendDeadline(id, newDate, reason = 'Grace period extension granted by Super Admin') {
+    const subs = await this.getSubscriptions()
+    const sub = subs.find(s => s.id === id)
+    if (sub) {
+      sub.renewalDate = newDate
+      sub.extendedUntil = newDate
+      sub.status = 'ACTIVE'
+      localStorage.setItem('sms_institute_subscriptions', JSON.stringify(subs))
+      DataService.logActivity('Deadline Extended', `Extended payment deadline for ${sub.instituteName} to ${newDate}: ${reason}`, 'Super Admin')
+      return { success: true, subscription: sub }
+    }
+    return { success: false }
+  },
+
+  // SUPER ADMIN OVERRIDE 3: Switch Plan & Enabled Tiers
+  async updateSubscriptionPlan(id, planId, enabledTiers = null, pricePKR = null) {
+    const subs = await this.getSubscriptions()
+    const sub = subs.find(s => s.id === id)
+    const plans = await this.getPlans()
+    const targetPlan = plans.find(p => p.id === planId)
+
+    if (sub && targetPlan) {
+      sub.planId = planId
+      sub.planName = targetPlan.name
+      sub.pricePKR = pricePKR !== null ? Number(pricePKR) : targetPlan.pricePKR
+      sub.enabledTiers = enabledTiers || targetPlan.enabledTiers || ['school']
+
+      localStorage.setItem('sms_institute_subscriptions', JSON.stringify(subs))
+
+      // Synchronize Institute object in global store
+      const data = getStoredData()
+      const inst = (data.institutes || []).find(i => i.id === sub.instituteId)
+      if (inst) {
+        inst.planTier = targetPlan.name
+        inst.planType = targetPlan.planCode || 'CUSTOM'
+        inst.enabledTiers = sub.enabledTiers
+        saveStoredData(data)
+      }
+
+      DataService.logActivity('Subscription Plan Changed', `Assigned ${targetPlan.name} to ${sub.instituteName}`, 'Super Admin')
       return { success: true, subscription: sub }
     }
     return { success: false }

@@ -18,40 +18,60 @@ export const PLATFORM_MODULES = [
 
 export const SUBSCRIPTION_PLANS = [
   {
-    id: 'plan-basic',
-    name: 'Standard Campus',
+    id: 'plan-school',
+    name: 'School Plan',
     type: 'School',
-    pricePKR: 15000,
+    planCode: 'SCHOOL',
+    enabledTiers: ['school'],
+    pricePKR: 25000,
     interval: 'Monthly',
-    maxStudents: 500,
-    maxUsers: 25,
-    maxCampuses: 1,
-    storageMB: 1024,
-    description: 'Perfect for single-campus schools and small academies'
+    maxStudents: 1500,
+    maxUsers: 50,
+    maxCampuses: 2,
+    storageMB: 5120,
+    description: 'Tailored for Primary, Middle & Matric / O-Levels schools'
   },
   {
-    id: 'plan-pro',
-    name: 'Professional Tier',
+    id: 'plan-college',
+    name: 'College Plan',
     type: 'College',
+    planCode: 'COLLEGE',
+    enabledTiers: ['college'],
     pricePKR: 35000,
     interval: 'Monthly',
-    maxStudents: 2000,
-    maxUsers: 80,
+    maxStudents: 3000,
+    maxUsers: 100,
     maxCampuses: 3,
-    storageMB: 4096,
-    description: 'Designed for intermediate colleges and multi-branch schools'
+    storageMB: 10240,
+    description: 'Built for Intermediate, F.Sc, ICS, FA, I.Com & A-Levels colleges'
   },
   {
-    id: 'plan-enterprise',
-    name: 'Enterprise Apex',
+    id: 'plan-university',
+    name: 'University Plan',
     type: 'University',
-    pricePKR: 85000,
+    planCode: 'UNIVERSITY',
+    enabledTiers: ['undergraduate'],
+    pricePKR: 55000,
     interval: 'Monthly',
-    maxStudents: 10000,
-    maxUsers: 500,
+    maxStudents: 8000,
+    maxUsers: 300,
+    maxCampuses: 5,
+    storageMB: 25600,
+    description: 'Full Undergraduate BS degree management, Semesters, Credit Hours & CGPA'
+  },
+  {
+    id: 'plan-custom',
+    name: 'Custom Hybrid Plan',
+    type: 'Custom',
+    planCode: 'CUSTOM',
+    enabledTiers: ['school', 'college'],
+    pricePKR: 75000,
+    interval: 'Monthly',
+    maxStudents: 15000,
+    maxUsers: 600,
     maxCampuses: 15,
-    storageMB: 20480,
-    description: 'Full-scale solution for chartered universities and nationwide chains'
+    storageMB: 51200,
+    description: 'Multi-wing educational groups combining School, College, and University wings'
   }
 ]
 

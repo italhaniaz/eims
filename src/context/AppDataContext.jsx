@@ -8,6 +8,22 @@ export const AppDataProvider = ({ children }) => {
   const [data, setData] = useState(() => getStoredData())
   const [loading, setLoading] = useState(false)
   const [activeProgramLevel, setActiveProgramLevel] = useState('all')
+  const [activeWing, setActiveWingState] = useState('all')
+
+  const setActiveWing = (wing) => {
+    setActiveWingState(wing)
+    if (wing === 'school') {
+      if (!['preschool', 'elementary', 'secondary'].includes(activeProgramLevel)) {
+        setActiveProgramLevel('elementary')
+      }
+    } else if (wing === 'college') {
+      setActiveProgramLevel('higher-secondary')
+    } else if (wing === 'undergraduate') {
+      setActiveProgramLevel('university')
+    } else if (wing === 'all') {
+      setActiveProgramLevel('all')
+    }
+  }
 
   const refreshData = () => {
     const fresh = getStoredData()
@@ -213,6 +229,8 @@ export const AppDataProvider = ({ children }) => {
         instituteModules: data.instituteModules || [],
         activeProgramLevel,
         setActiveProgramLevel,
+        activeWing,
+        setActiveWing,
         programLevels: PROGRAM_LEVELS,
         loading,
         refreshData,

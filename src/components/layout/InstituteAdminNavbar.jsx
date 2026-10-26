@@ -42,6 +42,8 @@ export const InstituteAdminNavbar = ({
     institutes, 
     activeProgramLevel, 
     setActiveProgramLevel, 
+    activeWing = 'all',
+    setActiveWing,
     programLevels = [] 
   } = useAppData()
 
@@ -81,6 +83,20 @@ export const InstituteAdminNavbar = ({
   }, [])
 
   const currentLevelObj = programLevels.find(l => l.id === activeProgramLevel) || programLevels[0]
+
+  const enabledTiers = selectedInstitute?.enabledTiers || (
+    selectedInstitute?.type === 'School' ? ['school'] :
+    selectedInstitute?.type === 'College' ? ['college'] :
+    selectedInstitute?.type === 'University' ? ['undergraduate'] :
+    ['school', 'college']
+  )
+
+  const availableWings = [
+    { id: 'all', label: 'All Wings', icon: Layers, badge: 'Overview' },
+    ...(enabledTiers.includes('school') ? [{ id: 'school', label: 'School Wing', icon: School, badge: 'K-10' }] : []),
+    ...(enabledTiers.includes('college') ? [{ id: 'college', label: 'College Wing', icon: Building2, badge: '11-12' }] : []),
+    ...(enabledTiers.includes('undergraduate') ? [{ id: 'undergraduate', label: 'Undergraduates', icon: GraduationCap, badge: 'BS' }] : [])
+  ]
 
   const getLevelIcon = (id, className = "w-4 h-4") => {
     switch (id) {
@@ -457,6 +473,49 @@ export const InstituteAdminNavbar = ({
           {getRouteTitle()}
         </h1>
       </div>
+
+      {/* Center: Academic Wing Switcher (Multi-Tier Option A Architecture) */}
+      {availableWings.length > 2 && (
+        <div className="hidden lg:flex items-center bg-slate-100/90 p-1 rounded-xl border border-slate-200/80 shadow-2xs gap-1">
+          {availableWings.map(wing => {
+            const Icon = wing.icon
+            const isActive = activeWing === wing.id
+            return (
+              <button
+                key={wing.id}
+                type="button"
+                onClick={() => setActiveWing && setActiveWing(wing.id)}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  isActive 
+                    ? 'bg-white text-blue-700 shadow-xs border border-slate-200/70 ring-1 ring-blue-500/10' 
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                }`}
+                title={`Switch active view to ${wing.label}`}
+              >
+                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-blue-600' : 'text-slate-500'}`} />
+                <span>{wing.label}</span>
+                {wing.badge && (
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-semibold ${
+                    isActive ? 'bg-blue-50 text-blue-700' : 'bg-slate-200 text-slate-500'
+                  }`}>
+                    {wing.badge}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Single Tier Campus Badge (when institute only has 1 tier enabled) */}
+      {availableWings.length <= 2 && (
+        <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-700 text-xs font-semibold">
+          {enabledTiers[0] === 'school' && <School className="w-4 h-4 text-blue-600" />}
+          {enabledTiers[0] === 'college' && <Building2 className="w-4 h-4 text-indigo-600" />}
+          {enabledTiers[0] === 'undergraduate' && <GraduationCap className="w-4 h-4 text-purple-600" />}
+          <span>{enabledTiers[0] === 'undergraduate' ? 'Undergraduates / University' : (enabledTiers[0] || 'Campus').toUpperCase()} Portal</span>
+        </div>
+      )}
 
       {/* Right: Settings and User Menu */}
       <div className="flex items-center gap-2 sm:gap-3">

@@ -21,6 +21,7 @@ import {
   X
 } from 'lucide-react'
 import StatCard from '../../components/common/StatCard'
+import { BillingService } from '../../services/billingService'
 import { CampusSetupWizard } from '../../components/common/CampusSetupWizard'
 import { useAppData } from '../../context/AppDataContext'
 import { normalizeClassSections, detectProgramLevel } from '../../constants/academicLevels'
@@ -34,8 +35,16 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
     classes = [],
     activeProgramLevel, 
     setActiveProgramLevel, 
+    activeWing = 'all',
+    setActiveWing,
     programLevels = [] 
   } = useAppData()
+
+  const [isRenewalDismissed, setIsRenewalDismissed] = useState(() => {
+    return typeof window !== 'undefined' && sessionStorage.getItem(`dismiss_renewal_${currentInstitute?.id}`) === 'true'
+  })
+
+  const subscription = BillingService.getSubscriptionForInstitute(currentInstitute?.id)
 
   const [isNoticeDismissed, setIsNoticeDismissed] = useState(false)
   const urgentNotice = notices.find(n => 
@@ -159,6 +168,65 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
             >
               <X className="w-4 h-4" />
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Subscription Renewal Warning Banner (5 or 2 days deadline alert) */}
+      {subscription && subscription.isApproachingDeadline && !isRenewalDismissed && (
+        <div className="bg-gradient-to-r from-amber-50 via-amber-50/90 to-amber-100/70 border border-amber-200/90 rounded-2xl p-4 text-amber-900 shadow-xs flex items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-700 flex items-center justify-center shrink-0">
+              <Clock className="w-5 h-5 animate-pulse" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 bg-amber-200/70 px-2 py-0.5 rounded-full">
+                  Subscription Renewal Reminder
+                </span>
+                <span className="text-xs font-bold text-amber-800">
+                  Due in {subscription.daysRemaining} days ({subscription.renewalDate})
+                </span>
+              </div>
+              <p className="text-xs text-amber-800/90 mt-1">
+                Your <strong>{subscription.planName || 'Campus Plan'}</strong> billing cycle is approaching renewal. All campus modules, student attendance, fees, and grading remain fully active without interruption.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setIsRenewalDismissed(true)
+              sessionStorage.setItem(`dismiss_renewal_${currentInstitute?.id}`, 'true')
+            }}
+            className="w-8 h-8 rounded-lg text-amber-700 hover:text-amber-950 hover:bg-amber-200/60 flex items-center justify-center transition-colors shrink-0 cursor-pointer"
+            title="Dismiss notification"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Waived Month Courtesy Banner (Super Admin Override) */}
+      {subscription && subscription.isWaived && (
+        <div className="bg-emerald-50/90 border border-emerald-200/80 rounded-2xl p-3.5 px-4 text-emerald-900 shadow-2xs flex items-center justify-between gap-3 animate-in fade-in">
+          <div className="flex items-center gap-2.5">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+            <span className="text-xs font-medium">
+              <strong>Complimentary Billing Cycle:</strong> Platform fees for this cycle have been waived by Super Admin ({subscription.waiveReason || 'Promotional Courtesy'}). Next billing date: {subscription.renewalDate}.
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Grace Period Extension Banner (Super Admin Override) */}
+      {subscription && subscription.extendedUntil && !subscription.isWaived && (
+        <div className="bg-blue-50/90 border border-blue-200/80 rounded-2xl p-3.5 px-4 text-blue-900 shadow-2xs flex items-center justify-between gap-3 animate-in fade-in">
+          <div className="flex items-center gap-2.5">
+            <Clock className="w-5 h-5 text-blue-600 shrink-0" />
+            <span className="text-xs font-medium">
+              <strong>Grace Period Active:</strong> Payment due date has been extended until <strong>{subscription.extendedUntil}</strong>. All campus operations remain fully active.
+            </span>
           </div>
         </div>
       )}

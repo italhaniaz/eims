@@ -69,7 +69,10 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
     city: '',
     address: '',
     email: '',
-    phone: ''
+    phone: '',
+    planTier: 'School Plan',
+    planType: 'SCHOOL',
+    enabledTiers: ['school']
   })
 
   // Broadcast form data
@@ -124,6 +127,9 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
       studentsCount: 0,
       teachersCount: 0,
       status: 'Active',
+      planTier: newInstituteData.planTier || 'School Plan',
+      planType: newInstituteData.planType || 'SCHOOL',
+      enabledTiers: newInstituteData.enabledTiers || ['school'],
       joinedDate: new Date().toISOString().split('T')[0]
     })
 
@@ -134,7 +140,10 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
       city: '',
       address: '',
       email: '',
-      phone: ''
+      phone: '',
+      planTier: 'School Plan',
+      planType: 'SCHOOL',
+      enabledTiers: ['school']
     })
     triggerToast('New institute registered successfully in the system database!')
   }
@@ -677,6 +686,35 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               onChange={(e) => setNewInstituteData({ ...newInstituteData, address: e.target.value })}
               className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
             />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Subscription Plan & Educational Tier</label>
+            <select
+              value={newInstituteData.planTier}
+              onChange={(e) => {
+                const val = e.target.value
+                const map = {
+                  'School Plan': { planType: 'SCHOOL', enabledTiers: ['school'] },
+                  'College Plan': { planType: 'COLLEGE', enabledTiers: ['college'] },
+                  'University Plan': { planType: 'UNIVERSITY', enabledTiers: ['undergraduate'] },
+                  'Custom Hybrid Plan': { planType: 'CUSTOM', enabledTiers: ['school', 'college'] }
+                }
+                const conf = map[val] || map['School Plan']
+                setNewInstituteData({
+                  ...newInstituteData,
+                  planTier: val,
+                  planType: conf.planType,
+                  enabledTiers: conf.enabledTiers
+                })
+              }}
+              className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm bg-white"
+            >
+              <option value="School Plan">School Plan (Primary & High School)</option>
+              <option value="College Plan">College Plan (Intermediate / HSSC)</option>
+              <option value="University Plan">University Plan (Undergraduates / BS Degrees)</option>
+              <option value="Custom Hybrid Plan">Custom Hybrid Plan (Multi-Wing Combo)</option>
+            </select>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

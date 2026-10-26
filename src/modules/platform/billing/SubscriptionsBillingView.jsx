@@ -7,17 +7,24 @@ import {
   Clock,
   Plus,
   CheckCircle,
+  CheckCircle2,
   Edit2,
   Trash2,
   Send,
   Calendar,
+  CalendarPlus,
   Layers,
   Search,
   Check,
   RefreshCw,
   ExternalLink,
   Shield,
-  FileText
+  FileText,
+  Gift,
+  Sliders,
+  School,
+  Building2,
+  GraduationCap
 } from 'lucide-react'
 import StatCard from '../../../components/common/StatCard'
 import Modal from '../../../components/common/Modal'
@@ -52,6 +59,21 @@ const SubscriptionsBillingView = () => {
 
   // Delete plan confirm modal
   const [planToDelete, setPlanToDelete] = useState(null)
+
+  // Super Admin Overrides Modals
+  const [isWaiveModalOpen, setIsWaiveModalOpen] = useState(false)
+  const [waivingSub, setWaivingSub] = useState(null)
+  const [waiveReason, setWaiveReason] = useState('Promotional courtesy waived by Super Admin')
+
+  const [isExtendModalOpen, setIsExtendModalOpen] = useState(false)
+  const [extendingSub, setExtendingSub] = useState(null)
+  const [extendDays, setExtendDays] = useState(7)
+  const [customExtendDate, setCustomExtendDate] = useState('')
+
+  const [isChangePlanModalOpen, setIsChangePlanModalOpen] = useState(false)
+  const [editingSubPlan, setEditingSubPlan] = useState(null)
+  const [selectedPlanId, setSelectedPlanId] = useState('plan-school')
+  const [customEnabledTiers, setCustomEnabledTiers] = useState(['school', 'college'])
 
   // Feedback Toast
   const [actionToast, setActionToast] = useState(null)
@@ -142,6 +164,84 @@ const SubscriptionsBillingView = () => {
     await BillingService.renewSubscription(id)
     fetchBillingData()
     showToast(`Subscription cycle renewed for 1 month.`)
+  }
+
+  // Super Admin Override 1: Waive Month
+  const handleOpenWaiveModal = (sub) => {
+    setWaivingSub(sub)
+    setWaiveReason('Promotional courtesy waived by Super Admin')
+    setIsWaiveModalOpen(true)
+  }
+
+  const handleConfirmWaive = async (e) => {
+    e.preventDefault()
+    if (!waivingSub) return
+    await BillingService.waiveCurrentMonth(waivingSub.id, waiveReason)
+    setIsWaiveModalOpen(false)
+    setWaivingSub(null)
+    fetchBillingData()
+    showToast(`Monthly fee successfully waived for ${waivingSub.instituteName}.`)
+  }
+
+  // Super Admin Override 2: Extend Deadline
+  const handleOpenExtendModal = (sub) => {
+    setExtendingSub(sub)
+    setExtendDays(7)
+    const d = new Date(sub.renewalDate || new Date())
+    d.setDate(d.getDate() + 7)
+    setCustomExtendDate(d.toISOString().slice(0, 10))
+    setIsExtendModalOpen(true)
+  }
+
+  const handleSelectDays = (days) => {
+    setExtendDays(days)
+    if (!extendingSub) return
+    const d = new Date(extendingSub.renewalDate || new Date())
+    d.setDate(d.getDate() + days)
+    setCustomExtendDate(d.toISOString().slice(0, 10))
+  }
+
+  const handleConfirmExtend = async (e) => {
+    e.preventDefault()
+    if (!extendingSub || !customExtendDate) return
+    await BillingService.extendDeadline(extendingSub.id, customExtendDate, `Deadline extended by ${extendDays} days`)
+    setIsExtendModalOpen(false)
+    setExtendingSub(null)
+    fetchBillingData()
+    showToast(`Payment deadline for ${extendingSub.instituteName} extended to ${customExtendDate}.`)
+  }
+
+  // Super Admin Override 3: Change Plan & Enabled Tiers
+  const handleOpenChangePlanModal = (sub) => {
+    setEditingSubPlan(sub)
+    setSelectedPlanId(sub.planId || 'plan-school')
+    setCustomEnabledTiers(sub.enabledTiers || ['school'])
+    setIsChangePlanModalOpen(true)
+  }
+
+  const handleToggleTier = (tierId) => {
+    if (customEnabledTiers.includes(tierId)) {
+      if (customEnabledTiers.length > 1) {
+        setCustomEnabledTiers(customEnabledTiers.filter(t => t !== tierId))
+      }
+    } else {
+      setCustomEnabledTiers([...customEnabledTiers, tierId])
+    }
+  }
+
+  const handleConfirmChangePlan = async (e) => {
+    e.preventDefault()
+    if (!editingSubPlan) return
+    const targetPlan = plans.find(p => p.id === selectedPlanId)
+    const tiersToSave = selectedPlanId === 'plan-custom' 
+      ? customEnabledTiers 
+      : (targetPlan?.enabledTiers || ['school'])
+    
+    await BillingService.updateSubscriptionPlan(editingSubPlan.id, selectedPlanId, tiersToSave)
+    setIsChangePlanModalOpen(false)
+    setEditingSubPlan(null)
+    fetchBillingData()
+    showToast(`Assigned ${targetPlan?.name || 'New Plan'} to ${editingSubPlan.instituteName}.`)
   }
 
   const handleExtendTrial = async (id) => {
@@ -426,51 +526,111 @@ const SubscriptionsBillingView = () => {
                       <td className="py-3.5 px-4">
                         <div className="font-semibold text-slate-900">{sub.instituteName}</div>
                         <div className="text-[11px] text-slate-400">ID: {sub.instituteId.slice(0, 8)}...</div>
+                        {/* Enabled Wings Pills */}
+                        <div className="flex items-center gap-1 mt-1">
+                          {(sub.enabledTiers || ['school']).map(tier => (
+                            <span key={tier} className={`text-[9px] font-bold px-1.5 py-0.2 rounded uppercase tracking-wider ${
+                              tier === 'school' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                              tier === 'college' ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' :
+                              'bg-purple-50 text-purple-700 border border-purple-200'
+                            }`}>
+                              {tier === 'undergraduate' ? 'University' : tier}
+                            </span>
+                          ))}
+                        </div>
                       </td>
                       <td className="py-3.5 px-4">
-                        <span className="font-medium text-slate-800">{sub.planName}</span>
+                        <span className="font-bold text-slate-800 block">{sub.planName}</span>
+                        <span className="text-[11px] text-slate-400 block mt-0.5">
+                          {sub.planId === 'plan-custom' ? 'Custom Multi-Tier' : sub.planId === 'plan-university' ? 'BS & Semesters' : sub.planId === 'plan-college' ? 'Intermediate HSSC' : 'Primary & High'}
+                        </span>
                       </td>
                       <td className="py-3.5 px-4 font-mono font-medium text-slate-800">
-                        ₨ {sub.pricePKR?.toLocaleString()} / {sub.billingCycle}
+                        {sub.isWaived ? (
+                          <div>
+                            <span className="line-through text-slate-400 text-xs">₨ {sub.pricePKR?.toLocaleString()}</span>
+                            <span className="block text-emerald-700 font-bold text-xs">₨ 0 (Waived)</span>
+                          </div>
+                        ) : (
+                          <span>₨ {sub.pricePKR?.toLocaleString()} / {sub.billingCycle}</span>
+                        )}
                       </td>
                       <td className="py-3.5 px-4">
-                        <div className="flex items-center gap-1.5 text-xs font-medium text-slate-700">
+                        <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-800">
                           <Calendar className="w-3.5 h-3.5 text-slate-400" />
                           <span>{sub.renewalDate}</span>
                         </div>
-                        {sub.status === 'TRIAL' && (
-                          <span className="text-[11px] text-amber-600 font-semibold block mt-0.5">
-                            Trial ends: {sub.trialEndsAt || sub.renewalDate}
+                        {sub.isWaived && (
+                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.2 rounded inline-block mt-0.5">
+                            Free Cycle Waived
+                          </span>
+                        )}
+                        {sub.extendedUntil && !sub.isWaived && (
+                          <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-1.5 py-0.2 rounded inline-block mt-0.5">
+                            Grace: {sub.extendedUntil}
+                          </span>
+                        )}
+                        {sub.daysRemaining <= 5 && sub.daysRemaining >= 0 && !sub.isWaived && (
+                          <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.2 rounded inline-block mt-0.5">
+                            {sub.daysRemaining} days remaining
                           </span>
                         )}
                       </td>
                       <td className="py-3.5 px-4 text-center">
                         <span
-                          className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                            sub.status === 'ACTIVE'
+                          className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                            sub.isWaived
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                              : sub.status === 'ACTIVE'
                               ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                               : sub.status === 'TRIAL'
                               ? 'bg-blue-50 text-blue-700 border border-blue-200'
                               : 'bg-rose-50 text-rose-700 border border-rose-200'
                           }`}
                         >
-                          {sub.status}
+                          {sub.isWaived ? 'WAIVED' : sub.status}
                         </span>
                       </td>
                       <td className="py-3.5 px-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          {sub.status === 'TRIAL' && (
-                            <button
-                              onClick={() => handleExtendTrial(sub.id)}
-                              className="px-2.5 py-1 text-xs rounded-lg bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 font-medium transition-colors cursor-pointer"
-                              title="Add 14 days to trial"
-                            >
-                              Extend Trial
-                            </button>
-                          )}
+                        <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                          {/* Super Admin: Waive Month Button */}
                           <button
+                            type="button"
+                            onClick={() => handleOpenWaiveModal(sub)}
+                            className="px-2 py-1 text-xs rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 font-semibold transition-colors cursor-pointer flex items-center gap-1"
+                            title="Waive this month's charge (PKR 0)"
+                          >
+                            <Gift className="w-3 h-3 text-emerald-600" />
+                            <span>Waive</span>
+                          </button>
+
+                          {/* Super Admin: Extend Deadline Button */}
+                          <button
+                            type="button"
+                            onClick={() => handleOpenExtendModal(sub)}
+                            className="px-2 py-1 text-xs rounded-lg bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 font-semibold transition-colors cursor-pointer flex items-center gap-1"
+                            title="Extend payment due date"
+                          >
+                            <CalendarPlus className="w-3 h-3 text-blue-600" />
+                            <span>Extend</span>
+                          </button>
+
+                          {/* Super Admin: Switch Plan / Tiers */}
+                          <button
+                            type="button"
+                            onClick={() => handleOpenChangePlanModal(sub)}
+                            className="px-2 py-1 text-xs rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 font-semibold transition-colors cursor-pointer flex items-center gap-1"
+                            title="Change subscription plan or enable/disable wings"
+                          >
+                            <Sliders className="w-3 h-3 text-indigo-600" />
+                            <span>Plan</span>
+                          </button>
+
+                          <button
+                            type="button"
                             onClick={() => handleRenewSubscription(sub.id)}
-                            className="px-2.5 py-1 text-xs rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 font-medium transition-colors cursor-pointer flex items-center gap-1"
+                            className="px-2 py-1 text-xs rounded-lg bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200 font-semibold transition-colors cursor-pointer flex items-center gap-1"
+                            title="Renew subscription cycle"
                           >
                             <RefreshCw className="w-3 h-3" />
                             <span>Renew</span>
@@ -815,6 +975,203 @@ const SubscriptionsBillingView = () => {
               className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs sm:text-sm shadow-sm transition-colors cursor-pointer"
             >
               {editingPlan ? 'Save Plan Updates' : 'Publish Plan'}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* SUPER ADMIN MODAL 1: WAIVE MONTH */}
+      <Modal
+        isOpen={isWaiveModalOpen}
+        onClose={() => setIsWaiveModalOpen(false)}
+        title="Waive Monthly Platform Charge"
+        maxWidth="max-w-md"
+      >
+        <form onSubmit={handleConfirmWaive} className="space-y-4">
+          <div className="p-3.5 bg-emerald-50 rounded-xl border border-emerald-200 flex items-start gap-3">
+            <Gift className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+            <div className="text-xs text-emerald-900">
+              <span className="font-bold block">Complimentary Billing Period</span>
+              You are waiving the current cycle fees for <strong>{waivingSub?.instituteName}</strong>. Their monthly bill of <strong>PKR {waivingSub?.pricePKR?.toLocaleString()}</strong> will be set to <strong>PKR 0</strong>.
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Waive Reason / Courtesy Note</label>
+            <input
+              type="text"
+              required
+              value={waiveReason}
+              onChange={(e) => setWaiveReason(e.target.value)}
+              placeholder="e.g. Promotional courtesy / Partner discount"
+              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+            />
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={() => setIsWaiveModalOpen(false)}
+              className="px-4 py-2 text-xs font-medium text-slate-600 hover:text-slate-800 cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-colors cursor-pointer"
+            >
+              Confirm & Waive Month
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* SUPER ADMIN MODAL 2: EXTEND DEADLINE */}
+      <Modal
+        isOpen={isExtendModalOpen}
+        onClose={() => setIsExtendModalOpen(false)}
+        title="Extend Payment Due Date"
+        maxWidth="max-w-md"
+      >
+        <form onSubmit={handleConfirmExtend} className="space-y-4">
+          <div className="p-3.5 bg-blue-50 rounded-xl border border-blue-200 flex items-start gap-3">
+            <Clock className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+            <div className="text-xs text-blue-900">
+              <span className="font-bold block">Grace Period Extension</span>
+              Current renewal date for <strong>{extendingSub?.instituteName}</strong> is <strong>{extendingSub?.renewalDate}</strong>.
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-2">Quick Extension Options</label>
+            <div className="grid grid-cols-4 gap-2">
+              {[5, 7, 14, 30].map(days => (
+                <button
+                  key={days}
+                  type="button"
+                  onClick={() => handleSelectDays(days)}
+                  className={`py-2 rounded-xl border text-xs font-bold transition-all ${
+                    extendDays === days
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                      : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                  }`}
+                >
+                  +{days} Days
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">New Payment Due Date</label>
+            <input
+              type="date"
+              required
+              value={customExtendDate}
+              onChange={(e) => setCustomExtendDate(e.target.value)}
+              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            />
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={() => setIsExtendModalOpen(false)}
+              className="px-4 py-2 text-xs font-medium text-slate-600 hover:text-slate-800 cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm transition-colors cursor-pointer"
+            >
+              Save New Deadline
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* SUPER ADMIN MODAL 3: SWITCH PLAN & TIERS */}
+      <Modal
+        isOpen={isChangePlanModalOpen}
+        onClose={() => setIsChangePlanModalOpen(false)}
+        title="Manage Subscription Plan & Wings"
+        maxWidth="max-w-lg"
+      >
+        <form onSubmit={handleConfirmChangePlan} className="space-y-4">
+          <div className="text-xs text-slate-600">
+            Assign subscription plan and active wings for <strong>{editingSubPlan?.instituteName}</strong>.
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-2">Select Plan</label>
+            <div className="grid grid-cols-2 gap-2.5">
+              {plans.map(plan => (
+                <button
+                  key={plan.id}
+                  type="button"
+                  onClick={() => setSelectedPlanId(plan.id)}
+                  className={`p-3 rounded-xl border text-left transition-all ${
+                    selectedPlanId === plan.id
+                      ? 'border-indigo-600 bg-indigo-50/70 text-indigo-950 font-bold ring-2 ring-indigo-500/20'
+                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                  }`}
+                >
+                  <span className="text-xs font-bold block">{plan.name}</span>
+                  <span className="text-[11px] font-mono text-indigo-700 block mt-0.5">₨ {Number(plan.pricePKR).toLocaleString()}/mo</span>
+                  <span className="text-[10px] text-slate-400 block mt-1 line-clamp-1">{plan.description}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* If Custom Plan, show checkboxes for Enabled Tiers */}
+          {selectedPlanId === 'plan-custom' && (
+            <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+              <label className="block text-xs font-bold text-slate-800 uppercase tracking-wide">
+                Custom Multi-Wing Activation
+              </label>
+              <div className="space-y-2">
+                {[
+                  { id: 'school', label: 'School Wing', desc: 'Primary, Middle & High School (Matric / O-Levels)', icon: School },
+                  { id: 'college', label: 'College Wing', desc: 'Intermediate (F.Sc, ICS, FA, I.Com, A-Levels)', icon: Building2 },
+                  { id: 'undergraduate', label: 'Undergraduates Wing', desc: '4-Year BS Degrees, Semesters & CGPA', icon: GraduationCap }
+                ].map(wing => {
+                  const WingIcon = wing.icon
+                  const isChecked = customEnabledTiers.includes(wing.id)
+                  return (
+                    <label key={wing.id} className="flex items-center gap-3 p-2 bg-white rounded-lg border border-slate-200/80 cursor-pointer hover:border-slate-300">
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => handleToggleTier(wing.id)}
+                        className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
+                      />
+                      <WingIcon className="w-4 h-4 text-indigo-600 shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <span className="text-xs font-bold text-slate-800 block">{wing.label}</span>
+                        <span className="text-[11px] text-slate-400 block">{wing.desc}</span>
+                      </div>
+                    </label>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={() => setIsChangePlanModalOpen(false)}
+              className="px-4 py-2 text-xs font-medium text-slate-600 hover:text-slate-800 cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition-colors cursor-pointer"
+            >
+              Save Subscription Changes
             </button>
           </div>
         </form>
