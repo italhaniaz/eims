@@ -23,7 +23,9 @@ import {
   AlertTriangle,
   X,
   ShieldCheck,
-  GraduationCap
+  GraduationCap,
+  Copy,
+  Check
 } from 'lucide-react'
 import StatCard from '../../components/common/StatCard'
 import Modal from '../../components/common/Modal'
@@ -70,10 +72,17 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
     address: '',
     email: '',
     phone: '',
+    adminName: '',
+    adminEmail: '',
+    adminPassword: 'Password123!',
     planTier: 'School Plan',
     planType: 'SCHOOL',
     enabledTiers: ['school']
   })
+
+  // Credentials Ready Popup Modal
+  const [newlyCreatedCreds, setNewlyCreatedCreds] = useState(null)
+  const [copiedCreds, setCopiedCreds] = useState(false)
 
   // Broadcast form data
   const [broadcastData, setBroadcastData] = useState({
@@ -117,12 +126,18 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
     e.preventDefault()
     if (!newInstituteData.name || !newInstituteData.code) return
 
-    await addItem('institutes', {
+    const instCode = newInstituteData.code.toUpperCase().trim()
+    const cleanSlug = instCode.toLowerCase().replace(/[^a-z0-9]/g, '')
+    const adminEmail = newInstituteData.adminEmail?.trim() || `admin@${cleanSlug}.edu`
+    const adminName = newInstituteData.adminName?.trim() || `${newInstituteData.name} Administrator`
+    const adminPassword = newInstituteData.adminPassword || 'Password123!'
+
+    const createdInst = await addItem('institutes', {
       name: newInstituteData.name,
-      code: newInstituteData.code.toUpperCase(),
+      code: instCode,
       city: newInstituteData.city || 'Central District',
       address: newInstituteData.address || `${newInstituteData.name} Campus, Central District`,
-      email: newInstituteData.email || 'info@campus.edu',
+      email: newInstituteData.email || adminEmail,
       phone: newInstituteData.phone || '+92 300 0000000',
       studentsCount: 0,
       teachersCount: 0,
@@ -133,7 +148,32 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
       joinedDate: new Date().toISOString().split('T')[0]
     })
 
+    const newInstId = createdInst?.id || `inst-${Date.now()}`
+
+    // Provision campus administrator account
+    await addItem('users', {
+      name: adminName,
+      email: adminEmail,
+      password: adminPassword,
+      role: 'institute_admin',
+      roleTitle: 'Institute Administrator',
+      instituteId: newInstId,
+      institute: newInstituteData.name,
+      phone: newInstituteData.phone || '+92 300 0000000',
+      status: 'Active',
+      lastLogin: 'Never'
+    })
+
     setIsInstituteModalOpen(false)
+    setNewlyCreatedCreds({
+      name: newInstituteData.name,
+      code: instCode,
+      planTier: newInstituteData.planTier || 'School Plan',
+      adminName: adminName,
+      adminEmail: adminEmail,
+      password: adminPassword
+    })
+
     setNewInstituteData({
       name: '',
       code: '',
@@ -141,11 +181,14 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
       address: '',
       email: '',
       phone: '',
+      adminName: '',
+      adminEmail: '',
+      adminPassword: 'Password123!',
       planTier: 'School Plan',
       planType: 'SCHOOL',
       enabledTiers: ['school']
     })
-    triggerToast('New institute registered successfully in the system database!')
+    triggerToast('New institute and administrator credentials created!')
   }
 
   const handleSendBroadcast = (e) => {
@@ -740,6 +783,37 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
             </div>
           </div>
 
+          <div className="pt-2 border-t border-slate-100">
+            <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
+              Campus Administrator Login Credentials
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Admin Email (Login ID)</label>
+                <input
+                  type="email"
+                  placeholder={newInstituteData.code ? `admin@${newInstituteData.code.toLowerCase().replace(/[^a-z0-9]/g, '')}.edu` : "admin@campus.edu"}
+                  value={newInstituteData.adminEmail}
+                  onChange={(e) => setNewInstituteData({ ...newInstituteData, adminEmail: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-xs"
+                />
+                <p className="text-[10px] text-slate-400 mt-0.5">Leave empty to auto-generate</p>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Initial Password</label>
+                <input
+                  type="text"
+                  placeholder="Password123!"
+                  value={newInstituteData.adminPassword}
+                  onChange={(e) => setNewInstituteData({ ...newInstituteData, adminPassword: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-xs font-mono"
+                />
+                <p className="text-[10px] text-slate-400 mt-0.5">Default: Password123!</p>
+              </div>
+            </div>
+          </div>
+
           <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
             <button
               type="button"
@@ -757,6 +831,81 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           </div>
         </form>
       </Modal>
+
+      {/* Newly Registered Institute Credentials Popup */}
+      {newlyCreatedCreds && (
+        <Modal
+          isOpen={true}
+          onClose={() => setNewlyCreatedCreds(null)}
+          title="Campus Registered & Credentials Ready"
+        >
+          <div className="space-y-4">
+            <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 flex items-start gap-3">
+              <div className="w-9 h-9 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0">
+                <Check className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-emerald-950">Campus & Admin Account Active</h4>
+                <p className="text-xs text-emerald-800 mt-0.5">
+                  The campus <strong>{newlyCreatedCreds.name}</strong> ({newlyCreatedCreds.code}) has been created with <strong>{newlyCreatedCreds.planTier}</strong>. Copy these credentials to send to your client:
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 text-xs">
+              <div className="flex justify-between items-center pb-2 border-b border-slate-200">
+                <span className="text-slate-500 font-medium">Administrator Name:</span>
+                <span className="font-semibold text-slate-800">{newlyCreatedCreds.adminName}</span>
+              </div>
+              <div className="flex justify-between items-center pb-2 border-b border-slate-200">
+                <span className="text-slate-500 font-medium">Login Email:</span>
+                <span className="font-mono font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">{newlyCreatedCreds.adminEmail}</span>
+              </div>
+              <div className="flex justify-between items-center pb-2 border-b border-slate-200">
+                <span className="text-slate-500 font-medium">Password:</span>
+                <span className="font-mono font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">{newlyCreatedCreds.password}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500 font-medium">Portal URL:</span>
+                <span className="text-slate-600 font-mono text-[11px]">https://eims-app.vercel.app/</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                const text = `🏫 Educational Institute Management System (EIMS)
+📍 Campus: ${newlyCreatedCreds.name} (${newlyCreatedCreds.code})
+📋 Plan: ${newlyCreatedCreds.planTier}
+👤 Admin Name: ${newlyCreatedCreds.adminName}
+📧 Login Email: ${newlyCreatedCreds.adminEmail}
+🔑 Password: ${newlyCreatedCreds.password}
+🌐 Login URL: https://eims-app.vercel.app/`
+                if (navigator?.clipboard?.writeText) {
+                  navigator.clipboard.writeText(text)
+                }
+                setCopiedCreds(true)
+                triggerToast('Credentials copied to clipboard for client delivery!')
+                setTimeout(() => setCopiedCreds(false), 3000)
+              }}
+              className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+            >
+              {copiedCreds ? <Check className="w-4 h-4 text-emerald-300" /> : <Copy className="w-4 h-4" />}
+              <span>{copiedCreds ? 'Copied to Clipboard!' : 'Copy Login Credentials for Client'}</span>
+            </button>
+
+            <div className="flex justify-end pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setNewlyCreatedCreds(null)}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {/* Quick Modal 3: Broadcast Notification to Active Sessions */}
       <Modal

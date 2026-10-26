@@ -40,7 +40,8 @@ import {
   Calendar,
   X,
   Lock,
-  GraduationCap
+  GraduationCap,
+  Copy
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
 import { useAuth } from '../../../context/AuthContext'
@@ -94,6 +95,17 @@ export const InstitutesView = () => {
   const [suspensionReason, setSuspensionReason] = useState('')
 
   // Password Reset Modal
+  // Campus Administrator Credentials State
+  const [credentialsModal, setCredentialsModal] = useState(null)
+  const [credentialsForm, setCredentialsForm] = useState({
+    adminName: '',
+    adminEmail: '',
+    password: '',
+    showPassword: true
+  })
+  const [copiedState, setCopiedState] = useState(false)
+  const [newlyCreatedCreds, setNewlyCreatedCreds] = useState(null)
+
   const [passwordResetTarget, setPasswordResetTarget] = useState(null)
   const [newAdminPassword, setNewAdminPassword] = useState('')
 
@@ -212,8 +224,16 @@ export const InstitutesView = () => {
     try {
       await PlatformService.onboardInstitute(wizardData)
       refreshData()
-      toast.success(`Institute "${wizardData.name}" onboarded successfully with initial admin account!`)
       setIsWizardOpen(false)
+      setNewlyCreatedCreds({
+        name: wizardData.name,
+        code: wizardData.code,
+        planTier: wizardData.planTier,
+        adminName: wizardData.adminName || `${wizardData.name} Administrator`,
+        adminEmail: wizardData.adminEmail || `admin@${wizardData.slug || 'campus'}.edu`,
+        password: wizardData.adminPassword || 'admin123'
+      })
+      toast.success(`Institute "${wizardData.name}" onboarded successfully with initial admin account!`)
     } catch (e) {
       toast.error(e.message || 'Failed to complete onboarding')
     }
@@ -282,6 +302,52 @@ export const InstitutesView = () => {
   // ----------------------------------------------------
   // Password Reset
   // ----------------------------------------------------
+  const handleOpenCredentialsModal = (inst) => {
+    const creds = PlatformService.getAdminCredentials(inst.id)
+    setCredentialsModal(inst)
+    setCredentialsForm({
+      adminName: creds.adminName,
+      adminEmail: creds.adminEmail,
+      password: creds.password,
+      showPassword: true
+    })
+    setCopiedState(false)
+  }
+
+  const handleCopyCredentials = (inst, form) => {
+    const text = `🏫 Educational Institute Management System (EIMS)
+📍 Campus: ${inst?.name} (${inst?.code})
+📋 Plan: ${inst?.planTier || 'School Plan'}
+👤 Admin Name: ${form.adminName}
+📧 Login Email: ${form.adminEmail}
+🔑 Password: ${form.password}
+🌐 Login URL: https://eims-app.vercel.app/`
+
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(text)
+    }
+    setCopiedState(true)
+    toast.success('Campus login credentials copied to clipboard!')
+    setTimeout(() => setCopiedState(false), 3000)
+  }
+
+  const handleSaveCredentials = async (e) => {
+    e.preventDefault()
+    if (!credentialsModal) return
+    try {
+      await PlatformService.saveAdminCredentials(credentialsModal.id, {
+        adminName: credentialsForm.adminName,
+        adminEmail: credentialsForm.adminEmail,
+        password: credentialsForm.password
+      })
+      refreshData()
+      toast.success(`Administrator credentials for "${credentialsModal.name}" updated successfully!`)
+      setCredentialsModal(null)
+    } catch (err) {
+      toast.error(err.message || 'Failed to update credentials')
+    }
+  }
+
   const handleResetPassword = async () => {
     if (!newAdminPassword || newAdminPassword.length < 6) {
       toast.error('Password must be at least 6 characters.')
@@ -664,6 +730,17 @@ export const InstitutesView = () => {
                         <span className="font-medium text-slate-700 truncate max-w-[170px]">{inst.principal || 'In-Charge Principal'}</span>
                       </div>
                       <div className="flex items-center justify-between">
+                        <span className="text-slate-400">Admin Account:</span>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenCredentialsModal(inst)}
+                          className="font-mono text-[11px] text-blue-700 bg-blue-50 hover:bg-blue-100 px-2 py-0.5 rounded font-semibold truncate max-w-[170px] cursor-pointer flex items-center gap-1"
+                          title="Click to view full login password"
+                        >
+                          <span>admin@{inst.slug || inst.code?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'campus'}.edu</span>
+                        </button>
+                      </div>
+                      <div className="flex items-center justify-between">
                         <span className="text-slate-400">Plan Tier:</span>
                         <span className="font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded text-[11px]">
                           {inst.planTier || 'Enterprise'}
@@ -758,14 +835,11 @@ export const InstitutesView = () => {
 
                       <div className="flex items-center gap-1">
                         <button
-                          onClick={() => {
-                            setPasswordResetTarget(inst)
-                            setNewAdminPassword('')
-                          }}
-                          className="p-1 text-slate-400 hover:text-indigo-600 rounded hover:bg-white transition-colors"
-                          title="Reset Admin Password"
+                          onClick={() => handleOpenCredentialsModal(inst)}
+                          className="p-1 text-slate-400 hover:text-indigo-600 rounded hover:bg-white transition-colors cursor-pointer"
+                          title="View / Set Admin Login Credentials"
                         >
-                          <KeyRound className="w-3.5 h-3.5" />
+                          <KeyRound className="w-3.5 h-3.5 text-indigo-600" />
                         </button>
                         <button
                           onClick={() => openEditModal(inst)}
@@ -1365,6 +1439,186 @@ export const InstitutesView = () => {
       )}
 
       {/* ---------------------------------------------------- */}
+      {/* 3.1 FULL CREDENTIALS & ACCOUNT MANAGEMENT MODAL */}
+      {credentialsModal && (
+        <Modal
+          isOpen={Boolean(credentialsModal)}
+          onClose={() => setCredentialsModal(null)}
+          title={`Campus Admin Account & Login Credentials: ${credentialsModal.name}`}
+          maxWidth="max-w-md"
+        >
+          <form onSubmit={handleSaveCredentials} className="space-y-4">
+            <div className="p-3.5 bg-indigo-50/80 rounded-xl border border-indigo-200/80 text-xs text-indigo-950 flex items-start gap-3">
+              <KeyRound className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold block">Institute Administrator Account</span>
+                These credentials grant direct login access to the <strong>{credentialsModal.name}</strong> portal ({credentialsModal.planTier || 'School Plan'}).
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Administrator Full Name</label>
+              <input
+                type="text"
+                required
+                value={credentialsForm.adminName}
+                onChange={(e) => setCredentialsForm({ ...credentialsForm, adminName: e.target.value })}
+                className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Login Email / Username *</label>
+              <input
+                type="email"
+                required
+                value={credentialsForm.adminEmail}
+                onChange={(e) => setCredentialsForm({ ...credentialsForm, adminEmail: e.target.value })}
+                className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              />
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-semibold text-slate-600 uppercase">Login Password *</label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const randomPass = 'Pass@' + Math.floor(1000 + Math.random() * 9000)
+                    setCredentialsForm({ ...credentialsForm, password: randomPass })
+                  }}
+                  className="text-[11px] text-indigo-600 hover:underline font-semibold"
+                >
+                  Generate Strong
+                </button>
+              </div>
+              <div className="relative">
+                <input
+                  type={credentialsForm.showPassword ? 'text' : 'password'}
+                  required
+                  value={credentialsForm.password}
+                  onChange={(e) => setCredentialsForm({ ...credentialsForm, password: e.target.value })}
+                  className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500/20 pr-16"
+                />
+                <button
+                  type="button"
+                  onClick={() => setCredentialsForm({ ...credentialsForm, showPassword: !credentialsForm.showPassword })}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-500 hover:text-slate-800 px-1.5 py-0.5 rounded bg-slate-100"
+                >
+                  {credentialsForm.showPassword ? 'Hide' : 'Show'}
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Copy Box */}
+            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
+              <div>
+                <span className="text-[11px] font-bold text-slate-700 block">Ready to Send to Client</span>
+                <span className="text-[10px] text-slate-400">Copy formatted text for WhatsApp or Email</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleCopyCredentials(credentialsModal, credentialsForm)}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all flex items-center gap-1.5 cursor-pointer ${
+                  copiedState 
+                    ? 'bg-emerald-600 text-white border-emerald-600' 
+                    : 'bg-white text-indigo-700 border-indigo-200 hover:bg-indigo-50 shadow-2xs'
+                }`}
+              >
+                {copiedState ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{copiedState ? 'Copied!' : 'Copy Credentials'}</span>
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => {
+                  setCredentialsModal(null)
+                  handleImpersonate(credentialsModal)
+                }}
+                className="px-3 py-2 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors cursor-pointer"
+              >
+                Direct Login as Admin
+              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCredentialsModal(null)}
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
+                >
+                  Close
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-colors cursor-pointer"
+                >
+                  Save Updates
+                </button>
+              </div>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {/* 3.2 NEWLY CREATED CREDENTIALS SUCCESS DIALOG */}
+      {newlyCreatedCreds && (
+        <Modal
+          isOpen={Boolean(newlyCreatedCreds)}
+          onClose={() => setNewlyCreatedCreds(null)}
+          title="Campus Successfully Created & Credentials Ready!"
+          maxWidth="max-w-md"
+        >
+          <div className="space-y-4">
+            <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200 text-center space-y-1">
+              <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto" />
+              <h3 className="text-sm font-bold text-emerald-950 mt-1">{newlyCreatedCreds.name}</h3>
+              <p className="text-xs text-emerald-800">
+                Institute registered with <strong>{newlyCreatedCreds.planTier || 'School Plan'}</strong>. Initial administrator account is active.
+              </p>
+            </div>
+
+            <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Admin Name:</span>
+                <span className="font-semibold text-slate-800">{newlyCreatedCreds.adminName}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Login Email:</span>
+                <span className="font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">{newlyCreatedCreds.adminEmail}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Password:</span>
+                <span className="font-mono font-bold text-slate-900 bg-white border border-slate-200 px-2 py-0.5 rounded">{newlyCreatedCreds.password}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Portal URL:</span>
+                <span className="text-slate-600 font-mono text-[11px]">https://eims-app.vercel.app/</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => handleCopyCredentials(newlyCreatedCreds, newlyCreatedCreds)}
+              className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+            >
+              <Copy className="w-4 h-4" />
+              <span>Copy Login Credentials to Send to Client</span>
+            </button>
+
+            <div className="flex justify-end pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setNewlyCreatedCreds(null)}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
       {/* 3. PASSWORD RESET MODAL */}
       {/* ---------------------------------------------------- */}
       {passwordResetTarget && (

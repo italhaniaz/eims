@@ -516,25 +516,80 @@ export const PlatformService = {
     return { newInstitute, adminUser }
   },
 
-  // 8. Reset Admin Password
-  async resetAdminPassword(instituteId, newPassword) {
+  // 8. Get, Provision & Manage Admin Credentials
+  getAdminCredentials(instituteId) {
     const store = getStoredData()
-    const targetUser = (store.users || []).find(u => u.instituteId === instituteId && u.role === 'institute_admin')
+    const inst = (store.institutes || []).find(i => i.id === instituteId)
+    let targetUser = (store.users || []).find(u => u.instituteId === instituteId && u.role === 'institute_admin')
 
-    if (!targetUser) {
-      throw new Error('No Institute Administrator account found for this campus.')
+    if (!targetUser && inst) {
+      // Auto-provision credentials if institute was created without an admin
+      const cleanSlug = (inst.slug || inst.code?.toLowerCase() || 'campus').replace(/[^a-z0-9]/g, '')
+      targetUser = {
+        id: `usr-${Date.now()}`,
+        name: `${inst.name} Administrator`,
+        email: `admin@${cleanSlug}.edu`,
+        password: 'Password123!',
+        role: 'institute_admin',
+        roleTitle: 'Institute Administrator',
+        instituteId: inst.id,
+        institute: inst.name,
+        status: 'Active',
+        createdAt: new Date().toISOString()
+      }
+      store.users = store.users || []
+      store.users.push(targetUser)
+      saveStoredData(store)
     }
 
-    targetUser.password = newPassword
+    return {
+      adminName: targetUser?.name || 'Campus Administrator',
+      adminEmail: targetUser?.email || 'admin@campus.edu',
+      password: targetUser?.password || 'Password123!',
+      instituteName: inst?.name || 'Campus',
+      instituteCode: inst?.code || 'INST'
+    }
+  },
+
+  async saveAdminCredentials(instituteId, { adminName, adminEmail, password }) {
+    const store = getStoredData()
+    const inst = (store.institutes || []).find(i => i.id === instituteId)
+    let targetUser = (store.users || []).find(u => u.instituteId === instituteId && u.role === 'institute_admin')
+
+    if (!targetUser) {
+      targetUser = {
+        id: `usr-${Date.now()}`,
+        name: adminName || `${inst?.name || 'Campus'} Administrator`,
+        email: adminEmail || `admin@campus.edu`,
+        password: password || 'Password123!',
+        role: 'institute_admin',
+        roleTitle: 'Institute Administrator',
+        instituteId: instituteId,
+        institute: inst?.name || 'Campus',
+        status: 'Active',
+        createdAt: new Date().toISOString()
+      }
+      store.users = store.users || []
+      store.users.push(targetUser)
+    } else {
+      if (adminName) targetUser.name = adminName
+      if (adminEmail) targetUser.email = adminEmail
+      if (password) targetUser.password = password
+    }
+
     saveStoredData(store)
 
     DataService.logAuditEvent(
-      `Reset administrator password for ${targetUser.email} (${targetUser.institute || instituteId})`,
+      `Updated credentials for administrator ${targetUser.email} (${inst?.name || instituteId})`,
       'Super Administrator',
       'Success'
     )
 
-    return { success: true, email: targetUser.email }
+    return { success: true, user: targetUser }
+  },
+
+  async resetAdminPassword(instituteId, newPassword) {
+    return await this.saveAdminCredentials(instituteId, { password: newPassword })
   },
 
   // 9. Impersonation Session Engine (Server-first, local-backed)
