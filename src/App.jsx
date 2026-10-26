@@ -429,13 +429,15 @@ const AppContent = () => {
 
 function App() {
   return (
-    <AuthProvider>
+    <ErrorBoundary onNavigateHome={() => window.location.reload()}>
+      <AuthProvider>
       <AppDataProvider>
         <ToastProvider>
           <AppContent />
         </ToastProvider>
       </AppDataProvider>
     </AuthProvider>
+    </ErrorBoundary>
   )
 }
 
