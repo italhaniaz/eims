@@ -25,7 +25,8 @@ import {
   ShieldCheck,
   GraduationCap,
   Copy,
-  Check
+  Check,
+  CreditCard
 } from 'lucide-react'
 import StatCard from '../../components/common/StatCard'
 import Modal from '../../components/common/Modal'
@@ -385,9 +386,9 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           badgePositive={true}
           showActions={true}
           showAllText="Show all"
-          onShowAll={() => onRouteChange('finance')}
-          onView={() => onRouteChange('finance')}
-          viewTooltip="View Financial & Growth Analytics"
+          onShowAll={() => onRouteChange('platform-billing')}
+          onView={() => onRouteChange('platform-billing')}
+          viewTooltip="View Platform Subscriptions & Billing"
           onAdd={handleGenerateReport}
           addTooltip="Generate & Download Growth Audit Report"
         />
@@ -532,25 +533,25 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0 ml-2" />
             </button>
 
-            {/* 4. Academic Programs & Boards */}
+            {/* 4. Subscriptions & Billing */}
             <button
-              onClick={() => onRouteChange('programs')}
-              className="w-full flex items-center justify-between p-3 sm:p-3.5 rounded-xl bg-slate-50/80 hover:bg-white border border-slate-200/70 hover:border-purple-400 hover:shadow-sm text-slate-700 font-medium text-sm transition-all duration-150 group active:scale-[0.99] text-left"
+              onClick={() => onRouteChange('platform-billing')}
+              className="w-full flex items-center justify-between p-3 sm:p-3.5 rounded-xl bg-slate-50/80 hover:bg-white border border-slate-200/70 hover:border-emerald-400 hover:shadow-sm text-slate-700 font-medium text-sm transition-all duration-150 group active:scale-[0.99] text-left cursor-pointer"
             >
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 transition-colors group-hover:bg-purple-600 group-hover:text-white">
-                  <GraduationCap className="w-4 h-4" />
+                <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 transition-colors group-hover:bg-emerald-600 group-hover:text-white">
+                  <CreditCard className="w-4 h-4" />
                 </div>
                 <div className="truncate">
-                  <span className="block font-semibold text-slate-800 text-xs sm:text-sm group-hover:text-purple-600 transition-colors truncate">
-                    Academic Programs & Boards
+                  <span className="block font-semibold text-slate-800 text-xs sm:text-sm group-hover:text-emerald-600 transition-colors truncate">
+                    Subscriptions & Billing
                   </span>
                   <span className="block text-[11px] text-slate-400 font-normal truncate">
-                    Configure global degrees, boards & streams
+                    Manage tier pricing, cycles, and waivers
                   </span>
                 </div>
               </div>
-              <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-purple-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0 ml-2" />
+              <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0 ml-2" />
             </button>
 
             {/* 5. Platform Settings */}
