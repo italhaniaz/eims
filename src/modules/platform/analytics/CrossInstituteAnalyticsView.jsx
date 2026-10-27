@@ -123,7 +123,7 @@ const CrossInstituteAnalyticsView = () => {
   const { summary, topPerformers } = analyticsData
 
   return (
-    <div className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 md:p-8 pb-16 space-y-6 max-w-[1400px] mx-auto">
       {/* Toast Notification */}
       {actionToast && (
         <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl flex items-center justify-between shadow-sm animate-in fade-in slide-in-from-top-2">
@@ -138,31 +138,34 @@ const CrossInstituteAnalyticsView = () => {
       )}
 
       {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-[#1b253d] to-[#151f38] text-white p-6 rounded-2xl shadow-sm border border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2.5 text-purple-600 font-semibold text-xs uppercase tracking-wider mb-1">
-            <BarChart3 className="w-4 h-4" />
-            Multi-Campus Telemetry & Intelligence
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#f5eeff] text-purple-700 border border-purple-100 inline-flex items-center gap-1.5">
+              <BarChart3 className="w-3.5 h-3.5 text-purple-600" />
+              <span>Multi-Campus Telemetry & Intelligence</span>
+            </span>
           </div>
-          <h1 className="text-xl md:text-2xl font-bold tracking-tight">Cross-Institute Comparative Analytics</h1>
-          <p className="text-slate-400 text-xs sm:text-sm mt-1 max-w-2xl">
-            Real-time multi-campus performance comparison, attendance recovery indexes, and cross-institute fee reconciliations. Read-only aggregated intelligence.
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-heading">
+            Cross-Institute Comparative Analytics
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
+            Real-time multi-campus performance comparison, attendance recovery indexes, and cross-institute fee reconciliations.
           </p>
         </div>
 
-        {/* Action Buttons */}
         <div className="flex flex-wrap items-center gap-2.5">
           <button
             onClick={handleExportCSV}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-medium text-xs sm:text-sm transition-colors cursor-pointer"
+            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200/80 text-slate-700 font-semibold text-xs sm:text-sm shadow-2xs transition-colors cursor-pointer"
           >
-            <Download className="w-4 h-4 text-emerald-400" />
+            <Download className="w-4 h-4 text-slate-500" />
             <span>Export CSV Snapshot</span>
           </button>
 
           <button
             onClick={() => setIsPrintModalOpen(true)}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-medium text-xs sm:text-sm shadow-sm transition-colors cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs sm:text-sm shadow-xs transition-colors cursor-pointer"
           >
             <Printer className="w-4 h-4" />
             <span>Print Executive Briefing</span>
@@ -170,9 +173,9 @@ const CrossInstituteAnalyticsView = () => {
 
           <button
             onClick={() => setIsScheduleModalOpen(true)}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-medium text-xs sm:text-sm transition-colors cursor-pointer"
+            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-[#f5eeff] hover:bg-[#ede0fe] border border-purple-200/50 text-purple-700 font-semibold text-xs sm:text-sm transition-colors cursor-pointer"
           >
-            <Clock className="w-4 h-4 text-amber-400" />
+            <Clock className="w-4 h-4 text-purple-600" />
             <span>Schedule Briefing</span>
           </button>
         </div>
@@ -279,7 +282,7 @@ const CrossInstituteAnalyticsView = () => {
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-3">
+      <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] shadow-sm flex flex-col md:flex-row items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
           {/* Period Selector */}
           <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl text-xs font-medium text-slate-700">
@@ -325,7 +328,7 @@ const CrossInstituteAnalyticsView = () => {
       </div>
 
       {/* Comparative Performance Table */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] shadow-sm overflow-hidden">
         <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
           <div>
             <h3 className="text-sm sm:text-base font-bold text-slate-800">Campus-by-Campus Comparative Matrix</h3>
@@ -456,7 +459,7 @@ const CrossInstituteAnalyticsView = () => {
       {/* Visual Analytics Chart Comparisons */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Attendance Bar Chart Representation */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2">
               <Percent className="w-4 h-4 text-purple-600" />
@@ -486,7 +489,7 @@ const CrossInstituteAnalyticsView = () => {
         </div>
 
         {/* Fee Recovery Representation */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2">
               <DollarSign className="w-4 h-4 text-emerald-600" />
@@ -555,7 +558,7 @@ const CrossInstituteAnalyticsView = () => {
               </div>
 
               {/* KPI Summary Block */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-4 rounded-3xl border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] text-center">
                 <div>
                   <span className="text-[11px] text-slate-500 uppercase font-semibold block">Total Institutes</span>
                   <span className="text-lg font-bold text-slate-900">{summary.totalInstitutes}</span>

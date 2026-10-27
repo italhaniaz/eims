@@ -162,7 +162,7 @@ const SupportApprovalsView = () => {
   const openTicketsCount = tickets.filter(t => t.status === 'OPEN' || t.status === 'IN_PROGRESS').length
 
   return (
-    <div className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 md:p-8 pb-16 space-y-6 max-w-[1400px] mx-auto">
       {/* Toast Notification */}
       {actionToast && (
         <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl flex items-center justify-between shadow-sm animate-in fade-in slide-in-from-top-2">
@@ -177,14 +177,18 @@ const SupportApprovalsView = () => {
       )}
 
       {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-[#1b253d] to-[#151f38] text-white p-6 rounded-2xl shadow-sm border border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2.5 text-blue-400 font-semibold text-xs uppercase tracking-wider mb-1">
-            <LifeBuoy className="w-4 h-4" />
-            Platform Support, Governance & Approvals
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#f5eeff] text-purple-700 border border-purple-100 inline-flex items-center gap-1.5">
+              <LifeBuoy className="w-3.5 h-3.5 text-purple-600" />
+              <span>Platform Support, Governance & Approvals</span>
+            </span>
           </div>
-          <h1 className="text-xl md:text-2xl font-bold tracking-tight">Support Desk & Approval Queue</h1>
-          <p className="text-slate-400 text-xs sm:text-sm mt-1 max-w-2xl">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-heading">
+            Support Desk & Approval Queue
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
             Resolve institute inquiries, review campus affiliation and quota increase petitions, supervise notifications, and manage platform legal content.
           </p>
         </div>
@@ -309,7 +313,7 @@ const SupportApprovalsView = () => {
 
       {/* TAB 1: SUPPORT TICKETS */}
       {activeTab === 'tickets' && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs sm:text-sm">
               <thead className="bg-slate-50/80 text-slate-600 font-semibold border-b border-slate-100 uppercase text-[11px] tracking-wider">
@@ -385,7 +389,7 @@ const SupportApprovalsView = () => {
           {approvals.map((appr) => (
             <div
               key={appr.id}
-              className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col md:flex-row md:items-center justify-between gap-4"
+              className="bg-white rounded-3xl border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] shadow-sm p-5 flex flex-col md:flex-row md:items-center justify-between gap-4"
             >
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2">
@@ -441,7 +445,7 @@ const SupportApprovalsView = () => {
 
       {/* TAB 3: NOTIFICATION CENTER */}
       {activeTab === 'notifications' && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+        <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] shadow-sm p-6 space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div>
               <h3 className="text-base font-bold text-slate-900">Notification Center</h3>
@@ -490,7 +494,7 @@ const SupportApprovalsView = () => {
       {activeTab === 'content' && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {/* Submenu */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 space-y-1 h-fit">
+          <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] shadow-sm p-4 space-y-1 h-fit">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block px-3 py-1">
               CMS Pages
             </span>
@@ -518,7 +522,7 @@ const SupportApprovalsView = () => {
           </div>
 
           {/* Content Preview & Editor */}
-          <div className="md:col-span-3 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+          <div className="md:col-span-3 bg-white rounded-3xl border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] shadow-sm p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div>
                 <h3 className="text-base font-bold text-slate-900">{contentDoc?.title || 'CMS Document'}</h3>
@@ -526,7 +530,7 @@ const SupportApprovalsView = () => {
               </div>
               <button
                 onClick={() => setIsEditingContent(!isEditingContent)}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-50 transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-3xl border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] text-slate-700 text-xs font-semibold hover:bg-slate-50 transition-colors cursor-pointer"
               >
                 <Edit2 className="w-3.5 h-3.5 text-purple-600" />
                 <span>{isEditingContent ? 'Preview Markdown' : 'Edit Document'}</span>
@@ -585,7 +589,7 @@ const SupportApprovalsView = () => {
         maxWidth="max-w-2xl"
       >
         <div className="space-y-4">
-          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-center text-xs">
+          <div className="p-3 bg-slate-50 rounded-3xl border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] flex justify-between items-center text-xs">
             <div>
               <span className="font-bold text-slate-900">{selectedTicket?.instituteName}</span>
               <p className="text-slate-500">{selectedTicket?.subject}</p>
@@ -664,7 +668,7 @@ const SupportApprovalsView = () => {
             <p className="text-xs text-slate-500 mt-0.5">Petitioner: {selectedApproval?.instituteName}</p>
           </div>
 
-          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs font-mono text-slate-800">
+          <div className="p-3 bg-slate-50 rounded-3xl border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] text-xs font-mono text-slate-800">
             {JSON.stringify(selectedApproval?.details, null, 2)}
           </div>
 

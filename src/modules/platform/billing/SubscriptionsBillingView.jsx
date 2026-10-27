@@ -340,7 +340,7 @@ const SubscriptionsBillingView = () => {
 
   if (loading) {
     return (
-      <div className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto flex items-center justify-center min-h-[400px]">
+      <div className="p-4 sm:p-6 md:p-8 pb-16 space-y-6 max-w-[1400px] mx-auto flex items-center justify-center min-h-[400px]">
         <div className="text-center space-y-3">
           <div className="w-8 h-8 border-3 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
           <p className="text-sm font-medium text-slate-500">Loading multi-campus billing ledgers & subscription quotas...</p>
@@ -366,28 +366,30 @@ const SubscriptionsBillingView = () => {
         </div>
       )}
 
-      {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-[#1b253d] to-[#151f38] text-white p-6 rounded-2xl shadow-sm border border-slate-800">
+      {/* Clean Light SaaS Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2.5 text-purple-600 font-semibold text-xs uppercase tracking-wider mb-1">
-            <CreditCard className="w-4 h-4" />
-            Platform Monetization & Plan Governance
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#f5eeff] text-purple-700 border border-purple-100 inline-flex items-center gap-1.5">
+              <CreditCard className="w-3.5 h-3.5 text-purple-600" />
+              <span>Platform Monetization & Plan Governance</span>
+            </span>
           </div>
-          <h1 className="text-xl md:text-2xl font-bold tracking-tight">Subscriptions & Revenue Operations</h1>
-          <p className="text-slate-400 text-xs sm:text-sm mt-1 max-w-2xl">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-heading">
+            Subscriptions & Revenue Operations
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
             SaaS subscription tiers, multi-campus invoicing ledger, automated trial governance, and platform revenue metrics in PKR.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleOpenCreatePlan}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs sm:text-sm shadow-sm transition-colors cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Create New Plan</span>
-          </button>
-        </div>
+        <button
+          onClick={handleOpenCreatePlan}
+          className="flex items-center gap-2 px-4.5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs sm:text-sm shadow-xs transition-colors cursor-pointer self-start sm:self-auto active:scale-95"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Create New Plan</span>
+        </button>
       </div>
 
       {/* Overdue Invoices Alert Banner */}
@@ -481,14 +483,14 @@ const SubscriptionsBillingView = () => {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="border-b border-slate-200">
-        <nav className="flex space-x-6">
+      <div className="bg-white p-1.5 rounded-2xl border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
+        <nav className="flex space-x-2 overflow-x-auto text-xs sm:text-sm font-medium">
           <button
             onClick={() => setActiveTab('plans')}
-            className={`py-3 text-sm font-medium border-b-2 flex items-center gap-2 transition-colors cursor-pointer ${
+            className={`py-2 px-4 rounded-xl flex items-center gap-2 transition-all cursor-pointer shrink-0 ${
               activeTab === 'plans'
-                ? 'border-purple-600 text-purple-600 font-semibold'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
+                ? 'bg-[#f5eeff] text-purple-700 font-bold shadow-2xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
             }`}
           >
             <Layers className="w-4 h-4" />
@@ -500,10 +502,10 @@ const SubscriptionsBillingView = () => {
               setActiveTab('subscriptions')
               setStatusFilter('ALL')
             }}
-            className={`py-3 text-sm font-medium border-b-2 flex items-center gap-2 transition-colors cursor-pointer ${
+            className={`py-2 px-4 rounded-xl flex items-center gap-2 transition-all cursor-pointer shrink-0 ${
               activeTab === 'subscriptions'
-                ? 'border-purple-600 text-purple-600 font-semibold'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
+                ? 'bg-[#f5eeff] text-purple-700 font-bold shadow-2xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
             }`}
           >
             <CreditCard className="w-4 h-4" />
@@ -515,10 +517,10 @@ const SubscriptionsBillingView = () => {
               setActiveTab('invoices')
               setStatusFilter('ALL')
             }}
-            className={`py-3 text-sm font-medium border-b-2 flex items-center gap-2 transition-colors cursor-pointer ${
+            className={`py-2 px-4 rounded-xl flex items-center gap-2 transition-all cursor-pointer shrink-0 ${
               activeTab === 'invoices'
-                ? 'border-purple-600 text-purple-600 font-semibold'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
+                ? 'bg-[#f5eeff] text-purple-700 font-bold shadow-2xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
             }`}
           >
             <FileText className="w-4 h-4" />

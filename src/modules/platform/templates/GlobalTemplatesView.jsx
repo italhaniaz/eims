@@ -235,22 +235,26 @@ const GlobalTemplatesView = () => {
         </div>
       )}
 
-      {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-[#1b253d] to-[#151f38] text-white p-6 rounded-2xl shadow-sm border border-slate-800">
+      {/* Clean Light SaaS Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2.5 text-blue-400 font-semibold text-xs uppercase tracking-wider mb-1">
-            <FileSpreadsheet className="w-4 h-4" />
-            Platform Curriculum & Master Standards
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#f5eeff] text-purple-700 border border-purple-100 inline-flex items-center gap-1.5">
+              <FileSpreadsheet className="w-3.5 h-3.5 text-purple-600" />
+              <span>Platform Curriculum & Master Standards</span>
+            </span>
           </div>
-          <h1 className="text-xl md:text-2xl font-bold tracking-tight">Global Master Data & Templates</h1>
-          <p className="text-slate-400 text-xs sm:text-sm mt-1 max-w-2xl">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-heading">
+            Global Master Data & Templates
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
             Standardize grading scales, institutional fee heads, faculty designations, and curriculum subjects across all affiliated campuses with 1-click template push.
           </p>
         </div>
 
         <button
           onClick={handleOpenCreateModal}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs sm:text-sm shadow-sm transition-colors cursor-pointer self-start md:self-auto"
+          className="flex items-center gap-2 px-4.5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs sm:text-sm shadow-xs transition-colors cursor-pointer self-start sm:self-auto active:scale-95"
         >
           <Plus className="w-4 h-4" />
           <span>New Master Template</span>
@@ -258,14 +262,14 @@ const GlobalTemplatesView = () => {
       </div>
 
       {/* Template Categories Tabs */}
-      <div className="border-b border-slate-200">
-        <nav className="flex space-x-6 overflow-x-auto pb-1 text-sm font-medium">
+      <div className="bg-white p-1.5 rounded-2xl border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
+        <nav className="flex space-x-2 overflow-x-auto text-xs sm:text-sm font-medium">
           <button
             onClick={() => setActiveTab('GRADING_SYSTEM')}
-            className={`py-3 border-b-2 flex items-center gap-2 transition-colors cursor-pointer shrink-0 ${
+            className={`py-2 px-4 rounded-xl flex items-center gap-2 transition-all cursor-pointer shrink-0 ${
               activeTab === 'GRADING_SYSTEM'
-                ? 'border-purple-600 text-purple-600 font-semibold'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
+                ? 'bg-[#f5eeff] text-purple-700 font-bold shadow-2xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
             }`}
           >
             <Award className="w-4 h-4" />
@@ -274,10 +278,10 @@ const GlobalTemplatesView = () => {
 
           <button
             onClick={() => setActiveTab('FEE_HEAD')}
-            className={`py-3 border-b-2 flex items-center gap-2 transition-colors cursor-pointer shrink-0 ${
+            className={`py-2 px-4 rounded-xl flex items-center gap-2 transition-all cursor-pointer shrink-0 ${
               activeTab === 'FEE_HEAD'
-                ? 'border-purple-600 text-purple-600 font-semibold'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
+                ? 'bg-[#f5eeff] text-purple-700 font-bold shadow-2xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
             }`}
           >
             <DollarSign className="w-4 h-4" />
@@ -286,10 +290,10 @@ const GlobalTemplatesView = () => {
 
           <button
             onClick={() => setActiveTab('DESIGNATION')}
-            className={`py-3 border-b-2 flex items-center gap-2 transition-colors cursor-pointer shrink-0 ${
+            className={`py-2 px-4 rounded-xl flex items-center gap-2 transition-all cursor-pointer shrink-0 ${
               activeTab === 'DESIGNATION'
-                ? 'border-purple-600 text-purple-600 font-semibold'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
+                ? 'bg-[#f5eeff] text-purple-700 font-bold shadow-2xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
             }`}
           >
             <Briefcase className="w-4 h-4" />
@@ -298,10 +302,10 @@ const GlobalTemplatesView = () => {
 
           <button
             onClick={() => setActiveTab('SUBJECT_TEMPLATE')}
-            className={`py-3 border-b-2 flex items-center gap-2 transition-colors cursor-pointer shrink-0 ${
+            className={`py-2 px-4 rounded-xl flex items-center gap-2 transition-all cursor-pointer shrink-0 ${
               activeTab === 'SUBJECT_TEMPLATE'
-                ? 'border-purple-600 text-purple-600 font-semibold'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
+                ? 'bg-[#f5eeff] text-purple-700 font-bold shadow-2xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
             }`}
           >
             <BookOpen className="w-4 h-4" />

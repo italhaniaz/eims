@@ -96,7 +96,7 @@ const SystemHealthView = () => {
   }
 
   return (
-    <div className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 md:p-8 pb-16 space-y-6 max-w-[1400px] mx-auto">
       {/* Toast Notification */}
       {actionToast && (
         <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl flex items-center justify-between shadow-sm animate-in fade-in slide-in-from-top-2">
@@ -111,23 +111,27 @@ const SystemHealthView = () => {
       )}
 
       {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-[#1b253d] to-[#151f38] text-white p-6 rounded-2xl shadow-sm border border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2.5 text-blue-400 font-semibold text-xs uppercase tracking-wider mb-1">
-            <Activity className="w-4 h-4" />
-            Platform Telemetry & Infrastructure Health
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#f5eeff] text-purple-700 border border-purple-100 inline-flex items-center gap-1.5">
+              <Activity className="w-3.5 h-3.5 text-purple-600" />
+              <span>Platform Telemetry & Infrastructure Health</span>
+            </span>
           </div>
-          <h1 className="text-xl md:text-2xl font-bold tracking-tight">System Health & Diagnostic Monitor</h1>
-          <p className="text-slate-400 text-xs sm:text-sm mt-1 max-w-2xl">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-heading">
+            System Health & Diagnostic Monitor
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
             Live Express server metrics, multi-campus storage quotas, API latency benchmarks, and diagnostic exception streaming.
           </p>
         </div>
 
         <button
           onClick={loadHealthData}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-medium text-xs sm:text-sm transition-colors cursor-pointer self-start md:self-auto"
+          className="flex items-center gap-2 px-4.5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs sm:text-sm shadow-xs transition-colors cursor-pointer self-start sm:self-auto active:scale-95"
         >
-          <RefreshCw className="w-4 h-4 text-emerald-400" />
+          <RefreshCw className="w-4 h-4" />
           <span>Refresh Telemetry</span>
         </button>
       </div>
@@ -241,7 +245,7 @@ const SystemHealthView = () => {
       {activeTab === 'overview' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Service Health Cards */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+          <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] shadow-sm p-6 space-y-4">
             <h3 className="text-base font-bold text-slate-900">Service Status Matrix</h3>
             
             <div className="space-y-3">
@@ -293,7 +297,7 @@ const SystemHealthView = () => {
           </div>
 
           {/* Node Specs & System Environment */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+          <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] shadow-sm p-6 space-y-4">
             <h3 className="text-base font-bold text-slate-900">Platform Environment Telemetry</h3>
 
             <div className="space-y-2.5 text-xs text-slate-600">
@@ -326,7 +330,7 @@ const SystemHealthView = () => {
 
       {/* TAB 2: STORAGE PER INSTITUTE */}
       {activeTab === 'storage' && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] shadow-sm overflow-hidden">
           <div className="p-4 sm:p-5 border-b border-slate-100">
             <h3 className="text-base font-bold text-slate-900">Campus Cloud Storage Consumption</h3>
             <p className="text-xs text-slate-400 mt-0.5">Database tables, student documents, and fee receipts breakdown</p>
@@ -385,7 +389,7 @@ const SystemHealthView = () => {
       {/* TAB 3: DIAGNOSTIC ERROR LOGS */}
       {activeTab === 'errors' && (
         <div className="space-y-4">
-          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-3">
+          <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] shadow-sm flex flex-col md:flex-row items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2">
               {['ALL', 'CRITICAL', 'WARNING', 'INFO'].map((sev) => (
                 <button
@@ -424,7 +428,7 @@ const SystemHealthView = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs sm:text-sm">
                 <thead className="bg-slate-50/80 text-slate-600 font-semibold border-b border-slate-100 uppercase text-[11px] tracking-wider">
