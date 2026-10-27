@@ -78,19 +78,19 @@ export const SuperadminSidebar = ({
           transition-all duration-300 shrink-0 border-r border-slate-100 shadow-[1px_0_15px_rgba(0,0,0,0.02)] select-none
         `}
       >
-        {/* Top Brand Header matching "ia Academy" style */}
+        {/* Top Brand Header */}
         <div className="h-16 sm:h-20 min-h-[64px] sm:min-h-[80px] flex items-center justify-between px-4 sm:px-5 border-b border-slate-100 shrink-0">
           <div className="flex items-center gap-2.5 overflow-hidden">
-            <div className="w-8 h-8 rounded-full bg-purple-600/10 text-purple-600 flex items-center justify-center shrink-0 font-bold text-xs">
-              <span className="font-extrabold tracking-tighter">ia</span>
+            <div className="w-9 h-9 rounded-xl bg-[#f5eeff] text-purple-700 border border-purple-100 flex items-center justify-center shrink-0 font-bold text-xs shadow-2xs">
+              <ShieldCheck className="w-5 h-5 text-purple-600" />
             </div>
             {(!collapsed || isMobileOpen) && (
-              <div className="flex items-baseline gap-1 truncate">
-                <span className="text-base font-extrabold text-purple-600 font-heading">
-                  ia
+              <div className="flex flex-col truncate">
+                <span className="text-sm font-extrabold text-slate-900 tracking-tight font-heading leading-tight">
+                  Super Admin
                 </span>
-                <span className="text-base font-bold text-slate-800 font-heading">
-                  Academy
+                <span className="text-[10px] text-purple-600 font-bold uppercase tracking-wider">
+                  Platform Console
                 </span>
               </div>
             )}

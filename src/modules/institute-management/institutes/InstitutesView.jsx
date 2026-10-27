@@ -557,16 +557,21 @@ export const InstitutesView = () => {
   }
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="p-4 sm:p-6 md:p-8 pb-16 space-y-6 max-w-[1400px] mx-auto">
+      {/* Clean Light SaaS Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <Building2 className="w-5 h-5 text-purple-600" />
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Institutes Lifecycle & Campuses</h1>
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#f5eeff] text-purple-700 border border-purple-100 inline-flex items-center gap-1.5">
+              <Building2 className="w-3.5 h-3.5 text-purple-600" />
+              <span>Campus Directory & Global Lifecycle</span>
+            </span>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Global governance of schools, colleges, chartered universities, and multi-tenant campuses
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-heading">
+            Institutes & Campuses
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
+            Global governance of schools, colleges, chartered universities, and multi-tenant registered campuses.
           </p>
         </div>
 

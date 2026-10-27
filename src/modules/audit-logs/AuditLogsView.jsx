@@ -101,35 +101,40 @@ export const AuditLogsView = () => {
   }, [auditLogs])
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="p-4 sm:p-6 md:p-8 pb-16 space-y-6 max-w-[1400px] mx-auto">
+      {/* Clean Light SaaS Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-purple-600" />
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">System Security & Audit Trail</h1>
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#f5eeff] text-purple-700 border border-purple-100 inline-flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
+              <span>Compliance & Immutable Event Stream</span>
+            </span>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Real-time immutable activity stream, authentication attempts, and administrative security logs
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-heading">
+            System Security & Audit Trail
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
+            Real-time immutable activity stream, authentication attempts, and administrative security audit logs.
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 flex-wrap">
           <button
             onClick={() => {
               refreshData()
               toast.info('Audit trail refreshed!')
             }}
-            className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-all"
+            className="flex items-center gap-2 px-3.5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 rounded-xl text-xs font-semibold shadow-2xs transition-all cursor-pointer"
             title="Refresh stream"
           >
-            <RefreshCw className="w-3.5 h-3.5 text-slate-600" />
-            <span className="hidden sm:inline">Refresh</span>
+            <RefreshCw className="w-3.5 h-3.5 text-purple-600" />
+            <span>Refresh</span>
           </button>
 
           <button
             onClick={handleExportLogs}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-black text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
+            className="flex items-center gap-2 px-4.5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs sm:text-sm font-semibold shadow-xs transition-all cursor-pointer active:scale-95"
           >
             <Download className="w-3.5 h-3.5" />
             <span>Export Audit CSV</span>

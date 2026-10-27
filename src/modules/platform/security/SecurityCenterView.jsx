@@ -134,28 +134,31 @@ export const SecurityCenterView = () => {
   }, [loginHistory, historySearch, historyFilter])
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="p-4 sm:p-6 md:p-8 pb-16 space-y-6 max-w-[1400px] mx-auto">
+      {/* Clean Light SaaS Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-indigo-600" />
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Enterprise Security Center</h1>
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#f5eeff] text-purple-700 border border-purple-100 inline-flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
+              <span>Identity Governance & Threat Prevention</span>
+            </span>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Real-time session governance, server-enforced force logout, password policies, 2FA, and intrusion monitoring
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-heading">
+            Enterprise Security Center
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
+            Real-time session governance, server-enforced force logout, password policies, 2FA, and intrusion monitoring.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={loadSecurityData}
-            className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 transition-all cursor-pointer"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            <span>Refresh Telemetry</span>
-          </button>
-        </div>
+        <button
+          onClick={loadSecurityData}
+          className="flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 rounded-xl font-semibold text-xs sm:text-sm shadow-2xs transition-all cursor-pointer self-start sm:self-auto active:scale-95"
+        >
+          <RefreshCw className="w-4 h-4 text-purple-600" />
+          <span>Refresh Telemetry</span>
+        </button>
       </div>
 
       {/* KPI Cards */}
@@ -232,8 +235,9 @@ export const SecurityCenterView = () => {
         </div>
       )}
 
-      {/* Tabs Navigation */}
-      <div className="flex items-center gap-1.5 border-b border-slate-200 pb-2 text-xs">
+      {/* Navigation Tabs */}
+      <div className="bg-white p-1.5 rounded-2xl border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
+        <nav className="flex space-x-2 overflow-x-auto text-xs sm:text-sm font-medium">
         {[
           { key: 'sessions', label: `Active Sessions (${sessions.length})`, icon: Laptop },
           { key: 'history', label: 'Login History & Audit Trail', icon: Activity },
@@ -257,6 +261,7 @@ export const SecurityCenterView = () => {
             </button>
           )
         })}
+        </nav>
       </div>
 
       {/* ---------------------------------------------------- */}

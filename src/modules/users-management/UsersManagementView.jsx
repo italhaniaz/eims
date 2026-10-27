@@ -197,49 +197,60 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
         </div>
       )}
 
-      {/* Header Banner */}
-      <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      {/* Clean Light SaaS Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-purple-600 text-xs font-semibold uppercase tracking-wider">
-            <ShieldCheck className="w-4 h-4" />
-            <span>Platform Access Control & Security</span>
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#f5eeff] text-purple-700 border border-purple-100 inline-flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
+              <span>Platform Access Control & Security</span>
+            </span>
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 mt-1 tracking-tight">Users & Role Architecture</h1>
-          <p className="text-xs text-slate-500 mt-1">
-            Global access directory, hierarchical security roles, and granular feature permission policies
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-heading">
+            Users & Role Architecture
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
+            Global access directory, hierarchical security roles, and granular feature permission policies.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="bg-slate-100 p-1 rounded-xl flex items-center gap-1 text-xs font-semibold border border-slate-200">
-            <button
-              onClick={() => setActiveTab('all')}
-              className={`px-3.5 py-1.5 rounded-lg transition-all ${
-                activeTab === 'all' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              All Users ({users.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('roles')}
-              className={`px-3.5 py-1.5 rounded-lg transition-all ${
-                activeTab === 'roles' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Roles & Permissions ({SYSTEM_ROLES.length})
-            </button>
-          </div>
+        {activeTab === 'all' && (
+          <button
+            onClick={openAddModal}
+            className="flex items-center gap-2 px-4.5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs sm:text-sm font-semibold shadow-xs transition-all cursor-pointer self-start sm:self-auto active:scale-95"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add New User</span>
+          </button>
+        )}
+      </div>
 
-          {activeTab === 'all' && (
-            <button
-              onClick={openAddModal}
-              className="flex items-center gap-1.5 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-semibold shadow-xs transition-all active:scale-95"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Add New User</span>
-            </button>
-          )}
-        </div>
+      {/* Navigation Tabs */}
+      <div className="bg-white p-1.5 rounded-2xl border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
+        <nav className="flex space-x-2 overflow-x-auto text-xs sm:text-sm font-medium">
+          <button
+            onClick={() => setActiveTab('all')}
+            className={`py-2 px-4 rounded-xl flex items-center gap-2 transition-all cursor-pointer shrink-0 ${
+              activeTab === 'all'
+                ? 'bg-[#f5eeff] text-purple-700 font-bold shadow-2xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
+          >
+            <Users className="w-4 h-4" />
+            <span>All Platform Users ({users.length})</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('roles')}
+            className={`py-2 px-4 rounded-xl flex items-center gap-2 transition-all cursor-pointer shrink-0 ${
+              activeTab === 'roles'
+                ? 'bg-[#f5eeff] text-purple-700 font-bold shadow-2xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
+          >
+            <Shield className="w-4 h-4" />
+            <span>Roles & Permissions ({SYSTEM_ROLES.length})</span>
+          </button>
+        </nav>
       </div>
 
       {activeTab === 'all' ? (
@@ -273,7 +284,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
           </div>
 
           {/* Users Table */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+          <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] overflow-hidden">
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-semibold border-b border-slate-200">
                 <tr>

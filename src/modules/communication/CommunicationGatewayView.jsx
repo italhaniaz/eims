@@ -138,27 +138,32 @@ export const CommunicationGatewayView = () => {
   }
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="p-4 sm:p-6 md:p-8 pb-16 space-y-6 max-w-[1400px] mx-auto">
+      {/* Clean Light SaaS Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-purple-600" />
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">SMS & WhatsApp Communication Gateway</h1>
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#f5eeff] text-purple-700 border border-purple-100 inline-flex items-center gap-1.5">
+              <MessageSquare className="w-3.5 h-3.5 text-purple-600" />
+              <span>Multi-Channel Telecom Gateway</span>
+            </span>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Broadcast automated SMS, WhatsApp alerts, class-targeted notifications, and telecom delivery audit
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-heading">
+            SMS & WhatsApp Gateway
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
+            Broadcast automated SMS, WhatsApp alerts, class-targeted notifications, and telecom delivery audit.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 text-xs font-semibold">
-          <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5">
+        <div className="flex items-center gap-2.5 text-xs font-semibold flex-wrap">
+          <span className="px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 shadow-2xs flex items-center gap-1.5 font-bold">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            SMS Gateway: Active
+            SMS: Active
           </span>
-          <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5">
+          <span className="px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 shadow-2xs flex items-center gap-1.5 font-bold">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            WhatsApp API: Connected
+            WhatsApp: Connected
           </span>
         </div>
       </div>

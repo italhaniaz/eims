@@ -293,13 +293,19 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
         </div>
       )}
 
-      {/* 1. Header Row (Matching "Admin Dashboard" style) */}
+      {/* 1. Header Row */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#f5eeff] text-purple-700 border border-purple-100 inline-flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
+              <span>Multi-Campus Platform Governance</span>
+            </span>
+          </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-heading">
-            Admin Dashboard
+            Super Admin Dashboard
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1 font-sans">
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 font-sans">
             Multi-Campus Educational Wings Governance & Real-Time Performance Matrix
           </p>
         </div>

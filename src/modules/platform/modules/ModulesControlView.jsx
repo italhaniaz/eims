@@ -282,24 +282,29 @@ export const ModulesControlView = () => {
   const totalAllocatedStorageGB = Math.round(institutes.reduce((acc, i) => acc + (i.quotaStorageMb || 2048), 0) / 1024)
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="p-4 sm:p-6 md:p-8 pb-16 space-y-6 max-w-[1400px] mx-auto">
+      {/* Clean Light SaaS Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <Sliders className="w-5 h-5 text-purple-600" />
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Cross-Institute Module Control & Feature Flags</h1>
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#f5eeff] text-purple-700 border border-purple-100 inline-flex items-center gap-1.5">
+              <Sliders className="w-3.5 h-3.5 text-purple-600" />
+              <span>Multi-Campus Architecture & Feature Governance</span>
+            </span>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Centrally govern feature flags, software capabilities, and storage/student quotas per institute
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-heading">
+            Educational Wings & Modules Matrix
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
+            Centrally govern School, College, and University educational wings, module capabilities, and storage/student quotas across all registered campuses.
           </p>
         </div>
 
         <button
           onClick={loadMatrix}
-          className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 transition-all cursor-pointer"
+          className="flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 rounded-xl font-semibold text-xs sm:text-sm shadow-2xs transition-all cursor-pointer self-start sm:self-auto active:scale-95"
         >
-          <RefreshCw className="w-3.5 h-3.5" />
+          <RefreshCw className="w-4 h-4 text-purple-600" />
           <span>Refresh Matrix</span>
         </button>
       </div>
@@ -347,30 +352,30 @@ export const ModulesControlView = () => {
         </div>
       </div>
 
-      {/* Navigation Tabs: Educational Wings vs System Feature Modules */}
-      <div className="border-b border-slate-200">
-        <nav className="flex space-x-6">
+      {/* Navigation Tabs */}
+      <div className="bg-white p-1.5 rounded-2xl border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
+        <nav className="flex space-x-2 overflow-x-auto text-xs sm:text-sm font-medium">
           <button
             onClick={() => setActiveControlTab('wings')}
-            className={`py-3 text-sm font-medium border-b-2 flex items-center gap-2 transition-colors cursor-pointer ${
+            className={`py-2 px-4 rounded-xl flex items-center gap-2 transition-all cursor-pointer shrink-0 ${
               activeControlTab === 'wings'
-                ? 'border-purple-600 text-purple-600 font-semibold'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
+                ? 'bg-[#f5eeff] text-purple-700 font-bold shadow-2xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
             }`}
           >
-            <GraduationCap className="w-4 h-4 text-purple-600" />
+            <GraduationCap className="w-4 h-4" />
             <span>Educational Wings Matrix (School • College • University)</span>
           </button>
 
           <button
             onClick={() => setActiveControlTab('features')}
-            className={`py-3 text-sm font-medium border-b-2 flex items-center gap-2 transition-colors cursor-pointer ${
+            className={`py-2 px-4 rounded-xl flex items-center gap-2 transition-all cursor-pointer shrink-0 ${
               activeControlTab === 'features'
-                ? 'border-purple-600 text-purple-600 font-semibold'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
+                ? 'bg-[#f5eeff] text-purple-700 font-bold shadow-2xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
             }`}
           >
-            <Sliders className="w-4 h-4 text-indigo-600" />
+            <Sliders className="w-4 h-4" />
             <span>Feature Capabilities Matrix (10 Modules)</span>
           </button>
         </nav>
@@ -379,14 +384,14 @@ export const ModulesControlView = () => {
       {/* TAB 1: EDUCATIONAL WINGS & TIER MATRIX (DEFAULT) */}
       {activeControlTab === 'wings' && (
         <div className="space-y-4">
-          <div className="bg-gradient-to-r from-[#f5eeff] via-indigo-50/50 to-white border border-purple-200/80 rounded-2xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 shadow-2xs">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-purple-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-                <School className="w-4 h-4" />
+          <div className="bg-[#fcfaff] border border-purple-100 rounded-2xl p-4.5 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 shadow-2xs">
+            <div className="flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-[#f5eeff] text-purple-700 border border-purple-100 flex items-center justify-center shrink-0 shadow-2xs">
+                <School className="w-5 h-5 text-purple-600" />
               </div>
               <div>
                 <h3 className="text-sm font-bold text-slate-900">Institutional Educational Wings Governance</h3>
-                <p className="text-xs text-slate-600 mt-0.5">
+                <p className="text-xs text-slate-500 mt-0.5">
                   Toggle School, College, or University wings with 1 click. Changes dynamically update the Institute Admin portal, class creation levels, faculty assignments, and student admissions.
                 </p>
               </div>
@@ -394,7 +399,7 @@ export const ModulesControlView = () => {
           </div>
 
           {/* Wings Matrix Table */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
@@ -425,13 +430,16 @@ export const ModulesControlView = () => {
                           {/* Institute Column */}
                           <td className="py-3.5 px-4">
                             <div className="flex items-center gap-2.5">
-                              <div 
-                                className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-white shrink-0 shadow-2xs"
-                                style={{ backgroundColor: inst.primaryColor || '#2563eb' }}
-                              >
-                                {isUniOn ? <GraduationCap className="w-4 h-4" /> :
-                                 isCollegeOn ? <Building2 className="w-4 h-4" /> :
-                                 <School className="w-4 h-4" />}
+                              <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold shrink-0 transition-colors shadow-2xs border ${
+                                isUniOn 
+                                  ? 'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-100' 
+                                  : isCollegeOn 
+                                  ? 'bg-[#f5eeff] text-purple-700 border-purple-100' 
+                                  : 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                              }`}>
+                                {isUniOn ? <GraduationCap className="w-4.5 h-4.5" /> :
+                                 isCollegeOn ? <Building2 className="w-4.5 h-4.5" /> :
+                                 <School className="w-4.5 h-4.5" />}
                               </div>
                               <div>
                                 <span className="font-bold text-slate-900 text-xs sm:text-sm">{inst.name}</span>
@@ -446,7 +454,7 @@ export const ModulesControlView = () => {
 
                           {/* Plan Badge */}
                           <td className="py-3.5 px-3">
-                            <span className="inline-flex px-2 py-0.5 rounded-md text-[11px] font-bold bg-[#f5eeff] text-purple-700 border border-purple-200">
+                            <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-bold bg-[#f5eeff] text-purple-700 border border-purple-100">
                               {inst.planTier || 'School Plan'}
                             </span>
                           </td>
@@ -456,17 +464,17 @@ export const ModulesControlView = () => {
                             <button
                               type="button"
                               onClick={() => handleToggleWing(inst.id, 'school')}
-                              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs ${
+                              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-xs ${
                                 isSchoolOn
-                                  ? 'bg-purple-600 text-white hover:bg-purple-700 ring-2 ring-purple-500/20'
-                                  : 'bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600'
+                                  ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-purple-600/20 active:scale-95'
+                                  : 'bg-slate-100/90 text-slate-400 hover:bg-slate-200/80 hover:text-slate-600'
                               }`}
                               title={isSchoolOn ? 'School Wing Active (Click to disable)' : 'School Wing Disabled (Click to activate)'}
                             >
-                              {isSchoolOn ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+                              {isSchoolOn ? <Check className="w-3.5 h-3.5 stroke-[2.5]" /> : <X className="w-3.5 h-3.5" />}
                               <span>{isSchoolOn ? 'Active' : 'Disabled'}</span>
                             </button>
-                            <span className="block text-[9px] text-slate-400 mt-0.5 font-medium">K-10 & Matric</span>
+                            <span className="block text-[10px] text-slate-400 mt-1 font-medium">K-10 & Matric</span>
                           </td>
 
                           {/* 2. College Wing Toggle */}
@@ -474,17 +482,17 @@ export const ModulesControlView = () => {
                             <button
                               type="button"
                               onClick={() => handleToggleWing(inst.id, 'college')}
-                              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs ${
+                              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-xs ${
                                 isCollegeOn
-                                  ? 'bg-indigo-600 text-white hover:bg-indigo-700 ring-2 ring-indigo-500/20'
-                                  : 'bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600'
+                                  ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-purple-600/20 active:scale-95'
+                                  : 'bg-slate-100/90 text-slate-400 hover:bg-slate-200/80 hover:text-slate-600'
                               }`}
                               title={isCollegeOn ? 'College Wing Active (Click to disable)' : 'College Wing Disabled (Click to activate)'}
                             >
-                              {isCollegeOn ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+                              {isCollegeOn ? <Check className="w-3.5 h-3.5 stroke-[2.5]" /> : <X className="w-3.5 h-3.5" />}
                               <span>{isCollegeOn ? 'Active' : 'Disabled'}</span>
                             </button>
-                            <span className="block text-[9px] text-slate-400 mt-0.5 font-medium">11-12 & Inter</span>
+                            <span className="block text-[10px] text-slate-400 mt-1 font-medium">11-12 & Inter</span>
                           </td>
 
                           {/* 3. University Wing Toggle */}
@@ -492,17 +500,17 @@ export const ModulesControlView = () => {
                             <button
                               type="button"
                               onClick={() => handleToggleWing(inst.id, 'undergraduate')}
-                              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs ${
+                              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-xs ${
                                 isUniOn
-                                  ? 'bg-purple-600 text-white hover:bg-purple-700 ring-2 ring-purple-500/20'
-                                  : 'bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600'
+                                  ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-purple-600/20 active:scale-95'
+                                  : 'bg-slate-100/90 text-slate-400 hover:bg-slate-200/80 hover:text-slate-600'
                               }`}
                               title={isUniOn ? 'University Wing Active (Click to disable)' : 'University Wing Disabled (Click to activate)'}
                             >
-                              {isUniOn ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+                              {isUniOn ? <Check className="w-3.5 h-3.5 stroke-[2.5]" /> : <X className="w-3.5 h-3.5" />}
                               <span>{isUniOn ? 'Active' : 'Disabled'}</span>
                             </button>
-                            <span className="block text-[9px] text-slate-400 mt-0.5 font-medium">BS & Semesters</span>
+                            <span className="block text-[10px] text-slate-400 mt-1 font-medium">BS & Semesters</span>
                           </td>
 
                           {/* Cascading Chain Impact Info */}
@@ -525,7 +533,7 @@ export const ModulesControlView = () => {
                             <button
                               type="button"
                               onClick={() => handleOpenWingsModal(inst)}
-                              className="px-2.5 py-1.5 bg-slate-100 hover:bg-purple-50 text-slate-700 hover:text-purple-700 rounded-lg text-xs font-semibold border border-slate-200 transition-colors cursor-pointer"
+                              className="px-3 py-1.5 bg-[#f5eeff] hover:bg-[#ede0fe] text-purple-700 font-semibold rounded-xl text-xs transition-colors border border-purple-200/50 cursor-pointer shadow-2xs"
                             >
                               Configure
                             </button>
@@ -645,10 +653,7 @@ export const ModulesControlView = () => {
                       {/* Institute Column (Sticky) */}
                       <td className="py-3 px-4 sticky left-0 bg-white hover:bg-slate-50/50 z-10 border-r border-slate-100">
                         <div className="flex items-center gap-2.5">
-                          <div 
-                            className="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-white shrink-0 shadow-2xs"
-                            style={{ backgroundColor: inst.primaryColor || '#2563eb' }}
-                          >
+                          <div className="w-8 h-8 rounded-xl bg-[#f5eeff] text-purple-700 border border-purple-100 flex items-center justify-center font-bold shrink-0 shadow-2xs">
                             {instType === 'University' ? <GraduationCap className="w-4 h-4" /> :
                              instType === 'College' ? <Building2 className="w-4 h-4" /> :
                              <School className="w-4 h-4" />}

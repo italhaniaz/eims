@@ -174,8 +174,8 @@ export const SuperadminNavbar = ({
               <span className="text-xs font-bold text-slate-800 leading-tight group-hover:text-purple-700 transition-colors">
                 Super Administrator
               </span>
-              <span className="text-[10px] text-slate-400 font-medium">
-                Admin
+              <span className="text-[10px] text-purple-600 font-bold uppercase tracking-wider">
+                Super Admin
               </span>
             </div>
           </button>
