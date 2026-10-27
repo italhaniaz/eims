@@ -5,6 +5,7 @@ import {
   Search, 
   Edit2, 
   Trash2, 
+  Shield,
   ShieldCheck, 
   Mail, 
   Phone, 

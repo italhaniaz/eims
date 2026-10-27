@@ -41,6 +41,8 @@ const SystemHealthView = () => {
     loadHealthData()
   }, [])
 
+  const handleRefresh = () => loadHealthData()
+
   const loadHealthData = async () => {
     setLoading(true)
     try {

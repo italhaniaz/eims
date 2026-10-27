@@ -27,6 +27,9 @@ const SupportApprovalsView = () => {
   const [tickets, setTickets] = useState([])
   const [approvals, setApprovals] = useState([])
   const [loading, setLoading] = useState(true)
+  const [ticketStatusFilter, setTicketStatusFilter] = useState('ALL')
+  const [isNewTicketModalOpen, setIsNewTicketModalOpen] = useState(false)
+  const [newTicketForm, setNewTicketForm] = useState({ subject: '', category: 'General', priority: 'Medium', message: '', instituteName: '' })
 
   // Ticket Reply Modal
   const [selectedTicket, setSelectedTicket] = useState(null)
@@ -327,7 +330,7 @@ const SupportApprovalsView = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
-                {tickets.map((tkt) => (
+                {(ticketStatusFilter === "ALL" ? tickets : tickets.filter(t => t.status === ticketStatusFilter)).map((tkt) => (
                   <tr key={tkt.id} className="hover:bg-slate-50/70 transition-colors">
                     <td className="py-3.5 px-4 font-mono font-semibold text-slate-900">
                       {tkt.ticketNumber}

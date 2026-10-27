@@ -474,8 +474,8 @@ const SubscriptionsBillingView = () => {
           color="amber"
           showActions={true}
           showAllText="Show all"
-          onShowAll={() => { setActiveTab('invoices'); setInvoiceStatusFilter('OVERDUE'); }}
-          onView={() => { setActiveTab('invoices'); setInvoiceStatusFilter('OVERDUE'); }}
+          onShowAll={() => { setActiveTab('invoices'); setStatusFilter('OVERDUE'); }}
+          onView={() => { setActiveTab('invoices'); setStatusFilter('OVERDUE'); }}
           viewTooltip="View Overdue Invoices"
           onAdd={() => setIsCreateInvoiceModalOpen(true)}
           addTooltip="Create & Issue Invoice Reminder"
