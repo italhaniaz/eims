@@ -547,7 +547,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
       )}
 
       {/* 1. Header Row */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
             <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#f5eeff] text-purple-700 border border-purple-100 inline-flex items-center gap-1.5">
@@ -562,16 +562,12 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
             Multi-Campus Educational Wings Governance & Real-Time Performance Matrix
           </p>
 
-          {/* Active Filter Indicator Pill */}
+          {/* Active Filter Indicator Pill - Minimalist */}
           {selectedTierFilter !== 'all' && (
             <div className="flex items-center gap-2 mt-2">
-              <span className="text-xs text-slate-500 font-medium">Filtered View:</span>
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-800 border border-purple-200">
                 <Filter className="w-3 h-3 text-purple-600" />
                 <span>{currentFilterConfig.label}</span>
-                <span className="text-[10px] px-1.5 py-0.2 bg-purple-200 text-purple-900 rounded-full font-extrabold">
-                  {filteredInstitutes.length} campuses
-                </span>
                 <button
                   type="button"
                   onClick={() => handleSelectTierFilter('all')}
@@ -585,113 +581,64 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           )}
         </div>
 
-        {/* Action Shortcuts & Educational Tier Filter */}
-        <div className="flex flex-wrap items-center gap-2.5">
-          {/* Educational Tier Dropdown Filter */}
+        {/* Action Shortcuts & Educational Tier Filter - Single clean row, no wrap */}
+        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 flex-nowrap">
+          {/* Clean Educational Tier Dropdown Filter */}
           <div className="relative" ref={filterDropdownRef}>
             <button
               type="button"
               onClick={() => setIsFilterDropdownOpen(prev => !prev)}
-              className={`px-3.5 py-2.5 rounded-xl text-xs font-semibold border transition-all duration-150 flex items-center gap-2 cursor-pointer shadow-2xs select-none ${
+              className={`h-10 px-3.5 rounded-xl text-xs font-bold border transition-all duration-150 flex items-center gap-2 cursor-pointer shadow-2xs select-none whitespace-nowrap ${
                 selectedTierFilter !== 'all'
-                  ? 'bg-purple-50/90 border-purple-300 text-purple-900 ring-2 ring-purple-500/15'
+                  ? 'bg-purple-50 border-purple-300 text-purple-700 ring-2 ring-purple-500/10'
                   : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300'
               }`}
-              title="Filter dashboard by educational tier (School, College, University, Custom)"
+              title="Filter campuses by tier"
               aria-expanded={isFilterDropdownOpen}
               aria-haspopup="true"
             >
-              <Filter className={`w-3.5 h-3.5 shrink-0 ${selectedTierFilter !== 'all' ? 'text-purple-600' : 'text-slate-500'}`} />
-              
-              <div className="flex items-center gap-1.5">
-                <span className="font-medium text-slate-400 hidden sm:inline">Tier:</span>
-                <span className="font-bold text-slate-800 whitespace-nowrap">
-                  {currentFilterConfig.label}
-                </span>
-              </div>
-
-              <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-extrabold ${
-                selectedTierFilter !== 'all'
-                  ? 'bg-purple-200 text-purple-900'
-                  : 'bg-slate-100 text-slate-600'
-              }`}>
-                {tierCounts[selectedTierFilter] ?? 0}
-              </span>
-
-              <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${isFilterDropdownOpen ? 'rotate-180 text-purple-600' : ''}`} />
+              <Filter className={`w-3.5 h-3.5 shrink-0 ${selectedTierFilter !== 'all' ? 'text-purple-600' : 'text-slate-400'}`} />
+              <span>{currentFilterConfig.label}</span>
+              <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0 ${isFilterDropdownOpen ? 'rotate-180 text-purple-600' : ''}`} />
             </button>
 
-            {/* Dropdown Popover Menu */}
+            {/* Dropdown Popover Menu - Clean & Focused */}
             {isFilterDropdownOpen && (
-              <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 bg-white rounded-2xl border border-slate-200/90 shadow-xl shadow-purple-900/10 p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+              <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl border border-slate-200/90 shadow-xl shadow-purple-900/10 p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150 text-left">
                 <div className="px-3 py-2 border-b border-slate-100 mb-1 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <Filter className="w-3.5 h-3.5 text-purple-600" />
-                    <span className="text-xs font-bold text-slate-900">Filter by Educational Tier</span>
-                  </div>
+                  <span className="text-xs font-bold text-slate-800">Filter by Tier</span>
                   {selectedTierFilter !== 'all' && (
                     <button
                       type="button"
                       onClick={() => handleSelectTierFilter('all')}
-                      className="text-[11px] font-bold text-purple-600 hover:text-purple-800 transition-colors cursor-pointer"
+                      className="text-[11px] font-semibold text-purple-600 hover:text-purple-800 transition-colors cursor-pointer"
                     >
-                      Show All
+                      Clear
                     </button>
                   )}
                 </div>
 
-                <div className="space-y-1">
+                <div className="space-y-0.5">
                   {tierFilterOptions.map(option => {
                     const isSelected = selectedTierFilter === option.id
                     const OptionIcon = option.icon
-                    const count = tierCounts[option.id] ?? 0
 
                     return (
                       <button
                         key={option.id}
                         type="button"
                         onClick={() => handleSelectTierFilter(option.id)}
-                        className={`w-full flex items-center justify-between p-2.5 rounded-xl text-left transition-all cursor-pointer group ${
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left text-xs font-semibold transition-all cursor-pointer ${
                           isSelected
-                            ? 'bg-purple-50 text-purple-900 font-semibold'
-                            : 'hover:bg-slate-50/90 text-slate-700'
+                            ? 'bg-purple-50 text-purple-900 font-bold'
+                            : 'hover:bg-slate-50 text-slate-700'
                         }`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
-                            isSelected
-                              ? 'bg-purple-600 text-white shadow-xs'
-                              : 'bg-slate-100 text-slate-600 group-hover:bg-slate-200/70'
-                          }`}>
-                            <OptionIcon className="w-4 h-4 stroke-[2]" />
-                          </div>
-
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-xs font-bold truncate">{option.label}</span>
-                              {option.id !== 'all' && (
-                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
-                                  option.id === 'school' ? 'bg-purple-100 text-purple-700' :
-                                  option.id === 'college' ? 'bg-amber-100 text-amber-800' :
-                                  option.id === 'university' ? 'bg-blue-100 text-blue-700' :
-                                  'bg-indigo-100 text-indigo-700'
-                                }`}>
-                                  {option.badge}
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-[10px] text-slate-400 truncate mt-0.5">{option.subtitle}</p>
-                          </div>
+                          <OptionIcon className={`w-4 h-4 shrink-0 ${isSelected ? 'text-purple-600' : 'text-slate-400'}`} />
+                          <span className="truncate">{option.label}</span>
                         </div>
-
-                        <div className="flex items-center gap-2 shrink-0 ml-2">
-                          <span className={`text-[11px] px-2 py-0.5 rounded-md font-bold ${
-                            isSelected ? 'bg-purple-200 text-purple-900' : 'bg-slate-100 text-slate-500'
-                          }`}>
-                            {count}
-                          </span>
-                          {isSelected && <Check className="w-4 h-4 text-purple-600 stroke-[2.5]" />}
-                        </div>
+                        {isSelected && <Check className="w-4 h-4 text-purple-600 stroke-[2.5] shrink-0" />}
                       </button>
                     )
                   })}
@@ -702,16 +649,16 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
 
           <button
             onClick={handleOpenAddCampusModal}
-            className="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-semibold shadow-sm shadow-purple-600/25 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+            className="h-10 px-4 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-semibold shadow-sm shadow-purple-600/25 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 whitespace-nowrap shrink-0"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 shrink-0" />
             <span>Add Campus</span>
           </button>
           <button
             onClick={() => onRouteChange('platform-modules')}
-            className="px-4 py-2.5 bg-white hover:bg-purple-50/60 border border-slate-200 text-slate-700 hover:text-purple-700 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+            className="h-10 px-4 bg-white hover:bg-purple-50/60 border border-slate-200 text-slate-700 hover:text-purple-700 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs whitespace-nowrap shrink-0"
           >
-            <Sliders className="w-4 h-4 text-purple-600" />
+            <Sliders className="w-4 h-4 text-purple-600 shrink-0" />
             <span>Wings Matrix</span>
           </button>
         </div>
