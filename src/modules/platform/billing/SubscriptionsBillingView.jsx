@@ -168,29 +168,52 @@ const SubscriptionsBillingView = () => {
     setEditingPlan(null)
     setPlanForm({
       name: '',
-      tier: 'Basic',
+      tier: 'School',
       pricePKR: 20000,
       billingCycle: 'monthly',
       maxStudents: 1000,
       maxCampuses: 2,
       maxUsers: 50,
       storageGB: 5,
-      features: ['students', 'fees', 'exams']
+      trialDays: 14,
+      isTrial: false,
+      description: '',
+      features: ['students', 'attendance', 'classes', 'fees', 'exams', 'notices']
     })
     setIsPlanModalOpen(true)
+  }
+
+  const handleApplyTrialPreset = () => {
+    setPlanForm({
+      name: 'Free Trial Plan',
+      tier: 'Trial',
+      pricePKR: 0,
+      billingCycle: '14-day trial',
+      maxStudents: 250,
+      maxCampuses: 1,
+      maxUsers: 15,
+      storageGB: 1,
+      trialDays: 14,
+      isTrial: true,
+      description: '14-Day evaluation trial for schools and institutes exploring the platform',
+      features: ['students', 'attendance', 'classes', 'fees', 'exams', 'notices']
+    })
   }
 
   const handleOpenEditPlan = (plan) => {
     setEditingPlan(plan)
     setPlanForm({
       name: plan.name || '',
-      tier: plan.tier || 'Basic',
-      pricePKR: plan.pricePKR || 20000,
+      tier: plan.tier || 'School',
+      pricePKR: plan.pricePKR !== undefined ? plan.pricePKR : 20000,
       billingCycle: plan.billingCycle || 'monthly',
       maxStudents: plan.maxStudents || 1000,
       maxCampuses: plan.maxCampuses || 1,
       maxUsers: plan.maxUsers || 25,
       storageGB: plan.storageGB || 2,
+      trialDays: plan.trialDays || 14,
+      isTrial: plan.tier === 'Trial' || !!plan.isTrial || Number(plan.pricePKR) === 0,
+      description: plan.description || '',
       features: Array.isArray(plan.features) ? plan.features : ['students', 'fees']
     })
     setIsPlanModalOpen(true)
@@ -198,9 +221,17 @@ const SubscriptionsBillingView = () => {
 
   const handleSavePlan = async (e) => {
     e.preventDefault()
-    if (!planForm.name || !planForm.pricePKR) return
+    if (!planForm.name || planForm.pricePKR === '' || isNaN(Number(planForm.pricePKR))) return
 
-    const payload = editingPlan ? { ...planForm, id: editingPlan.id } : { ...planForm }
+    const isTrial = planForm.tier === 'Trial' || planForm.isTrial || Number(planForm.pricePKR) === 0
+    const payload = {
+      ...planForm,
+      pricePKR: Number(planForm.pricePKR) || 0,
+      isTrial,
+      billingCycle: isTrial && !planForm.billingCycle.includes('trial') ? '14-day trial' : planForm.billingCycle,
+      ...(editingPlan ? { id: editingPlan.id } : {})
+    }
+
     await BillingService.savePlan(payload)
     setIsPlanModalOpen(false)
     fetchBillingData()
@@ -453,8 +484,8 @@ const SubscriptionsBillingView = () => {
         <StatCard
           icon={CreditCard}
           title="Active Subscriptions"
-          value={`${overview?.activeCount || 0} Institutes`}
-          badge={`${overview?.trialCount || 0} active trial(s)`}
+          value={overview?.activeCount ?? 0}
+          badge={`${overview?.trialCount || 0} in trial`}
           badgePositive={true}
           color="indigo"
           showActions={true}
@@ -729,6 +760,14 @@ const SubscriptionsBillingView = () => {
               ).length
 
               const tierThemes = {
+                'Trial': {
+                  cardBorder: 'border-emerald-300 ring-2 ring-emerald-500/20 hover:border-emerald-400 hover:shadow-md bg-gradient-to-b from-emerald-50/20 via-white to-white',
+                  badgeBg: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                  icon: Sparkles,
+                  iconBg: 'bg-emerald-100 text-emerald-600',
+                  btnStyle: 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200',
+                  wings: 'Evaluation Trial (14-Day Full Platform Access)'
+                },
                 'School': {
                   cardBorder: 'border-purple-200 hover:border-blue-400 hover:shadow-md',
                   badgeBg: 'bg-[#f5eeff] text-purple-700 border-purple-200',
@@ -776,6 +815,11 @@ const SubscriptionsBillingView = () => {
                       Multi-Campus Group
                     </span>
                   )}
+                  {plan.tier === 'Trial' && (
+                    <span className="absolute -top-2.5 right-4 bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-xs">
+                      Free Evaluation Tier
+                    </span>
+                  )}
 
                   <div>
                     {/* Header: Icon, Tier Badge, Action Icons */}
@@ -816,7 +860,7 @@ const SubscriptionsBillingView = () => {
                     <div className="mt-3.5 mb-4 p-3 rounded-xl bg-slate-50 border border-slate-100">
                       <div className="flex items-baseline">
                         <span className="text-2xl font-black text-slate-900 font-mono tracking-tight">
-                          ₨ {Number(plan.pricePKR).toLocaleString()}
+                          {Number(plan.pricePKR) === 0 ? 'FREE (₨ 0)' : `₨ ${Number(plan.pricePKR).toLocaleString()}`}
                         </span>
                         <span className="text-slate-500 text-xs ml-1.5 font-medium">/ {plan.billingCycle}</span>
                       </div>
@@ -1011,6 +1055,26 @@ const SubscriptionsBillingView = () => {
         maxWidth="max-w-xl"
       >
         <form onSubmit={handleSavePlan} className="space-y-4">
+          {/* Quick Free Trial Preset Helper */}
+          <div className="p-3 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border border-emerald-200/80 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                <Sparkles className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="text-xs font-bold text-emerald-950">Free Trial / Evaluation Package</div>
+                <div className="text-[11px] text-emerald-700">Quickly configure a ₨ 0 evaluation tier for prospective clients to test the software.</div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleApplyTrialPreset}
+              className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs transition-colors shrink-0 cursor-pointer"
+            >
+              Use Trial Preset
+            </button>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">Plan Name</label>
@@ -1020,26 +1084,37 @@ const SubscriptionsBillingView = () => {
                 value={planForm.name}
                 onChange={(e) => setPlanForm({ ...planForm, name: e.target.value })}
                 className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none"
-                placeholder="e.g. Campus Pro"
+                placeholder="e.g. Free Trial Plan or Campus Pro"
               />
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">Tier Category</label>
               <select
                 value={planForm.tier}
-                onChange={(e) => setPlanForm({ ...planForm, tier: e.target.value })}
+                onChange={(e) => {
+                  const newTier = e.target.value
+                  if (newTier === 'Trial') {
+                    setPlanForm({ ...planForm, tier: newTier, pricePKR: 0, billingCycle: '14-day trial', isTrial: true })
+                  } else {
+                    setPlanForm({ ...planForm, tier: newTier, pricePKR: planForm.pricePKR === 0 ? 25000 : planForm.pricePKR, billingCycle: planForm.billingCycle.includes('trial') ? 'monthly' : planForm.billingCycle, isTrial: false })
+                  }
+                }}
                 className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none bg-white"
               >
-                <option value="Basic">Basic Tier</option>
-                <option value="Pro">Professional Tier</option>
-                <option value="Enterprise">Enterprise Apex</option>
+                <option value="Trial">Free Trial Tier (₨ 0 Evaluation)</option>
+                <option value="School">School Tier (Primary / Matric)</option>
+                <option value="College">College Tier (Inter / F.Sc / A-Levels)</option>
+                <option value="University">University Tier (BS / Degrees)</option>
+                <option value="Custom">Custom Multi-Wing Tier</option>
               </select>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Price (PKR)</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Price (PKR) {planForm.tier === 'Trial' && <span className="text-emerald-600 font-bold">(0 for Free Evaluation)</span>}
+              </label>
               <input
                 type="number"
                 required
@@ -1050,16 +1125,29 @@ const SubscriptionsBillingView = () => {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Billing Cycle</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Billing Cycle / Duration</label>
               <select
                 value={planForm.billingCycle}
                 onChange={(e) => setPlanForm({ ...planForm, billingCycle: e.target.value })}
                 className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none bg-white"
               >
+                <option value="14-day trial">14-Day Evaluation Trial</option>
+                <option value="30-day trial">30-Day Evaluation Trial</option>
                 <option value="monthly">Monthly Cycle</option>
                 <option value="annual">Annual Prepaid</option>
               </select>
             </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Plan Description / Scope</label>
+            <input
+              type="text"
+              value={planForm.description || ''}
+              onChange={(e) => setPlanForm({ ...planForm, description: e.target.value })}
+              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none"
+              placeholder="e.g. 14-day evaluation trial for schools exploring the platform"
+            />
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
@@ -1261,7 +1349,9 @@ const SubscriptionsBillingView = () => {
                   }`}
                 >
                   <span className="text-xs font-bold block">{plan.name}</span>
-                  <span className="text-[11px] font-mono text-indigo-700 block mt-0.5">₨ {Number(plan.pricePKR).toLocaleString()}/mo</span>
+                  <span className="text-[11px] font-mono text-indigo-700 block mt-0.5">
+                    {Number(plan.pricePKR) === 0 ? 'FREE TRIAL (₨ 0)' : `₨ ${Number(plan.pricePKR).toLocaleString()}/mo`}
+                  </span>
                   <span className="text-[10px] text-slate-400 block mt-1 line-clamp-1">{plan.description}</span>
                 </button>
               ))}
