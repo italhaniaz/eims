@@ -170,11 +170,12 @@ export const InstitutesView = () => {
   }
 
   const [wizardData, setWizardData] = useState(initialWizardState)
+  const [wizardErrors, setWizardErrors] = useState({})
 
   // Auto-generate code and slug when name changes in Wizard
   const handleWizardNameChange = (name) => {
     const generatedSlug = name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').slice(0, 30)
-    const codePrefix = wizardData.type === 'University' ? 'UNI' : wizardData.type === 'College' ? 'COL' : 'SCH'
+    const codePrefix = wizardData.type === 'University' ? 'UNI' : wizardData.type === 'College' ? 'COL' : wizardData.type === 'Custom' ? 'HYB' : 'SCH'
     const generatedCode = wizardData.code || `${codePrefix}-${Math.floor(100 + Math.random() * 900)}`
     
     setWizardData(prev => ({
@@ -194,32 +195,93 @@ export const InstitutesView = () => {
       districtId: districts[0]?.id || '',
       affiliatedBoard: examinationBodies[0]?.code || 'BISE Lahore'
     })
+    setWizardErrors({})
     setWizardStep(1)
     setIsWizardOpen(true)
   }
 
   const handleNextStep = () => {
+    const errors = {}
+
     if (wizardStep === 1) {
-      if (!wizardData.name || !wizardData.code) {
-        toast.error('Please provide Institute Name and Unique Code')
+      if (!wizardData.name?.trim()) {
+        errors.name = 'Official Institute Name is required'
+      }
+      if (!wizardData.code?.trim()) {
+        errors.code = 'Unique Institute Code is required'
+      } else {
+        const isDuplicate = institutes.some(i => i.code?.toLowerCase() === wizardData.code.trim().toLowerCase())
+        if (isDuplicate) {
+          errors.code = `Institute Code "${wizardData.code}" is already in use!`
+        }
+      }
+      if (wizardData.type === 'Custom' && (!wizardData.enabledTiers || wizardData.enabledTiers.length === 0)) {
+        errors.enabledTiers = 'Please select at least one educational wing'
+      }
+
+      if (Object.keys(errors).length > 0) {
+        setWizardErrors(errors)
+        const firstError = Object.values(errors)[0]
+        toast.error(firstError)
         return
       }
-      // Check duplicate code
-      const isDuplicate = institutes.some(i => i.code?.toLowerCase() === wizardData.code.trim().toLowerCase())
-      if (isDuplicate) {
-        toast.error(`Institute Code "${wizardData.code}" is already in use!`)
+    } else if (wizardStep === 2) {
+      if (!wizardData.city?.trim()) {
+        errors.city = 'Primary Campus City is required'
+      }
+      if (!wizardData.address?.trim()) {
+        errors.address = 'Head Campus Physical Address is required'
+      }
+
+      if (Object.keys(errors).length > 0) {
+        setWizardErrors(errors)
+        const firstError = Object.values(errors)[0]
+        toast.error(firstError)
+        return
+      }
+    } else if (wizardStep === 3) {
+      // Step 3: Contact Details - Official Phone is strictly required!
+      if (!wizardData.phone?.trim()) {
+        errors.phone = 'Official Phone Number is required'
+      } else if (wizardData.phone.trim().replace(/[^0-9]/g, '').length < 7) {
+        errors.phone = 'Please enter a valid phone number (minimum 7 digits)'
+      }
+
+      if (Object.keys(errors).length > 0) {
+        setWizardErrors(errors)
+        const firstError = Object.values(errors)[0]
+        toast.error(firstError)
         return
       }
     } else if (wizardStep === 4) {
-      if (!wizardData.adminEmail || !wizardData.adminPassword) {
-        toast.error('Please enter Administrator Email and Secure Password')
+      if (!wizardData.adminName?.trim()) {
+        errors.adminName = 'Administrator Full Name is required'
+      }
+      if (!wizardData.adminEmail?.trim()) {
+        errors.adminEmail = 'Administrator Official Email is required'
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(wizardData.adminEmail.trim())) {
+        errors.adminEmail = 'Please provide a valid Administrator Email address'
+      }
+      if (!wizardData.adminPassword?.trim()) {
+        errors.adminPassword = 'Initial Temporary Password is required'
+      } else if (wizardData.adminPassword.length < 6) {
+        errors.adminPassword = 'Password must be at least 6 characters'
+      }
+
+      if (Object.keys(errors).length > 0) {
+        setWizardErrors(errors)
+        const firstError = Object.values(errors)[0]
+        toast.error(firstError)
         return
       }
     }
+
+    setWizardErrors({})
     setWizardStep(prev => Math.min(prev + 1, 5))
   }
 
   const handlePrevStep = () => {
+    setWizardErrors({})
     setWizardStep(prev => Math.max(prev - 1, 1))
   }
 
@@ -1077,25 +1139,67 @@ export const InstitutesView = () => {
       >
         <div className="space-y-5">
           {/* Progress Indicators */}
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3 text-xs">
-            <span className={`font-bold ${wizardStep === 1 ? 'text-purple-600' : 'text-slate-400'}`}>1. Type & Profile</span>
-            <span className={`font-bold ${wizardStep === 2 ? 'text-purple-600' : 'text-slate-400'}`}>2. Campuses</span>
-            <span className={`font-bold ${wizardStep === 3 ? 'text-purple-600' : 'text-slate-400'}`}>3. Branding</span>
-            <span className={`font-bold ${wizardStep === 4 ? 'text-purple-600' : 'text-slate-400'}`}>4. Administrator</span>
-            <span className={`font-bold ${wizardStep === 5 ? 'text-purple-600' : 'text-slate-400'}`}>5. Plan & Quotas</span>
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3 text-xs overflow-x-auto gap-2">
+            <span className={`font-bold shrink-0 ${wizardStep === 1 ? 'text-purple-600' : 'text-slate-400'}`}>1. Type & Profile</span>
+            <span className={`font-bold shrink-0 ${wizardStep === 2 ? 'text-purple-600' : 'text-slate-400'}`}>2. Campuses</span>
+            <span className={`font-bold shrink-0 ${wizardStep === 3 ? 'text-purple-600' : 'text-slate-400'}`}>3. Contact Details</span>
+            <span className={`font-bold shrink-0 ${wizardStep === 4 ? 'text-purple-600' : 'text-slate-400'}`}>4. Administrator</span>
+            <span className={`font-bold shrink-0 ${wizardStep === 5 ? 'text-purple-600' : 'text-slate-400'}`}>5. Plan & Quotas</span>
           </div>
 
           {/* Step 1: Type & Profile */}
           {wizardStep === 1 && (
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1.5">Educational Tier / Institute Plan Type *</label>
+                <div className="flex items-center justify-between gap-3 mb-2">
+                  <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider flex items-center gap-1">
+                    <span>Educational Tier / Institute Plan Type</span>
+                    <span className="text-rose-500 font-bold">*</span>
+                  </label>
+                  
+                  {/* Dropdown Filter / Quick Selector (As Requested) */}
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">Select Tier:</span>
+                    <select
+                      value={wizardData.type || 'School'}
+                      onChange={(e) => {
+                        const tierMap = {
+                          School: { planName: 'School Plan', defaultTiers: ['school'], prefix: 'SCH' },
+                          College: { planName: 'College Plan', defaultTiers: ['college'], prefix: 'COL' },
+                          University: { planName: 'University Plan', defaultTiers: ['undergraduate'], prefix: 'UNI' },
+                          Custom: { planName: 'Custom Hybrid Plan', defaultTiers: ['school', 'college'], prefix: 'HYB' }
+                        }
+                        const t = tierMap[e.target.value]
+                        if (t) {
+                          setWizardData(prev => ({
+                            ...prev,
+                            type: e.target.value,
+                            planType: e.target.value.toUpperCase(),
+                            planTier: t.planName,
+                            enabledTiers: t.defaultTiers,
+                            code: prev.code && !prev.code.startsWith('SCH-') && !prev.code.startsWith('COL-') && !prev.code.startsWith('UNI-') && !prev.code.startsWith('HYB-')
+                              ? prev.code
+                              : `${t.prefix}-${Math.floor(100 + Math.random() * 900)}`
+                          }))
+                          if (wizardErrors.enabledTiers) setWizardErrors(prev => ({ ...prev, enabledTiers: null }))
+                        }
+                      }}
+                      className="px-2.5 py-1 text-xs font-semibold bg-white border border-slate-200 rounded-lg text-slate-700 shadow-2xs focus:outline-none focus:ring-2 focus:ring-purple-500/20 cursor-pointer hover:border-slate-300"
+                    >
+                      <option value="School">School Plan</option>
+                      <option value="College">College Plan</option>
+                      <option value="University">University Plan</option>
+                      <option value="Custom">Custom Hybrid</option>
+                    </select>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[
-                    { id: 'School', label: 'School Plan', icon: School, defaultTiers: ['school'], planName: 'School Plan', color: 'text-purple-600' },
-                    { id: 'College', label: 'College Plan', icon: Building2, defaultTiers: ['college'], planName: 'College Plan', color: 'text-indigo-600' },
-                    { id: 'University', label: 'University Plan', icon: GraduationCap, defaultTiers: ['undergraduate'], planName: 'University Plan', color: 'text-purple-600' },
-                    { id: 'Custom', label: 'Custom Hybrid', icon: Layers, defaultTiers: ['school', 'college'], planName: 'Custom Hybrid Plan', color: 'text-amber-600' }
+                    { id: 'School', label: 'School Plan', icon: School, defaultTiers: ['school'], planName: 'School Plan', color: 'text-purple-600', prefix: 'SCH' },
+                    { id: 'College', label: 'College Plan', icon: Building2, defaultTiers: ['college'], planName: 'College Plan', color: 'text-indigo-600', prefix: 'COL' },
+                    { id: 'University', label: 'University Plan', icon: GraduationCap, defaultTiers: ['undergraduate'], planName: 'University Plan', color: 'text-purple-600', prefix: 'UNI' },
+                    { id: 'Custom', label: 'Custom Hybrid', icon: Layers, defaultTiers: ['school', 'college'], planName: 'Custom Hybrid Plan', color: 'text-amber-600', prefix: 'HYB' }
                   ].map((tierItem) => {
                     const TierIcon = tierItem.icon
                     const isSelected = wizardData.type === tierItem.id
@@ -1103,16 +1207,22 @@ export const InstitutesView = () => {
                       <button
                         key={tierItem.id}
                         type="button"
-                        onClick={() => setWizardData({ 
-                          ...wizardData, 
-                          type: tierItem.id,
-                          planType: tierItem.id.toUpperCase(),
-                          planTier: tierItem.planName,
-                          enabledTiers: tierItem.defaultTiers
-                        })}
+                        onClick={() => {
+                          setWizardData(prev => ({ 
+                            ...prev, 
+                            type: tierItem.id,
+                            planType: tierItem.id.toUpperCase(),
+                            planTier: tierItem.planName,
+                            enabledTiers: tierItem.defaultTiers,
+                            code: prev.code && !prev.code.startsWith('SCH-') && !prev.code.startsWith('COL-') && !prev.code.startsWith('UNI-') && !prev.code.startsWith('HYB-')
+                              ? prev.code
+                              : `${tierItem.prefix}-${Math.floor(100 + Math.random() * 900)}`
+                          }))
+                          if (wizardErrors.enabledTiers) setWizardErrors(prev => ({ ...prev, enabledTiers: null }))
+                        }}
                         className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center gap-1.5 cursor-pointer ${
                           isSelected 
-                            ? 'border-purple-600 bg-[#f5eeff] text-purple-800 font-bold ring-2 ring-purple-500/20' 
+                            ? 'border-purple-600 bg-[#f5eeff] text-purple-800 font-bold ring-2 ring-purple-500/20 shadow-2xs' 
                             : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
                         }`}
                       >
@@ -1125,10 +1235,15 @@ export const InstitutesView = () => {
 
                 {/* Custom Plan: Multi-Wing Checkbox Configuration */}
                 {wizardData.type === 'Custom' && (
-                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 mt-3 space-y-2">
-                    <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
-                      Select Active Educational Wings for this Custom Client
-                    </span>
+                  <div className={`p-3 rounded-xl border mt-3 space-y-2 ${wizardErrors.enabledTiers ? 'bg-rose-50/30 border-rose-300 ring-2 ring-rose-200/50' : 'bg-slate-50 border-slate-200'}`}>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
+                        Select Active Educational Wings for this Custom Client <span className="text-rose-500 font-bold">*</span>
+                      </span>
+                      {wizardErrors.enabledTiers && (
+                        <span className="text-[11px] text-rose-600 font-semibold">{wizardErrors.enabledTiers}</span>
+                      )}
+                    </div>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       {[
                         { id: 'school', label: 'School Wing', desc: 'Primary & High School (K-10)', icon: School },
@@ -1152,6 +1267,7 @@ export const InstitutesView = () => {
                                   updated = [...current, wing.id]
                                 }
                                 setWizardData({ ...wizardData, enabledTiers: updated })
+                                if (wizardErrors.enabledTiers) setWizardErrors(prev => ({ ...prev, enabledTiers: null }))
                               }}
                               className="w-4 h-4 text-purple-600 rounded border-slate-300 focus:ring-purple-500"
                             />
@@ -1169,28 +1285,52 @@ export const InstitutesView = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Official Name *</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                  Official Name <span className="text-rose-500 font-bold">*</span>
+                </label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Beaconhouse Central High School"
                   value={wizardData.name}
-                  onChange={(e) => handleWizardNameChange(e.target.value)}
-                  className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                  onChange={(e) => {
+                    handleWizardNameChange(e.target.value)
+                    if (wizardErrors.name) setWizardErrors(prev => ({ ...prev, name: null }))
+                  }}
+                  className={`w-full px-3.5 py-2 text-xs rounded-lg border transition-all focus:outline-none focus:ring-2 ${
+                    wizardErrors.name 
+                      ? 'border-rose-400 bg-rose-50/20 ring-2 ring-rose-200/50' 
+                      : 'border-slate-200 focus:ring-purple-500/20'
+                  }`}
                 />
+                {wizardErrors.name && (
+                  <p className="text-[11px] text-rose-600 mt-1 font-medium">{wizardErrors.name}</p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Unique Code *</label>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                    Unique Code <span className="text-rose-500 font-bold">*</span>
+                  </label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. BHS-001"
                     value={wizardData.code}
-                    onChange={(e) => setWizardData({ ...wizardData, code: e.target.value.toUpperCase() })}
-                    className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 font-mono uppercase focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                    onChange={(e) => {
+                      setWizardData({ ...wizardData, code: e.target.value.toUpperCase() })
+                      if (wizardErrors.code) setWizardErrors(prev => ({ ...prev, code: null }))
+                    }}
+                    className={`w-full px-3.5 py-2 text-xs rounded-lg border font-mono uppercase transition-all focus:outline-none focus:ring-2 ${
+                      wizardErrors.code 
+                        ? 'border-rose-400 bg-rose-50/20 ring-2 ring-rose-200/50' 
+                        : 'border-slate-200 focus:ring-purple-500/20'
+                    }`}
                   />
+                  {wizardErrors.code && (
+                    <p className="text-[11px] text-rose-600 mt-1 font-medium">{wizardErrors.code}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Head / Principal</label>
@@ -1247,18 +1387,33 @@ export const InstitutesView = () => {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Primary Campus City *</label>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                    Primary Campus City <span className="text-rose-500 font-bold">*</span>
+                  </label>
                   <input
                     type="text"
+                    required
+                    placeholder="e.g. Lahore"
                     value={wizardData.city}
-                    onChange={(e) => setWizardData({ ...wizardData, city: e.target.value })}
-                    className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                    onChange={(e) => {
+                      setWizardData({ ...wizardData, city: e.target.value })
+                      if (wizardErrors.city) setWizardErrors(prev => ({ ...prev, city: null }))
+                    }}
+                    className={`w-full px-3.5 py-2 text-xs rounded-lg border transition-all focus:outline-none focus:ring-2 ${
+                      wizardErrors.city 
+                        ? 'border-rose-400 bg-rose-50/20 ring-2 ring-rose-200/50' 
+                        : 'border-slate-200 focus:ring-purple-500/20'
+                    }`}
                   />
+                  {wizardErrors.city && (
+                    <p className="text-[11px] text-rose-600 mt-1 font-medium">{wizardErrors.city}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Province / State</label>
                   <input
                     type="text"
+                    placeholder="e.g. Punjab"
                     value={wizardData.province}
                     onChange={(e) => setWizardData({ ...wizardData, province: e.target.value })}
                     className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
@@ -1267,14 +1422,27 @@ export const InstitutesView = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Head Campus Physical Address *</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                  Head Campus Physical Address <span className="text-rose-500 font-bold">*</span>
+                </label>
                 <input
                   type="text"
+                  required
                   placeholder="e.g. Gulberg III, Main Boulevard, Lahore"
                   value={wizardData.address}
-                  onChange={(e) => setWizardData({ ...wizardData, address: e.target.value })}
-                  className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                  onChange={(e) => {
+                    setWizardData({ ...wizardData, address: e.target.value })
+                    if (wizardErrors.address) setWizardErrors(prev => ({ ...prev, address: null }))
+                  }}
+                  className={`w-full px-3.5 py-2 text-xs rounded-lg border transition-all focus:outline-none focus:ring-2 ${
+                    wizardErrors.address 
+                      ? 'border-rose-400 bg-rose-50/20 ring-2 ring-rose-200/50' 
+                      : 'border-slate-200 focus:ring-purple-500/20'
+                  }`}
                 />
+                {wizardErrors.address && (
+                  <p className="text-[11px] text-rose-600 mt-1 font-medium">{wizardErrors.address}</p>
+                )}
               </div>
 
               {/* Additional Campuses */}
@@ -1293,7 +1461,7 @@ export const InstitutesView = () => {
                         ]
                       })
                     }}
-                    className="text-[11px] font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1"
+                    className="text-[11px] font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1 cursor-pointer"
                   >
                     <Plus className="w-3 h-3" />
                     <span>Add Branch</span>
@@ -1314,7 +1482,7 @@ export const InstitutesView = () => {
                               campuses: wizardData.campuses.filter((_, idx) => idx !== i)
                             })
                           }}
-                          className="text-rose-500 hover:text-rose-700 ml-auto p-1"
+                          className="text-rose-500 hover:text-rose-700 ml-auto p-1 cursor-pointer"
                         >
                           <X className="w-3.5 h-3.5" />
                         </button>
@@ -1326,73 +1494,55 @@ export const InstitutesView = () => {
             </div>
           )}
 
-          {/* Step 3: Identity & Branding */}
+          {/* Step 3: Campus Contact Information (Subdomain & Brand Color Removed As Requested) */}
           {wizardStep === 3 && (
             <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Subdomain / URL Slug *</label>
-                <div className="flex items-center">
-                  <span className="px-3 py-2 bg-slate-100 border border-r-0 border-slate-200 rounded-l-lg text-xs text-slate-500 font-mono">
-                    https://
-                  </span>
-                  <input
-                    type="text"
-                    placeholder="beacon-central"
-                    value={wizardData.slug}
-                    onChange={(e) => setWizardData({ ...wizardData, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
-                    className="w-full px-3.5 py-2 text-xs border border-slate-200 focus:outline-none font-mono"
-                  />
-                  <span className="px-3 py-2 bg-slate-100 border border-l-0 border-slate-200 rounded-r-lg text-xs text-slate-500 font-mono">
-                    .sms.edu
-                  </span>
+              <div className="p-3 bg-[#f5eeff]/80 border border-purple-200 rounded-xl text-xs text-purple-800 flex items-start gap-2.5">
+                <Building2 className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-bold">Official Campus Contact:</span>
+                  <p className="mt-0.5 text-slate-600">
+                    Official phone number is strictly required for campus registration, platform alerts, and administrative communications.
+                  </p>
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1.5">Primary Brand Color</label>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="color"
-                    value={wizardData.primaryColor}
-                    onChange={(e) => setWizardData({ ...wizardData, primaryColor: e.target.value })}
-                    className="w-10 h-10 rounded-lg cursor-pointer border border-slate-200 p-0.5"
-                  />
-                  <span className="font-mono text-xs text-slate-700 font-semibold">{wizardData.primaryColor}</span>
-                  <div className="flex items-center gap-1.5 ml-auto">
-                    {['#2563eb', '#7c3aed', '#059669', '#dc2626', '#0284c7'].map(c => (
-                      <button
-                        key={c}
-                        type="button"
-                        onClick={() => setWizardData({ ...wizardData, primaryColor: c })}
-                        className="w-6 h-6 rounded-full border border-white shadow-2xs"
-                        style={{ backgroundColor: c }}
-                      />
-                    ))}
-                  </div>
-                </div>
+                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                  Official Phone <span className="text-rose-500 font-bold">*</span>
+                </label>
+                <input
+                  type="tel"
+                  required
+                  placeholder="e.g. +92 42 35789012 or +92 300 1234567"
+                  value={wizardData.phone}
+                  onChange={(e) => {
+                    setWizardData({ ...wizardData, phone: e.target.value })
+                    if (wizardErrors.phone) setWizardErrors(prev => ({ ...prev, phone: null }))
+                  }}
+                  className={`w-full px-3.5 py-2.5 text-xs rounded-lg border transition-all focus:outline-none focus:ring-2 ${
+                    wizardErrors.phone 
+                      ? 'border-rose-400 bg-rose-50/20 ring-2 ring-rose-200/50' 
+                      : 'border-slate-200 focus:ring-purple-500/20'
+                  }`}
+                />
+                {wizardErrors.phone && (
+                  <p className="text-[11px] text-rose-600 mt-1 font-medium">{wizardErrors.phone}</p>
+                )}
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Official Email</label>
-                  <input
-                    type="email"
-                    placeholder="info@campus.edu"
-                    value={wizardData.email}
-                    onChange={(e) => setWizardData({ ...wizardData, email: e.target.value })}
-                    className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Official Phone</label>
-                  <input
-                    type="tel"
-                    placeholder="+92 42 35789012"
-                    value={wizardData.phone}
-                    onChange={(e) => setWizardData({ ...wizardData, phone: e.target.value })}
-                    className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none"
-                  />
-                </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                  Official Email <span className="text-slate-400 font-normal lowercase">(optional)</span>
+                </label>
+                <input
+                  type="email"
+                  placeholder="e.g. info@campus.edu"
+                  value={wizardData.email}
+                  onChange={(e) => setWizardData({ ...wizardData, email: e.target.value })}
+                  className="w-full px-3.5 py-2.5 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                />
+                <p className="text-[10px] text-slate-400 mt-1">Optional contact email for general public inquiries</p>
               </div>
             </div>
           )}
@@ -1405,37 +1555,74 @@ export const InstitutesView = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Administrator Full Name *</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                  Administrator Full Name <span className="text-rose-500 font-bold">*</span>
+                </label>
                 <input
                   type="text"
+                  required
                   placeholder="e.g. Dr. Shahida Parveen (Principal)"
                   value={wizardData.adminName}
-                  onChange={(e) => setWizardData({ ...wizardData, adminName: e.target.value })}
-                  className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                  onChange={(e) => {
+                    setWizardData({ ...wizardData, adminName: e.target.value })
+                    if (wizardErrors.adminName) setWizardErrors(prev => ({ ...prev, adminName: null }))
+                  }}
+                  className={`w-full px-3.5 py-2 text-xs rounded-lg border transition-all focus:outline-none focus:ring-2 ${
+                    wizardErrors.adminName 
+                      ? 'border-rose-400 bg-rose-50/20 ring-2 ring-rose-200/50' 
+                      : 'border-slate-200 focus:ring-purple-500/20'
+                  }`}
                 />
+                {wizardErrors.adminName && (
+                  <p className="text-[11px] text-rose-600 mt-1 font-medium">{wizardErrors.adminName}</p>
+                )}
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Administrator Official Email *</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                  Administrator Official Email <span className="text-rose-500 font-bold">*</span>
+                </label>
                 <input
                   type="email"
                   required
                   placeholder="admin.beacon@sms.edu"
                   value={wizardData.adminEmail}
-                  onChange={(e) => setWizardData({ ...wizardData, adminEmail: e.target.value })}
-                  className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                  onChange={(e) => {
+                    setWizardData({ ...wizardData, adminEmail: e.target.value })
+                    if (wizardErrors.adminEmail) setWizardErrors(prev => ({ ...prev, adminEmail: null }))
+                  }}
+                  className={`w-full px-3.5 py-2 text-xs rounded-lg border transition-all focus:outline-none focus:ring-2 ${
+                    wizardErrors.adminEmail 
+                      ? 'border-rose-400 bg-rose-50/20 ring-2 ring-rose-200/50' 
+                      : 'border-slate-200 focus:ring-purple-500/20'
+                  }`}
                 />
+                {wizardErrors.adminEmail && (
+                  <p className="text-[11px] text-rose-600 mt-1 font-medium">{wizardErrors.adminEmail}</p>
+                )}
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Initial Temporary Password *</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                  Initial Temporary Password <span className="text-rose-500 font-bold">*</span>
+                </label>
                 <input
                   type="text"
                   required
                   value={wizardData.adminPassword}
-                  onChange={(e) => setWizardData({ ...wizardData, adminPassword: e.target.value })}
-                  className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 font-mono focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                  onChange={(e) => {
+                    setWizardData({ ...wizardData, adminPassword: e.target.value })
+                    if (wizardErrors.adminPassword) setWizardErrors(prev => ({ ...prev, adminPassword: null }))
+                  }}
+                  className={`w-full px-3.5 py-2 text-xs rounded-lg border font-mono transition-all focus:outline-none focus:ring-2 ${
+                    wizardErrors.adminPassword 
+                      ? 'border-rose-400 bg-rose-50/20 ring-2 ring-rose-200/50' 
+                      : 'border-slate-200 focus:ring-purple-500/20'
+                  }`}
                 />
+                {wizardErrors.adminPassword && (
+                  <p className="text-[11px] text-rose-600 mt-1 font-medium">{wizardErrors.adminPassword}</p>
+                )}
               </div>
             </div>
           )}
@@ -1458,7 +1645,7 @@ export const InstitutesView = () => {
                         quotaCampuses: plan.maxCampuses,
                         quotaStorageMb: plan.storageMB
                       })}
-                      className={`p-3 rounded-xl border text-left transition-all ${
+                      className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
                         wizardData.planTier === plan.name
                           ? 'border-indigo-600 bg-indigo-50/70 text-indigo-900 ring-2 ring-indigo-500/20 font-bold'
                           : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
@@ -1507,7 +1694,7 @@ export const InstitutesView = () => {
               type="button"
               onClick={handlePrevStep}
               disabled={wizardStep === 1}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
             >
               Previous
             </button>
@@ -1516,7 +1703,7 @@ export const InstitutesView = () => {
               <button
                 type="button"
                 onClick={handleNextStep}
-                className="px-5 py-2 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow-sm transition-all"
+                className="px-5 py-2.5 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-xl shadow-xs transition-all cursor-pointer active:scale-95 whitespace-nowrap"
               >
                 Continue
               </button>
@@ -1524,7 +1711,7 @@ export const InstitutesView = () => {
               <button
                 type="button"
                 onClick={handleCompleteWizard}
-                className="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition-all"
+                className="px-5 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-xs transition-all cursor-pointer active:scale-95 whitespace-nowrap"
               >
                 Complete Onboarding & Launch Campus
               </button>
