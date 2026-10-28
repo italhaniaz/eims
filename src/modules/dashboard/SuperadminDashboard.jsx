@@ -329,114 +329,182 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
         </div>
       </div>
 
-      {/* 2. Top Row: 4 Pastel Colored KPI Cards (Exact "ia Academy" reference style) */}
+      {/* 2. Top Row: 4 Pastel Colored KPI Cards with Dedicated View Details Eye Buttons */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
         
         {/* Card 1: Students / Campuses (Lavender) */}
-        <div 
-          onClick={() => onRouteChange('institutes')}
-          className="bg-[#f5eeff] border border-purple-100/80 rounded-2xl p-5 sm:p-6 transition-all duration-200 hover:shadow-sm cursor-pointer group flex items-center justify-between"
-        >
-          <div>
-            <span className="block text-xs font-semibold text-slate-500 mb-1">
-              Total Campuses
-            </span>
-            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading">
-              {stats.totalInstitutes || 12}
-            </span>
-            <div className="flex items-center gap-1.5 mt-2">
+        <div className="bg-[#f5eeff] border border-purple-100/80 rounded-2xl p-5 sm:p-6 transition-all duration-200 hover:shadow-sm shadow-2xs flex justify-between gap-3">
+          <div className="flex flex-col justify-between flex-1 min-w-0">
+            <div>
+              <span className="block text-xs font-semibold text-slate-500 mb-1">
+                Total Campuses
+              </span>
+              <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading">
+                {stats.totalInstitutes || 12}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 mt-3 pt-1">
               <span className="text-[11px] font-semibold text-purple-700">
                 {stats.activeInstitutes || 12} Active
               </span>
               <span className="text-slate-300">•</span>
-              <span className="text-[11px] text-purple-600/80 group-hover:underline flex items-center gap-0.5">
-                Manage <ArrowUpRight className="w-3 h-3 inline" />
-              </span>
+              <button
+                type="button"
+                onClick={() => onRouteChange('institutes')}
+                className="text-[11px] font-semibold text-purple-600 hover:text-purple-800 hover:underline flex items-center gap-0.5 cursor-pointer"
+                title="Manage Campuses"
+              >
+                <span>Manage</span>
+                <ArrowUpRight className="w-3 h-3 inline" />
+              </button>
             </div>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-white/70 text-purple-600 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
-            <School className="w-6 h-6 stroke-[1.8]" />
+
+          <div className="flex flex-col justify-between items-end shrink-0 pl-1">
+            <div className="w-11 h-11 rounded-2xl bg-white/70 text-purple-600 flex items-center justify-center shadow-2xs">
+              <School className="w-5 h-5 stroke-[1.8]" />
+            </div>
+            <button
+              type="button"
+              onClick={() => onRouteChange('institutes')}
+              className="w-8 h-8 rounded-full border border-purple-200/80 bg-white/90 hover:bg-white text-purple-600 hover:text-purple-800 flex items-center justify-center shadow-2xs hover:shadow-xs transition-all cursor-pointer active:scale-95 hover:scale-105 mt-2"
+              title="View Campus Details"
+              aria-label="View Campus Details"
+            >
+              <Eye className="w-4 h-4 stroke-[2]" />
+            </button>
           </div>
         </div>
 
         {/* Card 2: Total Students (Sky Blue) */}
-        <div 
-          onClick={() => onRouteChange('institutes')}
-          className="bg-[#f0f9ff] border border-sky-100/80 rounded-2xl p-5 sm:p-6 transition-all duration-200 hover:shadow-sm cursor-pointer group flex items-center justify-between"
-        >
-          <div>
-            <span className="block text-xs font-semibold text-slate-500 mb-1">
-              Total Students
-            </span>
-            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading">
-              {stats.totalStudents ? `${(stats.totalStudents / 1000).toFixed(2)}K` : '15.00K'}
-            </span>
-            <div className="flex items-center gap-1.5 mt-2">
+        <div className="bg-[#f0f9ff] border border-sky-100/80 rounded-2xl p-5 sm:p-6 transition-all duration-200 hover:shadow-sm shadow-2xs flex justify-between gap-3">
+          <div className="flex flex-col justify-between flex-1 min-w-0">
+            <div>
+              <span className="block text-xs font-semibold text-slate-500 mb-1">
+                Total Students
+              </span>
+              <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading">
+                {stats.totalStudents ? `${(stats.totalStudents / 1000).toFixed(2)}K` : '15.00K'}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 mt-3 pt-1">
               <span className="text-[11px] font-semibold text-sky-700">
                 +12.4% MoM
               </span>
               <span className="text-slate-300">•</span>
-              <span className="text-[11px] text-sky-600/80 group-hover:underline flex items-center gap-0.5">
-                All Wings <ArrowUpRight className="w-3 h-3 inline" />
-              </span>
+              <button
+                type="button"
+                onClick={() => onRouteChange('institutes')}
+                className="text-[11px] font-semibold text-sky-600 hover:text-sky-800 hover:underline flex items-center gap-0.5 cursor-pointer"
+                title="View All Wings"
+              >
+                <span>All Wings</span>
+                <ArrowUpRight className="w-3 h-3 inline" />
+              </button>
             </div>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-white/70 text-sky-500 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
-            <GraduationCap className="w-6 h-6 stroke-[1.8]" />
+
+          <div className="flex flex-col justify-between items-end shrink-0 pl-1">
+            <div className="w-11 h-11 rounded-2xl bg-white/70 text-sky-500 flex items-center justify-center shadow-2xs">
+              <GraduationCap className="w-5 h-5 stroke-[1.8]" />
+            </div>
+            <button
+              type="button"
+              onClick={() => onRouteChange('institutes')}
+              className="w-8 h-8 rounded-full border border-sky-200/80 bg-white/90 hover:bg-white text-sky-600 hover:text-sky-800 flex items-center justify-center shadow-2xs hover:shadow-xs transition-all cursor-pointer active:scale-95 hover:scale-105 mt-2"
+              title="View Students Details"
+              aria-label="View Students Details"
+            >
+              <Eye className="w-4 h-4 stroke-[2]" />
+            </button>
           </div>
         </div>
 
         {/* Card 3: Educational Wings (Peach / Amber) */}
-        <div 
-          onClick={() => onRouteChange('platform-modules')}
-          className="bg-[#fff7ed] border border-amber-100/80 rounded-2xl p-5 sm:p-6 transition-all duration-200 hover:shadow-sm cursor-pointer group flex items-center justify-between"
-        >
-          <div>
-            <span className="block text-xs font-semibold text-slate-500 mb-1">
-              Educational Wings
-            </span>
-            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading">
-              3 Wings
-            </span>
-            <div className="flex items-center gap-1.5 mt-2">
+        <div className="bg-[#fff7ed] border border-amber-100/80 rounded-2xl p-5 sm:p-6 transition-all duration-200 hover:shadow-sm shadow-2xs flex justify-between gap-3">
+          <div className="flex flex-col justify-between flex-1 min-w-0">
+            <div>
+              <span className="block text-xs font-semibold text-slate-500 mb-1">
+                Educational Wings
+              </span>
+              <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading">
+                3 Wings
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 mt-3 pt-1">
               <span className="text-[11px] font-semibold text-amber-700">
                 School • College • Uni
               </span>
               <span className="text-slate-300">•</span>
-              <span className="text-[11px] text-amber-600/80 group-hover:underline flex items-center gap-0.5">
-                Matrix <ArrowUpRight className="w-3 h-3 inline" />
-              </span>
+              <button
+                type="button"
+                onClick={() => onRouteChange('platform-modules')}
+                className="text-[11px] font-semibold text-amber-600 hover:text-amber-800 hover:underline flex items-center gap-0.5 cursor-pointer"
+                title="View Wings Matrix"
+              >
+                <span>Matrix</span>
+                <ArrowUpRight className="w-3 h-3 inline" />
+              </button>
             </div>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-white/70 text-amber-500 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
-            <Sliders className="w-6 h-6 stroke-[1.8]" />
+
+          <div className="flex flex-col justify-between items-end shrink-0 pl-1">
+            <div className="w-11 h-11 rounded-2xl bg-white/70 text-amber-500 flex items-center justify-center shadow-2xs">
+              <Sliders className="w-5 h-5 stroke-[1.8]" />
+            </div>
+            <button
+              type="button"
+              onClick={() => onRouteChange('platform-modules')}
+              className="w-8 h-8 rounded-full border border-amber-200/80 bg-white/90 hover:bg-white text-amber-600 hover:text-amber-800 flex items-center justify-center shadow-2xs hover:shadow-xs transition-all cursor-pointer active:scale-95 hover:scale-105 mt-2"
+              title="View Wings Matrix Details"
+              aria-label="View Wings Matrix Details"
+            >
+              <Eye className="w-4 h-4 stroke-[2]" />
+            </button>
           </div>
         </div>
 
         {/* Card 4: Platform Earnings / Revenue (Mint Green) */}
-        <div 
-          onClick={() => onRouteChange('platform-billing')}
-          className="bg-[#f0fdf4] border border-emerald-100/80 rounded-2xl p-5 sm:p-6 transition-all duration-200 hover:shadow-sm cursor-pointer group flex items-center justify-between"
-        >
-          <div>
-            <span className="block text-xs font-semibold text-slate-500 mb-1">
-              Platform MRR
-            </span>
-            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading">
-              {stats.monthlyRevenue || '$19.3K'}
-            </span>
-            <div className="flex items-center gap-1.5 mt-2">
+        <div className="bg-[#f0fdf4] border border-emerald-100/80 rounded-2xl p-5 sm:p-6 transition-all duration-200 hover:shadow-sm shadow-2xs flex justify-between gap-3">
+          <div className="flex flex-col justify-between flex-1 min-w-0">
+            <div>
+              <span className="block text-xs font-semibold text-slate-500 mb-1">
+                Platform MRR
+              </span>
+              <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading">
+                {stats.monthlyRevenue || '$19.3K'}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 mt-3 pt-1">
               <span className="text-[11px] font-semibold text-emerald-700">
                 4 Tier Plans
               </span>
               <span className="text-slate-300">•</span>
-              <span className="text-[11px] text-emerald-600/80 group-hover:underline flex items-center gap-0.5">
-                Billing <ArrowUpRight className="w-3 h-3 inline" />
-              </span>
+              <button
+                type="button"
+                onClick={() => onRouteChange('platform-billing')}
+                className="text-[11px] font-semibold text-emerald-600 hover:text-emerald-800 hover:underline flex items-center gap-0.5 cursor-pointer"
+                title="View Billing Ledger"
+              >
+                <span>Billing</span>
+                <ArrowUpRight className="w-3 h-3 inline" />
+              </button>
             </div>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-white/70 text-emerald-500 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
-            <CreditCard className="w-6 h-6 stroke-[1.8]" />
+
+          <div className="flex flex-col justify-between items-end shrink-0 pl-1">
+            <div className="w-11 h-11 rounded-2xl bg-white/70 text-emerald-500 flex items-center justify-center shadow-2xs">
+              <CreditCard className="w-5 h-5 stroke-[1.8]" />
+            </div>
+            <button
+              type="button"
+              onClick={() => onRouteChange('platform-billing')}
+              className="w-8 h-8 rounded-full border border-emerald-200/80 bg-white/90 hover:bg-white text-emerald-600 hover:text-emerald-800 flex items-center justify-center shadow-2xs hover:shadow-xs transition-all cursor-pointer active:scale-95 hover:scale-105 mt-2"
+              title="View Platform Billing Details"
+              aria-label="View Platform Billing Details"
+            >
+              <Eye className="w-4 h-4 stroke-[2]" />
+            </button>
           </div>
         </div>
 
