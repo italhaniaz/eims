@@ -58,27 +58,58 @@ export const LandingPage = ({ onNavigateToLogin }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [showScrollTop, setShowScrollTop] = useState(false)
 
-  // Localized Magnetic Cursor Tracker for Pre-Footer Action Burst Sticker
+  // Bottom Zone & Pointer-Sticking Action Burst Sticker
+  const bottomWrapperRef = useRef(null)
   const ctaSectionRef = useRef(null)
-  const [magneticOffset, setMagneticOffset] = useState({ x: 0, y: 0 })
+  const footerRef = useRef(null)
+  const [stickerPos, setStickerPos] = useState({ x: 1100, y: 280 })
+  const [isPointerSticking, setIsPointerSticking] = useState(false)
 
-  const handleCtaMouseMove = (e) => {
-    if (!ctaSectionRef.current) return
-    const rect = ctaSectionRef.current.getBoundingClientRect()
-    // Anchor position near the right edge of the banner
-    const anchorX = rect.left + rect.width - 140
-    const anchorY = rect.top + rect.height - 30
-    const deltaX = (e.clientX - anchorX) * 0.16
-    const deltaY = (e.clientY - anchorY) * 0.16
-    const maxDist = 40
-    setMagneticOffset({
-      x: Math.max(-maxDist, Math.min(maxDist, deltaX)),
-      y: Math.max(-maxDist, Math.min(maxDist, deltaY))
+  // Keep dock position responsive on resize and initial render
+  useEffect(() => {
+    const updateDock = () => {
+      if (!isPointerSticking && bottomWrapperRef.current) {
+        const rect = bottomWrapperRef.current.getBoundingClientRect()
+        const ctaHeight = ctaSectionRef.current ? ctaSectionRef.current.offsetHeight : 320
+        setStickerPos({
+          x: Math.max(160, rect.width - 150),
+          y: ctaHeight - 15
+        })
+      }
+    }
+    updateDock()
+    window.addEventListener('resize', updateDock)
+    return () => window.removeEventListener('resize', updateDock)
+  }, [isPointerSticking])
+
+  // Mouse enters or moves over footer: sticker attaches & sticks directly to the pointer
+  const handleFooterMouseMove = (e) => {
+    if (!bottomWrapperRef.current) return
+    const rect = bottomWrapperRef.current.getBoundingClientRect()
+    setIsPointerSticking(true)
+    setStickerPos({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
     })
   }
 
-  const handleCtaMouseLeave = () => {
-    setMagneticOffset({ x: 0, y: 0 })
+  // Mouse leaves footer: sticker releases and smoothly returns to its docked resting position
+  const handleFooterMouseLeave = () => {
+    setIsPointerSticking(false)
+    if (bottomWrapperRef.current) {
+      const rect = bottomWrapperRef.current.getBoundingClientRect()
+      const ctaHeight = ctaSectionRef.current ? ctaSectionRef.current.offsetHeight : 320
+      setStickerPos({
+        x: Math.max(160, rect.width - 150),
+        y: ctaHeight - 15
+      })
+    }
+  }
+
+  // Click handler for footer when sticker is sticking (leaves buttons/links clickable)
+  const handleFooterClick = (e) => {
+    if (e.target.closest('button, a, input')) return
+    setIsTrialModalOpen(true)
   }
 
   // Auto-close mobile drawer on desktop resize
@@ -1333,118 +1364,93 @@ export const LandingPage = ({ onNavigateToLogin }) => {
         </div>
       </section>
 
-      {/* 9. BOTTOM CTA BANNER (FEATURING MAGNETIC ACTION BURST STICKER) */}
-      <section
-        ref={ctaSectionRef}
-        onMouseMove={handleCtaMouseMove}
-        onMouseLeave={handleCtaMouseLeave}
-        className="py-16 sm:py-20 bg-gradient-to-r from-purple-700 via-purple-600 to-indigo-700 text-white relative overflow-visible"
-      >
-        <div className="max-w-5xl mx-auto px-4 text-center relative z-10">
-          <span className="text-[11px] font-extrabold uppercase tracking-widest bg-white/15 px-3 py-1 rounded-full text-purple-100 inline-block mb-4">
-            Transform Your Campus Today
-          </span>
-          <h2 className="text-2xl sm:text-4xl font-extrabold font-heading tracking-tight">
-            Ready to Streamline Your Educational Institution?
-          </h2>
-          <p className="mt-3 text-xs sm:text-sm text-purple-100 max-w-xl mx-auto">
-            Join hundreds of forward-thinking schools, colleges, and university faculties. Experience modern academic management in minutes.
-          </p>
-          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <button
-              onClick={() => setIsTrialModalOpen(true)}
-              className="w-full sm:w-auto px-6 py-3 rounded-xl bg-white text-purple-700 hover:bg-purple-50 font-bold text-xs sm:text-sm shadow-md transition-all hover:scale-105 cursor-pointer flex items-center justify-center gap-2"
-            >
-              <Sparkles className="w-4 h-4 text-purple-600" />
-              <span>Launch 14-Day Free Trial (₨ 0)</span>
-            </button>
-            <button
-              onClick={() => onNavigateToLogin('signin')}
-              className="w-full sm:w-auto px-5 py-3 rounded-xl bg-purple-800/80 hover:bg-purple-800 text-white border border-purple-400/40 font-semibold text-xs sm:text-sm transition-all cursor-pointer flex items-center justify-center gap-2"
-            >
-              <Lock className="w-3.5 h-3.5" />
-              <span>Sign In to Existing Portal</span>
-            </button>
-          </div>
+      {/* 9 & 10. BOTTOM WRAPPER: PRE-FOOTER CTA + DARK FOOTER WITH POINTER-STICKING STICKER */}
+      <div ref={bottomWrapperRef} className="relative overflow-visible">
 
-          {/* Mobile Embedded Sticker (< sm) */}
-          <div className="sm:hidden mt-8 flex justify-center">
-            <button
-              type="button"
-              onClick={() => setIsTrialModalOpen(true)}
-              className="group relative w-32 h-32 flex items-center justify-center cursor-pointer select-none active:scale-95"
-              title="Claim 14-Day Free Evaluation (₨ 0)"
-            >
-              <svg
-                viewBox="0 0 120 120"
-                className="w-full h-full text-purple-600 drop-shadow-[0_12px_24px_rgba(88,28,135,0.7)] animate-[spin_22s_linear_infinite]"
-              >
-                <polygon points={STARBURST_POINTS} fill="currentColor" />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-white pointer-events-none px-2">
-                <span className="text-[10px] font-black tracking-widest uppercase font-heading text-purple-200">
-                  GET FREE
-                </span>
-                <span className="text-base font-black tracking-tight uppercase font-heading text-white">
-                  TRIAL
-                </span>
-                <span className="text-[8px] font-bold text-emerald-300 mt-1 uppercase bg-purple-950/80 px-2 py-0.5 rounded-full border border-purple-400/40">
-                  ₨ 0 · 14-DAYS
-                </span>
-              </div>
-            </button>
-          </div>
-        </div>
-
-        {/* Desktop / Tablet Magnetic Floating Action Burst Sticker (Overlapping CTA & Dark Footer) */}
-        <div
-          style={{
-            transform: `translate3d(${magneticOffset.x}px, ${magneticOffset.y}px, 0)`
-          }}
-          className="hidden sm:block absolute right-8 sm:right-14 lg:right-20 -bottom-14 sm:-bottom-18 z-30 transition-transform duration-200 ease-out"
+        {/* 9. BOTTOM CTA BANNER */}
+        <section
+          ref={ctaSectionRef}
+          className="py-16 sm:py-20 bg-gradient-to-r from-purple-700 via-purple-600 to-indigo-700 text-white relative overflow-visible"
         >
-          <button
-            type="button"
-            onClick={() => setIsTrialModalOpen(true)}
-            className="group relative w-32 h-32 sm:w-36 sm:h-36 md:w-40 md:h-40 flex items-center justify-center cursor-pointer select-none transition-all duration-300 hover:scale-110 active:scale-95 focus:outline-none"
-            title="Click to Activate 14-Day Free Evaluation (₨ 0)"
-            aria-label="Start 14-Day Free Trial"
-          >
-            {/* Ambient Purple Radial Glow */}
-            <div className="absolute inset-2 rounded-full bg-purple-600/60 blur-xl group-hover:bg-purple-500/80 transition-colors pointer-events-none"></div>
-
-            {/* Rotating Serrated Starburst Badge (28-Point Jagged Polygon) */}
-            <svg
-              viewBox="0 0 120 120"
-              className="w-full h-full text-purple-600 group-hover:text-purple-500 drop-shadow-[0_14px_28px_rgba(88,28,135,0.7)] group-hover:drop-shadow-[0_18px_38px_rgba(126,34,206,0.9)] transition-all duration-300 animate-[spin_24s_linear_infinite]"
-            >
-              <polygon points={STARBURST_POINTS} fill="currentColor" />
-            </svg>
-
-            {/* Center Bold Typography */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-white pointer-events-none px-3">
-              <span className="text-[10px] sm:text-[11px] font-black tracking-widest uppercase font-heading leading-tight drop-shadow-sm text-purple-200 group-hover:text-white">
-                GET FREE
-              </span>
-              <span className="text-sm sm:text-base md:text-lg font-black tracking-tight uppercase font-heading leading-none text-white drop-shadow-md">
-                TRIAL
-              </span>
-              <span className="text-[8px] sm:text-[9px] font-bold tracking-wider text-emerald-300 mt-1 uppercase bg-purple-950/90 px-2 py-0.5 rounded-full border border-purple-400/40 shadow-xs">
-                ₨ 0 · 14-DAYS
-              </span>
+          <div className="max-w-5xl mx-auto px-4 text-center relative z-10">
+            <span className="text-[11px] font-extrabold uppercase tracking-widest bg-white/15 px-3 py-1 rounded-full text-purple-100 inline-block mb-4">
+              Transform Your Campus Today
+            </span>
+            <h2 className="text-2xl sm:text-4xl font-extrabold font-heading tracking-tight">
+              Ready to Streamline Your Educational Institution?
+            </h2>
+            <p className="mt-3 text-xs sm:text-sm text-purple-100 max-w-xl mx-auto">
+              Join hundreds of forward-thinking schools, colleges, and university faculties. Experience modern academic management in minutes.
+            </p>
+            <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <button
+                onClick={() => setIsTrialModalOpen(true)}
+                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-white text-purple-700 hover:bg-purple-50 font-bold text-xs sm:text-sm shadow-md transition-all hover:scale-105 cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Sparkles className="w-4 h-4 text-purple-600" />
+                <span>Launch 14-Day Free Trial (₨ 0)</span>
+              </button>
+              <button
+                onClick={() => onNavigateToLogin('signin')}
+                className="w-full sm:w-auto px-5 py-3 rounded-xl bg-purple-800/80 hover:bg-purple-800 text-white border border-purple-400/40 font-semibold text-xs sm:text-sm transition-all cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Lock className="w-3.5 h-3.5" />
+                <span>Sign In to Existing Portal</span>
+              </button>
             </div>
 
-            {/* Pulsing Live Beacon Indicator */}
-            <span className="absolute top-2 right-2 flex h-3.5 w-3.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border border-white"></span>
-            </span>
-          </button>
-        </div>
-      </section>
+            {/* Mobile Embedded Sticker (< sm) */}
+            <div className="sm:hidden mt-8 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setIsTrialModalOpen(true)}
+                className="group relative w-32 h-32 flex items-center justify-center cursor-pointer select-none active:scale-95"
+                title="Claim 14-Day Free Evaluation (₨ 0)"
+              >
+                <svg
+                  viewBox="0 0 120 120"
+                  className="w-full h-full drop-shadow-[0_12px_24px_rgba(88,28,135,0.7)] animate-[spin_22s_linear_infinite]"
+                >
+                  <defs>
+                    <linearGradient id="mobStickerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#9333EA" />
+                      <stop offset="50%" stopColor="#7E22CE" />
+                      <stop offset="100%" stopColor="#6B21A8" />
+                    </linearGradient>
+                  </defs>
+                  <polygon
+                    points={STARBURST_POINTS}
+                    fill="url(#mobStickerGrad)"
+                    stroke="rgba(255,255,255,0.4)"
+                    strokeWidth="1.2"
+                  />
+                  <circle cx="60" cy="60" r="42" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="1" strokeDasharray="3 3" />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-white pointer-events-none px-2">
+                  <span className="text-[10px] font-black tracking-widest uppercase font-heading text-purple-200">
+                    GET FREE
+                  </span>
+                  <span className="text-base font-black tracking-tight uppercase font-heading text-white">
+                    TRIAL
+                  </span>
+                  <span className="text-[8px] font-bold text-emerald-300 mt-1 uppercase bg-purple-950/80 px-2 py-0.5 rounded-full border border-purple-400/40">
+                    ₨ 0 · 14-DAYS
+                  </span>
+                </div>
+              </button>
+            </div>
+          </div>
+        </section>
 
-      {/* 10. CLEAN MINIMAL FOOTER */}
-      <footer className="bg-slate-900 text-slate-400 text-xs py-12 border-t border-slate-800">
+        {/* 10. CLEAN MINIMAL FOOTER (INTERACTIVE TRIGGER ZONE FOR POINTER STICKING) */}
+        <footer
+          ref={footerRef}
+          onMouseMove={handleFooterMouseMove}
+          onMouseEnter={handleFooterMouseMove}
+          onMouseLeave={handleFooterMouseLeave}
+          onClick={handleFooterClick}
+          className="bg-slate-900 text-slate-400 text-xs py-12 border-t border-slate-800 relative cursor-default"
+        >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 pb-10 border-b border-slate-800">
             
@@ -1530,6 +1536,89 @@ export const LandingPage = ({ onNavigateToLogin }) => {
           </div>
         </div>
       </footer>
+
+      {/* Desktop / Tablet Pointer-Sticking Action Burst Sticker */}
+      <div
+        onClick={() => setIsTrialModalOpen(true)}
+        style={{
+          transform: `translate3d(${stickerPos.x}px, ${stickerPos.y}px, 0) translate(-50%, -50%) scale(${isPointerSticking ? 1.08 : 1})`,
+          transition: isPointerSticking
+            ? 'transform 0.08s ease-out, scale 0.25s ease-out'
+            : 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), scale 0.35s ease-out'
+        }}
+        className={`hidden sm:block absolute left-0 top-0 z-30 select-none ${
+          isPointerSticking ? 'pointer-events-none' : 'pointer-events-auto cursor-pointer'
+        }`}
+        title="Click to Activate 14-Day Free Evaluation (₨ 0)"
+        aria-label="Start 14-Day Free Trial"
+      >
+        <div className="relative w-36 h-36 md:w-40 md:h-40 flex items-center justify-center group">
+          {/* Ambient Purple Radial Glow */}
+          <div
+            className={`absolute inset-2 rounded-full blur-xl transition-all duration-300 pointer-events-none ${
+              isPointerSticking
+                ? 'bg-purple-500/80 scale-125'
+                : 'bg-purple-600/50 group-hover:bg-purple-500/80'
+            }`}
+          />
+
+          {/* Rotating Serrated Starburst Badge (28-Point Jagged Polygon with Gradient & Stamp Ring) */}
+          <svg
+            viewBox="0 0 120 120"
+            className="w-full h-full drop-shadow-[0_16px_36px_rgba(88,28,135,0.75)] animate-[spin_24s_linear_infinite]"
+          >
+            <defs>
+              <linearGradient id="stickerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#9333EA" />
+                <stop offset="50%" stopColor="#7E22CE" />
+                <stop offset="100%" stopColor="#6B21A8" />
+              </linearGradient>
+            </defs>
+
+            {/* Outer Jagged Starburst Teeth */}
+            <polygon
+              points={STARBURST_POINTS}
+              fill="url(#stickerGrad)"
+              stroke="rgba(255, 255, 255, 0.45)"
+              strokeWidth="1.2"
+              strokeLinejoin="round"
+            />
+
+            {/* Inner Stamp Dashed Ring */}
+            <circle
+              cx="60"
+              cy="60"
+              r="42"
+              fill="none"
+              stroke="rgba(255, 255, 255, 0.28)"
+              strokeWidth="1.2"
+              strokeDasharray="3 3"
+            />
+          </svg>
+
+          {/* Center Bold Typography (Crisp, High-Contrast & Beautiful) */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-white pointer-events-none px-3">
+            <span className="text-[11px] font-black tracking-widest uppercase font-heading leading-tight drop-shadow-sm text-purple-200">
+              GET FREE
+            </span>
+            <span className="text-base sm:text-lg font-black tracking-tight uppercase font-heading leading-none text-white drop-shadow-md mt-0.5">
+              TRIAL
+            </span>
+            <div className="flex items-center gap-1 mt-1.5 bg-black/40 px-2 py-0.5 rounded-full border border-purple-300/30 backdrop-blur-xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-[9px] font-bold text-emerald-300 tracking-wider">₨ 0 EVALUATION</span>
+            </div>
+          </div>
+
+          {/* Pulsing Live Beacon Indicator */}
+          <span className="absolute top-2 right-2 flex h-3.5 w-3.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border border-white" />
+          </span>
+        </div>
+      </div>
+
+    </div>{/* end bottomWrapperRef */}
 
       {/* 11. START 14-DAY FREE TRIAL MODAL */}
       {isTrialModalOpen && (
