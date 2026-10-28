@@ -73,9 +73,9 @@ export const NoticeBroadcasterView = () => {
 
         <button
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs sm:text-sm font-semibold shadow-sm transition-all cursor-pointer self-start xl:self-auto active:scale-95 whitespace-nowrap"
+          className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs sm:text-sm font-semibold shadow-sm transition-all cursor-pointer self-start xl:self-auto active:scale-95 whitespace-nowrap"
         >
-          <Send className="w-4 h-4" />
+          <Send className="w-4 h-4 shrink-0" />
           <span>Broadcast New Circular</span>
         </button>
       </div>

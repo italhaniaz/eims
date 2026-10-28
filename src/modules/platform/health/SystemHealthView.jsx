@@ -131,9 +131,9 @@ const SystemHealthView = () => {
 
         <button
           onClick={loadHealthData}
-          className="flex items-center gap-2 px-4.5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs sm:text-sm shadow-xs transition-colors cursor-pointer self-start xl:self-auto active:scale-95 whitespace-nowrap"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs sm:text-sm shadow-xs transition-colors cursor-pointer self-start xl:self-auto active:scale-95 whitespace-nowrap"
         >
-          <RefreshCw className="w-4 h-4" />
+          <RefreshCw className="w-4 h-4 shrink-0" />
           <span>Refresh Telemetry</span>
         </button>
       </div>

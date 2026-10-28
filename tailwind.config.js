@@ -23,6 +23,9 @@ export default {
         }
       },
       spacing: {
+        '0.2': '0.05rem',
+        '4.5': '1.125rem', // 18px
+        '5.5': '1.375rem', // 22px
         18: '4.5rem',
       },
       fontFamily: {

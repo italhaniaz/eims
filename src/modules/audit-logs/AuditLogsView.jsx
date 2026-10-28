@@ -125,18 +125,18 @@ export const AuditLogsView = () => {
               refreshData()
               toast.info('Audit trail refreshed!')
             }}
-            className="inline-flex items-center gap-2 px-3.5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 rounded-xl text-xs font-semibold shadow-2xs transition-all cursor-pointer whitespace-nowrap shrink-0"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 rounded-xl text-xs font-semibold shadow-2xs transition-all cursor-pointer whitespace-nowrap shrink-0"
             title="Refresh stream"
           >
-            <RefreshCw className="w-3.5 h-3.5 text-purple-600" />
+            <RefreshCw className="w-3.5 h-3.5 text-purple-600 shrink-0" />
             <span>Refresh</span>
           </button>
 
           <button
             onClick={handleExportLogs}
-            className="inline-flex items-center gap-2 px-4.5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs sm:text-sm font-semibold shadow-xs transition-all cursor-pointer active:scale-95 whitespace-nowrap shrink-0"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs sm:text-sm font-semibold shadow-xs transition-all cursor-pointer active:scale-95 whitespace-nowrap shrink-0"
           >
-            <Download className="w-3.5 h-3.5" />
+            <Download className="w-4 h-4 shrink-0" />
             <span>Export Audit CSV</span>
           </button>
         </div>
