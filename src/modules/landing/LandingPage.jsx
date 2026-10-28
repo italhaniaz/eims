@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   GraduationCap,
   Sparkles,
@@ -28,6 +28,23 @@ import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { getStoredData, saveStoredData } from '../../services/dataService'
 
+// 28-point serrated starburst sticker geometry (Awwwards-style Action Badge)
+const STARBURST_POINTS = (() => {
+  const points = []
+  const numPoints = 28
+  const outerR = 58
+  const innerR = 49
+  const center = 60
+  for (let i = 0; i < numPoints * 2; i++) {
+    const r = i % 2 === 0 ? outerR : innerR
+    const angle = (i * Math.PI) / numPoints
+    const x = (center + r * Math.cos(angle)).toFixed(2)
+    const y = (center + r * Math.sin(angle)).toFixed(2)
+    points.push(`${x},${y}`)
+  }
+  return points.join(' ')
+})()
+
 export const LandingPage = ({ onNavigateToLogin }) => {
   const { login } = useAuth()
   const { showToast } = useToast()
@@ -40,6 +57,29 @@ export const LandingPage = ({ onNavigateToLogin }) => {
   const [expandedFaq, setExpandedFaq] = useState(0)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [showScrollTop, setShowScrollTop] = useState(false)
+
+  // Localized Magnetic Cursor Tracker for Pre-Footer Action Burst Sticker
+  const ctaSectionRef = useRef(null)
+  const [magneticOffset, setMagneticOffset] = useState({ x: 0, y: 0 })
+
+  const handleCtaMouseMove = (e) => {
+    if (!ctaSectionRef.current) return
+    const rect = ctaSectionRef.current.getBoundingClientRect()
+    // Anchor position near the right edge of the banner
+    const anchorX = rect.left + rect.width - 140
+    const anchorY = rect.top + rect.height - 30
+    const deltaX = (e.clientX - anchorX) * 0.16
+    const deltaY = (e.clientY - anchorY) * 0.16
+    const maxDist = 40
+    setMagneticOffset({
+      x: Math.max(-maxDist, Math.min(maxDist, deltaX)),
+      y: Math.max(-maxDist, Math.min(maxDist, deltaY))
+    })
+  }
+
+  const handleCtaMouseLeave = () => {
+    setMagneticOffset({ x: 0, y: 0 })
+  }
 
   // Auto-close mobile drawer on desktop resize
   useEffect(() => {
@@ -1293,8 +1333,13 @@ export const LandingPage = ({ onNavigateToLogin }) => {
         </div>
       </section>
 
-      {/* 9. BOTTOM CTA BANNER */}
-      <section className="py-16 bg-gradient-to-r from-purple-700 via-purple-600 to-indigo-700 text-white relative overflow-hidden">
+      {/* 9. BOTTOM CTA BANNER (FEATURING MAGNETIC ACTION BURST STICKER) */}
+      <section
+        ref={ctaSectionRef}
+        onMouseMove={handleCtaMouseMove}
+        onMouseLeave={handleCtaMouseLeave}
+        className="py-16 sm:py-20 bg-gradient-to-r from-purple-700 via-purple-600 to-indigo-700 text-white relative overflow-visible"
+      >
         <div className="max-w-5xl mx-auto px-4 text-center relative z-10">
           <span className="text-[11px] font-extrabold uppercase tracking-widest bg-white/15 px-3 py-1 rounded-full text-purple-100 inline-block mb-4">
             Transform Your Campus Today
@@ -1321,6 +1366,80 @@ export const LandingPage = ({ onNavigateToLogin }) => {
               <span>Sign In to Existing Portal</span>
             </button>
           </div>
+
+          {/* Mobile Embedded Sticker (< sm) */}
+          <div className="sm:hidden mt-8 flex justify-center">
+            <button
+              type="button"
+              onClick={() => setIsTrialModalOpen(true)}
+              className="group relative w-32 h-32 flex items-center justify-center cursor-pointer select-none active:scale-95"
+              title="Claim 14-Day Free Evaluation (₨ 0)"
+            >
+              <svg
+                viewBox="0 0 120 120"
+                className="w-full h-full text-purple-600 drop-shadow-[0_12px_24px_rgba(88,28,135,0.7)] animate-[spin_22s_linear_infinite]"
+              >
+                <polygon points={STARBURST_POINTS} fill="currentColor" />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-white pointer-events-none px-2">
+                <span className="text-[10px] font-black tracking-widest uppercase font-heading text-purple-200">
+                  GET FREE
+                </span>
+                <span className="text-base font-black tracking-tight uppercase font-heading text-white">
+                  TRIAL
+                </span>
+                <span className="text-[8px] font-bold text-emerald-300 mt-1 uppercase bg-purple-950/80 px-2 py-0.5 rounded-full border border-purple-400/40">
+                  ₨ 0 · 14-DAYS
+                </span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* Desktop / Tablet Magnetic Floating Action Burst Sticker (Overlapping CTA & Dark Footer) */}
+        <div
+          style={{
+            transform: `translate3d(${magneticOffset.x}px, ${magneticOffset.y}px, 0)`
+          }}
+          className="hidden sm:block absolute right-8 sm:right-14 lg:right-20 -bottom-14 sm:-bottom-18 z-30 transition-transform duration-200 ease-out"
+        >
+          <button
+            type="button"
+            onClick={() => setIsTrialModalOpen(true)}
+            className="group relative w-32 h-32 sm:w-36 sm:h-36 md:w-40 md:h-40 flex items-center justify-center cursor-pointer select-none transition-all duration-300 hover:scale-110 active:scale-95 focus:outline-none"
+            title="Click to Activate 14-Day Free Evaluation (₨ 0)"
+            aria-label="Start 14-Day Free Trial"
+          >
+            {/* Ambient Purple Radial Glow */}
+            <div className="absolute inset-2 rounded-full bg-purple-600/60 blur-xl group-hover:bg-purple-500/80 transition-colors pointer-events-none"></div>
+
+            {/* Rotating Serrated Starburst Badge (28-Point Jagged Polygon) */}
+            <svg
+              viewBox="0 0 120 120"
+              className="w-full h-full text-purple-600 group-hover:text-purple-500 drop-shadow-[0_14px_28px_rgba(88,28,135,0.7)] group-hover:drop-shadow-[0_18px_38px_rgba(126,34,206,0.9)] transition-all duration-300 animate-[spin_24s_linear_infinite]"
+            >
+              <polygon points={STARBURST_POINTS} fill="currentColor" />
+            </svg>
+
+            {/* Center Bold Typography */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-white pointer-events-none px-3">
+              <span className="text-[10px] sm:text-[11px] font-black tracking-widest uppercase font-heading leading-tight drop-shadow-sm text-purple-200 group-hover:text-white">
+                GET FREE
+              </span>
+              <span className="text-sm sm:text-base md:text-lg font-black tracking-tight uppercase font-heading leading-none text-white drop-shadow-md">
+                TRIAL
+              </span>
+              <span className="text-[8px] sm:text-[9px] font-bold tracking-wider text-emerald-300 mt-1 uppercase bg-purple-950/90 px-2 py-0.5 rounded-full border border-purple-400/40 shadow-xs">
+                ₨ 0 · 14-DAYS
+              </span>
+            </div>
+
+            {/* Pulsing Live Beacon Indicator */}
+            <span className="absolute top-2 right-2 flex h-3.5 w-3.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border border-white"></span>
+            </span>
+          </button>
         </div>
       </section>
 
