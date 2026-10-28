@@ -385,7 +385,7 @@ const SubscriptionsBillingView = () => {
 
         <button
           onClick={handleOpenCreatePlan}
-          className="flex items-center gap-2 px-4.5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs sm:text-sm shadow-xs transition-colors cursor-pointer self-start sm:self-auto active:scale-95"
+          className="inline-flex items-center gap-2 px-4.5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs sm:text-sm shadow-xs transition-colors cursor-pointer self-start sm:self-auto active:scale-95 whitespace-nowrap shrink-0"
         >
           <Plus className="w-4 h-4" />
           <span>Create New Plan</span>

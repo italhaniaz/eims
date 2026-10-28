@@ -154,26 +154,26 @@ const CrossInstituteAnalyticsView = () => {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap shrink-0">
           <button
             onClick={handleExportCSV}
-            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200/80 text-slate-700 font-semibold text-xs sm:text-sm shadow-2xs transition-colors cursor-pointer"
+            className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200/80 text-slate-700 font-semibold text-xs sm:text-sm shadow-2xs transition-colors cursor-pointer whitespace-nowrap shrink-0"
           >
             <Download className="w-4 h-4 text-slate-500" />
-            <span>Export CSV Snapshot</span>
+            <span>Export CSV</span>
           </button>
 
           <button
             onClick={() => setIsPrintModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs sm:text-sm shadow-xs transition-colors cursor-pointer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs sm:text-sm shadow-xs transition-colors cursor-pointer whitespace-nowrap shrink-0"
           >
             <Printer className="w-4 h-4" />
-            <span>Print Executive Briefing</span>
+            <span>Print Briefing</span>
           </button>
 
           <button
             onClick={() => setIsScheduleModalOpen(true)}
-            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-[#f5eeff] hover:bg-[#ede0fe] border border-purple-200/50 text-purple-700 font-semibold text-xs sm:text-sm transition-colors cursor-pointer"
+            className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-[#f5eeff] hover:bg-[#ede0fe] border border-purple-200/50 text-purple-700 font-semibold text-xs sm:text-sm transition-colors cursor-pointer whitespace-nowrap shrink-0"
           >
             <Clock className="w-4 h-4 text-purple-600" />
             <span>Schedule Briefing</span>

@@ -154,7 +154,7 @@ export const SecurityCenterView = () => {
 
         <button
           onClick={loadSecurityData}
-          className="flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 rounded-xl font-semibold text-xs sm:text-sm shadow-2xs transition-all cursor-pointer self-start sm:self-auto active:scale-95"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 rounded-xl font-semibold text-xs sm:text-sm shadow-2xs transition-all cursor-pointer self-start sm:self-auto active:scale-95 whitespace-nowrap shrink-0"
         >
           <RefreshCw className="w-4 h-4 text-purple-600" />
           <span>Refresh Telemetry</span>

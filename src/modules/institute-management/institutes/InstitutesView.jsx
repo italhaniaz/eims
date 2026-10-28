@@ -575,31 +575,32 @@ export const InstitutesView = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap shrink-0">
           <button
             onClick={exportInstitutesCSV}
-            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold border border-slate-200/80 shadow-2xs transition-all cursor-pointer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs sm:text-sm font-semibold border border-slate-200/80 shadow-2xs transition-all cursor-pointer whitespace-nowrap shrink-0"
             title="Export institutes to CSV"
           >
-            <Download className="w-3.5 h-3.5" />
+            <Download className="w-4 h-4 text-slate-500" />
             <span>Export CSV</span>
           </button>
 
           <button
             onClick={() => setIsBackupModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-[#f5eeff] hover:bg-[#ede0fe] text-purple-700 border border-purple-200/60 rounded-xl text-xs font-semibold shadow-2xs transition-all cursor-pointer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#f5eeff] hover:bg-[#ede0fe] text-purple-700 border border-purple-200/60 rounded-xl text-xs sm:text-sm font-semibold shadow-2xs transition-all cursor-pointer whitespace-nowrap shrink-0"
             title="One-Click Campus Snapshot & Disaster Recovery"
           >
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-200" />
+            <ShieldCheck className="w-4 h-4 text-purple-600" />
             <span>Disaster Recovery</span>
           </button>
 
           <button
             onClick={openOnboardingWizard}
-            className="flex items-center gap-2 px-4.5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-semibold shadow-xs transition-all cursor-pointer active:scale-95"
+            className="inline-flex items-center gap-2 px-4.5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs sm:text-sm font-semibold shadow-xs transition-all cursor-pointer active:scale-95 whitespace-nowrap shrink-0"
+            title="Launch Campus Onboarding Wizard"
           >
             <Plus className="w-4 h-4" />
-            <span>Onboard New Institute (Wizard)</span>
+            <span>Onboard New Campus</span>
           </button>
         </div>
       </div>

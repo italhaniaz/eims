@@ -218,7 +218,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
         {activeTab === 'all' && (
           <button
             onClick={openAddModal}
-            className="flex items-center gap-2 px-4.5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs sm:text-sm font-semibold shadow-xs transition-all cursor-pointer self-start sm:self-auto active:scale-95"
+            className="inline-flex items-center gap-2 px-4.5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs sm:text-sm font-semibold shadow-xs transition-all cursor-pointer self-start sm:self-auto active:scale-95 whitespace-nowrap shrink-0"
           >
             <Plus className="w-4 h-4" />
             <span>Add New User</span>
