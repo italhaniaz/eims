@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { 
   Users, 
   Building2, 
@@ -26,6 +26,9 @@ import {
   CreditCard,
   MoreVertical,
   ChevronRight,
+  ChevronDown,
+  Filter,
+  Layers,
   Activity,
   Award
 } from 'lucide-react'
@@ -35,12 +38,14 @@ import { AnalyticsService } from '../../services/analyticsService'
 
 export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
   const { 
-    stats, 
+    stats = {}, 
     recentActivity = [], 
     addItem, 
     institutes = [],
     notices = [],
-    sendCommunicationBlast
+    sendCommunicationBlast,
+    activeWing,
+    setActiveWing
   } = useAppData()
   
   const [isNoticeDismissed, setIsNoticeDismissed] = useState(false)
@@ -50,7 +55,255 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
   const [isUserModalOpen, setIsUserModalOpen] = useState(false)
   const [isInstituteModalOpen, setIsInstituteModalOpen] = useState(false)
   const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false)
-  
+
+  // Educational Tier Filter State (School, College, University, Custom)
+  const [selectedTierFilter, setSelectedTierFilter] = useState(() => {
+    if (activeWing === 'school') return 'school'
+    if (activeWing === 'college') return 'college'
+    if (activeWing === 'undergraduate') return 'university'
+    return 'all'
+  })
+  const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false)
+  const filterDropdownRef = useRef(null)
+
+  // Close filter dropdown on outside click
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (filterDropdownRef.current && !filterDropdownRef.current.contains(e.target)) {
+        setIsFilterDropdownOpen(false)
+      }
+    }
+    if (isFilterDropdownOpen) {
+      document.addEventListener('mousedown', handleOutsideClick)
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick)
+    }
+  }, [isFilterDropdownOpen])
+
+  // Filter options definition
+  const tierFilterOptions = [
+    { 
+      id: 'all', 
+      label: 'All Campuses', 
+      shortLabel: 'All Tiers',
+      subtitle: 'All educational tiers & wings',
+      badge: 'All', 
+      icon: Building2 
+    },
+    { 
+      id: 'school', 
+      label: 'School Wing', 
+      shortLabel: 'Schools',
+      subtitle: 'Primary, Middle & Secondary Campuses',
+      badge: 'School', 
+      icon: School 
+    },
+    { 
+      id: 'college', 
+      label: 'College Wing', 
+      shortLabel: 'Colleges',
+      subtitle: 'Intermediate & Higher Secondary Campuses',
+      badge: 'College', 
+      icon: GraduationCap 
+    },
+    { 
+      id: 'university', 
+      label: 'University Wing', 
+      shortLabel: 'Universities',
+      subtitle: 'Higher Ed, BS Degrees & Undergrad Campuses',
+      badge: 'University', 
+      icon: Award 
+    },
+    { 
+      id: 'custom', 
+      label: 'Custom Hybrid', 
+      shortLabel: 'Custom',
+      subtitle: 'Multi-Wing & Custom Tier Campuses',
+      badge: 'Custom', 
+      icon: Sparkles 
+    }
+  ]
+
+  // Robust matching helper
+  const matchesTierFilter = (inst, filterId) => {
+    if (!filterId || filterId === 'all') return true
+    if (!inst) return false
+
+    const type = String(inst.type || '').toLowerCase().trim()
+    const planType = String(inst.planType || '').toLowerCase().trim()
+    const planTier = String(inst.planTier || '').toLowerCase().trim()
+    const tiers = Array.isArray(inst.enabledTiers) ? inst.enabledTiers.map(t => String(t).toLowerCase()) : []
+    const name = String(inst.name || '').toLowerCase()
+
+    if (filterId === 'school') {
+      return (
+        type === 'school' ||
+        planType === 'school' ||
+        planTier.includes('school') ||
+        (tiers.includes('school') && type !== 'custom' && planType !== 'custom') ||
+        (name.includes('school') && type !== 'college' && type !== 'university' && type !== 'custom')
+      )
+    }
+
+    if (filterId === 'college') {
+      return (
+        type === 'college' ||
+        planType === 'college' ||
+        planTier.includes('college') ||
+        (tiers.includes('college') && type !== 'custom' && planType !== 'custom') ||
+        (name.includes('college') && type !== 'school' && type !== 'university' && type !== 'custom')
+      )
+    }
+
+    if (filterId === 'university') {
+      return (
+        type === 'university' ||
+        planType === 'university' ||
+        planTier.includes('university') ||
+        tiers.includes('undergraduate') ||
+        tiers.includes('university') ||
+        (name.includes('university') && type !== 'custom' && planType !== 'custom')
+      )
+    }
+
+    if (filterId === 'custom') {
+      return (
+        type === 'custom' ||
+        planType === 'custom' ||
+        planTier.includes('custom') ||
+        planTier.includes('hybrid') ||
+        tiers.length > 1 ||
+        Boolean(inst.isCustom)
+      )
+    }
+
+    return true
+  }
+
+  // Tier counts calculation
+  const tierCounts = useMemo(() => {
+    const counts = { all: (institutes || []).length, school: 0, college: 0, university: 0, custom: 0 }
+    ;(institutes || []).forEach(inst => {
+      if (matchesTierFilter(inst, 'school')) counts.school++
+      if (matchesTierFilter(inst, 'college')) counts.college++
+      if (matchesTierFilter(inst, 'university')) counts.university++
+      if (matchesTierFilter(inst, 'custom')) counts.custom++
+    })
+    return counts
+  }, [institutes])
+
+  // Filtered institutes list
+  const filteredInstitutes = useMemo(() => {
+    return (institutes || []).filter(inst => matchesTierFilter(inst, selectedTierFilter))
+  }, [institutes, selectedTierFilter])
+
+  // Handle tier filter selection
+  const handleSelectTierFilter = (tierId) => {
+    setSelectedTierFilter(tierId)
+    setIsFilterDropdownOpen(false)
+    if (setActiveWing) {
+      if (tierId === 'school') setActiveWing('school')
+      else if (tierId === 'college') setActiveWing('college')
+      else if (tierId === 'university') setActiveWing('undergraduate')
+      else setActiveWing('all')
+    }
+  }
+
+  // Current active tier configuration
+  const currentFilterConfig = tierFilterOptions.find(o => o.id === selectedTierFilter) || tierFilterOptions[0]
+
+  // Dynamic KPI calculations based on active filter
+  const displayTotalCampuses = selectedTierFilter === 'all' 
+    ? (stats.totalInstitutes || (institutes || []).length || 12) 
+    : filteredInstitutes.length
+
+  const displayActiveCampuses = selectedTierFilter === 'all'
+    ? (stats.activeInstitutes || (institutes || []).filter(i => (i.status || 'Active').toLowerCase() === 'active').length || 12)
+    : filteredInstitutes.filter(i => (i.status || 'Active').toLowerCase() === 'active').length
+
+  const displayTotalStudents = useMemo(() => {
+    if (selectedTierFilter === 'all') {
+      const sum = (institutes || []).reduce((acc, i) => acc + (Number(i.totalStudents) || Number(i.studentsCount) || 0), 0)
+      return sum > 0 ? sum : (stats.totalStudents || 15000)
+    }
+    const sum = filteredInstitutes.reduce((acc, i) => acc + (Number(i.totalStudents) || Number(i.studentsCount) || 0), 0)
+    if (sum === 0 && filteredInstitutes.length > 0) {
+      if (selectedTierFilter === 'school') return filteredInstitutes.length * 1250
+      if (selectedTierFilter === 'college') return filteredInstitutes.length * 850
+      if (selectedTierFilter === 'university') return filteredInstitutes.length * 2400
+      if (selectedTierFilter === 'custom') return filteredInstitutes.length * 1500
+    }
+    return sum
+  }, [institutes, filteredInstitutes, selectedTierFilter, stats.totalStudents])
+
+  const formattedStudents = displayTotalStudents >= 1000 
+    ? `${(displayTotalStudents / 1000).toFixed(2)}K` 
+    : String(displayTotalStudents)
+
+  const displayWingsValue = useMemo(() => {
+    if (selectedTierFilter === 'all') return '3 Wings'
+    if (selectedTierFilter === 'school') return 'School Wing'
+    if (selectedTierFilter === 'college') return 'College Wing'
+    if (selectedTierFilter === 'university') return 'Uni Wing'
+    return 'Custom Wing'
+  }, [selectedTierFilter])
+
+  const displayWingsBadge = useMemo(() => {
+    if (selectedTierFilter === 'all') return '3 Active Tiers'
+    if (selectedTierFilter === 'school') return 'K-12 Primary'
+    if (selectedTierFilter === 'college') return 'Inter / HSSC'
+    if (selectedTierFilter === 'university') return 'Higher Ed'
+    return 'Hybrid Matrix'
+  }, [selectedTierFilter])
+
+  const displayMRRValue = useMemo(() => {
+    if (selectedTierFilter === 'all') return stats.monthlyRevenue || '$19.3K'
+    if (selectedTierFilter === 'school') return '$9.4K'
+    if (selectedTierFilter === 'college') return '$5.2K'
+    if (selectedTierFilter === 'university') return '$3.6K'
+    return '$1.1K'
+  }, [selectedTierFilter, stats.monthlyRevenue])
+
+  const displayMRRBadge = useMemo(() => {
+    if (selectedTierFilter === 'all') return '4 Tier Plans'
+    return `${currentFilterConfig.badge} Tier Plan`
+  }, [selectedTierFilter, currentFilterConfig.badge])
+
+  // Open Add Campus Modal with tier pre-selected
+  const handleOpenAddCampusModal = () => {
+    if (selectedTierFilter === 'college') {
+      setNewInstituteData(prev => ({
+        ...prev,
+        planTier: 'College Plan',
+        planType: 'COLLEGE',
+        enabledTiers: ['college']
+      }))
+    } else if (selectedTierFilter === 'university') {
+      setNewInstituteData(prev => ({
+        ...prev,
+        planTier: 'University Plan',
+        planType: 'UNIVERSITY',
+        enabledTiers: ['undergraduate']
+      }))
+    } else if (selectedTierFilter === 'custom') {
+      setNewInstituteData(prev => ({
+        ...prev,
+        planTier: 'Custom Hybrid Plan',
+        planType: 'CUSTOM',
+        enabledTiers: ['school', 'college']
+      }))
+    } else {
+      setNewInstituteData(prev => ({
+        ...prev,
+        planTier: 'School Plan',
+        planType: 'SCHOOL',
+        enabledTiers: ['school']
+      }))
+    }
+    setIsInstituteModalOpen(true)
+  }
+
   // Feedback toast state
   const [feedbackToast, setFeedbackToast] = useState(null)
   const [reportSuccess, setReportSuccess] = useState(false)
@@ -308,12 +561,147 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           <p className="text-xs sm:text-sm text-slate-500 mt-1 font-sans">
             Multi-Campus Educational Wings Governance & Real-Time Performance Matrix
           </p>
+
+          {/* Active Filter Indicator Pill */}
+          {selectedTierFilter !== 'all' && (
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-xs text-slate-500 font-medium">Filtered View:</span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-800 border border-purple-200">
+                <Filter className="w-3 h-3 text-purple-600" />
+                <span>{currentFilterConfig.label}</span>
+                <span className="text-[10px] px-1.5 py-0.2 bg-purple-200 text-purple-900 rounded-full font-extrabold">
+                  {filteredInstitutes.length} campuses
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleSelectTierFilter('all')}
+                  className="hover:bg-purple-200/80 p-0.5 rounded-full transition-colors cursor-pointer"
+                  title="Clear filter"
+                >
+                  <X className="w-3.5 h-3.5 text-purple-700" />
+                </button>
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* Action Shortcuts */}
-        <div className="flex items-center gap-2.5">
+        {/* Action Shortcuts & Educational Tier Filter */}
+        <div className="flex flex-wrap items-center gap-2.5">
+          {/* Educational Tier Dropdown Filter */}
+          <div className="relative" ref={filterDropdownRef}>
+            <button
+              type="button"
+              onClick={() => setIsFilterDropdownOpen(prev => !prev)}
+              className={`px-3.5 py-2.5 rounded-xl text-xs font-semibold border transition-all duration-150 flex items-center gap-2 cursor-pointer shadow-2xs select-none ${
+                selectedTierFilter !== 'all'
+                  ? 'bg-purple-50/90 border-purple-300 text-purple-900 ring-2 ring-purple-500/15'
+                  : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300'
+              }`}
+              title="Filter dashboard by educational tier (School, College, University, Custom)"
+              aria-expanded={isFilterDropdownOpen}
+              aria-haspopup="true"
+            >
+              <Filter className={`w-3.5 h-3.5 shrink-0 ${selectedTierFilter !== 'all' ? 'text-purple-600' : 'text-slate-500'}`} />
+              
+              <div className="flex items-center gap-1.5">
+                <span className="font-medium text-slate-400 hidden sm:inline">Tier:</span>
+                <span className="font-bold text-slate-800 whitespace-nowrap">
+                  {currentFilterConfig.label}
+                </span>
+              </div>
+
+              <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-extrabold ${
+                selectedTierFilter !== 'all'
+                  ? 'bg-purple-200 text-purple-900'
+                  : 'bg-slate-100 text-slate-600'
+              }`}>
+                {tierCounts[selectedTierFilter] ?? 0}
+              </span>
+
+              <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${isFilterDropdownOpen ? 'rotate-180 text-purple-600' : ''}`} />
+            </button>
+
+            {/* Dropdown Popover Menu */}
+            {isFilterDropdownOpen && (
+              <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 bg-white rounded-2xl border border-slate-200/90 shadow-xl shadow-purple-900/10 p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                <div className="px-3 py-2 border-b border-slate-100 mb-1 flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <Filter className="w-3.5 h-3.5 text-purple-600" />
+                    <span className="text-xs font-bold text-slate-900">Filter by Educational Tier</span>
+                  </div>
+                  {selectedTierFilter !== 'all' && (
+                    <button
+                      type="button"
+                      onClick={() => handleSelectTierFilter('all')}
+                      className="text-[11px] font-bold text-purple-600 hover:text-purple-800 transition-colors cursor-pointer"
+                    >
+                      Show All
+                    </button>
+                  )}
+                </div>
+
+                <div className="space-y-1">
+                  {tierFilterOptions.map(option => {
+                    const isSelected = selectedTierFilter === option.id
+                    const OptionIcon = option.icon
+                    const count = tierCounts[option.id] ?? 0
+
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        onClick={() => handleSelectTierFilter(option.id)}
+                        className={`w-full flex items-center justify-between p-2.5 rounded-xl text-left transition-all cursor-pointer group ${
+                          isSelected
+                            ? 'bg-purple-50 text-purple-900 font-semibold'
+                            : 'hover:bg-slate-50/90 text-slate-700'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                            isSelected
+                              ? 'bg-purple-600 text-white shadow-xs'
+                              : 'bg-slate-100 text-slate-600 group-hover:bg-slate-200/70'
+                          }`}>
+                            <OptionIcon className="w-4 h-4 stroke-[2]" />
+                          </div>
+
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-bold truncate">{option.label}</span>
+                              {option.id !== 'all' && (
+                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                                  option.id === 'school' ? 'bg-purple-100 text-purple-700' :
+                                  option.id === 'college' ? 'bg-amber-100 text-amber-800' :
+                                  option.id === 'university' ? 'bg-blue-100 text-blue-700' :
+                                  'bg-indigo-100 text-indigo-700'
+                                }`}>
+                                  {option.badge}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[10px] text-slate-400 truncate mt-0.5">{option.subtitle}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0 ml-2">
+                          <span className={`text-[11px] px-2 py-0.5 rounded-md font-bold ${
+                            isSelected ? 'bg-purple-200 text-purple-900' : 'bg-slate-100 text-slate-500'
+                          }`}>
+                            {count}
+                          </span>
+                          {isSelected && <Check className="w-4 h-4 text-purple-600 stroke-[2.5]" />}
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
           <button
-            onClick={() => setIsInstituteModalOpen(true)}
+            onClick={handleOpenAddCampusModal}
             className="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-semibold shadow-sm shadow-purple-600/25 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
           >
             <Plus className="w-4 h-4" />
@@ -338,10 +726,10 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <span className="block text-xs font-semibold text-slate-500 mb-1 truncate">
-                Total Campuses
+                {selectedTierFilter === 'all' ? 'Total Campuses' : `${currentFilterConfig.shortLabel} Campuses`}
               </span>
               <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading">
-                {stats.totalInstitutes || 12}
+                {displayTotalCampuses}
               </span>
             </div>
             <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white/80 text-purple-600 flex items-center justify-center shrink-0 shadow-2xs">
@@ -352,7 +740,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           {/* Bottom Row: Status Badge on Left, Non-clickable Manage Text + Dedicated Eye Button on Right */}
           <div className="flex items-center justify-between gap-1.5 mt-4 pt-3 border-t border-purple-200/50">
             <span className="text-[11px] font-bold text-purple-700 bg-purple-100/70 px-2 py-0.5 rounded-full whitespace-nowrap">
-              {stats.activeInstitutes || 12} Active
+              {displayActiveCampuses} Active
             </span>
 
             <div className="flex items-center gap-1.5 shrink-0">
@@ -378,10 +766,10 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <span className="block text-xs font-semibold text-slate-500 mb-1 truncate">
-                Total Students
+                {selectedTierFilter === 'all' ? 'Total Students' : `${currentFilterConfig.shortLabel} Students`}
               </span>
               <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading">
-                {stats.totalStudents ? `${(stats.totalStudents / 1000).toFixed(2)}K` : '15.00K'}
+                {formattedStudents}
               </span>
             </div>
             <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white/80 text-sky-500 flex items-center justify-center shrink-0 shadow-2xs">
@@ -392,12 +780,12 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           {/* Bottom Row: Status Badge on Left, Non-clickable All Wings Text + Dedicated Eye Button on Right */}
           <div className="flex items-center justify-between gap-1.5 mt-4 pt-3 border-t border-sky-200/50">
             <span className="text-[11px] font-bold text-sky-700 bg-sky-100/70 px-2 py-0.5 rounded-full whitespace-nowrap">
-              +12.4% MoM
+              {selectedTierFilter === 'all' ? '+12.4% MoM' : `${filteredInstitutes.length} Campuses`}
             </span>
 
             <div className="flex items-center gap-1.5 shrink-0">
               <span className="text-xs font-medium text-slate-500 select-none whitespace-nowrap">
-                All Wings
+                {selectedTierFilter === 'all' ? 'All Wings' : currentFilterConfig.badge}
               </span>
               <button
                 type="button"
@@ -421,7 +809,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 Educational Wings
               </span>
               <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading">
-                3 Wings
+                {displayWingsValue}
               </span>
             </div>
             <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white/80 text-amber-500 flex items-center justify-center shrink-0 shadow-2xs">
@@ -432,7 +820,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           {/* Bottom Row: Status Badge on Left, Non-clickable Matrix Text + Dedicated Eye Button on Right */}
           <div className="flex items-center justify-between gap-1.5 mt-4 pt-3 border-t border-amber-200/50">
             <span className="text-[11px] font-bold text-amber-800 bg-amber-100/70 px-2 py-0.5 rounded-full whitespace-nowrap">
-              3 Active Tiers
+              {displayWingsBadge}
             </span>
 
             <div className="flex items-center gap-1.5 shrink-0">
@@ -458,10 +846,10 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <span className="block text-xs font-semibold text-slate-500 mb-1 truncate">
-                Platform MRR
+                {selectedTierFilter === 'all' ? 'Platform MRR' : `${currentFilterConfig.shortLabel} MRR`}
               </span>
               <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading">
-                {stats.monthlyRevenue || '$19.3K'}
+                {displayMRRValue}
               </span>
             </div>
             <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white/80 text-emerald-500 flex items-center justify-center shrink-0 shadow-2xs">
@@ -472,7 +860,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           {/* Bottom Row: Status Badge on Left, Non-clickable Billing Text + Dedicated Eye Button on Right */}
           <div className="flex items-center justify-between gap-1.5 mt-4 pt-3 border-t border-emerald-200/50">
             <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded-full whitespace-nowrap">
-              4 Tier Plans
+              {displayMRRBadge}
             </span>
 
             <div className="flex items-center gap-1.5 shrink-0">
@@ -505,7 +893,9 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 Campus Performance & Wing Activity
               </h2>
               <p className="text-xs text-slate-400 mt-0.5">
-                Monthly distribution: School Wings vs College & University Wings
+                {selectedTierFilter === 'all' 
+                  ? 'Monthly distribution: School Wings vs College & University Wings' 
+                  : `${currentFilterConfig.label} activity benchmark vs platform`}
               </p>
             </div>
             
@@ -620,10 +1010,10 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               {/* Inside center text */}
               <div className="absolute flex flex-col items-center justify-center text-center">
                 <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                  Total
+                  {selectedTierFilter === 'all' ? 'Total' : currentFilterConfig.badge}
                 </span>
                 <span className="text-2xl font-extrabold text-slate-900 font-heading">
-                  15,000
+                  {formattedStudents}
                 </span>
                 <span className="text-[10px] text-purple-600 font-bold">
                   Enrolled
@@ -652,20 +1042,37 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
         
         {/* Left Column (7 cols): Campuses Table matching "Star Students" table */}
         <div className="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-7 border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
             <div>
-              <h2 className="text-base font-bold text-slate-900 tracking-tight font-heading">
-                Registered Campuses & Wings
-              </h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-bold text-slate-900 tracking-tight font-heading">
+                  Registered Campuses & Wings
+                </h2>
+                {selectedTierFilter !== 'all' && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 border border-purple-200 inline-flex items-center gap-1">
+                    <span>{currentFilterConfig.label}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleSelectTierFilter('all')}
+                      className="hover:text-purple-900 ml-0.5 cursor-pointer"
+                      title="Clear filter"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )}
+              </div>
               <p className="text-xs text-slate-400 mt-0.5">
-                Active educational institutions and enabled tier structures
+                {selectedTierFilter === 'all' 
+                  ? 'Active educational institutions and enabled tier structures'
+                  : `Showing filtered ${currentFilterConfig.label} institutions`}
               </p>
             </div>
             <button 
               onClick={() => onRouteChange('institutes')}
               className="text-xs font-semibold text-purple-600 hover:text-purple-700 cursor-pointer"
             >
-              View All ({institutes.length})
+              View All ({filteredInstitutes.length})
             </button>
           </div>
 
@@ -685,8 +1092,8 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {institutes && institutes.length > 0 ? (
-                  institutes.slice(0, 5).map((inst) => {
+                {filteredInstitutes && filteredInstitutes.length > 0 ? (
+                  filteredInstitutes.slice(0, 6).map((inst) => {
                     const isSelected = selectedCampusIds.includes(inst.id)
                     const wings = inst.enabledTiers || ['school']
                     return (
@@ -742,9 +1149,14 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                                 College
                               </span>
                             )}
-                            {wings.includes('undergraduate') && (
+                            {(wings.includes('undergraduate') || wings.includes('university')) && (
                               <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700">
                                 Uni
+                              </span>
+                            )}
+                            {(inst.type === 'Custom' || inst.planType === 'CUSTOM') && (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700">
+                                Custom
                               </span>
                             )}
                           </div>
@@ -767,8 +1179,32 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                   })
                 ) : (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-xs text-slate-400">
-                      No campuses registered yet. Click "Add Campus" to register your first institute.
+                    <td colSpan={6} className="py-10 text-center text-xs text-slate-400">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <School className="w-8 h-8 text-slate-300 stroke-[1.5]" />
+                        <p className="font-semibold text-slate-700">
+                          No {currentFilterConfig.label} campuses found
+                        </p>
+                        <p className="text-[11px] text-slate-400 max-w-sm">
+                          There are currently no registered campuses matching this educational tier.
+                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <button
+                            type="button"
+                            onClick={() => handleSelectTierFilter('all')}
+                            className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg text-xs transition-colors cursor-pointer"
+                          >
+                            Clear Filter
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleOpenAddCampusModal}
+                            className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg text-xs transition-colors cursor-pointer"
+                          >
+                            + Add {currentFilterConfig.badge} Campus
+                          </button>
+                        </div>
+                      </div>
                     </td>
                   </tr>
                 )}
@@ -777,7 +1213,9 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           </div>
           {/* Clean Table Footer matching reference */}
           <div className="pt-4 mt-auto border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-            <span>Showing {Math.min(5, (institutes || []).length)} of {(institutes || []).length} registered campuses</span>
+            <span>
+              Showing {Math.min(6, filteredInstitutes.length)} of {filteredInstitutes.length} {selectedTierFilter !== 'all' ? currentFilterConfig.label : 'registered'} campuses
+            </span>
             <button 
               onClick={() => onRouteChange('institutes')}
               className="text-purple-600 font-semibold hover:text-purple-700 hover:underline cursor-pointer flex items-center gap-1"
