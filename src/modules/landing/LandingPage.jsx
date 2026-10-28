@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   GraduationCap,
   Sparkles,
@@ -16,26 +16,22 @@ import {
   Phone,
   Mail,
   ChevronDown,
-  ChevronRight,
   Lock,
-  Play,
   Laptop,
   Check,
   X,
-  ExternalLink,
-  MessageCircle,
-  HelpCircle
+  MessageCircle
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
-import { BillingService } from '../../services/billingService'
-import { DataService, getStoredData, saveStoredData } from '../../services/dataService'
+import { getStoredData, saveStoredData } from '../../services/dataService'
 
 export const LandingPage = ({ onNavigateToLogin }) => {
   const { login } = useAuth()
   const { showToast } = useToast()
 
   // State
+  const [activeSection, setActiveSection] = useState('hero')
   const [activeTab, setActiveTab] = useState('school') // 'school', 'college', 'university', 'custom'
   const [billingCycle, setBillingCycle] = useState('monthly') // 'monthly', 'annual'
   const [isTrialModalOpen, setIsTrialModalOpen] = useState(false)
@@ -52,6 +48,47 @@ export const LandingPage = ({ onNavigateToLogin }) => {
     city: 'Lahore'
   })
   const [isSubmittingTrial, setIsSubmittingTrial] = useState(false)
+
+  // Scroll Spy: Track which section is in view and highlight in navbar
+  useEffect(() => {
+    const sectionIds = ['hero', 'features', 'wings', 'preview', 'pricing', 'faq']
+
+    const handleScrollSpy = () => {
+      const scrollPosition = window.scrollY + 120 // offset for navbar
+      for (const id of sectionIds) {
+        const el = document.getElementById(id)
+        if (el) {
+          const top = el.offsetTop
+          const height = el.offsetHeight
+          if (scrollPosition >= top && scrollPosition < top + height) {
+            setActiveSection(id)
+            break
+          }
+        }
+      }
+    }
+
+    window.addEventListener('scroll', handleScrollSpy, { passive: true })
+    handleScrollSpy()
+    return () => window.removeEventListener('scroll', handleScrollSpy)
+  }, [])
+
+  // Smooth scroll helper that takes sticky navbar height into account
+  const scrollToSection = (e, id) => {
+    e.preventDefault()
+    setActiveSection(id)
+    const el = document.getElementById(id)
+    if (el) {
+      const navHeight = 72
+      const elPosition = el.getBoundingClientRect().top + window.pageYOffset
+      const offsetPosition = elPosition - navHeight
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      })
+    }
+  }
 
   // Direct 1-Click Demo Login Handlers
   const handleQuickDemo = (role = 'superadmin') => {
@@ -147,7 +184,7 @@ export const LandingPage = ({ onNavigateToLogin }) => {
     }, 600)
   }
 
-  // Tab previews data
+  // Tab previews data for live mockup
   const wingPreviews = {
     school: {
       title: 'School Wing (Primary to Matric / O-Levels)',
@@ -221,8 +258,17 @@ export const LandingPage = ({ onNavigateToLogin }) => {
 
   const currentPreview = wingPreviews[activeTab]
 
+  // Navbar items matching the page sections in exact scroll order
+  const navItems = [
+    { id: 'features', label: 'Core Features' },
+    { id: 'wings', label: 'Educational Wings' },
+    { id: 'preview', label: 'Dashboard Preview' },
+    { id: 'pricing', label: 'Packages & Free Trial' },
+    { id: 'faq', label: 'FAQ' }
+  ]
+
   return (
-    <div className="min-h-screen bg-[#fcfaff] text-slate-900 font-sans selection:bg-purple-100 selection:text-purple-900">
+    <div className="min-h-screen w-full bg-[#fcfaff] text-slate-900 font-sans selection:bg-purple-100 selection:text-purple-900">
       
       {/* 1. TOP ANNOUNCEMENT BANNER */}
       <div className="bg-[#f5eeff] border-b border-purple-200/80 px-4 py-2 text-center text-xs font-medium text-purple-900 flex items-center justify-center gap-2">
@@ -239,13 +285,16 @@ export const LandingPage = ({ onNavigateToLogin }) => {
         </button>
       </div>
 
-      {/* 2. STICKY GLASSMORPHIC NAVBAR */}
-      <header className="sticky top-0 z-40 bg-white/85 backdrop-blur-md border-b border-purple-100 transition-all duration-200">
+      {/* 2. STICKY GLASSMORPHIC NAVBAR WITH ACTIVE HIGHLIGHT ANIMATION */}
+      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-purple-100 shadow-[0_4px_20px_-4px_rgba(147,51,234,0.04)] transition-all duration-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between gap-4">
           
           {/* Brand Logo */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-700 via-purple-600 to-indigo-600 flex items-center justify-center text-white shadow-sm shadow-purple-500/25">
+          <div 
+            onClick={(e) => scrollToSection(e, 'hero')}
+            className="flex items-center gap-3 cursor-pointer group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-700 via-purple-600 to-indigo-600 flex items-center justify-center text-white shadow-sm shadow-purple-500/25 group-hover:scale-105 transition-transform">
               <GraduationCap className="w-5 h-5 stroke-[2.2]" />
             </div>
             <div>
@@ -263,38 +312,61 @@ export const LandingPage = ({ onNavigateToLogin }) => {
             </div>
           </div>
 
-          {/* Center Navigation Links (Desktop) */}
-          <nav className="hidden lg:flex items-center gap-8 text-xs font-semibold text-slate-600">
-            <a href="#features" className="hover:text-purple-600 transition-colors">Core Features</a>
-            <a href="#wings" className="hover:text-purple-600 transition-colors">Educational Wings</a>
-            <a href="#preview" className="hover:text-purple-600 transition-colors">Live Dashboard Preview</a>
-            <a href="#pricing" className="hover:text-purple-600 transition-colors">Packages & Free Trial</a>
-            <a href="#faq" className="hover:text-purple-600 transition-colors">FAQ</a>
+          {/* Center Navigation Links with Smooth Active Highlighting Animation */}
+          <nav className="hidden lg:flex items-center gap-2 p-1 bg-slate-50/70 rounded-2xl border border-purple-100/70 text-xs">
+            {navItems.map((item) => {
+              const isActive = activeSection === item.id
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={(e) => scrollToSection(e, item.id)}
+                  className={`px-3.5 py-1.5 rounded-xl font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5 ${
+                    isActive
+                      ? 'bg-[#f5eeff] text-purple-700 border border-purple-200 shadow-xs'
+                      : 'text-slate-600 hover:text-purple-600 hover:bg-white/80'
+                  }`}
+                >
+                  {isActive && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-purple-600 animate-pulse"></span>
+                  )}
+                  <span>{item.label}</span>
+                </button>
+              )
+            })}
           </nav>
 
-          {/* Right Action Buttons */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          {/* Right Action Buttons: Bold, Clean & Directly Clickable Portal Sign In */}
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            {/* Prominent, Bold & Clean Portal Sign In Button */}
             <button
+              type="button"
               onClick={() => onNavigateToLogin('signin')}
-              className="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:text-purple-700 hover:bg-[#f5eeff] border border-transparent hover:border-purple-200 transition-all cursor-pointer flex items-center gap-1.5"
+              className="px-4 py-2 rounded-xl bg-purple-50 hover:bg-[#f5eeff] text-purple-700 hover:text-purple-900 border-2 border-purple-300 hover:border-purple-500 font-extrabold text-xs sm:text-sm shadow-xs hover:shadow-md transition-all duration-200 hover:scale-[1.03] active:scale-95 cursor-pointer flex items-center gap-2 group whitespace-nowrap"
+              title="Sign in to your Educational Portal"
             >
-              <Lock className="w-3.5 h-3.5 text-slate-500" />
-              <span>Portal Sign In</span>
+              <div className="w-5 h-5 rounded-lg bg-purple-100 group-hover:bg-purple-200 flex items-center justify-center text-purple-700 transition-colors shrink-0">
+                <Lock className="w-3.5 h-3.5 stroke-[2.4]" />
+              </div>
+              <span className="font-heading tracking-tight">Portal Sign In</span>
+              <ArrowRight className="w-3.5 h-3.5 text-purple-400 group-hover:text-purple-700 group-hover:translate-x-0.5 transition-all shrink-0" />
             </button>
 
+            {/* Start Free Trial Button */}
             <button
+              type="button"
               onClick={() => setIsTrialModalOpen(true)}
-              className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-sm shadow-purple-600/25 transition-all hover:scale-[1.02] active:scale-95 cursor-pointer flex items-center gap-1.5"
+              className="px-4 py-2 sm:px-4.5 sm:py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs sm:text-sm shadow-sm shadow-purple-600/25 transition-all duration-200 hover:scale-[1.03] active:scale-95 cursor-pointer flex items-center gap-2 whitespace-nowrap"
             >
               <Sparkles className="w-3.5 h-3.5 text-purple-200" />
-              <span>Start Free Trial</span>
+              <span className="font-heading tracking-tight">Start Free Trial</span>
             </button>
           </div>
         </div>
       </header>
 
       {/* 3. HERO SECTION */}
-      <section className="relative pt-12 pb-20 overflow-hidden bg-gradient-to-b from-[#fcfaff] via-[#f5eeff]/35 to-white">
+      <section id="hero" className="relative pt-14 pb-20 overflow-hidden bg-gradient-to-b from-[#fcfaff] via-[#f5eeff]/35 to-white">
         {/* Soft Ambient Radial Accents */}
         <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-purple-200/40 rounded-full blur-3xl pointer-events-none -z-10"></div>
         <div className="absolute top-40 right-10 w-96 h-96 bg-indigo-100/40 rounded-full blur-3xl pointer-events-none -z-10"></div>
@@ -362,156 +434,95 @@ export const LandingPage = ({ onNavigateToLogin }) => {
         </div>
       </section>
 
-      {/* 4. INTERACTIVE PRODUCT PREVIEW SECTION */}
-      <section id="preview" className="py-16 bg-white border-y border-purple-100/70">
+      {/* 4. CORE PLATFORM MODULES SECTION */}
+      <section id="features" className="py-20 bg-white border-y border-purple-100/70">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
-          <div className="text-center max-w-3xl mx-auto mb-10">
+          <div className="text-center max-w-3xl mx-auto mb-14">
             <span className="text-xs font-bold uppercase tracking-wider text-purple-700 bg-[#f5eeff] px-3 py-1 rounded-full border border-purple-200">
-              Interactive Dashboard Preview
+              Built for Real Pakistani & Global Operations
             </span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading tracking-tight mt-3">
-              Designed for Speed, Clarity, and Institutional Control
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 font-heading tracking-tight mt-3">
+              Everything Your Administration Needs
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 mt-2">
-              Select an educational wing below to inspect how ApexEd adapts interfaces, quotas, and workflows seamlessly.
+              All modules work together seamlessly out of the box with zero manual integration required.
             </p>
-
-            {/* Wing Switcher Pills */}
-            <div className="flex flex-wrap items-center justify-center gap-2 mt-6 p-1.5 bg-slate-100/80 rounded-2xl border border-slate-200/80 max-w-2xl mx-auto">
-              <button
-                onClick={() => setActiveTab('school')}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  activeTab === 'school'
-                    ? 'bg-purple-600 text-white shadow-xs'
-                    : 'text-slate-600 hover:text-purple-700 hover:bg-white'
-                }`}
-              >
-                <School className="w-3.5 h-3.5" />
-                <span>School Wing</span>
-              </button>
-              <button
-                onClick={() => setActiveTab('college')}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  activeTab === 'college'
-                    ? 'bg-purple-600 text-white shadow-xs'
-                    : 'text-slate-600 hover:text-purple-700 hover:bg-white'
-                }`}
-              >
-                <Building2 className="w-3.5 h-3.5" />
-                <span>College Wing</span>
-              </button>
-              <button
-                onClick={() => setActiveTab('university')}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  activeTab === 'university'
-                    ? 'bg-purple-600 text-white shadow-xs'
-                    : 'text-slate-600 hover:text-purple-700 hover:bg-white'
-                }`}
-              >
-                <GraduationCap className="w-3.5 h-3.5" />
-                <span>University Wing</span>
-              </button>
-              <button
-                onClick={() => setActiveTab('custom')}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  activeTab === 'custom'
-                    ? 'bg-purple-600 text-white shadow-xs'
-                    : 'text-slate-600 hover:text-purple-700 hover:bg-white'
-                }`}
-              >
-                <Sliders className="w-3.5 h-3.5" />
-                <span>Multi-Campus Group</span>
-              </button>
-            </div>
           </div>
 
-          {/* Mockup Card Window */}
-          <div className="rounded-3xl border border-purple-200/90 bg-white shadow-[0_20px_50px_rgba(147,51,234,0.06)] overflow-hidden">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             
-            {/* Window Titlebar */}
-            <div className="px-5 py-3.5 bg-slate-900 text-slate-200 flex items-center justify-between border-b border-slate-800">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-rose-500"></span>
-                <span className="w-3 h-3 rounded-full bg-amber-500"></span>
-                <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
-                <span className="text-xs font-mono text-slate-400 ml-3 hidden sm:inline">
-                  https://app.apexed.pk/portal/{activeTab}
-                </span>
+            {/* Feature 1 */}
+            <div className="p-6 rounded-2xl bg-[#fcfaff] border border-purple-100/80 hover:border-purple-200 transition-all">
+              <div className="w-10 h-10 rounded-xl bg-[#f5eeff] text-purple-700 flex items-center justify-center mb-4">
+                <CreditCard className="w-5 h-5" />
               </div>
-              <div className="flex items-center gap-2 text-[11px] font-semibold text-purple-300">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span>Active Session: Super Admin HQ</span>
-              </div>
+              <h4 className="text-base font-bold text-slate-900">Fee Challans & Pakistani Gateways</h4>
+              <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                Computerized fee vouchers with 1Link, 1Bill, and JazzCash corporate references. Includes installment tracking, partial payments, and overdue fines.
+              </p>
             </div>
 
-            {/* Mockup Inner Body */}
-            <div className="p-6 sm:p-8 bg-[#fcfaff]">
-              
-              {/* Inner Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-purple-100">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#f5eeff] text-purple-700 border border-purple-200">
-                      {currentPreview.tag}
-                    </span>
-                    <span className="text-xs text-slate-400">· Real-time Synchronization</span>
-                  </div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mt-1 font-heading">
-                    {currentPreview.title}
-                  </h3>
-                  <p className="text-xs sm:text-sm text-slate-500 mt-0.5 max-w-2xl">
-                    {currentPreview.description}
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    onClick={() => handleQuickDemo(activeTab === 'custom' ? 'superadmin' : 'institute')}
-                    className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs"
-                  >
-                    Open Live Portal
-                  </button>
-                </div>
+            {/* Feature 2 */}
+            <div className="p-6 rounded-2xl bg-[#fcfaff] border border-purple-100/80 hover:border-purple-200 transition-all">
+              <div className="w-10 h-10 rounded-xl bg-[#f5eeff] text-purple-700 flex items-center justify-center mb-4">
+                <FileText className="w-5 h-5" />
               </div>
-
-              {/* 4 Metrics Cards */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-                {currentPreview.metrics.map((m, idx) => (
-                  <div key={idx} className="p-4 rounded-2xl bg-white border border-purple-100 shadow-xs">
-                    <span className="text-xs font-medium text-slate-500 block">{m.label}</span>
-                    <span className="text-2xl font-black text-slate-900 font-mono tracking-tight block mt-1">
-                      {m.value}
-                    </span>
-                    <span className="text-[11px] font-semibold text-purple-600 block mt-1">
-                      {m.sub}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Module Capabilities List */}
-              <div className="mt-6 p-4 rounded-2xl bg-[#f5eeff]/60 border border-purple-200/80">
-                <span className="text-xs font-bold uppercase tracking-wider text-purple-900 block mb-3">
-                  Activated Academic Modules in this Wing:
-                </span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {currentPreview.features.map((feat, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-xs text-slate-800 bg-white p-2.5 rounded-xl border border-purple-100/90 shadow-2xs">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span className="font-medium">{feat}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
+              <h4 className="text-base font-bold text-slate-900">Examinations & Printable Admit Cards</h4>
+              <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                Generate printable exam admit cards with candidate photos, roll numbers, and date sheets. Enter marks and print official result gazettes instantly.
+              </p>
             </div>
+
+            {/* Feature 3 */}
+            <div className="p-6 rounded-2xl bg-[#fcfaff] border border-purple-100/80 hover:border-purple-200 transition-all">
+              <div className="w-10 h-10 rounded-xl bg-[#f5eeff] text-purple-700 flex items-center justify-center mb-4">
+                <Calendar className="w-5 h-5" />
+              </div>
+              <h4 className="text-base font-bold text-slate-900">Daily Digital Attendance</h4>
+              <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                Period-wise attendance for students and staff. Automatic notifications for consecutive absences, leaves management, and monthly attendance registers.
+              </p>
+            </div>
+
+            {/* Feature 4 */}
+            <div className="p-6 rounded-2xl bg-[#fcfaff] border border-purple-100/80 hover:border-purple-200 transition-all">
+              <div className="w-10 h-10 rounded-xl bg-[#f5eeff] text-purple-700 flex items-center justify-center mb-4">
+                <MessageCircle className="w-5 h-5" />
+              </div>
+              <h4 className="text-base font-bold text-slate-900">Direct WhatsApp & SMS Broadcasts</h4>
+              <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                Instantly reach parents and faculty via integrated WhatsApp redirect links and SMS broadcasting. Send fee reminders, exam schedules, and circulars.
+              </p>
+            </div>
+
+            {/* Feature 5 */}
+            <div className="p-6 rounded-2xl bg-[#fcfaff] border border-purple-100/80 hover:border-purple-200 transition-all">
+              <div className="w-10 h-10 rounded-xl bg-[#f5eeff] text-purple-700 flex items-center justify-center mb-4">
+                <BarChart3 className="w-5 h-5" />
+              </div>
+              <h4 className="text-base font-bold text-slate-900">Cross-Institute Financial Analytics</h4>
+              <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                Live platform MRR, ARR, student admission trends, and fee collection rates. Download complete audit reports in Excel and CSV formats.
+              </p>
+            </div>
+
+            {/* Feature 6 */}
+            <div className="p-6 rounded-2xl bg-[#fcfaff] border border-purple-100/80 hover:border-purple-200 transition-all">
+              <div className="w-10 h-10 rounded-xl bg-[#f5eeff] text-purple-700 flex items-center justify-center mb-4">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <h4 className="text-base font-bold text-slate-900">Multi-Tenant Cloud Security</h4>
+              <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                Strict data isolation between campuses, role-based access control (Super Admin, Campus Admin, Teachers, Accounts), and automatic encrypted backups.
+              </p>
+            </div>
+
           </div>
-
         </div>
       </section>
 
-      {/* 5. EDUCATIONAL WINGS SHOWCASE */}
+      {/* 5. EDUCATIONAL WINGS SHOWCASE SECTION */}
       <section id="wings" className="py-20 bg-gradient-to-b from-white to-[#fcfaff]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
@@ -656,91 +667,152 @@ export const LandingPage = ({ onNavigateToLogin }) => {
         </div>
       </section>
 
-      {/* 6. CORE PLATFORM MODULES */}
-      <section id="features" className="py-20 bg-white border-y border-purple-100/70">
+      {/* 6. INTERACTIVE PRODUCT PREVIEW SECTION */}
+      <section id="preview" className="py-20 bg-white border-y border-purple-100/70">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
-          <div className="text-center max-w-3xl mx-auto mb-14">
+          <div className="text-center max-w-3xl mx-auto mb-10">
             <span className="text-xs font-bold uppercase tracking-wider text-purple-700 bg-[#f5eeff] px-3 py-1 rounded-full border border-purple-200">
-              Built for Real Pakistani & Global Operations
+              Interactive Dashboard Preview
             </span>
-            <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 font-heading tracking-tight mt-3">
-              Everything Your Administration Needs
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading tracking-tight mt-3">
+              Designed for Speed, Clarity, and Institutional Control
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 mt-2">
-              All modules work together seamlessly out of the box with zero manual integration required.
+              Select an educational wing below to inspect how ApexEd adapts interfaces, quotas, and workflows seamlessly.
             </p>
+
+            {/* Wing Switcher Pills */}
+            <div className="flex flex-wrap items-center justify-center gap-2 mt-6 p-1.5 bg-slate-100/80 rounded-2xl border border-slate-200/80 max-w-2xl mx-auto">
+              <button
+                onClick={() => setActiveTab('school')}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  activeTab === 'school'
+                    ? 'bg-purple-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-purple-700 hover:bg-white'
+                }`}
+              >
+                <School className="w-3.5 h-3.5" />
+                <span>School Wing</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('college')}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  activeTab === 'college'
+                    ? 'bg-purple-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-purple-700 hover:bg-white'
+                }`}
+              >
+                <Building2 className="w-3.5 h-3.5" />
+                <span>College Wing</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('university')}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  activeTab === 'university'
+                    ? 'bg-purple-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-purple-700 hover:bg-white'
+                }`}
+              >
+                <GraduationCap className="w-3.5 h-3.5" />
+                <span>University Wing</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('custom')}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  activeTab === 'custom'
+                    ? 'bg-purple-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-purple-700 hover:bg-white'
+                }`}
+              >
+                <Sliders className="w-3.5 h-3.5" />
+                <span>Multi-Campus Group</span>
+              </button>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Mockup Card Window */}
+          <div className="rounded-3xl border border-purple-200/90 bg-white shadow-[0_20px_50px_rgba(147,51,234,0.06)] overflow-hidden">
             
-            {/* Feature 1 */}
-            <div className="p-6 rounded-2xl bg-[#fcfaff] border border-purple-100/80 hover:border-purple-200 transition-all">
-              <div className="w-10 h-10 rounded-xl bg-[#f5eeff] text-purple-700 flex items-center justify-center mb-4">
-                <CreditCard className="w-5 h-5" />
+            {/* Window Titlebar */}
+            <div className="px-5 py-3.5 bg-slate-900 text-slate-200 flex items-center justify-between border-b border-slate-800">
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-rose-500"></span>
+                <span className="w-3 h-3 rounded-full bg-amber-500"></span>
+                <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
+                <span className="text-xs font-mono text-slate-400 ml-3 hidden sm:inline">
+                  https://app.apexed.pk/portal/{activeTab}
+                </span>
               </div>
-              <h4 className="text-base font-bold text-slate-900">Fee Challans & Pakistani Gateways</h4>
-              <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
-                Computerized fee vouchers with 1Link, 1Bill, and JazzCash corporate references. Includes installment tracking, partial payments, and overdue fines.
-              </p>
+              <div className="flex items-center gap-2 text-[11px] font-semibold text-purple-300">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>Active Session: Super Admin HQ</span>
+              </div>
             </div>
 
-            {/* Feature 2 */}
-            <div className="p-6 rounded-2xl bg-[#fcfaff] border border-purple-100/80 hover:border-purple-200 transition-all">
-              <div className="w-10 h-10 rounded-xl bg-[#f5eeff] text-purple-700 flex items-center justify-center mb-4">
-                <FileText className="w-5 h-5" />
-              </div>
-              <h4 className="text-base font-bold text-slate-900">Examinations & Printable Admit Cards</h4>
-              <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
-                Generate printable exam admit cards with candidate photos, roll numbers, and date sheets. Enter marks and print official result gazettes instantly.
-              </p>
-            </div>
+            {/* Mockup Inner Body */}
+            <div className="p-6 sm:p-8 bg-[#fcfaff]">
+              
+              {/* Inner Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-purple-100">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#f5eeff] text-purple-700 border border-purple-200">
+                      {currentPreview.tag}
+                    </span>
+                    <span className="text-xs text-slate-400">· Real-time Synchronization</span>
+                  </div>
+                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mt-1 font-heading">
+                    {currentPreview.title}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-slate-500 mt-0.5 max-w-2xl">
+                    {currentPreview.description}
+                  </p>
+                </div>
 
-            {/* Feature 3 */}
-            <div className="p-6 rounded-2xl bg-[#fcfaff] border border-purple-100/80 hover:border-purple-200 transition-all">
-              <div className="w-10 h-10 rounded-xl bg-[#f5eeff] text-purple-700 flex items-center justify-center mb-4">
-                <Calendar className="w-5 h-5" />
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => handleQuickDemo(activeTab === 'custom' ? 'superadmin' : 'institute')}
+                    className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs"
+                  >
+                    Open Live Portal
+                  </button>
+                </div>
               </div>
-              <h4 className="text-base font-bold text-slate-900">Daily Digital Attendance</h4>
-              <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
-                Period-wise attendance for students and staff. Automatic notifications for consecutive absences, leaves management, and monthly attendance registers.
-              </p>
-            </div>
 
-            {/* Feature 4 */}
-            <div className="p-6 rounded-2xl bg-[#fcfaff] border border-purple-100/80 hover:border-purple-200 transition-all">
-              <div className="w-10 h-10 rounded-xl bg-[#f5eeff] text-purple-700 flex items-center justify-center mb-4">
-                <MessageCircle className="w-5 h-5" />
+              {/* 4 Metrics Cards */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+                {currentPreview.metrics.map((m, idx) => (
+                  <div key={idx} className="p-4 rounded-2xl bg-white border border-purple-100 shadow-xs">
+                    <span className="text-xs font-medium text-slate-500 block">{m.label}</span>
+                    <span className="text-2xl font-black text-slate-900 font-mono tracking-tight block mt-1">
+                      {m.value}
+                    </span>
+                    <span className="text-[11px] font-semibold text-purple-600 block mt-1">
+                      {m.sub}
+                    </span>
+                  </div>
+                ))}
               </div>
-              <h4 className="text-base font-bold text-slate-900">Direct WhatsApp & SMS Broadcasts</h4>
-              <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
-                Instantly reach parents and faculty via integrated WhatsApp redirect links and SMS broadcasting. Send fee reminders, exam schedules, and circulars.
-              </p>
-            </div>
 
-            {/* Feature 5 */}
-            <div className="p-6 rounded-2xl bg-[#fcfaff] border border-purple-100/80 hover:border-purple-200 transition-all">
-              <div className="w-10 h-10 rounded-xl bg-[#f5eeff] text-purple-700 flex items-center justify-center mb-4">
-                <BarChart3 className="w-5 h-5" />
+              {/* Module Capabilities List */}
+              <div className="mt-6 p-4 rounded-2xl bg-[#f5eeff]/60 border border-purple-200/80">
+                <span className="text-xs font-bold uppercase tracking-wider text-purple-900 block mb-3">
+                  Activated Academic Modules in this Wing:
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {currentPreview.features.map((feat, idx) => (
+                    <div key={idx} className="flex items-center gap-2 text-xs text-slate-800 bg-white p-2.5 rounded-xl border border-purple-100/90 shadow-2xs">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span className="font-medium">{feat}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <h4 className="text-base font-bold text-slate-900">Cross-Institute Financial Analytics</h4>
-              <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
-                Live platform MRR, ARR, student admission trends, and fee collection rates. Download complete audit reports in Excel and CSV formats.
-              </p>
-            </div>
 
-            {/* Feature 6 */}
-            <div className="p-6 rounded-2xl bg-[#fcfaff] border border-purple-100/80 hover:border-purple-200 transition-all">
-              <div className="w-10 h-10 rounded-xl bg-[#f5eeff] text-purple-700 flex items-center justify-center mb-4">
-                <ShieldCheck className="w-5 h-5" />
-              </div>
-              <h4 className="text-base font-bold text-slate-900">Multi-Tenant Cloud Security</h4>
-              <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
-                Strict data isolation between campuses, role-based access control (Super Admin, Campus Admin, Teachers, Accounts), and automatic encrypted backups.
-              </p>
             </div>
-
           </div>
+
         </div>
       </section>
 
@@ -908,7 +980,7 @@ export const LandingPage = ({ onNavigateToLogin }) => {
                   <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center">
                     <Building2 className="w-4 h-4" />
                   </div>
-                  <span className="text-xs font-bold uppercase text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md">
+                  <span className="text-xs font-bold uppercase text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200">
                     College Plan
                   </span>
                 </div>
@@ -1113,7 +1185,10 @@ export const LandingPage = ({ onNavigateToLogin }) => {
             
             {/* Col 1: Brand */}
             <div>
-              <div className="flex items-center gap-2.5 text-white font-heading font-extrabold text-base mb-3">
+              <div 
+                onClick={(e) => scrollToSection(e, 'hero')}
+                className="flex items-center gap-2.5 text-white font-heading font-extrabold text-base mb-3 cursor-pointer"
+              >
                 <div className="w-7 h-7 rounded-lg bg-purple-600 flex items-center justify-center text-white">
                   <GraduationCap className="w-4 h-4" />
                 </div>
@@ -1130,10 +1205,10 @@ export const LandingPage = ({ onNavigateToLogin }) => {
                 Educational Wings
               </span>
               <ul className="space-y-2">
-                <li><button onClick={() => { setActiveTab('school'); document.getElementById('preview')?.scrollIntoView({ behavior: 'smooth' }); }} className="hover:text-purple-400 transition-colors">School Wing (Primary & Matric)</button></li>
-                <li><button onClick={() => { setActiveTab('college'); document.getElementById('preview')?.scrollIntoView({ behavior: 'smooth' }); }} className="hover:text-purple-400 transition-colors">College Wing (Intermediate & F.Sc)</button></li>
-                <li><button onClick={() => { setActiveTab('university'); document.getElementById('preview')?.scrollIntoView({ behavior: 'smooth' }); }} className="hover:text-purple-400 transition-colors">University Wing (BS & CGPA)</button></li>
-                <li><button onClick={() => { setActiveTab('custom'); document.getElementById('preview')?.scrollIntoView({ behavior: 'smooth' }); }} className="hover:text-purple-400 transition-colors">Multi-Campus Conglomerates</button></li>
+                <li><button onClick={(e) => { setActiveTab('school'); scrollToSection(e, 'wings'); }} className="hover:text-purple-400 transition-colors cursor-pointer">School Wing (Primary & Matric)</button></li>
+                <li><button onClick={(e) => { setActiveTab('college'); scrollToSection(e, 'wings'); }} className="hover:text-purple-400 transition-colors cursor-pointer">College Wing (Intermediate & F.Sc)</button></li>
+                <li><button onClick={(e) => { setActiveTab('university'); scrollToSection(e, 'wings'); }} className="hover:text-purple-400 transition-colors cursor-pointer">University Wing (BS & CGPA)</button></li>
+                <li><button onClick={(e) => { setActiveTab('custom'); scrollToSection(e, 'wings'); }} className="hover:text-purple-400 transition-colors cursor-pointer">Multi-Campus Conglomerates</button></li>
               </ul>
             </div>
 
@@ -1143,10 +1218,10 @@ export const LandingPage = ({ onNavigateToLogin }) => {
                 Core Operations
               </span>
               <ul className="space-y-2">
-                <li>1Link / 1Bill Voucher Engine</li>
-                <li>Admit Card & Exam Controller</li>
-                <li>Digital Attendance & SMS Gateway</li>
-                <li>Financial MRR & Fee Ledgers</li>
+                <li><button onClick={(e) => scrollToSection(e, 'features')} className="hover:text-purple-400 transition-colors cursor-pointer">1Link / 1Bill Voucher Engine</button></li>
+                <li><button onClick={(e) => scrollToSection(e, 'features')} className="hover:text-purple-400 transition-colors cursor-pointer">Admit Card & Exam Controller</button></li>
+                <li><button onClick={(e) => scrollToSection(e, 'features')} className="hover:text-purple-400 transition-colors cursor-pointer">Digital Attendance & SMS Gateway</button></li>
+                <li><button onClick={(e) => scrollToSection(e, 'pricing')} className="hover:text-purple-400 transition-colors cursor-pointer">Financial MRR & Fee Ledgers</button></li>
               </ul>
             </div>
 
@@ -1157,19 +1232,19 @@ export const LandingPage = ({ onNavigateToLogin }) => {
               </span>
               <ul className="space-y-2">
                 <li>
-                  <button onClick={() => onNavigateToLogin('superadmin')} className="text-purple-400 hover:text-purple-300 font-semibold flex items-center gap-1">
+                  <button onClick={() => onNavigateToLogin('superadmin')} className="text-purple-400 hover:text-purple-300 font-semibold flex items-center gap-1 cursor-pointer">
                     <Lock className="w-3 h-3" />
                     <span>Super Admin Sign In</span>
                   </button>
                 </li>
                 <li>
-                  <button onClick={() => onNavigateToLogin('institute')} className="text-purple-400 hover:text-purple-300 font-semibold flex items-center gap-1">
+                  <button onClick={() => onNavigateToLogin('institute')} className="text-purple-400 hover:text-purple-300 font-semibold flex items-center gap-1 cursor-pointer">
                     <Building2 className="w-3 h-3" />
                     <span>Campus Admin Sign In</span>
                   </button>
                 </li>
                 <li>
-                  <button onClick={() => setIsTrialModalOpen(true)} className="text-emerald-400 hover:text-emerald-300 font-semibold flex items-center gap-1">
+                  <button onClick={() => setIsTrialModalOpen(true)} className="text-emerald-400 hover:text-emerald-300 font-semibold flex items-center gap-1 cursor-pointer">
                     <Sparkles className="w-3 h-3" />
                     <span>14-Day Free Evaluation Access</span>
                   </button>

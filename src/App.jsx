@@ -256,7 +256,7 @@ const AppContent = () => {
   // 1. SUPERADMIN PORTAL
   if (user.role === 'superadmin') {
     return (
-      <div className="flex flex-col h-full w-full overflow-hidden bg-[#f8fafc]">
+      <div className="flex flex-col h-screen w-full overflow-hidden bg-[#f8fafc]">
         {/* Floating Impersonation Delegation Banner */}
         <ImpersonationBanner />
 
@@ -371,7 +371,7 @@ const AppContent = () => {
       })
 
   return (
-    <div className="flex flex-col h-full w-full overflow-hidden bg-[#f4f7fb]">
+    <div className="flex flex-col h-screen w-full overflow-hidden bg-[#f4f7fb]">
       {/* Floating Impersonation Delegation Banner */}
       <ImpersonationBanner />
 
