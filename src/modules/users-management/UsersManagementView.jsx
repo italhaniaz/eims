@@ -20,6 +20,7 @@ import {
   GraduationCap,
   HeartHandshake,
   ChevronRight,
+  ChevronDown,
   Info,
   Sliders,
   CheckCircle2,
@@ -378,7 +379,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
           </div>
 
           {/* Users Table */}
-          <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] overflow-hidden">
+          <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] overflow-x-auto min-h-[420px]">
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-semibold border-b border-slate-200">
                 <tr>
@@ -392,7 +393,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filtered.length > 0 ? (
-                  filtered.map(u => {
+                  filtered.map((u, index) => {
                     const roleMeta = getRoleMeta(u.role)
                     return (
                       <tr key={u.id} className="hover:bg-slate-50/70 transition-colors">
@@ -435,134 +436,185 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
                           </button>
                         </td>
                         <td className="px-6 py-4 text-right whitespace-nowrap">
-                          <div className="flex items-center justify-end gap-1.5">
-                            <button 
+                          {/* Dedicated Settings & Actions Dropdown (Replaces loose edit/delete buttons) */}
+                          <div className="relative inline-block text-left">
+                            <button
                               type="button"
-                              onClick={() => openEditModal(u)} 
-                              className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors cursor-pointer"
-                              title="Edit user profile"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setActiveDropdownUserId(prev => prev === u.id ? null : u.id)
+                              }}
+                              className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs ${
+                                activeDropdownUserId === u.id
+                                  ? 'bg-[#f5eeff] text-purple-700 border-purple-300 ring-2 ring-purple-500/20 shadow-xs'
+                                  : 'bg-white hover:bg-[#f5eeff] text-slate-700 hover:text-purple-700 border-slate-200 hover:border-purple-200'
+                              }`}
+                              title={`Settings & Actions for ${u.name}`}
+                              aria-label="Settings options"
                             >
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-                            <button 
-                              type="button"
-                              onClick={() => handleDelete(u.id, u.name)} 
-                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                              title="Delete user account"
-                            >
-                              <Trash2 className="w-4 h-4" />
+                              <Settings className={`w-3.5 h-3.5 text-purple-600 transition-transform duration-200 ${activeDropdownUserId === u.id ? 'rotate-90' : ''}`} />
+                              <span>Settings</span>
+                              <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform duration-200 ${activeDropdownUserId === u.id ? 'rotate-180' : ''}`} />
                             </button>
 
-                            {/* Settings Dropdown Button (Highlighted by user) */}
-                            <div className="relative">
-                              <button
-                                type="button"
-                                onClick={() => setActiveDropdownUserId(prev => prev === u.id ? null : u.id)}
-                                className={`p-1.5 rounded-lg transition-all cursor-pointer ${
-                                  activeDropdownUserId === u.id
-                                    ? 'bg-purple-100 text-purple-700 ring-2 ring-purple-500/20'
-                                    : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
-                                }`}
-                                title="User Settings & WhatsApp"
-                                aria-label="Settings options"
+                            {/* Dropdown Popover with dynamic vertical positioning */}
+                            {activeDropdownUserId === u.id && (
+                              <div
+                                ref={dropdownRef}
+                                className={`absolute right-0 ${index >= filtered.length - 2 && filtered.length > 2 ? 'bottom-full mb-1.5' : 'top-full mt-1.5'} w-64 bg-white rounded-2xl border border-slate-200/90 shadow-2xl shadow-purple-950/15 p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150 text-left`}
                               >
-                                <Settings className={`w-4 h-4 transition-transform duration-200 ${activeDropdownUserId === u.id ? 'rotate-45 text-purple-600' : ''}`} />
-                              </button>
-
-                              {/* Dropdown Popover */}
-                              {activeDropdownUserId === u.id && (
-                                <div
-                                  ref={dropdownRef}
-                                  className="absolute right-0 top-full mt-1.5 w-60 bg-white rounded-2xl border border-slate-200/90 shadow-xl shadow-purple-950/10 p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150 text-left"
-                                >
-                                  <div className="px-3 py-2 border-b border-slate-100 mb-1">
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                                      User Settings & Actions
-                                    </p>
-                                    <p className="text-xs font-bold text-slate-800 truncate mt-0.5">
-                                      {u.name}
-                                    </p>
+                                {/* Dropdown Header */}
+                                <div className="px-3.5 py-2.5 border-b border-slate-100 mb-1 bg-slate-50/70 rounded-t-xl">
+                                  <div className="flex items-center justify-between gap-1">
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">User Actions</span>
+                                    <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full border ${(u.status || 'Active').toLowerCase() === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'}`}>
+                                      {u.status || 'Active'}
+                                    </span>
                                   </div>
-
-                                  <div className="space-y-0.5">
-                                    {/* Edit Option */}
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setActiveDropdownUserId(null)
-                                        openEditModal(u)
-                                      }}
-                                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-purple-50 hover:text-purple-700 transition-colors cursor-pointer group"
-                                    >
-                                      <div className="w-6 h-6 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                                        <Edit2 className="w-3.5 h-3.5" />
-                                      </div>
-                                      <div className="min-w-0 text-left">
-                                        <span>Edit User</span>
-                                        <p className="text-[10px] text-slate-400 font-normal">Modify profile & role</p>
-                                      </div>
-                                    </button>
-
-                                    {/* WhatsApp Direct Option */}
-                                    <button
-                                      type="button"
-                                      onClick={() => handleWhatsAppRedirect(u)}
-                                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors cursor-pointer group"
-                                    >
-                                      <div className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                                        <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
-                                          <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0012.04 2m.01 1.67c4.54 0 8.24 3.7 8.24 8.24 0 2.2-.86 4.28-2.42 5.84-1.56 1.56-3.64 2.4-5.83 2.4-1.46 0-2.89-.39-4.14-1.13l-.3-.18-3.12.82.83-3.04-.2-.31a8.19 8.19 0 01-1.26-4.4c0-4.54 3.7-8.24 8.2-8.24m4.53 11.64c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.25-.75-.67-1.25-1.5-1.4-1.75-.14-.25-.02-.39.11-.51.11-.11.25-.29.37-.43.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1s.9 2.44 1.03 2.61c.13.17 1.77 2.7 4.29 3.79.6.26 1.07.41 1.43.53.6.19 1.15.16 1.58.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.15-1.18-.06-.1-.23-.17-.48-.29z"/>
-                                        </svg>
-                                      </div>
-                                      <div className="min-w-0 text-left">
-                                        <div className="flex items-center gap-1">
-                                          <span>WhatsApp Direct</span>
-                                          <ExternalLink className="w-2.5 h-2.5 opacity-60" />
-                                        </div>
-                                        <p className="text-[10px] text-slate-400 font-normal truncate">
-                                          {u.phone ? `Chat with ${u.phone}` : 'Open WhatsApp'}
-                                        </p>
-                                      </div>
-                                    </button>
-
-                                    {/* Email Option */}
-                                    <a
-                                      href={`mailto:${u.email}`}
-                                      onClick={() => setActiveDropdownUserId(null)}
-                                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-sky-50 hover:text-sky-700 transition-colors cursor-pointer group"
-                                    >
-                                      <div className="w-6 h-6 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                                        <Mail className="w-3.5 h-3.5" />
-                                      </div>
-                                      <div className="min-w-0 text-left">
-                                        <span>Send Email</span>
-                                        <p className="text-[10px] text-slate-400 font-normal truncate">{u.email}</p>
-                                      </div>
-                                    </a>
-
-                                    <div className="h-px bg-slate-100 my-1" />
-
-                                    {/* Delete Option */}
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setActiveDropdownUserId(null)
-                                        handleDelete(u.id, u.name)
-                                      }}
-                                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer group"
-                                    >
-                                      <div className="w-6 h-6 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                                        <Trash2 className="w-3.5 h-3.5" />
-                                      </div>
-                                      <div className="min-w-0 text-left">
-                                        <span>Delete Account</span>
-                                        <p className="text-[10px] text-rose-400 font-normal">Remove permanently</p>
-                                      </div>
-                                    </button>
-                                  </div>
+                                  <p className="text-xs font-bold text-slate-800 truncate mt-1">
+                                    {u.name}
+                                  </p>
+                                  <p className="text-[11px] text-slate-400 font-mono truncate">
+                                    {u.email}
+                                  </p>
                                 </div>
-                              )}
-                            </div>
+
+                                <div className="space-y-0.5">
+                                  {/* 1. Edit User Profile & Role */}
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setActiveDropdownUserId(null)
+                                      openEditModal(u)
+                                    }}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-[#f5eeff] hover:text-purple-700 transition-colors cursor-pointer group"
+                                  >
+                                    <div className="w-6 h-6 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                                      <Edit2 className="w-3.5 h-3.5" />
+                                    </div>
+                                    <div className="min-w-0 text-left">
+                                      <span className="block font-bold">Edit Profile</span>
+                                      <p className="text-[10px] text-slate-400 font-normal">Modify name, email, phone & role</p>
+                                    </div>
+                                  </button>
+
+                                  {/* 2. Direct WhatsApp Redirect */}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleWhatsAppRedirect(u)}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors cursor-pointer group"
+                                  >
+                                    <div className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                                      <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                                        <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0012.04 2m.01 1.67c4.54 0 8.24 3.7 8.24 8.24 0 2.2-.86 4.28-2.42 5.84-1.56 1.56-3.64 2.4-5.83 2.4-1.46 0-2.89-.39-4.14-1.13l-.3-.18-3.12.82.83-3.04-.2-.31a8.19 8.19 0 01-1.26-4.4c0-4.54 3.7-8.24 8.2-8.24m4.53 11.64c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.25-.75-.67-1.25-1.5-1.4-1.75-.14-.25-.02-.39.11-.51.11-.11.25-.29.37-.43.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1s.9 2.44 1.03 2.61c.13.17 1.77 2.7 4.29 3.79.6.26 1.07.41 1.43.53.6.19 1.15.16 1.58.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.15-1.18-.06-.1-.23-.17-.48-.29z"/>
+                                      </svg>
+                                    </div>
+                                    <div className="min-w-0 text-left">
+                                      <div className="flex items-center gap-1">
+                                        <span className="font-bold">WhatsApp Direct</span>
+                                        <ExternalLink className="w-2.5 h-2.5 opacity-60" />
+                                      </div>
+                                      <p className="text-[10px] text-slate-400 font-normal truncate">
+                                        {u.phone ? `Chat: ${u.phone}` : 'Open WhatsApp chat'}
+                                      </p>
+                                    </div>
+                                  </button>
+
+                                  {/* 3. Direct Phone Call */}
+                                  <a
+                                    href={u.phone ? `tel:${u.phone.replace(/[^\d+]/g, '')}` : undefined}
+                                    onClick={(e) => {
+                                      if (!u.phone) {
+                                        e.preventDefault()
+                                        triggerToast(`No phone contact registered for ${u.name}.`)
+                                      } else {
+                                        setActiveDropdownUserId(null)
+                                      }
+                                    }}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors cursor-pointer group"
+                                  >
+                                    <div className="w-6 h-6 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                                      <Phone className="w-3.5 h-3.5" />
+                                    </div>
+                                    <div className="min-w-0 text-left">
+                                      <span className="font-bold">Direct Phone Call</span>
+                                      <p className="text-[10px] text-slate-400 font-normal truncate">{u.phone || 'No phone registered'}</p>
+                                    </div>
+                                  </a>
+
+                                  {/* 4. Send Email */}
+                                  <a
+                                    href={`mailto:${u.email}`}
+                                    onClick={() => setActiveDropdownUserId(null)}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-sky-50 hover:text-sky-700 transition-colors cursor-pointer group"
+                                  >
+                                    <div className="w-6 h-6 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                                      <Mail className="w-3.5 h-3.5" />
+                                    </div>
+                                    <div className="min-w-0 text-left">
+                                      <span className="font-bold">Send Email</span>
+                                      <p className="text-[10px] text-slate-400 font-normal truncate">{u.email}</p>
+                                    </div>
+                                  </a>
+
+                                  {/* 5. Toggle Active/Inactive Status */}
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setActiveDropdownUserId(null)
+                                      toggleUserStatus(u)
+                                    }}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-amber-50 hover:text-amber-800 transition-colors cursor-pointer group"
+                                  >
+                                    <div className="w-6 h-6 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                                      <CheckCircle2 className="w-3.5 h-3.5" />
+                                    </div>
+                                    <div className="min-w-0 text-left">
+                                      <span className="font-bold">{(u.status || 'Active').toLowerCase() === 'active' ? 'Deactivate User' : 'Activate User'}</span>
+                                      <p className="text-[10px] text-slate-400 font-normal">Toggle active/inactive status</p>
+                                    </div>
+                                  </button>
+
+                                  {/* 6. Password Reset / Send Credentials */}
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setActiveDropdownUserId(null)
+                                      triggerToast(`Password reset link dispatched to ${u.email}.`)
+                                    }}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-purple-50 hover:text-purple-700 transition-colors cursor-pointer group"
+                                  >
+                                    <div className="w-6 h-6 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                                      <KeyRound className="w-3.5 h-3.5" />
+                                    </div>
+                                    <div className="min-w-0 text-left">
+                                      <span className="font-bold">Reset Password</span>
+                                      <p className="text-[10px] text-slate-400 font-normal">Send secure reset credentials</p>
+                                    </div>
+                                  </button>
+
+                                  <div className="h-px bg-slate-100 my-1" />
+
+                                  {/* 7. Delete User Account */}
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setActiveDropdownUserId(null)
+                                      handleDelete(u.id, u.name)
+                                    }}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer group"
+                                  >
+                                    <div className="w-6 h-6 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </div>
+                                    <div className="min-w-0 text-left">
+                                      <span className="font-bold">Delete Account</span>
+                                      <p className="text-[10px] text-rose-400 font-normal">Remove permanently</p>
+                                    </div>
+                                  </button>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </td>
                       </tr>
