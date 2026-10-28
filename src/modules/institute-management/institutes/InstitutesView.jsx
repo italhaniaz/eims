@@ -21,6 +21,7 @@ import {
   ArrowDown, 
   ChevronLeft, 
   ChevronRight,
+  ChevronDown,
   ShieldCheck,
   CheckCircle2,
   Layers,
@@ -45,6 +46,15 @@ import {
   GraduationCap,
   Copy
 } from 'lucide-react'
+import { 
+  GEOGRAPHIC_REGISTRY,
+  getAvailableCountries,
+  getCountryDivisions,
+  getCountryBoards,
+  getCountryProvinces,
+  getProvinceCities,
+  getProvinceCapital
+} from '../../../data/geographicData'
 import { useAppData } from '../../../context/AppDataContext'
 import { useAuth } from '../../../context/AuthContext'
 import { useToast } from '../../../context/ToastContext'
@@ -127,13 +137,15 @@ export const InstitutesView = () => {
     enabledTiers: ['school'],
     name: '',
     code: '',
-    affiliatedBoard: examinationBodies[0]?.code || 'BISE Lahore',
-    divisionId: divisions[0]?.id || '',
-    districtId: districts[0]?.id || '',
+    country: 'Pakistan',
+    affiliatedBoard: 'BISE Lahore (Board of Intermediate & Secondary Education)',
+    divisionId: 'div-lhr',
+    districtId: '',
     principal: '',
     // Step 2: Campuses
     city: 'Lahore',
     province: 'Punjab',
+    customCity: '',
     address: '',
     campuses: [
       { name: 'Main Campus', city: 'Lahore', address: '' }
@@ -179,6 +191,90 @@ export const InstitutesView = () => {
 
   const [wizardData, setWizardData] = useState(initialWizardState)
   const [wizardErrors, setWizardErrors] = useState({})
+  const [isCustomCityMode, setIsCustomCityMode] = useState(false)
+
+  // Geographic calculations for wizardData
+  const currentCountryConfig = useMemo(() => {
+    return GEOGRAPHIC_REGISTRY[wizardData.country] || GEOGRAPHIC_REGISTRY['Pakistan']
+  }, [wizardData.country])
+
+  const availableProvinces = useMemo(() => {
+    return Object.keys(currentCountryConfig.provinces || {})
+  }, [currentCountryConfig])
+
+  const availableCities = useMemo(() => {
+    const prov = wizardData.province || availableProvinces[0]
+    return currentCountryConfig.provinces?.[prov]?.cities || []
+  }, [currentCountryConfig, wizardData.province, availableProvinces])
+
+  const currentCapitalCity = useMemo(() => {
+    const prov = wizardData.province || availableProvinces[0]
+    return currentCountryConfig.provinces?.[prov]?.capitalCity || availableCities[0] || 'Lahore'
+  }, [currentCountryConfig, wizardData.province, availableCities, availableProvinces])
+
+  // Country selection handler - Cascades to boards, divisions, province and city
+  const handleWizardCountryChange = (selectedCountry) => {
+    const countryConfig = GEOGRAPHIC_REGISTRY[selectedCountry] || GEOGRAPHIC_REGISTRY['Pakistan']
+    const firstDivision = countryConfig.divisions[0]?.id || ''
+    const firstBoard = countryConfig.boards[0]?.name || countryConfig.boards[0]?.code || ''
+    const availableProvincesList = Object.keys(countryConfig.provinces || {})
+    const firstProvince = availableProvincesList[0] || 'Punjab'
+    const provinceConfig = countryConfig.provinces?.[firstProvince]
+    const firstCity = provinceConfig?.capitalCity || provinceConfig?.cities?.[0] || 'Lahore'
+
+    setIsCustomCityMode(false)
+    setWizardData(prev => ({
+      ...prev,
+      country: selectedCountry,
+      divisionId: firstDivision,
+      affiliatedBoard: firstBoard,
+      province: firstProvince,
+      city: firstCity,
+      customCity: '',
+      phone: prev.phone ? prev.phone : (countryConfig.phoneCode ? `${countryConfig.phoneCode} ` : ''),
+      campuses: prev.campuses.map((c, i) => i === 0 ? { ...c, city: firstCity } : c)
+    }))
+
+    if (wizardErrors.country) setWizardErrors(prev => ({ ...prev, country: null }))
+  }
+
+  // Province selection handler in Step 2 - Auto-detects primary/capital city and updates city dropdown
+  const handleWizardProvinceChange = (selectedProvince) => {
+    const autoDetectedCity = getProvinceCapital(wizardData.country || 'Pakistan', selectedProvince)
+    setIsCustomCityMode(false)
+    setWizardData(prev => ({
+      ...prev,
+      province: selectedProvince,
+      city: autoDetectedCity,
+      customCity: '',
+      campuses: prev.campuses.map((c, i) => i === 0 ? { ...c, city: autoDetectedCity } : c)
+    }))
+
+    if (wizardErrors.province) setWizardErrors(prev => ({ ...prev, province: null }))
+    if (wizardErrors.city) setWizardErrors(prev => ({ ...prev, city: null }))
+  }
+
+  // City selection handler in Step 2
+  const handleWizardCityChange = (selectedCity) => {
+    setWizardData(prev => ({
+      ...prev,
+      city: selectedCity,
+      customCity: '',
+      campuses: prev.campuses.map((c, i) => i === 0 ? { ...c, city: selectedCity } : c)
+    }))
+    if (wizardErrors.city) setWizardErrors(prev => ({ ...prev, city: null }))
+  }
+
+  // Custom city text input handler
+  const handleCustomCityChange = (cityName) => {
+    setWizardData(prev => ({
+      ...prev,
+      city: cityName,
+      customCity: cityName,
+      campuses: prev.campuses.map((c, i) => i === 0 ? { ...c, city: cityName } : c)
+    }))
+    if (wizardErrors.city) setWizardErrors(prev => ({ ...prev, city: null }))
+  }
 
   // Tier selection handler - auto-syncs plan, code prefix and quota limits
   const handleTierSelection = (selectedTierId) => {
@@ -216,14 +312,26 @@ export const InstitutesView = () => {
   }
 
   const openOnboardingWizard = () => {
+    const defaultCountry = 'Pakistan'
+    const countryConfig = GEOGRAPHIC_REGISTRY[defaultCountry]
+    const defaultProvince = Object.keys(countryConfig.provinces)[0]
+    const defaultCity = countryConfig.provinces[defaultProvince].capitalCity
+    setIsCustomCityMode(false)
     setWizardData({
       ...initialWizardState,
+      country: defaultCountry,
+      province: defaultProvince,
+      city: defaultCity,
+      customCity: '',
       planTier: 'School Plan',
       quotaStudents: 1500,
       code: `SCH-${Math.floor(100 + Math.random() * 900)}`,
-      divisionId: divisions[0]?.id || '',
-      districtId: districts[0]?.id || '',
-      affiliatedBoard: examinationBodies[0]?.code || 'BISE Lahore'
+      divisionId: countryConfig.divisions[0]?.id || 'div-lhr',
+      districtId: '',
+      affiliatedBoard: countryConfig.boards[0]?.name || countryConfig.boards[0]?.code || 'BISE Lahore',
+      campuses: [
+        { name: 'Main Campus', city: defaultCity, address: '' }
+      ]
     })
     setWizardErrors({})
     setWizardStep(1)
@@ -234,6 +342,9 @@ export const InstitutesView = () => {
     const errors = {}
 
     if (wizardStep === 1) {
+      if (!wizardData.country?.trim()) {
+        errors.country = 'Country / Jurisdiction is required'
+      }
       if (!wizardData.name?.trim()) {
         errors.name = 'Official Institute Name is required'
       }
@@ -256,6 +367,9 @@ export const InstitutesView = () => {
         return
       }
     } else if (wizardStep === 2) {
+      if (!wizardData.province?.trim()) {
+        errors.province = 'Province / State is required'
+      }
       if (!wizardData.city?.trim()) {
         errors.city = 'Primary Campus City is required'
       }
@@ -1341,39 +1455,99 @@ export const InstitutesView = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Affiliated Examination Board</label>
+              {/* Country Selection */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider flex items-center gap-1">
+                    <span>Country / Geographic Jurisdiction</span>
+                    <span className="text-rose-500 font-bold">*</span>
+                  </label>
+                  <span className="text-[11px] text-purple-700 font-medium bg-[#f5eeff] px-2 py-0.5 rounded-md border border-purple-200/60 flex items-center gap-1">
+                    <Globe className="w-3 h-3 text-purple-600" />
+                    <span>Auto-configures Boards & Divisions</span>
+                  </span>
+                </div>
+                <div className="relative">
                   <select
-                    value={wizardData.affiliatedBoard}
-                    onChange={(e) => setWizardData({ ...wizardData, affiliatedBoard: e.target.value })}
-                    className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                    value={wizardData.country || 'Pakistan'}
+                    onChange={(e) => handleWizardCountryChange(e.target.value)}
+                    className={`w-full px-3.5 py-2.5 text-xs font-semibold rounded-lg border bg-white transition-all appearance-none cursor-pointer focus:outline-none focus:ring-2 ${
+                      wizardErrors.country 
+                        ? 'border-rose-400 bg-rose-50/20 ring-2 ring-rose-200/50' 
+                        : 'border-slate-200 hover:border-slate-300 focus:ring-purple-500/20 text-slate-800'
+                    }`}
                   >
-                    {examinationBodies.length > 0 ? (
-                      examinationBodies.map(ex => <option key={ex.id} value={ex.code || ex.name}>{ex.name}</option>)
-                    ) : (
-                      <>
-                        <option value="BISE Lahore">BISE Lahore</option>
-                        <option value="Federal Board (FBISE)">Federal Board (FBISE)</option>
-                        <option value="Cambridge Assessment (CAIE)">Cambridge Assessment (CAIE)</option>
-                      </>
-                    )}
+                    {getAvailableCountries().map(c => (
+                      <option key={c.name} value={c.name}>
+                        {c.flag} {c.name} ({c.phoneCode})
+                      </option>
+                    ))}
                   </select>
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                    <ChevronDown className="w-4 h-4" />
+                  </div>
+                </div>
+                {wizardErrors.country && (
+                  <p className="text-[11px] text-rose-600 mt-1 font-medium">{wizardErrors.country}</p>
+                )}
+              </div>
+
+              {/* Dynamic Regional Division & Examination Board (Driven by Selected Country) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-semibold text-slate-700 uppercase flex items-center gap-1">
+                      <span>Affiliated Examination Board</span>
+                      <span className="text-rose-500 font-bold">*</span>
+                    </label>
+                    <span className="text-[10px] text-slate-400 font-medium">
+                      {getCountryBoards(wizardData.country).length} Boards
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <select
+                      value={wizardData.affiliatedBoard}
+                      onChange={(e) => setWizardData({ ...wizardData, affiliatedBoard: e.target.value })}
+                      className="w-full px-3.5 py-2 text-xs font-medium rounded-lg border border-slate-200 bg-white hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20 appearance-none pr-8 cursor-pointer text-slate-800"
+                    >
+                      {getCountryBoards(wizardData.country).map(b => (
+                        <option key={b.id || b.code} value={b.name || b.code}>
+                          {b.name}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </div>
+                  </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Regional Division</label>
-                  <select
-                    value={wizardData.divisionId}
-                    onChange={(e) => setWizardData({ ...wizardData, divisionId: e.target.value })}
-                    className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
-                  >
-                    {divisions.length > 0 ? (
-                      divisions.map(d => <option key={d.id} value={d.id}>{d.name}</option>)
-                    ) : (
-                      <option value="lhr">Lahore Division</option>
-                    )}
-                  </select>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-semibold text-slate-700 uppercase flex items-center gap-1">
+                      <span>Regional Division</span>
+                      <span className="text-rose-500 font-bold">*</span>
+                    </label>
+                    <span className="text-[10px] text-slate-400 font-medium">
+                      {getCountryDivisions(wizardData.country).length} Divisions
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <select
+                      value={wizardData.divisionId}
+                      onChange={(e) => setWizardData({ ...wizardData, divisionId: e.target.value })}
+                      className="w-full px-3.5 py-2 text-xs font-medium rounded-lg border border-slate-200 bg-white hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20 appearance-none pr-8 cursor-pointer text-slate-800"
+                    >
+                      {getCountryDivisions(wizardData.country).map(d => (
+                        <option key={d.id} value={d.id}>
+                          {d.name}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1382,39 +1556,134 @@ export const InstitutesView = () => {
           {/* Step 2: Campuses */}
           {wizardStep === 2 && (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
+              {/* Province / State & Primary Campus City */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* 1. Province / State (Dropdown populated based on Step 1 Country) */}
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
-                    Primary Campus City <span className="text-rose-500 font-bold">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Lahore"
-                    value={wizardData.city}
-                    onChange={(e) => {
-                      setWizardData({ ...wizardData, city: e.target.value })
-                      if (wizardErrors.city) setWizardErrors(prev => ({ ...prev, city: null }))
-                    }}
-                    className={`w-full px-3.5 py-2 text-xs rounded-lg border transition-all focus:outline-none focus:ring-2 ${
-                      wizardErrors.city 
-                        ? 'border-rose-400 bg-rose-50/20 ring-2 ring-rose-200/50' 
-                        : 'border-slate-200 focus:ring-purple-500/20'
-                    }`}
-                  />
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-semibold text-slate-700 uppercase flex items-center gap-1">
+                      <span>Province / State</span>
+                      <span className="text-rose-500 font-bold">*</span>
+                    </label>
+                    <span className="text-[10px] text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-100 font-medium">
+                      {wizardData.country || 'Pakistan'}
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <select
+                      value={wizardData.province || availableProvinces[0]}
+                      onChange={(e) => handleWizardProvinceChange(e.target.value)}
+                      className={`w-full px-3.5 py-2 text-xs font-semibold rounded-lg border bg-white appearance-none pr-8 cursor-pointer transition-all focus:outline-none focus:ring-2 ${
+                        wizardErrors.province 
+                          ? 'border-rose-400 bg-rose-50/20 ring-2 ring-rose-200/50' 
+                          : 'border-slate-200 hover:border-slate-300 focus:ring-purple-500/20 text-slate-800'
+                      }`}
+                    >
+                      {availableProvinces.map(provName => (
+                        <option key={provName} value={provName}>
+                          {provName}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </div>
+                  </div>
+                  {wizardErrors.province && (
+                    <p className="text-[11px] text-rose-600 mt-1 font-medium">{wizardErrors.province}</p>
+                  )}
+                </div>
+
+                {/* 2. Primary Campus City (Auto-detected from Province + Dropdown List) */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-semibold text-slate-700 uppercase flex items-center gap-1">
+                      <span>Primary Campus City</span>
+                      <span className="text-rose-500 font-bold">*</span>
+                    </label>
+                    <div className="flex items-center gap-1.5">
+                      {wizardData.city === currentCapitalCity && !isCustomCityMode && (
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-1.5 py-0.5 rounded flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                          <span>Auto-Detected</span>
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nextMode = !isCustomCityMode
+                          setIsCustomCityMode(nextMode)
+                          if (!nextMode && !availableCities.includes(wizardData.city)) {
+                            handleWizardCityChange(currentCapitalCity || availableCities[0] || 'Lahore')
+                          }
+                        }}
+                        className="text-[10px] text-purple-600 hover:text-purple-800 font-semibold underline cursor-pointer"
+                      >
+                        {isCustomCityMode ? 'Select from list' : '+ Custom city'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {!isCustomCityMode ? (
+                    <div className="relative">
+                      <select
+                        value={availableCities.includes(wizardData.city) ? wizardData.city : '__CUSTOM__'}
+                        onChange={(e) => {
+                          const val = e.target.value
+                          if (val === '__CUSTOM__') {
+                            setIsCustomCityMode(true)
+                          } else {
+                            handleWizardCityChange(val)
+                          }
+                        }}
+                        className={`w-full px-3.5 py-2 text-xs font-medium rounded-lg border bg-white appearance-none pr-8 cursor-pointer transition-all focus:outline-none focus:ring-2 ${
+                          wizardErrors.city 
+                            ? 'border-rose-400 bg-rose-50/20 ring-2 ring-rose-200/50' 
+                            : 'border-slate-200 hover:border-slate-300 focus:ring-purple-500/20 text-slate-800'
+                        }`}
+                      >
+                        {availableCities.map(cityName => (
+                          <option key={cityName} value={cityName}>
+                            {cityName} {cityName === currentCapitalCity ? '★ (Capital / Primary City)' : ''}
+                          </option>
+                        ))}
+                        <option value="__CUSTOM__">+ Other / Enter Custom City...</option>
+                      </select>
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                        <ChevronDown className="w-3.5 h-3.5" />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        required
+                        placeholder={`e.g. ${availableCities[0] || 'Kasur'}`}
+                        value={wizardData.city}
+                        onChange={(e) => handleCustomCityChange(e.target.value)}
+                        className={`w-full px-3.5 py-2 text-xs rounded-lg border transition-all focus:outline-none focus:ring-2 ${
+                          wizardErrors.city 
+                            ? 'border-rose-400 bg-rose-50/20 ring-2 ring-rose-200/50' 
+                            : 'border-slate-200 focus:ring-purple-500/20'
+                        }`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsCustomCityMode(false)
+                          handleWizardCityChange(currentCapitalCity || availableCities[0] || 'Lahore')
+                        }}
+                        className="px-2.5 py-1 text-[11px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg shrink-0 cursor-pointer"
+                        title="Return to standard city dropdown list"
+                      >
+                        List
+                      </button>
+                    </div>
+                  )}
+
                   {wizardErrors.city && (
                     <p className="text-[11px] text-rose-600 mt-1 font-medium">{wizardErrors.city}</p>
                   )}
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Province / State</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Punjab"
-                    value={wizardData.province}
-                    onChange={(e) => setWizardData({ ...wizardData, province: e.target.value })}
-                    className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
-                  />
                 </div>
               </div>
 

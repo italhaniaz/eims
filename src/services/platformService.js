@@ -498,6 +498,7 @@ export const PlatformService = {
       name: wizardData.name,
       code: wizardData.code.toUpperCase().trim(),
       type: wizardData.type || 'School', // School, College, University
+      country: wizardData.country || 'Pakistan',
       city: wizardData.city || 'Lahore',
       province: wizardData.province || 'Punjab',
       divisionId: wizardData.divisionId || null,
@@ -505,7 +506,7 @@ export const PlatformService = {
       principal: wizardData.principal || 'In-Charge Principal',
       email: wizardData.email || 'info@campus.edu',
       phone: wizardData.phone || '+92 300 0000000',
-      address: wizardData.address || `${wizardData.city}, Pakistan`,
+      address: wizardData.address || `${wizardData.city || 'Lahore'}, ${wizardData.province || ''}, ${wizardData.country || 'Pakistan'}`,
       affiliatedBoard: wizardData.affiliatedBoard || 'BISE Lahore',
       slug: wizardData.slug || wizardData.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
       primaryColor: wizardData.primaryColor || '#2563eb',
