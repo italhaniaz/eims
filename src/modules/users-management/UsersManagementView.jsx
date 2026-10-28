@@ -30,10 +30,11 @@ import { SYSTEM_ROLES, DEFAULT_RBAC_PERMISSIONS, getRoleMeta } from '../../const
 import Modal from '../../components/common/Modal'
 
 export const UsersManagementView = ({ defaultTab = 'all' }) => {
-  const { users, stats, addItem, updateItem, deleteItem, institutes } = useAppData()
+  const { users = [], stats, addItem, updateItem, deleteItem, institutes = [] } = useAppData()
   const [activeTab, setActiveTab] = useState(defaultTab) // 'all' | 'roles'
   const [searchTerm, setSearchTerm] = useState('')
   const [roleFilter, setRoleFilter] = useState('ALL')
+  const [statusFilter, setStatusFilter] = useState('ACTIVE') // Default to active users only
   const [selectedRoleCard, setSelectedRoleCard] = useState('superadmin')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingUser, setEditingUser] = useState(null)
@@ -148,9 +149,10 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
   }
 
   const toggleUserStatus = async (user) => {
-    const nextStatus = user.status === 'Active' ? 'Inactive' : 'Active'
+    const isCurrentlyActive = (user.status || 'Active').toLowerCase() === 'active'
+    const nextStatus = isCurrentlyActive ? 'Inactive' : 'Active'
     await updateItem('users', user.id, { status: nextStatus })
-    triggerToast(`User status set to ${nextStatus}.`)
+    triggerToast(`User "${user.name}" status updated to ${nextStatus}${statusFilter === 'ACTIVE' && nextStatus === 'Inactive' ? ' (moved to Inactive view)' : ''}.`)
   }
 
   const getRoleBadgeStyle = (role) => {
@@ -172,12 +174,27 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
     }
   }
 
-  const filtered = users.filter(u => {
-    const matchesSearch = u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (u.institute && u.institute.toLowerCase().includes(searchTerm.toLowerCase()))
+  // Active / Inactive user counts
+  const activeUsersCount = (users || []).filter(u => (u.status || 'Active').toLowerCase() === 'active').length
+  const inactiveUsersCount = (users || []).filter(u => (u.status || 'Active').toLowerCase() !== 'active').length
+
+  // User filtering logic (Search, Role, and Status: Default to Active Only as requested)
+  const filtered = (users || []).filter(u => {
+    const nameMatch = (u.name || '').toLowerCase().includes(searchTerm.toLowerCase())
+    const emailMatch = (u.email || '').toLowerCase().includes(searchTerm.toLowerCase())
+    const instMatch = (u.institute || '').toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = nameMatch || emailMatch || instMatch
+
     const matchesRole = roleFilter === 'ALL' || u.role === roleFilter
-    return matchesSearch && matchesRole
+
+    const isUserActive = (u.status || 'Active').toLowerCase() === 'active'
+    const matchesStatus = statusFilter === 'ALL' 
+      ? true 
+      : statusFilter === 'ACTIVE' 
+        ? isUserActive 
+        : !isUserActive
+
+    return matchesSearch && matchesRole && matchesStatus
   })
 
   const activeRoleDetails = SYSTEM_ROLES.find(r => r.id === selectedRoleCard) || SYSTEM_ROLES[0]
@@ -238,7 +255,13 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
             }`}
           >
             <Users className="w-4 h-4" />
-            <span>All Platform Users ({users.length})</span>
+            <span>
+              {statusFilter === 'ACTIVE'
+                ? `Active Users (${filtered.length})`
+                : statusFilter === 'INACTIVE'
+                ? `Inactive Users (${filtered.length})`
+                : `All Platform Users (${users.length})`}
+            </span>
           </button>
           <button
             onClick={() => setActiveTab('roles')}
@@ -257,7 +280,8 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
       {activeTab === 'all' ? (
         <>
           {/* Filter and Search Bar */}
-          <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3.5">
+            {/* Search Input */}
             <div className="relative flex-1 w-full max-w-md">
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
@@ -269,18 +293,42 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
               />
             </div>
 
-            <div className="flex items-center gap-3 w-full sm:w-auto">
-              <span className="text-xs font-semibold text-slate-500">Filter by Role:</span>
-              <select
-                value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value)}
-                className="px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 bg-white"
-              >
-                <option value="ALL">All Roles ({users.length})</option>
-                {SYSTEM_ROLES.map(r => (
-                  <option key={r.id} value={r.id}>{r.name}</option>
-                ))}
-              </select>
+            {/* Filter Controls */}
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Status Filter: Default to Active Only */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-slate-500 whitespace-nowrap">Status:</span>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-xl border transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500/20 ${
+                    statusFilter === 'ACTIVE'
+                      ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                      : statusFilter === 'INACTIVE'
+                      ? 'bg-rose-50 text-rose-800 border-rose-200'
+                      : 'bg-white text-slate-700 border-slate-200'
+                  }`}
+                >
+                  <option value="ACTIVE">Active Users ({activeUsersCount})</option>
+                  <option value="ALL">All Users ({users.length})</option>
+                  <option value="INACTIVE">Inactive Users ({inactiveUsersCount})</option>
+                </select>
+              </div>
+
+              {/* Role Filter */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-slate-500 whitespace-nowrap">Filter by Role:</span>
+                <select
+                  value={roleFilter}
+                  onChange={(e) => setRoleFilter(e.target.value)}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 bg-white text-slate-700 cursor-pointer"
+                >
+                  <option value="ALL">All Roles ({filtered.length})</option>
+                  {SYSTEM_ROLES.map(r => (
+                    <option key={r.id} value={r.id}>{r.shortName || r.name}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
 
@@ -289,12 +337,12 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-semibold border-b border-slate-200">
                 <tr>
-                  <th className="px-6 py-4">User Details</th>
-                  <th className="px-6 py-4">System Role</th>
-                  <th className="px-6 py-4">Institute Affiliation</th>
-                  <th className="px-6 py-4">Phone Contact</th>
-                  <th className="px-6 py-4 text-center">Status</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
+                  <th className="px-6 py-4 whitespace-nowrap">User Details</th>
+                  <th className="px-6 py-4 whitespace-nowrap">System Role</th>
+                  <th className="px-6 py-4 whitespace-nowrap">Institute Affiliation</th>
+                  <th className="px-6 py-4 whitespace-nowrap">Phone Contact</th>
+                  <th className="px-6 py-4 text-center whitespace-nowrap">Status</th>
+                  <th className="px-6 py-4 text-right whitespace-nowrap">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -303,7 +351,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
                     const roleMeta = getRoleMeta(u.role)
                     return (
                       <tr key={u.id} className="hover:bg-slate-50/70 transition-colors">
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-3">
                             <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-xs uppercase shadow-2xs">
                               {u.name.charAt(0)}
@@ -314,42 +362,45 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
-                          <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border uppercase ${getRoleBadgeStyle(u.role)}`}>
-                            {roleMeta.shortName || u.role.replace('_', ' ')}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border whitespace-nowrap shadow-2xs ${getRoleBadgeStyle(u.role)}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${roleMeta?.dotColor || 'bg-purple-600'}`}></span>
+                            <span>{roleMeta?.shortName || (u.role ? u.role.replace('_', ' ') : 'User')}</span>
                           </span>
                         </td>
                         <td className="px-6 py-4 text-xs text-slate-600 font-medium">
                           {u.institute || 'Global HQ'}
                         </td>
-                        <td className="px-6 py-4 text-xs font-mono text-slate-500">
+                        <td className="px-6 py-4 text-xs font-mono text-slate-500 whitespace-nowrap">
                           {u.phone || '—'}
                         </td>
-                        <td className="px-6 py-4 text-center">
+                        <td className="px-6 py-4 text-center whitespace-nowrap">
                           <button
+                            type="button"
                             onClick={() => toggleUserStatus(u)}
-                            className={`text-xs font-semibold px-2.5 py-1 rounded-full border transition-all ${
-                              u.status === 'Active'
-                                ? 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100'
-                                : 'bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-100'
+                            className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full border transition-all cursor-pointer whitespace-nowrap shadow-2xs ${
+                              (u.status || 'Active').toLowerCase() === 'active'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                                : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'
                             }`}
                             title="Click to toggle status"
                           >
-                            {u.status || 'Active'}
+                            <span className={`w-1.5 h-1.5 rounded-full ${(u.status || 'Active').toLowerCase() === 'active' ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
+                            <span>{u.status || 'Active'}</span>
                           </button>
                         </td>
-                        <td className="px-6 py-4 text-right">
+                        <td className="px-6 py-4 text-right whitespace-nowrap">
                           <div className="flex items-center justify-end gap-2">
                             <button 
                               onClick={() => openEditModal(u)} 
-                              className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                              className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors cursor-pointer"
                               title="Edit user"
                             >
                               <Edit2 className="w-4 h-4" />
                             </button>
                             <button 
                               onClick={() => handleDelete(u.id, u.name)} 
-                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                               title="Delete user"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -363,16 +414,36 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
                   <tr>
                     <td colSpan={6} className="px-6 py-12 text-center text-slate-400">
                       <Users className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-                      <p className="text-sm font-semibold text-slate-700">No Users Found</p>
-                      <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-                        Register institute administrators, teachers, accountants, or platform managers.
+                      <p className="text-sm font-semibold text-slate-700">
+                        {statusFilter === 'ACTIVE' 
+                          ? 'No Active Users Found' 
+                          : statusFilter === 'INACTIVE' 
+                          ? 'No Inactive Users Found' 
+                          : 'No Users Found'}
                       </p>
-                      <button
-                        onClick={openAddModal}
-                        className="mt-3 px-4 py-2 bg-purple-600 text-white rounded-xl text-xs font-semibold shadow hover:bg-purple-700 transition-all active:scale-95"
-                      >
-                        Add New User
-                      </button>
+                      <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                        {statusFilter === 'ACTIVE'
+                          ? 'There are currently no active users matching your criteria. Try changing the status filter to "All Users".'
+                          : 'Register institute administrators, teachers, accountants, or platform managers.'}
+                      </p>
+                      <div className="flex items-center justify-center gap-2 mt-3">
+                        {statusFilter !== 'ALL' && (
+                          <button
+                            type="button"
+                            onClick={() => setStatusFilter('ALL')}
+                            className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+                          >
+                            Show All Users
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={openAddModal}
+                          className="px-4 py-2 bg-purple-600 text-white rounded-xl text-xs font-semibold shadow hover:bg-purple-700 transition-all active:scale-95 cursor-pointer"
+                        >
+                          Add New User
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 )}
@@ -454,7 +525,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
                       <h3 className="text-lg font-bold text-slate-900 tracking-tight">
                         {activeRoleDetails.name}
                       </h3>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${activeRoleDetails.badgeClass}`}>
+                      <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border whitespace-nowrap inline-flex items-center ${activeRoleDetails.badgeClass}`}>
                         {activeRoleDetails.tierLevel}
                       </span>
                     </div>
