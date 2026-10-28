@@ -714,3 +714,34 @@ export const getProvinceCapital = (countryName, provinceName) => {
   const province = country.provinces?.[provinceName]
   return province?.capitalCity || province?.cities?.[0] || ''
 }
+
+/**
+ * Returns typical phone placeholder based on country calling code
+ */
+export const getPhonePlaceholder = (dialCode) => {
+  switch (dialCode) {
+    case '+92':
+      return 'e.g. 300 1234567 or 42 35789012'
+    case '+971':
+      return 'e.g. 50 1234567 or 4 1234567'
+    case '+966':
+      return 'e.g. 50 1234567 or 11 1234567'
+    case '+44':
+      return 'e.g. 7123 456789 or 20 7946 0912'
+    case '+1':
+      return 'e.g. 555 123 4567'
+    case '+974':
+      return 'e.g. 3312 3456'
+    case '+968':
+      return 'e.g. 9123 4567'
+    case '+973':
+      return 'e.g. 3612 3456'
+    case '+965':
+      return 'e.g. 9123 4567'
+    case '+61':
+      return 'e.g. 412 345 678'
+    default:
+      return 'e.g. 300 1234567'
+  }
+}
+
