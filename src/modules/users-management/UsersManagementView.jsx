@@ -26,6 +26,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Settings,
+  Eye,
   MessageCircle,
   ExternalLink
 } from 'lucide-react'
@@ -42,6 +43,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
   const [selectedRoleCard, setSelectedRoleCard] = useState('superadmin')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingUser, setEditingUser] = useState(null)
+  const [viewingUser, setViewingUser] = useState(null)
   const [toastMessage, setToastMessage] = useState(null)
   const [activeDropdownUserId, setActiveDropdownUserId] = useState(null)
   const dropdownRef = useRef(null)
@@ -198,6 +200,9 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
     const isCurrentlyActive = (user.status || 'Active').toLowerCase() === 'active'
     const nextStatus = isCurrentlyActive ? 'Inactive' : 'Active'
     await updateItem('users', user.id, { status: nextStatus })
+    if (viewingUser && viewingUser.id === user.id) {
+      setViewingUser(prev => ({ ...prev, status: nextStatus }))
+    }
     triggerToast(`User "${user.name}" status updated to ${nextStatus}${statusFilter === 'ACTIVE' && nextStatus === 'Inactive' ? ' (moved to Inactive view)' : ''}.`)
   }
 
@@ -436,26 +441,36 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
                           </button>
                         </td>
                         <td className="px-6 py-4 text-right whitespace-nowrap">
-                          {/* Dedicated Settings & Actions Dropdown (Replaces loose edit/delete buttons) */}
-                          <div className="relative inline-block text-left">
+                          <div className="flex items-center justify-end gap-1.5">
+                            {/* Dedicated Eye (View Details) Button */}
                             <button
                               type="button"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setActiveDropdownUserId(prev => prev === u.id ? null : u.id)
-                              }}
-                              className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs ${
-                                activeDropdownUserId === u.id
-                                  ? 'bg-[#f5eeff] text-purple-700 border-purple-300 ring-2 ring-purple-500/20 shadow-xs'
-                                  : 'bg-white hover:bg-[#f5eeff] text-slate-700 hover:text-purple-700 border-slate-200 hover:border-purple-200'
-                              }`}
-                              title={`Settings & Actions for ${u.name}`}
-                              aria-label="Settings options"
+                              onClick={() => setViewingUser(u)}
+                              className="w-8 h-8 rounded-xl border border-slate-200 bg-white hover:bg-[#f5eeff] hover:border-purple-300 text-slate-600 hover:text-purple-700 transition-all cursor-pointer shadow-2xs group inline-flex items-center justify-center"
+                              title={`View Details: ${u.name}`}
+                              aria-label={`View Details for ${u.name}`}
                             >
-                              <Settings className={`w-3.5 h-3.5 text-purple-600 transition-transform duration-200 ${activeDropdownUserId === u.id ? 'rotate-90' : ''}`} />
-                              <span>Settings</span>
-                              <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform duration-200 ${activeDropdownUserId === u.id ? 'rotate-180' : ''}`} />
+                              <Eye className="w-4 h-4 text-slate-500 group-hover:text-purple-600 transition-colors" />
                             </button>
+
+                            {/* Dedicated Settings Icon Button (Settings word removed, only Settings icon button) */}
+                            <div className="relative inline-block text-left">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setActiveDropdownUserId(prev => prev === u.id ? null : u.id)
+                                }}
+                                className={`w-8 h-8 rounded-xl border transition-all cursor-pointer inline-flex items-center justify-center shadow-2xs ${
+                                  activeDropdownUserId === u.id
+                                    ? 'bg-[#f5eeff] text-purple-700 border-purple-300 ring-2 ring-purple-500/20 shadow-xs'
+                                    : 'bg-white hover:bg-[#f5eeff] text-slate-600 hover:text-purple-700 border-slate-200 hover:border-purple-300'
+                                }`}
+                                title={`Settings & Actions: ${u.name}`}
+                                aria-label="Settings options"
+                              >
+                                <Settings className={`w-4 h-4 text-purple-600 transition-transform duration-300 ${activeDropdownUserId === u.id ? 'rotate-90' : ''}`} />
+                              </button>
 
                             {/* Dropdown Popover with dynamic vertical positioning */}
                             {activeDropdownUserId === u.id && (
@@ -480,6 +495,24 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
                                 </div>
 
                                 <div className="space-y-0.5">
+                                  {/* 0. View User Details & Role Spec */}
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setActiveDropdownUserId(null)
+                                      setViewingUser(u)
+                                    }}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-[#f5eeff] hover:text-purple-700 transition-colors cursor-pointer group"
+                                  >
+                                    <div className="w-6 h-6 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                                      <Eye className="w-3.5 h-3.5" />
+                                    </div>
+                                    <div className="min-w-0 text-left">
+                                      <span className="block font-bold">View Profile & Roles</span>
+                                      <p className="text-[10px] text-slate-400 font-normal">Full user profile & capabilities</p>
+                                    </div>
+                                  </button>
+
                                   {/* 1. Edit User Profile & Role */}
                                   <button
                                     type="button"
@@ -615,6 +648,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
                                 </div>
                               </div>
                             )}
+                            </div>
                           </div>
                         </td>
                       </tr>
@@ -968,6 +1002,221 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
             </div>
           </div>
         </div>
+      )}
+
+            {/* Modal: View User Details */}
+      {viewingUser && (
+        <Modal
+          isOpen={!!viewingUser}
+          onClose={() => setViewingUser(null)}
+          title="User Profile & System Role Specifications"
+          maxWidth="max-w-2xl"
+        >
+          {(() => {
+            const roleMeta = getRoleMeta(viewingUser.role)
+            const RoleIcon = roleMeta?.icon || ShieldCheck
+            const isActive = (viewingUser.status || 'Active').toLowerCase() === 'active'
+
+            return (
+              <div className="space-y-5">
+                {/* 1. Profile Identity Header Card */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-gradient-to-r from-purple-50/80 via-slate-50 to-indigo-50/60 border border-purple-100">
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white font-black text-xl flex items-center justify-center shadow-md uppercase shrink-0">
+                      {viewingUser.name.charAt(0)}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="text-base font-bold text-slate-900">{viewingUser.name}</h4>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${getRoleBadgeStyle(viewingUser.role)}`}>
+                          {roleMeta?.shortName || viewingUser.role}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 font-mono mt-0.5">{viewingUser.email}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => toggleUserStatus(viewingUser)}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer shadow-2xs ${
+                        isActive 
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' 
+                          : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'
+                      }`}
+                      title="Click to toggle active status"
+                    >
+                      <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                      <span>{isActive ? 'Account Active' : 'Account Inactive'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* 2. Key Attributes Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* System Role */}
+                  <div className="p-3.5 rounded-xl border border-slate-200 bg-white space-y-1">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">System Role & Level</span>
+                    <div className="flex items-center gap-2 pt-0.5">
+                      <div className={`p-1.5 rounded-lg ${roleMeta?.badgeClass || 'bg-purple-100 text-purple-700'}`}>
+                        <RoleIcon className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-800">{roleMeta?.name || 'System User'}</p>
+                        <p className="text-[10px] text-slate-500">{roleMeta?.tierLevel || 'Standard Access'}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Campus / Institute */}
+                  <div className="p-3.5 rounded-xl border border-slate-200 bg-white space-y-1">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Campus Affiliation</span>
+                    <div className="flex items-center gap-2 pt-0.5">
+                      <div className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600">
+                        <Building className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-800">{viewingUser.institute || 'Global HQ / Multi-Campus'}</p>
+                        <p className="text-[10px] text-slate-500">{viewingUser.institute ? 'Assigned Institute Branch' : 'Platform Central Administration'}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Phone Contact */}
+                  <div className="p-3.5 rounded-xl border border-slate-200 bg-white space-y-2">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Phone & WhatsApp Contact</span>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600">
+                          <Phone className="w-4 h-4" />
+                        </div>
+                        <span className="text-xs font-mono font-bold text-slate-800">
+                          {viewingUser.phone || 'No phone registered'}
+                        </span>
+                      </div>
+                      {viewingUser.phone && (
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleWhatsAppRedirect(viewingUser)}
+                            className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-[10px] font-bold border border-emerald-200 transition-colors inline-flex items-center gap-1 cursor-pointer"
+                            title="Chat on WhatsApp"
+                          >
+                            <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24">
+                              <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0012.04 2m.01 1.67c4.54 0 8.24 3.7 8.24 8.24 0 2.2-.86 4.28-2.42 5.84-1.56 1.56-3.64 2.4-5.83 2.4-1.46 0-2.89-.39-4.14-1.13l-.3-.18-3.12.82.83-3.04-.2-.31a8.19 8.19 0 01-1.26-4.4c0-4.54 3.7-8.24 8.2-8.24m4.53 11.64c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.25-.75-.67-1.25-1.5-1.4-1.75-.14-.25-.02-.39.11-.51.11-.11.25-.29.37-.43.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1s.9 2.44 1.03 2.61c.13.17 1.77 2.7 4.29 3.79.6.26 1.07.41 1.43.53.6.19 1.15.16 1.58.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.15-1.18-.06-.1-.23-.17-.48-.29z"/>
+                            </svg>
+                            <span>WhatsApp</span>
+                          </button>
+                          <a
+                            href={`tel:${viewingUser.phone.replace(/[^\d+]/g, '')}`}
+                            className="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-[10px] font-bold border border-blue-200 transition-colors inline-flex items-center gap-1 cursor-pointer"
+                            title="Call Phone"
+                          >
+                            <Phone className="w-3 h-3" />
+                            <span>Call</span>
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Email & Auth */}
+                  <div className="p-3.5 rounded-xl border border-slate-200 bg-white space-y-2">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Email & Communication</span>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="p-1.5 rounded-lg bg-sky-50 text-sky-600 shrink-0">
+                          <Mail className="w-4 h-4" />
+                        </div>
+                        <span className="text-xs font-mono font-bold text-slate-800 truncate">
+                          {viewingUser.email}
+                        </span>
+                      </div>
+                      <a
+                        href={`mailto:${viewingUser.email}`}
+                        className="px-2 py-1 bg-sky-50 hover:bg-sky-100 text-sky-700 rounded-lg text-[10px] font-bold border border-sky-200 transition-colors inline-flex items-center gap-1 cursor-pointer shrink-0"
+                        title="Send Email"
+                      >
+                        <Mail className="w-3 h-3" />
+                        <span>Email</span>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Role Authority Scope & Responsibilities */}
+                {roleMeta && (
+                  <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/60 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                        <ShieldCheck className="w-4 h-4 text-purple-600" />
+                        <span>Authority Scope & Responsibilities</span>
+                      </span>
+                      <span className="text-[10px] text-slate-500 font-medium">
+                        {roleMeta.category}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      {roleMeta.summary}
+                    </p>
+                    {roleMeta.responsibilities && roleMeta.responsibilities.length > 0 && (
+                      <div className="pt-2 border-t border-slate-200/70">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
+                          Assigned Capabilities
+                        </span>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                          {roleMeta.responsibilities.slice(0, 4).map((resp, i) => (
+                            <div key={i} className="flex items-start gap-1.5 text-xs text-slate-700">
+                              <CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                              <span className="leading-snug">{resp}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* 4. Modal Footer Actions */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-100">
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const targetUser = viewingUser
+                        setViewingUser(null)
+                        openEditModal(targetUser)
+                      }}
+                      className="px-4 py-2 text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-xl transition-colors cursor-pointer inline-flex items-center justify-center gap-1.5 flex-1 sm:flex-initial shadow-2xs"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                      <span>Edit Profile</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        triggerToast(`Password reset link dispatched to ${viewingUser.email}.`)
+                      }}
+                      className="px-3.5 py-2 text-xs font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer inline-flex items-center justify-center gap-1.5"
+                    >
+                      <KeyRound className="w-3.5 h-3.5" />
+                      <span>Reset Password</span>
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setViewingUser(null)}
+                    className="w-full sm:w-auto px-5 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            )
+          })()}
+        </Modal>
       )}
 
       {/* Modal: Create / Edit User */}
