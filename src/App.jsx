@@ -16,6 +16,7 @@ import ErrorBoundary from './components/common/ErrorBoundary'
 
 // Auth
 import LoginPage from './modules/auth/LoginPage'
+import LandingPage from './modules/landing/LandingPage'
 
 // Lazy-loaded Views for Bundle Performance & Code Splitting (with resilient auto-retry)
 const SuperadminDashboard = lazyWithRetry(() => import('./modules/dashboard/SuperadminDashboard'), 'superadmin-dashboard')
@@ -109,6 +110,15 @@ const AppContent = () => {
   const [superadminRoute, setSuperadminRouteState] = useState(getInitialSuperadminRoute)
   const [instituteRoute, setInstituteRouteState] = useState(getInitialInstituteRoute)
 
+  // Public visitor routing (Landing Page vs Login Page)
+  const [publicView, setPublicView] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash.replace(/^#\/?/, '')
+      if (hash === 'login' || hash === 'signin') return 'login'
+    }
+    return 'landing'
+  })
+
   // Route setters that update the browser URL hash without full reload
   const setSuperadminRoute = (route) => {
     const valid = VALID_SUPERADMIN_ROUTES.includes(route) ? route : 'dashboard'
@@ -150,6 +160,14 @@ const AppContent = () => {
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace(/^#\/?/, '')
+      if (!user) {
+        if (hash === 'login' || hash === 'signin') {
+          setPublicView('login')
+        } else {
+          setPublicView('landing')
+        }
+        return
+      }
       if (hash) {
         if (user?.role === 'superadmin') {
           if (VALID_SUPERADMIN_ROUTES.includes(hash)) {
@@ -203,9 +221,36 @@ const AppContent = () => {
     }
   }
 
-  // If no user is authenticated, display login page
+  // If no user is authenticated, display landing page or login page
   if (!user) {
-    return <LoginPage />
+    if (publicView === 'login') {
+      return (
+        <LoginPage
+          onBackToLanding={() => {
+            setPublicView('landing')
+            if (typeof window !== 'undefined') {
+              window.location.hash = ''
+            }
+          }}
+          onOpenTrial={() => {
+            setPublicView('landing')
+            if (typeof window !== 'undefined') {
+              window.location.hash = ''
+            }
+          }}
+        />
+      )
+    }
+    return (
+      <LandingPage
+        onNavigateToLogin={(mode) => {
+          setPublicView('login')
+          if (typeof window !== 'undefined') {
+            window.location.hash = '#login'
+          }
+        }}
+      />
+    )
   }
 
   // 1. SUPERADMIN PORTAL
