@@ -150,10 +150,10 @@ export const InstitutesView = () => {
     adminPassword: 'Password123!',
     adminPhone: '',
     // Step 5: Subscription Plan
-    planTier: 'Pro',
+    planTier: 'School Plan',
     quotaStudents: 1500,
     quotaUsers: 50,
-    quotaCampuses: 3,
+    quotaCampuses: 2,
     quotaStorageMb: 2048,
     enabledModules: {
       students: true,
@@ -169,8 +169,36 @@ export const InstitutesView = () => {
     }
   }
 
+  // Tier to Plan Mapping for Automatic Detection & Quota Initialization
+  const tierPlanMapping = {
+    School: { planName: 'School Plan', maxStudents: 1500, maxUsers: 50, maxCampuses: 2, storageMB: 2048, prefix: 'SCH', defaultTiers: ['school'] },
+    College: { planName: 'College Plan', maxStudents: 3000, maxUsers: 100, maxCampuses: 3, storageMB: 5120, prefix: 'COL', defaultTiers: ['college'] },
+    University: { planName: 'University Plan', maxStudents: 3000, maxUsers: 250, maxCampuses: 5, storageMB: 10240, prefix: 'UNI', defaultTiers: ['undergraduate'] },
+    Custom: { planName: 'Custom Hybrid Plan', maxStudents: 3000, maxUsers: 150, maxCampuses: 4, storageMB: 8192, prefix: 'HYB', defaultTiers: ['school', 'college'] }
+  }
+
   const [wizardData, setWizardData] = useState(initialWizardState)
   const [wizardErrors, setWizardErrors] = useState({})
+
+  // Tier selection handler - auto-syncs plan, code prefix and quota limits
+  const handleTierSelection = (selectedTierId) => {
+    const config = tierPlanMapping[selectedTierId] || tierPlanMapping.School
+    setWizardData(prev => ({
+      ...prev,
+      type: selectedTierId,
+      planType: selectedTierId.toUpperCase(),
+      planTier: config.planName,
+      quotaStudents: Math.min(config.maxStudents, 3000),
+      quotaUsers: config.maxUsers,
+      quotaCampuses: config.maxCampuses,
+      quotaStorageMb: config.storageMB,
+      enabledTiers: config.defaultTiers,
+      code: prev.code && !prev.code.startsWith('SCH-') && !prev.code.startsWith('COL-') && !prev.code.startsWith('UNI-') && !prev.code.startsWith('HYB-')
+        ? prev.code
+        : `${config.prefix}-${Math.floor(100 + Math.random() * 900)}`
+    }))
+    if (wizardErrors.enabledTiers) setWizardErrors(prev => ({ ...prev, enabledTiers: null }))
+  }
 
   // Auto-generate code and slug when name changes in Wizard
   const handleWizardNameChange = (name) => {
@@ -190,6 +218,8 @@ export const InstitutesView = () => {
   const openOnboardingWizard = () => {
     setWizardData({
       ...initialWizardState,
+      planTier: 'School Plan',
+      quotaStudents: 1500,
       code: `SCH-${Math.floor(100 + Math.random() * 900)}`,
       divisionId: divisions[0]?.id || '',
       districtId: districts[0]?.id || '',
@@ -1162,28 +1192,7 @@ export const InstitutesView = () => {
                     <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">Select Tier:</span>
                     <select
                       value={wizardData.type || 'School'}
-                      onChange={(e) => {
-                        const tierMap = {
-                          School: { planName: 'School Plan', defaultTiers: ['school'], prefix: 'SCH' },
-                          College: { planName: 'College Plan', defaultTiers: ['college'], prefix: 'COL' },
-                          University: { planName: 'University Plan', defaultTiers: ['undergraduate'], prefix: 'UNI' },
-                          Custom: { planName: 'Custom Hybrid Plan', defaultTiers: ['school', 'college'], prefix: 'HYB' }
-                        }
-                        const t = tierMap[e.target.value]
-                        if (t) {
-                          setWizardData(prev => ({
-                            ...prev,
-                            type: e.target.value,
-                            planType: e.target.value.toUpperCase(),
-                            planTier: t.planName,
-                            enabledTiers: t.defaultTiers,
-                            code: prev.code && !prev.code.startsWith('SCH-') && !prev.code.startsWith('COL-') && !prev.code.startsWith('UNI-') && !prev.code.startsWith('HYB-')
-                              ? prev.code
-                              : `${t.prefix}-${Math.floor(100 + Math.random() * 900)}`
-                          }))
-                          if (wizardErrors.enabledTiers) setWizardErrors(prev => ({ ...prev, enabledTiers: null }))
-                        }
-                      }}
+                      onChange={(e) => handleTierSelection(e.target.value)}
                       className="px-2.5 py-1 text-xs font-semibold bg-white border border-slate-200 rounded-lg text-slate-700 shadow-2xs focus:outline-none focus:ring-2 focus:ring-purple-500/20 cursor-pointer hover:border-slate-300"
                     >
                       <option value="School">School Plan</option>
@@ -1196,10 +1205,10 @@ export const InstitutesView = () => {
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[
-                    { id: 'School', label: 'School Plan', icon: School, defaultTiers: ['school'], planName: 'School Plan', color: 'text-purple-600', prefix: 'SCH' },
-                    { id: 'College', label: 'College Plan', icon: Building2, defaultTiers: ['college'], planName: 'College Plan', color: 'text-indigo-600', prefix: 'COL' },
-                    { id: 'University', label: 'University Plan', icon: GraduationCap, defaultTiers: ['undergraduate'], planName: 'University Plan', color: 'text-purple-600', prefix: 'UNI' },
-                    { id: 'Custom', label: 'Custom Hybrid', icon: Layers, defaultTiers: ['school', 'college'], planName: 'Custom Hybrid Plan', color: 'text-amber-600', prefix: 'HYB' }
+                    { id: 'School', label: 'School Plan', icon: School, color: 'text-purple-600' },
+                    { id: 'College', label: 'College Plan', icon: Building2, color: 'text-indigo-600' },
+                    { id: 'University', label: 'University Plan', icon: GraduationCap, color: 'text-purple-600' },
+                    { id: 'Custom', label: 'Custom Hybrid', icon: Layers, color: 'text-amber-600' }
                   ].map((tierItem) => {
                     const TierIcon = tierItem.icon
                     const isSelected = wizardData.type === tierItem.id
@@ -1207,19 +1216,7 @@ export const InstitutesView = () => {
                       <button
                         key={tierItem.id}
                         type="button"
-                        onClick={() => {
-                          setWizardData(prev => ({ 
-                            ...prev, 
-                            type: tierItem.id,
-                            planType: tierItem.id.toUpperCase(),
-                            planTier: tierItem.planName,
-                            enabledTiers: tierItem.defaultTiers,
-                            code: prev.code && !prev.code.startsWith('SCH-') && !prev.code.startsWith('COL-') && !prev.code.startsWith('UNI-') && !prev.code.startsWith('HYB-')
-                              ? prev.code
-                              : `${tierItem.prefix}-${Math.floor(100 + Math.random() * 900)}`
-                          }))
-                          if (wizardErrors.enabledTiers) setWizardErrors(prev => ({ ...prev, enabledTiers: null }))
-                        }}
+                        onClick={() => handleTierSelection(tierItem.id)}
                         className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center gap-1.5 cursor-pointer ${
                           isSelected 
                             ? 'border-purple-600 bg-[#f5eeff] text-purple-800 font-bold ring-2 ring-purple-500/20 shadow-2xs' 
@@ -1631,57 +1628,150 @@ export const InstitutesView = () => {
           {wizardStep === 5 && (
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1.5">Select Subscription Plan</label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                    Subscription Plan
+                  </label>
+                  <span className="text-[11px] font-bold text-purple-700 bg-purple-50 border border-purple-200/60 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 shadow-2xs">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-purple-600" />
+                    <span>Auto-Detected from Tier ({wizardData.type || 'School'})</span>
+                  </span>
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                  {SUBSCRIPTION_PLANS.map((plan) => (
-                    <button
-                      key={plan.id}
-                      type="button"
-                      onClick={() => setWizardData({
-                        ...wizardData,
-                        planTier: plan.name,
-                        quotaStudents: plan.maxStudents,
-                        quotaUsers: plan.maxUsers,
-                        quotaCampuses: plan.maxCampuses,
-                        quotaStorageMb: plan.storageMB
-                      })}
-                      className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
-                        wizardData.planTier === plan.name
-                          ? 'border-indigo-600 bg-indigo-50/70 text-indigo-900 ring-2 ring-indigo-500/20 font-bold'
-                          : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                      }`}
-                    >
-                      <span className="text-xs font-bold block">{plan.name}</span>
-                      <span className="text-[11px] text-indigo-700 font-semibold block mt-1">
-                        PKR {plan.pricePKR.toLocaleString()}/mo
-                      </span>
-                      <span className="text-[10px] text-slate-400 block mt-1">
-                        Up to {plan.maxStudents.toLocaleString()} students
-                      </span>
-                    </button>
-                  ))}
+                  {SUBSCRIPTION_PLANS.map((plan) => {
+                    const isSelected = wizardData.planTier === plan.name
+                    const isMatchedTier = plan.type === wizardData.type
+                    return (
+                      <button
+                        key={plan.id}
+                        type="button"
+                        onClick={() => setWizardData({
+                          ...wizardData,
+                          planTier: plan.name,
+                          quotaStudents: Math.min(plan.maxStudents, 3000),
+                          quotaUsers: plan.maxUsers,
+                          quotaCampuses: plan.maxCampuses,
+                          quotaStorageMb: plan.storageMB
+                        })}
+                        className={`p-3 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden ${
+                          isSelected
+                            ? 'border-purple-600 bg-[#f5eeff] text-purple-900 ring-2 ring-purple-500/20 font-bold shadow-xs'
+                            : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                        }`}
+                      >
+                        {isMatchedTier && (
+                          <span className="absolute top-2 right-2 text-[9px] font-bold uppercase tracking-wider bg-purple-600 text-white px-1.5 py-0.5 rounded-md shadow-2xs">
+                            Tier Match
+                          </span>
+                        )}
+                        <span className="text-xs font-bold block">{plan.name}</span>
+                        <span className="text-[11px] text-purple-700 font-bold block mt-1">
+                          PKR {plan.pricePKR.toLocaleString()}/mo
+                        </span>
+                        <span className="text-[10px] text-slate-400 block mt-1 font-medium">
+                          Up to {Math.min(plan.maxStudents, 3000).toLocaleString()} seats
+                        </span>
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
 
-              {/* Quota Summary Box */}
-              <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200/80">
-                <span className="text-xs font-bold text-slate-800 uppercase tracking-wide block mb-2">Allocated Quota Limits</span>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
-                  <div className="p-2 bg-white rounded-lg border border-slate-100">
-                    <span className="text-[10px] text-slate-400 block">Max Students</span>
-                    <span className="font-bold text-slate-800">{wizardData.quotaStudents}</span>
+              {/* Quota Summary & Custom Student Allocation Box */}
+              <div className="p-4 bg-slate-50/80 rounded-2xl border border-slate-200/80 space-y-3.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-800 uppercase tracking-wide block">
+                    Allocated Quota Limits
+                  </span>
+                  <span className="text-[11px] font-bold text-slate-500">
+                    Cap: 3,000 Students Max
+                  </span>
+                </div>
+
+                {/* Custom Student Quota Input + Preset Tags */}
+                <div className="p-3.5 bg-white rounded-xl border border-slate-200 shadow-2xs space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                    <div>
+                      <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                        <GraduationCap className="w-4 h-4 text-purple-600" />
+                        <span>Custom Student Enrollment Limit</span>
+                        <span className="text-rose-500 font-bold">*</span>
+                      </label>
+                      <span className="text-[11px] text-slate-500 block mt-0.5">
+                        Enter custom seats or select from quick preset tags (max allowable 3,000)
+                      </span>
+                    </div>
+
+                    {/* Interactive Number Input */}
+                    <div className="flex items-center gap-2 self-start sm:self-auto">
+                      <div className="relative">
+                        <input
+                          type="number"
+                          min="100"
+                          max="3000"
+                          step="50"
+                          value={wizardData.quotaStudents ?? 1500}
+                          onChange={(e) => {
+                            const raw = e.target.value === '' ? '' : parseInt(e.target.value, 10)
+                            if (raw === '') {
+                              setWizardData({ ...wizardData, quotaStudents: '' })
+                            } else {
+                              const clamped = Math.min(Math.max(raw, 0), 3000)
+                              setWizardData({ ...wizardData, quotaStudents: clamped })
+                            }
+                          }}
+                          onBlur={() => {
+                            if (!wizardData.quotaStudents || wizardData.quotaStudents < 100) {
+                              setWizardData({ ...wizardData, quotaStudents: 1500 })
+                            }
+                          }}
+                          className="w-32 px-3 py-1.5 text-xs font-extrabold text-slate-900 border border-slate-300 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-purple-500/20 bg-slate-50/50"
+                        />
+                        <span className="absolute right-2 top-1.5 text-[10px] text-slate-400 font-bold pointer-events-none">
+                          Seats
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="p-2 bg-white rounded-lg border border-slate-100">
-                    <span className="text-[10px] text-slate-400 block">Max Users</span>
-                    <span className="font-bold text-slate-800">{wizardData.quotaUsers}</span>
+
+                  {/* Preset Quick Select Tags (1500, 2000, 2500, 3000 Max) */}
+                  <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-slate-100">
+                    <span className="text-[11px] font-semibold text-slate-500 mr-1">Quick Select:</span>
+                    {[1500, 2000, 2500, 3000].map((tagVal) => {
+                      const isSelected = Number(wizardData.quotaStudents) === tagVal
+                      const isMax = tagVal === 3000
+                      return (
+                        <button
+                          key={tagVal}
+                          type="button"
+                          onClick={() => setWizardData({ ...wizardData, quotaStudents: tagVal })}
+                          className={`px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                            isSelected
+                              ? 'bg-purple-600 text-white shadow-xs ring-2 ring-purple-500/20 scale-105'
+                              : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80 hover:border-slate-300'
+                          }`}
+                        >
+                          {tagVal.toLocaleString()} {isMax && <span className="text-[10px] ml-1 opacity-90 font-medium">(Max)</span>}
+                        </button>
+                      )
+                    })}
                   </div>
-                  <div className="p-2 bg-white rounded-lg border border-slate-100">
-                    <span className="text-[10px] text-slate-400 block">Campuses</span>
-                    <span className="font-bold text-slate-800">{wizardData.quotaCampuses}</span>
+                </div>
+
+                {/* Additional Quota Metrics */}
+                <div className="grid grid-cols-3 gap-2.5 text-center text-xs">
+                  <div className="p-2.5 bg-white rounded-xl border border-slate-100 shadow-2xs">
+                    <span className="text-[10px] text-slate-400 block font-medium">Max Staff & Users</span>
+                    <span className="text-sm font-extrabold text-slate-800 mt-0.5 block">{wizardData.quotaUsers || 50}</span>
                   </div>
-                  <div className="p-2 bg-white rounded-lg border border-slate-100">
-                    <span className="text-[10px] text-slate-400 block">Cloud Storage</span>
-                    <span className="font-bold text-slate-800">{wizardData.quotaStorageMb} MB</span>
+                  <div className="p-2.5 bg-white rounded-xl border border-slate-100 shadow-2xs">
+                    <span className="text-[10px] text-slate-400 block font-medium">Branch Campuses</span>
+                    <span className="text-sm font-extrabold text-slate-800 mt-0.5 block">{wizardData.quotaCampuses || 3}</span>
+                  </div>
+                  <div className="p-2.5 bg-white rounded-xl border border-slate-100 shadow-2xs">
+                    <span className="text-[10px] text-slate-400 block font-medium">Cloud Storage</span>
+                    <span className="text-sm font-extrabold text-slate-800 mt-0.5 block">{wizardData.quotaStorageMb || 2048} MB</span>
                   </div>
                 </div>
               </div>
