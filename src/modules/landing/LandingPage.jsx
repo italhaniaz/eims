@@ -785,7 +785,7 @@ export const LandingPage = ({ onNavigateToLogin }) => {
                 {currentPreview.metrics.map((m, idx) => (
                   <div key={idx} className="p-4 rounded-2xl bg-white border border-purple-100 shadow-xs">
                     <span className="text-xs font-medium text-slate-500 block">{m.label}</span>
-                    <span className="text-2xl font-black text-slate-900 font-mono tracking-tight block mt-1">
+                    <span className="text-2xl font-extrabold text-slate-900 font-heading tracking-tight block mt-1">
                       {m.value}
                     </span>
                     <span className="text-[11px] font-semibold text-purple-600 block mt-1">
@@ -879,11 +879,15 @@ export const LandingPage = ({ onNavigateToLogin }) => {
                 </p>
 
                 <div className="mt-4 mb-5 p-3 rounded-xl bg-emerald-50/60 border border-emerald-100">
-                  <div className="text-3xl font-black text-emerald-700 font-mono">
-                    ₨ 0
+                  <div className="flex items-baseline gap-1 font-heading">
+                    <span className="text-lg font-bold text-emerald-600">₨</span>
+                    <span className="text-3xl sm:text-4xl font-extrabold text-emerald-700 tracking-tight">0</span>
+                    <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full ml-1.5 border border-emerald-200">
+                      FREE
+                    </span>
                   </div>
-                  <div className="text-xs font-medium text-emerald-900 mt-0.5">
-                    100% Free / 14-Day Evaluation
+                  <div className="text-xs font-medium text-emerald-900 mt-1">
+                    100% Free / 14-Day Evaluation Access
                   </div>
                 </div>
 
@@ -935,11 +939,15 @@ export const LandingPage = ({ onNavigateToLogin }) => {
                 </p>
 
                 <div className="mt-4 mb-5 p-3 rounded-xl bg-slate-50 border border-slate-100">
-                  <div className="text-3xl font-black text-slate-900 font-mono">
-                    ₨ {billingCycle === 'annual' ? '21,250' : '25,000'}
+                  <div className="flex items-baseline gap-1 font-heading">
+                    <span className="text-lg font-bold text-slate-500">₨</span>
+                    <span className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+                      {billingCycle === 'annual' ? '21,250' : '25,000'}
+                    </span>
+                    <span className="text-xs font-medium text-slate-500 ml-1">/ month</span>
                   </div>
-                  <div className="text-xs text-slate-500 mt-0.5">
-                    Per month {billingCycle === 'annual' ? '(Billed annually)' : '(Billed monthly)'}
+                  <div className="text-xs text-slate-500 mt-1">
+                    {billingCycle === 'annual' ? 'Billed annually (Save 15%)' : 'Standard monthly billing'}
                   </div>
                 </div>
 
@@ -991,11 +999,15 @@ export const LandingPage = ({ onNavigateToLogin }) => {
                 </p>
 
                 <div className="mt-4 mb-5 p-3 rounded-xl bg-slate-50 border border-slate-100">
-                  <div className="text-3xl font-black text-slate-900 font-mono">
-                    ₨ {billingCycle === 'annual' ? '29,750' : '35,000'}
+                  <div className="flex items-baseline gap-1 font-heading">
+                    <span className="text-lg font-bold text-slate-500">₨</span>
+                    <span className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+                      {billingCycle === 'annual' ? '29,750' : '35,000'}
+                    </span>
+                    <span className="text-xs font-medium text-slate-500 ml-1">/ month</span>
                   </div>
-                  <div className="text-xs text-slate-500 mt-0.5">
-                    Per month {billingCycle === 'annual' ? '(Billed annually)' : '(Billed monthly)'}
+                  <div className="text-xs text-slate-500 mt-1">
+                    {billingCycle === 'annual' ? 'Billed annually (Save 15%)' : 'Standard monthly billing'}
                   </div>
                 </div>
 
@@ -1047,11 +1059,16 @@ export const LandingPage = ({ onNavigateToLogin }) => {
                 </p>
 
                 <div className="mt-4 mb-5 p-3 rounded-xl bg-white border border-purple-100 shadow-2xs">
-                  <div className="text-3xl font-black text-purple-700 font-mono">
-                    ₨ {billingCycle === 'annual' ? '46,750' : '55,000'}+
+                  <div className="flex items-baseline gap-1 font-heading">
+                    <span className="text-lg font-bold text-purple-600">₨</span>
+                    <span className="text-3xl sm:text-4xl font-extrabold text-purple-700 tracking-tight">
+                      {billingCycle === 'annual' ? '46,750' : '55,000'}
+                      <span className="text-2xl text-purple-500 font-bold">+</span>
+                    </span>
+                    <span className="text-xs font-medium text-slate-500 ml-1">/ month</span>
                   </div>
-                  <div className="text-xs text-slate-500 mt-0.5">
-                    Per month {billingCycle === 'annual' ? '(Billed annually)' : '(Billed monthly)'}
+                  <div className="text-xs text-slate-500 mt-1">
+                    {billingCycle === 'annual' ? 'Billed annually (Save 15%)' : 'Standard monthly billing'}
                   </div>
                 </div>
 

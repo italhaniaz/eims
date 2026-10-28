@@ -858,8 +858,8 @@ const SubscriptionsBillingView = () => {
 
                     {/* Price in PKR */}
                     <div className="mt-3.5 mb-4 p-3 rounded-xl bg-slate-50 border border-slate-100">
-                      <div className="flex items-baseline">
-                        <span className="text-2xl font-black text-slate-900 font-mono tracking-tight">
+                      <div className="flex items-baseline font-heading">
+                        <span className="text-2xl font-extrabold text-slate-900 tracking-tight">
                           {Number(plan.pricePKR) === 0 ? 'FREE (₨ 0)' : `₨ ${Number(plan.pricePKR).toLocaleString()}`}
                         </span>
                         <span className="text-slate-500 text-xs ml-1.5 font-medium">/ {plan.billingCycle}</span>
