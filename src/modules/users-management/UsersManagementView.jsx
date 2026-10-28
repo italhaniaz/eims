@@ -199,7 +199,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
       )}
 
       {/* Clean Light SaaS Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
             <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#f5eeff] text-purple-700 border border-purple-100 inline-flex items-center gap-1.5">
@@ -218,7 +218,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
         {activeTab === 'all' && (
           <button
             onClick={openAddModal}
-            className="inline-flex items-center gap-2 px-4.5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs sm:text-sm font-semibold shadow-xs transition-all cursor-pointer self-start sm:self-auto active:scale-95 whitespace-nowrap shrink-0"
+            className="inline-flex items-center gap-2 px-4.5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs sm:text-sm font-semibold shadow-xs transition-all cursor-pointer self-start xl:self-auto active:scale-95 whitespace-nowrap"
           >
             <Plus className="w-4 h-4" />
             <span>Add New User</span>

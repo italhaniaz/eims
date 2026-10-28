@@ -559,8 +559,8 @@ export const InstitutesView = () => {
   return (
     <div className="p-4 sm:p-6 md:p-8 pb-16 space-y-6 max-w-[1400px] mx-auto">
       {/* Clean Light SaaS Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+        <div className="min-w-0">
           <div className="flex items-center gap-2 mb-1.5">
             <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#f5eeff] text-purple-700 border border-purple-100 inline-flex items-center gap-1.5">
               <Building2 className="w-3.5 h-3.5 text-purple-600" />
@@ -575,10 +575,10 @@ export const InstitutesView = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap shrink-0">
+        <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
           <button
             onClick={exportInstitutesCSV}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs sm:text-sm font-semibold border border-slate-200/80 shadow-2xs transition-all cursor-pointer whitespace-nowrap shrink-0"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 sm:px-4 sm:py-2.5 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs sm:text-sm font-semibold border border-slate-200/80 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
             title="Export institutes to CSV"
           >
             <Download className="w-4 h-4 text-slate-500" />
@@ -587,7 +587,7 @@ export const InstitutesView = () => {
 
           <button
             onClick={() => setIsBackupModalOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#f5eeff] hover:bg-[#ede0fe] text-purple-700 border border-purple-200/60 rounded-xl text-xs sm:text-sm font-semibold shadow-2xs transition-all cursor-pointer whitespace-nowrap shrink-0"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 sm:px-4 sm:py-2.5 bg-[#f5eeff] hover:bg-[#ede0fe] text-purple-700 border border-purple-200/60 rounded-xl text-xs sm:text-sm font-semibold shadow-2xs transition-all cursor-pointer whitespace-nowrap"
             title="One-Click Campus Snapshot & Disaster Recovery"
           >
             <ShieldCheck className="w-4 h-4 text-purple-600" />
@@ -596,11 +596,11 @@ export const InstitutesView = () => {
 
           <button
             onClick={openOnboardingWizard}
-            className="inline-flex items-center gap-2 px-4.5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs sm:text-sm font-semibold shadow-xs transition-all cursor-pointer active:scale-95 whitespace-nowrap shrink-0"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 sm:px-4.5 sm:py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs sm:text-sm font-semibold shadow-xs transition-all cursor-pointer active:scale-95 whitespace-nowrap"
             title="Launch Campus Onboarding Wizard"
           >
             <Plus className="w-4 h-4" />
-            <span>Onboard New Campus</span>
+            <span>Onboard Campus</span>
           </button>
         </div>
       </div>

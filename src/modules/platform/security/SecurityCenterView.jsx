@@ -136,8 +136,8 @@ export const SecurityCenterView = () => {
   return (
     <div className="p-4 sm:p-6 md:p-8 pb-16 space-y-6 max-w-[1400px] mx-auto">
       {/* Clean Light SaaS Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+        <div className="min-w-0">
           <div className="flex items-center gap-2 mb-1.5">
             <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#f5eeff] text-purple-700 border border-purple-100 inline-flex items-center gap-1.5">
               <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
@@ -154,7 +154,7 @@ export const SecurityCenterView = () => {
 
         <button
           onClick={loadSecurityData}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 rounded-xl font-semibold text-xs sm:text-sm shadow-2xs transition-all cursor-pointer self-start sm:self-auto active:scale-95 whitespace-nowrap shrink-0"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 rounded-xl font-semibold text-xs sm:text-sm shadow-2xs transition-all cursor-pointer self-start xl:self-auto active:scale-95 whitespace-nowrap shrink-0"
         >
           <RefreshCw className="w-4 h-4 text-purple-600" />
           <span>Refresh Telemetry</span>

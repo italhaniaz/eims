@@ -333,25 +333,25 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 items-stretch">
         
         {/* Card 1: Campuses (Lavender) */}
-        <div className="bg-[#f5eeff] border border-purple-100/90 rounded-2xl p-5 sm:p-5.5 transition-all duration-200 hover:shadow-sm shadow-2xs flex flex-col justify-between h-full min-h-[148px]">
+        <div className="bg-[#f5eeff] border border-purple-100/90 rounded-2xl p-4 sm:p-5 transition-all duration-200 hover:shadow-sm shadow-2xs flex flex-col justify-between h-full min-h-[148px] overflow-hidden">
           {/* Top Row: Metric & Decorative Icon */}
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <span className="block text-xs font-semibold text-slate-500 mb-1">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <span className="block text-xs font-semibold text-slate-500 mb-1 truncate">
                 Total Campuses
               </span>
               <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading">
                 {stats.totalInstitutes || 12}
               </span>
             </div>
-            <div className="w-11 h-11 rounded-2xl bg-white/80 text-purple-600 flex items-center justify-center shrink-0 shadow-2xs">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white/80 text-purple-600 flex items-center justify-center shrink-0 shadow-2xs">
               <School className="w-5 h-5 stroke-[1.8]" />
             </div>
           </div>
 
           {/* Bottom Row: Status Badge on Left, Non-clickable Manage Text + Dedicated Eye Button on Right */}
-          <div className="flex items-center justify-between gap-2 mt-4 pt-3 border-t border-purple-200/50">
-            <span className="text-[11px] font-bold text-purple-700 bg-purple-100/70 px-2.5 py-0.5 rounded-full whitespace-nowrap">
+          <div className="flex items-center justify-between gap-1.5 mt-4 pt-3 border-t border-purple-200/50">
+            <span className="text-[11px] font-bold text-purple-700 bg-purple-100/70 px-2 py-0.5 rounded-full whitespace-nowrap">
               {stats.activeInstitutes || 12} Active
             </span>
 
@@ -373,25 +373,25 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
         </div>
 
         {/* Card 2: Students (Sky Blue) */}
-        <div className="bg-[#f0f9ff] border border-sky-100/90 rounded-2xl p-5 sm:p-5.5 transition-all duration-200 hover:shadow-sm shadow-2xs flex flex-col justify-between h-full min-h-[148px]">
+        <div className="bg-[#f0f9ff] border border-sky-100/90 rounded-2xl p-4 sm:p-5 transition-all duration-200 hover:shadow-sm shadow-2xs flex flex-col justify-between h-full min-h-[148px] overflow-hidden">
           {/* Top Row: Metric & Decorative Icon */}
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <span className="block text-xs font-semibold text-slate-500 mb-1">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <span className="block text-xs font-semibold text-slate-500 mb-1 truncate">
                 Total Students
               </span>
               <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading">
                 {stats.totalStudents ? `${(stats.totalStudents / 1000).toFixed(2)}K` : '15.00K'}
               </span>
             </div>
-            <div className="w-11 h-11 rounded-2xl bg-white/80 text-sky-500 flex items-center justify-center shrink-0 shadow-2xs">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white/80 text-sky-500 flex items-center justify-center shrink-0 shadow-2xs">
               <GraduationCap className="w-5 h-5 stroke-[1.8]" />
             </div>
           </div>
 
           {/* Bottom Row: Status Badge on Left, Non-clickable All Wings Text + Dedicated Eye Button on Right */}
-          <div className="flex items-center justify-between gap-2 mt-4 pt-3 border-t border-sky-200/50">
-            <span className="text-[11px] font-bold text-sky-700 bg-sky-100/70 px-2.5 py-0.5 rounded-full whitespace-nowrap">
+          <div className="flex items-center justify-between gap-1.5 mt-4 pt-3 border-t border-sky-200/50">
+            <span className="text-[11px] font-bold text-sky-700 bg-sky-100/70 px-2 py-0.5 rounded-full whitespace-nowrap">
               +12.4% MoM
             </span>
 
@@ -413,26 +413,26 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
         </div>
 
         {/* Card 3: Educational Wings (Peach / Amber) */}
-        <div className="bg-[#fff7ed] border border-amber-100/90 rounded-2xl p-5 sm:p-5.5 transition-all duration-200 hover:shadow-sm shadow-2xs flex flex-col justify-between h-full min-h-[148px]">
+        <div className="bg-[#fff7ed] border border-amber-100/90 rounded-2xl p-4 sm:p-5 transition-all duration-200 hover:shadow-sm shadow-2xs flex flex-col justify-between h-full min-h-[148px] overflow-hidden">
           {/* Top Row: Metric & Decorative Icon */}
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <span className="block text-xs font-semibold text-slate-500 mb-1">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <span className="block text-xs font-semibold text-slate-500 mb-1 truncate">
                 Educational Wings
               </span>
               <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading">
                 3 Wings
               </span>
             </div>
-            <div className="w-11 h-11 rounded-2xl bg-white/80 text-amber-500 flex items-center justify-center shrink-0 shadow-2xs">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white/80 text-amber-500 flex items-center justify-center shrink-0 shadow-2xs">
               <Sliders className="w-5 h-5 stroke-[1.8]" />
             </div>
           </div>
 
           {/* Bottom Row: Status Badge on Left, Non-clickable Matrix Text + Dedicated Eye Button on Right */}
-          <div className="flex items-center justify-between gap-2 mt-4 pt-3 border-t border-amber-200/50">
-            <span className="text-[11px] font-bold text-amber-800 bg-amber-100/70 px-2.5 py-0.5 rounded-full whitespace-nowrap">
-              School • College • Uni
+          <div className="flex items-center justify-between gap-1.5 mt-4 pt-3 border-t border-amber-200/50">
+            <span className="text-[11px] font-bold text-amber-800 bg-amber-100/70 px-2 py-0.5 rounded-full whitespace-nowrap">
+              3 Active Tiers
             </span>
 
             <div className="flex items-center gap-1.5 shrink-0">
@@ -453,25 +453,25 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
         </div>
 
         {/* Card 4: Platform MRR (Mint Green) */}
-        <div className="bg-[#f0fdf4] border border-emerald-100/90 rounded-2xl p-5 sm:p-5.5 transition-all duration-200 hover:shadow-sm shadow-2xs flex flex-col justify-between h-full min-h-[148px]">
+        <div className="bg-[#f0fdf4] border border-emerald-100/90 rounded-2xl p-4 sm:p-5 transition-all duration-200 hover:shadow-sm shadow-2xs flex flex-col justify-between h-full min-h-[148px] overflow-hidden">
           {/* Top Row: Metric & Decorative Icon */}
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <span className="block text-xs font-semibold text-slate-500 mb-1">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <span className="block text-xs font-semibold text-slate-500 mb-1 truncate">
                 Platform MRR
               </span>
               <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading">
                 {stats.monthlyRevenue || '$19.3K'}
               </span>
             </div>
-            <div className="w-11 h-11 rounded-2xl bg-white/80 text-emerald-500 flex items-center justify-center shrink-0 shadow-2xs">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white/80 text-emerald-500 flex items-center justify-center shrink-0 shadow-2xs">
               <CreditCard className="w-5 h-5 stroke-[1.8]" />
             </div>
           </div>
 
           {/* Bottom Row: Status Badge on Left, Non-clickable Billing Text + Dedicated Eye Button on Right */}
-          <div className="flex items-center justify-between gap-2 mt-4 pt-3 border-t border-emerald-200/50">
-            <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100/70 px-2.5 py-0.5 rounded-full whitespace-nowrap">
+          <div className="flex items-center justify-between gap-1.5 mt-4 pt-3 border-t border-emerald-200/50">
+            <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded-full whitespace-nowrap">
               4 Tier Plans
             </span>
 
