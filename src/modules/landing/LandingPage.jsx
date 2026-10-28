@@ -20,7 +20,9 @@ import {
   Laptop,
   Check,
   X,
-  MessageCircle
+  MessageCircle,
+  Menu,
+  ArrowUp
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
@@ -36,6 +38,19 @@ export const LandingPage = ({ onNavigateToLogin }) => {
   const [billingCycle, setBillingCycle] = useState('monthly') // 'monthly', 'annual'
   const [isTrialModalOpen, setIsTrialModalOpen] = useState(false)
   const [expandedFaq, setExpandedFaq] = useState(0)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [showScrollTop, setShowScrollTop] = useState(false)
+
+  // Auto-close mobile drawer on desktop resize
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setIsMobileMenuOpen(false)
+      }
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   // Free Trial Form State
   const [trialForm, setTrialForm] = useState({
@@ -54,6 +69,9 @@ export const LandingPage = ({ onNavigateToLogin }) => {
     const sectionIds = ['hero', 'features', 'wings', 'preview', 'pricing', 'faq']
 
     const handleScrollSpy = () => {
+      if (typeof window !== 'undefined') {
+        setShowScrollTop(window.scrollY > 380)
+      }
       const scrollPosition = window.scrollY + 120 // offset for navbar
       for (const id of sectionIds) {
         const el = document.getElementById(id)
@@ -88,6 +106,14 @@ export const LandingPage = ({ onNavigateToLogin }) => {
         behavior: 'smooth'
       })
     }
+  }
+
+  // Smooth Back to Top
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    })
   }
 
   // Direct 1-Click Demo Login Handlers
@@ -268,10 +294,10 @@ export const LandingPage = ({ onNavigateToLogin }) => {
   ]
 
   return (
-    <div className="min-h-screen w-full bg-[#fcfaff] text-slate-900 font-sans selection:bg-purple-100 selection:text-purple-900">
+    <div className="min-h-screen w-full bg-[#fcfaff] text-slate-900 font-sans selection:bg-purple-100 selection:text-purple-900 overflow-x-hidden relative">
       
       {/* 1. TOP ANNOUNCEMENT BANNER */}
-      <div className="bg-[#f5eeff] border-b border-purple-200/80 px-4 py-2 text-center text-xs font-medium text-purple-900 flex items-center justify-center gap-2">
+      <div className="bg-[#f5eeff] border-b border-purple-200/80 px-4 py-2 text-center text-xs font-medium text-purple-900 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
         <span className="w-2 h-2 rounded-full bg-purple-600 animate-pulse"></span>
         <span>
           <strong>New Release:</strong> 14-Day Free Evaluation Tier is now active for all educational institutions.
@@ -287,22 +313,22 @@ export const LandingPage = ({ onNavigateToLogin }) => {
 
       {/* 2. STICKY GLASSMORPHIC NAVBAR WITH ACTIVE HIGHLIGHT ANIMATION */}
       <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-purple-100 shadow-[0_4px_20px_-4px_rgba(147,51,234,0.04)] transition-all duration-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-18 flex items-center justify-between gap-2 sm:gap-4">
           
           {/* Brand Logo */}
           <div 
             onClick={(e) => scrollToSection(e, 'hero')}
-            className="flex items-center gap-3 cursor-pointer group"
+            className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group shrink-0"
           >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-700 via-purple-600 to-indigo-600 flex items-center justify-center text-white shadow-sm shadow-purple-500/25 group-hover:scale-105 transition-transform">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-purple-700 via-purple-600 to-indigo-600 flex items-center justify-center text-white shadow-sm shadow-purple-500/25 group-hover:scale-105 transition-transform shrink-0">
               <GraduationCap className="w-5 h-5 stroke-[2.2]" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="text-lg font-extrabold font-heading tracking-tight text-slate-900">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="text-base sm:text-lg font-extrabold font-heading tracking-tight text-slate-900">
                   Apex<span className="text-purple-600">Ed</span>
                 </span>
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#f5eeff] text-purple-700 border border-purple-200">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#f5eeff] text-purple-700 border border-purple-200 hidden xs:inline-block">
                   ERP v2.4
                 </span>
               </div>
@@ -312,8 +338,8 @@ export const LandingPage = ({ onNavigateToLogin }) => {
             </div>
           </div>
 
-          {/* Center Navigation Links with Smooth Active Highlighting Animation */}
-          <nav className="hidden lg:flex items-center gap-2 p-1 bg-slate-50/70 rounded-2xl border border-purple-100/70 text-xs">
+          {/* Center Navigation Links with Smooth Active Highlighting Animation (Desktop) */}
+          <nav className="hidden lg:flex items-center gap-1.5 p-1 bg-slate-50/70 rounded-2xl border border-purple-100/70 text-xs">
             {navItems.map((item) => {
               const isActive = activeSection === item.id
               return (
@@ -321,7 +347,7 @@ export const LandingPage = ({ onNavigateToLogin }) => {
                   key={item.id}
                   type="button"
                   onClick={(e) => scrollToSection(e, item.id)}
-                  className={`px-3.5 py-1.5 rounded-xl font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 rounded-xl font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5 ${
                     isActive
                       ? 'bg-[#f5eeff] text-purple-700 border border-purple-200 shadow-xs'
                       : 'text-slate-600 hover:text-purple-600 hover:bg-white/80'
@@ -336,33 +362,136 @@ export const LandingPage = ({ onNavigateToLogin }) => {
             })}
           </nav>
 
-          {/* Right Action Buttons: Bold, Clean & Directly Clickable Portal Sign In */}
-          <div className="flex items-center gap-2.5 sm:gap-3">
+          {/* Right Action Buttons */}
+          <div className="flex items-center gap-2 sm:gap-3">
             {/* Prominent, Bold & Clean Portal Sign In Button */}
             <button
               type="button"
               onClick={() => onNavigateToLogin('signin')}
-              className="px-4 py-2 rounded-xl bg-purple-50 hover:bg-[#f5eeff] text-purple-700 hover:text-purple-900 border-2 border-purple-300 hover:border-purple-500 font-extrabold text-xs sm:text-sm shadow-xs hover:shadow-md transition-all duration-200 hover:scale-[1.03] active:scale-95 cursor-pointer flex items-center gap-2 group whitespace-nowrap"
+              className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-purple-50 hover:bg-[#f5eeff] text-purple-700 hover:text-purple-900 border-2 border-purple-300 hover:border-purple-500 font-extrabold text-xs sm:text-sm shadow-xs hover:shadow-md transition-all duration-200 hover:scale-[1.03] active:scale-95 cursor-pointer flex items-center gap-1.5 sm:gap-2 group whitespace-nowrap"
               title="Sign in to your Educational Portal"
             >
-              <div className="w-5 h-5 rounded-lg bg-purple-100 group-hover:bg-purple-200 flex items-center justify-center text-purple-700 transition-colors shrink-0">
-                <Lock className="w-3.5 h-3.5 stroke-[2.4]" />
+              <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-lg bg-purple-100 group-hover:bg-purple-200 flex items-center justify-center text-purple-700 transition-colors shrink-0">
+                <Lock className="w-3 h-3 sm:w-3.5 sm:h-3.5 stroke-[2.4]" />
               </div>
               <span className="font-heading tracking-tight">Portal Sign In</span>
-              <ArrowRight className="w-3.5 h-3.5 text-purple-400 group-hover:text-purple-700 group-hover:translate-x-0.5 transition-all shrink-0" />
+              <ArrowRight className="w-3.5 h-3.5 text-purple-400 group-hover:text-purple-700 group-hover:translate-x-0.5 transition-all hidden sm:inline shrink-0" />
             </button>
 
-            {/* Start Free Trial Button */}
+            {/* Start Free Trial Button (Tablet & Desktop) */}
             <button
               type="button"
               onClick={() => setIsTrialModalOpen(true)}
-              className="px-4 py-2 sm:px-4.5 sm:py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs sm:text-sm shadow-sm shadow-purple-600/25 transition-all duration-200 hover:scale-[1.03] active:scale-95 cursor-pointer flex items-center gap-2 whitespace-nowrap"
+              className="hidden sm:flex px-4 py-2 sm:px-4.5 sm:py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs sm:text-sm shadow-sm shadow-purple-600/25 transition-all duration-200 hover:scale-[1.03] active:scale-95 cursor-pointer items-center gap-2 whitespace-nowrap"
             >
               <Sparkles className="w-3.5 h-3.5 text-purple-200" />
               <span className="font-heading tracking-tight">Start Free Trial</span>
             </button>
+
+            {/* Mobile Hamburger Menu Toggle Button */}
+            <button
+              type="button"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="lg:hidden p-2 rounded-xl text-slate-700 hover:text-purple-700 hover:bg-purple-50 border border-purple-100 transition-colors cursor-pointer"
+              aria-label="Toggle Navigation Menu"
+            >
+              {isMobileMenuOpen ? (
+                <X className="w-5 h-5 text-purple-700" />
+              ) : (
+                <Menu className="w-5 h-5 text-slate-700" />
+              )}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Navigation Dropdown Drawer (Animated & Full Interactive Response) */}
+        {isMobileMenuOpen && (
+          <div className="lg:hidden border-t border-purple-100 bg-white/98 backdrop-blur-md px-4 py-4 shadow-xl space-y-3.5 animate-in slide-in-from-top-2 duration-200 max-h-[80vh] overflow-y-auto">
+            {/* Nav Items */}
+            <div className="space-y-1">
+              {navItems.map((item) => {
+                const isActive = activeSection === item.id
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={(e) => scrollToSection(e, item.id)}
+                    className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-between transition-colors ${
+                      isActive
+                        ? 'bg-[#f5eeff] text-purple-700 border border-purple-200'
+                        : 'text-slate-700 hover:bg-purple-50 hover:text-purple-700'
+                    }`}
+                  >
+                    <span>{item.label}</span>
+                    {isActive ? (
+                      <span className="w-2 h-2 rounded-full bg-purple-600 animate-pulse"></span>
+                    ) : (
+                      <ArrowRight className="w-3.5 h-3.5 text-slate-300" />
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Quick Actions in Mobile Menu */}
+            <div className="pt-2 border-t border-purple-100 space-y-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileMenuOpen(false)
+                  setIsTrialModalOpen(true)
+                }}
+                className="w-full py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs sm:text-sm shadow-xs transition-colors flex items-center justify-center gap-2"
+              >
+                <Sparkles className="w-4 h-4 text-purple-200" />
+                <span>Start 14-Day Free Trial (₨ 0)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileMenuOpen(false)
+                  onNavigateToLogin('signin')
+                }}
+                className="w-full py-2.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs sm:text-sm border border-purple-200 transition-colors flex items-center justify-center gap-2"
+              >
+                <Lock className="w-4 h-4" />
+                <span>Portal Sign In</span>
+              </button>
+            </div>
+
+            {/* Direct 1-Click Interactive Demos in Mobile Drawer */}
+            <div className="pt-2 border-t border-purple-100">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
+                Instant 1-Click Demo Evaluation:
+              </span>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false)
+                    handleQuickDemo('superadmin')
+                  }}
+                  className="py-2 px-2.5 rounded-xl bg-slate-50 hover:bg-purple-50 border border-slate-200 text-slate-700 hover:text-purple-700 font-semibold text-center transition-colors flex items-center justify-center gap-1"
+                >
+                  <Laptop className="w-3.5 h-3.5 text-purple-600" />
+                  <span>Super Admin</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false)
+                    handleQuickDemo('institute')
+                  }}
+                  className="py-2 px-2.5 rounded-xl bg-slate-50 hover:bg-purple-50 border border-slate-200 text-slate-700 hover:text-purple-700 font-semibold text-center transition-colors flex items-center justify-center gap-1"
+                >
+                  <Building2 className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Campus Admin</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* 3. HERO SECTION */}
@@ -1198,7 +1327,7 @@ export const LandingPage = ({ onNavigateToLogin }) => {
       {/* 10. CLEAN MINIMAL FOOTER */}
       <footer className="bg-slate-900 text-slate-400 text-xs py-12 border-t border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-10 border-b border-slate-800">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 pb-10 border-b border-slate-800">
             
             {/* Col 1: Brand */}
             <div>
@@ -1286,7 +1415,7 @@ export const LandingPage = ({ onNavigateToLogin }) => {
       {/* 11. START 14-DAY FREE TRIAL MODAL */}
       {isTrialModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-purple-100 relative">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-purple-100 relative max-h-[90vh] overflow-y-auto">
             
             {/* Close Button */}
             <button
@@ -1439,6 +1568,33 @@ export const LandingPage = ({ onNavigateToLogin }) => {
 
           </div>
         </div>
+      )}
+
+      {/* 12. FLOATING USER INTERACTION & RESPONSE WIDGETS */}
+      {/* WhatsApp Quick Chat Floating Pill */}
+      <a
+        href="https://wa.me/923001234567?text=Hello%20ApexEd%20ERP%20Team!%20I%20am%20interested%20in%20a%20demo%20and%20pricing%20for%20our%20institution."
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-5 left-5 z-40 inline-flex items-center gap-2 px-3.5 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-lg shadow-emerald-600/30 transition-all hover:scale-105 active:scale-95 cursor-pointer group"
+        title="Chat with ApexEd Support on WhatsApp"
+      >
+        <MessageCircle className="w-4 h-4 fill-white/20" />
+        <span className="hidden sm:inline">WhatsApp Inquiries</span>
+        <span className="sm:hidden">WhatsApp</span>
+      </a>
+
+      {/* Back to Top Smooth Scroll Floating Button */}
+      {showScrollTop && (
+        <button
+          type="button"
+          onClick={scrollToTop}
+          className="fixed bottom-5 right-5 z-40 p-3 rounded-full bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-600/30 transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer flex items-center justify-center animate-in fade-in"
+          title="Back to Top"
+          aria-label="Back to Top"
+        >
+          <ArrowUp className="w-4 h-4 stroke-[2.5]" />
+        </button>
       )}
 
     </div>
