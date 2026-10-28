@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useRef, useEffect } from 'react'
 import { 
   LayoutGrid,
   List,
@@ -40,6 +40,7 @@ import {
   Palette,
   Globe,
   Sliders,
+  Filter,
   Calendar,
   X,
   Lock,
@@ -100,6 +101,41 @@ export const InstitutesView = () => {
   // Modals
   const [isWizardOpen, setIsWizardOpen] = useState(false)
   const [wizardStep, setWizardStep] = useState(1)
+
+  // Tier cards visibility filter for Wizard Step 1 (Checkboxes to tick/untick cards to display on screen)
+  const [visibleTierCards, setVisibleTierCards] = useState(['School', 'College', 'University', 'Custom'])
+  const [showTierFilterPopover, setShowTierFilterPopover] = useState(false)
+  const tierFilterPopoverRef = useRef(null)
+
+  // Close filter popover on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (tierFilterPopoverRef.current && !tierFilterPopoverRef.current.contains(event.target)) {
+        setShowTierFilterPopover(false)
+      }
+    }
+    if (showTierFilterPopover) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showTierFilterPopover])
+
+  // Toggle visibility of individual tier cards
+  const toggleTierCardVisibility = (tierId) => {
+    setVisibleTierCards(prev => {
+      const next = prev.includes(tierId)
+        ? prev.filter(t => t !== tierId)
+        : [...prev, tierId]
+      
+      // If currently selected tier is now hidden, select the first visible one
+      if (!next.includes(wizardData.type) && next.length > 0) {
+        handleTierSelection(next[0])
+      }
+      return next
+    })
+  }
   const [editingInstitute, setEditingInstitute] = useState(null)
   const [viewingDetails, setViewingDetails] = useState(null)
   const [detailsTab, setDetailsTab] = useState('overview') // overview, campuses, admins, modules, plan, activity
@@ -1490,48 +1526,155 @@ export const InstitutesView = () => {
                     <span className="text-rose-500 font-bold">*</span>
                   </label>
                   
-                  {/* Dropdown Filter / Quick Selector (As Requested) */}
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">Select Tier:</span>
-                    <select
-                      value={wizardData.type || 'School'}
-                      onChange={(e) => handleTierSelection(e.target.value)}
-                      className="px-2.5 py-1 text-xs font-semibold bg-white border border-slate-200 rounded-lg text-slate-700 shadow-2xs focus:outline-none focus:ring-2 focus:ring-purple-500/20 cursor-pointer hover:border-slate-300"
+                  {/* Multi-Checkbox Filter Popover for Tier Cards (Tick to display on screen, untick to hide) */}
+                  <div className="relative shrink-0" ref={tierFilterPopoverRef}>
+                    <button
+                      type="button"
+                      onClick={() => setShowTierFilterPopover(!showTierFilterPopover)}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg border transition-all cursor-pointer shadow-2xs ${
+                        showTierFilterPopover
+                          ? 'bg-purple-50 border-purple-400 text-purple-700 ring-2 ring-purple-500/20'
+                          : 'bg-white border-slate-200 text-slate-700 hover:border-purple-300 hover:bg-slate-50'
+                      }`}
+                      title="Filter which plan cards to display on screen"
                     >
-                      <option value="School">School Plan</option>
-                      <option value="College">College Plan</option>
-                      <option value="University">University Plan</option>
-                      <option value="Custom">Custom Hybrid</option>
-                    </select>
+                      <Filter className="w-3.5 h-3.5 text-purple-600" />
+                      <span>Filter Cards</span>
+                      <span className="text-[10px] font-bold text-purple-700 bg-purple-100 px-1.5 py-0.2 rounded-full">
+                        {visibleTierCards.length}/4
+                      </span>
+                      <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${showTierFilterPopover ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {/* Floating Popover with Checkboxes */}
+                    {showTierFilterPopover && (
+                      <div className="absolute right-0 top-full mt-1.5 w-60 bg-white rounded-2xl shadow-xl border border-purple-100 z-50 p-2.5 space-y-2 animate-in fade-in slide-in-from-top-1 duration-150">
+                        <div className="flex items-center justify-between pb-1.5 border-b border-slate-100 px-1">
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                            Show / Hide Cards
+                          </span>
+                          <div className="flex items-center gap-1.5 text-[10px]">
+                            <button
+                              type="button"
+                              onClick={() => setVisibleTierCards(['School', 'College', 'University', 'Custom'])}
+                              className="text-purple-600 hover:underline font-bold cursor-pointer"
+                            >
+                              All
+                            </button>
+                            <span className="text-slate-300">·</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setVisibleTierCards(['School'])
+                                handleTierSelection('School')
+                              }}
+                              className="text-slate-500 hover:underline font-medium cursor-pointer"
+                            >
+                              Reset
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Checkbox Options for each tier card */}
+                        <div className="space-y-1">
+                          {[
+                            { id: 'School', label: 'School Plan', icon: School, color: 'text-purple-600', badge: 'K-10' },
+                            { id: 'College', label: 'College Plan', icon: Building2, color: 'text-indigo-600', badge: '11-12' },
+                            { id: 'University', label: 'University Plan', icon: GraduationCap, color: 'text-purple-600', badge: 'BS' },
+                            { id: 'Custom', label: 'Custom Hybrid', icon: Layers, color: 'text-amber-600', badge: 'Multi' }
+                          ].map(item => {
+                            const ItemIcon = item.icon
+                            const isChecked = visibleTierCards.includes(item.id)
+                            return (
+                              <label
+                                key={item.id}
+                                className={`flex items-center justify-between px-2.5 py-1.5 rounded-xl cursor-pointer transition-colors text-xs select-none ${
+                                  isChecked ? 'bg-purple-50/70 text-purple-900 font-semibold' : 'hover:bg-slate-50 text-slate-600'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    type="checkbox"
+                                    checked={isChecked}
+                                    onChange={() => toggleTierCardVisibility(item.id)}
+                                    className="w-3.5 h-3.5 text-purple-600 rounded border-slate-300 focus:ring-purple-500 cursor-pointer"
+                                  />
+                                  <ItemIcon className={`w-3.5 h-3.5 ${item.color} shrink-0`} />
+                                  <span>{item.label}</span>
+                                </div>
+                                <span className="text-[10px] font-bold text-slate-400 bg-white px-1.5 py-0.5 rounded border border-slate-100">
+                                  {item.badge}
+                                </span>
+                              </label>
+                            )
+                          })}
+                        </div>
+
+                        <div className="pt-1.5 border-t border-slate-100 px-1 text-[10px] text-slate-400 text-center">
+                          Tick cards to display on screen, untick to hide.
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {[
+                {/* Dynamically Filtered Tier Cards Displayed On Screen */}
+                {(() => {
+                  const allTierCards = [
                     { id: 'School', label: 'School Plan', icon: School, color: 'text-purple-600' },
                     { id: 'College', label: 'College Plan', icon: Building2, color: 'text-indigo-600' },
                     { id: 'University', label: 'University Plan', icon: GraduationCap, color: 'text-purple-600' },
                     { id: 'Custom', label: 'Custom Hybrid', icon: Layers, color: 'text-amber-600' }
-                  ].map((tierItem) => {
-                    const TierIcon = tierItem.icon
-                    const isSelected = wizardData.type === tierItem.id
+                  ]
+                  const displayedCards = allTierCards.filter(card => visibleTierCards.includes(card.id))
+
+                  if (displayedCards.length === 0) {
                     return (
-                      <button
-                        key={tierItem.id}
-                        type="button"
-                        onClick={() => handleTierSelection(tierItem.id)}
-                        className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center gap-1.5 cursor-pointer ${
-                          isSelected 
-                            ? 'border-purple-600 bg-[#f5eeff] text-purple-800 font-bold ring-2 ring-purple-500/20 shadow-2xs' 
-                            : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
-                        }`}
-                      >
-                        <TierIcon className={`w-5 h-5 ${tierItem.color}`} />
-                        <span className="text-xs font-semibold">{tierItem.label}</span>
-                      </button>
+                      <div className="p-6 text-center rounded-2xl bg-slate-50 border border-dashed border-slate-300 animate-in fade-in">
+                        <Filter className="w-7 h-7 text-slate-400 mx-auto mb-2" />
+                        <p className="text-xs font-bold text-slate-700">All plan cards are currently hidden</p>
+                        <p className="text-[11px] text-slate-500 mt-0.5">Please tick at least one card in the Filter above to display it on screen.</p>
+                        <button
+                          type="button"
+                          onClick={() => setVisibleTierCards(['School', 'College', 'University', 'Custom'])}
+                          className="mt-3 px-3.5 py-1.5 text-xs font-bold text-purple-700 bg-purple-100 hover:bg-purple-200 rounded-xl transition-colors cursor-pointer"
+                        >
+                          Show All Cards
+                        </button>
+                      </div>
                     )
-                  })}
-                </div>
+                  }
+
+                  const gridColsClass = 
+                    displayedCards.length === 4 ? 'grid-cols-2 sm:grid-cols-4' :
+                    displayedCards.length === 3 ? 'grid-cols-1 sm:grid-cols-3' :
+                    displayedCards.length === 2 ? 'grid-cols-2' :
+                    'grid-cols-1 max-w-sm mx-auto'
+
+                  return (
+                    <div className={`grid ${gridColsClass} gap-3 transition-all`}>
+                      {displayedCards.map((tierItem) => {
+                        const TierIcon = tierItem.icon
+                        const isSelected = wizardData.type === tierItem.id
+                        return (
+                          <button
+                            key={tierItem.id}
+                            type="button"
+                            onClick={() => handleTierSelection(tierItem.id)}
+                            className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center gap-1.5 cursor-pointer ${
+                              isSelected 
+                                ? 'border-purple-600 bg-[#f5eeff] text-purple-800 font-bold ring-2 ring-purple-500/20 shadow-2xs' 
+                                : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                            }`}
+                          >
+                            <TierIcon className={`w-5 h-5 ${tierItem.color}`} />
+                            <span className="text-xs font-semibold">{tierItem.label}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )
+                })()}
 
                 {/* Custom Plan: Multi-Wing Checkbox Configuration */}
                 {wizardData.type === 'Custom' && (
