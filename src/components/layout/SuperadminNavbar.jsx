@@ -90,11 +90,6 @@ export const SuperadminNavbar = ({
 
       {/* Right Side Icons & Profile Info */}
       <div className="flex items-center gap-2.5 sm:gap-4 shrink-0">
-        {/* Cloud Sync Status */}
-        <div className="hidden md:block">
-          <CloudSyncBadge onOpenSettings={onOpenSettings} />
-        </div>
-
         {/* Notification Bell */}
         <div className="relative" ref={notifRef}>
           <button 
