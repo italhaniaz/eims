@@ -131,6 +131,7 @@ export const LandingPage = ({ onNavigateToLogin }) => {
     countryCode: '+92',
     phone: '',
     tier: 'school',
+    isMultiCampus: false,
     city: 'Lahore'
   })
   const [isSubmittingTrial, setIsSubmittingTrial] = useState(false)
@@ -198,6 +199,17 @@ export const LandingPage = ({ onNavigateToLogin }) => {
     }
   }
 
+  // Smart Trial Modal Opener that pre-selects the clicked educational wing
+  const handleOpenTrialModal = (targetWing = 'school') => {
+    const normalized = targetWing === 'university' ? 'undergraduate' : (targetWing || activeTab || 'school')
+    setTrialForm(prev => ({
+      ...prev,
+      tier: normalized === 'custom' ? 'school' : normalized,
+      isMultiCampus: targetWing === 'custom'
+    }))
+    setIsTrialModalOpen(true)
+  }
+
   // Handle Free Trial Registration
   const handleSubmitTrial = (e) => {
     e.preventDefault()
@@ -215,6 +227,36 @@ export const LandingPage = ({ onNavigateToLogin }) => {
         
         // Save new trial institute to stored data
         const currentData = getStoredData()
+        // Configure exact enabled wing tiers
+        const enabledTiers = trialForm.isMultiCampus
+          ? [trialForm.tier, trialForm.tier === 'school' ? 'college' : 'school']
+          : [trialForm.tier]
+
+        const wingLabel = trialForm.isMultiCampus
+          ? 'Multi-Wing Conglomerate'
+          : trialForm.tier === 'school'
+          ? 'School Wing'
+          : trialForm.tier === 'college'
+          ? 'College Wing'
+          : 'University Wing'
+
+        const planTierName = `Free Trial (${wingLabel})`
+        const planTypeCode = trialForm.isMultiCampus
+          ? 'CUSTOM'
+          : trialForm.tier === 'school'
+          ? 'SCHOOL'
+          : trialForm.tier === 'college'
+          ? 'COLLEGE'
+          : 'UNIVERSITY'
+
+        const instTypeName = trialForm.isMultiCampus
+          ? 'Custom Group'
+          : trialForm.tier === 'school'
+          ? 'School'
+          : trialForm.tier === 'college'
+          ? 'College'
+          : 'University'
+
         const newInstitute = {
           id: newInstId,
           name: trialForm.instituteName,
@@ -225,15 +267,16 @@ export const LandingPage = ({ onNavigateToLogin }) => {
           address: `${trialForm.city}, Pakistan`,
           city: trialForm.city,
           country: 'Pakistan',
-          planTier: 'Free Trial Plan',
-          planType: 'TRIAL',
+          planTier: planTierName,
+          planType: planTypeCode,
+          type: instTypeName,
           subscriptionStatus: 'TRIAL',
           trialEndsAt: new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
-          enabledTiers: [trialForm.tier],
+          enabledTiers: enabledTiers,
           createdAt: new Date().toISOString().slice(0, 10),
           status: 'Active',
-          wingsCount: 1,
-          campusesCount: 1,
+          wingsCount: enabledTiers.length,
+          campusesCount: trialForm.isMultiCampus ? 2 : 1,
           studentCount: 0,
           facultyCount: 0
         }
@@ -246,9 +289,9 @@ export const LandingPage = ({ onNavigateToLogin }) => {
           id: `sub-trial-${Date.now().toString().slice(-4)}`,
           instituteId: newInstId,
           instituteName: trialForm.instituteName,
-          planId: 'plan-trial',
-          planName: 'Free Trial Plan',
-          enabledTiers: [trialForm.tier],
+          planId: `plan-trial-${trialForm.tier}`,
+          planName: planTierName,
+          enabledTiers: enabledTiers,
           status: 'TRIAL',
           billingCycle: '14-day trial',
           pricePKR: 0,
@@ -257,7 +300,7 @@ export const LandingPage = ({ onNavigateToLogin }) => {
           trialEndsAt: new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
           autoRenew: false,
           isWaived: false,
-          waiveReason: '14-Day Free Evaluation Access'
+          waiveReason: `14-Day Free Evaluation Access (${wingLabel})`
         }
 
         const localSubs = localStorage.getItem('sms_institute_subscriptions')
@@ -1623,7 +1666,7 @@ export const LandingPage = ({ onNavigateToLogin }) => {
       {/* 11. START 14-DAY FREE TRIAL MODAL */}
       {isTrialModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-purple-100 relative max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-purple-100 relative max-h-[90vh] overflow-y-auto">
             
             {/* Close Button */}
             <button
@@ -1694,6 +1737,119 @@ export const LandingPage = ({ onNavigateToLogin }) => {
                 />
               </div>
 
+              {/* Dedicated Educational Wing Selection Cards */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-xs font-bold text-slate-800">
+                    Educational Wing <span className="text-rose-500">*</span>
+                  </label>
+                  <span className="text-[10px] font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200">
+                    Isolated Architecture
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
+                  {/* Card 1: School */}
+                  <button
+                    type="button"
+                    onClick={() => setTrialForm({ ...trialForm, tier: 'school' })}
+                    className={`p-2.5 sm:p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                      trialForm.tier === 'school'
+                        ? 'bg-purple-50/80 border-purple-500 ring-2 ring-purple-500/20 shadow-xs'
+                        : 'bg-white border-slate-200 hover:border-purple-200 hover:bg-slate-50/60'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <div className={`w-7 h-7 rounded-xl flex items-center justify-center ${
+                        trialForm.tier === 'school' ? 'bg-purple-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600'
+                      }`}>
+                        <School className="w-4 h-4" />
+                      </div>
+                      {trialForm.tier === 'school' && (
+                        <CheckCircle2 className="w-4 h-4 text-purple-600 shrink-0" />
+                      )}
+                    </div>
+                    <div className="mt-2">
+                      <span className="block text-xs font-bold text-slate-900 leading-tight">School</span>
+                      <span className="block text-[10px] text-slate-500 leading-tight mt-0.5">Matric & Primary</span>
+                    </div>
+                  </button>
+
+                  {/* Card 2: College */}
+                  <button
+                    type="button"
+                    onClick={() => setTrialForm({ ...trialForm, tier: 'college' })}
+                    className={`p-2.5 sm:p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                      trialForm.tier === 'college'
+                        ? 'bg-indigo-50/80 border-indigo-500 ring-2 ring-indigo-500/20 shadow-xs'
+                        : 'bg-white border-slate-200 hover:border-indigo-200 hover:bg-slate-50/60'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <div className={`w-7 h-7 rounded-xl flex items-center justify-center ${
+                        trialForm.tier === 'college' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600'
+                      }`}>
+                        <Building2 className="w-4 h-4" />
+                      </div>
+                      {trialForm.tier === 'college' && (
+                        <CheckCircle2 className="w-4 h-4 text-indigo-600 shrink-0" />
+                      )}
+                    </div>
+                    <div className="mt-2">
+                      <span className="block text-xs font-bold text-slate-900 leading-tight">College</span>
+                      <span className="block text-[10px] text-slate-500 leading-tight mt-0.5">F.Sc & ICS (BISE)</span>
+                    </div>
+                  </button>
+
+                  {/* Card 3: University */}
+                  <button
+                    type="button"
+                    onClick={() => setTrialForm({ ...trialForm, tier: 'undergraduate' })}
+                    className={`p-2.5 sm:p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                      trialForm.tier === 'undergraduate'
+                        ? 'bg-emerald-50/80 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs'
+                        : 'bg-white border-slate-200 hover:border-emerald-200 hover:bg-slate-50/60'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <div className={`w-7 h-7 rounded-xl flex items-center justify-center ${
+                        trialForm.tier === 'undergraduate' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600'
+                      }`}>
+                        <GraduationCap className="w-4 h-4" />
+                      </div>
+                      {trialForm.tier === 'undergraduate' && (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      )}
+                    </div>
+                    <div className="mt-2">
+                      <span className="block text-xs font-bold text-slate-900 leading-tight">University</span>
+                      <span className="block text-[10px] text-slate-500 leading-tight mt-0.5">BS & Semesters</span>
+                    </div>
+                  </button>
+                </div>
+
+                {/* Optional Multi-Campus / Multi-Wing Support Toggle */}
+                <div className="mt-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-start gap-2.5">
+                  <input
+                    type="checkbox"
+                    id="multiCampusToggle"
+                    checked={trialForm.isMultiCampus}
+                    onChange={(e) => setTrialForm({ ...trialForm, isMultiCampus: e.target.checked })}
+                    className="mt-0.5 w-4 h-4 rounded text-purple-600 focus:ring-purple-500 border-slate-300 cursor-pointer"
+                  />
+                  <label htmlFor="multiCampusToggle" className="text-xs cursor-pointer select-none">
+                    <span className="font-bold text-slate-900 flex items-center gap-1.5">
+                      <span>Enable Multi-Campus / Multi-Wing Network</span>
+                      <span className="text-[10px] font-bold text-purple-700 bg-purple-100/70 px-1.5 py-0.2 rounded border border-purple-200">Optional</span>
+                    </span>
+                    <span className="text-[11px] text-slate-500 block mt-0.5 leading-snug">
+                      Combine multiple school, college, or university branches under one unified central headquarters.
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Phone and City in 2 Columns */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -1715,40 +1871,24 @@ export const LandingPage = ({ onNavigateToLogin }) => {
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Educational Wing
+                    City
                   </label>
                   <select
-                    value={trialForm.tier}
-                    onChange={(e) => setTrialForm({ ...trialForm, tier: e.target.value })}
+                    value={trialForm.city}
+                    onChange={(e) => setTrialForm({ ...trialForm, city: e.target.value })}
                     className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none bg-white font-medium"
                   >
-                    <option value="school">School Wing (Primary/Matric)</option>
-                    <option value="college">College Wing (F.Sc/ICS)</option>
-                    <option value="undergraduate">University Wing (BS)</option>
-                    <option value="custom">Multi-Wing Conglomerate</option>
+                    <option value="Lahore">Lahore</option>
+                    <option value="Islamabad">Islamabad</option>
+                    <option value="Rawalpindi">Rawalpindi</option>
+                    <option value="Karachi">Karachi</option>
+                    <option value="Faisalabad">Faisalabad</option>
+                    <option value="Multan">Multan</option>
+                    <option value="Peshawar">Peshawar</option>
+                    <option value="Quetta">Quetta</option>
+                    <option value="Other">Other City</option>
                   </select>
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  City
-                </label>
-                <select
-                  value={trialForm.city}
-                  onChange={(e) => setTrialForm({ ...trialForm, city: e.target.value })}
-                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none bg-white font-medium"
-                >
-                  <option value="Lahore">Lahore</option>
-                  <option value="Islamabad">Islamabad</option>
-                  <option value="Rawalpindi">Rawalpindi</option>
-                  <option value="Karachi">Karachi</option>
-                  <option value="Faisalabad">Faisalabad</option>
-                  <option value="Multan">Multan</option>
-                  <option value="Peshawar">Peshawar</option>
-                  <option value="Quetta">Quetta</option>
-                  <option value="Other">Other City</option>
-                </select>
               </div>
 
               <div className="pt-2">
