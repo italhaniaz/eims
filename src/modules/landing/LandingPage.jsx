@@ -1677,39 +1677,51 @@ export const LandingPage = ({ onNavigateToLogin }) => {
 
     </div>{/* end bottomWrapperRef */}
 
-      {/* 11. START 14-DAY FREE TRIAL MODAL */}
+      {/* 11. START 14-DAY FREE TRIAL MODAL (Clean UX, Zero Corner Overflow, Sleek Scrollbar) */}
       {isTrialModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-purple-100 relative max-h-[90vh] overflow-y-auto">
-            
-            {/* Close Button */}
-            <button
-              onClick={() => setIsTrialModalOpen(false)}
-              className="absolute top-5 right-5 p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in"
+          onClick={() => setIsTrialModalOpen(false)}
+        >
+          {/* Outer Card: Holds border-radius and overflow-hidden so native scrollbar never clips corners */}
+          <div 
+            className="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-purple-100 relative max-h-[92vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header: Fixed at top with persistent close button */}
+            <div className="p-5 sm:p-6 pb-3.5 relative shrink-0 border-b border-slate-100/90 bg-white">
+              {/* Close Button */}
+              <button
+                onClick={() => setIsTrialModalOpen(false)}
+                className="absolute top-4 right-4 sm:top-5 sm:right-5 p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                title="Close dialog"
+                aria-label="Close dialog"
+              >
+                <X className="w-5 h-5" />
+              </button>
 
-            {/* Modal Header */}
-            <div className="flex items-center gap-2.5 mb-1.5">
-              <div className="w-9 h-9 rounded-xl bg-[#f5eeff] text-purple-700 flex items-center justify-center">
-                <Sparkles className="w-5 h-5" />
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-[#f5eeff] text-purple-700 flex items-center justify-center shrink-0 shadow-2xs">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div className="pr-8">
+                  <h3 className="text-base sm:text-lg font-extrabold text-slate-900 font-heading leading-tight">
+                    Start 14-Day Free Trial
+                  </h3>
+                  <span className="text-[11px] font-semibold text-emerald-600 block mt-0.5">
+                    ₨ 0 · No Credit Card Required · Instant Activation
+                  </span>
+                </div>
               </div>
-              <div>
-                <h3 className="text-lg font-extrabold text-slate-900 font-heading">
-                  Start 14-Day Free Trial
-                </h3>
-                <span className="text-[11px] font-semibold text-emerald-600">
-                  ₨ 0 · No Credit Card Required · Instant Activation
-                </span>
-              </div>
+
+              <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                Enter your institutional details below to immediately launch an isolated trial environment for your school or college.
+              </p>
             </div>
 
-            <p className="text-xs text-slate-500 mt-2 mb-5">
-              Enter your institutional details below to immediately launch an isolated trial environment for your school or college.
-            </p>
-
-            <form onSubmit={handleSubmitTrial} className="space-y-3.5">
+            {/* Scrollable Form Body: Inner container with sleek modal-scrollbar */}
+            <div className="overflow-y-auto p-5 sm:p-6 pt-4 modal-scrollbar flex-1">
+              <form onSubmit={handleSubmitTrial} className="space-y-3.5">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
                   Institute Name <span className="text-rose-500">*</span>
@@ -1927,9 +1939,9 @@ export const LandingPage = ({ onNavigateToLogin }) => {
                 By activating, your evaluation instance will be initialized instantly under our standard privacy and multi-tenant security policies.
               </div>
             </form>
-
           </div>
         </div>
+      </div>
       )}
 
       {/* 12. FLOATING USER INTERACTION & RESPONSE WIDGETS */}
