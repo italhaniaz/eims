@@ -28,12 +28,12 @@ import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { getStoredData, saveStoredData } from '../../services/dataService'
 
-// 28-point serrated starburst sticker geometry (Awwwards-style Action Badge)
+// 26-point refined serrated starburst sticker geometry (Compact Awwwards-style Action Badge)
 const STARBURST_POINTS = (() => {
   const points = []
-  const numPoints = 28
-  const outerR = 58
-  const innerR = 49
+  const numPoints = 26
+  const outerR = 56
+  const innerR = 48.5
   const center = 60
   for (let i = 0; i < numPoints * 2; i++) {
     const r = i % 2 === 0 ? outerR : innerR
@@ -72,8 +72,8 @@ export const LandingPage = ({ onNavigateToLogin }) => {
         const rect = bottomWrapperRef.current.getBoundingClientRect()
         const ctaHeight = ctaSectionRef.current ? ctaSectionRef.current.offsetHeight : 320
         setStickerPos({
-          x: Math.max(160, rect.width - 150),
-          y: ctaHeight - 15
+          x: Math.max(140, rect.width - 130),
+          y: ctaHeight - 10
         })
       }
     }
@@ -100,8 +100,8 @@ export const LandingPage = ({ onNavigateToLogin }) => {
       const rect = bottomWrapperRef.current.getBoundingClientRect()
       const ctaHeight = ctaSectionRef.current ? ctaSectionRef.current.offsetHeight : 320
       setStickerPos({
-        x: Math.max(160, rect.width - 150),
-        y: ctaHeight - 15
+        x: Math.max(140, rect.width - 130),
+        y: ctaHeight - 10
       })
     }
   }
@@ -1580,13 +1580,13 @@ export const LandingPage = ({ onNavigateToLogin }) => {
         </div>
       </footer>
 
-      {/* Desktop / Tablet Pointer-Sticking Action Burst Sticker */}
+      {/* Desktop / Tablet Pointer-Sticking Action Burst Sticker (Compact & Senior UI Polish) */}
       <div
         onClick={() => setIsTrialModalOpen(true)}
         style={{
-          transform: `translate3d(${stickerPos.x}px, ${stickerPos.y}px, 0) translate(-50%, -50%) scale(${isPointerSticking ? 1.08 : 1})`,
+          transform: `translate3d(${stickerPos.x}px, ${stickerPos.y}px, 0) translate(-50%, -50%) scale(${isPointerSticking ? 1.05 : 1})`,
           transition: isPointerSticking
-            ? 'transform 0.08s ease-out, scale 0.25s ease-out'
+            ? 'transform 0.08s ease-out, scale 0.2s ease-out'
             : 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), scale 0.35s ease-out'
         }}
         className={`hidden sm:block absolute left-0 top-0 z-30 select-none ${
@@ -1595,68 +1595,82 @@ export const LandingPage = ({ onNavigateToLogin }) => {
         title="Click to Activate 14-Day Free Evaluation (₨ 0)"
         aria-label="Start 14-Day Free Trial"
       >
-        <div className="relative w-36 h-36 md:w-40 md:h-40 flex items-center justify-center group">
+        <div className="relative w-28 h-28 sm:w-30 sm:h-30 md:w-32 md:h-32 flex items-center justify-center group cursor-pointer transition-transform duration-200 hover:scale-105 active:scale-95">
           {/* Ambient Purple Radial Glow */}
           <div
-            className={`absolute inset-2 rounded-full blur-xl transition-all duration-300 pointer-events-none ${
+            className={`absolute inset-1 rounded-full blur-lg transition-all duration-300 pointer-events-none ${
               isPointerSticking
-                ? 'bg-purple-500/80 scale-125'
-                : 'bg-purple-600/50 group-hover:bg-purple-500/80'
+                ? 'bg-purple-500/70 scale-110'
+                : 'bg-purple-600/40 group-hover:bg-purple-500/70'
             }`}
           />
 
-          {/* Rotating Serrated Starburst Badge (28-Point Jagged Polygon with Gradient & Stamp Ring) */}
+          {/* Rotating Serrated Starburst Badge (Refined Scalloped Seal Geometry & Gloss Overlay) */}
           <svg
             viewBox="0 0 120 120"
-            className="w-full h-full drop-shadow-[0_16px_36px_rgba(88,28,135,0.75)] animate-[spin_24s_linear_infinite]"
+            className="w-full h-full drop-shadow-[0_12px_28px_rgba(126,34,206,0.65)] animate-[spin_22s_linear_infinite]"
           >
             <defs>
-              <linearGradient id="stickerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#9333EA" />
-                <stop offset="50%" stopColor="#7E22CE" />
-                <stop offset="100%" stopColor="#6B21A8" />
+              <linearGradient id="stickerGrad" x1="15%" y1="10%" x2="85%" y2="90%">
+                <stop offset="0%" stopColor="#A855F7" />
+                <stop offset="35%" stopColor="#9333EA" />
+                <stop offset="70%" stopColor="#7E22CE" />
+                <stop offset="100%" stopColor="#581C87" />
               </linearGradient>
+              <radialGradient id="stickerGloss" cx="35%" cy="30%" r="65%">
+                <stop offset="0%" stopColor="#ffffff" stopOpacity="0.32" />
+                <stop offset="45%" stopColor="#ffffff" stopOpacity="0.08" />
+                <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+              </radialGradient>
             </defs>
 
-            {/* Outer Jagged Starburst Teeth */}
+            {/* Outer Scalloped Starburst Teeth */}
             <polygon
               points={STARBURST_POINTS}
               fill="url(#stickerGrad)"
-              stroke="rgba(255, 255, 255, 0.45)"
+              stroke="rgba(255, 255, 255, 0.5)"
               strokeWidth="1.2"
               strokeLinejoin="round"
+            />
+
+            {/* Inner Gloss Dome Reflection */}
+            <circle
+              cx="60"
+              cy="60"
+              r="47"
+              fill="url(#stickerGloss)"
             />
 
             {/* Inner Stamp Dashed Ring */}
             <circle
               cx="60"
               cy="60"
-              r="42"
+              r="40"
               fill="none"
-              stroke="rgba(255, 255, 255, 0.28)"
-              strokeWidth="1.2"
-              strokeDasharray="3 3"
+              stroke="rgba(255, 255, 255, 0.35)"
+              strokeWidth="1.1"
+              strokeDasharray="3 2.5"
             />
           </svg>
 
-          {/* Center Bold Typography (Crisp, High-Contrast & Beautiful) */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-white pointer-events-none px-3">
-            <span className="text-[11px] font-black tracking-widest uppercase font-heading leading-tight drop-shadow-sm text-purple-200">
+          {/* Center Bold Typography (Crisp, High-Contrast & Beautiful Hierarchy) */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-white pointer-events-none px-2 select-none">
+            <span className="text-[9.5px] sm:text-[10px] font-black tracking-widest uppercase font-heading leading-tight drop-shadow-sm text-purple-200">
               GET FREE
             </span>
-            <span className="text-base sm:text-lg font-black tracking-tight uppercase font-heading leading-none text-white drop-shadow-md mt-0.5">
+            <span className="text-[15px] sm:text-base font-black tracking-tight uppercase font-heading leading-none text-white drop-shadow-md mt-0.5">
               TRIAL
             </span>
-            <div className="flex items-center gap-1 mt-1.5 bg-black/40 px-2 py-0.5 rounded-full border border-purple-300/30 backdrop-blur-xs">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-[9px] font-bold text-emerald-300 tracking-wider">₨ 0 EVALUATION</span>
+            <div className="flex items-center gap-1 mt-1 bg-purple-950/70 px-2 py-0.5 rounded-full border border-purple-300/40 backdrop-blur-md shadow-xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_6px_#34d399]" />
+              <span className="text-[8px] sm:text-[8.5px] font-extrabold text-emerald-300 tracking-wider">₨ 0 EVALUATION</span>
             </div>
           </div>
 
-          {/* Pulsing Live Beacon Indicator */}
-          <span className="absolute top-2 right-2 flex h-3.5 w-3.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border border-white" />
+          {/* Pinned Live Beacon Indicator (Directly Anchored on Badge Rim) */}
+          <span className="absolute top-1 right-2 sm:top-1.5 sm:right-2.5 flex h-3 w-3" title="Live Free Evaluation Available">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-80" />
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border border-white shadow-xs" />
           </span>
         </div>
       </div>
