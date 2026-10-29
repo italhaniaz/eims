@@ -428,6 +428,9 @@ export const InstitutesView = () => {
           errors.code = `Institute Code "${wizardData.code}" is already in use!`
         }
       }
+      if (!wizardData.principal?.trim()) {
+        errors.principal = 'Head / Principal Name is required'
+      }
       if (wizardData.type === 'Custom' && (!wizardData.enabledTiers || wizardData.enabledTiers.length === 0)) {
         errors.enabledTiers = 'Please select at least one educational wing'
       }
@@ -822,6 +825,10 @@ export const InstitutesView = () => {
     }
     if (!editFormData.code?.trim()) {
       toast.error('Institute Code is required.')
+      return
+    }
+    if (!editFormData.principal?.trim()) {
+      toast.error('Head / Principal Name is required.')
       return
     }
 
@@ -1776,14 +1783,28 @@ export const InstitutesView = () => {
                   )}
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Head / Principal</label>
+                  <label className="block text-xs font-semibold text-slate-600 uppercase mb-1 flex items-center gap-1">
+                    <span>Head / Principal</span>
+                    <span className="text-rose-500 font-bold">*</span>
+                  </label>
                   <input
                     type="text"
+                    required
                     placeholder="e.g. Dr. Shahida Parveen"
                     value={wizardData.principal}
-                    onChange={(e) => setWizardData({ ...wizardData, principal: e.target.value })}
-                    className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                    onChange={(e) => {
+                      setWizardData({ ...wizardData, principal: e.target.value })
+                      if (wizardErrors.principal) setWizardErrors(prev => ({ ...prev, principal: null }))
+                    }}
+                    className={`w-full px-3.5 py-2 text-xs rounded-lg border transition-all focus:outline-none focus:ring-2 ${
+                      wizardErrors.principal 
+                        ? 'border-rose-400 bg-rose-50/20 ring-2 ring-rose-200/50' 
+                        : 'border-slate-200 focus:ring-purple-500/20'
+                    }`}
                   />
+                  {wizardErrors.principal && (
+                    <p className="text-[11px] text-rose-600 mt-1 font-medium">{wizardErrors.principal}</p>
+                  )}
                 </div>
               </div>
 
@@ -2960,8 +2981,9 @@ export const InstitutesView = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
-                    Head / Principal Name
+                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1 flex items-center gap-1">
+                    <span>Head / Principal Name</span>
+                    <span className="text-rose-500 font-bold">*</span>
                   </label>
                   <input
                     type="text"
