@@ -65,11 +65,11 @@ const PLAN_CONFIGS = {
     priceDisplay: 'Rs. 0',
     priceSub: 'No Credit Card · 14 Days Full Access',
     badge: '14 Days full testing access',
-    badgeColor: 'text-emerald-400',
+    badgeColor: 'text-emerald-700',
     description: 'Enter your institutional details below to immediately launch an isolated 14-day evaluation request for your school or college.',
     buttonText: 'Submit Institution Registration Request',
-    buttonClass: 'bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold shadow-lg shadow-purple-600/30',
-    iconBg: 'bg-emerald-950/80 text-emerald-400 border border-emerald-500/30'
+    buttonClass: 'bg-purple-600 hover:bg-purple-700 text-white font-bold shadow-md shadow-purple-600/20',
+    iconBg: 'bg-emerald-50 text-emerald-600 border border-emerald-200/80'
   },
   school: {
     id: 'school',
@@ -80,11 +80,11 @@ const PLAN_CONFIGS = {
     priceDisplay: 'PKR 25,000/mo',
     priceSub: 'Up to 1,500 Students · 2 Campuses',
     badge: '14 Days full testing access',
-    badgeColor: 'text-purple-400',
+    badgeColor: 'text-purple-700',
     description: 'Submit institutional onboarding details for primary or matriculation school campus.',
     buttonText: 'Submit Institution Registration Request',
-    buttonClass: 'bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold shadow-lg shadow-purple-600/30',
-    iconBg: 'bg-purple-950/80 text-purple-400 border border-purple-500/30'
+    buttonClass: 'bg-purple-600 hover:bg-purple-700 text-white font-bold shadow-md shadow-purple-600/20',
+    iconBg: 'bg-purple-50 text-purple-600 border border-purple-200/80'
   },
   college: {
     id: 'college',
@@ -95,11 +95,11 @@ const PLAN_CONFIGS = {
     priceDisplay: 'PKR 35,000/mo',
     priceSub: 'Up to 3,000 Students · 3 Campuses',
     badge: '14 Days full testing access',
-    badgeColor: 'text-indigo-400',
+    badgeColor: 'text-indigo-700',
     description: 'Submit higher secondary college registration (F.Sc, ICS, FA, I.Com) for Super Admin review.',
     buttonText: 'Submit Institution Registration Request',
-    buttonClass: 'bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold shadow-lg shadow-purple-600/30',
-    iconBg: 'bg-indigo-950/80 text-indigo-400 border border-indigo-500/30'
+    buttonClass: 'bg-purple-600 hover:bg-purple-700 text-white font-bold shadow-md shadow-purple-600/20',
+    iconBg: 'bg-indigo-50 text-indigo-600 border border-indigo-200/80'
   },
   university: {
     id: 'university',
@@ -110,11 +110,11 @@ const PLAN_CONFIGS = {
     priceDisplay: 'PKR 55,000/mo',
     priceSub: '8,000+ Students · Multi-Campus HQ',
     badge: '14 Days full testing access',
-    badgeColor: 'text-purple-400',
+    badgeColor: 'text-blue-700',
     description: 'Submit multi-campus university network application for dedicated enterprise portal credentialing.',
     buttonText: 'Submit Institution Registration Request',
-    buttonClass: 'bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold shadow-lg shadow-purple-600/30',
-    iconBg: 'bg-purple-950/80 text-purple-400 border border-purple-500/30'
+    buttonClass: 'bg-purple-600 hover:bg-purple-700 text-white font-bold shadow-md shadow-purple-600/20',
+    iconBg: 'bg-blue-50 text-blue-600 border border-blue-200/80'
   }
 }
 
@@ -1954,15 +1954,15 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
       {/* 11. START 14-DAY FREE TRIAL / PLAN REGISTRATION MODAL */}
       {isTrialModalOpen && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200"
           onClick={() => setIsTrialModalOpen(false)}
         >
           <div 
-            className="bg-[#0B0F19] text-slate-100 rounded-3xl max-w-4xl w-full shadow-2xl border border-slate-800 relative max-h-[94vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
+            className="bg-white text-slate-800 rounded-3xl max-w-4xl w-full shadow-2xl border border-slate-200/90 relative max-h-[94vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             {/* 1. TOP STEPPER (Select Package -> Enter Details) */}
-            <div className="flex items-center justify-center gap-3 sm:gap-6 py-3.5 px-6 border-b border-slate-800/80 bg-[#0B0F19] shrink-0 select-none">
+            <div className="flex items-center justify-center gap-3 sm:gap-6 py-3.5 px-6 border-b border-slate-100 bg-white shrink-0 select-none">
               <button
                 type="button"
                 onClick={() => setModalStep(1)}
@@ -1970,19 +1970,19 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
               >
                 <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
                   modalStep === 1 
-                    ? 'bg-purple-600 text-white ring-4 ring-purple-500/20 shadow-md shadow-purple-600/30' 
-                    : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                    ? 'bg-purple-600 text-white ring-4 ring-purple-100 shadow-xs' 
+                    : 'bg-emerald-100 text-emerald-700 font-extrabold'
                 }`}>
                   {modalStep === 1 ? '1' : '✓'}
                 </span>
                 <span className={`text-xs ${
-                  modalStep === 1 ? 'text-white font-bold' : 'text-emerald-400 font-semibold group-hover:text-emerald-300'
+                  modalStep === 1 ? 'text-slate-900 font-bold' : 'text-emerald-700 font-semibold group-hover:text-emerald-800'
                 }`}>
                   Select Package
                 </span>
               </button>
 
-              <div className="h-0.5 w-10 sm:w-20 bg-slate-800"></div>
+              <div className="h-0.5 w-10 sm:w-20 bg-slate-200"></div>
 
               <button
                 type="button"
@@ -1991,13 +1991,13 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
               >
                 <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
                   modalStep === 2 
-                    ? 'bg-purple-600 text-white ring-4 ring-purple-500/20 shadow-md shadow-purple-600/30' 
-                    : 'bg-slate-800 text-slate-400 border border-slate-700'
+                    ? 'bg-purple-600 text-white ring-4 ring-purple-100 shadow-xs' 
+                    : 'bg-slate-100 text-slate-500 border border-slate-200'
                 }`}>
                   2
                 </span>
                 <span className={`text-xs ${
-                  modalStep === 2 ? 'text-white font-bold' : 'text-slate-400 font-semibold'
+                  modalStep === 2 ? 'text-slate-900 font-bold' : 'text-slate-500 font-semibold'
                 }`}>
                   Enter Details
                 </span>
@@ -2005,12 +2005,12 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
             </div>
 
             {/* 2. TOP BAR (Change Plan, Selected Subscription, 14 Days testing access badge) */}
-            <div className="flex flex-wrap items-center justify-between gap-3 px-5 sm:px-6 py-3.5 border-b border-slate-800/80 bg-[#111827]/70 shrink-0">
+            <div className="flex flex-wrap items-center justify-between gap-3 px-5 sm:px-6 py-3.5 border-b border-slate-100 bg-[#f8fafc] shrink-0">
               <div className="flex items-center gap-3">
                 <button
                   type="button"
                   onClick={() => setModalStep(modalStep === 1 ? 2 : 1)}
-                  className="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/90 hover:bg-slate-700 text-xs font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs"
+                  className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   <span>{modalStep === 1 ? 'Continue to Details' : 'Change Plan'}</span>
@@ -2020,9 +2020,9 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
                     Selected Subscription
                   </span>
-                  <span className="text-sm font-bold text-white flex items-center gap-2">
+                  <span className="text-sm font-bold text-slate-900 flex items-center gap-2">
                     <span>{(PLAN_CONFIGS[activeModalPlan] || PLAN_CONFIGS.trial).planName}</span>
-                    <span className="text-purple-400 font-mono text-xs">
+                    <span className="text-purple-600 font-mono text-xs font-bold">
                       ({(PLAN_CONFIGS[activeModalPlan] || PLAN_CONFIGS.trial).priceDisplay})
                     </span>
                   </span>
@@ -2030,14 +2030,14 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
               </div>
 
               <div className="flex items-center gap-3">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-950/60 text-emerald-400 border border-emerald-500/30">
-                  <Clock className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                  <Clock className="w-3.5 h-3.5 text-emerald-600" />
                   <span>14 Days full testing access</span>
                 </span>
 
                 <button
                   onClick={() => setIsTrialModalOpen(false)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors cursor-pointer"
                   title="Close dialog"
                   aria-label="Close dialog"
                 >
@@ -2051,10 +2051,10 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
               {modalStep === 1 ? (
                 <div className="space-y-4">
                   <div className="text-center max-w-md mx-auto mb-2">
-                    <h3 className="text-lg sm:text-xl font-bold text-white font-heading">
+                    <h3 className="text-lg sm:text-xl font-bold text-slate-900 font-heading">
                       Select Your Subscription Package
                     </h3>
-                    <p className="text-xs text-slate-400 mt-1">
+                    <p className="text-xs text-slate-500 mt-1">
                       Choose an institutional plan to proceed to credential setup and Super Admin verification.
                     </p>
                   </div>
@@ -2078,8 +2078,8 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                           }}
                           className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${
                             isSelected
-                              ? 'bg-purple-950/40 border-purple-500 ring-2 ring-purple-500/30 shadow-lg shadow-purple-900/20'
-                              : 'bg-[#12192b]/80 border-slate-800 hover:border-slate-700 hover:bg-[#16213a]'
+                              ? 'bg-purple-50/70 border-2 border-purple-600 ring-2 ring-purple-600/10 shadow-md shadow-purple-600/5'
+                              : 'bg-white border-slate-200 hover:border-purple-200 hover:bg-slate-50/70 hover:shadow-sm'
                           }`}
                         >
                           <div>
@@ -2088,27 +2088,27 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                                 <PlanCardIcon className="w-5 h-5" />
                               </div>
                               {isSelected && (
-                                <span className="text-[10px] font-bold text-purple-400 bg-purple-500/20 px-2 py-0.5 rounded-full border border-purple-500/30">
+                                <span className="text-[10px] font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full border border-purple-200">
                                   Active
                                 </span>
                               )}
                             </div>
 
-                            <h4 className="text-sm font-bold text-white">{p.planName}</h4>
-                            <div className="mt-1 font-mono text-base font-extrabold text-purple-400">
+                            <h4 className="text-sm font-bold text-slate-900">{p.planName}</h4>
+                            <div className="mt-1 font-mono text-base font-extrabold text-purple-600">
                               {p.priceDisplay}
                             </div>
-                            <p className="text-[11px] text-slate-400 mt-1 leading-snug">
+                            <p className="text-[11px] text-slate-500 mt-1 leading-snug">
                               {p.priceSub}
                             </p>
                           </div>
 
                           <button
                             type="button"
-                            className={`w-full mt-4 py-2 px-3 rounded-xl font-bold text-xs transition-colors flex items-center justify-center gap-1.5 ${
+                            className={`w-full mt-4 py-2 px-3 rounded-xl font-bold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
                               isSelected
-                                ? 'bg-purple-600 text-white'
-                                : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
+                                ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-xs'
+                                : 'bg-slate-100 text-slate-700 hover:bg-purple-50 hover:text-purple-700'
                             }`}
                           >
                             <span>Select Package</span>
@@ -2122,43 +2122,43 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
               ) : (
                 <form onSubmit={handleSubmitTrial} className="space-y-4">
                   {/* Header: Enter Your Educational Institute & Admin Credentials */}
-                  <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-800/60">
+                  <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
                     <div className="flex items-center gap-2.5">
                       <span className="w-6 h-6 rounded-full bg-purple-600 text-white flex items-center justify-center text-xs font-bold shrink-0 shadow-xs shadow-purple-600/30">
                         2
                       </span>
-                      <h3 className="text-base sm:text-lg font-bold text-white font-heading">
+                      <h3 className="text-base sm:text-lg font-bold text-slate-900 font-heading">
                         Enter Your Educational Institute & Admin Credentials
                       </h3>
                     </div>
-                    <span className="text-[11px] text-slate-400">
-                      Fields marked with <span className="text-rose-400 font-bold">*</span> are mandatory
+                    <span className="text-[11px] text-slate-500">
+                      Fields marked with <span className="text-rose-500 font-bold">*</span> are mandatory
                     </span>
                   </div>
 
                   {/* Guarantee Box */}
-                  <div className="p-3.5 rounded-2xl bg-emerald-950/20 border border-emerald-500/30 text-emerald-300">
-                    <div className="flex items-center gap-2 text-xs font-bold text-emerald-400">
-                      <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <div className="p-3.5 rounded-2xl bg-emerald-50/80 border border-emerald-200 text-emerald-900">
+                    <div className="flex items-center gap-2 text-xs font-bold text-emerald-800">
+                      <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
                       <span>14-Day Free Evaluation Guarantee</span>
                     </div>
-                    <p className="text-[11.5px] sm:text-xs text-emerald-200/80 mt-1 leading-relaxed">
+                    <p className="text-[11.5px] sm:text-xs text-emerald-700 mt-1 leading-relaxed">
                       No credit card or payment TRX required upfront. You will receive 14 days of full feature access to test computerized fee challans, live attendance, multi-wing telemetry, and academic grading.
                     </p>
                   </div>
 
                   {/* Group 1: INSTITUTION & CAMPUS PROFILE */}
                   <div className="space-y-2.5 pt-1">
-                    <span className="text-xs font-bold uppercase tracking-wider text-purple-400 flex items-center gap-1.5">
-                      <Building2 className="w-3.5 h-3.5 text-purple-400" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-purple-700 flex items-center gap-1.5">
+                      <Building2 className="w-3.5 h-3.5 text-purple-600" />
                       <span>Institution & Campus Profile</span>
                     </span>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                       {/* Institution Name */}
                       <div>
-                        <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1">
-                          Institution / Campus Name <span className="text-rose-400">*</span>
+                        <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
+                          Institution / Campus Name <span className="text-rose-500">*</span>
                         </label>
                         <div className="relative">
                           <Building2 className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -2167,28 +2167,28 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                             required
                             value={trialForm.instituteName}
                             onChange={(e) => setTrialForm({ ...trialForm, instituteName: e.target.value })}
-                            placeholder="e.g. Beaconhouse High School / The Educators"
-                            className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm bg-[#161f36] border border-slate-700/80 text-white placeholder-slate-500 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all"
+                            placeholder="e.g. Apex High School & College / The Scholars Academy"
+                            className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm bg-[#f8fafc] border border-slate-200 text-slate-900 placeholder-slate-400 rounded-xl focus:outline-none focus:bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
                           />
                         </div>
                       </div>
 
                       {/* Institution Type / Wing */}
                       <div>
-                        <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1">
-                          Institution Type / Educational Wing <span className="text-rose-400">*</span>
+                        <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
+                          Institution Type / Educational Wing <span className="text-rose-500">*</span>
                         </label>
                         <div className="relative">
                           <School className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                           <select
                             value={trialForm.wing}
                             onChange={(e) => setTrialForm({ ...trialForm, wing: e.target.value })}
-                            className="w-full pl-10 pr-8 py-2.5 text-xs sm:text-sm bg-[#161f36] border border-slate-700/80 text-white rounded-xl focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all cursor-pointer font-medium appearance-none"
+                            className="w-full pl-10 pr-8 py-2.5 text-xs sm:text-sm bg-[#f8fafc] border border-slate-200 text-slate-900 rounded-xl focus:outline-none focus:bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all cursor-pointer font-medium appearance-none"
                           >
-                            <option value="school" className="bg-slate-900 text-white">School Wing (Primary to Matric / O-Levels)</option>
-                            <option value="college" className="bg-slate-900 text-white">College Wing (F.Sc, ICS, FA, I.Com)</option>
-                            <option value="university" className="bg-slate-900 text-white">University Wing (BS Degrees & Semesters)</option>
-                            <option value="multi-campus" className="bg-slate-900 text-white">Multi-Campus / Hybrid Educational Network</option>
+                            <option value="school">School Wing (Primary to Matric / O-Levels)</option>
+                            <option value="college">College Wing (F.Sc, ICS, FA, I.Com)</option>
+                            <option value="university">University Wing (BS Degrees & Semesters)</option>
+                            <option value="multi-campus">Multi-Campus / Hybrid Educational Network</option>
                           </select>
                           <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                         </div>
@@ -2196,7 +2196,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
 
                       {/* City / District */}
                       <div>
-                        <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1">
+                        <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
                           City / District (Optional)
                         </label>
                         <div className="relative">
@@ -2205,16 +2205,16 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                             type="text"
                             value={trialForm.city}
                             onChange={(e) => setTrialForm({ ...trialForm, city: e.target.value })}
-                            placeholder="e.g. Lahore, Karachi, Islamabad, Kasur..."
-                            className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm bg-[#161f36] border border-slate-700/80 text-white placeholder-slate-500 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all"
+                            placeholder="e.g. Lahore, Karachi, Islamabad, Rawalpindi..."
+                            className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm bg-[#f8fafc] border border-slate-200 text-slate-900 placeholder-slate-400 rounded-xl focus:outline-none focus:bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
                           />
                         </div>
                       </div>
 
                       {/* Principal / Administrator Full Name */}
                       <div>
-                        <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1">
-                          Principal / Administrator Full Name <span className="text-rose-400">*</span>
+                        <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
+                          Principal / Administrator Full Name <span className="text-rose-500">*</span>
                         </label>
                         <div className="relative">
                           <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -2224,7 +2224,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                             value={trialForm.adminName}
                             onChange={(e) => setTrialForm({ ...trialForm, adminName: e.target.value })}
                             placeholder="e.g. Prof. Tariq Mahmood"
-                            className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm bg-[#161f36] border border-slate-700/80 text-white placeholder-slate-500 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all"
+                            className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm bg-[#f8fafc] border border-slate-200 text-slate-900 placeholder-slate-400 rounded-xl focus:outline-none focus:bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
                           />
                         </div>
                       </div>
@@ -2233,16 +2233,16 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
 
                   {/* Group 2: ACCOUNT ACCESS & SECURITY */}
                   <div className="space-y-2.5 pt-1">
-                    <span className="text-xs font-bold uppercase tracking-wider text-purple-400 flex items-center gap-1.5">
-                      <Lock className="w-3.5 h-3.5 text-purple-400" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-purple-700 flex items-center gap-1.5">
+                      <Lock className="w-3.5 h-3.5 text-purple-600" />
                       <span>Account Access & Security</span>
                     </span>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                       {/* Email Address */}
                       <div>
-                        <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1">
-                          Email Address <span className="text-rose-400">*</span>
+                        <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
+                          Email Address <span className="text-rose-500">*</span>
                         </label>
                         <div className="relative">
                           <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -2252,15 +2252,15 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                             value={trialForm.email}
                             onChange={(e) => setTrialForm({ ...trialForm, email: e.target.value })}
                             placeholder="e.g. principal@institution.edu.pk"
-                            className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm bg-[#161f36] border border-slate-700/80 text-white placeholder-slate-500 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all"
+                            className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm bg-[#f8fafc] border border-slate-200 text-slate-900 placeholder-slate-400 rounded-xl focus:outline-none focus:bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
                           />
                         </div>
                       </div>
 
                       {/* Mobile / WhatsApp */}
                       <div>
-                        <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1">
-                          Mobile / WhatsApp Number <span className="text-rose-400">*</span>
+                        <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
+                          Mobile / WhatsApp Number <span className="text-rose-500">*</span>
                         </label>
                         <div className="relative">
                           <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -2270,15 +2270,15 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                             value={trialForm.phone}
                             onChange={(e) => setTrialForm({ ...trialForm, phone: e.target.value })}
                             placeholder="0300-1234567"
-                            className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm bg-[#161f36] border border-slate-700/80 text-white placeholder-slate-500 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 font-mono transition-all"
+                            className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm bg-[#f8fafc] border border-slate-200 text-slate-900 placeholder-slate-400 rounded-xl focus:outline-none focus:bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 font-mono transition-all"
                           />
                         </div>
                       </div>
 
                       {/* Create Admin Password */}
                       <div>
-                        <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1">
-                          Create Admin Password <span className="text-rose-400">*</span>
+                        <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
+                          Create Admin Password <span className="text-rose-500">*</span>
                         </label>
                         <div className="relative">
                           <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -2288,12 +2288,12 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                             value={trialForm.adminPassword}
                             onChange={(e) => setTrialForm({ ...trialForm, adminPassword: e.target.value })}
                             placeholder="••••••••••••"
-                            className="w-full pl-10 pr-10 py-2.5 text-xs sm:text-sm bg-[#161f36] border border-slate-700/80 text-white placeholder-slate-500 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 font-mono transition-all"
+                            className="w-full pl-10 pr-10 py-2.5 text-xs sm:text-sm bg-[#f8fafc] border border-slate-200 text-slate-900 placeholder-slate-400 rounded-xl focus:outline-none focus:bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 font-mono transition-all"
                           />
                           <button
                             type="button"
                             onClick={() => setShowAdminPassword(!showAdminPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
                             title="Toggle password visibility"
                           >
                             {showAdminPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -2303,11 +2303,11 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
 
                       {/* Confirm Admin Password */}
                       <div>
-                        <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1 flex items-center justify-between">
-                          <span>Confirm Admin Password <span className="text-rose-400">*</span></span>
+                        <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1 flex items-center justify-between">
+                          <span>Confirm Admin Password <span className="text-rose-500">*</span></span>
                           {trialForm.confirmPassword && (
                             <span className={`text-[10px] font-bold ${
-                              trialForm.adminPassword === trialForm.confirmPassword ? 'text-emerald-400' : 'text-rose-400'
+                              trialForm.adminPassword === trialForm.confirmPassword ? 'text-emerald-600' : 'text-rose-600'
                             }`}>
                               {trialForm.adminPassword === trialForm.confirmPassword ? '✓ Passwords match' : '✕ Passwords do not match'}
                             </span>
@@ -2321,16 +2321,16 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                             value={trialForm.confirmPassword}
                             onChange={(e) => setTrialForm({ ...trialForm, confirmPassword: e.target.value })}
                             placeholder="••••••••••••"
-                            className={`w-full pl-10 pr-10 py-2.5 text-xs sm:text-sm bg-[#161f36] border rounded-xl focus:outline-none font-mono transition-all ${
+                            className={`w-full pl-10 pr-10 py-2.5 text-xs sm:text-sm bg-[#f8fafc] border rounded-xl focus:outline-none font-mono transition-all ${
                               trialForm.confirmPassword && trialForm.adminPassword !== trialForm.confirmPassword
-                                ? 'border-rose-500 text-white focus:border-rose-500 focus:ring-1 focus:ring-rose-500'
-                                : 'border-slate-700/80 text-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500'
+                                ? 'border-rose-300 text-slate-900 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20'
+                                : 'border-slate-200 text-slate-900 focus:bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20'
                             }`}
                           />
                           <button
                             type="button"
                             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
                             title="Toggle password visibility"
                           >
                             {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -2341,20 +2341,20 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                   </div>
 
                   {/* Plan Active Status Banner */}
-                  <div className="p-3.5 rounded-2xl bg-emerald-950/25 border border-emerald-500/30 flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                  <div className="p-3.5 rounded-2xl bg-[#f5eeff]/70 border border-purple-200/80 flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
                       <Sparkles className="w-4 h-4" />
                     </div>
                     <div className="flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-xs font-bold text-white">
+                        <span className="text-xs font-bold text-slate-900">
                           {(PLAN_CONFIGS[activeModalPlan] || PLAN_CONFIGS.trial).planName} Active (100% Free / Verified)
                         </span>
-                        <span className="text-[10px] font-black tracking-wider uppercase text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded-md border border-emerald-500/30">
+                        <span className="text-[10px] font-black tracking-wider uppercase text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md border border-emerald-200">
                           ZERO UPFRONT PAYMENT
                         </span>
                       </div>
-                      <p className="text-[11.5px] text-slate-300 mt-1 leading-relaxed">
+                      <p className="text-[11.5px] text-slate-600 mt-1 leading-relaxed">
                         No payment, credit card, or Transaction ID is required for your trial. You will receive immediate full access to all campus features upon Super Admin review.
                       </p>
                     </div>
@@ -2362,7 +2362,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
 
                   {/* Group 3: ADDITIONAL INSTRUCTIONS OR CUSTOM CAMPUS REQUIREMENTS */}
                   <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1">
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
                       Additional Instructions or Custom Campus Requirements (Optional)
                     </label>
                     <textarea
@@ -2370,24 +2370,24 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                       value={trialForm.notes}
                       onChange={(e) => setTrialForm({ ...trialForm, notes: e.target.value })}
                       placeholder="e.g. Multi-campus branch sync, biometric machine integration, custom fee voucher format, or specific BISE / HEC grading guidelines..."
-                      className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-[#161f36] border border-slate-700/80 text-white placeholder-slate-500 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all resize-y"
+                      className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-[#f8fafc] border border-slate-200 text-slate-900 placeholder-slate-400 rounded-xl focus:outline-none focus:bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all resize-y"
                     />
                   </div>
 
                   {/* Terms Agreement Checkbox */}
-                  <div className="p-3.5 rounded-2xl bg-[#161f36]/60 border border-slate-700/70 flex items-start gap-3">
+                  <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-start gap-3">
                     <input
                       type="checkbox"
                       id="termsAgreement"
                       checked={trialForm.agreedToTerms}
                       onChange={(e) => setTrialForm({ ...trialForm, agreedToTerms: e.target.checked })}
-                      className="mt-1 w-4 h-4 rounded text-purple-600 focus:ring-purple-500 border-slate-600 bg-slate-800 cursor-pointer"
+                      className="mt-1 w-4 h-4 rounded text-purple-600 focus:ring-purple-500 border-slate-300 bg-white cursor-pointer accent-purple-600"
                     />
                     <label htmlFor="termsAgreement" className="text-xs cursor-pointer select-none">
-                      <span className="font-bold text-slate-200 block">
+                      <span className="font-bold text-slate-900 block">
                         I agree to the Terms of Service & Institutional Usage Agreement.
                       </span>
-                      <span className="text-[11px] text-slate-400 block mt-0.5 leading-relaxed">
+                      <span className="text-[11px] text-slate-500 block mt-0.5 leading-relaxed">
                         I verify that all submitted educational institution information is accurate and understand my account will be activated upon Super Admin approval.
                       </span>
                     </label>
@@ -2398,7 +2398,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                     <button
                       type="button"
                       onClick={() => setModalStep(1)}
-                      className="w-full sm:w-auto px-5 py-3 rounded-xl border border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-slate-300 font-semibold text-xs sm:text-sm transition-colors cursor-pointer"
+                      className="w-full sm:w-auto px-5 py-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs sm:text-sm transition-colors cursor-pointer shadow-2xs"
                     >
                       Back to Plans
                     </button>
@@ -2406,7 +2406,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                     <button
                       type="submit"
                       disabled={isSubmittingTrial}
-                      className="w-full sm:flex-1 py-3 px-6 rounded-xl bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs sm:text-sm shadow-lg shadow-purple-600/30 transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
+                      className="w-full sm:flex-1 py-3 px-6 rounded-xl bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs sm:text-sm shadow-md shadow-purple-600/20 transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
                     >
                       {isSubmittingTrial ? (
                         <div className="flex items-center gap-2">
@@ -2422,7 +2422,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                     </button>
                   </div>
 
-                  <div className="text-center text-[10.5px] text-slate-500 pt-1 leading-relaxed">
+                  <div className="text-center text-[10.5px] text-slate-400 pt-1 leading-relaxed">
                     Your request is securely forwarded to Super Admin headquarters. Upon review & approval, official portal Login ID & Password will be confirmed and activated.
                   </div>
                 </form>

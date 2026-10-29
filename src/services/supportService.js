@@ -128,14 +128,55 @@ export const SupportService = {
       if (item.requestType === 'INSTITUTE_ONBOARDING' && item.instituteId) {
         try {
           const currentData = getStoredData()
+          let inst = null
           if (currentData && currentData.institutes) {
-            const inst = currentData.institutes.find(i => i.id === item.instituteId)
+            inst = currentData.institutes.find(i => i.id === item.instituteId)
             if (inst) {
               inst.status = 'Active'
               inst.lifecycleStatus = 'Active'
               inst.subscriptionStatus = 'ACTIVE'
-              saveStoredData(currentData)
             }
+          }
+
+          // Create/activate user account for institute admin so they can login immediately
+          if (currentData && (item.details || inst)) {
+            currentData.users = currentData.users || []
+            const email = ((item.details && item.details.email) || (inst && inst.email) || '').toLowerCase().trim()
+            if (email) {
+              const existingIdx = currentData.users.findIndex(u => (u.email || '').toLowerCase() === email)
+              const userObj = {
+                id: existingIdx !== -1 ? currentData.users[existingIdx].id : `usr-inst-${Date.now().toString().slice(-4)}`,
+                name: (item.details && (item.details.contactPerson || item.details.adminName)) || (inst && inst.contactPerson) || 'Principal Administrator',
+                email: email,
+                password: (item.details && item.details.adminPassword) || (inst && inst.adminPassword) || 'admin123',
+                role: 'institute_admin',
+                roleId: 'institute_admin',
+                instituteId: item.instituteId,
+                instituteName: item.instituteName,
+                status: 'Active',
+                phone: (item.details && item.details.phone) || (inst && inst.phone) || '',
+                createdAt: new Date().toISOString()
+              }
+              if (existingIdx !== -1) {
+                currentData.users[existingIdx] = { ...currentData.users[existingIdx], ...userObj }
+              } else {
+                currentData.users.push(userObj)
+              }
+            }
+          }
+          saveStoredData(currentData)
+
+          // Activate the subscription in sms_institute_subscriptions
+          const localSubs = localStorage.getItem('sms_institute_subscriptions')
+          if (localSubs) {
+            try {
+              const subs = JSON.parse(localSubs)
+              const sub = subs.find(s => s.instituteId === item.instituteId)
+              if (sub) {
+                sub.status = 'ACTIVE'
+                localStorage.setItem('sms_institute_subscriptions', JSON.stringify(subs))
+              }
+            } catch {}
           }
         } catch (e) {
           console.error('Error activating institute on approval:', e)
