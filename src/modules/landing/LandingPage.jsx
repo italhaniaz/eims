@@ -737,23 +737,8 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
             })}
           </nav>
 
-          {/* Right Action Buttons */}
+          {/* Right Action Controls (Mobile Menu Toggle) */}
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* Prominent, Bold & Clean Portal Sign In Button */}
-            <button
-              type="button"
-              onClick={() => onNavigateToLogin('signin')}
-              className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-purple-50 hover:bg-[#f5eeff] text-purple-700 hover:text-purple-900 border-2 border-purple-300 hover:border-purple-500 font-extrabold text-xs sm:text-sm shadow-xs hover:shadow-md transition-all duration-200 hover:scale-[1.03] active:scale-95 cursor-pointer flex items-center gap-1.5 sm:gap-2 group whitespace-nowrap"
-              title="Sign in to your Educational Portal"
-            >
-              <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-lg bg-purple-100 group-hover:bg-purple-200 flex items-center justify-center text-purple-700 transition-colors shrink-0">
-                <Lock className="w-3 h-3 sm:w-3.5 sm:h-3.5 stroke-[2.4]" />
-              </div>
-              <span className="font-heading tracking-tight">Portal Sign In</span>
-              <ArrowRight className="w-3.5 h-3.5 text-purple-400 group-hover:text-purple-700 group-hover:translate-x-0.5 transition-all hidden sm:inline shrink-0" />
-            </button>
-
-            
             {/* Mobile Hamburger Menu Toggle Button */}
             <button
               type="button"
@@ -895,22 +880,19 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
             >
               <Sparkles className="w-4 h-4 text-purple-200" />
               <span>Start 14-Day Free Trial (₨ 0)</span>
-              <ArrowRight className="w-4 h-4 ml-1" />
             </button>
 
             <button
               type="button"
-              onClick={() => {
-                if (onNavigateToDemo) {
-                  onNavigateToDemo()
-                } else {
-                  handleQuickDemo('superadmin')
-                }
-              }}
-              className="w-full sm:w-auto px-5 py-3.5 rounded-xl bg-white hover:bg-purple-50/60 text-slate-800 border border-purple-200 font-semibold text-sm shadow-xs hover:border-purple-300 transition-all cursor-pointer flex items-center justify-center gap-2"
+              onClick={() => onNavigateToLogin('signin')}
+              className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-purple-50 hover:bg-[#f5eeff] text-purple-700 hover:text-purple-900 border-2 border-purple-300 hover:border-purple-500 font-extrabold text-sm shadow-xs hover:shadow-md transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer flex items-center justify-center gap-2 group whitespace-nowrap"
+              title="Sign in to your Educational Portal"
             >
-              <Laptop className="w-4 h-4 text-purple-600" />
-              <span>1-Click Live Interactive Demo</span>
+              <div className="w-5 h-5 rounded-lg bg-purple-100 group-hover:bg-purple-200 flex items-center justify-center text-purple-700 transition-colors shrink-0">
+                <Lock className="w-3.5 h-3.5 stroke-[2.4]" />
+              </div>
+              <span className="font-heading tracking-tight">Portal Sign In</span>
+              <ArrowRight className="w-4 h-4 text-purple-400 group-hover:text-purple-700 group-hover:translate-x-0.5 transition-all shrink-0" />
             </button>
           </div>
 
