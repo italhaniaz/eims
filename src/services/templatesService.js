@@ -109,7 +109,7 @@ export const TemplatesService = {
       if (res.ok) return await res.json()
     } catch {}
 
-    if (isSupabaseConfigured() && supabase) {
+    if (isSupabaseConfigured && supabase) {
       const { data, error } = await supabase.from('global_templates').select('*')
       if (!error && data && data.length > 0) return data
     }

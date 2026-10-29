@@ -76,7 +76,7 @@ export const HealthService = {
       memoryUsedMB: 48,
       memoryTotalMB: 128,
       activeSessionsCount: 3,
-      dbConnectionStatus: isSupabaseConfigured() ? 'CONNECTED_POSTGRESQL' : 'OFFLINE_PERSISTENT_STORE',
+      dbConnectionStatus: isSupabaseConfigured ? 'CONNECTED_POSTGRESQL' : 'OFFLINE_PERSISTENT_STORE',
       serverNodeVersion: 'v20.x',
       platformHost: 'SMS-Enterprise-Cluster-Node1'
     }

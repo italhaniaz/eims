@@ -255,7 +255,7 @@ export const BillingService = {
       // fallback
     }
 
-    if (isSupabaseConfigured() && supabase) {
+    if (isSupabaseConfigured && supabase) {
       const { data, error } = await supabase.from('subscription_plans').select('*').order('price_pkr', { ascending: true })
       if (!error && data && data.length > 0) return data
     }
@@ -345,7 +345,7 @@ export const BillingService = {
       if (res.ok) return await res.json()
     } catch {}
 
-    if (isSupabaseConfigured() && supabase) {
+    if (isSupabaseConfigured && supabase) {
       const { data, error } = await supabase.from('institute_subscriptions').select('*')
       if (!error && data && data.length > 0) return data
     }
@@ -540,7 +540,7 @@ export const BillingService = {
       if (res.ok) return await res.json()
     } catch {}
 
-    if (isSupabaseConfigured() && supabase) {
+    if (isSupabaseConfigured && supabase) {
       const { data, error } = await supabase.from('platform_invoices').select('*').order('issue_date', { ascending: false })
       if (!error && data && data.length > 0) return data
     }
