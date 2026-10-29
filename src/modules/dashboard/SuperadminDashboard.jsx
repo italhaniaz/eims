@@ -29,7 +29,8 @@ import {
   Filter,
   Layers,
   Activity,
-  Award
+  Award,
+  Landmark
 } from 'lucide-react'
 import Modal from '../../components/common/Modal'
 import { useAppData } from '../../context/AppDataContext'
@@ -296,6 +297,117 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
 
   // Current active tier configuration
   const currentFilterConfig = tierFilterOptions.find(o => o.id === selectedTierFilter) || tierFilterOptions[0]
+
+  // Activity Stream Tier Logo & Badge Configuration Helper (School, College, University)
+  const getActivityBadgeConfig = (act) => {
+    if (!act) {
+      return {
+        tier: 'school',
+        tierLabel: 'School',
+        icon: School,
+        bg: 'bg-sky-50',
+        text: 'text-sky-600',
+        border: 'border-sky-100/90',
+        badgeClass: 'bg-sky-100/80 text-sky-700',
+        logoUrl: null
+      }
+    }
+
+    const text = String(act.text || '').toLowerCase()
+    const actTier = String(act.tier || '').toLowerCase()
+
+    // 1. Direct institute lookup by ID or by matching name in activity text
+    let matchedInst = null
+    if (act.instituteId) {
+      matchedInst = institutes.find(i => String(i.id) === String(act.instituteId))
+    }
+    if (!matchedInst && Array.isArray(institutes) && institutes.length > 0) {
+      matchedInst = institutes.find(i => {
+        if (!i?.name) return false
+        const cleanName = i.name.toLowerCase().trim()
+        return cleanName.length > 2 && text.includes(cleanName)
+      })
+    }
+
+    const logoUrl = matchedInst?.logoUrl || act.logoUrl || null
+
+    // 2. Classify by matched institute or keyword analysis
+    // University Check
+    const isUniversity =
+      actTier === 'university' ||
+      actTier === 'undergraduate' ||
+      (matchedInst && matchesTierFilter(matchedInst, 'university')) ||
+      text.includes('university') ||
+      text.includes('undergrad') ||
+      text.includes('bs degree') ||
+      text.includes('chartered university')
+
+    if (isUniversity) {
+      return {
+        tier: 'university',
+        tierLabel: 'University',
+        icon: Landmark,
+        bg: 'bg-blue-50',
+        text: 'text-blue-600',
+        border: 'border-blue-100/90',
+        badgeClass: 'bg-blue-100/80 text-blue-700',
+        logoUrl
+      }
+    }
+
+    // College Check
+    const isCollege =
+      actTier === 'college' ||
+      (matchedInst && matchesTierFilter(matchedInst, 'college')) ||
+      text.includes('college') ||
+      text.includes('intermediate') ||
+      text.includes('hssc') ||
+      text.includes('higher secondary')
+
+    if (isCollege) {
+      return {
+        tier: 'college',
+        tierLabel: 'College',
+        icon: GraduationCap,
+        bg: 'bg-amber-50',
+        text: 'text-amber-600',
+        border: 'border-amber-100/90',
+        badgeClass: 'bg-amber-100/80 text-amber-700',
+        logoUrl
+      }
+    }
+
+    // Custom Hybrid Check
+    const isCustom =
+      actTier === 'custom' ||
+      (matchedInst && matchedInst.type === 'Custom' && !text.includes('school')) ||
+      text.includes('custom hybrid')
+
+    if (isCustom) {
+      return {
+        tier: 'custom',
+        tierLabel: 'Custom',
+        icon: Sparkles,
+        bg: 'bg-purple-50',
+        text: 'text-purple-600',
+        border: 'border-purple-100/90',
+        badgeClass: 'bg-purple-100/80 text-purple-700',
+        logoUrl
+      }
+    }
+
+    // Default: School (Primary, Middle, High School / Matric)
+    return {
+      tier: 'school',
+      tierLabel: 'School',
+      icon: School,
+      bg: 'bg-sky-50',
+      text: 'text-sky-600',
+      border: 'border-sky-100/90',
+      badgeClass: 'bg-sky-100/80 text-sky-700',
+      logoUrl
+    }
+  }
 
   // Dynamic KPI calculations based on active filter
   const displayTotalCampuses = selectedTierFilter === 'all' 
@@ -1399,26 +1511,46 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
             <div className="space-y-3.5">
               {recentActivity && recentActivity.length > 0 ? (
                 recentActivity.slice(0, 4).map((act, i) => {
-                  const colors = [
-                    { bg: 'bg-sky-50', text: 'text-sky-600', icon: School },
-                    { bg: 'bg-purple-50', text: 'text-purple-600', icon: CreditCard },
-                    { bg: 'bg-teal-50', text: 'text-teal-600', icon: Sliders },
-                    { bg: 'bg-amber-50', text: 'text-amber-600', icon: ShieldCheck }
-                  ]
-                  const c = colors[i % colors.length]
-                  const IconComp = c.icon
+                  const badgeConfig = getActivityBadgeConfig(act)
+                  const IconComp = badgeConfig.icon
 
                   return (
-                    <div key={act.id || i} className="flex items-start gap-3 p-2.5 rounded-2xl hover:bg-slate-50 transition-colors">
-                      <div className={`w-9 h-9 rounded-xl ${c.bg} ${c.text} flex items-center justify-center shrink-0`}>
-                        <IconComp className="w-4.5 h-4.5" />
+                    <div key={act.id || i} className="flex items-start gap-3 p-2.5 rounded-2xl hover:bg-slate-50 transition-colors group">
+                      {/* Educational Tier Logo / Icon Block */}
+                      <div 
+                        className={`w-9 h-9 rounded-xl ${badgeConfig.bg} ${badgeConfig.text} border ${badgeConfig.border} flex items-center justify-center shrink-0 shadow-2xs overflow-hidden relative`}
+                        title={`${badgeConfig.tierLabel} Activity`}
+                      >
+                        {badgeConfig.logoUrl ? (
+                          <img 
+                            src={badgeConfig.logoUrl} 
+                            alt={badgeConfig.tierLabel} 
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none'
+                              if (e.currentTarget.nextElementSibling) {
+                                e.currentTarget.nextElementSibling.classList.remove('hidden')
+                              }
+                            }}
+                          />
+                        ) : null}
+                        <div className={badgeConfig.logoUrl ? 'hidden w-full h-full flex items-center justify-center' : 'flex items-center justify-center'}>
+                          <IconComp className="w-4.5 h-4.5 stroke-[1.8]" />
+                        </div>
                       </div>
+
+                      {/* Activity Details with Educational Tier Badge Pill */}
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-slate-800 line-clamp-1">
-                          {act.text}
-                        </p>
+                        <div className="flex items-center justify-between gap-1.5">
+                          <p className="text-xs font-semibold text-slate-800 line-clamp-1 group-hover:text-purple-900 transition-colors" title={act.text}>
+                            {act.text}
+                          </p>
+                          <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${badgeConfig.badgeClass} shrink-0`}>
+                            {badgeConfig.tierLabel}
+                          </span>
+                        </div>
                         <span className="text-[10px] text-slate-400 mt-0.5 inline-block">
-                          {act.time}
+                          {act.time || 'Just now'}
                         </span>
                       </div>
                     </div>
