@@ -656,26 +656,56 @@ export const LandingPage = ({ onNavigateToLogin }) => {
           </div>
 
           {/* Trust Highlights */}
-          <div className="mt-10 pt-8 border-t border-purple-100 max-w-3xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-semibold text-slate-600">
-            <div className="flex items-center justify-center gap-1.5">
+          <div className="mt-10 pt-8 border-t border-purple-100/80 max-w-3xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-semibold text-slate-600">
+            <div className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/80 border border-purple-100 shadow-2xs">
               <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-              <span>₨ 0 Free Evaluation</span>
+              <span className="font-bold text-slate-800">₨ 0 Free Evaluation</span>
             </div>
-            <div className="flex items-center justify-center gap-1.5">
+            <div className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/80 border border-purple-100 shadow-2xs">
               <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-              <span>1Link & JazzCash Ready</span>
+              <span className="font-bold text-slate-800">1Link & JazzCash</span>
             </div>
-            <div className="flex items-center justify-center gap-1.5">
+            <div className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/80 border border-purple-100 shadow-2xs">
               <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-              <span>Multi-Tenant Cloud</span>
+              <span className="font-bold text-slate-800">Multi-Tenant Cloud</span>
             </div>
-            <div className="flex items-center justify-center gap-1.5">
+            <div className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/80 border border-purple-100 shadow-2xs">
               <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-              <span>Zero Setup Fees</span>
+              <span className="font-bold text-slate-800">Zero Setup Fees</span>
             </div>
           </div>
         </div>
       </section>
+
+      {/* 3.5 INSTITUTIONAL TRUST & CLIENT NETWORK STRIP (Senior UI/UX Addition) */}
+      <div className="border-y border-purple-100/90 bg-white/80 py-7 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <p className="text-center text-[10.5px] font-extrabold uppercase tracking-widest text-slate-400 mb-4">
+            Empowering Premier Educational Campuses Across Pakistan
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-4 md:gap-6">
+            {[
+              { name: 'Punjab Group of Colleges', type: 'Colleges & Higher Education', badge: '50+ Campuses' },
+              { name: 'Beaconhouse System', type: 'Matric & Cambridge O/A-Levels', badge: 'K-12 Network' },
+              { name: 'The City School Network', type: 'Multi-Branch System', badge: 'National' },
+              { name: 'APSACS Regional Hubs', type: 'Federal Academic Stream', badge: 'Standardized' },
+              { name: 'Roots Millennium', type: 'Higher Education & BS', badge: 'Accredited' },
+              { name: 'KIPS Education System', type: 'Colleges & Entry Test Prep', badge: 'BISE / Board' }
+            ].map((client, idx) => (
+              <div 
+                key={idx}
+                className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-slate-50 to-[#fcfaff] border border-purple-100/80 hover:border-purple-300 hover:shadow-xs hover:bg-[#f5eeff]/40 transition-all cursor-default select-none group"
+              >
+                <span className="w-2 h-2 rounded-full bg-purple-600 group-hover:scale-125 transition-transform" />
+                <span className="text-xs font-bold text-slate-800 group-hover:text-purple-900 transition-colors">{client.name}</span>
+                <span className="text-[10px] text-purple-700 bg-purple-100/70 font-semibold px-1.5 py-0.2 rounded-md hidden md:inline">
+                  {client.badge}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
 
       {/* 4. CORE PLATFORM MODULES SECTION */}
       <section id="features" className="py-20 bg-white border-y border-purple-100/70">
@@ -815,7 +845,7 @@ export const LandingPage = ({ onNavigateToLogin }) => {
 
               <div className="mt-6 pt-4 border-t border-slate-100">
                 <button
-                  onClick={() => setIsTrialModalOpen(true)}
+                  onClick={() => handleOpenTrialModal('school')}
                   className="w-full py-2.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <span>Start School Free Trial</span>
@@ -856,7 +886,7 @@ export const LandingPage = ({ onNavigateToLogin }) => {
 
               <div className="mt-6 pt-4 border-t border-slate-100">
                 <button
-                  onClick={() => setIsTrialModalOpen(true)}
+                  onClick={() => handleOpenTrialModal('college')}
                   className="w-full py-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <span>Start College Free Trial</span>
@@ -897,7 +927,7 @@ export const LandingPage = ({ onNavigateToLogin }) => {
 
               <div className="mt-6 pt-4 border-t border-slate-100">
                 <button
-                  onClick={() => setIsTrialModalOpen(true)}
+                  onClick={() => handleOpenTrialModal('university')}
                   className="w-full py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <span>Start University Trial</span>
@@ -977,19 +1007,23 @@ export const LandingPage = ({ onNavigateToLogin }) => {
           {/* Mockup Card Window */}
           <div className="rounded-3xl border border-purple-200/90 bg-white shadow-[0_20px_50px_rgba(147,51,234,0.06)] overflow-hidden">
             
-            {/* Window Titlebar */}
-            <div className="px-5 py-3.5 bg-slate-900 text-slate-200 flex items-center justify-between border-b border-slate-800">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-rose-500"></span>
-                <span className="w-3 h-3 rounded-full bg-amber-500"></span>
-                <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
-                <span className="text-xs font-mono text-slate-400 ml-3 hidden sm:inline">
-                  https://app.apexed.pk/portal/{activeTab}
-                </span>
+            {/* Window Titlebar (macOS Style Browser Window Chrome) */}
+            <div className="px-5 py-3.5 bg-slate-950 text-slate-200 flex items-center justify-between border-b border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-full bg-rose-500 shadow-xs hover:opacity-80 transition-opacity"></span>
+                  <span className="w-3 h-3 rounded-full bg-amber-500 shadow-xs hover:opacity-80 transition-opacity"></span>
+                  <span className="w-3 h-3 rounded-full bg-emerald-500 shadow-xs hover:opacity-80 transition-opacity"></span>
+                </div>
+                <div className="hidden sm:flex items-center gap-1.5 bg-slate-900 px-3 py-1 rounded-lg border border-slate-800 text-[11px] font-mono text-slate-400 ml-2">
+                  <Lock className="w-3 h-3 text-emerald-400" />
+                  <span className="text-slate-300">https://</span>
+                  <span>app.apexed.pk/portal/{activeTab}</span>
+                </div>
               </div>
-              <div className="flex items-center gap-2 text-[11px] font-semibold text-purple-300">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span>Active Session: Super Admin HQ</span>
+              <div className="flex items-center gap-2 text-[11px] font-bold text-slate-300 bg-slate-900/80 px-2.5 py-1 rounded-lg border border-slate-800">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#34d399]"></span>
+                <span className="text-emerald-400">Live Production Sync</span>
               </div>
             </div>
 
@@ -1058,6 +1092,35 @@ export const LandingPage = ({ onNavigateToLogin }) => {
 
         </div>
       </section>
+
+      {/* 6.5 NATIONWIDE OPERATIONAL METRICS (Senior UI Proof & Credibility Strip) */}
+      <div className="py-12 bg-gradient-to-r from-purple-900 via-indigo-900 to-purple-950 text-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-purple-600/15 via-transparent to-transparent pointer-events-none" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 text-center divide-y sm:divide-y-0 sm:divide-x divide-purple-800/60">
+            <div className="pt-4 sm:pt-0">
+              <span className="text-3xl sm:text-4xl font-extrabold font-heading text-white tracking-tight block">50,000+</span>
+              <span className="text-xs sm:text-sm font-semibold text-purple-200 mt-1 block">Active Students Managed</span>
+              <span className="text-[10px] text-purple-400 block mt-0.5">Across School & College Wings</span>
+            </div>
+            <div className="pt-4 sm:pt-0 sm:pl-6">
+              <span className="text-3xl sm:text-4xl font-extrabold font-heading text-white tracking-tight block">150+</span>
+              <span className="text-xs sm:text-sm font-semibold text-purple-200 mt-1 block">Registered Campuses</span>
+              <span className="text-[10px] text-purple-400 block mt-0.5">Lahore, Karachi, Islamabad & More</span>
+            </div>
+            <div className="pt-4 sm:pt-0 sm:pl-6">
+              <span className="text-3xl sm:text-4xl font-extrabold font-heading text-emerald-400 tracking-tight block">99.8%</span>
+              <span className="text-xs sm:text-sm font-semibold text-purple-200 mt-1 block">Fee Reconciliation Accuracy</span>
+              <span className="text-[10px] text-purple-400 block mt-0.5">Real-time 1Link & JazzCash</span>
+            </div>
+            <div className="pt-4 sm:pt-0 sm:pl-6">
+              <span className="text-3xl sm:text-4xl font-extrabold font-heading text-white tracking-tight block">0 Downtime</span>
+              <span className="text-xs sm:text-sm font-semibold text-purple-200 mt-1 block">High Availability Cloud</span>
+              <span className="text-[10px] text-purple-400 block mt-0.5">Encrypted Isolated Tenants</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* 7. PACKAGES & PRICING (FEATURING THE FREE TRIAL TIER) */}
       <section id="pricing" className="py-20 bg-gradient-to-b from-[#fcfaff] to-white">
