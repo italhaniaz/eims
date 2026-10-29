@@ -224,8 +224,8 @@ export const InstitutesView = () => {
   const tierPlanMapping = {
     School: { planName: 'School Plan', maxStudents: 1500, maxUsers: 50, maxCampuses: 2, storageMB: 2048, prefix: 'SCH', defaultTiers: ['school'] },
     College: { planName: 'College Plan', maxStudents: 3000, maxUsers: 100, maxCampuses: 3, storageMB: 5120, prefix: 'COL', defaultTiers: ['college'] },
-    University: { planName: 'University Plan', maxStudents: 3000, maxUsers: 250, maxCampuses: 5, storageMB: 10240, prefix: 'UNI', defaultTiers: ['undergraduate'] },
-    Custom: { planName: 'Custom Hybrid Plan', maxStudents: 3000, maxUsers: 150, maxCampuses: 4, storageMB: 8192, prefix: 'HYB', defaultTiers: ['school', 'college'] }
+    University: { planName: 'University Plan', maxStudents: 10000, maxUsers: 250, maxCampuses: 5, storageMB: 10240, prefix: 'UNI', defaultTiers: ['undergraduate'] },
+    Custom: { planName: 'Custom Hybrid Plan', maxStudents: 25000, maxUsers: 150, maxCampuses: 4, storageMB: 8192, prefix: 'HYB', defaultTiers: ['school', 'college'] }
   }
 
   const [wizardData, setWizardData] = useState(initialWizardState)
@@ -352,7 +352,7 @@ export const InstitutesView = () => {
       type: selectedTierId,
       planType: selectedTierId.toUpperCase(),
       planTier: config.planName,
-      quotaStudents: Math.min(config.maxStudents, 3000),
+      quotaStudents: config.maxStudents || 1500,
       quotaUsers: config.maxUsers,
       quotaCampuses: config.maxCampuses,
       quotaStorageMb: config.storageMB,
@@ -2303,7 +2303,7 @@ export const InstitutesView = () => {
                           PKR {plan.pricePKR.toLocaleString()}/mo
                         </span>
                         <span className="text-[10px] text-slate-400 block mt-1 font-medium">
-                          Up to {Math.min(plan.maxStudents, 3000).toLocaleString()} seats
+                          Up to {plan.maxStudents ? `${plan.maxStudents.toLocaleString()} seats` : 'Unlimited seats'}
                         </span>
                       </div>
                     )
@@ -2317,8 +2317,9 @@ export const InstitutesView = () => {
                   <span className="text-xs font-bold text-slate-800 uppercase tracking-wide block">
                     Allocated Quota Limits
                   </span>
-                  <span className="text-[11px] font-bold text-slate-500">
-                    Cap: 3,000 Students Max
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>No Upper Cap · Unlimited Scalability</span>
                   </span>
                 </div>
 
@@ -2332,7 +2333,7 @@ export const InstitutesView = () => {
                         <span className="text-rose-500 font-bold">*</span>
                       </label>
                       <span className="text-[11px] text-slate-500 block mt-0.5">
-                        Enter custom seats or select from quick preset tags (max allowable 3,000)
+                        Enter any custom seat count (no limit) or choose from quick preset tags
                       </span>
                     </div>
 
@@ -2340,35 +2341,33 @@ export const InstitutesView = () => {
                     <div className="flex items-center gap-2 self-start sm:self-auto">
                       <input
                         type="number"
-                        min="100"
-                        max="3000"
-                        step="50"
+                        min="1"
+                        step="100"
                         value={wizardData.quotaStudents ?? 1500}
                         onChange={(e) => {
                           const raw = e.target.value === '' ? '' : parseInt(e.target.value, 10)
                           if (raw === '') {
                             setWizardData({ ...wizardData, quotaStudents: '' })
                           } else {
-                            const clamped = Math.min(Math.max(raw, 0), 3000)
-                            setWizardData({ ...wizardData, quotaStudents: clamped })
+                            const val = Math.max(raw, 0)
+                            setWizardData({ ...wizardData, quotaStudents: val })
                           }
                         }}
                         onBlur={() => {
-                          if (!wizardData.quotaStudents || wizardData.quotaStudents < 100) {
+                          if (wizardData.quotaStudents === '' || wizardData.quotaStudents < 1) {
                             setWizardData({ ...wizardData, quotaStudents: 1500 })
                           }
                         }}
-                        className="w-28 px-3 py-1.5 text-xs font-extrabold text-slate-900 border border-slate-300 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-purple-500/20 bg-slate-50/50"
+                        className="w-32 px-3 py-1.5 text-xs font-extrabold text-slate-900 border border-slate-300 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-purple-500/20 bg-slate-50/50"
                       />
                     </div>
                   </div>
 
-                  {/* Preset Quick Select Tags (1500, 2000, 2500, 3000 Max) */}
+                  {/* Preset Quick Select Tags (Flexible & Scalable Presets) */}
                   <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-slate-100">
                     <span className="text-[11px] font-semibold text-slate-500 mr-1">Quick Select:</span>
-                    {[1500, 2000, 2500, 3000].map((tagVal) => {
+                    {[1500, 3000, 5000, 10000, 25000, 50000].map((tagVal) => {
                       const isSelected = Number(wizardData.quotaStudents) === tagVal
-                      const isMax = tagVal === 3000
                       return (
                         <button
                           key={tagVal}
@@ -2380,7 +2379,7 @@ export const InstitutesView = () => {
                               : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80 hover:border-slate-300'
                           }`}
                         >
-                          {tagVal.toLocaleString()} {isMax && <span className="text-[10px] ml-1 opacity-90 font-medium">(Max)</span>}
+                          {tagVal.toLocaleString()}
                         </button>
                       )
                     })}
@@ -3240,15 +3239,14 @@ export const InstitutesView = () => {
                       </label>
                       <input
                         type="number"
-                        min="100"
-                        max="3000"
-                        step="50"
+                        min="1"
+                        step="100"
                         value={editFormData.quotaStudents}
                         onChange={(e) => {
-                          const val = e.target.value === '' ? '' : Math.min(Math.max(parseInt(e.target.value, 10), 0), 3000)
+                          const val = e.target.value === '' ? '' : Math.max(parseInt(e.target.value, 10), 0)
                           setEditFormData({ ...editFormData, quotaStudents: val })
                         }}
-                        className="w-24 px-2 py-1 text-xs font-extrabold text-slate-900 border border-slate-300 rounded-md text-center focus:outline-none bg-white"
+                        className="w-28 px-2 py-1 text-xs font-extrabold text-slate-900 border border-slate-300 rounded-md text-center focus:outline-none bg-white"
                       />
                     </div>
 
