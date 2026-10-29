@@ -75,7 +75,7 @@ export const FALLBACK_PLANS = [
     name: 'Custom Hybrid Plan',
     tier: 'Custom',
     planCode: 'CUSTOM',
-    enabledTiers: ['school', 'college'],
+    enabledTiers: ['school', 'college', 'undergraduate'],
     pricePKR: 75000,
     billingCycle: 'monthly',
     maxStudents: 15000,

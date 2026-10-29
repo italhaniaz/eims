@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import {
-  CreditCard,
+  Lock,
+CreditCard,
   DollarSign,
   TrendingUp,
   AlertTriangle,
@@ -51,6 +52,7 @@ const SubscriptionsBillingView = () => {
   const [planForm, setPlanForm] = useState({
     name: '',
     tier: 'Basic',
+    enabledTiers: ['school'],
     pricePKR: 20000,
     billingCycle: 'monthly',
     maxStudents: 1000,
@@ -191,9 +193,10 @@ const SubscriptionsBillingView = () => {
     setPlanForm({
       name: '',
       tier: 'School',
-      pricePKR: 20000,
+      enabledTiers: ['school'],
+      pricePKR: 25000,
       billingCycle: 'monthly',
-      maxStudents: 1000,
+      maxStudents: 1500,
       maxCampuses: 2,
       maxUsers: 50,
       storageGB: 5,
@@ -209,6 +212,7 @@ const SubscriptionsBillingView = () => {
     setPlanForm({
       name: 'Free Trial Plan',
       tier: 'Trial',
+      enabledTiers: ['school'],
       pricePKR: 0,
       billingCycle: '14-day trial',
       maxStudents: 250,
@@ -222,11 +226,32 @@ const SubscriptionsBillingView = () => {
     })
   }
 
+  const toggleWingInPlanForm = (wingKey) => {
+    setPlanForm(prev => {
+      const current = Array.isArray(prev.enabledTiers) ? prev.enabledTiers : ['school', 'college']
+      const exists = current.includes(wingKey)
+      if (exists && current.length <= 1) {
+        showToast('A hybrid plan must include at least one educational wing.')
+        return prev
+      }
+      const nextTiers = exists ? current.filter(w => w !== wingKey) : [...current, wingKey]
+      return { ...prev, enabledTiers: nextTiers }
+    })
+  }
+
   const handleOpenEditPlan = (plan) => {
     setEditingPlan(plan)
+    const currentEnabledTiers = Array.isArray(plan.enabledTiers) && plan.enabledTiers.length > 0
+      ? plan.enabledTiers
+      : (plan.tier === 'School' ? ['school'] :
+         plan.tier === 'College' ? ['college'] :
+         plan.tier === 'University' ? ['undergraduate'] :
+         plan.tier === 'Custom' ? ['school', 'college', 'undergraduate'] : ['school'])
+
     setPlanForm({
       name: plan.name || '',
       tier: plan.tier || 'School',
+      enabledTiers: currentEnabledTiers,
       pricePKR: plan.pricePKR !== undefined ? plan.pricePKR : 20000,
       billingCycle: plan.billingCycle || 'monthly',
       maxStudents: plan.maxStudents || 1000,
@@ -248,6 +273,12 @@ const SubscriptionsBillingView = () => {
     const isTrial = planForm.tier === 'Trial' || planForm.isTrial || Number(planForm.pricePKR) === 0
     const payload = {
       ...planForm,
+      enabledTiers: planForm.enabledTiers || (
+        planForm.tier === 'School' ? ['school'] :
+        planForm.tier === 'College' ? ['college'] :
+        planForm.tier === 'University' ? ['undergraduate'] :
+        planForm.tier === 'Custom' ? ['school', 'college', 'undergraduate'] : ['school']
+      ),
       pricePKR: Number(planForm.pricePKR) || 0,
       isTrial,
       billingCycle: isTrial && !planForm.billingCycle.includes('trial') ? '14-day trial' : planForm.billingCycle,
@@ -1177,50 +1208,134 @@ const SubscriptionsBillingView = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
                   {customPlans.map((plan) => {
-                    const enrolledCount = subscriptions.filter(s => s.planId === plan.id).length
+                    const enrolledCount = subscriptions.filter(s => s.planId === plan.id || s.planName?.toLowerCase().includes('hybrid') || s.planName?.toLowerCase().includes(plan.name?.toLowerCase())).length
+                    const planEnabledTiers = Array.isArray(plan.enabledTiers) && plan.enabledTiers.length > 0 
+                      ? plan.enabledTiers 
+                      : ['school', 'college', 'undergraduate']
+
                     return (
                       <div
                         key={plan.id}
-                        className="bg-white rounded-2xl border border-purple-200 p-5 flex flex-col justify-between shadow-xs hover:shadow-md transition-all relative"
+                        className="rounded-3xl border-2 border-purple-200/90 ring-1 ring-purple-500/10 bg-gradient-to-b from-white via-purple-50/15 to-[#fcfaff] p-6 flex flex-col justify-between shadow-xs hover:border-purple-300 hover:shadow-lg transition-all relative overflow-hidden group"
                       >
+                        {/* Top decorative gradient glow */}
+                        <div className="absolute top-0 right-0 left-0 h-1.5 bg-gradient-to-r from-purple-500 via-indigo-500 to-fuchsia-500" />
+
                         <div>
+                          {/* Header row: Badge, Icon & Actions */}
                           <div className="flex items-center justify-between mb-3">
-                            <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200">
-                              {plan.name}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 text-white flex items-center justify-center shadow-xs">
+                                <Layers className="w-4 h-4" />
+                              </div>
+                              <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-[#f5eeff] text-purple-700 border border-purple-200">
+                                {plan.name || 'Custom Hybrid Plan'}
+                              </span>
+                            </div>
                             <div className="flex items-center gap-1">
                               <button
                                 onClick={() => handleOpenEditPlan(plan)}
-                                className="p-1 rounded text-slate-400 hover:text-purple-600 hover:bg-slate-100"
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-purple-600 hover:bg-purple-50 transition-colors cursor-pointer"
+                                title="Edit Hybrid Plan Settings"
                               >
                                 <Edit2 className="w-3.5 h-3.5" />
                               </button>
                               <button
                                 onClick={() => setPlanToDelete(plan)}
-                                className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-slate-100"
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                                title="Delete Plan"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
                             </div>
                           </div>
 
-                          <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 mb-3">
-                            <span className="text-2xl font-black text-slate-900">
-                              ₨ {Number(plan.pricePKR).toLocaleString()}
+                          <h3 className="text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
+                            <span>Multi-Wing Conglomerate</span>
+                            <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                              HYBRID
                             </span>
-                            <span className="text-xs text-slate-500 ml-1">/ month</span>
+                          </h3>
+
+                          <p className="text-xs text-slate-500 mt-1 line-clamp-2 min-h-[32px]">
+                            {plan.description || 'Multi-wing educational groups combining School, College, and University wings with consolidated governance.'}
+                          </p>
+
+                          {/* Active Wings Pills */}
+                          <div className="flex flex-wrap items-center gap-1.5 my-3">
+                            {planEnabledTiers.includes('school') && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                                🏫 School Wing
+                              </span>
+                            )}
+                            {planEnabledTiers.includes('college') && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200">
+                                🏛️ College Wing
+                              </span>
+                            )}
+                            {planEnabledTiers.includes('undergraduate') && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200">
+                                🎓 University Wing
+                              </span>
+                            )}
                           </div>
 
-                          <p className="text-xs text-slate-500 line-clamp-2">{plan.description}</p>
+                          {/* Pricing Box */}
+                          <div className="mb-5 p-3.5 rounded-2xl bg-white border border-purple-100 shadow-2xs">
+                            <div className="flex items-baseline gap-1 font-heading">
+                              <span className="text-lg font-bold text-purple-600">₨</span>
+                              <span className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+                                {billingCycle === 'annual'
+                                  ? Math.round((Number(plan.pricePKR) || 75000) * 0.85).toLocaleString()
+                                  : (Number(plan.pricePKR) || 75000).toLocaleString()}
+                              </span>
+                              <span className="text-xs font-medium text-slate-500 ml-1">/ month</span>
+                            </div>
+                            <div className="text-xs text-purple-700 font-medium mt-1">
+                              {billingCycle === 'annual' ? 'Billed annually (Save 15%)' : 'Enterprise Multi-Tier License'}
+                            </div>
+                          </div>
+
+                          {/* Feature Quota Checklist */}
+                          <ul className="space-y-2.5 text-xs text-slate-600">
+                            <li className="flex items-center gap-2">
+                              <Check className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                              <span>Up to <strong>{(plan.maxStudents || 15000).toLocaleString()} Enrolled Students</strong></span>
+                            </li>
+                            <li className="flex items-center gap-2">
+                              <Check className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                              <span><strong>{plan.maxCampuses || 15} Campuses / Wings</strong> interconnected</span>
+                            </li>
+                            <li className="flex items-center gap-2">
+                              <Check className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                              <span><strong>{plan.maxUsers || 600} Staff & Faculty Accounts</strong></span>
+                            </li>
+                            <li className="flex items-center gap-2">
+                              <Check className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                              <span><strong>{plan.storageGB || 50} GB</strong> High-Speed Cloud Storage</span>
+                            </li>
+                            <li className="flex items-center gap-2">
+                              <Check className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                              <span>Unified Multi-Wing Portal & Consolidated Ledger</span>
+                            </li>
+                          </ul>
                         </div>
 
-                        <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between">
-                          <span className="text-xs text-slate-500">{enrolledCount} Campuses</span>
+                        {/* Footer / CTA */}
+                        <div className="mt-6 pt-4 border-t border-slate-100 space-y-2.5">
+                          <div className="flex items-center justify-between text-[11px]">
+                            <span className="text-slate-400 font-medium">Subscribers:</span>
+                            <span className="font-bold text-purple-700 bg-purple-50 px-2.5 py-0.5 rounded-md border border-purple-200">
+                              {enrolledCount} Campuses
+                            </span>
+                          </div>
                           <button
+                            type="button"
                             onClick={() => handleOpenEditPlan(plan)}
-                            className="px-3 py-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs"
+                            className="w-full py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold text-xs shadow-sm shadow-purple-600/25 transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
                           >
-                            Configure Limits
+                            <Sliders className="w-3.5 h-3.5" />
+                            <span>Configure Hybrid Plan</span>
                           </button>
                         </div>
                       </div>
@@ -1403,18 +1518,42 @@ const SubscriptionsBillingView = () => {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Tier Category</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-semibold text-slate-700">Tier Category</label>
+                {editingPlan && (
+                  <span className="text-[10px] text-purple-700 bg-purple-50 px-1.5 py-0.2 rounded border border-purple-200 font-semibold inline-flex items-center gap-1">
+                    <Lock className="w-2.5 h-2.5" /> Fixed
+                  </span>
+                )}
+              </div>
               <select
                 value={planForm.tier}
+                disabled={Boolean(editingPlan)}
                 onChange={(e) => {
                   const newTier = e.target.value
+                  let newEnabledTiers = planForm.enabledTiers || []
                   if (newTier === 'Trial') {
-                    setPlanForm({ ...planForm, tier: newTier, pricePKR: 0, billingCycle: '14-day trial', isTrial: true })
-                  } else {
-                    setPlanForm({ ...planForm, tier: newTier, pricePKR: planForm.pricePKR === 0 ? 25000 : planForm.pricePKR, billingCycle: planForm.billingCycle.includes('trial') ? 'monthly' : planForm.billingCycle, isTrial: false })
+                    newEnabledTiers = ['school']
+                    setPlanForm({ ...planForm, tier: newTier, enabledTiers: newEnabledTiers, pricePKR: 0, billingCycle: '14-day trial', isTrial: true })
+                  } else if (newTier === 'School') {
+                    newEnabledTiers = ['school']
+                    setPlanForm({ ...planForm, tier: newTier, enabledTiers: newEnabledTiers, pricePKR: planForm.pricePKR === 0 ? 25000 : planForm.pricePKR, billingCycle: planForm.billingCycle.includes('trial') ? 'monthly' : planForm.billingCycle, isTrial: false })
+                  } else if (newTier === 'College') {
+                    newEnabledTiers = ['college']
+                    setPlanForm({ ...planForm, tier: newTier, enabledTiers: newEnabledTiers, pricePKR: planForm.pricePKR === 0 ? 35000 : planForm.pricePKR, billingCycle: planForm.billingCycle.includes('trial') ? 'monthly' : planForm.billingCycle, isTrial: false })
+                  } else if (newTier === 'University') {
+                    newEnabledTiers = ['undergraduate']
+                    setPlanForm({ ...planForm, tier: newTier, enabledTiers: newEnabledTiers, pricePKR: planForm.pricePKR === 0 ? 55000 : planForm.pricePKR, billingCycle: planForm.billingCycle.includes('trial') ? 'monthly' : planForm.billingCycle, isTrial: false })
+                  } else if (newTier === 'Custom') {
+                    newEnabledTiers = newEnabledTiers.length > 0 ? newEnabledTiers : ['school', 'college', 'undergraduate']
+                    setPlanForm({ ...planForm, tier: newTier, enabledTiers: newEnabledTiers, pricePKR: planForm.pricePKR === 0 ? 75000 : planForm.pricePKR, billingCycle: planForm.billingCycle.includes('trial') ? 'monthly' : planForm.billingCycle, isTrial: false })
                   }
                 }}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none bg-white"
+                className={`w-full px-3 py-2 text-sm border rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none ${
+                  editingPlan
+                    ? 'bg-slate-100/90 text-slate-700 border-slate-200 cursor-not-allowed font-medium'
+                    : 'bg-white border-slate-200'
+                }`}
               >
                 <option value="Trial">Free Trial Tier (₨ 0 Evaluation)</option>
                 <option value="School">School Tier (Primary / Matric)</option>
@@ -1424,6 +1563,92 @@ const SubscriptionsBillingView = () => {
               </select>
             </div>
           </div>
+
+          {/* TASK 3: HYBRID TIER WING SELECTOR OPTIONS (School, College, University) */}
+          {(planForm.tier === 'Custom' || planForm.tier === 'Hybrid' || planForm.name?.toLowerCase().includes('hybrid')) && (
+            <div className="p-3.5 bg-gradient-to-r from-purple-50/70 via-indigo-50/40 to-fuchsia-50/30 border border-purple-200/90 rounded-2xl space-y-2.5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                  <Layers className="w-3.5 h-3.5 text-purple-600" />
+                  <span>Choose Included Educational Wings (School, College, University)</span>
+                </label>
+                <span className="text-[10px] font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full border border-purple-200">
+                  {(planForm.enabledTiers || []).length} Wings Selected
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500">
+                Configure which academic wings are activated when campuses enroll into this hybrid plan:
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+                {/* 1. School Wing Option */}
+                <div
+                  onClick={() => toggleWingInPlanForm('school')}
+                  className={`p-3 rounded-xl border text-left flex items-start gap-2.5 transition-all cursor-pointer select-none ${
+                    (planForm.enabledTiers || []).includes('school')
+                      ? 'bg-white border-purple-400 ring-2 ring-purple-400/20 shadow-xs'
+                      : 'bg-slate-50 border-slate-200 opacity-60 hover:opacity-100 hover:border-slate-300'
+                  }`}
+                >
+                  <div className={`w-4 h-4 rounded mt-0.5 flex items-center justify-center text-xs shrink-0 transition-colors ${
+                    (planForm.enabledTiers || []).includes('school') ? 'bg-purple-600 text-white' : 'border border-slate-300 bg-white'
+                  }`}>
+                    {(planForm.enabledTiers || []).includes('school') && <Check className="w-3 h-3 stroke-[3]" />}
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-slate-900 flex items-center gap-1">
+                      <span>🏫 School Wing</span>
+                    </div>
+                    <div className="text-[10px] text-slate-500 mt-0.5">Primary & Matric (K-10)</div>
+                  </div>
+                </div>
+
+                {/* 2. College Wing Option */}
+                <div
+                  onClick={() => toggleWingInPlanForm('college')}
+                  className={`p-3 rounded-xl border text-left flex items-start gap-2.5 transition-all cursor-pointer select-none ${
+                    (planForm.enabledTiers || []).includes('college')
+                      ? 'bg-white border-purple-400 ring-2 ring-purple-400/20 shadow-xs'
+                      : 'bg-slate-50 border-slate-200 opacity-60 hover:opacity-100 hover:border-slate-300'
+                  }`}
+                >
+                  <div className={`w-4 h-4 rounded mt-0.5 flex items-center justify-center text-xs shrink-0 transition-colors ${
+                    (planForm.enabledTiers || []).includes('college') ? 'bg-purple-600 text-white' : 'border border-slate-300 bg-white'
+                  }`}>
+                    {(planForm.enabledTiers || []).includes('college') && <Check className="w-3 h-3 stroke-[3]" />}
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-slate-900 flex items-center gap-1">
+                      <span>🏛️ College Wing</span>
+                    </div>
+                    <div className="text-[10px] text-slate-500 mt-0.5">11-12 & Inter (F.Sc, ICS)</div>
+                  </div>
+                </div>
+
+                {/* 3. University Wing Option */}
+                <div
+                  onClick={() => toggleWingInPlanForm('undergraduate')}
+                  className={`p-3 rounded-xl border text-left flex items-start gap-2.5 transition-all cursor-pointer select-none ${
+                    (planForm.enabledTiers || []).includes('undergraduate')
+                      ? 'bg-white border-purple-400 ring-2 ring-purple-400/20 shadow-xs'
+                      : 'bg-slate-50 border-slate-200 opacity-60 hover:opacity-100 hover:border-slate-300'
+                  }`}
+                >
+                  <div className={`w-4 h-4 rounded mt-0.5 flex items-center justify-center text-xs shrink-0 transition-colors ${
+                    (planForm.enabledTiers || []).includes('undergraduate') ? 'bg-purple-600 text-white' : 'border border-slate-300 bg-white'
+                  }`}>
+                    {(planForm.enabledTiers || []).includes('undergraduate') && <Check className="w-3 h-3 stroke-[3]" />}
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-slate-900 flex items-center gap-1">
+                      <span>🎓 University Wing</span>
+                    </div>
+                    <div className="text-[10px] text-slate-500 mt-0.5">BS Degrees & Semesters</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <div>

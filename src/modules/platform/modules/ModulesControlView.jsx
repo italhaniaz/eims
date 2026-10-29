@@ -185,15 +185,58 @@ export const ModulesControlView = () => {
     loadMatrix()
   }, [institutes.length])
 
+  // Dynamic counts for wing filter badges
+  const { schoolCount, collegeCount, uniCount, hybridCount } = useMemo(() => {
+    let school = 0
+    let college = 0
+    let uni = 0
+    let hybrid = 0
+
+    institutes.forEach(inst => {
+      const currentTiers = inst.enabledTiers || (
+        inst.type === 'School' ? ['school'] :
+        inst.type === 'College' ? ['college'] :
+        inst.type === 'University' ? ['undergraduate'] : ['school']
+      )
+      if (currentTiers.includes('school') || inst.type === 'School') school++
+      if (currentTiers.includes('college') || inst.type === 'College') college++
+      if (currentTiers.includes('undergraduate') || currentTiers.includes('university') || inst.type === 'University') uni++
+      if (currentTiers.length > 1 || inst.type === 'Custom Group' || (inst.planTier && inst.planTier.toLowerCase().includes('hybrid'))) hybrid++
+    })
+
+    return { schoolCount: school, collegeCount: college, uniCount: uni, hybridCount: hybrid }
+  }, [institutes])
+
   // Filter institutes
   const filteredInstitutes = useMemo(() => {
     return institutes.filter(inst => {
-      const matchesSearch = 
-        inst.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        inst.code.toLowerCase().includes(searchTerm.toLowerCase())
-      const instType = inst.type || 'School'
-      const matchesType = typeFilter === 'ALL' || instType.toLowerCase() === typeFilter.toLowerCase()
-      return matchesSearch && matchesType
+      const term = searchTerm.toLowerCase().trim()
+      const matchesSearch = !term ||
+        (inst.name && inst.name.toLowerCase().includes(term)) ||
+        (inst.code && inst.code.toLowerCase().includes(term)) ||
+        (inst.city && inst.city.toLowerCase().includes(term))
+
+      const currentTiers = inst.enabledTiers || (
+        inst.type === 'School' ? ['school'] :
+        inst.type === 'College' ? ['college'] :
+        inst.type === 'University' ? ['undergraduate'] : ['school']
+      )
+
+      let matchesWing = true
+      const f = typeFilter.toLowerCase()
+      if (f === 'school') {
+        matchesWing = currentTiers.includes('school') || inst.type === 'School'
+      } else if (f === 'college') {
+        matchesWing = currentTiers.includes('college') || inst.type === 'College'
+      } else if (f === 'university') {
+        matchesWing = currentTiers.includes('undergraduate') || currentTiers.includes('university') || inst.type === 'University'
+      } else if (f === 'hybrid') {
+        matchesWing = currentTiers.length > 1 || inst.type === 'Custom Group' || (inst.planTier && inst.planTier.toLowerCase().includes('hybrid'))
+      } else if (typeFilter !== 'ALL') {
+        matchesWing = inst.type?.toLowerCase() === f
+      }
+
+      return matchesSearch && matchesWing
     })
   }, [institutes, searchTerm, typeFilter])
 
@@ -352,8 +395,8 @@ export const ModulesControlView = () => {
         </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="bg-white p-1.5 rounded-2xl border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
+      {/* Navigation Tabs & Wing Filter Bar */}
+      <div className="bg-white p-2 rounded-2xl border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         <nav className="flex space-x-2 overflow-x-auto text-xs sm:text-sm font-medium">
           <button
             onClick={() => setActiveControlTab('wings')}
@@ -379,6 +422,59 @@ export const ModulesControlView = () => {
             <span>Feature Capabilities Matrix (10 Modules)</span>
           </button>
         </nav>
+
+        {/* Wing Filter Control (Positioned in the red box area) */}
+        <div className="flex flex-wrap items-center gap-2 self-start lg:self-center shrink-0 pr-1">
+          {/* Quick Search Box */}
+          <div className="relative">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search campus or code..."
+              className="pl-8 pr-7 py-1.5 bg-slate-50 hover:bg-slate-100/70 focus:bg-white text-xs text-slate-800 placeholder-slate-400 rounded-xl border border-slate-200/90 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all w-36 sm:w-44 font-medium"
+            />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+
+          {/* Wing Filter Dropdown */}
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-100/70 border border-slate-200/90 rounded-xl transition-all shadow-2xs">
+            <Filter className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider hidden sm:inline">Filter Wing:</span>
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              aria-label="Filter institutes by educational wing"
+              className="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer pr-1"
+            >
+              <option value="ALL">All Wings & Campuses ({institutes.length})</option>
+              <option value="school">🏫 School Wing ({schoolCount})</option>
+              <option value="college">🏛️ College Wing ({collegeCount})</option>
+              <option value="university">🎓 University Wing ({uniCount})</option>
+              <option value="hybrid">✨ Hybrid / Multi-Wing ({hybridCount})</option>
+            </select>
+          </div>
+
+          {typeFilter !== 'ALL' && (
+            <button
+              type="button"
+              onClick={() => setTypeFilter('ALL')}
+              className="px-2 py-1 text-[11px] font-semibold text-purple-700 hover:text-purple-800 hover:bg-purple-50 rounded-lg transition-colors cursor-pointer"
+              title="Reset Wing Filter"
+            >
+              Reset
+            </button>
+          )}
+        </div>
       </div>
 
       {/* TAB 1: EDUCATIONAL WINGS & TIER MATRIX (DEFAULT) */}
@@ -619,10 +715,11 @@ export const ModulesControlView = () => {
             onChange={(e) => setTypeFilter(e.target.value)}
             className="px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 font-medium focus:outline-none"
           >
-            <option value="ALL">All Institutes</option>
-            <option value="School">School</option>
-            <option value="College">College</option>
-            <option value="University">University</option>
+            <option value="ALL">All Wings ({institutes.length})</option>
+            <option value="school">🏫 School Wing ({schoolCount})</option>
+            <option value="college">🏛️ College Wing ({collegeCount})</option>
+            <option value="university">🎓 University Wing ({uniCount})</option>
+            <option value="hybrid">✨ Hybrid / Multi-Wing ({hybridCount})</option>
           </select>
         </div>
       </div>
