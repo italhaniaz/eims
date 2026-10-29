@@ -25,6 +25,7 @@ class ErrorBoundary extends React.Component {
       msg.includes('Loading chunk') ||
       msg.includes('error loading dynamically imported module') ||
       msg.includes('Importing a module script failed') ||
+      msg.includes('before initialization') ||
       name === 'ChunkLoadError'
     )
   }

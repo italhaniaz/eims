@@ -29,7 +29,8 @@ export const lazyWithRetry = (componentImport, moduleKey = 'module') => {
         error?.message?.includes('Loading chunk') ||
         error?.name === 'ChunkLoadError' ||
         error?.message?.includes('Importing a module script failed') ||
-        error?.message?.includes('error loading dynamically imported module')
+        error?.message?.includes('error loading dynamically imported module') ||
+        error?.message?.includes('before initialization')
 
       if (isChunkError && !pageHasBeenRetried) {
         window.sessionStorage.setItem(storageKey, 'true')

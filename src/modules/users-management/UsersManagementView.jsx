@@ -47,6 +47,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
   const [roleFilter, setRoleFilter] = useState('ALL')
   const [statusFilter, setStatusFilter] = useState('ACTIVE') // Default to active users only
   const [selectedRoleCard, setSelectedRoleCard] = useState('superadmin')
+  const [isRoleDetailsOpen, setIsRoleDetailsOpen] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingUser, setEditingUser] = useState(null)
   const [viewingUser, setViewingUser] = useState(null)
@@ -395,6 +396,16 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
 
   const activeRoleDetails = SYSTEM_ROLES.find(r => r.id === selectedRoleCard) || SYSTEM_ROLES[0]
   const ActiveRoleIcon = activeRoleDetails.icon
+
+  // Toggle or select role specification inspection view (Eye button trigger)
+  const handleToggleRoleDetails = (roleId) => {
+    if (selectedRoleCard === roleId && isRoleDetailsOpen) {
+      setIsRoleDetailsOpen(false)
+    } else {
+      setSelectedRoleCard(roleId)
+      setIsRoleDetailsOpen(true)
+    }
+  }
 
   return (
     <div className="p-3 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
@@ -1121,7 +1132,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
         <div className="space-y-6">
           {/* Role Architecture Directory (6 Standard Roles) */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
                 <h2 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
                   <ShieldCheck className="w-5 h-5 text-indigo-600" />
@@ -1130,6 +1141,21 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
                 <p className="text-xs text-slate-500">
                   Comprehensive definition of the 6 core platform roles, their operational scopes, and authority boundaries
                 </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setIsRoleDetailsOpen(!isRoleDetailsOpen)}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-all inline-flex items-center gap-2 shadow-2xs cursor-pointer ${
+                    isRoleDetailsOpen
+                      ? 'bg-purple-600 text-white border-purple-600 hover:bg-purple-700 shadow-sm'
+                      : 'bg-white hover:bg-purple-50 text-purple-700 border-purple-200 hover:border-purple-300'
+                  }`}
+                  title={isRoleDetailsOpen ? "Hide Role Specifications" : "View Role Specifications"}
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  <span>{isRoleDetailsOpen ? 'Hide Specifications' : 'View Specifications'}</span>
+                </button>
               </div>
             </div>
 
@@ -1141,25 +1167,33 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
                 const userCount = users.filter(u => u.role === r.id).length
 
                 return (
-                  <button
+                  <div
                     key={r.id}
-                    onClick={() => setSelectedRoleCard(r.id)}
-                    className={`p-3.5 rounded-2xl border text-left transition-all relative overflow-hidden flex flex-col justify-between cursor-pointer ${
-                      isSelected 
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => handleToggleRoleDetails(r.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        handleToggleRoleDetails(r.id)
+                      }
+                    }}
+                    className={`p-3.5 rounded-2xl border text-left transition-all relative overflow-hidden flex flex-col justify-between cursor-pointer group ${
+                      isSelected && isRoleDetailsOpen
                         ? 'bg-white border-purple-600 shadow-md ring-2 ring-purple-500/20' 
-                        : 'bg-white hover:bg-slate-50/80 border-slate-200/80 shadow-2xs'
+                        : 'bg-white hover:bg-slate-50/80 border-slate-200/80 shadow-2xs hover:border-purple-200'
                     }`}
                   >
                     <div>
                       <div className="flex items-center justify-between gap-1 mb-2">
-                        <div className={`p-2 rounded-xl ${r.badgeClass}`}>
+                        <div className={`p-2 rounded-xl transition-transform group-hover:scale-105 ${r.badgeClass}`}>
                           <IconComponent className="w-4 h-4" />
                         </div>
                         <span className="text-[10px] font-mono font-bold text-slate-400">
                           {userCount} Users
                         </span>
                       </div>
-                      <h4 className="text-xs font-bold text-slate-800 leading-tight">
+                      <h4 className="text-xs font-bold text-slate-800 leading-tight group-hover:text-purple-700 transition-colors">
                         {r.shortName}
                       </h4>
                       <p className="text-[10px] text-slate-400 mt-1 line-clamp-1">
@@ -1168,84 +1202,116 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
                     </div>
 
                     <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px]">
-                      <span className={`font-semibold ${isSelected ? 'text-purple-600' : 'text-slate-400'}`}>
-                        {isSelected ? 'Viewing' : 'Inspect'}
+                      <span className={`font-semibold ${isSelected && isRoleDetailsOpen ? 'text-purple-600' : 'text-slate-500'}`}>
+                        {isSelected && isRoleDetailsOpen ? 'Viewing Specs' : 'Inspect'}
                       </span>
-                      <ChevronRight className="w-3 h-3 text-slate-400" />
+
+                      {/* Prominent Eye Button */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleToggleRoleDetails(r.id)
+                        }}
+                        className={`p-1.5 rounded-lg transition-all cursor-pointer inline-flex items-center justify-center ${
+                          isSelected && isRoleDetailsOpen
+                            ? 'bg-purple-600 text-white shadow-xs hover:bg-purple-700 ring-2 ring-purple-300'
+                            : 'bg-purple-50 text-purple-700 hover:bg-purple-600 hover:text-white border border-purple-200'
+                        }`}
+                        title={isSelected && isRoleDetailsOpen ? `Hide ${r.shortName} Specifications` : `View ${r.shortName} Specifications`}
+                        aria-label={`View ${r.shortName} Specifications`}
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                      </button>
                     </div>
-                  </button>
+                  </div>
                 )
               })}
             </div>
 
             {/* Selected Role Deep-Dive Specification Card */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 space-y-4">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
-                <div className="flex items-center gap-3">
-                  <div className={`p-3 rounded-2xl ${activeRoleDetails.badgeClass}`}>
-                    <ActiveRoleIcon className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-bold text-slate-900 tracking-tight">
-                        {activeRoleDetails.name}
-                      </h3>
-                      <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border whitespace-nowrap inline-flex items-center ${activeRoleDetails.badgeClass}`}>
-                        {activeRoleDetails.tierLevel}
-                      </span>
+            {isRoleDetailsOpen && activeRoleDetails && (
+              <div className="bg-white rounded-2xl border border-purple-200/90 shadow-sm p-6 space-y-4 animate-in fade-in duration-200">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-3 rounded-2xl ${activeRoleDetails.badgeClass}`}>
+                      <ActiveRoleIcon className="w-6 h-6" />
                     </div>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      <strong>Scope of Authority:</strong> {activeRoleDetails.scope}
-                    </p>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="text-lg font-bold text-slate-900 tracking-tight">
+                          {activeRoleDetails.name}
+                        </h3>
+                        <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border whitespace-nowrap inline-flex items-center ${activeRoleDetails.badgeClass}`}>
+                          {activeRoleDetails.tierLevel}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        <strong>Scope of Authority:</strong> {activeRoleDetails.scope}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2.5 self-stretch sm:self-auto justify-between sm:justify-end">
+                    <div className="text-xs text-slate-500 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+                      <span>Currently Assigned: </span>
+                      <strong className="text-slate-800 font-bold font-mono">
+                        {users.filter(u => u.role === activeRoleDetails.id).length} Active Accounts
+                      </strong>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setIsRoleDetailsOpen(false)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors cursor-pointer border border-slate-200/60"
+                      title="Close Role Details"
+                      aria-label="Close Role Details"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                      <span>Close</span>
+                    </button>
                   </div>
                 </div>
 
-                <div className="text-xs text-slate-500 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
-                  <span>Currently Assigned: </span>
-                  <strong className="text-slate-800 font-bold font-mono">
-                    {users.filter(u => u.role === activeRoleDetails.id).length} Active Accounts
-                  </strong>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  {activeRoleDetails.summary}
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                  {/* Core Responsibilities & Privileges */}
+                  <div className="bg-slate-50/70 p-4 rounded-xl border border-slate-200/70 space-y-2">
+                    <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                      <CheckCircle className="w-4 h-4 text-emerald-600" />
+                      <span>Authorized Responsibilities & Privileges</span>
+                    </h4>
+                    <ul className="space-y-1.5 text-xs text-slate-600">
+                      {activeRoleDetails.responsibilities.map((resp, idx) => (
+                        <li key={idx} className="flex items-start gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0"></span>
+                          <span>{resp}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Boundaries & Access Limitations */}
+                  <div className="bg-slate-50/70 p-4 rounded-xl border border-slate-200/70 space-y-2">
+                    <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                      <ShieldCheck className="w-4 h-4 text-amber-600" />
+                      <span>Access Boundaries & Governance Safeguards</span>
+                    </h4>
+                    <ul className="space-y-1.5 text-xs text-slate-600">
+                      {activeRoleDetails.limitations.map((lim, idx) => (
+                        <li key={idx} className="flex items-start gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0"></span>
+                          <span>{lim}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
               </div>
-
-              <p className="text-xs text-slate-600 leading-relaxed">
-                {activeRoleDetails.summary}
-              </p>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                {/* Core Responsibilities & Privileges */}
-                <div className="bg-slate-50/70 p-4 rounded-xl border border-slate-200/70 space-y-2">
-                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                    <CheckCircle className="w-4 h-4 text-emerald-600" />
-                    <span>Authorized Responsibilities & Privileges</span>
-                  </h4>
-                  <ul className="space-y-1.5 text-xs text-slate-600">
-                    {activeRoleDetails.responsibilities.map((resp, idx) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0"></span>
-                        <span>{resp}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Boundaries & Access Limitations */}
-                <div className="bg-slate-50/70 p-4 rounded-xl border border-slate-200/70 space-y-2">
-                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                    <ShieldCheck className="w-4 h-4 text-amber-600" />
-                    <span>Access Boundaries & Governance Safeguards</span>
-                  </h4>
-                  <ul className="space-y-1.5 text-xs text-slate-600">
-                    {activeRoleDetails.limitations.map((lim, idx) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0"></span>
-                        <span>{lim}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Policy Information Strip */}
