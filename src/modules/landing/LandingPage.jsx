@@ -97,11 +97,12 @@ const PLAN_CONFIGS = {
   }
 }
 
-export const LandingPage = ({ onNavigateToLogin }) => {
+export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
   const { login } = useAuth()
   const { showToast } = useToast()
 
   // State
+  const [showAnnouncementBanner, setShowAnnouncementBanner] = useState(true)
   const [activeSection, setActiveSection] = useState('hero')
   const [activeTab, setActiveTab] = useState('school') // 'school', 'college', 'university', 'custom'
   const [billingCycle, setBillingCycle] = useState('monthly') // 'monthly', 'annual'
@@ -498,19 +499,32 @@ export const LandingPage = ({ onNavigateToLogin }) => {
     <div className="min-h-screen w-full bg-[#fcfaff] text-slate-900 font-sans selection:bg-purple-100 selection:text-purple-900 overflow-x-clip relative">
       
       {/* 1. TOP ANNOUNCEMENT BANNER */}
-      <div className="bg-[#f5eeff] border-b border-purple-200/80 px-4 py-2 text-center text-xs font-medium text-purple-900 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
-        <span className="w-2 h-2 rounded-full bg-purple-600 animate-pulse"></span>
-        <span>
-          <strong>New Release:</strong> 14-Day Free Evaluation Tier is now active for all educational institutions.
-        </span>
-        <button
-          onClick={() => setIsTrialModalOpen(true)}
-          className="ml-1 underline font-bold hover:text-purple-700 cursor-pointer inline-flex items-center gap-0.5"
-        >
-          <span>Claim Free Access</span>
-          <ArrowRight className="w-3 h-3" />
-        </button>
-      </div>
+      {showAnnouncementBanner && (
+        <div className="bg-[#f5eeff] border-b border-purple-200/80 px-4 py-2 text-xs font-medium text-purple-900 relative flex items-center justify-center">
+          <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 text-center pr-8 sm:pr-0">
+            <span className="w-2 h-2 rounded-full bg-purple-600 animate-pulse shrink-0"></span>
+            <span>
+              <strong>New Release:</strong> 14-Day Free Evaluation Tier is now active for all educational institutions.
+            </span>
+            <button
+              onClick={() => setIsTrialModalOpen(true)}
+              className="ml-1 underline font-bold hover:text-purple-700 cursor-pointer inline-flex items-center gap-0.5"
+            >
+              <span>Claim Free Access</span>
+              <ArrowRight className="w-3 h-3" />
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowAnnouncementBanner(false)}
+            className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 p-1 rounded-lg hover:bg-purple-200/70 text-purple-700 hover:text-purple-950 transition-colors cursor-pointer shrink-0"
+            aria-label="Dismiss banner"
+            title="Dismiss announcement"
+          >
+            <X className="w-3.5 h-3.5 stroke-[2.5]" />
+          </button>
+        </div>
+      )}
 
       {/* 2. STICKY GLASSMORPHIC NAVBAR WITH ACTIVE HIGHLIGHT ANIMATION */}
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-purple-100/90 shadow-[0_4px_20px_-4px_rgba(147,51,234,0.06)] transition-all duration-200">
@@ -579,16 +593,7 @@ export const LandingPage = ({ onNavigateToLogin }) => {
               <ArrowRight className="w-3.5 h-3.5 text-purple-400 group-hover:text-purple-700 group-hover:translate-x-0.5 transition-all hidden sm:inline shrink-0" />
             </button>
 
-            {/* Start Free Trial Button (Tablet & Desktop) */}
-            <button
-              type="button"
-              onClick={() => setIsTrialModalOpen(true)}
-              className="hidden sm:flex px-4 py-2 sm:px-4.5 sm:py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs sm:text-sm shadow-sm shadow-purple-600/25 transition-all duration-200 hover:scale-[1.03] active:scale-95 cursor-pointer items-center gap-2 whitespace-nowrap"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-purple-200" />
-              <span className="font-heading tracking-tight">Start Free Trial</span>
-            </button>
-
+            
             {/* Mobile Hamburger Menu Toggle Button */}
             <button
               type="button"
@@ -734,7 +739,14 @@ export const LandingPage = ({ onNavigateToLogin }) => {
             </button>
 
             <button
-              onClick={() => handleQuickDemo('superadmin')}
+              type="button"
+              onClick={() => {
+                if (onNavigateToDemo) {
+                  onNavigateToDemo()
+                } else {
+                  handleQuickDemo('superadmin')
+                }
+              }}
               className="w-full sm:w-auto px-5 py-3.5 rounded-xl bg-white hover:bg-purple-50/60 text-slate-800 border border-purple-200 font-semibold text-sm shadow-xs hover:border-purple-300 transition-all cursor-pointer flex items-center justify-center gap-2"
             >
               <Laptop className="w-4 h-4 text-purple-600" />

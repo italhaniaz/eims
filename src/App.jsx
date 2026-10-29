@@ -17,6 +17,7 @@ import ErrorBoundary from './components/common/ErrorBoundary'
 // Auth
 import LoginPage from './modules/auth/LoginPage'
 import LandingPage from './modules/landing/LandingPage'
+import DemoComingSoonPage from './modules/landing/DemoComingSoonPage'
 
 // Lazy-loaded Views for Bundle Performance & Code Splitting (with resilient auto-retry)
 const SuperadminDashboard = lazyWithRetry(() => import('./modules/dashboard/SuperadminDashboard'), 'superadmin-dashboard')
@@ -115,6 +116,7 @@ const AppContent = () => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash.replace(/^#\/?/, '')
       if (hash === 'login' || hash === 'signin') return 'login'
+      if (hash === 'demo' || hash === 'live-demo') return 'demo'
     }
     return 'landing'
   })
@@ -163,6 +165,8 @@ const AppContent = () => {
       if (!user) {
         if (hash === 'login' || hash === 'signin') {
           setPublicView('login')
+        } else if (hash === 'demo' || hash === 'live-demo') {
+          setPublicView('demo')
         } else {
           setPublicView('landing')
         }
@@ -221,7 +225,7 @@ const AppContent = () => {
     }
   }
 
-  // If no user is authenticated, display landing page or login page
+  // If no user is authenticated, display landing page, login page, or demo page
   if (!user) {
     if (publicView === 'login') {
       return (
@@ -241,12 +245,42 @@ const AppContent = () => {
         />
       )
     }
+    if (publicView === 'demo') {
+      return (
+        <DemoComingSoonPage
+          onBackToLanding={() => {
+            setPublicView('landing')
+            if (typeof window !== 'undefined') {
+              window.location.hash = ''
+            }
+          }}
+          onNavigateToLogin={() => {
+            setPublicView('login')
+            if (typeof window !== 'undefined') {
+              window.location.hash = '#login'
+            }
+          }}
+          onOpenTrial={() => {
+            setPublicView('landing')
+            if (typeof window !== 'undefined') {
+              window.location.hash = '#pricing'
+            }
+          }}
+        />
+      )
+    }
     return (
       <LandingPage
         onNavigateToLogin={(mode) => {
           setPublicView('login')
           if (typeof window !== 'undefined') {
             window.location.hash = '#login'
+          }
+        }}
+        onNavigateToDemo={() => {
+          setPublicView('demo')
+          if (typeof window !== 'undefined') {
+            window.location.hash = '#demo'
           }
         }}
       />
