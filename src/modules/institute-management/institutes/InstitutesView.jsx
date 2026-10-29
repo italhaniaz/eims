@@ -162,66 +162,26 @@ export const InstitutesView = () => {
   }, [viewingDetails])
 
   const handleOverviewFieldChange = (field, value) => {
-    let finalVal = value
-    if (field === 'phone') {
-      const digits = value.replace(/\D/g, '')
-      const maxDigits = digits.startsWith('0') ? 11 : 10
-      finalVal = digits.slice(0, maxDigits)
-    }
-    setOverviewForm(prev => ({ ...prev, [field]: finalVal }))
-    if (overviewErrors[field]) {
-      setOverviewErrors(prev => ({ ...prev, [field]: false }))
-    }
-  }
-
-  const validateOverviewFields = () => {
-    const errors = {}
-    if (!overviewForm.principal || !overviewForm.principal.trim()) {
-      errors.principal = true
-    }
-    const phoneDigits = (overviewForm.phone || '').replace(/\D/g, '')
-    if (!phoneDigits) {
-      errors.phone = true
-    } else if (phoneDigits.startsWith('0')) {
-      if (phoneDigits.length !== 11) errors.phone = true
-    } else {
-      if (phoneDigits.length !== 10) errors.phone = true
-    }
-    setOverviewErrors(errors)
-    return Object.keys(errors).length === 0
+    setOverviewForm(prev => ({ ...prev, [field]: value }))
   }
 
   const handleDetailTabChange = (targetTab) => {
-    if (detailsTab === 'overview' && targetTab !== 'overview') {
-      const isValid = validateOverviewFields()
-      if (!isValid) {
-        toast.error('Please fill in the mandatory fields (Principal / Head and Contact Phone) to proceed.')
-        return
-      }
-    }
     setDetailsTab(targetTab)
   }
 
   const handleOverviewNext = async () => {
-    const isValid = validateOverviewFields()
-    if (!isValid) {
-      toast.error('Please fill in the mandatory fields (Principal / Head and Contact Phone) to proceed.')
-      return
-    }
-
     try {
       if (updateItem && viewingDetails?.id) {
         await updateItem('institutes', viewingDetails.id, {
-          principal: overviewForm.principal.trim(),
-          phone: overviewForm.phone.trim()
+          principal: overviewForm.principal?.trim() || '',
+          phone: overviewForm.phone?.trim() || ''
         })
       }
       setViewingDetails(prev => prev ? ({
         ...prev,
-        principal: overviewForm.principal.trim(),
-        phone: overviewForm.phone.trim()
+        principal: overviewForm.principal?.trim() || '',
+        phone: overviewForm.phone?.trim() || ''
       }) : null)
-      toast.success('Institute details updated successfully.')
     } catch (err) {
       console.error('Failed to update institute details:', err)
     }
@@ -2868,20 +2828,10 @@ export const InstitutesView = () => {
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 text-xs">
-                  {/* Principal / Head - MANDATORY */}
-                  <div className={`p-2.5 bg-white rounded-lg border transition-all ${
-                    overviewErrors.principal 
-                      ? 'border-red-400 bg-red-50/30 ring-1 ring-red-400' 
-                      : 'border-slate-200 focus-within:border-purple-400 focus-within:ring-1 focus-within:ring-purple-300'
-                  }`}>
-                    <label className="text-[10px] text-slate-500 block uppercase font-bold flex items-center justify-between">
-                      <span className="flex items-center gap-1">
-                        Principal / Head
-                        <span className="text-red-500 font-extrabold text-xs">*</span>
-                      </span>
-                      {overviewErrors.principal && (
-                        <span className="text-red-600 text-[10px] font-semibold tracking-normal lowercase">Required</span>
-                      )}
+                  {/* Principal / Head */}
+                  <div className="p-2.5 bg-white rounded-lg border border-slate-200 focus-within:border-purple-400 focus-within:ring-1 focus-within:ring-purple-300 transition-all">
+                    <label className="text-[10px] text-slate-500 block uppercase font-bold">
+                      Principal / Head
                     </label>
                     <input 
                       type="text"
@@ -2904,27 +2854,17 @@ export const InstitutesView = () => {
                     <span className="font-semibold text-purple-600 truncate block mt-1">{viewingDetails.email || '—'}</span>
                   </div>
 
-                  {/* Contact Phone - MANDATORY */}
-                  <div className={`p-2.5 bg-white rounded-lg border transition-all ${
-                    overviewErrors.phone 
-                      ? 'border-red-400 bg-red-50/30 ring-1 ring-red-400' 
-                      : 'border-slate-200 focus-within:border-purple-400 focus-within:ring-1 focus-within:ring-purple-300'
-                  }`}>
-                    <label className="text-[10px] text-slate-500 block uppercase font-bold flex items-center justify-between">
-                      <span className="flex items-center gap-1">
-                        Contact Phone
-                        <span className="text-red-500 font-extrabold text-xs">*</span>
-                      </span>
-                      {overviewErrors.phone && (
-                        <span className="text-red-600 text-[10px] font-semibold tracking-normal lowercase">Required</span>
-                      )}
+                  {/* Contact Phone */}
+                  <div className="p-2.5 bg-white rounded-lg border border-slate-200 focus-within:border-purple-400 focus-within:ring-1 focus-within:ring-purple-300 transition-all">
+                    <label className="text-[10px] text-slate-500 block uppercase font-bold">
+                      Contact Phone
                     </label>
                     <input 
                       type="text"
                       value={overviewForm.phone}
                       onChange={(e) => handleOverviewFieldChange('phone', e.target.value)}
                       placeholder="e.g. +92 42 35789012"
-                      className="w-full mt-1 font-semibold text-slate-800 bg-transparent border-0 p-0 text-xs focus:ring-0 focus:outline-none placeholder:text-slate-300"
+                      className="w-full mt-1 font-semibold text-slate-800 bg-transparent border-0 p-0 text-xs focus:ring-0 focus:outline-none placeholder:text-slate-300 font-mono"
                     />
                   </div>
                 </div>
