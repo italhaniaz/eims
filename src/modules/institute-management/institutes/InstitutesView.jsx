@@ -35,7 +35,6 @@ import {
   Archive,
   RotateCcw,
   Check,
-  UserCheck,
   ShieldAlert,
   Palette,
   Globe,
@@ -1314,27 +1313,17 @@ export const InstitutesView = () => {
 
                   {/* Actions Bar */}
                   <div className="p-3 bg-slate-50/80 border-t border-slate-100 flex flex-col gap-2">
-                    {/* Primary Row: View Profile & Impersonate */}
-                    <div className="flex items-center justify-between gap-2">
+                    {/* Primary Row: View Details */}
+                    <div>
                       <button
                         onClick={() => {
                           setViewingDetails(inst)
                           setDetailsTab('overview')
                         }}
-                        className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#f5eeff] hover:bg-[#ede0fe] text-purple-700 text-xs font-semibold transition-colors cursor-pointer flex-1"
+                        className="w-full flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-[#f5eeff] hover:bg-[#ede0fe] text-purple-700 hover:text-purple-800 text-xs font-bold transition-all cursor-pointer shadow-2xs hover:shadow-xs"
                       >
-                        <Eye className="w-3.5 h-3.5" />
+                        <Eye className="w-4 h-4 stroke-[2.2]" />
                         <span>View Details</span>
-                      </button>
-
-                      <button
-                        onClick={() => handleImpersonate(inst)}
-                        disabled={isSuspended}
-                        className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl text-xs font-semibold shadow-xs transition-all cursor-pointer flex-1"
-                        title="1-Click Direct Delegation / Impersonation (60 min session)"
-                      >
-                        <UserCheck className="w-3.5 h-3.5" />
-                        <span>Login as Admin</span>
                       </button>
                     </div>
 
@@ -1497,17 +1486,10 @@ export const InstitutesView = () => {
                                   setViewingDetails(inst)
                                   setDetailsTab('overview')
                                 }}
-                                className="px-2.5 py-1.5 rounded-xl bg-[#f5eeff] hover:bg-[#ede0fe] text-purple-700 text-xs font-semibold transition-colors cursor-pointer"
+                                className="px-3 py-1.5 rounded-xl bg-[#f5eeff] hover:bg-[#ede0fe] text-purple-700 hover:text-purple-800 text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5"
                               >
-                                View
-                              </button>
-                              <button
-                                onClick={() => handleImpersonate(inst)}
-                                disabled={isSuspended}
-                                className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 disabled:opacity-40 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer flex items-center gap-1"
-                              >
-                                <UserCheck className="w-3.5 h-3.5" />
-                                <span>Login</span>
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>View Details</span>
                               </button>
                             </div>
                           </td>
@@ -2652,32 +2634,20 @@ export const InstitutesView = () => {
               </button>
             </div>
 
-            <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
               <button
                 type="button"
-                onClick={() => {
-                  setCredentialsModal(null)
-                  handleImpersonate(credentialsModal)
-                }}
-                className="px-3 py-2 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors cursor-pointer"
+                onClick={() => setCredentialsModal(null)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
               >
-                Direct Login as Admin
+                Close
               </button>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setCredentialsModal(null)}
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
-                >
-                  Close
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-colors cursor-pointer"
-                >
-                  Save Updates
-                </button>
-              </div>
+              <button
+                type="submit"
+                className="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-colors cursor-pointer"
+              >
+                Save Updates
+              </button>
             </div>
           </form>
         </Modal>
