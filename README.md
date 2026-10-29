@@ -134,4 +134,3 @@ Server runs at `http://localhost:5000/api/health`.
    VITE_SUPABASE_ANON_KEY=your-anon-key-here
    ```
 5. Alternatively, you can click the **Settings Cog icon** or **Database Status Pill** in the top navbar while running the app and paste your keys directly into the UI!
-6. Added that point
