@@ -4,11 +4,15 @@
 
 @layer base {
   html, body, #root {
-    height: 100%;
+    min-height: 100%;
     width: 100%;
     margin: 0;
     padding: 0;
-    overflow: hidden;
+    overflow-x: clip;
+  }
+
+  html {
+    scroll-behavior: smooth;
   }
 
   body {
@@ -25,6 +29,12 @@
   }
 }
 
+/* Universal modern smooth scrollbars (cross-browser Chrome, Edge, Firefox, Safari) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
 /* Custom sleek scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
@@ -39,6 +49,26 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+/* Modal and card sleek modern scrollbar */
+.modal-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #d8b4fe transparent;
+}
+.modal-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.modal-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 10px 0;
+}
+.modal-scrollbar::-webkit-scrollbar-thumb {
+  background: #d8b4fe;
+  border-radius: 9999px;
+}
+.modal-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #c084fc;
 }
 
 /* Clean sidebar scrollbar */

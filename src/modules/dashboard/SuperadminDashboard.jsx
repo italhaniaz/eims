@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { 
   Users, 
   Building2, 
@@ -26,6 +26,9 @@ import {
   CreditCard,
   MoreVertical,
   ChevronRight,
+  ChevronDown,
+  Filter,
+  Layers,
   Activity,
   Award
 } from 'lucide-react'
@@ -35,12 +38,14 @@ import { AnalyticsService } from '../../services/analyticsService'
 
 export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
   const { 
-    stats, 
+    stats = {}, 
     recentActivity = [], 
     addItem, 
     institutes = [],
     notices = [],
-    sendCommunicationBlast
+    sendCommunicationBlast,
+    activeWing,
+    setActiveWing
   } = useAppData()
   
   const [isNoticeDismissed, setIsNoticeDismissed] = useState(false)
@@ -50,7 +55,345 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
   const [isUserModalOpen, setIsUserModalOpen] = useState(false)
   const [isInstituteModalOpen, setIsInstituteModalOpen] = useState(false)
   const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false)
-  
+
+  // Educational Tier Filter State (School, College, University, Custom)
+  const [selectedTierFilter, setSelectedTierFilter] = useState(() => {
+    if (activeWing === 'school') return 'school'
+    if (activeWing === 'college') return 'college'
+    if (activeWing === 'undergraduate') return 'university'
+    return 'all'
+  })
+  const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false)
+  const filterDropdownRef = useRef(null)
+
+  // Executive Super Admin Monthly Performance Chart State (Metric Switcher & Hover State)
+  const [executiveMetric, setExecutiveMetric] = useState('revenue') // 'revenue', 'students', 'recovery'
+  const [hoveredMonthIdx, setHoveredMonthIdx] = useState(null)
+
+  // Executive Data across 12 months for Super Admin
+  const executiveChartData = useMemo(() => {
+    if (executiveMetric === 'revenue') {
+      return {
+        unit: '₨',
+        yAxisLabels: ['₨ 2.5M', '₨ 2.0M', '₨ 1.5M', '₨ 1.0M', '₨ 0.5M', '₨ 0'],
+        maxVal: 2700, // in thousands PKR
+        summaryLabel: 'Total Fee Revenue (2026)',
+        summaryValue: '₨ 24.65M',
+        avgLabel: 'Monthly Avg Collection',
+        avgValue: '₨ 2.05M',
+        growthBadge: '+14.2% vs last year',
+        primaryLegend: 'School Campuses (Primary & Matric)',
+        secondaryLegend: 'College & Universities (Inter & BS)',
+        months: [
+          { m: 'Jan', v1: 950, v2: 720, label1: '₨ 950K', label2: '₨ 720K', total: '₨ 1.67M', note: 'Winter session fees' },
+          { m: 'Feb', v1: 1020, v2: 780, label1: '₨ 1.02M', label2: '₨ 780K', total: '₨ 1.80M', note: 'Standard installment' },
+          { m: 'Mar', v1: 890, v2: 850, label1: '₨ 890K', label2: '₨ 850K', total: '₨ 1.74M', note: 'Pre-exam dues' },
+          { m: 'Apr', v1: 1350, v2: 920, label1: '₨ 1.35M', label2: '₨ 920K', total: '₨ 2.27M', note: 'New session intake' },
+          { m: 'May', v1: 1580, v2: 1120, label1: '₨ 1.58M', label2: '₨ 1.12M', total: '₨ 2.70M', note: 'Admissions Peak', isPeak: true },
+          { m: 'Jun', v1: 980, v2: 860, label1: '₨ 980K', label2: '₨ 860K', total: '₨ 1.84M', note: 'Pre-summer clearing' },
+          { m: 'Jul', v1: 750, v2: 710, label1: '₨ 750K', label2: '₨ 710K', total: '₨ 1.46M', note: 'Summer break low' },
+          { m: 'Aug', v1: 1220, v2: 890, label1: '₨ 1.22M', label2: '₨ 890K', total: '₨ 2.11M', note: 'Campus re-opening' },
+          { m: 'Sep', v1: 1480, v2: 1050, label1: '₨ 1.48M', label2: '₨ 1.05M', total: '₨ 2.53M', note: 'Fall semester intake', isPeak: true },
+          { m: 'Oct', v1: 1120, v2: 820, label1: '₨ 1.12M', label2: '₨ 820K', total: '₨ 1.94M', note: 'Regular fee challans' },
+          { m: 'Nov', v1: 1280, v2: 910, label1: '₨ 1.28M', label2: '₨ 910K', total: '₨ 2.19M', note: 'Terminal exams clearance' },
+          { m: 'Dec', v1: 1420, v2: 980, label1: '₨ 1.42M', label2: '₨ 980K', total: '₨ 2.40M', note: 'Annual closing dues' }
+        ]
+      }
+    } else if (executiveMetric === 'students') {
+      return {
+        unit: 'Students',
+        yAxisLabels: ['8,000', '6,400', '4,800', '3,200', '1,600', '0'],
+        maxVal: 8000,
+        summaryLabel: 'Total Active Enrolled',
+        summaryValue: '14,850',
+        avgLabel: 'Avg Campus Strength',
+        avgValue: '1,238 / campus',
+        growthBadge: '+8.5% Net Admissions',
+        primaryLegend: 'School Students (Grade 1-10)',
+        secondaryLegend: 'College & Uni Students (Inter/BS)',
+        months: [
+          { m: 'Jan', v1: 4200, v2: 3100, label1: '4,200', label2: '3,100', total: '7,300', note: 'Session enrollment' },
+          { m: 'Feb', v1: 4350, v2: 3180, label1: '4,350', label2: '3,180', total: '7,530', note: 'Mid-term transfers' },
+          { m: 'Mar', v1: 4400, v2: 3250, label1: '4,400', label2: '3,250', total: '7,650', note: 'Pre-board count' },
+          { m: 'Apr', v1: 5100, v2: 3450, label1: '5,100', label2: '3,450', total: '8,550', note: 'Spring admissions' },
+          { m: 'May', v1: 5800, v2: 3900, label1: '5,800', label2: '3,900', total: '9,700', note: 'Peak registrations', isPeak: true },
+          { m: 'Jun', v1: 5750, v2: 3850, label1: '5,750', label2: '3,850', total: '9,600', note: 'Stable roster' },
+          { m: 'Jul', v1: 5600, v2: 3800, label1: '5,600', label2: '3,800', total: '9,400', note: 'Graduated outgoing' },
+          { m: 'Aug', v1: 6100, v2: 4150, label1: '6,100', label2: '4,150', total: '10,250', note: 'New admissions' },
+          { m: 'Sep', v1: 6800, v2: 4600, label1: '6,800', label2: '4,600', total: '11,400', note: 'Fall batch enrollment', isPeak: true },
+          { m: 'Oct', v1: 6750, v2: 4550, label1: '6,750', label2: '4,550', total: '11,300', note: 'Current active' },
+          { m: 'Nov', v1: 6900, v2: 4700, label1: '6,900', label2: '4,700', total: '11,600', note: 'Registered roster' },
+          { m: 'Dec', v1: 7150, v2: 4850, label1: '7,150', label2: '4,850', total: '12,000', note: 'End-of-year strength' }
+        ]
+      }
+    } else {
+      return {
+        unit: '%',
+        yAxisLabels: ['100%', '80%', '60%', '40%', '20%', '0%'],
+        maxVal: 100,
+        summaryLabel: 'Annual Network Recovery',
+        summaryValue: '94.2%',
+        avgLabel: '1Link Digital Clearance',
+        avgValue: '98.1%',
+        growthBadge: 'Target: ≥ 90% (Healthy)',
+        primaryLegend: 'School Recovery %',
+        secondaryLegend: 'College & Uni Recovery %',
+        months: [
+          { m: 'Jan', v1: 92, v2: 88, label1: '92%', label2: '88%', total: '90.0% Avg', note: 'Target achieved' },
+          { m: 'Feb', v1: 94, v2: 89, label1: '94%', label2: '89%', total: '91.5% Avg', note: 'On track' },
+          { m: 'Mar', v1: 91, v2: 86, label1: '91%', label2: '86%', total: '88.5% Avg', note: 'Follow-ups dispatched' },
+          { m: 'Apr', v1: 96, v2: 92, label1: '96%', label2: '92%', total: '94.0% Avg', note: 'High recovery' },
+          { m: 'May', v1: 98, v2: 95, label1: '98%', label2: '95%', total: '96.5% Avg', note: 'Peak efficiency', isPeak: true },
+          { m: 'Jun', v1: 93, v2: 90, label1: '93%', label2: '90%', total: '91.5% Avg', note: 'Cleared' },
+          { m: 'Jul', v1: 89, v2: 87, label1: '89%', label2: '87%', total: '88.0% Avg', note: 'Holiday grace period' },
+          { m: 'Aug', v1: 95, v2: 91, label1: '95%', label2: '91%', total: '93.0% Avg', note: 'Re-opening rush' },
+          { m: 'Sep', v1: 97, v2: 94, label1: '97%', label2: '94%', total: '95.5% Avg', note: 'Excellent collection', isPeak: true },
+          { m: 'Oct', v1: 93, v2: 89, label1: '93%', label2: '89%', total: '91.0% Avg', note: 'Current cycle' },
+          { m: 'Nov', v1: 95, v2: 92, label1: '95%', label2: '92%', total: '93.5% Avg', note: 'Pre-exam clearance' },
+          { m: 'Dec', v1: 96, v2: 93, label1: '96%', label2: '93%', total: '94.5% Avg', note: 'Annual audit clean' }
+        ]
+      }
+    }
+  }, [executiveMetric])
+
+  // Close filter dropdown on outside click
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (filterDropdownRef.current && !filterDropdownRef.current.contains(e.target)) {
+        setIsFilterDropdownOpen(false)
+      }
+    }
+    if (isFilterDropdownOpen) {
+      document.addEventListener('mousedown', handleOutsideClick)
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick)
+    }
+  }, [isFilterDropdownOpen])
+
+  // Filter options definition
+  const tierFilterOptions = [
+    { 
+      id: 'all', 
+      label: 'All Campuses', 
+      shortLabel: 'All Tiers',
+      subtitle: 'All educational tiers & wings',
+      badge: 'All', 
+      icon: Building2 
+    },
+    { 
+      id: 'school', 
+      label: 'School Wing', 
+      shortLabel: 'Schools',
+      subtitle: 'Primary, Middle & Secondary Campuses',
+      badge: 'School', 
+      icon: School 
+    },
+    { 
+      id: 'college', 
+      label: 'College Wing', 
+      shortLabel: 'Colleges',
+      subtitle: 'Intermediate & Higher Secondary Campuses',
+      badge: 'College', 
+      icon: GraduationCap 
+    },
+    { 
+      id: 'university', 
+      label: 'University Wing', 
+      shortLabel: 'Universities',
+      subtitle: 'Higher Ed, BS Degrees & Undergrad Campuses',
+      badge: 'University', 
+      icon: Award 
+    },
+    { 
+      id: 'custom', 
+      label: 'Custom Hybrid', 
+      shortLabel: 'Custom',
+      subtitle: 'Multi-Wing & Custom Tier Campuses',
+      badge: 'Custom', 
+      icon: Sparkles 
+    }
+  ]
+
+  // Robust matching helper
+  const matchesTierFilter = (inst, filterId) => {
+    if (!filterId || filterId === 'all') return true
+    if (!inst) return false
+
+    const type = String(inst.type || '').toLowerCase().trim()
+    const planType = String(inst.planType || '').toLowerCase().trim()
+    const planTier = String(inst.planTier || '').toLowerCase().trim()
+    const tiers = Array.isArray(inst.enabledTiers) ? inst.enabledTiers.map(t => String(t).toLowerCase()) : []
+    const name = String(inst.name || '').toLowerCase()
+
+    if (filterId === 'school') {
+      return (
+        type === 'school' ||
+        planType === 'school' ||
+        planTier.includes('school') ||
+        (tiers.includes('school') && type !== 'custom' && planType !== 'custom') ||
+        (name.includes('school') && type !== 'college' && type !== 'university' && type !== 'custom')
+      )
+    }
+
+    if (filterId === 'college') {
+      return (
+        type === 'college' ||
+        planType === 'college' ||
+        planTier.includes('college') ||
+        (tiers.includes('college') && type !== 'custom' && planType !== 'custom') ||
+        (name.includes('college') && type !== 'school' && type !== 'university' && type !== 'custom')
+      )
+    }
+
+    if (filterId === 'university') {
+      return (
+        type === 'university' ||
+        planType === 'university' ||
+        planTier.includes('university') ||
+        tiers.includes('undergraduate') ||
+        tiers.includes('university') ||
+        (name.includes('university') && type !== 'custom' && planType !== 'custom')
+      )
+    }
+
+    if (filterId === 'custom') {
+      return (
+        type === 'custom' ||
+        planType === 'custom' ||
+        planTier.includes('custom') ||
+        planTier.includes('hybrid') ||
+        tiers.length > 1 ||
+        Boolean(inst.isCustom)
+      )
+    }
+
+    return true
+  }
+
+  // Tier counts calculation
+  const tierCounts = useMemo(() => {
+    const counts = { all: (institutes || []).length, school: 0, college: 0, university: 0, custom: 0 }
+    ;(institutes || []).forEach(inst => {
+      if (matchesTierFilter(inst, 'school')) counts.school++
+      if (matchesTierFilter(inst, 'college')) counts.college++
+      if (matchesTierFilter(inst, 'university')) counts.university++
+      if (matchesTierFilter(inst, 'custom')) counts.custom++
+    })
+    return counts
+  }, [institutes])
+
+  // Filtered institutes list
+  const filteredInstitutes = useMemo(() => {
+    return (institutes || []).filter(inst => matchesTierFilter(inst, selectedTierFilter))
+  }, [institutes, selectedTierFilter])
+
+  // Handle tier filter selection
+  const handleSelectTierFilter = (tierId) => {
+    setSelectedTierFilter(tierId)
+    setIsFilterDropdownOpen(false)
+    if (setActiveWing) {
+      if (tierId === 'school') setActiveWing('school')
+      else if (tierId === 'college') setActiveWing('college')
+      else if (tierId === 'university') setActiveWing('undergraduate')
+      else setActiveWing('all')
+    }
+  }
+
+  // Current active tier configuration
+  const currentFilterConfig = tierFilterOptions.find(o => o.id === selectedTierFilter) || tierFilterOptions[0]
+
+  // Dynamic KPI calculations based on active filter
+  const displayTotalCampuses = selectedTierFilter === 'all' 
+    ? (stats.totalInstitutes || (institutes || []).length || 12) 
+    : filteredInstitutes.length
+
+  const displayActiveCampuses = selectedTierFilter === 'all'
+    ? (stats.activeInstitutes || (institutes || []).filter(i => (i.status || 'Active').toLowerCase() === 'active').length || 12)
+    : filteredInstitutes.filter(i => (i.status || 'Active').toLowerCase() === 'active').length
+
+  const displayTotalStudents = useMemo(() => {
+    if (selectedTierFilter === 'all') {
+      const sum = (institutes || []).reduce((acc, i) => acc + (Number(i.totalStudents) || Number(i.studentsCount) || 0), 0)
+      return sum > 0 ? sum : (stats.totalStudents || 15000)
+    }
+    const sum = filteredInstitutes.reduce((acc, i) => acc + (Number(i.totalStudents) || Number(i.studentsCount) || 0), 0)
+    if (sum === 0 && filteredInstitutes.length > 0) {
+      if (selectedTierFilter === 'school') return filteredInstitutes.length * 1250
+      if (selectedTierFilter === 'college') return filteredInstitutes.length * 850
+      if (selectedTierFilter === 'university') return filteredInstitutes.length * 2400
+      if (selectedTierFilter === 'custom') return filteredInstitutes.length * 1500
+    }
+    return sum
+  }, [institutes, filteredInstitutes, selectedTierFilter, stats.totalStudents])
+
+  const formattedStudents = displayTotalStudents >= 1000 
+    ? `${(displayTotalStudents / 1000).toFixed(2)}K` 
+    : String(displayTotalStudents)
+
+  const displayWingsValue = useMemo(() => {
+    if (selectedTierFilter === 'all') return '3 Wings'
+    if (selectedTierFilter === 'school') return 'School Wing'
+    if (selectedTierFilter === 'college') return 'College Wing'
+    if (selectedTierFilter === 'university') return 'Uni Wing'
+    return 'Custom Wing'
+  }, [selectedTierFilter])
+
+  const displayWingsBadge = useMemo(() => {
+    if (selectedTierFilter === 'all') return '3 Active Tiers'
+    if (selectedTierFilter === 'school') return 'K-12 Primary'
+    if (selectedTierFilter === 'college') return 'Inter / HSSC'
+    if (selectedTierFilter === 'university') return 'Higher Ed'
+    return 'Hybrid Matrix'
+  }, [selectedTierFilter])
+
+  const displayMRRValue = useMemo(() => {
+    if (selectedTierFilter === 'all') return stats.monthlyRevenue || '$19.3K'
+    if (selectedTierFilter === 'school') return '$9.4K'
+    if (selectedTierFilter === 'college') return '$5.2K'
+    if (selectedTierFilter === 'university') return '$3.6K'
+    return '$1.1K'
+  }, [selectedTierFilter, stats.monthlyRevenue])
+
+  const displayMRRBadge = useMemo(() => {
+    if (selectedTierFilter === 'all') return '4 Tier Plans'
+    return `${currentFilterConfig.badge} Tier Plan`
+  }, [selectedTierFilter, currentFilterConfig.badge])
+
+  // Open Add Campus Modal with tier pre-selected
+  const handleOpenAddCampusModal = () => {
+    if (selectedTierFilter === 'college') {
+      setNewInstituteData(prev => ({
+        ...prev,
+        planTier: 'College Plan',
+        planType: 'COLLEGE',
+        enabledTiers: ['college']
+      }))
+    } else if (selectedTierFilter === 'university') {
+      setNewInstituteData(prev => ({
+        ...prev,
+        planTier: 'University Plan',
+        planType: 'UNIVERSITY',
+        enabledTiers: ['undergraduate']
+      }))
+    } else if (selectedTierFilter === 'custom') {
+      setNewInstituteData(prev => ({
+        ...prev,
+        planTier: 'Custom Hybrid Plan',
+        planType: 'CUSTOM',
+        enabledTiers: ['school', 'college']
+      }))
+    } else {
+      setNewInstituteData(prev => ({
+        ...prev,
+        planTier: 'School Plan',
+        planType: 'SCHOOL',
+        enabledTiers: ['school']
+      }))
+    }
+    setIsInstituteModalOpen(true)
+  }
+
   // Feedback toast state
   const [feedbackToast, setFeedbackToast] = useState(null)
   const [reportSuccess, setReportSuccess] = useState(false)
@@ -294,7 +637,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
       )}
 
       {/* 1. Header Row */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
             <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#f5eeff] text-purple-700 border border-purple-100 inline-flex items-center gap-1.5">
@@ -308,22 +651,104 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           <p className="text-xs sm:text-sm text-slate-500 mt-1 font-sans">
             Multi-Campus Educational Wings Governance & Real-Time Performance Matrix
           </p>
+
+          {/* Active Filter Indicator Pill - Minimalist */}
+          {selectedTierFilter !== 'all' && (
+            <div className="flex items-center gap-2 mt-2">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-800 border border-purple-200">
+                <Filter className="w-3 h-3 text-purple-600" />
+                <span>{currentFilterConfig.label}</span>
+                <button
+                  type="button"
+                  onClick={() => handleSelectTierFilter('all')}
+                  className="hover:bg-purple-200/80 p-0.5 rounded-full transition-colors cursor-pointer"
+                  title="Clear filter"
+                >
+                  <X className="w-3.5 h-3.5 text-purple-700" />
+                </button>
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* Action Shortcuts */}
-        <div className="flex items-center gap-2.5">
+        {/* Action Shortcuts & Educational Tier Filter - Single clean row, no wrap */}
+        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 flex-nowrap">
+          {/* Clean Educational Tier Dropdown Filter */}
+          <div className="relative" ref={filterDropdownRef}>
+            <button
+              type="button"
+              onClick={() => setIsFilterDropdownOpen(prev => !prev)}
+              className={`h-10 px-3.5 rounded-xl text-xs font-bold border transition-all duration-150 flex items-center gap-2 cursor-pointer shadow-2xs select-none whitespace-nowrap ${
+                selectedTierFilter !== 'all'
+                  ? 'bg-purple-50 border-purple-300 text-purple-700 ring-2 ring-purple-500/10'
+                  : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300'
+              }`}
+              title="Filter campuses by tier"
+              aria-expanded={isFilterDropdownOpen}
+              aria-haspopup="true"
+            >
+              <Filter className={`w-3.5 h-3.5 shrink-0 ${selectedTierFilter !== 'all' ? 'text-purple-600' : 'text-slate-400'}`} />
+              <span>{currentFilterConfig.label}</span>
+              <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0 ${isFilterDropdownOpen ? 'rotate-180 text-purple-600' : ''}`} />
+            </button>
+
+            {/* Dropdown Popover Menu - Clean & Focused */}
+            {isFilterDropdownOpen && (
+              <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl border border-slate-200/90 shadow-xl shadow-purple-900/10 p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150 text-left">
+                <div className="px-3 py-2 border-b border-slate-100 mb-1 flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-800">Filter by Tier</span>
+                  {selectedTierFilter !== 'all' && (
+                    <button
+                      type="button"
+                      onClick={() => handleSelectTierFilter('all')}
+                      className="text-[11px] font-semibold text-purple-600 hover:text-purple-800 transition-colors cursor-pointer"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+
+                <div className="space-y-0.5">
+                  {tierFilterOptions.map(option => {
+                    const isSelected = selectedTierFilter === option.id
+                    const OptionIcon = option.icon
+
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        onClick={() => handleSelectTierFilter(option.id)}
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left text-xs font-semibold transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-purple-50 text-purple-900 font-bold'
+                            : 'hover:bg-slate-50 text-slate-700'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <OptionIcon className={`w-4 h-4 shrink-0 ${isSelected ? 'text-purple-600' : 'text-slate-400'}`} />
+                          <span className="truncate">{option.label}</span>
+                        </div>
+                        {isSelected && <Check className="w-4 h-4 text-purple-600 stroke-[2.5] shrink-0" />}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
           <button
-            onClick={() => setIsInstituteModalOpen(true)}
-            className="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-semibold shadow-sm shadow-purple-600/25 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+            onClick={handleOpenAddCampusModal}
+            className="h-10 px-4 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-semibold shadow-sm shadow-purple-600/25 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 whitespace-nowrap shrink-0"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 shrink-0" />
             <span>Add Campus</span>
           </button>
           <button
             onClick={() => onRouteChange('platform-modules')}
-            className="px-4 py-2.5 bg-white hover:bg-purple-50/60 border border-slate-200 text-slate-700 hover:text-purple-700 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+            className="h-10 px-4 bg-white hover:bg-purple-50/60 border border-slate-200 text-slate-700 hover:text-purple-700 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs whitespace-nowrap shrink-0"
           >
-            <Sliders className="w-4 h-4 text-purple-600" />
+            <Sliders className="w-4 h-4 text-purple-600 shrink-0" />
             <span>Wings Matrix</span>
           </button>
         </div>
@@ -338,10 +763,10 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <span className="block text-xs font-semibold text-slate-500 mb-1 truncate">
-                Total Campuses
+                {selectedTierFilter === 'all' ? 'Total Campuses' : `${currentFilterConfig.shortLabel} Campuses`}
               </span>
               <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading">
-                {stats.totalInstitutes || 12}
+                {displayTotalCampuses}
               </span>
             </div>
             <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white/80 text-purple-600 flex items-center justify-center shrink-0 shadow-2xs">
@@ -352,7 +777,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           {/* Bottom Row: Status Badge on Left, Non-clickable Manage Text + Dedicated Eye Button on Right */}
           <div className="flex items-center justify-between gap-1.5 mt-4 pt-3 border-t border-purple-200/50">
             <span className="text-[11px] font-bold text-purple-700 bg-purple-100/70 px-2 py-0.5 rounded-full whitespace-nowrap">
-              {stats.activeInstitutes || 12} Active
+              {displayActiveCampuses} Active
             </span>
 
             <div className="flex items-center gap-1.5 shrink-0">
@@ -378,10 +803,10 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <span className="block text-xs font-semibold text-slate-500 mb-1 truncate">
-                Total Students
+                {selectedTierFilter === 'all' ? 'Total Students' : `${currentFilterConfig.shortLabel} Students`}
               </span>
               <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading">
-                {stats.totalStudents ? `${(stats.totalStudents / 1000).toFixed(2)}K` : '15.00K'}
+                {formattedStudents}
               </span>
             </div>
             <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white/80 text-sky-500 flex items-center justify-center shrink-0 shadow-2xs">
@@ -392,12 +817,12 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           {/* Bottom Row: Status Badge on Left, Non-clickable All Wings Text + Dedicated Eye Button on Right */}
           <div className="flex items-center justify-between gap-1.5 mt-4 pt-3 border-t border-sky-200/50">
             <span className="text-[11px] font-bold text-sky-700 bg-sky-100/70 px-2 py-0.5 rounded-full whitespace-nowrap">
-              +12.4% MoM
+              {selectedTierFilter === 'all' ? '+12.4% MoM' : `${filteredInstitutes.length} Campuses`}
             </span>
 
             <div className="flex items-center gap-1.5 shrink-0">
               <span className="text-xs font-medium text-slate-500 select-none whitespace-nowrap">
-                All Wings
+                {selectedTierFilter === 'all' ? 'All Wings' : currentFilterConfig.badge}
               </span>
               <button
                 type="button"
@@ -421,7 +846,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 Educational Wings
               </span>
               <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading">
-                3 Wings
+                {displayWingsValue}
               </span>
             </div>
             <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white/80 text-amber-500 flex items-center justify-center shrink-0 shadow-2xs">
@@ -432,7 +857,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           {/* Bottom Row: Status Badge on Left, Non-clickable Matrix Text + Dedicated Eye Button on Right */}
           <div className="flex items-center justify-between gap-1.5 mt-4 pt-3 border-t border-amber-200/50">
             <span className="text-[11px] font-bold text-amber-800 bg-amber-100/70 px-2 py-0.5 rounded-full whitespace-nowrap">
-              3 Active Tiers
+              {displayWingsBadge}
             </span>
 
             <div className="flex items-center gap-1.5 shrink-0">
@@ -458,10 +883,10 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <span className="block text-xs font-semibold text-slate-500 mb-1 truncate">
-                Platform MRR
+                {selectedTierFilter === 'all' ? 'Platform MRR' : `${currentFilterConfig.shortLabel} MRR`}
               </span>
               <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading">
-                {stats.monthlyRevenue || '$19.3K'}
+                {displayMRRValue}
               </span>
             </div>
             <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white/80 text-emerald-500 flex items-center justify-center shrink-0 shadow-2xs">
@@ -472,7 +897,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           {/* Bottom Row: Status Badge on Left, Non-clickable Billing Text + Dedicated Eye Button on Right */}
           <div className="flex items-center justify-between gap-1.5 mt-4 pt-3 border-t border-emerald-200/50">
             <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded-full whitespace-nowrap">
-              4 Tier Plans
+              {displayMRRBadge}
             </span>
 
             <div className="flex items-center gap-1.5 shrink-0">
@@ -497,70 +922,237 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
       {/* 3. Middle Section: Dual Bar Chart & Educational Wings Donut Ring */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         
-        {/* Left Card (7 cols): Campus Performance Chart matching "All Exam Result" */}
-        <div className="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-7 border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-4">
+        {/* Left Card (7 cols): Executive Campus Financial & Growth Performance Chart */}
+        <div className="lg:col-span-7 bg-white rounded-3xl p-5 sm:p-7 border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] flex flex-col justify-between relative overflow-hidden">
+          
+          {/* 1. Header with Clear Title & Metric Switcher Tabs */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
             <div>
-              <h2 className="text-base font-bold text-slate-900 tracking-tight font-heading">
-                Campus Performance & Wing Activity
-              </h2>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Monthly distribution: School Wings vs College & University Wings
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-purple-600 animate-pulse"></span>
+                <h2 className="text-base font-extrabold text-slate-900 tracking-tight font-heading">
+                  Monthly Campus Revenue & Growth
+                </h2>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {executiveMetric === 'revenue' && 'Monthly fee collections & recovery across network in PKR (₨)'}
+                {executiveMetric === 'students' && 'Active enrolled students & admissions pipeline by academic wing'}
+                {executiveMetric === 'recovery' && 'Monthly collection efficiency benchmark vs 90% target'}
               </p>
             </div>
+
+            {/* Metric Switcher Tabs (Super Admin can switch view with 1 click) */}
+            <div className="flex items-center p-1 bg-slate-100/80 rounded-xl text-xs font-bold gap-1 self-start sm:self-auto shrink-0">
+              <button
+                type="button"
+                onClick={() => setExecutiveMetric('revenue')}
+                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                  executiveMetric === 'revenue'
+                    ? 'bg-white text-purple-700 shadow-2xs font-extrabold'
+                    : 'text-slate-600 hover:text-purple-700'
+                }`}
+                title="View Fee Revenue in PKR"
+              >
+                <span>₨ Revenue</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setExecutiveMetric('students')}
+                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                  executiveMetric === 'students'
+                    ? 'bg-white text-purple-700 shadow-2xs font-extrabold'
+                    : 'text-slate-600 hover:text-purple-700'
+                }`}
+                title="View Enrolled Students"
+              >
+                <span>🎓 Students</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setExecutiveMetric('recovery')}
+                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                  executiveMetric === 'recovery'
+                    ? 'bg-white text-purple-700 shadow-2xs font-extrabold'
+                    : 'text-slate-600 hover:text-purple-700'
+                }`}
+                title="View Recovery Rate %"
+              >
+                <span>% Recovery</span>
+              </button>
+            </div>
+          </div>
+
+          {/* 2. Executive Quick Stats Summary Bar (High Super Admin Benefit) */}
+          <div className="grid grid-cols-3 gap-2 py-3">
+            <div className="px-3 py-2 rounded-xl bg-purple-50/50 border border-purple-100/60">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                {executiveChartData.summaryLabel}
+              </span>
+              <span className="text-sm sm:text-base font-extrabold text-purple-900 font-heading tracking-tight block mt-0.5">
+                {executiveChartData.summaryValue}
+              </span>
+            </div>
+
+            <div className="px-3 py-2 rounded-xl bg-slate-50 border border-slate-100">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                {executiveChartData.avgLabel}
+              </span>
+              <span className="text-sm sm:text-base font-bold text-slate-800 font-heading tracking-tight block mt-0.5">
+                {executiveChartData.avgValue}
+              </span>
+            </div>
+
+            <div className="px-3 py-2 rounded-xl bg-emerald-50/50 border border-emerald-100/60 flex flex-col justify-center">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 block">
+                Network Trend
+              </span>
+              <span className="text-xs sm:text-xs font-extrabold text-emerald-700 flex items-center gap-1 mt-0.5">
+                <TrendingUp className="w-3.5 h-3.5 stroke-[2.5]" />
+                <span>{executiveChartData.growthBadge}</span>
+              </span>
+            </div>
+          </div>
+
+          {/* 3. The Interactive Chart Area with Clear Y-Axis & Gridlines */}
+          <div className="pt-2 pb-1 relative">
             
-            {/* Legend dots */}
-            <div className="flex items-center gap-4 text-xs font-medium">
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-purple-600"></span>
-                <span className="text-slate-600">School Wing</span>
+            {/* Chart Wrapper with Y-Axis on Left and Bars on Right */}
+            <div className="flex items-stretch gap-2 sm:gap-3">
+              
+              {/* Y-Axis Scale Marks */}
+              <div className="flex flex-col justify-between text-right text-[10px] font-mono font-medium text-slate-400 w-11 sm:w-13 shrink-0 h-44 sm:h-48 py-1 select-none">
+                {executiveChartData.yAxisLabels.map((lbl, i) => (
+                  <span key={i} className="leading-none">{lbl}</span>
+                ))}
               </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
-                <span className="text-slate-600">College / Uni</span>
+
+              {/* Chart Grid & 12 Month Bar Columns */}
+              <div className="flex-1 relative h-44 sm:h-48 flex items-end">
+                
+                {/* 5 Horizontal Dashed Benchmark Gridlines */}
+                <div className="absolute inset-0 flex flex-col justify-between pointer-events-none py-1">
+                  {[0, 1, 2, 3, 4].map(idx => (
+                    <div key={idx} className="w-full border-b border-dashed border-slate-200/60 h-0" />
+                  ))}
+                </div>
+
+                {/* 12 Months Dual Bars */}
+                <div className="w-full h-full flex items-end justify-between gap-1 sm:gap-2 px-1 relative z-10">
+                  {executiveChartData.months.map((item, idx) => {
+                    const isHovered = hoveredMonthIdx === idx
+                    const h1 = Math.max(6, Math.min(100, Math.round((item.v1 / executiveChartData.maxVal) * 100)))
+                    const h2 = Math.max(6, Math.min(100, Math.round((item.v2 / executiveChartData.maxVal) * 100)))
+
+                    return (
+                      <div
+                        key={idx}
+                        onMouseEnter={() => setHoveredMonthIdx(idx)}
+                        onMouseLeave={() => setHoveredMonthIdx(null)}
+                        className={`flex-1 flex flex-col items-center justify-end h-full relative cursor-pointer group transition-all rounded-xl py-0.5 ${
+                          isHovered ? 'bg-purple-100/40' : ''
+                        }`}
+                      >
+                        {/* Peak indicator badge on top of May & Sep */}
+                        {item.isPeak && (
+                          <span className="absolute -top-2.5 text-[9px] font-extrabold text-amber-500 bg-amber-50 px-1 py-0.2 rounded border border-amber-200 shadow-2xs hidden sm:block pointer-events-none">
+                            Peak
+                          </span>
+                        )}
+
+                        {/* Dual Bar Graphic */}
+                        <div className="w-full flex items-end justify-center gap-0.5 sm:gap-1 h-full pb-1">
+                          {/* Purple Bar: School Campuses */}
+                          <div
+                            style={{ height: `${h1}%` }}
+                            className={`w-1.5 sm:w-2.5 rounded-t-md bg-gradient-to-t from-purple-700 via-purple-600 to-indigo-500 transition-all duration-300 shadow-2xs ${
+                              isHovered ? 'brightness-110 scale-y-105' : ''
+                            }`}
+                          />
+                          {/* Orange Bar: Colleges & Universities */}
+                          <div
+                            style={{ height: `${h2}%` }}
+                            className={`w-1.5 sm:w-2.5 rounded-t-md bg-gradient-to-t from-orange-600 via-orange-500 to-amber-400 transition-all duration-300 shadow-2xs ${
+                              isHovered ? 'brightness-110 scale-y-105' : ''
+                            }`}
+                          />
+                        </div>
+
+                        {/* Month Label */}
+                        <span className={`text-[10px] sm:text-[11px] font-bold transition-colors select-none ${
+                          isHovered ? 'text-purple-700 font-extrabold' : 'text-slate-500'
+                        }`}>
+                          {item.m}
+                        </span>
+
+                        {/* Floating Tooltip Card (Appears directly over hovered month) */}
+                        {isHovered && (
+                          <div 
+                            className={`absolute z-30 bottom-full mb-3 w-48 sm:w-52 bg-slate-900/95 backdrop-blur-md text-white p-3 rounded-2xl shadow-xl shadow-purple-950/20 text-left pointer-events-none animate-in fade-in zoom-in-95 duration-150 ${
+                              idx > 8 ? 'right-0' : idx < 3 ? 'left-0' : 'left-1/2 -translate-x-1/2'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between pb-1.5 border-b border-slate-700/80 mb-2">
+                              <span className="font-extrabold text-xs text-white">
+                                {item.m} 2026
+                              </span>
+                              <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/80 px-1.5 py-0.2 rounded border border-emerald-500/30">
+                                {item.total}
+                              </span>
+                            </div>
+
+                            <div className="space-y-1.5 text-[11px]">
+                              <div className="flex items-center justify-between">
+                                <span className="flex items-center gap-1.5 text-slate-300">
+                                  <span className="w-2 h-2 rounded-full bg-purple-400 shrink-0"></span>
+                                  <span>Schools:</span>
+                                </span>
+                                <span className="font-bold text-white font-mono">{item.label1}</span>
+                              </div>
+
+                              <div className="flex items-center justify-between">
+                                <span className="flex items-center gap-1.5 text-slate-300">
+                                  <span className="w-2 h-2 rounded-full bg-orange-400 shrink-0"></span>
+                                  <span>College/Uni:</span>
+                                </span>
+                                <span className="font-bold text-white font-mono">{item.label2}</span>
+                              </div>
+                            </div>
+
+                            <div className="mt-2 pt-1.5 border-t border-slate-800 text-[10px] text-slate-400 flex items-center justify-between">
+                              <span>Note:</span>
+                              <span className="text-purple-300 font-medium truncate">{item.note}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Clean Dual Bar SVG Chart matching reference */}
-          <div className="pt-4 pb-2">
-            <div className="h-56 w-full flex items-end justify-between gap-2 sm:gap-3 px-2">
-              {[
-                { m: 'Jan', v1: 45, v2: 60 },
-                { m: 'Feb', v1: 52, v2: 56 },
-                { m: 'Mar', v1: 40, v2: 68 },
-                { m: 'Apr', v1: 75, v2: 65 },
-                { m: 'May', v1: 100, v2: 80 },
-                { m: 'Jun', v1: 60, v2: 70 },
-                { m: 'Jul', v1: 45, v2: 55 },
-                { m: 'Aug', v1: 72, v2: 60 },
-                { m: 'Sep', v1: 90, v2: 72 },
-                { m: 'Oct', v1: 65, v2: 52 },
-                { m: 'Nov', v1: 80, v2: 65 },
-                { m: 'Dec', v1: 95, v2: 78 }
-              ].map((item, idx) => (
-                <div key={idx} className="flex-1 flex flex-col items-center gap-2 group">
-                  <div className="w-full flex items-end justify-center gap-1 h-44">
-                    {/* Purple bar */}
-                    <div 
-                      className="w-2 sm:w-2.5 rounded-t-full bg-purple-600 transition-all duration-300 group-hover:bg-purple-700"
-                      style={{ height: `${item.v1}%` }}
-                      title={`School Wing: ${item.v1}%`}
-                    ></div>
-                    {/* Orange bar */}
-                    <div 
-                      className="w-2 sm:w-2.5 rounded-t-full bg-orange-500 transition-all duration-300 group-hover:bg-orange-600"
-                      style={{ height: `${item.v2}%` }}
-                      title={`College/Uni: ${item.v2}%`}
-                    ></div>
-                  </div>
-                  <span className="text-[11px] font-medium text-slate-400 group-hover:text-slate-700 transition-colors">
-                    {item.m}
-                  </span>
-                </div>
-              ))}
+          {/* 4. Bottom Legend with Easy-to-Understand Institutional Names */}
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-3 mt-1 border-t border-slate-100 text-xs">
+            <div className="flex flex-wrap items-center gap-4 text-xs font-semibold">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-purple-700 to-purple-500 shadow-2xs"></span>
+                <span className="text-slate-700 font-bold">{executiveChartData.primaryLegend}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-orange-600 to-amber-400 shadow-2xs"></span>
+                <span className="text-slate-700 font-bold">{executiveChartData.secondaryLegend}</span>
+              </div>
+            </div>
+
+            <div className="text-[11px] text-slate-400 font-medium hidden sm:flex items-center gap-1">
+              <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+              <span>Real-time platform ledger feed</span>
             </div>
           </div>
+
         </div>
 
         {/* Right Card (5 cols): Wings Donut Ring Gauge matching "Students" Donut */}
@@ -620,10 +1212,10 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               {/* Inside center text */}
               <div className="absolute flex flex-col items-center justify-center text-center">
                 <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                  Total
+                  {selectedTierFilter === 'all' ? 'Total' : currentFilterConfig.badge}
                 </span>
                 <span className="text-2xl font-extrabold text-slate-900 font-heading">
-                  15,000
+                  {formattedStudents}
                 </span>
                 <span className="text-[10px] text-purple-600 font-bold">
                   Enrolled
@@ -652,20 +1244,37 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
         
         {/* Left Column (7 cols): Campuses Table matching "Star Students" table */}
         <div className="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-7 border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
             <div>
-              <h2 className="text-base font-bold text-slate-900 tracking-tight font-heading">
-                Registered Campuses & Wings
-              </h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-bold text-slate-900 tracking-tight font-heading">
+                  Registered Campuses & Wings
+                </h2>
+                {selectedTierFilter !== 'all' && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 border border-purple-200 inline-flex items-center gap-1">
+                    <span>{currentFilterConfig.label}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleSelectTierFilter('all')}
+                      className="hover:text-purple-900 ml-0.5 cursor-pointer"
+                      title="Clear filter"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )}
+              </div>
               <p className="text-xs text-slate-400 mt-0.5">
-                Active educational institutions and enabled tier structures
+                {selectedTierFilter === 'all' 
+                  ? 'Active educational institutions and enabled tier structures'
+                  : `Showing filtered ${currentFilterConfig.label} institutions`}
               </p>
             </div>
             <button 
               onClick={() => onRouteChange('institutes')}
               className="text-xs font-semibold text-purple-600 hover:text-purple-700 cursor-pointer"
             >
-              View All ({institutes.length})
+              View All ({filteredInstitutes.length})
             </button>
           </div>
 
@@ -685,8 +1294,8 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {institutes && institutes.length > 0 ? (
-                  institutes.slice(0, 5).map((inst) => {
+                {filteredInstitutes && filteredInstitutes.length > 0 ? (
+                  filteredInstitutes.slice(0, 6).map((inst) => {
                     const isSelected = selectedCampusIds.includes(inst.id)
                     const wings = inst.enabledTiers || ['school']
                     return (
@@ -742,9 +1351,14 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                                 College
                               </span>
                             )}
-                            {wings.includes('undergraduate') && (
+                            {(wings.includes('undergraduate') || wings.includes('university')) && (
                               <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700">
                                 Uni
+                              </span>
+                            )}
+                            {(inst.type === 'Custom' || inst.planType === 'CUSTOM') && (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700">
+                                Custom
                               </span>
                             )}
                           </div>
@@ -767,8 +1381,32 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                   })
                 ) : (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-xs text-slate-400">
-                      No campuses registered yet. Click "Add Campus" to register your first institute.
+                    <td colSpan={6} className="py-10 text-center text-xs text-slate-400">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <School className="w-8 h-8 text-slate-300 stroke-[1.5]" />
+                        <p className="font-semibold text-slate-700">
+                          No {currentFilterConfig.label} campuses found
+                        </p>
+                        <p className="text-[11px] text-slate-400 max-w-sm">
+                          There are currently no registered campuses matching this educational tier.
+                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <button
+                            type="button"
+                            onClick={() => handleSelectTierFilter('all')}
+                            className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg text-xs transition-colors cursor-pointer"
+                          >
+                            Clear Filter
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleOpenAddCampusModal}
+                            className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg text-xs transition-colors cursor-pointer"
+                          >
+                            + Add {currentFilterConfig.badge} Campus
+                          </button>
+                        </div>
+                      </div>
                     </td>
                   </tr>
                 )}
@@ -777,7 +1415,9 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           </div>
           {/* Clean Table Footer matching reference */}
           <div className="pt-4 mt-auto border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-            <span>Showing {Math.min(5, (institutes || []).length)} of {(institutes || []).length} registered campuses</span>
+            <span>
+              Showing {Math.min(6, filteredInstitutes.length)} of {filteredInstitutes.length} {selectedTierFilter !== 'all' ? currentFilterConfig.label : 'registered'} campuses
+            </span>
             <button 
               onClick={() => onRouteChange('institutes')}
               className="text-purple-600 font-semibold hover:text-purple-700 hover:underline cursor-pointer flex items-center gap-1"

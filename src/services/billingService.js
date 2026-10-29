@@ -5,6 +5,24 @@ const API_BASE_URL = 'http://localhost:5000'
 
 export const FALLBACK_PLANS = [
   {
+    id: 'plan-trial',
+    name: 'Free Trial Plan',
+    tier: 'Trial',
+    planCode: 'TRIAL',
+    enabledTiers: ['school'],
+    pricePKR: 0,
+    billingCycle: '14-day trial',
+    trialDays: 14,
+    isTrial: true,
+    maxStudents: 250,
+    maxCampuses: 1,
+    maxUsers: 15,
+    storageGB: 1,
+    features: ['students', 'attendance', 'classes', 'fees', 'exams', 'notices'],
+    description: '14-Day evaluation trial for schools and institutes exploring the platform',
+    isActive: true
+  },
+  {
     id: 'plan-school',
     name: 'School Plan',
     tier: 'School',
@@ -71,6 +89,24 @@ export const FALLBACK_PLANS = [
 ]
 
 export const FALLBACK_SUBSCRIPTIONS = [
+  {
+    id: 'sub-4',
+    instituteId: 'c1000000-0000-0000-0000-000000000004',
+    instituteName: 'Al-Huda International Grammar School',
+    planId: 'plan-trial',
+    planName: 'Free Trial Plan',
+    enabledTiers: ['school'],
+    status: 'TRIAL',
+    billingCycle: '14-day trial',
+    pricePKR: 0,
+    startDate: '2026-10-20',
+    renewalDate: '2026-11-03',
+    trialEndsAt: '2026-11-03',
+    autoRenew: false,
+    isWaived: false,
+    waiveReason: '14-Day Free Evaluation Access',
+    extendedUntil: null
+  },
   {
     id: 'sub-1',
     instituteId: 'c1000000-0000-0000-0000-000000000001',
@@ -228,8 +264,16 @@ export const BillingService = {
     if (local) {
       try { 
         const parsed = JSON.parse(local)
-        // If legacy plans stored, refresh to new 4 plans
-        if (parsed && parsed.some(p => p.id === 'plan-school')) return parsed
+        if (parsed && Array.isArray(parsed) && parsed.some(p => p.id === 'plan-school')) {
+          if (!parsed.some(p => p.id === 'plan-trial' || p.tier === 'Trial')) {
+            const trial = FALLBACK_PLANS.find(p => p.id === 'plan-trial')
+            if (trial) {
+              parsed.unshift(trial)
+              localStorage.setItem('sms_platform_plans', JSON.stringify(parsed))
+            }
+          }
+          return parsed
+        }
       } catch {}
     }
     localStorage.setItem('sms_platform_plans', JSON.stringify(FALLBACK_PLANS))
@@ -310,7 +354,14 @@ export const BillingService = {
     if (local) {
       try { 
         const parsed = JSON.parse(local)
-        if (parsed && parsed.some(s => s.planId === 'plan-custom' || s.planId === 'plan-school')) {
+        if (parsed && Array.isArray(parsed) && parsed.some(s => s.planId === 'plan-custom' || s.planId === 'plan-school')) {
+          if (!parsed.some(s => s.id === 'sub-4' || s.status === 'TRIAL')) {
+            const trialSub = FALLBACK_SUBSCRIPTIONS.find(s => s.status === 'TRIAL')
+            if (trialSub) {
+              parsed.push(trialSub)
+              localStorage.setItem('sms_institute_subscriptions', JSON.stringify(parsed))
+            }
+          }
           return parsed.map(s => ({
             ...s,
             daysRemaining: this.calculateDaysRemaining(s.renewalDate)

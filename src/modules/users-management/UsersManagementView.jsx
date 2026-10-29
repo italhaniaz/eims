@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import { 
   Users, 
   Plus, 
@@ -20,28 +21,153 @@ import {
   GraduationCap,
   HeartHandshake,
   ChevronRight,
+  ChevronDown,
   Info,
   Sliders,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Settings,
+  Eye,
+  MessageCircle,
+  ExternalLink
 } from 'lucide-react'
 import { useAppData } from '../../context/AppDataContext'
 import { SYSTEM_ROLES, DEFAULT_RBAC_PERMISSIONS, getRoleMeta } from '../../constants/systemRoles'
 import Modal from '../../components/common/Modal'
 
 export const UsersManagementView = ({ defaultTab = 'all' }) => {
-  const { users, stats, addItem, updateItem, deleteItem, institutes } = useAppData()
+  const { users = [], stats, addItem, updateItem, deleteItem, institutes = [] } = useAppData()
   const [activeTab, setActiveTab] = useState(defaultTab) // 'all' | 'roles'
   const [searchTerm, setSearchTerm] = useState('')
   const [roleFilter, setRoleFilter] = useState('ALL')
+  const [statusFilter, setStatusFilter] = useState('ACTIVE') // Default to active users only
   const [selectedRoleCard, setSelectedRoleCard] = useState('superadmin')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingUser, setEditingUser] = useState(null)
+  const [viewingUser, setViewingUser] = useState(null)
   const [toastMessage, setToastMessage] = useState(null)
+  const [activeDropdownUserId, setActiveDropdownUserId] = useState(null)
+  const [dropdownCoords, setDropdownCoords] = useState(null)
+  const dropdownRef = useRef(null)
+
+  // Toggle user actions dropdown popover with viewport coordinate anchoring
+  const handleToggleDropdown = (e, userId) => {
+    e.stopPropagation()
+    if (activeDropdownUserId === userId) {
+      setActiveDropdownUserId(null)
+      setDropdownCoords(null)
+    } else {
+      const rect = e.currentTarget.getBoundingClientRect()
+      setDropdownCoords({
+        top: rect.top,
+        bottom: rect.bottom,
+        left: rect.left,
+        right: rect.right,
+        width: rect.width,
+        height: rect.height
+      })
+      setActiveDropdownUserId(userId)
+    }
+  }
+
+  // Close dropdown on outside click, window resize, scroll, or Escape key
+  useEffect(() => {
+    if (!activeDropdownUserId) return
+
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setActiveDropdownUserId(null)
+        setDropdownCoords(null)
+      }
+    }
+
+    const handleScrollOrResize = () => {
+      setActiveDropdownUserId(null)
+      setDropdownCoords(null)
+    }
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setActiveDropdownUserId(null)
+        setDropdownCoords(null)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    window.addEventListener('scroll', handleScrollOrResize, true)
+    window.addEventListener('resize', handleScrollOrResize)
+    document.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      window.removeEventListener('scroll', handleScrollOrResize, true)
+      window.removeEventListener('resize', handleScrollOrResize)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [activeDropdownUserId])
+
+  // Active user data for the floating actions portal
+  const activeUser = useMemo(() => {
+    if (!activeDropdownUserId) return null
+    return users.find(u => u.id === activeDropdownUserId) || filtered.find(u => u.id === activeDropdownUserId)
+  }, [activeDropdownUserId, users, filtered])
+
+  // Calculate dynamic floating position (prevents table overflow clipping & screen overflow)
+  const calculateDropdownStyle = () => {
+    if (!dropdownCoords || typeof window === 'undefined') return {}
+
+    const MENU_WIDTH = 260
+    const ESTIMATED_HEIGHT = 350
+    const spaceBelow = window.innerHeight - dropdownCoords.bottom
+    const spaceAbove = dropdownCoords.top
+    const openUpwards = spaceBelow < ESTIMATED_HEIGHT && spaceAbove > spaceBelow
+
+    const style = {
+      position: 'fixed',
+      zIndex: 9999,
+      width: `${MENU_WIDTH}px`,
+      right: `${Math.max(16, window.innerWidth - dropdownCoords.right)}px`
+    }
+
+    if (openUpwards) {
+      style.bottom = `${Math.max(12, window.innerHeight - dropdownCoords.top + 6)}px`
+      style.maxHeight = `${Math.min(360, spaceAbove - 20)}px`
+    } else {
+      style.top = `${dropdownCoords.bottom + 6}px`
+      style.maxHeight = `${Math.min(360, spaceBelow - 20)}px`
+    }
+
+    return style
+  }
 
   const triggerToast = (msg) => {
     setToastMessage(msg)
     setTimeout(() => setToastMessage(null), 3500)
+  }
+
+  // Direct WhatsApp Chat Redirect Handler
+  const handleWhatsAppRedirect = (user) => {
+    const rawPhone = user.phone || ''
+    const digits = rawPhone.replace(/\D/g, '')
+
+    if (!digits || digits.length < 7) {
+      triggerToast(`No valid phone number registered for "${user.name}". Please edit user to add a contact number.`)
+      return
+    }
+
+    let waNumber = digits
+    if (waNumber.startsWith('0')) {
+      waNumber = '92' + waNumber.substring(1)
+    } else if (!waNumber.startsWith('92') && waNumber.length === 10 && waNumber.startsWith('3')) {
+      waNumber = '92' + waNumber
+    }
+
+    const message = encodeURIComponent(`Assalam-o-Alaikum ${user.name}, this is from School Management Platform administration regarding your account (${user.email}).`)
+    const waUrl = `https://wa.me/${waNumber}?text=${message}`
+    
+    window.open(waUrl, '_blank', 'noopener,noreferrer')
+    triggerToast(`Opening WhatsApp chat with ${user.name} (+${waNumber})...`)
+    setActiveDropdownUserId(null)
   }
 
   const [formData, setFormData] = useState({
@@ -148,9 +274,13 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
   }
 
   const toggleUserStatus = async (user) => {
-    const nextStatus = user.status === 'Active' ? 'Inactive' : 'Active'
+    const isCurrentlyActive = (user.status || 'Active').toLowerCase() === 'active'
+    const nextStatus = isCurrentlyActive ? 'Inactive' : 'Active'
     await updateItem('users', user.id, { status: nextStatus })
-    triggerToast(`User status set to ${nextStatus}.`)
+    if (viewingUser && viewingUser.id === user.id) {
+      setViewingUser(prev => ({ ...prev, status: nextStatus }))
+    }
+    triggerToast(`User "${user.name}" status updated to ${nextStatus}${statusFilter === 'ACTIVE' && nextStatus === 'Inactive' ? ' (moved to Inactive view)' : ''}.`)
   }
 
   const getRoleBadgeStyle = (role) => {
@@ -172,12 +302,27 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
     }
   }
 
-  const filtered = users.filter(u => {
-    const matchesSearch = u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (u.institute && u.institute.toLowerCase().includes(searchTerm.toLowerCase()))
+  // Active / Inactive user counts
+  const activeUsersCount = (users || []).filter(u => (u.status || 'Active').toLowerCase() === 'active').length
+  const inactiveUsersCount = (users || []).filter(u => (u.status || 'Active').toLowerCase() !== 'active').length
+
+  // User filtering logic (Search, Role, and Status: Default to Active Only as requested)
+  const filtered = (users || []).filter(u => {
+    const nameMatch = (u.name || '').toLowerCase().includes(searchTerm.toLowerCase())
+    const emailMatch = (u.email || '').toLowerCase().includes(searchTerm.toLowerCase())
+    const instMatch = (u.institute || '').toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = nameMatch || emailMatch || instMatch
+
     const matchesRole = roleFilter === 'ALL' || u.role === roleFilter
-    return matchesSearch && matchesRole
+
+    const isUserActive = (u.status || 'Active').toLowerCase() === 'active'
+    const matchesStatus = statusFilter === 'ALL' 
+      ? true 
+      : statusFilter === 'ACTIVE' 
+        ? isUserActive 
+        : !isUserActive
+
+    return matchesSearch && matchesRole && matchesStatus
   })
 
   const activeRoleDetails = SYSTEM_ROLES.find(r => r.id === selectedRoleCard) || SYSTEM_ROLES[0]
@@ -238,7 +383,13 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
             }`}
           >
             <Users className="w-4 h-4" />
-            <span>All Platform Users ({users.length})</span>
+            <span>
+              {statusFilter === 'ACTIVE'
+                ? `Active Users (${filtered.length})`
+                : statusFilter === 'INACTIVE'
+                ? `Inactive Users (${filtered.length})`
+                : `All Platform Users (${users.length})`}
+            </span>
           </button>
           <button
             onClick={() => setActiveTab('roles')}
@@ -257,7 +408,8 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
       {activeTab === 'all' ? (
         <>
           {/* Filter and Search Bar */}
-          <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3.5">
+            {/* Search Input */}
             <div className="relative flex-1 w-full max-w-md">
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
@@ -269,41 +421,65 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
               />
             </div>
 
-            <div className="flex items-center gap-3 w-full sm:w-auto">
-              <span className="text-xs font-semibold text-slate-500">Filter by Role:</span>
-              <select
-                value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value)}
-                className="px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 bg-white"
-              >
-                <option value="ALL">All Roles ({users.length})</option>
-                {SYSTEM_ROLES.map(r => (
-                  <option key={r.id} value={r.id}>{r.name}</option>
-                ))}
-              </select>
+            {/* Filter Controls */}
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Status Filter: Default to Active Only */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-slate-500 whitespace-nowrap">Status:</span>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-xl border transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500/20 ${
+                    statusFilter === 'ACTIVE'
+                      ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                      : statusFilter === 'INACTIVE'
+                      ? 'bg-rose-50 text-rose-800 border-rose-200'
+                      : 'bg-white text-slate-700 border-slate-200'
+                  }`}
+                >
+                  <option value="ACTIVE">Active Users ({activeUsersCount})</option>
+                  <option value="ALL">All Users ({users.length})</option>
+                  <option value="INACTIVE">Inactive Users ({inactiveUsersCount})</option>
+                </select>
+              </div>
+
+              {/* Role Filter */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-slate-500 whitespace-nowrap">Filter by Role:</span>
+                <select
+                  value={roleFilter}
+                  onChange={(e) => setRoleFilter(e.target.value)}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 bg-white text-slate-700 cursor-pointer"
+                >
+                  <option value="ALL">All Roles ({filtered.length})</option>
+                  {SYSTEM_ROLES.map(r => (
+                    <option key={r.id} value={r.id}>{r.shortName || r.name}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
 
           {/* Users Table */}
-          <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] overflow-hidden">
+          <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] overflow-x-auto min-h-[420px]">
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-semibold border-b border-slate-200">
                 <tr>
-                  <th className="px-6 py-4">User Details</th>
-                  <th className="px-6 py-4">System Role</th>
-                  <th className="px-6 py-4">Institute Affiliation</th>
-                  <th className="px-6 py-4">Phone Contact</th>
-                  <th className="px-6 py-4 text-center">Status</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
+                  <th className="px-6 py-4 whitespace-nowrap min-w-[220px]">User Details</th>
+                  <th className="px-6 py-4 whitespace-nowrap min-w-[150px]">System Role</th>
+                  <th className="px-6 py-4 whitespace-nowrap min-w-[180px]">Institute Affiliation</th>
+                  <th className="px-6 py-4 whitespace-nowrap min-w-[150px]">Phone Contact</th>
+                  <th className="px-6 py-4 text-center whitespace-nowrap min-w-[110px]">Status</th>
+                  <th className="px-6 py-4 text-right whitespace-nowrap min-w-[100px]">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filtered.length > 0 ? (
-                  filtered.map(u => {
+                  filtered.map((u, index) => {
                     const roleMeta = getRoleMeta(u.role)
                     return (
-                      <tr key={u.id} className="hover:bg-slate-50/70 transition-colors">
-                        <td className="px-6 py-4">
+                      <tr key={u.id} className={`hover:bg-slate-50/70 transition-colors ${activeDropdownUserId === u.id ? "relative z-30" : ""}`}>
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-3">
                             <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-xs uppercase shadow-2xs">
                               {u.name.charAt(0)}
@@ -314,45 +490,59 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
-                          <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border uppercase ${getRoleBadgeStyle(u.role)}`}>
-                            {roleMeta.shortName || u.role.replace('_', ' ')}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border whitespace-nowrap shadow-2xs ${getRoleBadgeStyle(u.role)}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${roleMeta?.dotColor || 'bg-purple-600'}`}></span>
+                            <span>{roleMeta?.shortName || (u.role ? u.role.replace('_', ' ') : 'User')}</span>
                           </span>
                         </td>
                         <td className="px-6 py-4 text-xs text-slate-600 font-medium">
                           {u.institute || 'Global HQ'}
                         </td>
-                        <td className="px-6 py-4 text-xs font-mono text-slate-500">
+                        <td className="px-6 py-4 text-xs font-mono text-slate-500 whitespace-nowrap">
                           {u.phone || '—'}
                         </td>
-                        <td className="px-6 py-4 text-center">
+                        <td className="px-6 py-4 text-center whitespace-nowrap">
                           <button
+                            type="button"
                             onClick={() => toggleUserStatus(u)}
-                            className={`text-xs font-semibold px-2.5 py-1 rounded-full border transition-all ${
-                              u.status === 'Active'
-                                ? 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100'
-                                : 'bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-100'
+                            className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full border transition-all cursor-pointer whitespace-nowrap shadow-2xs ${
+                              (u.status || 'Active').toLowerCase() === 'active'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                                : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'
                             }`}
                             title="Click to toggle status"
                           >
-                            {u.status || 'Active'}
+                            <span className={`w-1.5 h-1.5 rounded-full ${(u.status || 'Active').toLowerCase() === 'active' ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
+                            <span>{u.status || 'Active'}</span>
                           </button>
                         </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <button 
-                              onClick={() => openEditModal(u)} 
-                              className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                              title="Edit user"
+                        <td className="px-6 py-4 text-right whitespace-nowrap min-w-[100px]">
+                          <div className="flex items-center justify-end gap-1.5">
+                            {/* Dedicated Eye (View Details) Button */}
+                            <button
+                              type="button"
+                              onClick={() => setViewingUser(u)}
+                              className="w-8 h-8 rounded-xl border border-slate-200 bg-white hover:bg-[#f5eeff] hover:border-purple-300 text-slate-600 hover:text-purple-700 transition-all cursor-pointer shadow-2xs group inline-flex items-center justify-center"
+                              title={`View Details: ${u.name}`}
+                              aria-label={`View Details for ${u.name}`}
                             >
-                              <Edit2 className="w-4 h-4" />
+                              <Eye className="w-4 h-4 text-slate-500 group-hover:text-purple-600 transition-colors" />
                             </button>
-                            <button 
-                              onClick={() => handleDelete(u.id, u.name)} 
-                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                              title="Delete user"
+
+                            {/* Dedicated Settings Icon Button */}
+                            <button
+                              type="button"
+                              onClick={(e) => handleToggleDropdown(e, u.id)}
+                              className={`w-8 h-8 rounded-xl border transition-all cursor-pointer inline-flex items-center justify-center shadow-2xs ${
+                                activeDropdownUserId === u.id
+                                  ? 'bg-[#f5eeff] text-purple-700 border-purple-300 ring-2 ring-purple-500/20 shadow-xs'
+                                  : 'bg-white hover:bg-[#f5eeff] text-slate-600 hover:text-purple-700 border-slate-200 hover:border-purple-300'
+                              }`}
+                              title={`Settings & Actions: ${u.name}`}
+                              aria-label="Settings options"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Settings className={`w-4 h-4 text-purple-600 transition-transform duration-300 ${activeDropdownUserId === u.id ? 'rotate-90' : ''}`} />
                             </button>
                           </div>
                         </td>
@@ -363,22 +553,237 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
                   <tr>
                     <td colSpan={6} className="px-6 py-12 text-center text-slate-400">
                       <Users className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-                      <p className="text-sm font-semibold text-slate-700">No Users Found</p>
-                      <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-                        Register institute administrators, teachers, accountants, or platform managers.
+                      <p className="text-sm font-semibold text-slate-700">
+                        {statusFilter === 'ACTIVE' 
+                          ? 'No Active Users Found' 
+                          : statusFilter === 'INACTIVE' 
+                          ? 'No Inactive Users Found' 
+                          : 'No Users Found'}
                       </p>
-                      <button
-                        onClick={openAddModal}
-                        className="mt-3 px-4 py-2 bg-purple-600 text-white rounded-xl text-xs font-semibold shadow hover:bg-purple-700 transition-all active:scale-95"
-                      >
-                        Add New User
-                      </button>
+                      <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                        {statusFilter === 'ACTIVE'
+                          ? 'There are currently no active users matching your criteria. Try changing the status filter to "All Users".'
+                          : 'Register institute administrators, teachers, accountants, or platform managers.'}
+                      </p>
+                      <div className="flex items-center justify-center gap-2 mt-3">
+                        {statusFilter !== 'ALL' && (
+                          <button
+                            type="button"
+                            onClick={() => setStatusFilter('ALL')}
+                            className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+                          >
+                            Show All Users
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={openAddModal}
+                          className="px-4 py-2 bg-purple-600 text-white rounded-xl text-xs font-semibold shadow hover:bg-purple-700 transition-all active:scale-95 cursor-pointer"
+                        >
+                          Add New User
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 )}
               </tbody>
             </table>
           </div>
+
+      {/* Floating Portal Action Dropdown Menu (Mounted to document.body to eliminate table clipping) */}
+      {activeDropdownUserId && activeUser && dropdownCoords && typeof document !== 'undefined' && createPortal(
+        <div
+          ref={dropdownRef}
+          style={calculateDropdownStyle()}
+          className="bg-white rounded-2xl border border-slate-200/90 shadow-[0_20px_50px_rgba(79,70,229,0.18),0_6px_20px_rgba(15,23,42,0.08)] ring-1 ring-black/5 overflow-hidden flex flex-col text-left animate-in fade-in zoom-in-95 duration-150"
+        >
+          {/* Pinned User Header */}
+          <div className="px-3.5 py-3 border-b border-slate-100 bg-slate-50/80 shrink-0">
+            <div className="flex items-center justify-between gap-2 mb-1.5">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                User Actions
+              </span>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                (activeUser.status || 'Active').toLowerCase() === 'active'
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                  : 'bg-rose-50 text-rose-700 border-rose-200'
+              }`}>
+                {activeUser.status || 'Active'}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs">
+                {activeUser.name?.charAt(0) || 'U'}
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-900 truncate">
+                  {activeUser.name}
+                </p>
+                <p className="text-[11px] text-slate-400 font-mono truncate">
+                  {activeUser.email}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Scrollable Action Items List with modern slim scrollbar */}
+          <div className="flex-1 overflow-y-auto overscroll-contain p-1.5 space-y-0.5 [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-purple-200 hover:[&::-webkit-scrollbar-thumb]:bg-purple-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
+            {/* Group 1: Profile & Editing */}
+            <button
+              type="button"
+              onClick={() => {
+                setActiveDropdownUserId(null)
+                setDropdownCoords(null)
+                setViewingUser(activeUser)
+              }}
+              className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-[#f5eeff] hover:text-purple-700 transition-colors cursor-pointer group"
+            >
+              <div className="w-6 h-6 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <Eye className="w-3.5 h-3.5" />
+              </div>
+              <span className="font-bold flex-1 text-left">View Profile & Roles</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setActiveDropdownUserId(null)
+                setDropdownCoords(null)
+                openEditModal(activeUser)
+              }}
+              className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-[#f5eeff] hover:text-purple-700 transition-colors cursor-pointer group"
+            >
+              <div className="w-6 h-6 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <Edit2 className="w-3.5 h-3.5" />
+              </div>
+              <span className="font-bold flex-1 text-left">Edit Profile</span>
+            </button>
+
+            <div className="h-px bg-slate-100 my-1" />
+
+            {/* Group 2: Instant Communications */}
+            <button
+              type="button"
+              onClick={() => {
+                setActiveDropdownUserId(null)
+                setDropdownCoords(null)
+                handleWhatsAppRedirect(activeUser)
+              }}
+              className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors cursor-pointer group"
+            >
+              <div className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                  <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0012.04 2m.01 1.67c4.54 0 8.24 3.7 8.24 8.24 0 2.2-.86 4.28-2.42 5.84-1.56 1.56-3.64 2.4-5.83 2.4-1.46 0-2.89-.39-4.14-1.13l-.3-.18-3.12.82.83-3.04-.2-.31a8.19 8.19 0 01-1.26-4.4c0-4.54 3.7-8.24 8.2-8.24m4.53 11.64c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.25-.75-.67-1.25-1.5-1.4-1.75-.14-.25-.02-.39.11-.51.11-.11.25-.29.37-.43.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1s.9 2.44 1.03 2.61c.13.17 1.77 2.7 4.29 3.79.6.26 1.07.41 1.43.53.6.19 1.15.16 1.58.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.15-1.18-.06-.1-.23-.17-.48-.29z"/>
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0 text-left">
+                <span className="font-bold block truncate">WhatsApp Direct</span>
+              </div>
+              <ExternalLink className="w-3 h-3 text-slate-300 group-hover:text-emerald-500 shrink-0" />
+            </button>
+
+            <a
+              href={activeUser.phone ? `tel:${activeUser.phone.replace(/[^\d+]/g, '')}` : undefined}
+              onClick={(e) => {
+                if (!activeUser.phone) {
+                  e.preventDefault()
+                  triggerToast(`No phone contact registered for ${activeUser.name}.`)
+                } else {
+                  setActiveDropdownUserId(null)
+                  setDropdownCoords(null)
+                }
+              }}
+              className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors cursor-pointer group"
+            >
+              <div className="w-6 h-6 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <Phone className="w-3.5 h-3.5" />
+              </div>
+              <div className="flex-1 min-w-0 text-left">
+                <span className="font-bold block truncate">
+                  {activeUser.phone ? `Call: ${activeUser.phone}` : 'Direct Phone Call'}
+                </span>
+              </div>
+            </a>
+
+            <a
+              href={`mailto:${activeUser.email}`}
+              onClick={() => {
+                setActiveDropdownUserId(null)
+                setDropdownCoords(null)
+              }}
+              className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-sky-50 hover:text-sky-700 transition-colors cursor-pointer group"
+            >
+              <div className="w-6 h-6 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <Mail className="w-3.5 h-3.5" />
+              </div>
+              <div className="flex-1 min-w-0 text-left">
+                <span className="font-bold block truncate">Send Email</span>
+              </div>
+            </a>
+
+            <div className="h-px bg-slate-100 my-1" />
+
+            {/* Group 3: Account Status & Credentials */}
+            <button
+              type="button"
+              onClick={() => {
+                setActiveDropdownUserId(null)
+                setDropdownCoords(null)
+                toggleUserStatus(activeUser)
+              }}
+              className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-amber-50 hover:text-amber-800 transition-colors cursor-pointer group"
+            >
+              <div className="w-6 h-6 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+              </div>
+              <div className="flex-1 min-w-0 text-left">
+                <span className="font-bold block truncate">
+                  {(activeUser.status || 'Active').toLowerCase() === 'active' ? 'Deactivate User' : 'Activate User'}
+                </span>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setActiveDropdownUserId(null)
+                setDropdownCoords(null)
+                triggerToast(`Password reset link dispatched to ${activeUser.email}.`)
+              }}
+              className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-purple-50 hover:text-purple-700 transition-colors cursor-pointer group"
+            >
+              <div className="w-6 h-6 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <KeyRound className="w-3.5 h-3.5" />
+              </div>
+              <div className="flex-1 min-w-0 text-left">
+                <span className="font-bold block truncate">Reset Password</span>
+              </div>
+            </button>
+
+            <div className="h-px bg-slate-100 my-1" />
+
+            {/* Group 4: Dangerous Action */}
+            <button
+              type="button"
+              onClick={() => {
+                setActiveDropdownUserId(null)
+                setDropdownCoords(null)
+                handleDelete(activeUser.id, activeUser.name)
+              }}
+              className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer group"
+            >
+              <div className="w-6 h-6 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <Trash2 className="w-3.5 h-3.5" />
+              </div>
+              <div className="flex-1 min-w-0 text-left">
+                <span className="font-bold block truncate">Delete Account</span>
+              </div>
+            </button>
+          </div>
+        </div>,
+        document.body
+      )}
         </>
       ) : (
         /* Roles & Permissions Matrix Tab */
@@ -454,7 +859,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
                       <h3 className="text-lg font-bold text-slate-900 tracking-tight">
                         {activeRoleDetails.name}
                       </h3>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${activeRoleDetails.badgeClass}`}>
+                      <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border whitespace-nowrap inline-flex items-center ${activeRoleDetails.badgeClass}`}>
                         {activeRoleDetails.tierLevel}
                       </span>
                     </div>
@@ -687,6 +1092,221 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
             </div>
           </div>
         </div>
+      )}
+
+            {/* Modal: View User Details */}
+      {viewingUser && (
+        <Modal
+          isOpen={!!viewingUser}
+          onClose={() => setViewingUser(null)}
+          title="User Profile & System Role Specifications"
+          maxWidth="max-w-2xl"
+        >
+          {(() => {
+            const roleMeta = getRoleMeta(viewingUser.role)
+            const RoleIcon = roleMeta?.icon || ShieldCheck
+            const isActive = (viewingUser.status || 'Active').toLowerCase() === 'active'
+
+            return (
+              <div className="space-y-5">
+                {/* 1. Profile Identity Header Card */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-gradient-to-r from-purple-50/80 via-slate-50 to-indigo-50/60 border border-purple-100">
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white font-black text-xl flex items-center justify-center shadow-md uppercase shrink-0">
+                      {viewingUser.name.charAt(0)}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="text-base font-bold text-slate-900">{viewingUser.name}</h4>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${getRoleBadgeStyle(viewingUser.role)}`}>
+                          {roleMeta?.shortName || viewingUser.role}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 font-mono mt-0.5">{viewingUser.email}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => toggleUserStatus(viewingUser)}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer shadow-2xs ${
+                        isActive 
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' 
+                          : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'
+                      }`}
+                      title="Click to toggle active status"
+                    >
+                      <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                      <span>{isActive ? 'Account Active' : 'Account Inactive'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* 2. Key Attributes Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* System Role */}
+                  <div className="p-3.5 rounded-xl border border-slate-200 bg-white space-y-1">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">System Role & Level</span>
+                    <div className="flex items-center gap-2 pt-0.5">
+                      <div className={`p-1.5 rounded-lg ${roleMeta?.badgeClass || 'bg-purple-100 text-purple-700'}`}>
+                        <RoleIcon className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-800">{roleMeta?.name || 'System User'}</p>
+                        <p className="text-[10px] text-slate-500">{roleMeta?.tierLevel || 'Standard Access'}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Campus / Institute */}
+                  <div className="p-3.5 rounded-xl border border-slate-200 bg-white space-y-1">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Campus Affiliation</span>
+                    <div className="flex items-center gap-2 pt-0.5">
+                      <div className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600">
+                        <Building className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-800">{viewingUser.institute || 'Global HQ / Multi-Campus'}</p>
+                        <p className="text-[10px] text-slate-500">{viewingUser.institute ? 'Assigned Institute Branch' : 'Platform Central Administration'}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Phone Contact */}
+                  <div className="p-3.5 rounded-xl border border-slate-200 bg-white space-y-2">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Phone & WhatsApp Contact</span>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600">
+                          <Phone className="w-4 h-4" />
+                        </div>
+                        <span className="text-xs font-mono font-bold text-slate-800">
+                          {viewingUser.phone || 'No phone registered'}
+                        </span>
+                      </div>
+                      {viewingUser.phone && (
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleWhatsAppRedirect(viewingUser)}
+                            className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-[10px] font-bold border border-emerald-200 transition-colors inline-flex items-center gap-1 cursor-pointer"
+                            title="Chat on WhatsApp"
+                          >
+                            <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24">
+                              <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0012.04 2m.01 1.67c4.54 0 8.24 3.7 8.24 8.24 0 2.2-.86 4.28-2.42 5.84-1.56 1.56-3.64 2.4-5.83 2.4-1.46 0-2.89-.39-4.14-1.13l-.3-.18-3.12.82.83-3.04-.2-.31a8.19 8.19 0 01-1.26-4.4c0-4.54 3.7-8.24 8.2-8.24m4.53 11.64c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.25-.75-.67-1.25-1.5-1.4-1.75-.14-.25-.02-.39.11-.51.11-.11.25-.29.37-.43.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1s.9 2.44 1.03 2.61c.13.17 1.77 2.7 4.29 3.79.6.26 1.07.41 1.43.53.6.19 1.15.16 1.58.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.15-1.18-.06-.1-.23-.17-.48-.29z"/>
+                            </svg>
+                            <span>WhatsApp</span>
+                          </button>
+                          <a
+                            href={`tel:${viewingUser.phone.replace(/[^\d+]/g, '')}`}
+                            className="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-[10px] font-bold border border-blue-200 transition-colors inline-flex items-center gap-1 cursor-pointer"
+                            title="Call Phone"
+                          >
+                            <Phone className="w-3 h-3" />
+                            <span>Call</span>
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Email & Auth */}
+                  <div className="p-3.5 rounded-xl border border-slate-200 bg-white space-y-2">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Email & Communication</span>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="p-1.5 rounded-lg bg-sky-50 text-sky-600 shrink-0">
+                          <Mail className="w-4 h-4" />
+                        </div>
+                        <span className="text-xs font-mono font-bold text-slate-800 truncate">
+                          {viewingUser.email}
+                        </span>
+                      </div>
+                      <a
+                        href={`mailto:${viewingUser.email}`}
+                        className="px-2 py-1 bg-sky-50 hover:bg-sky-100 text-sky-700 rounded-lg text-[10px] font-bold border border-sky-200 transition-colors inline-flex items-center gap-1 cursor-pointer shrink-0"
+                        title="Send Email"
+                      >
+                        <Mail className="w-3 h-3" />
+                        <span>Email</span>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Role Authority Scope & Responsibilities */}
+                {roleMeta && (
+                  <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/60 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                        <ShieldCheck className="w-4 h-4 text-purple-600" />
+                        <span>Authority Scope & Responsibilities</span>
+                      </span>
+                      <span className="text-[10px] text-slate-500 font-medium">
+                        {roleMeta.category}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      {roleMeta.summary}
+                    </p>
+                    {roleMeta.responsibilities && roleMeta.responsibilities.length > 0 && (
+                      <div className="pt-2 border-t border-slate-200/70">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
+                          Assigned Capabilities
+                        </span>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                          {roleMeta.responsibilities.slice(0, 4).map((resp, i) => (
+                            <div key={i} className="flex items-start gap-1.5 text-xs text-slate-700">
+                              <CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                              <span className="leading-snug">{resp}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* 4. Modal Footer Actions */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-100">
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const targetUser = viewingUser
+                        setViewingUser(null)
+                        openEditModal(targetUser)
+                      }}
+                      className="px-4 py-2 text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-xl transition-colors cursor-pointer inline-flex items-center justify-center gap-1.5 flex-1 sm:flex-initial shadow-2xs"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                      <span>Edit Profile</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        triggerToast(`Password reset link dispatched to ${viewingUser.email}.`)
+                      }}
+                      className="px-3.5 py-2 text-xs font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer inline-flex items-center justify-center gap-1.5"
+                    >
+                      <KeyRound className="w-3.5 h-3.5" />
+                      <span>Reset Password</span>
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setViewingUser(null)}
+                    className="w-full sm:w-auto px-5 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            )
+          })()}
+        </Modal>
       )}
 
       {/* Modal: Create / Edit User */}

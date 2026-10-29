@@ -16,6 +16,8 @@ import ErrorBoundary from './components/common/ErrorBoundary'
 
 // Auth
 import LoginPage from './modules/auth/LoginPage'
+import LandingPage from './modules/landing/LandingPage'
+import DemoComingSoonPage from './modules/landing/DemoComingSoonPage'
 
 // Lazy-loaded Views for Bundle Performance & Code Splitting (with resilient auto-retry)
 const SuperadminDashboard = lazyWithRetry(() => import('./modules/dashboard/SuperadminDashboard'), 'superadmin-dashboard')
@@ -109,6 +111,16 @@ const AppContent = () => {
   const [superadminRoute, setSuperadminRouteState] = useState(getInitialSuperadminRoute)
   const [instituteRoute, setInstituteRouteState] = useState(getInitialInstituteRoute)
 
+  // Public visitor routing (Landing Page vs Login Page)
+  const [publicView, setPublicView] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash.replace(/^#\/?/, '')
+      if (hash === 'login' || hash === 'signin') return 'login'
+      if (hash === 'demo' || hash === 'live-demo') return 'demo'
+    }
+    return 'landing'
+  })
+
   // Route setters that update the browser URL hash without full reload
   const setSuperadminRoute = (route) => {
     const valid = VALID_SUPERADMIN_ROUTES.includes(route) ? route : 'dashboard'
@@ -150,6 +162,16 @@ const AppContent = () => {
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace(/^#\/?/, '')
+      if (!user) {
+        if (hash === 'login' || hash === 'signin') {
+          setPublicView('login')
+        } else if (hash === 'demo' || hash === 'live-demo') {
+          setPublicView('demo')
+        } else {
+          setPublicView('landing')
+        }
+        return
+      }
       if (hash) {
         if (user?.role === 'superadmin') {
           if (VALID_SUPERADMIN_ROUTES.includes(hash)) {
@@ -203,15 +225,72 @@ const AppContent = () => {
     }
   }
 
-  // If no user is authenticated, display login page
+  // If no user is authenticated, display landing page, login page, or demo page
   if (!user) {
-    return <LoginPage />
+    if (publicView === 'login') {
+      return (
+        <LoginPage
+          onBackToLanding={() => {
+            setPublicView('landing')
+            if (typeof window !== 'undefined') {
+              window.location.hash = ''
+            }
+          }}
+          onOpenTrial={() => {
+            setPublicView('landing')
+            if (typeof window !== 'undefined') {
+              window.location.hash = ''
+            }
+          }}
+        />
+      )
+    }
+    if (publicView === 'demo') {
+      return (
+        <DemoComingSoonPage
+          onBackToLanding={() => {
+            setPublicView('landing')
+            if (typeof window !== 'undefined') {
+              window.location.hash = ''
+            }
+          }}
+          onNavigateToLogin={() => {
+            setPublicView('login')
+            if (typeof window !== 'undefined') {
+              window.location.hash = '#login'
+            }
+          }}
+          onOpenTrial={() => {
+            setPublicView('landing')
+            if (typeof window !== 'undefined') {
+              window.location.hash = '#pricing'
+            }
+          }}
+        />
+      )
+    }
+    return (
+      <LandingPage
+        onNavigateToLogin={(mode) => {
+          setPublicView('login')
+          if (typeof window !== 'undefined') {
+            window.location.hash = '#login'
+          }
+        }}
+        onNavigateToDemo={() => {
+          setPublicView('demo')
+          if (typeof window !== 'undefined') {
+            window.location.hash = '#demo'
+          }
+        }}
+      />
+    )
   }
 
   // 1. SUPERADMIN PORTAL
   if (user.role === 'superadmin') {
     return (
-      <div className="flex flex-col h-full w-full overflow-hidden bg-[#f8fafc]">
+      <div className="flex flex-col h-screen w-full overflow-hidden bg-[#f8fafc]">
         {/* Floating Impersonation Delegation Banner */}
         <ImpersonationBanner />
 
@@ -326,7 +405,7 @@ const AppContent = () => {
       })
 
   return (
-    <div className="flex flex-col h-full w-full overflow-hidden bg-[#f4f7fb]">
+    <div className="flex flex-col h-screen w-full overflow-hidden bg-[#f4f7fb]">
       {/* Floating Impersonation Delegation Banner */}
       <ImpersonationBanner />
 

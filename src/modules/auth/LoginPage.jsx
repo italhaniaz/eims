@@ -6,18 +6,18 @@ import {
   Eye, 
   EyeOff, 
   ArrowRight,
+  ArrowLeft,
   AlertCircle, 
   ShieldCheck, 
   ShieldAlert,
   Clock,
   AlertTriangle,
-  GraduationCap,
-  Sparkles
+  GraduationCap
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { DataService } from '../../services/dataService'
 
-export const LoginPage = () => {
+export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
   const { login } = useAuth()
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
@@ -77,7 +77,7 @@ export const LoginPage = () => {
                            (pass === 'admin123' || pass === 'admin')
 
       // Institute Admin authentication check
-      const isInstituteAdmin = (id === 'institute' || id === 'institute_admin' || id === 'admin.beacon@sms.edu' || id.includes('institute') || id.includes('beacon') || id.includes('school')) && 
+      const isInstituteAdmin = (id === 'institute' || id === 'institute_admin' || id === 'admin.beacon@sms.edu' || id.includes('institute') || id.includes('beacon') || id.includes('school') || id.includes('trial')) && 
                               (pass === 'institute123' || pass === 'admin123' || pass === 'admin')
 
       if (isSuperadmin || isInstituteAdmin || pass === 'admin123' || pass === 'admin' || pass === 'institute123') {
@@ -134,19 +134,35 @@ export const LoginPage = () => {
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-[#f8fafc] relative overflow-hidden px-4 py-8 sm:py-12">
-      {/* Ambient background soft glow */}
-      <div className="absolute top-0 -left-20 w-96 h-96 bg-violet-200/35 rounded-full blur-3xl pointer-events-none"></div>
-      <div className="absolute bottom-0 -right-20 w-96 h-96 bg-purple-200/30 rounded-full blur-3xl pointer-events-none"></div>
+    <div className="min-h-screen w-full flex items-center justify-center bg-[#fcfaff] relative overflow-hidden px-4 py-8 sm:py-12">
+      {/* Ambient background soft glow matching light purple theme */}
+      <div className="absolute top-0 -left-20 w-96 h-96 bg-purple-200/35 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute bottom-0 -right-20 w-96 h-96 bg-[#f5eeff] rounded-full blur-3xl pointer-events-none"></div>
 
-      <div className="w-full max-w-[420px] z-10 space-y-5">
+      {/* Top-Left Navigation: Sleek Back to Home Button */}
+      {onBackToLanding && (
+        <div className="absolute top-4 left-4 sm:top-6 sm:left-8 z-20">
+          <button
+            type="button"
+            onClick={onBackToLanding}
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 hover:text-purple-700 bg-white/80 hover:bg-white border border-purple-100/90 shadow-2xs hover:shadow-xs transition-all duration-150 backdrop-blur-xs group cursor-pointer"
+            title="Back to Landing Page"
+          >
+            <ArrowLeft className="w-4 h-4 text-slate-500 group-hover:text-purple-600 group-hover:-translate-x-0.5 transition-transform" />
+            <span>Back to Home</span>
+          </button>
+        </div>
+      )}
+
+      <div className="w-full max-w-[440px] z-10 space-y-4 pt-10 sm:pt-0">
+
         {/* Brand Header */}
         <div className="text-center">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-violet-600 to-purple-500 text-white shadow-lg shadow-violet-500/25 mb-3.5 transition-transform hover:scale-105 duration-200">
-            <GraduationCap className="w-7 h-7" />
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-700 via-purple-600 to-indigo-600 text-white shadow-md shadow-purple-500/25 mb-3 transition-transform hover:scale-105 duration-200">
+            <GraduationCap className="w-7 h-7 stroke-[2.2]" />
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-            Educational Portal
+          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight font-heading">
+            Apex<span className="text-purple-600">Ed</span> Portal
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1 flex items-center justify-center gap-1.5">
             <span>Unified Multi-Campus Management System</span>
@@ -154,7 +170,7 @@ export const LoginPage = () => {
         </div>
 
         {/* Clean White Card */}
-        <div className="bg-white border border-slate-200/80 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-[0_15px_40px_-5px_rgba(15,23,42,0.06),0_1px_3px_rgba(0,0,0,0.03)]">
+        <div className="bg-white border border-purple-100/90 rounded-3xl p-6 sm:p-8 shadow-[0_15px_40px_-5px_rgba(147,51,234,0.06),0_1px_3px_rgba(0,0,0,0.02)]">
           
           {/* Lockout Sentinel Banner */}
           {isLockedOut ? (
@@ -191,7 +207,7 @@ export const LoginPage = () => {
                 Email Address or Username
               </label>
               <div className="relative group">
-                <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors group-focus-within:text-violet-600" />
+                <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors group-focus-within:text-purple-600" />
                 <input
                   type="text"
                   required
@@ -201,10 +217,10 @@ export const LoginPage = () => {
                     setIdentifier(e.target.value)
                     if (authError) setAuthError('')
                   }}
-                  className={`w-full pl-10 pr-4 py-2.5 sm:py-3 rounded-xl bg-slate-50/70 hover:bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 text-sm focus:bg-white focus:outline-none focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 transition-all ${
+                  className={`w-full pl-10 pr-4 py-2.5 sm:py-3 rounded-xl bg-slate-50/70 hover:bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 text-sm focus:bg-white focus:outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 transition-all ${
                     isLockedOut ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
-                  placeholder="Enter email or username"
+                  placeholder="e.g. admin or admin.beacon@sms.edu"
                 />
               </div>
             </div>
@@ -219,13 +235,13 @@ export const LoginPage = () => {
                   onClick={() => { 
                     alert('Please contact your platform administrator or institutional IT department to reset credentials.') 
                   }} 
-                  className="text-xs text-violet-600 hover:text-violet-700 font-semibold cursor-pointer"
+                  className="text-xs text-purple-600 hover:text-purple-700 font-semibold cursor-pointer"
                 >
                   Forgot password?
                 </button>
               </div>
               <div className="relative group">
-                <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors group-focus-within:text-violet-600" />
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors group-focus-within:text-purple-600" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
@@ -235,7 +251,7 @@ export const LoginPage = () => {
                     setPassword(e.target.value)
                     if (authError) setAuthError('')
                   }}
-                  className={`w-full pl-10 pr-10 py-2.5 sm:py-3 rounded-xl bg-slate-50/70 hover:bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 text-sm focus:bg-white focus:outline-none focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 transition-all ${
+                  className={`w-full pl-10 pr-10 py-2.5 sm:py-3 rounded-xl bg-slate-50/70 hover:bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 text-sm focus:bg-white focus:outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 transition-all ${
                     isLockedOut ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                   placeholder="Enter password"
@@ -259,7 +275,7 @@ export const LoginPage = () => {
                   checked={rememberMe}
                   disabled={isLockedOut}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+                  className="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500"
                 />
                 <span>Remember session</span>
               </label>
@@ -268,7 +284,7 @@ export const LoginPage = () => {
             <button
               type="submit"
               disabled={isLoading || isLockedOut}
-              className={`w-full py-3 sm:py-3.5 rounded-xl font-semibold text-sm text-white bg-violet-600 hover:bg-violet-700 shadow-md shadow-violet-600/25 transition-all flex items-center justify-center gap-2 cursor-pointer ${
+              className={`w-full py-3 sm:py-3.5 rounded-xl font-semibold text-sm text-white bg-purple-600 hover:bg-purple-700 shadow-md shadow-purple-600/25 transition-all flex items-center justify-center gap-2 cursor-pointer ${
                 isLoading || isLockedOut ? 'opacity-70 cursor-not-allowed' : 'active:scale-[0.99]'
               }`}
             >
@@ -299,16 +315,16 @@ export const LoginPage = () => {
               <button
                 type="button"
                 onClick={() => handleQuickDemo('superadmin')}
-                className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl border border-slate-200/90 bg-slate-50/70 hover:bg-violet-50 hover:border-violet-200 text-slate-700 hover:text-violet-700 text-xs font-semibold transition-all cursor-pointer group"
+                className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl border border-purple-100 bg-[#fcfaff] hover:bg-[#f5eeff] hover:border-purple-200 text-slate-700 hover:text-purple-700 text-xs font-semibold transition-all cursor-pointer group"
                 title="Login as Super Admin"
               >
-                <span className="w-2 h-2 rounded-full bg-violet-500"></span>
+                <span className="w-2 h-2 rounded-full bg-purple-600"></span>
                 <span>Super Admin</span>
               </button>
               <button
                 type="button"
                 onClick={() => handleQuickDemo('institute')}
-                className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl border border-slate-200/90 bg-slate-50/70 hover:bg-emerald-50 hover:border-emerald-200 text-slate-700 hover:text-emerald-700 text-xs font-semibold transition-all cursor-pointer group"
+                className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl border border-emerald-100 bg-emerald-50/40 hover:bg-emerald-50 hover:border-emerald-200 text-slate-700 hover:text-emerald-700 text-xs font-semibold transition-all cursor-pointer group"
                 title="Login as Campus Admin"
               >
                 <span className="w-2 h-2 rounded-full bg-emerald-500"></span>

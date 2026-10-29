@@ -100,10 +100,11 @@ export const StatCard = ({
         </div>
 
         {/* Metric Value & Optional Badge */}
-        <div className="flex items-baseline justify-between gap-2">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
           <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">{value}</span>
           {cardBadge && (
-            <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0 flex items-center gap-1 ${
+            <span title={typeof cardBadge === 'string' ? cardBadge : undefined}
+            className={`text-[11px] font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1 max-w-full truncate ${
               badgePositive 
                 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60' 
                 : 'bg-rose-50 text-rose-700 border border-rose-200/60'
