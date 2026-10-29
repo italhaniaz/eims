@@ -39,18 +39,23 @@ export const AnalyticsService = {
       const instTeachers = teachers.filter(t => t.instituteId === inst.id)
 
       // Dynamic or representative counts
-      const studentCount = instStudents.length > 0 ? instStudents.length : (index === 0 ? 840 : index === 1 ? 520 : 310)
-      const teacherCount = instTeachers.length > 0 ? instTeachers.length : (index === 0 ? 48 : index === 1 ? 32 : 22)
+      const fallbackStudents = [840, 520, 380, 240, 190, 150]
+      const fallbackTeachers = [48, 32, 24, 20, 16, 12]
+      const fallbackAttendance = [94.2, 88.5, 84.0, 80.1, 85.0, 82.0]
+      const fallbackRecovery = [94.0, 86.0, 81.0, 75.0, 82.0, 78.0]
+
+      const studentCount = instStudents.length > 0 ? instStudents.length : (fallbackStudents[index] || 180)
+      const teacherCount = instTeachers.length > 0 ? instTeachers.length : (fallbackTeachers[index] || 16)
       const studentTeacherRatio = Math.round(studentCount / Math.max(1, teacherCount))
 
       // Proportional attendance rate by institute
-      const attendanceRate = index === 0 ? 94.2 : index === 1 ? 88.5 : 82.1
+      const attendanceRate = fallbackAttendance[index] || 85.0
 
       // Fee recovery calculation
       const instFees = fees.filter(f => f.instituteId === inst.id)
-      let feeRecoveryRate = 89.4
+      let feeRecoveryRate = fallbackRecovery[index] || 80.0
       let totalBilledPKR = studentCount * 12000
-      let totalCollectedPKR = Math.round(totalBilledPKR * (index === 0 ? 0.94 : index === 1 ? 0.86 : 0.78))
+      let totalCollectedPKR = Math.round(totalBilledPKR * (feeRecoveryRate / 100))
 
       if (instFees.length > 0) {
         const total = instFees.reduce((sum, f) => sum + (Number(f.amount) || 0), 0)
@@ -60,8 +65,6 @@ export const AnalyticsService = {
           totalCollectedPKR = paid
           feeRecoveryRate = Math.round((paid / total) * 1000) / 10
         }
-      } else {
-        feeRecoveryRate = index === 0 ? 94.0 : index === 1 ? 86.0 : 78.0
       }
 
       // Growth rate

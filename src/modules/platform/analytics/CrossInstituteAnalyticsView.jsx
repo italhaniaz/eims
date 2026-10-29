@@ -38,6 +38,15 @@ const CrossInstituteAnalyticsView = () => {
   // Modals
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false)
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false)
+  const [isBreakdownModalOpen, setIsBreakdownModalOpen] = useState(false)
+  const [activeMetricTab, setActiveMetricTab] = useState('students') // 'students', 'faculty', 'attendance', 'fees'
+  const [breakdownSearch, setBreakdownSearch] = useState('')
+
+  const openBreakdownModal = (tab = 'students') => {
+    setActiveMetricTab(tab)
+    setBreakdownSearch('')
+    setIsBreakdownModalOpen(true)
+  }
   const [scheduleForm, setScheduleForm] = useState({
     title: 'Weekly Executive Performance Briefing',
     frequency: 'WEEKLY',
@@ -192,9 +201,9 @@ const CrossInstituteAnalyticsView = () => {
           color="blue"
           showActions={true}
           showAllText="Show all"
-          onShowAll={() => { setSearchTerm(''); setTypeFilter('ALL'); }}
-          onView={() => { setSearchTerm(''); setTypeFilter('ALL'); }}
-          viewTooltip="View all student enrollment telemetry"
+          onShowAll={() => openBreakdownModal('students')}
+          onView={() => openBreakdownModal('students')}
+          viewTooltip="View all institutes student breakdown"
           onAdd={() => setIsScheduleModalOpen(true)}
           addTooltip="Schedule briefing report"
         />
@@ -207,9 +216,9 @@ const CrossInstituteAnalyticsView = () => {
           color="emerald"
           showActions={true}
           showAllText="Show all"
-          onShowAll={() => { setSearchTerm(''); setSortField('teacherCount'); setSortAsc(false); }}
-          onView={() => { setSearchTerm(''); setSortField('teacherCount'); setSortAsc(false); }}
-          viewTooltip="Sort campuses by faculty strength"
+          onShowAll={() => openBreakdownModal('faculty')}
+          onView={() => openBreakdownModal('faculty')}
+          viewTooltip="View all institutes faculty breakdown"
           onAdd={() => setIsPrintModalOpen(true)}
           addTooltip="Print executive faculty briefing"
         />
@@ -222,9 +231,9 @@ const CrossInstituteAnalyticsView = () => {
           color="indigo"
           showActions={true}
           showAllText="Show all"
-          onShowAll={() => { setSearchTerm(''); setSortField('attendanceRate'); setSortAsc(false); }}
-          onView={() => { setSearchTerm(''); setSortField('attendanceRate'); setSortAsc(false); }}
-          viewTooltip="Sort campuses by attendance rate"
+          onShowAll={() => openBreakdownModal('attendance')}
+          onView={() => openBreakdownModal('attendance')}
+          viewTooltip="View all institutes attendance breakdown"
           onAdd={() => handleExportCSV()}
           addTooltip="Export attendance audit snapshot"
         />
@@ -237,49 +246,14 @@ const CrossInstituteAnalyticsView = () => {
           color="amber"
           showActions={true}
           showAllText="Show all"
-          onShowAll={() => { setSearchTerm(''); setSortField('feeRecoveryRate'); setSortAsc(false); }}
-          onView={() => { setSearchTerm(''); setSortField('feeRecoveryRate'); setSortAsc(false); }}
-          viewTooltip="Sort campuses by fee recovery index"
+          onShowAll={() => openBreakdownModal('fees')}
+          onView={() => openBreakdownModal('fees')}
+          viewTooltip="View all institutes fee recovery breakdown"
           onAdd={() => handleExportCSV()}
           addTooltip="Export fee reconciliation audit snapshot"
         />
       </div>
 
-      {/* Top Performers Highlights */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-white p-4.5 rounded-2xl border border-amber-200/80 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-amber-500/20 text-amber-600 flex items-center justify-center shrink-0">
-            <Award className="w-6 h-6" />
-          </div>
-          <div className="min-w-0">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-amber-800 block">Top Attendance Campus</span>
-            <h4 className="text-sm font-bold text-slate-800 truncate">{topPerformers.topAttendance?.name}</h4>
-            <span className="text-xs font-semibold text-amber-700">{topPerformers.topAttendance?.attendanceRate}% Average Attendance</span>
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-white p-4.5 rounded-2xl border border-emerald-200/80 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-emerald-500/20 text-emerald-600 flex items-center justify-center shrink-0">
-            <CheckCircle className="w-6 h-6" />
-          </div>
-          <div className="min-w-0">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-800 block">Highest Fee Recovery</span>
-            <h4 className="text-sm font-bold text-slate-800 truncate">{topPerformers.topFeeRecovery?.name}</h4>
-            <span className="text-xs font-semibold text-emerald-700">{topPerformers.topFeeRecovery?.feeRecoveryRate}% Dues Collected</span>
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-purple-500/10 via-purple-500/5 to-white p-4.5 rounded-2xl border border-purple-200/80 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-[#f5eeff]0/20 text-purple-600 flex items-center justify-center shrink-0">
-            <Building className="w-6 h-6" />
-          </div>
-          <div className="min-w-0">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-purple-800 block">Largest Student Population</span>
-            <h4 className="text-sm font-bold text-slate-800 truncate">{topPerformers.largestEnrollment?.name}</h4>
-            <span className="text-xs font-semibold text-purple-700">{topPerformers.largestEnrollment?.studentCount.toLocaleString()} Enrolled Students</span>
-          </div>
-        </div>
-      </div>
 
       {/* Filter & Search Bar */}
       <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] shadow-sm flex flex-col md:flex-row items-center justify-between gap-3">
@@ -723,6 +697,313 @@ const CrossInstituteAnalyticsView = () => {
           </div>
         </form>
       </Modal>
+
+      {/* ALL INSTITUTES TELEMETRY BREAKDOWN MODAL */}
+      <Modal
+        isOpen={isBreakdownModalOpen}
+        onClose={() => setIsBreakdownModalOpen(false)}
+        title="Cross-Institute Multi-Campus Telemetry Breakdown"
+        maxWidth="max-w-4xl"
+      >
+        <div className="space-y-5">
+          {/* Header Metric Tabs Switcher */}
+          <div className="flex items-center gap-2 border-b border-slate-100 pb-3 overflow-x-auto scrollbar-none">
+            <button
+              type="button"
+              onClick={() => setActiveMetricTab('students')}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                activeMetricTab === 'students'
+                  ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20'
+                  : 'bg-slate-100/80 text-slate-600 hover:bg-slate-200/80'
+              }`}
+            >
+              <Users className="w-4 h-4" />
+              <span>Student Body ({summary.totalStudents.toLocaleString()})</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveMetricTab('faculty')}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                activeMetricTab === 'faculty'
+                  ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-500/20'
+                  : 'bg-slate-100/80 text-slate-600 hover:bg-slate-200/80'
+              }`}
+            >
+              <GraduationCap className="w-4 h-4" />
+              <span>Faculty & Staff ({summary.totalTeachers.toLocaleString()})</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveMetricTab('attendance')}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                activeMetricTab === 'attendance'
+                  ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-500/20'
+                  : 'bg-slate-100/80 text-slate-600 hover:bg-slate-200/80'
+              }`}
+            >
+              <Percent className="w-4 h-4" />
+              <span>Attendance Rate ({summary.avgAttendance}%)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveMetricTab('fees')}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                activeMetricTab === 'fees'
+                  ? 'bg-amber-600 text-white shadow-sm shadow-amber-500/20'
+                  : 'bg-slate-100/80 text-slate-600 hover:bg-slate-200/80'
+              }`}
+            >
+              <DollarSign className="w-4 h-4" />
+              <span>Fee Recovery ({summary.avgFeeRecovery}%)</span>
+            </button>
+          </div>
+
+          {/* Metric Overview Summary Chips */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {activeMetricTab === 'students' && (
+              <>
+                <div className="p-3 bg-blue-50/70 border border-blue-100 rounded-xl">
+                  <span className="text-[10px] uppercase font-bold text-blue-700 tracking-wider">Total Enrolled</span>
+                  <p className="text-lg font-extrabold text-blue-900 mt-0.5">{summary.totalStudents.toLocaleString()}</p>
+                  <span className="text-[11px] text-blue-600 font-medium">+12.4% vs last term</span>
+                </div>
+                <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl">
+                  <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Active Campuses</span>
+                  <p className="text-lg font-extrabold text-slate-900 mt-0.5">{analyticsData.comparisonList.length}</p>
+                  <span className="text-[11px] text-slate-500 font-medium">Reporting Live Data</span>
+                </div>
+                <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl">
+                  <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Avg Per Campus</span>
+                  <p className="text-lg font-extrabold text-slate-900 mt-0.5">{Math.round(summary.totalStudents / Math.max(1, analyticsData.comparisonList.length))}</p>
+                  <span className="text-[11px] text-slate-500 font-medium">Students / Institution</span>
+                </div>
+                <div className="p-3 bg-purple-50/70 border border-purple-100 rounded-xl">
+                  <span className="text-[10px] uppercase font-bold text-purple-700 tracking-wider">Largest Campus</span>
+                  <p className="text-sm font-extrabold text-purple-900 mt-0.5 truncate">{topPerformers.largestEnrollment?.name || 'Allied School'}</p>
+                  <span className="text-[11px] text-purple-700 font-semibold">{topPerformers.largestEnrollment?.studentCount || 840} Students</span>
+                </div>
+              </>
+            )}
+
+            {activeMetricTab === 'faculty' && (
+              <>
+                <div className="p-3 bg-emerald-50/70 border border-emerald-100 rounded-xl">
+                  <span className="text-[10px] uppercase font-bold text-emerald-700 tracking-wider">Total Faculty</span>
+                  <p className="text-lg font-extrabold text-emerald-900 mt-0.5">{summary.totalTeachers.toLocaleString()}</p>
+                  <span className="text-[11px] text-emerald-600 font-medium">Across all institutions</span>
+                </div>
+                <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl">
+                  <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Avg Per Campus</span>
+                  <p className="text-lg font-extrabold text-slate-900 mt-0.5">{Math.round(summary.totalTeachers / Math.max(1, analyticsData.comparisonList.length))}</p>
+                  <span className="text-[11px] text-slate-500 font-medium">Teachers / Institution</span>
+                </div>
+                <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl">
+                  <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Mean Ratio</span>
+                  <p className="text-lg font-extrabold text-slate-900 mt-0.5">{Math.round(summary.totalStudents / Math.max(1, summary.totalTeachers))}:1</p>
+                  <span className="text-[11px] text-slate-500 font-medium">Student to Teacher</span>
+                </div>
+                <div className="p-3 bg-emerald-50/70 border border-emerald-100 rounded-xl">
+                  <span className="text-[10px] uppercase font-bold text-emerald-700 tracking-wider">Top Faculty Hub</span>
+                  <p className="text-sm font-extrabold text-emerald-900 mt-0.5 truncate">{analyticsData.comparisonList[0]?.name || 'Allied School'}</p>
+                  <span className="text-[11px] text-emerald-700 font-semibold">{analyticsData.comparisonList[0]?.teacherCount || 48} Instructors</span>
+                </div>
+              </>
+            )}
+
+            {activeMetricTab === 'attendance' && (
+              <>
+                <div className="p-3 bg-indigo-50/70 border border-indigo-100 rounded-xl">
+                  <span className="text-[10px] uppercase font-bold text-indigo-700 tracking-wider">Mean Attendance</span>
+                  <p className="text-lg font-extrabold text-indigo-900 mt-0.5">{summary.avgAttendance}%</p>
+                  <span className="text-[11px] text-indigo-600 font-medium">Campus-wide daily average</span>
+                </div>
+                <div className="p-3 bg-emerald-50/70 border border-emerald-100 rounded-xl">
+                  <span className="text-[10px] uppercase font-bold text-emerald-700 tracking-wider">Highest Attendance</span>
+                  <p className="text-sm font-extrabold text-emerald-900 mt-0.5 truncate">{topPerformers.topAttendance?.name || 'Allied School'}</p>
+                  <span className="text-[11px] text-emerald-700 font-semibold">{topPerformers.topAttendance?.attendanceRate || 94.2}% Present</span>
+                </div>
+                <div className="p-3 bg-amber-50/70 border border-amber-100 rounded-xl">
+                  <span className="text-[10px] uppercase font-bold text-amber-700 tracking-wider">Attention Campus</span>
+                  <p className="text-sm font-extrabold text-amber-900 mt-0.5 truncate">{topPerformers.lowestAttendance?.name || 'Allama Iqbal'}</p>
+                  <span className="text-[11px] text-amber-700 font-semibold">{topPerformers.lowestAttendance?.attendanceRate || 80.1}% Present</span>
+                </div>
+                <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl">
+                  <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Active Monitoring</span>
+                  <p className="text-lg font-extrabold text-slate-900 mt-0.5">100%</p>
+                  <span className="text-[11px] text-slate-500 font-medium">Biometric & Portal Synced</span>
+                </div>
+              </>
+            )}
+
+            {activeMetricTab === 'fees' && (
+              <>
+                <div className="p-3 bg-amber-50/70 border border-amber-100 rounded-xl">
+                  <span className="text-[10px] uppercase font-bold text-amber-700 tracking-wider">Recovery Ratio</span>
+                  <p className="text-lg font-extrabold text-amber-900 mt-0.5">{summary.avgFeeRecovery}%</p>
+                  <span className="text-[11px] text-amber-600 font-medium">Overall Dues Cleared</span>
+                </div>
+                <div className="p-3 bg-emerald-50/70 border border-emerald-100 rounded-xl">
+                  <span className="text-[10px] uppercase font-bold text-emerald-700 tracking-wider">Total Collected</span>
+                  <p className="text-lg font-extrabold text-emerald-900 mt-0.5">PKR {(summary.totalCollectedPKR / 1000000).toFixed(1)}M</p>
+                  <span className="text-[11px] text-emerald-600 font-medium">Direct Bank & JazzCash</span>
+                </div>
+                <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl">
+                  <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Total Invoiced</span>
+                  <p className="text-lg font-extrabold text-slate-900 mt-0.5">PKR {(summary.totalBilledPKR / 1000000).toFixed(1)}M</p>
+                  <span className="text-[11px] text-slate-500 font-medium">Challans Generated</span>
+                </div>
+                <div className="p-3 bg-rose-50/70 border border-rose-100 rounded-xl">
+                  <span className="text-[10px] uppercase font-bold text-rose-700 tracking-wider">Outstanding</span>
+                  <p className="text-lg font-extrabold text-rose-900 mt-0.5">PKR {((summary.totalBilledPKR - summary.totalCollectedPKR) / 1000000).toFixed(1)}M</p>
+                  <span className="text-[11px] text-rose-600 font-medium">Pending Dues</span>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Search bar inside modal */}
+          <div className="relative">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Filter institutions by name, code or city..."
+              value={breakdownSearch}
+              onChange={(e) => setBreakdownSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white"
+            />
+          </div>
+
+          {/* Detailed Campus Breakdown Cards / Table */}
+          <div className="border border-slate-100 rounded-2xl overflow-hidden shadow-2xs">
+            <div className="max-h-[380px] overflow-y-auto divide-y divide-slate-100">
+              {analyticsData.comparisonList
+                .filter(inst => {
+                  if (!breakdownSearch) return true
+                  const q = breakdownSearch.toLowerCase()
+                  return inst.name.toLowerCase().includes(q) || inst.code.toLowerCase().includes(q) || inst.city.toLowerCase().includes(q)
+                })
+                .map((inst, idx) => {
+                  const studentShare = Math.round((inst.studentCount / Math.max(1, summary.totalStudents)) * 1000) / 10
+                  const colors = ['from-purple-500 to-indigo-500', 'from-blue-500 to-cyan-500', 'from-amber-500 to-orange-500', 'from-emerald-500 to-teal-500']
+                  const colorGradient = colors[idx % colors.length]
+
+                  return (
+                    <div key={inst.id} className="p-4 hover:bg-slate-50/70 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      {/* Left: Campus Avatar & Identity */}
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-tr ${colorGradient} text-white font-bold flex items-center justify-center text-sm shadow-xs shrink-0`}>
+                          {inst.name.charAt(0)}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-bold text-slate-900 text-sm">{inst.name}</h4>
+                            <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
+                              {inst.code}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-500">
+                            {inst.city} • <span className="font-semibold text-purple-600">{inst.type}</span>
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Right: Metric Specific Telemetry Display */}
+                      <div className="flex items-center gap-4 sm:gap-6 self-end sm:self-center">
+                        {activeMetricTab === 'students' && (
+                          <div className="text-right">
+                            <span className="text-base sm:text-lg font-extrabold text-slate-900">
+                              {inst.studentCount.toLocaleString()} <span className="text-xs font-semibold text-slate-500">Students</span>
+                            </span>
+                            <div className="flex items-center justify-end gap-1.5 mt-0.5">
+                              <div className="w-20 sm:w-24 bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                <div className="bg-blue-600 h-1.5 rounded-full" style={{ width: `${Math.min(100, studentShare * 2)}%` }}></div>
+                              </div>
+                              <span className="text-[11px] font-bold text-blue-600">{studentShare}% share</span>
+                            </div>
+                          </div>
+                        )}
+
+                        {activeMetricTab === 'faculty' && (
+                          <div className="text-right">
+                            <span className="text-base sm:text-lg font-extrabold text-slate-900">
+                              {inst.teacherCount} <span className="text-xs font-semibold text-slate-500">Faculty</span>
+                            </span>
+                            <p className="text-[11px] font-medium text-emerald-600 mt-0.5">
+                              Ratio {inst.studentTeacherRatio}
+                            </p>
+                          </div>
+                        )}
+
+                        {activeMetricTab === 'attendance' && (
+                          <div className="text-right">
+                            <span className="text-base sm:text-lg font-extrabold text-slate-900">
+                              {inst.attendanceRate}%
+                            </span>
+                            <div className="flex items-center justify-end gap-1.5 mt-0.5">
+                              <div className="w-20 sm:w-24 bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                <div 
+                                  className={`h-1.5 rounded-full ${inst.attendanceRate >= 90 ? 'bg-emerald-500' : inst.attendanceRate >= 85 ? 'bg-blue-500' : 'bg-amber-500'}`} 
+                                  style={{ width: `${inst.attendanceRate}%` }}
+                                ></div>
+                              </div>
+                              <span className={`text-[11px] font-bold ${inst.attendanceRate >= 90 ? 'text-emerald-600' : 'text-slate-600'}`}>
+                                {inst.attendanceRate >= 90 ? 'High' : 'Normal'}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+
+                        {activeMetricTab === 'fees' && (
+                          <div className="text-right">
+                            <span className="text-base sm:text-lg font-extrabold text-slate-900">
+                              {inst.feeRecoveryRate}% <span className="text-xs font-semibold text-slate-500">Collected</span>
+                            </span>
+                            <p className="text-[11px] font-mono text-emerald-700 font-semibold mt-0.5">
+                              ₨ {inst.totalCollectedPKR.toLocaleString()}
+                            </p>
+                          </div>
+                        )}
+
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                          Active
+                        </span>
+                      </div>
+                    </div>
+                  )
+                })}
+            </div>
+          </div>
+
+          {/* Modal Bottom Actions */}
+          <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+            <span className="text-xs text-slate-400">
+              Telemetry synchronized across {analyticsData.comparisonList.length} operational campuses
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleExportCSV}
+                className="px-3.5 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer flex items-center gap-1.5"
+              >
+                <Download className="w-3.5 h-3.5 text-slate-500" />
+                <span>Export CSV</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsBreakdownModalOpen(false)}
+                className="px-4 py-2 text-xs font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-xl shadow-xs transition-colors cursor-pointer"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      </Modal>
+
     </div>
   )
 }
