@@ -62,90 +62,126 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
   const filterDropdownRef = useRef(null)
 
   // Executive Super Admin Monthly Performance Chart State (Metric Switcher & Hover State)
-  const [executiveMetric, setExecutiveMetric] = useState('revenue') // 'revenue', 'students', 'recovery'
+  // Metrics: 'saas_revenue' (SaaS MRR), 'campuses' (Network Onboarding), 'students' (Platform Capacity), 'vouchers' (Digital Gateway)
+  const [executiveMetric, setExecutiveMetric] = useState('saas_revenue')
   const [hoveredMonthIdx, setHoveredMonthIdx] = useState(null)
 
-  // Executive Data across 12 months for Super Admin
+  // Executive Data across 12 months tailored specifically for Super Admin (Platform Owner / HQ)
   const executiveChartData = useMemo(() => {
-    if (executiveMetric === 'revenue') {
+    if (executiveMetric === 'saas_revenue') {
       return {
         unit: '₨',
-        yAxisLabels: ['₨ 2.5M', '₨ 2.0M', '₨ 1.5M', '₨ 1.0M', '₨ 0.5M', '₨ 0'],
-        maxVal: 2700, // in thousands PKR
-        summaryLabel: 'Total Fee Revenue (2026)',
-        summaryValue: '₨ 24.65M',
-        avgLabel: 'Monthly Avg Collection',
-        avgValue: '₨ 2.05M',
-        growthBadge: '+14.2% vs last year',
-        primaryLegend: 'School Campuses (Primary & Matric)',
-        secondaryLegend: 'College & Universities (Inter & BS)',
+        chartTitle: 'Platform SaaS Subscription Revenue & MRR Growth',
+        chartSubtitle: 'Monthly software licensing collections & recurring SaaS ARR generated from campus network in PKR (₨)',
+        yAxisLabels: ['₨ 500K', '₨ 400K', '₨ 300K', '₨ 200K', '₨ 100K', '₨ 0'],
+        maxVal: 550, // in thousands PKR
+        summaryLabel: 'Total Platform SaaS Revenue (2026)',
+        summaryValue: '₨ 4.62M',
+        avgLabel: 'Live Monthly Recurring Revenue',
+        avgValue: '₨ 385K / mo',
+        growthBadge: '+28.4% MRR Expansion',
+        primaryLegend: 'School Subscriptions (₨ 25K/mo)',
+        secondaryLegend: 'College & Enterprise (₨ 35K - 55K/mo)',
         months: [
-          { m: 'Jan', v1: 950, v2: 720, label1: '₨ 950K', label2: '₨ 720K', total: '₨ 1.67M', note: 'Winter session fees' },
-          { m: 'Feb', v1: 1020, v2: 780, label1: '₨ 1.02M', label2: '₨ 780K', total: '₨ 1.80M', note: 'Standard installment' },
-          { m: 'Mar', v1: 890, v2: 850, label1: '₨ 890K', label2: '₨ 850K', total: '₨ 1.74M', note: 'Pre-exam dues' },
-          { m: 'Apr', v1: 1350, v2: 920, label1: '₨ 1.35M', label2: '₨ 920K', total: '₨ 2.27M', note: 'New session intake' },
-          { m: 'May', v1: 1580, v2: 1120, label1: '₨ 1.58M', label2: '₨ 1.12M', total: '₨ 2.70M', note: 'Admissions Peak', isPeak: true },
-          { m: 'Jun', v1: 980, v2: 860, label1: '₨ 980K', label2: '₨ 860K', total: '₨ 1.84M', note: 'Pre-summer clearing' },
-          { m: 'Jul', v1: 750, v2: 710, label1: '₨ 750K', label2: '₨ 710K', total: '₨ 1.46M', note: 'Summer break low' },
-          { m: 'Aug', v1: 1220, v2: 890, label1: '₨ 1.22M', label2: '₨ 890K', total: '₨ 2.11M', note: 'Campus re-opening' },
-          { m: 'Sep', v1: 1480, v2: 1050, label1: '₨ 1.48M', label2: '₨ 1.05M', total: '₨ 2.53M', note: 'Fall semester intake', isPeak: true },
-          { m: 'Oct', v1: 1120, v2: 820, label1: '₨ 1.12M', label2: '₨ 820K', total: '₨ 1.94M', note: 'Regular fee challans' },
-          { m: 'Nov', v1: 1280, v2: 910, label1: '₨ 1.28M', label2: '₨ 910K', total: '₨ 2.19M', note: 'Terminal exams clearance' },
-          { m: 'Dec', v1: 1420, v2: 980, label1: '₨ 1.42M', label2: '₨ 980K', total: '₨ 2.40M', note: 'Annual closing dues' }
+          { m: 'Jan', v1: 150, v2: 140, label1: '₨ 150K', label2: '₨ 140K', total: '₨ 290K', note: 'Q1 recurring billing' },
+          { m: 'Feb', v1: 175, v2: 140, label1: '₨ 175K', label2: '₨ 140K', total: '₨ 315K', note: '+1 School tier license' },
+          { m: 'Mar', v1: 175, v2: 175, label1: '₨ 175K', label2: '₨ 175K', total: '₨ 350K', note: '+1 College affiliate' },
+          { m: 'Apr', v1: 200, v2: 175, label1: '₨ 200K', label2: '₨ 175K', total: '₨ 375K', note: 'Spring renewal cycle' },
+          { m: 'May', v1: 250, v2: 230, label1: '₨ 250K', label2: '₨ 230K', total: '₨ 480K', note: 'Annual Admission Onboarding Peak', isPeak: true },
+          { m: 'Jun', v1: 225, v2: 210, label1: '₨ 225K', label2: '₨ 210K', total: '₨ 435K', note: 'Mid-year renewals' },
+          { m: 'Jul', v1: 200, v2: 195, label1: '₨ 200K', label2: '₨ 195K', total: '₨ 395K', note: 'Summer licenses active' },
+          { m: 'Aug', v1: 225, v2: 210, label1: '₨ 225K', label2: '₨ 210K', total: '₨ 435K', note: 'Session restart billing' },
+          { m: 'Sep', v1: 275, v2: 245, label1: '₨ 275K', label2: '₨ 245K', total: '₨ 520K', note: 'Fall Semester Enterprise Influx', isPeak: true },
+          { m: 'Oct', v1: 250, v2: 210, label1: '₨ 250K', label2: '₨ 210K', total: '₨ 460K', note: 'Multi-campus expansions' },
+          { m: 'Nov', v1: 250, v2: 210, label1: '₨ 250K', label2: '₨ 210K', total: '₨ 460K', note: 'Pre-exam term renewals' },
+          { m: 'Dec', v1: 275, v2: 245, label1: '₨ 275K', label2: '₨ 245K', total: '₨ 520K', note: 'Year-end contract closing' }
+        ]
+      }
+    } else if (executiveMetric === 'campuses') {
+      return {
+        unit: 'Campuses',
+        chartTitle: 'Campus Network & Multi-Tenant Onboarding Velocity',
+        chartSubtitle: 'Active educational campus registrations, tenant activations & multi-wing expansions',
+        yAxisLabels: ['30', '24', '18', '12', '6', '0'],
+        maxVal: 30,
+        summaryLabel: 'Total Active Campuses',
+        summaryValue: '28 Campuses',
+        avgLabel: 'Monthly Onboarding Velocity',
+        avgValue: '2.4 Campuses / mo',
+        growthBadge: '+32% YoY Network Growth',
+        primaryLegend: 'School Campuses (Primary & Matric)',
+        secondaryLegend: 'College & University Campuses',
+        months: [
+          { m: 'Jan', v1: 8, v2: 5, label1: '8 Schools', label2: '5 Higher Ed', total: '13 Campuses', note: 'Initial platform network' },
+          { m: 'Feb', v1: 9, v2: 5, label1: '9 Schools', label2: '5 Higher Ed', total: '14 Campuses', note: '+1 School branch active' },
+          { m: 'Mar', v1: 10, v2: 6, label1: '10 Schools', label2: '6 Higher Ed', total: '16 Campuses', note: '+1 College affiliate' },
+          { m: 'Apr', v1: 11, v2: 7, label1: '11 Schools', label2: '7 Higher Ed', total: '18 Campuses', note: 'Spring onboarding drive' },
+          { m: 'May', v1: 14, v2: 9, label1: '14 Schools', label2: '9 Higher Ed', total: '23 Campuses', note: 'Admission Peak Registrations', isPeak: true },
+          { m: 'Jun', v1: 14, v2: 9, label1: '14 Schools', label2: '9 Higher Ed', total: '23 Campuses', note: 'Stable cloud tenants' },
+          { m: 'Jul', v1: 14, v2: 9, label1: '14 Schools', label2: '9 Higher Ed', total: '23 Campuses', note: 'Summer infrastructure sync' },
+          { m: 'Aug', v1: 15, v2: 10, label1: '15 Schools', label2: '10 Higher Ed', total: '25 Campuses', note: 'Session restart onboardings' },
+          { m: 'Sep', v1: 17, v2: 11, label1: '17 Schools', label2: '11 Higher Ed', total: '28 Campuses', note: 'Major University Affiliation', isPeak: true },
+          { m: 'Oct', v1: 17, v2: 11, label1: '17 Schools', label2: '11 Higher Ed', total: '28 Campuses', note: 'Operational network' },
+          { m: 'Nov', v1: 18, v2: 11, label1: '18 Schools', label2: '11 Higher Ed', total: '29 Campuses', note: '+1 School Wing added' },
+          { m: 'Dec', v1: 18, v2: 12, label1: '18 Schools', label2: '12 Higher Ed', total: '30 Campuses', note: 'Closing roster 2026' }
         ]
       }
     } else if (executiveMetric === 'students') {
       return {
         unit: 'Students',
-        yAxisLabels: ['8,000', '6,400', '4,800', '3,200', '1,600', '0'],
-        maxVal: 8000,
-        summaryLabel: 'Total Active Enrolled',
-        summaryValue: '14,850',
-        avgLabel: 'Avg Campus Strength',
-        avgValue: '1,238 / campus',
-        growthBadge: '+8.5% Net Admissions',
+        chartTitle: 'Total Platform Workload & Enrolled Student Telemetry',
+        chartSubtitle: 'Active student rosters, server compute load & license quota capacity across all institutes',
+        yAxisLabels: ['12K', '9.6K', '7.2K', '4.8K', '2.4K', '0'],
+        maxVal: 12000,
+        summaryLabel: 'Total Active Student Body',
+        summaryValue: '18,450 Students',
+        avgLabel: 'Average Tenant Load',
+        avgValue: '658 Students / Campus',
+        growthBadge: '76.4% Server Quota Filled',
         primaryLegend: 'School Students (Grade 1-10)',
         secondaryLegend: 'College & Uni Students (Inter/BS)',
         months: [
-          { m: 'Jan', v1: 4200, v2: 3100, label1: '4,200', label2: '3,100', total: '7,300', note: 'Session enrollment' },
-          { m: 'Feb', v1: 4350, v2: 3180, label1: '4,350', label2: '3,180', total: '7,530', note: 'Mid-term transfers' },
-          { m: 'Mar', v1: 4400, v2: 3250, label1: '4,400', label2: '3,250', total: '7,650', note: 'Pre-board count' },
-          { m: 'Apr', v1: 5100, v2: 3450, label1: '5,100', label2: '3,450', total: '8,550', note: 'Spring admissions' },
-          { m: 'May', v1: 5800, v2: 3900, label1: '5,800', label2: '3,900', total: '9,700', note: 'Peak registrations', isPeak: true },
-          { m: 'Jun', v1: 5750, v2: 3850, label1: '5,750', label2: '3,850', total: '9,600', note: 'Stable roster' },
-          { m: 'Jul', v1: 5600, v2: 3800, label1: '5,600', label2: '3,800', total: '9,400', note: 'Graduated outgoing' },
-          { m: 'Aug', v1: 6100, v2: 4150, label1: '6,100', label2: '4,150', total: '10,250', note: 'New admissions' },
-          { m: 'Sep', v1: 6800, v2: 4600, label1: '6,800', label2: '4,600', total: '11,400', note: 'Fall batch enrollment', isPeak: true },
-          { m: 'Oct', v1: 6750, v2: 4550, label1: '6,750', label2: '4,550', total: '11,300', note: 'Current active' },
-          { m: 'Nov', v1: 6900, v2: 4700, label1: '6,900', label2: '4,700', total: '11,600', note: 'Registered roster' },
-          { m: 'Dec', v1: 7150, v2: 4850, label1: '7,150', label2: '4,850', total: '12,000', note: 'End-of-year strength' }
+          { m: 'Jan', v1: 5200, v2: 3800, label1: '5,200', label2: '3,800', total: '9,000', note: 'Winter session roster' },
+          { m: 'Feb', v1: 5400, v2: 3900, label1: '5,400', label2: '3,900', total: '9,300', note: 'Mid-term transfers' },
+          { m: 'Mar', v1: 5600, v2: 4100, label1: '5,600', label2: '4,100', total: '9,700', note: 'Pre-board count' },
+          { m: 'Apr', v1: 6400, v2: 4400, label1: '6,400', label2: '4,400', total: '10,800', note: 'Spring admissions intake' },
+          { m: 'May', v1: 7800, v2: 5200, label1: '7,800', label2: '5,200', total: '13,000', note: 'Annual Enrollment Peak', isPeak: true },
+          { m: 'Jun', v1: 7600, v2: 5100, label1: '7,600', label2: '5,100', total: '12,700', note: 'Roster validation' },
+          { m: 'Jul', v1: 7400, v2: 5000, label1: '7,400', label2: '5,000', total: '12,400', note: 'Graduated outgoing batches' },
+          { m: 'Aug', v1: 8200, v2: 5600, label1: '8,200', label2: '5,600', total: '13,800', note: 'New intake registration' },
+          { m: 'Sep', v1: 9400, v2: 6400, label1: '9,400', label2: '6,400', total: '15,800', note: 'Fall Semester Registration', isPeak: true },
+          { m: 'Oct', v1: 9300, v2: 6350, label1: '9,300', label2: '6,350', total: '15,650', note: 'Active telemetry' },
+          { m: 'Nov', v1: 9500, v2: 6500, label1: '9,500', label2: '6,500', total: '16,000', note: 'Final examination register' },
+          { m: 'Dec', v1: 9800, v2: 6800, label1: '9,800', label2: '6,800', total: '16,600', note: 'Annual database closing' }
         ]
       }
     } else {
       return {
-        unit: '%',
-        yAxisLabels: ['100%', '80%', '60%', '40%', '20%', '0%'],
-        maxVal: 100,
-        summaryLabel: 'Annual Network Recovery',
-        summaryValue: '94.2%',
-        avgLabel: '1Link Digital Clearance',
-        avgValue: '98.1%',
-        growthBadge: 'Target: ≥ 90% (Healthy)',
-        primaryLegend: 'School Recovery %',
-        secondaryLegend: 'College & Uni Recovery %',
+        unit: 'Vouchers',
+        chartTitle: '1Link & Digital Fee Processing Velocity',
+        chartSubtitle: 'Sub-50ms 1Link 1Bill, JazzCash challans & counter barcode transactions settled via platform',
+        yAxisLabels: ['18K', '14.4K', '10.8K', '7.2K', '3.6K', '0'],
+        maxVal: 18000,
+        summaryLabel: 'Total Digital Operations',
+        summaryValue: '146,800 Vouchers',
+        avgLabel: 'Mean Processing Latency',
+        avgValue: '38ms / Challan',
+        growthBadge: '99.98% Gateway Uptime',
+        primaryLegend: '1Link 1Bill & JazzCash Online',
+        secondaryLegend: 'Counter Barcode Reconciliations',
         months: [
-          { m: 'Jan', v1: 92, v2: 88, label1: '92%', label2: '88%', total: '90.0% Avg', note: 'Target achieved' },
-          { m: 'Feb', v1: 94, v2: 89, label1: '94%', label2: '89%', total: '91.5% Avg', note: 'On track' },
-          { m: 'Mar', v1: 91, v2: 86, label1: '91%', label2: '86%', total: '88.5% Avg', note: 'Follow-ups dispatched' },
-          { m: 'Apr', v1: 96, v2: 92, label1: '96%', label2: '92%', total: '94.0% Avg', note: 'High recovery' },
-          { m: 'May', v1: 98, v2: 95, label1: '98%', label2: '95%', total: '96.5% Avg', note: 'Peak efficiency', isPeak: true },
-          { m: 'Jun', v1: 93, v2: 90, label1: '93%', label2: '90%', total: '91.5% Avg', note: 'Cleared' },
-          { m: 'Jul', v1: 89, v2: 87, label1: '89%', label2: '87%', total: '88.0% Avg', note: 'Holiday grace period' },
-          { m: 'Aug', v1: 95, v2: 91, label1: '95%', label2: '91%', total: '93.0% Avg', note: 'Re-opening rush' },
-          { m: 'Sep', v1: 97, v2: 94, label1: '97%', label2: '94%', total: '95.5% Avg', note: 'Excellent collection', isPeak: true },
-          { m: 'Oct', v1: 93, v2: 89, label1: '93%', label2: '89%', total: '91.0% Avg', note: 'Current cycle' },
-          { m: 'Nov', v1: 95, v2: 92, label1: '95%', label2: '92%', total: '93.5% Avg', note: 'Pre-exam clearance' },
-          { m: 'Dec', v1: 96, v2: 93, label1: '96%', label2: '93%', total: '94.5% Avg', note: 'Annual audit clean' }
+          { m: 'Jan', v1: 5800, v2: 4200, label1: '5,800', label2: '4,200', total: '10,000', note: 'Term fee cycle' },
+          { m: 'Feb', v1: 6200, v2: 4500, label1: '6,200', label2: '4,500', total: '10,700', note: 'Standard installments' },
+          { m: 'Mar', v1: 5900, v2: 4100, label1: '5,900', label2: '4,100', total: '10,000', note: 'Pre-exam dues' },
+          { m: 'Apr', v1: 8200, v2: 5600, label1: '8,200', label2: '5,600', total: '13,800', note: 'Spring admissions intake' },
+          { m: 'May', v1: 9800, v2: 6900, label1: '9,800', label2: '6,900', total: '16,700', note: 'Peak Barcode Challan Sync', isPeak: true },
+          { m: 'Jun', v1: 6400, v2: 4800, label1: '6,400', label2: '4,800', total: '11,200', note: 'Pre-vacation clearing' },
+          { m: 'Jul', v1: 4500, v2: 3600, label1: '4,500', label2: '3,600', total: '8,100', note: 'Summer break low' },
+          { m: 'Aug', v1: 7600, v2: 5400, label1: '7,600', label2: '5,400', total: '13,000', note: 'Campus re-opening dues' },
+          { m: 'Sep', v1: 10400, v2: 7200, label1: '10,400', label2: '7,200', total: '17,600', note: 'Fall Semester Clearance', isPeak: true },
+          { m: 'Oct', v1: 7800, v2: 5200, label1: '7,800', label2: '5,200', total: '13,000', note: 'Regular fee challans' },
+          { m: 'Nov', v1: 8600, v2: 5900, label1: '8,600', label2: '5,900', total: '14,500', note: 'Pre-board clearing' },
+          { m: 'Dec', v1: 9200, v2: 6300, label1: '9,200', label2: '6,300', total: '15,500', note: 'Annual ledger audit' }
         ]
       }
     }
@@ -454,12 +490,12 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
   }, [selectedTierFilter])
 
   const displayMRRValue = useMemo(() => {
-    if (selectedTierFilter === 'all') return stats.monthlyRevenue || '$19.3K'
-    if (selectedTierFilter === 'school') return '$9.4K'
-    if (selectedTierFilter === 'college') return '$5.2K'
-    if (selectedTierFilter === 'university') return '$3.6K'
-    return '$1.1K'
-  }, [selectedTierFilter, stats.monthlyRevenue])
+    if (selectedTierFilter === 'all') return '₨ 385K'
+    if (selectedTierFilter === 'school') return '₨ 200K'
+    if (selectedTierFilter === 'college') return '₨ 105K'
+    if (selectedTierFilter === 'university') return '₨ 80K'
+    return '₨ 385K'
+  }, [selectedTierFilter])
 
   const displayMRRBadge = useMemo(() => {
     if (selectedTierFilter === 'all') return '4 Tier Plans'
@@ -1013,13 +1049,11 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-purple-600 animate-pulse"></span>
                 <h2 className="text-base font-extrabold text-slate-900 tracking-tight font-heading">
-                  Monthly Campus Revenue & Growth
+                  {executiveChartData.chartTitle}
                 </h2>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
-                {executiveMetric === 'revenue' && 'Monthly fee collections & recovery across network in PKR (₨)'}
-                {executiveMetric === 'students' && 'Active enrolled students & admissions pipeline by academic wing'}
-                {executiveMetric === 'recovery' && 'Monthly collection efficiency benchmark vs 90% target'}
+                {executiveChartData.chartSubtitle}
               </p>
             </div>
 
@@ -1027,15 +1061,28 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
             <div className="flex items-center p-1 bg-slate-100/80 rounded-xl text-xs font-bold gap-1 self-start sm:self-auto shrink-0">
               <button
                 type="button"
-                onClick={() => setExecutiveMetric('revenue')}
+                onClick={() => setExecutiveMetric('saas_revenue')}
                 className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
-                  executiveMetric === 'revenue'
+                  executiveMetric === 'saas_revenue'
                     ? 'bg-white text-purple-700 shadow-2xs font-extrabold'
                     : 'text-slate-600 hover:text-purple-700'
                 }`}
-                title="View Fee Revenue in PKR"
+                title="View Platform SaaS Recurring Revenue (MRR) in PKR"
               >
-                <span>₨ Revenue</span>
+                <span>💼 SaaS MRR</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setExecutiveMetric('campuses')}
+                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                  executiveMetric === 'campuses'
+                    ? 'bg-white text-purple-700 shadow-2xs font-extrabold'
+                    : 'text-slate-600 hover:text-purple-700'
+                }`}
+                title="View Active Campus Network Growth"
+              >
+                <span>🏫 Campuses</span>
               </button>
 
               <button
@@ -1046,22 +1093,22 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                     ? 'bg-white text-purple-700 shadow-2xs font-extrabold'
                     : 'text-slate-600 hover:text-purple-700'
                 }`}
-                title="View Enrolled Students"
+                title="View Total Student Body Capacity"
               >
                 <span>🎓 Students</span>
               </button>
 
               <button
                 type="button"
-                onClick={() => setExecutiveMetric('recovery')}
+                onClick={() => setExecutiveMetric('vouchers')}
                 className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
-                  executiveMetric === 'recovery'
+                  executiveMetric === 'vouchers'
                     ? 'bg-white text-purple-700 shadow-2xs font-extrabold'
                     : 'text-slate-600 hover:text-purple-700'
                 }`}
-                title="View Recovery Rate %"
+                title="View Digital 1Link & Challan Velocity"
               >
-                <span>% Recovery</span>
+                <span>⚡ Vouchers</span>
               </button>
             </div>
           </div>
@@ -1231,7 +1278,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
 
             <div className="text-[11px] text-slate-400 font-medium hidden sm:flex items-center gap-1">
               <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-              <span>Real-time platform ledger feed</span>
+              <span>Real-time SaaS telemetry feed</span>
             </div>
           </div>
 
