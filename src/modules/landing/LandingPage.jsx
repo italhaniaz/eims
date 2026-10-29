@@ -408,7 +408,7 @@ export const LandingPage = ({ onNavigateToLogin }) => {
   ]
 
   return (
-    <div className="min-h-screen w-full bg-[#fcfaff] text-slate-900 font-sans selection:bg-purple-100 selection:text-purple-900 overflow-x-hidden relative">
+    <div className="min-h-screen w-full bg-[#fcfaff] text-slate-900 font-sans selection:bg-purple-100 selection:text-purple-900 overflow-x-clip relative">
       
       {/* 1. TOP ANNOUNCEMENT BANNER */}
       <div className="bg-[#f5eeff] border-b border-purple-200/80 px-4 py-2 text-center text-xs font-medium text-purple-900 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
@@ -426,7 +426,7 @@ export const LandingPage = ({ onNavigateToLogin }) => {
       </div>
 
       {/* 2. STICKY GLASSMORPHIC NAVBAR WITH ACTIVE HIGHLIGHT ANIMATION */}
-      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-purple-100 shadow-[0_4px_20px_-4px_rgba(147,51,234,0.04)] transition-all duration-200">
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-purple-100/90 shadow-[0_4px_20px_-4px_rgba(147,51,234,0.06)] transition-all duration-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-18 flex items-center justify-between gap-2 sm:gap-4">
           
           {/* Brand Logo */}
@@ -676,36 +676,6 @@ export const LandingPage = ({ onNavigateToLogin }) => {
           </div>
         </div>
       </section>
-
-      {/* 3.5 INSTITUTIONAL TRUST & CLIENT NETWORK STRIP (Senior UI/UX Addition) */}
-      <div className="border-y border-purple-100/90 bg-white/80 py-7 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-[10.5px] font-extrabold uppercase tracking-widest text-slate-400 mb-4">
-            Empowering Premier Educational Campuses Across Pakistan
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-4 md:gap-6">
-            {[
-              { name: 'Punjab Group of Colleges', type: 'Colleges & Higher Education', badge: '50+ Campuses' },
-              { name: 'Beaconhouse System', type: 'Matric & Cambridge O/A-Levels', badge: 'K-12 Network' },
-              { name: 'The City School Network', type: 'Multi-Branch System', badge: 'National' },
-              { name: 'APSACS Regional Hubs', type: 'Federal Academic Stream', badge: 'Standardized' },
-              { name: 'Roots Millennium', type: 'Higher Education & BS', badge: 'Accredited' },
-              { name: 'KIPS Education System', type: 'Colleges & Entry Test Prep', badge: 'BISE / Board' }
-            ].map((client, idx) => (
-              <div 
-                key={idx}
-                className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-slate-50 to-[#fcfaff] border border-purple-100/80 hover:border-purple-300 hover:shadow-xs hover:bg-[#f5eeff]/40 transition-all cursor-default select-none group"
-              >
-                <span className="w-2 h-2 rounded-full bg-purple-600 group-hover:scale-125 transition-transform" />
-                <span className="text-xs font-bold text-slate-800 group-hover:text-purple-900 transition-colors">{client.name}</span>
-                <span className="text-[10px] text-purple-700 bg-purple-100/70 font-semibold px-1.5 py-0.2 rounded-md hidden md:inline">
-                  {client.badge}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
 
       {/* 4. CORE PLATFORM MODULES SECTION */}
       <section id="features" className="py-20 bg-white border-y border-purple-100/70">
