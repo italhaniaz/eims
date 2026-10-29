@@ -106,7 +106,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
   const [activeSection, setActiveSection] = useState('hero')
   const [activeTab, setActiveTab] = useState('school') // 'school', 'college', 'university', 'custom'
   const [billingCycle, setBillingCycle] = useState('monthly') // 'monthly', 'annual'
-  const [isTrialModalOpen, setIsTrialModalOpen] = useState(false)
+  const [isTrialModalOpen, setIsTrialModalOpen] = useState(() => (typeof window !== 'undefined' && window.location.hash === '#trial'))
   const [activeModalPlan, setActiveModalPlan] = useState('trial')
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false)
   const [submittedSuccessData, setSubmittedSuccessData] = useState(null)
@@ -177,6 +177,18 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
     }
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  // Auto-open trial modal if triggered via hash navigation (e.g. from LoginPage)
+  useEffect(() => {
+    const handleHash = () => {
+      if (typeof window !== 'undefined' && window.location.hash === '#trial') {
+        setIsTrialModalOpen(true)
+      }
+    }
+    handleHash()
+    window.addEventListener('hashchange', handleHash)
+    return () => window.removeEventListener('hashchange', handleHash)
   }, [])
 
   // Free Trial Form State

@@ -239,7 +239,7 @@ const AppContent = () => {
           onOpenTrial={() => {
             setPublicView('landing')
             if (typeof window !== 'undefined') {
-              window.location.hash = ''
+              window.location.hash = '#trial'
             }
           }}
         />
