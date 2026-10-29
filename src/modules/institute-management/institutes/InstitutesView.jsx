@@ -162,7 +162,13 @@ export const InstitutesView = () => {
   }, [viewingDetails])
 
   const handleOverviewFieldChange = (field, value) => {
-    setOverviewForm(prev => ({ ...prev, [field]: value }))
+    let finalVal = value
+    if (field === 'phone') {
+      const digits = value.replace(/\D/g, '')
+      const maxDigits = digits.startsWith('0') ? 11 : 10
+      finalVal = digits.slice(0, maxDigits)
+    }
+    setOverviewForm(prev => ({ ...prev, [field]: finalVal }))
     if (overviewErrors[field]) {
       setOverviewErrors(prev => ({ ...prev, [field]: false }))
     }
@@ -173,8 +179,13 @@ export const InstitutesView = () => {
     if (!overviewForm.principal || !overviewForm.principal.trim()) {
       errors.principal = true
     }
-    if (!overviewForm.phone || !overviewForm.phone.trim()) {
+    const phoneDigits = (overviewForm.phone || '').replace(/\D/g, '')
+    if (!phoneDigits) {
       errors.phone = true
+    } else if (phoneDigits.startsWith('0')) {
+      if (phoneDigits.length !== 11) errors.phone = true
+    } else {
+      if (phoneDigits.length !== 10) errors.phone = true
     }
     setOverviewErrors(errors)
     return Object.keys(errors).length === 0
@@ -371,14 +382,14 @@ export const InstitutesView = () => {
     if (wizardErrors.phone) setWizardErrors(prev => ({ ...prev, phone: null }))
   }
 
-  // Local phone number input handler
+  // Local phone number input handler (Max 10 digits, or 11 digits if starting with 0)
   const handlePhoneNumberChange = (val) => {
-    let cleaned = val.replace(/[^0-9 -]/g, '')
-    if (cleaned.startsWith('0') && cleaned.length > 1) {
-      cleaned = cleaned.substring(1)
-    }
+    const digits = val.replace(/\D/g, '')
+    const maxDigits = digits.startsWith('0') ? 11 : 10
+    const cleaned = digits.slice(0, maxDigits)
+
     const dialCode = wizardData.phoneDialCode || '+92'
-    const fullPhone = cleaned.trim() ? `${dialCode} ${cleaned.trim()}` : ''
+    const fullPhone = cleaned ? `${dialCode} ${cleaned}` : ''
 
     setWizardData(prev => ({
       ...prev,
@@ -553,11 +564,17 @@ export const InstitutesView = () => {
       }
     } else if (wizardStep === 3) {
       // Step 3: Contact Details - Official Phone is strictly required!
-      const digitsOnly = (wizardData.phoneNumber || wizardData.phone || '').replace(/[^0-9]/g, '')
-      if (!wizardData.phoneNumber?.trim() && !wizardData.phone?.trim()) {
+      const digitsOnly = (wizardData.phoneNumber || '').replace(/\D/g, '')
+      if (!digitsOnly) {
         errors.phone = 'Official Phone Number is required'
-      } else if (digitsOnly.length < 7) {
-        errors.phone = 'Please enter a valid phone number (minimum 7 digits)'
+      } else if (digitsOnly.startsWith('0')) {
+        if (digitsOnly.length !== 11) {
+          errors.phone = 'Phone number with leading 0 must be 11 digits (e.g. 03006543298)'
+        }
+      } else {
+        if (digitsOnly.length !== 10) {
+          errors.phone = 'Phone number must be 10 digits (e.g. 3006543298)'
+        }
       }
 
       if (Object.keys(errors).length > 0) {
@@ -887,12 +904,12 @@ export const InstitutesView = () => {
   }
 
   const handleEditPhoneChange = (val) => {
-    let cleaned = val.replace(/[^0-9 -]/g, '')
-    if (cleaned.startsWith('0') && cleaned.length > 1) {
-      cleaned = cleaned.substring(1)
-    }
+    const digits = val.replace(/\D/g, '')
+    const maxDigits = digits.startsWith('0') ? 11 : 10
+    const cleaned = digits.slice(0, maxDigits)
+
     const dialCode = editFormData.phoneDialCode || '+92'
-    const fullPhone = cleaned.trim() ? `${dialCode} ${cleaned.trim()}` : ''
+    const fullPhone = cleaned ? `${dialCode} ${cleaned}` : ''
 
     setEditFormData(prev => ({
       ...prev,
@@ -2233,16 +2250,26 @@ export const InstitutesView = () => {
                     <input
                       type="tel"
                       required
-                      placeholder={getPhonePlaceholder(wizardData.phoneDialCode || '+92')}
+                      placeholder="e.g. 3006543298 or 03006543298"
                       value={wizardData.phoneNumber || ''}
+                      maxLength={(wizardData.phoneNumber || '').startsWith('0') ? 11 : 10}
                       onChange={(e) => handlePhoneNumberChange(e.target.value)}
-                      className="w-full px-3.5 py-2.5 text-xs font-semibold text-slate-800 bg-transparent border-none outline-none placeholder:text-slate-400 placeholder:font-normal"
+                      className="w-full px-3.5 py-2.5 text-xs font-semibold text-slate-800 bg-transparent border-none outline-none placeholder:text-slate-400 placeholder:font-normal font-mono tracking-wide"
                     />
+                    {wizardData.phoneNumber && (
+                      <span className="text-[10px] font-mono text-slate-400 pr-3 select-none shrink-0">
+                        {(wizardData.phoneNumber || '').length}/{(wizardData.phoneNumber || '').startsWith('0') ? 11 : 10}
+                      </span>
+                    )}
                   </div>
                 </div>
 
-                {wizardErrors.phone && (
+                {wizardErrors.phone ? (
                   <p className="text-[11px] text-rose-600 mt-1 font-medium">{wizardErrors.phone}</p>
+                ) : (
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    Enter 10 digits (e.g. 3006543298) or 11 digits with leading 0 (e.g. 03006543298)
+                  </p>
                 )}
               </div>
 
@@ -3345,10 +3372,11 @@ export const InstitutesView = () => {
                     </div>
                     <input
                       type="tel"
-                      value={editFormData.phoneNumber}
+                      value={editFormData.phoneNumber || ''}
+                      maxLength={(editFormData.phoneNumber || '').startsWith('0') ? 11 : 10}
                       onChange={(e) => handleEditPhoneChange(e.target.value)}
-                      placeholder={getPhonePlaceholder(editFormData.phoneDialCode || '+92')}
-                      className="w-full px-3.5 py-2.5 text-xs font-semibold text-slate-800 bg-transparent border-none outline-none"
+                      placeholder="e.g. 3006543298 or 03006543298"
+                      className="w-full px-3.5 py-2.5 text-xs font-semibold text-slate-800 bg-transparent border-none outline-none font-mono"
                     />
                   </div>
                 </div>
