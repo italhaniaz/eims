@@ -360,6 +360,14 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
     return `${currentFilterConfig.badge} Tier Plan`
   }, [selectedTierFilter, currentFilterConfig.badge])
 
+  // Direct Add Campus shortcut handler: Redirects to Institutes view and automatically opens onboarding wizard
+  const handleDirectAddCampus = () => {
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem('open_campus_wizard', 'true')
+    }
+    onRouteChange('institutes')
+  }
+
   // Open Add Campus Modal with tier pre-selected
   const handleOpenAddCampusModal = () => {
     if (selectedTierFilter === 'college') {
@@ -784,6 +792,8 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               <span className="text-xs font-medium text-slate-500 select-none">
                 Manage
               </span>
+
+              {/* View Campuses Directory (Eye Button) */}
               <button
                 type="button"
                 onClick={() => onRouteChange('institutes')}
@@ -792,6 +802,17 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 aria-label="View Campuses Directory"
               >
                 <Eye className="w-3.5 h-3.5 stroke-[2]" />
+              </button>
+
+              {/* Directly Add New Campus (Plus Button) */}
+              <button
+                type="button"
+                onClick={handleDirectAddCampus}
+                className="w-7 h-7 rounded-full bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center transition-all cursor-pointer shadow-xs shadow-purple-600/30 hover:scale-110 active:scale-95 shrink-0"
+                title="Directly Add / Onboard New Campus"
+                aria-label="Add New Campus"
+              >
+                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
               </button>
             </div>
           </div>

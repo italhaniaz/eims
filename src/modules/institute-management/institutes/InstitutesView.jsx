@@ -410,6 +410,17 @@ export const InstitutesView = () => {
     setIsWizardOpen(true)
   }
 
+  // Auto-launch Onboarding Wizard if redirected from Dashboard shortcut
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const shouldOpenWizard = sessionStorage.getItem('open_campus_wizard') === 'true'
+      if (shouldOpenWizard) {
+        sessionStorage.removeItem('open_campus_wizard')
+        openOnboardingWizard()
+      }
+    }
+  }, [])
+
   const handleNextStep = () => {
     const errors = {}
 
