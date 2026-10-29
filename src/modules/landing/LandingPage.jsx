@@ -45,6 +45,58 @@ const STARBURST_POINTS = (() => {
   return points.join(' ')
 })()
 
+// Educational Plans Configuration (Dedicated Cards & Modal Specifications)
+const PLAN_CONFIGS = {
+  trial: {
+    id: 'trial',
+    tier: 'school',
+    isMultiCampus: false,
+    title: 'Start 14-Day Free Trial',
+    badge: '₨ 0 · No Credit Card Required · Instant Activation',
+    badgeColor: 'text-emerald-600',
+    description: 'Enter your institutional details below to immediately launch an isolated 14-day evaluation environment for your school or college.',
+    buttonText: 'Activate 14-Day Free Trial',
+    buttonClass: 'bg-purple-600 hover:bg-purple-700 shadow-purple-600/25',
+    iconBg: 'bg-[#f5eeff] text-purple-700'
+  },
+  school: {
+    id: 'school',
+    tier: 'school',
+    isMultiCampus: false,
+    title: 'Subscribe to School Plan',
+    badge: '₨ 25,000 / month (or ₨ 21,250 annual) · 1,500 Students · 2 Campuses',
+    badgeColor: 'text-purple-700',
+    description: 'Setup and register your primary or matriculation school campus with computerized fee vouchers, exam admit cards, and daily attendance.',
+    buttonText: 'Activate School Plan',
+    buttonClass: 'bg-purple-600 hover:bg-purple-700 shadow-purple-600/25',
+    iconBg: 'bg-purple-100 text-purple-700'
+  },
+  college: {
+    id: 'college',
+    tier: 'college',
+    isMultiCampus: false,
+    title: 'Subscribe to College Plan',
+    badge: '₨ 35,000 / month (or ₨ 29,750 annual) · 3,000 Students · 3 Campuses',
+    badgeColor: 'text-indigo-700',
+    description: 'Deploy higher secondary intermediate college management for F.Sc, ICS, and I.Com with BISE board registrations and lab scheduling.',
+    buttonText: 'Activate College Plan',
+    buttonClass: 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-600/25',
+    iconBg: 'bg-indigo-100 text-indigo-700'
+  },
+  university: {
+    id: 'university',
+    tier: 'undergraduate',
+    isMultiCampus: true,
+    title: 'Subscribe to University / Hybrid Plan',
+    badge: '₨ 55,000 / month · 8,000+ Students · 15+ Campuses · Multi-Wing HQ',
+    badgeColor: 'text-purple-800',
+    description: 'Launch an enterprise academic operating system for universities, degree colleges, and large multi-campus educational conglomerates.',
+    buttonText: 'Activate University Plan',
+    buttonClass: 'bg-purple-700 hover:bg-purple-800 shadow-purple-700/25',
+    iconBg: 'bg-purple-100 text-purple-700'
+  }
+}
+
 export const LandingPage = ({ onNavigateToLogin }) => {
   const { login } = useAuth()
   const { showToast } = useToast()
@@ -54,6 +106,7 @@ export const LandingPage = ({ onNavigateToLogin }) => {
   const [activeTab, setActiveTab] = useState('school') // 'school', 'college', 'university', 'custom'
   const [billingCycle, setBillingCycle] = useState('monthly') // 'monthly', 'annual'
   const [isTrialModalOpen, setIsTrialModalOpen] = useState(false)
+  const [activeModalPlan, setActiveModalPlan] = useState('trial')
   const [expandedFaq, setExpandedFaq] = useState(0)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [showScrollTop, setShowScrollTop] = useState(false)
@@ -199,15 +252,32 @@ export const LandingPage = ({ onNavigateToLogin }) => {
     }
   }
 
+  // Smart Plan Modal Opener: Dynamically configures modal title, badge, icon, and default tier
+  const openPlanModal = (planKey = 'trial') => {
+    setActiveModalPlan(planKey)
+    if (planKey === 'school') {
+      setTrialForm(prev => ({ ...prev, tier: 'school', isMultiCampus: false }))
+    } else if (planKey === 'college') {
+      setTrialForm(prev => ({ ...prev, tier: 'college', isMultiCampus: false }))
+    } else if (planKey === 'university') {
+      setTrialForm(prev => ({ ...prev, tier: 'undergraduate', isMultiCampus: true }))
+    } else {
+      setTrialForm(prev => ({ ...prev, tier: 'school', isMultiCampus: false }))
+    }
+    setIsTrialModalOpen(true)
+  }
+
   // Smart Trial Modal Opener that pre-selects the clicked educational wing
   const handleOpenTrialModal = (targetWing = 'school') => {
-    const normalized = targetWing === 'university' ? 'undergraduate' : (targetWing || activeTab || 'school')
-    setTrialForm(prev => ({
-      ...prev,
-      tier: normalized === 'custom' ? 'school' : normalized,
-      isMultiCampus: targetWing === 'custom'
-    }))
-    setIsTrialModalOpen(true)
+    if (targetWing === 'college') {
+      openPlanModal('college')
+    } else if (targetWing === 'university') {
+      openPlanModal('university')
+    } else if (targetWing === 'custom') {
+      openPlanModal('university')
+    } else {
+      openPlanModal('school')
+    }
   }
 
   // Handle Free Trial Registration
@@ -240,7 +310,24 @@ export const LandingPage = ({ onNavigateToLogin }) => {
           ? 'College Wing'
           : 'University Wing'
 
-        const planTierName = `Free Trial (${wingLabel})`
+        let planTierName = '14-Day Free Evaluation Tier'
+        let planPrice = 0
+        let planStatus = 'TRIAL'
+
+        if (activeModalPlan === 'school') {
+          planTierName = 'School Plan (Primary & Matric)'
+          planPrice = billingCycle === 'annual' ? 21250 : 25000
+          planStatus = 'ACTIVE'
+        } else if (activeModalPlan === 'college') {
+          planTierName = 'College Plan (Intermediate & Inter)'
+          planPrice = billingCycle === 'annual' ? 29750 : 35000
+          planStatus = 'ACTIVE'
+        } else if (activeModalPlan === 'university') {
+          planTierName = 'University / Enterprise Plan'
+          planPrice = billingCycle === 'annual' ? 46750 : 55000
+          planStatus = 'ACTIVE'
+        }
+
         const planTypeCode = trialForm.isMultiCampus
           ? 'CUSTOM'
           : trialForm.tier === 'school'
@@ -292,9 +379,9 @@ export const LandingPage = ({ onNavigateToLogin }) => {
           planId: `plan-trial-${trialForm.tier}`,
           planName: planTierName,
           enabledTiers: enabledTiers,
-          status: 'TRIAL',
+          status: planStatus,
           billingCycle: '14-day trial',
-          pricePKR: 0,
+          pricePKR: planPrice,
           startDate: new Date().toISOString().slice(0, 10),
           renewalDate: new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
           trialEndsAt: new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
@@ -313,7 +400,7 @@ export const LandingPage = ({ onNavigateToLogin }) => {
 
         setIsSubmittingTrial(false)
         setIsTrialModalOpen(false)
-        showToast(`Congratulations! 14-Day Free Trial initiated for ${trialForm.instituteName}.`)
+        showToast(`Congratulations! ${planTierName} successfully activated for ${trialForm.instituteName}.`)
 
         // Automatically log in as the newly created trial campus admin
         login('institute_admin', trialForm.email, true)
@@ -1189,7 +1276,7 @@ export const LandingPage = ({ onNavigateToLogin }) => {
 
               <div className="mt-6 pt-4 border-t border-slate-100">
                 <button
-                  onClick={() => setIsTrialModalOpen(true)}
+                  onClick={() => openPlanModal('trial')}
                   className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer"
                 >
                   Start 14-Day Free Trial
@@ -1309,8 +1396,8 @@ export const LandingPage = ({ onNavigateToLogin }) => {
 
               <div className="mt-6 pt-4 border-t border-slate-100">
                 <button
-                  onClick={() => setIsTrialModalOpen(true)}
-                  className="w-full py-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs transition-colors cursor-pointer"
+                  onClick={() => openPlanModal('college')}
+                  className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm shadow-indigo-600/20 transition-all cursor-pointer"
                 >
                   Choose College Plan
                 </button>
@@ -1370,10 +1457,10 @@ export const LandingPage = ({ onNavigateToLogin }) => {
 
               <div className="mt-6 pt-4 border-t border-slate-100">
                 <button
-                  onClick={() => setIsTrialModalOpen(true)}
-                  className="w-full py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer"
+                  onClick={() => openPlanModal('university')}
+                  className="w-full py-2.5 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs shadow-sm shadow-purple-700/25 transition-all cursor-pointer"
                 >
-                  Contact for Enterprise
+                  Activate University Plan
                 </button>
               </div>
             </div>
@@ -1733,23 +1820,32 @@ export const LandingPage = ({ onNavigateToLogin }) => {
                 <X className="w-5 h-5" />
               </button>
 
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-[#f5eeff] text-purple-700 flex items-center justify-center shrink-0 shadow-2xs">
-                  <Sparkles className="w-5 h-5" />
-                </div>
-                <div className="pr-8">
-                  <h3 className="text-base sm:text-lg font-extrabold text-slate-900 font-heading leading-tight">
-                    Start 14-Day Free Trial
-                  </h3>
-                  <span className="text-[11px] font-semibold text-emerald-600 block mt-0.5">
-                    ₨ 0 · No Credit Card Required · Instant Activation
-                  </span>
-                </div>
-              </div>
+{(() => {
+                const currentPlanConfig = PLAN_CONFIGS[activeModalPlan] || PLAN_CONFIGS.trial
+                const PlanHeaderIcon = activeModalPlan === 'school' ? School : activeModalPlan === 'college' ? Building2 : activeModalPlan === 'university' ? GraduationCap : Sparkles
 
-              <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-                Enter your institutional details below to immediately launch an isolated trial environment for your school or college.
-              </p>
+                return (
+                  <div>
+                    <div className="flex items-center gap-2.5">
+                      <div className={`w-9 h-9 rounded-xl ${currentPlanConfig.iconBg} flex items-center justify-center shrink-0 shadow-2xs`}>
+                        <PlanHeaderIcon className="w-5 h-5" />
+                      </div>
+                      <div className="pr-8">
+                        <h3 className="text-base sm:text-lg font-extrabold text-slate-900 font-heading leading-tight">
+                          {currentPlanConfig.title}
+                        </h3>
+                        <span className={`text-[11px] font-semibold block mt-0.5 ${currentPlanConfig.badgeColor}`}>
+                          {currentPlanConfig.badge}
+                        </span>
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                      {currentPlanConfig.description}
+                    </p>
+                  </div>
+                )
+              })()}
             </div>
 
             {/* Scrollable Form Body: Inner container with sleek modal-scrollbar */}
@@ -1811,7 +1907,7 @@ export const LandingPage = ({ onNavigateToLogin }) => {
                   {/* Card 1: School */}
                   <button
                     type="button"
-                    onClick={() => setTrialForm({ ...trialForm, tier: 'school' })}
+                    onClick={() => { setActiveModalPlan('school'); setTrialForm({ ...trialForm, tier: 'school', isMultiCampus: false }); }}
                     className={`p-2.5 sm:p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
                       trialForm.tier === 'school'
                         ? 'bg-purple-50/80 border-purple-500 ring-2 ring-purple-500/20 shadow-xs'
@@ -1837,7 +1933,7 @@ export const LandingPage = ({ onNavigateToLogin }) => {
                   {/* Card 2: College */}
                   <button
                     type="button"
-                    onClick={() => setTrialForm({ ...trialForm, tier: 'college' })}
+                    onClick={() => { setActiveModalPlan('college'); setTrialForm({ ...trialForm, tier: 'college', isMultiCampus: false }); }}
                     className={`p-2.5 sm:p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
                       trialForm.tier === 'college'
                         ? 'bg-indigo-50/80 border-indigo-500 ring-2 ring-indigo-500/20 shadow-xs'
@@ -1863,7 +1959,7 @@ export const LandingPage = ({ onNavigateToLogin }) => {
                   {/* Card 3: University */}
                   <button
                     type="button"
-                    onClick={() => setTrialForm({ ...trialForm, tier: 'undergraduate' })}
+                    onClick={() => { setActiveModalPlan('university'); setTrialForm({ ...trialForm, tier: 'undergraduate' }); }}
                     className={`p-2.5 sm:p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
                       trialForm.tier === 'undergraduate'
                         ? 'bg-emerald-50/80 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs'
