@@ -69,12 +69,7 @@ const GlobalTemplatesView = () => {
       // Load institutes for the push target selector
       const store = getStoredData()
       const insts = store.institutes || []
-      const defaultInsts = [
-        { id: 'c1000000-0000-0000-0000-000000000001', name: 'Beaconhouse Central High School', code: 'BHS-001', city: 'Lahore' },
-        { id: 'c1000000-0000-0000-0000-000000000002', name: 'City School Model Town Campus', code: 'CSM-002', city: 'Lahore' },
-        { id: 'c1000000-0000-0000-0000-000000000003', name: 'Roots International Academy', code: 'RIA-003', city: 'Islamabad' }
-      ]
-      setInstitutes(insts.length > 0 ? insts : defaultInsts)
+      setInstitutes(insts)
     } catch (err) {
       console.error('Failed to load templates:', err)
     } finally {
@@ -505,7 +500,8 @@ const GlobalTemplatesView = () => {
             </div>
 
             <div className="space-y-2 max-h-56 overflow-y-auto border border-slate-200 rounded-xl p-2.5 bg-slate-50">
-              {institutes.map((inst) => {
+              {institutes.length > 0 ? (
+                institutes.map((inst) => {
                 const isSelected = selectedInstituteIds.includes(inst.id)
                 return (
                   <label
@@ -535,7 +531,12 @@ const GlobalTemplatesView = () => {
                     </span>
                   </label>
                 )
-              })}
+              })
+              ) : (
+                <div className="py-6 text-center text-xs text-slate-400">
+                  No campuses registered to sync templates to.
+                </div>
+              )}
             </div>
           </div>
 

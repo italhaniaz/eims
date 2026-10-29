@@ -308,6 +308,55 @@ export const getStoredData = () => {
       const parsed = JSON.parse(raw)
       const demoNames = ['Hamza Farooq', 'Ayesha Siddiqui', 'Daniyal Tariq', 'Zainab Fatima', 'Bilal Ahmed Khan', 'Ahmed Raza']
       const demoRolls = ['STD-101', 'COL-201', 'STD-103', 'REG-401', 'STD-105', 'BHS-2024-001', 'BHS-2024-002', 'STD-1001', 'COL-2002', 'REG-3003']
+      // Scrub dummy institutes
+      if (Array.isArray(parsed.institutes)) {
+        const demoInstIds = ['inst-1', 'inst-2', 'inst-3', 'c1000000-0000-0000-0000-000000000001', 'c1000000-0000-0000-0000-000000000002', 'c1000000-0000-0000-0000-000000000003']
+        const demoInstCodes = ['BHS-001', 'CSM-002', 'RIA-003']
+        const demoKeywords = ['beaconhouse', 'city school model town', 'roots international']
+        const filteredInsts = parsed.institutes.filter(inst => {
+          if (!inst) return false
+          if (demoInstIds.includes(inst.id)) return false
+          if (demoInstCodes.includes(inst.code)) return false
+          const nameLower = (inst.name || '').toLowerCase()
+          if (demoKeywords.some(k => nameLower.includes(k))) return false
+          return true
+        })
+        if (filteredInsts.length !== parsed.institutes.length) {
+          parsed.institutes = filteredInsts
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed))
+        }
+      }
+
+      // Scrub dummy users
+      if (Array.isArray(parsed.users)) {
+        const demoUserIds = ['usr-1', 'usr-2', 'usr-3', 'usr-admin-1', 'usr-demo']
+        const demoEmails = ['beacon.admin@sms.edu', 'beacon.central@sms.edu', 'info@cityschool.edu', 'rawalpindi@roots.edu', 'admin@schoolms.com']
+        const filteredUsers = parsed.users.filter(u => {
+          if (!u) return false
+          if (demoUserIds.includes(u.id)) return false
+          if (demoEmails.includes((u.email || '').toLowerCase())) return false
+          return true
+        })
+        if (filteredUsers.length !== parsed.users.length) {
+          parsed.users = filteredUsers
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed))
+        }
+      }
+
+      // Scrub dummy audit logs
+      if (Array.isArray(parsed.auditLogs)) {
+        const filteredLogs = parsed.auditLogs.filter(log => {
+          if (!log) return false
+          const str = ((log.user || '') + (log.action || '') + (log.details || '')).toLowerCase()
+          if (str.includes('beaconhouse') || str.includes('city school') || str.includes('roots')) return false
+          return true
+        })
+        if (filteredLogs.length !== parsed.auditLogs.length) {
+          parsed.auditLogs = filteredLogs
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed))
+        }
+      }
+
       if (Array.isArray(parsed.students)) {
         const filtered = parsed.students.filter(s => 
           !demoNames.includes(s.name) && !demoRolls.includes(s.rollNumber)
@@ -406,23 +455,40 @@ const getActiveUserEmail = () => {
 }
 
 // Data service API
-export const DataService = {
-  logActivity(action, details, actor = 'System') {
-    try {
-      const store = getStoredData()
-      if (!store.recentActivity) store.recentActivity = []
-      store.recentActivity.unshift({
-        id: `act-${Date.now()}`,
-        text: `${action}: ${details}`,
-        time: 'Just now',
-        type: 'SYSTEM',
-        dotColor: '#8b5cf6'
-      })
-      if (store.recentActivity.length > 25) store.recentActivity.pop()
-      saveStoredData(store)
-    } catch (e) {
-      console.warn('Failed to log activity:', e)
-    }
+export const DataService = {
+
+  logActivity(action, details, actor = 'System') {
+
+    try {
+
+      const store = getStoredData()
+
+      if (!store.recentActivity) store.recentActivity = []
+
+      store.recentActivity.unshift({
+
+        id: `act-${Date.now()}`,
+
+        text: `${action}: ${details}`,
+
+        time: 'Just now',
+
+        type: 'SYSTEM',
+
+        dotColor: '#8b5cf6'
+
+      })
+
+      if (store.recentActivity.length > 25) store.recentActivity.pop()
+
+      saveStoredData(store)
+
+    } catch (e) {
+
+      console.warn('Failed to log activity:', e)
+
+    }
+
   },
   async getCollection(collectionName) {
     if (isSupabaseConfigured && supabase) {

@@ -96,8 +96,8 @@ const SubscriptionsBillingView = () => {
       ])
 
       const finalPlans = (Array.isArray(p) && p.length > 0) ? p : FALLBACK_PLANS
-      const finalSubs = (Array.isArray(s) && s.length > 0) ? s : FALLBACK_SUBSCRIPTIONS
-      const finalInvs = (Array.isArray(inv) && inv.length > 0) ? inv : FALLBACK_INVOICES
+      const finalSubs = Array.isArray(s) ? s : []
+      const finalInvs = Array.isArray(inv) ? inv : []
 
       const activeSubs = finalSubs.filter(sub => sub.status === 'ACTIVE')
       const trialSubs = finalSubs.filter(sub => sub.status === 'TRIAL')
@@ -119,8 +119,8 @@ const SubscriptionsBillingView = () => {
     } catch (err) {
       console.error('Failed loading billing data:', err)
       setPlans(FALLBACK_PLANS)
-      setSubscriptions(FALLBACK_SUBSCRIPTIONS)
-      setInvoices(FALLBACK_INVOICES)
+      setSubscriptions([])
+      setInvoices([])
     } finally {
       setLoading(false)
     }
@@ -562,7 +562,7 @@ const SubscriptionsBillingView = () => {
             }`}
           >
             <CreditCard className="w-4 h-4" />
-            <span>Campus Subscriptions ({Math.max(subscriptions.length, 1)})</span>
+            <span>Campus Subscriptions ({subscriptions.length})</span>
           </button>
 
           <button
@@ -630,7 +630,8 @@ const SubscriptionsBillingView = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-700">
-                  {filteredSubscriptions.map((sub) => (
+                  {filteredSubscriptions.length > 0 ? (
+                    filteredSubscriptions.map((sub) => (
                     <tr key={sub.id} className="hover:bg-slate-50/70 transition-colors">
                       <td className="py-3.5 px-4">
                         <div className="font-semibold text-slate-900">{sub.instituteName}</div>
@@ -747,7 +748,16 @@ const SubscriptionsBillingView = () => {
                         </div>
                       </td>
                     </tr>
-                  ))}
+                  ))
+                  ) : (
+                    <tr>
+                      <td colSpan="5" className="py-12 text-center text-slate-400">
+                        <CreditCard className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                        <p className="text-sm font-semibold text-slate-600">No active subscriptions found</p>
+                        <p className="text-xs text-slate-400 mt-0.5">Campuses onboarded with subscription plans will appear here.</p>
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -1270,7 +1280,8 @@ const SubscriptionsBillingView = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-700">
-                  {filteredInvoices.map((inv) => (
+                  {filteredInvoices.length > 0 ? (
+                    filteredInvoices.map((inv) => (
                     <tr key={inv.id} className="hover:bg-slate-50/70 transition-colors">
                       <td className="py-3.5 px-4 font-mono font-semibold text-slate-900">
                         {inv.invoiceNumber}
@@ -1334,7 +1345,16 @@ const SubscriptionsBillingView = () => {
                         </div>
                       </td>
                     </tr>
-                  ))}
+                  ))
+                  ) : (
+                    <tr>
+                      <td colSpan="7" className="py-12 text-center text-slate-400">
+                        <FileText className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                        <p className="text-sm font-semibold text-slate-600">No invoices generated yet</p>
+                        <p className="text-xs text-slate-400 mt-0.5">Subscription billing invoices will appear here once generated.</p>
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>

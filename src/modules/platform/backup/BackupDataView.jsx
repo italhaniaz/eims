@@ -71,14 +71,9 @@ const BackupDataView = () => {
 
       const store = getStoredData()
       const insts = store.institutes || []
-      const defaultInsts = [
-        { id: 'c1000000-0000-0000-0000-000000000001', name: 'Beaconhouse Central High School', code: 'BHS-001', city: 'Lahore' },
-        { id: 'c1000000-0000-0000-0000-000000000002', name: 'City School Model Town Campus', code: 'CSM-002', city: 'Lahore' },
-        { id: 'c1000000-0000-0000-0000-000000000003', name: 'Roots International Academy', code: 'RIA-003', city: 'Islamabad' }
-      ]
-      const finalInsts = insts.length > 0 ? insts : defaultInsts
-      setInstitutes(finalInsts)
-      if (finalInsts[0]) setSelectedInstituteId(finalInsts[0].id)
+      setInstitutes(insts)
+      if (insts.length > 0) setSelectedInstituteId(insts[0].id)
+      else setSelectedInstituteId('')
     } catch (err) {
       console.error(err)
     } finally {
@@ -429,12 +424,17 @@ const BackupDataView = () => {
                 value={selectedInstituteId}
                 onChange={(e) => setSelectedInstituteId(e.target.value)}
                 className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none bg-white"
+                disabled={institutes.length === 0}
               >
-                {institutes.map((inst) => (
-                  <option key={inst.id} value={inst.id}>
-                    {inst.name} ({inst.code})
-                  </option>
-                ))}
+                {institutes.length > 0 ? (
+                  institutes.map((inst) => (
+                    <option key={inst.id} value={inst.id}>
+                      {inst.name} ({inst.code})
+                    </option>
+                  ))
+                ) : (
+                  <option value="">No registered campuses</option>
+                )}
               </select>
             </div>
 

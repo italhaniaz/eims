@@ -381,7 +381,8 @@ const SupportApprovalsView = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
-                {(ticketStatusFilter === "ALL" ? tickets : tickets.filter(t => t.status === ticketStatusFilter)).map((tkt) => (
+                {(ticketStatusFilter === "ALL" ? tickets : tickets.filter(t => t.status === ticketStatusFilter)).length > 0 ? (
+                  (ticketStatusFilter === "ALL" ? tickets : tickets.filter(t => t.status === ticketStatusFilter)).map((tkt) => (
                   <tr key={tkt.id} className="hover:bg-slate-50/70 transition-colors">
                     <td className="py-3.5 px-4 font-mono font-semibold text-slate-900">
                       {tkt.ticketNumber}
@@ -430,7 +431,16 @@ const SupportApprovalsView = () => {
                       </button>
                     </td>
                   </tr>
-                ))}
+                ))
+                ) : (
+                  <tr>
+                    <td colSpan="6" className="py-12 text-center text-slate-400">
+                      <LifeBuoy className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                      <p className="text-sm font-semibold text-slate-600">No support tickets found</p>
+                      <p className="text-xs text-slate-400 mt-0.5">Tickets from campus administrators will appear here.</p>
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -440,7 +450,8 @@ const SupportApprovalsView = () => {
       {/* TAB 2: APPROVAL QUEUE */}
       {activeTab === 'approvals' && (
         <div className="space-y-4">
-          {approvals.map((appr) => {
+          {approvals.length > 0 ? (
+            approvals.map((appr) => {
             const isPending = appr.status === 'PENDING'
             const isOnboarding = appr.requestType === 'INSTITUTE_ONBOARDING'
             const details = appr.details || {}
@@ -633,7 +644,16 @@ const SupportApprovalsView = () => {
                 </div>
               </div>
             )
-          })}
+          })
+          ) : (
+            <div className="bg-white rounded-3xl border border-slate-100 p-12 text-center shadow-xs">
+              <CheckCircle className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+              <h3 className="text-base font-bold text-slate-700">All Approvals Cleared</h3>
+              <p className="text-xs text-slate-400 max-w-sm mx-auto mt-1">
+                No pending administrative petitions or onboarding approvals at this time.
+              </p>
+            </div>
+          )}
         </div>
       )}
 

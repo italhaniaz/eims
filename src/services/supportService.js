@@ -2,97 +2,9 @@ import { DataService, getStoredData, saveStoredData } from './dataService'
 
 const API_BASE_URL = 'http://localhost:5000'
 
-const FALLBACK_TICKETS = [
-  {
-    id: 'tkt-001',
-    ticketNumber: 'TKT-8901',
-    instituteId: 'c1000000-0000-0000-0000-000000000001',
-    instituteName: 'Beaconhouse Central High School',
-    requesterName: 'Mrs. Rashida Khan',
-    requesterEmail: 'admin.beacon@sms.edu',
-    subject: 'Fee Challan custom bank barcode format inquiry',
-    category: 'Finance',
-    priority: 'Medium',
-    status: 'IN_PROGRESS',
-    messages: [
-      { sender: 'Mrs. Rashida Khan', role: 'Institute Admin', text: 'We need to verify if the 1Link 1Bill barcode prefix matches our new bank branch code 0442.', time: 'Yesterday at 11:30 AM' },
-      { sender: 'Super Administrator', role: 'Superadmin', text: 'The 1Link format has been updated to 18-digit consumer ID. You can verify it via the Challan Print Engine.', time: 'Yesterday at 02:15 PM' }
-    ],
-    createdAt: '2026-10-21T06:30:00Z',
-    updatedAt: '2026-10-21T10:15:00Z'
-  },
-  {
-    id: 'tkt-002',
-    ticketNumber: 'TKT-8902',
-    instituteId: 'c1000000-0000-0000-0000-000000000002',
-    instituteName: 'City School Model Town Campus',
-    requesterName: 'Tariq Mehmood',
-    requesterEmail: 'city.model@sms.edu',
-    subject: 'Request for additional campus branch license',
-    category: 'Billing',
-    priority: 'High',
-    status: 'OPEN',
-    messages: [
-      { sender: 'Tariq Mehmood', role: 'Institute Admin', text: 'We are inaugurating our Junior Model Town extension next month and need to add 1 additional campus slot.', time: 'Today at 09:15 AM' }
-    ],
-    createdAt: '2026-10-22T04:15:00Z',
-    updatedAt: '2026-10-22T04:15:00Z'
-  },
-  {
-    id: 'tkt-003',
-    ticketNumber: 'TKT-8903',
-    instituteId: 'c1000000-0000-0000-0000-000000000003',
-    instituteName: 'Roots International Academy',
-    requesterName: 'Dr. Sajid Alvi',
-    requesterEmail: 'roots.intl@sms.edu',
-    subject: 'Assistance with HEC grading scale conversion',
-    category: 'Academics',
-    priority: 'Low',
-    status: 'RESOLVED',
-    messages: [
-      { sender: 'Dr. Sajid Alvi', role: 'Institute Admin', text: 'Could you push the standard HEC 4.0 GPA matrix to our university portal?', time: '3 days ago' },
-      { sender: 'Super Administrator', role: 'Superadmin', text: 'Template HEC 4.0 GPA Higher Education Scale has been successfully synchronized with your academic schemes.', time: '2 days ago' }
-    ],
-    createdAt: '2026-10-19T08:00:00Z',
-    updatedAt: '2026-10-20T11:00:00Z'
-  }
-]
+const FALLBACK_TICKETS = []
 
-const FALLBACK_APPROVALS = [
-  {
-    id: 'appr-001',
-    requestType: 'QUOTA_INCREASE',
-    instituteId: 'c1000000-0000-0000-0000-000000000002',
-    instituteName: 'City School Model Town Campus',
-    title: 'Student Enrollment Quota Extension (+500 Students)',
-    details: { currentQuota: 2000, requestedQuota: 2500, reason: 'Mid-term admission surge for O-Level sciences', plan: 'Professional Tier' },
-    status: 'PENDING',
-    reviewerNotes: null,
-    createdAt: '2026-10-21T05:00:00Z'
-  },
-  {
-    id: 'appr-002',
-    requestType: 'INSTITUTE_ONBOARDING',
-    instituteId: null,
-    instituteName: 'Lahore Grammar Collegiate System',
-    title: 'New Institute Affiliation Application',
-    details: { city: 'Lahore', type: 'College', division: 'Lahore', principal: 'Dr. Asma Bilal', expectedStudents: 1200 },
-    status: 'PENDING',
-    reviewerNotes: null,
-    createdAt: '2026-10-22T02:00:00Z'
-  },
-  {
-    id: 'appr-003',
-    requestType: 'FEATURE_UNLOCK',
-    instituteId: 'c1000000-0000-0000-0000-000000000003',
-    instituteName: 'Roots International Academy',
-    title: 'Central Fleet & GPS Transport Module Access',
-    details: { module: 'transport', requestedTier: 'Enterprise Apex', vehicleCount: 18 },
-    status: 'APPROVED',
-    reviewerNotes: 'Approved as part of Enterprise annual subscription bundle.',
-    createdAt: '2026-10-18T10:00:00Z'
-  }
-]
+const FALLBACK_APPROVALS = []
 
 export const SupportService = {
   // 1. TICKETS
@@ -104,10 +16,24 @@ export const SupportService = {
 
     const local = localStorage.getItem('sms_support_tickets')
     if (local) {
-      try { return JSON.parse(local) } catch {}
+      try { 
+        const parsed = JSON.parse(local)
+        if (Array.isArray(parsed)) {
+          const demoKeywords = ['beaconhouse', 'city school', 'roots international']
+          const filtered = parsed.filter(t => {
+            if (!t) return false
+            const str = ((t.instituteName || '') + (t.subject || '')).toLowerCase()
+            if (demoKeywords.some(k => str.includes(k))) return false
+            return true
+          })
+          if (filtered.length !== parsed.length) {
+            localStorage.setItem('sms_support_tickets', JSON.stringify(filtered))
+          }
+          return filtered
+        }
+      } catch {}
     }
-    localStorage.setItem('sms_support_tickets', JSON.stringify(FALLBACK_TICKETS))
-    return FALLBACK_TICKETS
+    return []
   },
 
   async replyTicket(ticketId, replyText, newStatus = null) {

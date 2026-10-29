@@ -88,125 +88,9 @@ export const FALLBACK_PLANS = [
   }
 ]
 
-export const FALLBACK_SUBSCRIPTIONS = [
-  {
-    id: 'sub-4',
-    instituteId: 'c1000000-0000-0000-0000-000000000004',
-    instituteName: 'Al-Huda International Grammar School',
-    planId: 'plan-trial',
-    planName: 'Free Trial Plan',
-    enabledTiers: ['school'],
-    status: 'TRIAL',
-    billingCycle: '14-day trial',
-    pricePKR: 0,
-    startDate: '2026-10-20',
-    renewalDate: '2026-11-03',
-    trialEndsAt: '2026-11-03',
-    autoRenew: false,
-    isWaived: false,
-    waiveReason: '14-Day Free Evaluation Access',
-    extendedUntil: null
-  },
-  {
-    id: 'sub-1',
-    instituteId: 'c1000000-0000-0000-0000-000000000001',
-    instituteName: 'Beaconhouse Central High School',
-    planId: 'plan-custom',
-    planName: 'Custom Hybrid Plan',
-    enabledTiers: ['school', 'college'],
-    status: 'ACTIVE',
-    billingCycle: 'monthly',
-    pricePKR: 75000,
-    startDate: '2026-08-01',
-    renewalDate: '2026-10-31',
-    trialEndsAt: null,
-    autoRenew: true,
-    isWaived: false,
-    waiveReason: '',
-    extendedUntil: null
-  },
-  {
-    id: 'sub-2',
-    instituteId: 'c1000000-0000-0000-0000-000000000002',
-    instituteName: 'City School Model Town Campus',
-    planId: 'plan-school',
-    planName: 'School Plan',
-    enabledTiers: ['school'],
-    status: 'ACTIVE',
-    billingCycle: 'monthly',
-    pricePKR: 25000,
-    startDate: '2026-09-01',
-    renewalDate: '2026-11-15',
-    trialEndsAt: null,
-    autoRenew: true,
-    isWaived: false,
-    waiveReason: '',
-    extendedUntil: null
-  },
-  {
-    id: 'sub-3',
-    instituteId: 'c1000000-0000-0000-0000-000000000003',
-    instituteName: 'Roots International Academy',
-    planId: 'plan-college',
-    planName: 'College Plan',
-    enabledTiers: ['college'],
-    status: 'ACTIVE',
-    billingCycle: 'monthly',
-    pricePKR: 35000,
-    startDate: '2026-10-12',
-    renewalDate: '2026-10-29',
-    trialEndsAt: null,
-    autoRenew: true,
-    isWaived: false,
-    waiveReason: '',
-    extendedUntil: null
-  }
-]
+export const FALLBACK_SUBSCRIPTIONS = []
 
-export const FALLBACK_INVOICES = [
-  {
-    id: 'inv-001',
-    invoiceNumber: 'INV-2026-001',
-    instituteId: 'c1000000-0000-0000-0000-000000000001',
-    instituteName: 'Beaconhouse Central High School',
-    planName: 'Custom Hybrid Plan',
-    amountPKR: 75000,
-    status: 'PAID',
-    issueDate: '2026-09-25',
-    dueDate: '2026-10-05',
-    paidDate: '2026-09-28',
-    paymentMethod: '1Link / 1Bill',
-    transactionRef: 'TXN-1LINK-992144'
-  },
-  {
-    id: 'inv-002',
-    invoiceNumber: 'INV-2026-002',
-    instituteId: 'c1000000-0000-0000-0000-000000000002',
-    instituteName: 'City School Model Town Campus',
-    planName: 'School Plan',
-    amountPKR: 25000,
-    status: 'PAID',
-    issueDate: '2026-09-28',
-    dueDate: '2026-10-08',
-    paidDate: '2026-10-02',
-    paymentMethod: 'JazzCash Corporate',
-    transactionRef: 'TXN-JC-881203'
-  },
-  {
-    id: 'inv-003',
-    invoiceNumber: 'INV-2026-003',
-    instituteId: 'c1000000-0000-0000-0000-000000000003',
-    instituteName: 'Roots International Academy',
-    planName: 'College Plan',
-    amountPKR: 35000,
-    status: 'PENDING',
-    issueDate: '2026-10-18',
-    dueDate: '2026-10-29',
-    paidDate: null,
-    paymentMethod: 'Pending 1Bill Payment',
-    transactionRef: null
-  }
-]
+export const FALLBACK_INVOICES = []
 
 export const BillingService = {
   calculateDaysRemaining(renewalDate) {
@@ -354,26 +238,27 @@ export const BillingService = {
     if (local) {
       try { 
         const parsed = JSON.parse(local)
-        if (parsed && Array.isArray(parsed) && parsed.some(s => s.planId === 'plan-custom' || s.planId === 'plan-school')) {
-          if (!parsed.some(s => s.id === 'sub-4' || s.status === 'TRIAL')) {
-            const trialSub = FALLBACK_SUBSCRIPTIONS.find(s => s.status === 'TRIAL')
-            if (trialSub) {
-              parsed.push(trialSub)
-              localStorage.setItem('sms_institute_subscriptions', JSON.stringify(parsed))
-            }
+        if (Array.isArray(parsed)) {
+          const demoInstKeywords = ['beaconhouse', 'city school', 'roots international', 'al-huda']
+          const demoSubIds = ['sub-1', 'sub-2', 'sub-3', 'sub-4', 'c1000000-0000-0000-0000-000000000001', 'c1000000-0000-0000-0000-000000000002', 'c1000000-0000-0000-0000-000000000003', 'c1000000-0000-0000-0000-000000000004']
+          const filtered = parsed.filter(s => {
+            if (!s) return false
+            if (demoSubIds.includes(s.id) || demoSubIds.includes(s.instituteId)) return false
+            const name = (s.instituteName || '').toLowerCase()
+            if (demoInstKeywords.some(k => name.includes(k))) return false
+            return true
+          })
+          if (filtered.length !== parsed.length) {
+            localStorage.setItem('sms_institute_subscriptions', JSON.stringify(filtered))
           }
-          return parsed.map(s => ({
+          return filtered.map(s => ({
             ...s,
             daysRemaining: this.calculateDaysRemaining(s.renewalDate)
           }))
         }
       } catch {}
     }
-    localStorage.setItem('sms_institute_subscriptions', JSON.stringify(FALLBACK_SUBSCRIPTIONS))
-    return FALLBACK_SUBSCRIPTIONS.map(s => ({
-      ...s,
-      daysRemaining: this.calculateDaysRemaining(s.renewalDate)
-    }))
+    return []
   },
 
   getSubscriptionForInstitute(instituteId) {
@@ -382,7 +267,7 @@ export const BillingService = {
     if (local) {
       try { subs = JSON.parse(local) } catch {}
     }
-    const sub = subs.find(s => s.instituteId === instituteId) || subs[0]
+    const sub = subs.find(s => s.instituteId === instituteId)
     if (!sub) return null
     const daysRemaining = this.calculateDaysRemaining(sub.renewalDate)
     return {

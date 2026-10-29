@@ -3,18 +3,7 @@ import { DataService, getStoredData } from './dataService'
 
 const API_BASE_URL = 'http://localhost:5000'
 
-const FALLBACK_SCHEDULED_REPORTS = [
-  {
-    id: 'sch-rep-1',
-    title: 'Weekly Multi-Campus Executive Briefing',
-    frequency: 'WEEKLY',
-    format: 'PDF',
-    recipients: 'governance@schoolms.com, audit@schoolms.com',
-    isActive: true,
-    lastRunAt: '2026-10-20T08:00:00Z',
-    nextRunAt: '2026-10-27T08:00:00Z'
-  }
-]
+const FALLBACK_SCHEDULED_REPORTS = []
 
 export const AnalyticsService = {
   // 1. GET AGGREGATED CROSS-INSTITUTE DATA
@@ -25,37 +14,51 @@ export const AnalyticsService = {
     const teachers = store.teachers || []
     const fees = store.fees || []
 
-    // Ensure 3 demo institutes exist in data representation even if store has only 1
-    const baseInstitutes = institutes.length > 0 ? institutes : [
-      { id: 'c1000000-0000-0000-0000-000000000001', name: 'Beaconhouse Central High School', code: 'BHS-001', type: 'School', city: 'Lahore' },
-      { id: 'c1000000-0000-0000-0000-000000000002', name: 'City School Model Town Campus', code: 'CSM-002', type: 'College', city: 'Lahore' },
-      { id: 'c1000000-0000-0000-0000-000000000003', name: 'Roots International Academy', code: 'RIA-003', type: 'University', city: 'Islamabad' }
-    ]
+    if (institutes.length === 0) {
+      return {
+        period,
+        summary: {
+          totalInstitutes: 0,
+          totalStudents: 0,
+          totalTeachers: 0,
+          avgAttendance: 0,
+          avgFeeRecovery: 0,
+          totalBilledPKR: 0,
+          totalCollectedPKR: 0
+        },
+        comparisonList: [],
+        topPerformers: {
+          topAttendance: null,
+          lowestAttendance: null,
+          topFeeRecovery: null,
+          lowestFeeRecovery: null,
+          largestEnrollment: null
+        }
+      }
+    }
 
-    // Compute metrics for each institute
-    const comparisonList = baseInstitutes.map((inst, index) => {
-      // Find actual students for this institute or generate representative proportional cohort
+    // Compute metrics for each genuine institute
+    const comparisonList = institutes.map((inst, index) => {
       const instStudents = students.filter(s => s.instituteId === inst.id)
       const instTeachers = teachers.filter(t => t.instituteId === inst.id)
 
-      // Dynamic or representative counts
-      const fallbackStudents = [840, 520, 380, 240, 190, 150]
-      const fallbackTeachers = [48, 32, 24, 20, 16, 12]
-      const fallbackAttendance = [94.2, 88.5, 84.0, 80.1, 85.0, 82.0]
-      const fallbackRecovery = [94.0, 86.0, 81.0, 75.0, 82.0, 78.0]
+      const studentCount = instStudents.length > 0 ? instStudents.length : (Number(inst.totalStudents) || 0)
+      const teacherCount = instTeachers.length > 0 ? instTeachers.length : (Number(inst.totalTeachers) || 0)
+      const studentTeacherRatio = teacherCount > 0 ? `${Math.round(studentCount / teacherCount)}:1` : '0:1'
 
-      const studentCount = instStudents.length > 0 ? instStudents.length : (fallbackStudents[index] || 180)
-      const teacherCount = instTeachers.length > 0 ? instTeachers.length : (fallbackTeachers[index] || 16)
-      const studentTeacherRatio = Math.round(studentCount / Math.max(1, teacherCount))
+      // Real attendance rate or 0 if no records
+      let attendanceRate = 0
+      const instAttendance = store.attendance ? Object.values(store.attendance).filter(a => a.instituteId === inst.id) : []
+      if (instAttendance.length > 0) {
+        const present = instAttendance.filter(a => a.status === 'Present').length
+        attendanceRate = Math.round((present / instAttendance.length) * 1000) / 10
+      }
 
-      // Proportional attendance rate by institute
-      const attendanceRate = fallbackAttendance[index] || 85.0
-
-      // Fee recovery calculation
+      // Real fee recovery calculation
       const instFees = fees.filter(f => f.instituteId === inst.id)
-      let feeRecoveryRate = fallbackRecovery[index] || 80.0
-      let totalBilledPKR = studentCount * 12000
-      let totalCollectedPKR = Math.round(totalBilledPKR * (feeRecoveryRate / 100))
+      let feeRecoveryRate = 0
+      let totalBilledPKR = 0
+      let totalCollectedPKR = 0
 
       if (instFees.length > 0) {
         const total = instFees.reduce((sum, f) => sum + (Number(f.amount) || 0), 0)
@@ -67,21 +70,19 @@ export const AnalyticsService = {
         }
       }
 
-      // Growth rate
-      const growthRate = index === 0 ? '+14.2%' : index === 1 ? '+8.5%' : '+4.1%'
-
+      const growthRate = '+0.0%'
       const health = feeRecoveryRate >= 90 && attendanceRate >= 90 ? 'Excellent' : feeRecoveryRate >= 80 ? 'Good' : 'Needs Attention'
 
       return {
         id: inst.id,
         name: inst.name,
         code: inst.code,
-        type: inst.type || (index === 0 ? 'School' : index === 1 ? 'College' : 'University'),
-        city: inst.city || 'Lahore',
-        campusesCount: index === 0 ? 3 : index === 1 ? 2 : 1,
+        type: inst.type || 'School',
+        city: inst.city || 'Central Region',
+        campusesCount: 1,
         studentCount,
         teacherCount,
-        studentTeacherRatio: `${studentTeacherRatio}:1`,
+        studentTeacherRatio,
         attendanceRate,
         feeRecoveryRate,
         totalBilledPKR,
@@ -94,8 +95,8 @@ export const AnalyticsService = {
     // Totals & Averages
     const totalStudents = comparisonList.reduce((sum, i) => sum + i.studentCount, 0)
     const totalTeachers = comparisonList.reduce((sum, i) => sum + i.teacherCount, 0)
-    const avgAttendance = Math.round((comparisonList.reduce((sum, i) => sum + i.attendanceRate, 0) / comparisonList.length) * 10) / 10
-    const avgFeeRecovery = Math.round((comparisonList.reduce((sum, i) => sum + i.feeRecoveryRate, 0) / comparisonList.length) * 10) / 10
+    const avgAttendance = comparisonList.length > 0 ? Math.round((comparisonList.reduce((sum, i) => sum + i.attendanceRate, 0) / comparisonList.length) * 10) / 10 : 0
+    const avgFeeRecovery = comparisonList.length > 0 ? Math.round((comparisonList.reduce((sum, i) => sum + i.feeRecoveryRate, 0) / comparisonList.length) * 10) / 10 : 0
     const totalBilled = comparisonList.reduce((sum, i) => sum + i.totalBilledPKR, 0)
     const totalCollected = comparisonList.reduce((sum, i) => sum + i.totalCollectedPKR, 0)
 
@@ -117,11 +118,11 @@ export const AnalyticsService = {
       },
       comparisonList,
       topPerformers: {
-        topAttendance: sortedByAttendance[0],
-        lowestAttendance: sortedByAttendance[sortedByAttendance.length - 1],
-        topFeeRecovery: sortedByRecovery[0],
-        lowestFeeRecovery: sortedByRecovery[sortedByRecovery.length - 1],
-        largestEnrollment: sortedByStudents[0]
+        topAttendance: sortedByAttendance[0] || null,
+        lowestAttendance: sortedByAttendance[sortedByAttendance.length - 1] || null,
+        topFeeRecovery: sortedByRecovery[0] || null,
+        lowestFeeRecovery: sortedByRecovery[sortedByRecovery.length - 1] || null,
+        largestEnrollment: sortedByStudents[0] || null
       }
     }
   },

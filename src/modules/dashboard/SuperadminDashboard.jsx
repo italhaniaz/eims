@@ -445,62 +445,70 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
     }
   }
 
-  // Dynamic KPI calculations based on active filter
+  // Dynamic KPI calculations based on genuine data without dummy fallbacks
   const displayTotalCampuses = selectedTierFilter === 'all' 
-    ? (stats.totalInstitutes || (institutes || []).length || 12) 
+    ? (institutes || []).length 
     : filteredInstitutes.length
 
   const displayActiveCampuses = selectedTierFilter === 'all'
-    ? (stats.activeInstitutes || (institutes || []).filter(i => (i.status || 'Active').toLowerCase() === 'active').length || 12)
+    ? (institutes || []).filter(i => (i.status || 'Active').toLowerCase() === 'active').length
     : filteredInstitutes.filter(i => (i.status || 'Active').toLowerCase() === 'active').length
 
   const displayTotalStudents = useMemo(() => {
-    if (selectedTierFilter === 'all') {
-      const sum = (institutes || []).reduce((acc, i) => acc + (Number(i.totalStudents) || Number(i.studentsCount) || 0), 0)
-      return sum > 0 ? sum : (stats.totalStudents || 15000)
-    }
-    const sum = filteredInstitutes.reduce((acc, i) => acc + (Number(i.totalStudents) || Number(i.studentsCount) || 0), 0)
-    if (sum === 0 && filteredInstitutes.length > 0) {
-      if (selectedTierFilter === 'school') return filteredInstitutes.length * 1250
-      if (selectedTierFilter === 'college') return filteredInstitutes.length * 850
-      if (selectedTierFilter === 'university') return filteredInstitutes.length * 2400
-      if (selectedTierFilter === 'custom') return filteredInstitutes.length * 1500
-    }
-    return sum
-  }, [institutes, filteredInstitutes, selectedTierFilter, stats.totalStudents])
+    const targetList = selectedTierFilter === 'all' ? (institutes || []) : filteredInstitutes
+    return targetList.reduce((acc, i) => acc + (Number(i.totalStudents) || Number(i.studentsCount) || 0), 0)
+  }, [institutes, filteredInstitutes, selectedTierFilter])
 
   const formattedStudents = displayTotalStudents >= 1000 
     ? `${(displayTotalStudents / 1000).toFixed(2)}K` 
     : String(displayTotalStudents)
 
   const displayWingsValue = useMemo(() => {
-    if (selectedTierFilter === 'all') return '3 Wings'
-    if (selectedTierFilter === 'school') return 'School Wing'
-    if (selectedTierFilter === 'college') return 'College Wing'
-    if (selectedTierFilter === 'university') return 'Uni Wing'
-    return 'Custom Wing'
-  }, [selectedTierFilter])
+    if (selectedTierFilter === 'all') {
+      const activeWingsCount = [tierCounts.school > 0, tierCounts.college > 0, tierCounts.university > 0, tierCounts.custom > 0].filter(Boolean).length
+      return activeWingsCount > 0 ? `${activeWingsCount} Wings` : '0 Wings'
+    }
+    if (selectedTierFilter === 'school') return `${tierCounts.school} School${tierCounts.school === 1 ? '' : 's'}`
+    if (selectedTierFilter === 'college') return `${tierCounts.college} College${tierCounts.college === 1 ? '' : 's'}`
+    if (selectedTierFilter === 'university') return `${tierCounts.university} Uni${tierCounts.university === 1 ? '' : 's'}`
+    return `${tierCounts.custom} Custom`
+  }, [selectedTierFilter, tierCounts])
 
   const displayWingsBadge = useMemo(() => {
-    if (selectedTierFilter === 'all') return '3 Active Tiers'
+    if (selectedTierFilter === 'all') {
+      const activeWingsCount = [tierCounts.school > 0, tierCounts.college > 0, tierCounts.university > 0, tierCounts.custom > 0].filter(Boolean).length
+      return activeWingsCount > 0 ? `${activeWingsCount} Active Tiers` : '0 Active Tiers'
+    }
     if (selectedTierFilter === 'school') return 'K-12 Primary'
     if (selectedTierFilter === 'college') return 'Inter / HSSC'
     if (selectedTierFilter === 'university') return 'Higher Ed'
     return 'Hybrid Matrix'
-  }, [selectedTierFilter])
+  }, [selectedTierFilter, tierCounts])
 
   const displayMRRValue = useMemo(() => {
-    if (selectedTierFilter === 'all') return '₨ 385K'
-    if (selectedTierFilter === 'school') return '₨ 200K'
-    if (selectedTierFilter === 'college') return '₨ 105K'
-    if (selectedTierFilter === 'university') return '₨ 80K'
-    return '₨ 385K'
-  }, [selectedTierFilter])
+    const targetList = selectedTierFilter === 'all' ? (institutes || []) : filteredInstitutes
+    if (targetList.length === 0) return '₨ 0'
+    const total = targetList.reduce((sum, inst) => {
+      const tier = String(inst.planTier || inst.type || '').toLowerCase()
+      if (tier.includes('trial') || tier.includes('free')) return sum
+      if (tier.includes('custom') || tier.includes('hybrid')) return sum + 75000
+      if (tier.includes('university')) return sum + 55000
+      if (tier.includes('college')) return sum + 35000
+      if (tier.includes('school')) return sum + 25000
+      return sum + 25000
+    }, 0)
+    if (total === 0) return '₨ 0'
+    if (total >= 1000000) return `₨ ${(total / 1000000).toFixed(2)}M`
+    if (total >= 1000) return `₨ ${Math.round(total / 1000)}K`
+    return `₨ ${total.toLocaleString()}`
+  }, [institutes, filteredInstitutes, selectedTierFilter])
 
   const displayMRRBadge = useMemo(() => {
-    if (selectedTierFilter === 'all') return '4 Tier Plans'
+    const targetList = selectedTierFilter === 'all' ? (institutes || []) : filteredInstitutes
+    if (targetList.length === 0) return '0 Active Plans'
+    if (selectedTierFilter === 'all') return `${targetList.length} Active Plan${targetList.length === 1 ? '' : 's'}`
     return `${currentFilterConfig.badge} Tier Plan`
-  }, [selectedTierFilter, currentFilterConfig.badge])
+  }, [selectedTierFilter, currentFilterConfig.badge, institutes, filteredInstitutes])
 
   // Direct Add Campus shortcut handler: Redirects to Institutes view and automatically opens onboarding wizard
   const handleDirectAddCampus = () => {
@@ -935,7 +943,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           {/* Bottom Row: Status Badge on Left, Non-clickable All Wings Text + Dedicated Eye Button on Right */}
           <div className="flex items-center justify-between gap-1.5 mt-4 pt-3 border-t border-sky-200/50">
             <span className="text-[11px] font-bold text-sky-700 bg-sky-100/70 px-2 py-0.5 rounded-full whitespace-nowrap">
-              {selectedTierFilter === 'all' ? '+12.4% MoM' : `${filteredInstitutes.length} Campuses`}
+              {selectedTierFilter === 'all' ? (displayTotalStudents > 0 ? '+12.4% MoM' : '0 Enrolled') : `${filteredInstitutes.length} Campuses`}
             </span>
 
             <div className="flex items-center gap-1.5 shrink-0">

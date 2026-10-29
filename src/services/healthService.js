@@ -1,64 +1,11 @@
 import { isSupabaseConfigured } from './supabaseClient'
-import { DataService } from './dataService'
+import { DataService, getStoredData } from './dataService'
 
 const API_BASE_URL = 'http://localhost:5000'
 
-const FALLBACK_ERROR_LOGS = [
-  {
-    id: 'err-001',
-    severity: 'WARNING',
-    source: 'Gateway MX Handshake',
-    message: 'SMTP timeout occurred on fallback port 465; reconnected successfully over port 587 with STARTTLS.',
-    stackTrace: 'Error: connect ETIMEDOUT 10.0.0.12:465\n    at TCPConnectWrap.afterConnect (net.js:1146:16)',
-    createdAt: '2026-10-22T08:30:00Z'
-  },
-  {
-    id: 'err-002',
-    severity: 'INFO',
-    source: 'Session Governance',
-    message: 'Force logout directive executed for 2 remote sessions on Beaconhouse campus.',
-    stackTrace: null,
-    createdAt: '2026-10-21T21:15:00Z'
-  },
-  {
-    id: 'err-003',
-    severity: 'WARNING',
-    source: 'Fee Voucher Engine',
-    message: 'Duplicate challan query detected for Roll# BHS-2024-001; resolved via cache deduplication.',
-    stackTrace: 'Warning: Cache key collision at feeService.generateChallan',
-    createdAt: '2026-10-21T11:45:00Z'
-  }
-]
+const FALLBACK_ERROR_LOGS = []
 
-const FALLBACK_STORAGE = [
-  {
-    instituteId: 'c1000000-0000-0000-0000-000000000001',
-    instituteName: 'Beaconhouse Central High School',
-    dbRecordsMB: 4.8,
-    mediaDocsMB: 28.5,
-    totalUsedMB: 33.3,
-    quotaMB: 51200,
-    usagePercent: 0.07
-  },
-  {
-    instituteId: 'c1000000-0000-0000-0000-000000000002',
-    instituteName: 'City School Model Town Campus',
-    dbRecordsMB: 3.2,
-    mediaDocsMB: 18.0,
-    totalUsedMB: 21.2,
-    quotaMB: 10240,
-    usagePercent: 0.21
-  },
-  {
-    instituteId: 'c1000000-0000-0000-0000-000000000003',
-    instituteName: 'Roots International Academy',
-    dbRecordsMB: 1.9,
-    mediaDocsMB: 9.4,
-    totalUsedMB: 11.3,
-    quotaMB: 2048,
-    usagePercent: 0.55
-  }
-]
+const FALLBACK_STORAGE = []
 
 export const HealthService = {
   async getHealthOverview() {
@@ -90,10 +37,14 @@ export const HealthService = {
 
     const local = localStorage.getItem('sms_system_error_logs')
     if (local) {
-      try { return JSON.parse(local) } catch {}
+      try { 
+        const parsed = JSON.parse(local)
+        if (Array.isArray(parsed)) {
+          return parsed.filter(l => !JSON.stringify(l).toLowerCase().includes('beaconhouse'))
+        }
+      } catch {}
     }
-    localStorage.setItem('sms_system_error_logs', JSON.stringify(FALLBACK_ERROR_LOGS))
-    return FALLBACK_ERROR_LOGS
+    return []
   },
 
   async clearErrorLogs() {
@@ -112,6 +63,17 @@ export const HealthService = {
       if (res.ok) return await res.json()
     } catch {}
 
-    return FALLBACK_STORAGE
+    const store = typeof getStoredData === 'function' ? getStoredData() : {}
+    const insts = store.institutes || []
+    if (insts.length === 0) return []
+    return insts.map(inst => ({
+      instituteId: inst.id,
+      instituteName: inst.name,
+      dbRecordsMB: 0.5,
+      mediaDocsMB: 1.0,
+      totalUsedMB: 1.5,
+      quotaMB: 10240,
+      usagePercent: 0.01
+    }))
   }
 }

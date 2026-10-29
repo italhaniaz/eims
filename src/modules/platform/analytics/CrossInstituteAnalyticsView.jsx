@@ -359,7 +359,8 @@ const CrossInstituteAnalyticsView = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700">
-              {filteredAndSorted.map((inst) => (
+              {filteredAndSorted.length > 0 ? (
+                filteredAndSorted.map((inst) => (
                 <tr key={inst.id} className="hover:bg-slate-50/70 transition-colors">
                   <td className="py-3.5 px-4">
                     <div className="font-semibold text-slate-900">{inst.name}</div>
@@ -424,7 +425,16 @@ const CrossInstituteAnalyticsView = () => {
                     </span>
                   </td>
                 </tr>
-              ))}
+              ))
+              ) : (
+                <tr>
+                  <td colSpan="8" className="py-12 text-center text-slate-400">
+                    <Building className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                    <p className="text-sm font-semibold text-slate-600">No campuses reporting live telemetry</p>
+                    <p className="text-xs text-slate-400 mt-0.5">Campuses will appear here once registered on the platform.</p>
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -443,7 +453,8 @@ const CrossInstituteAnalyticsView = () => {
           </div>
 
           <div className="space-y-3 pt-2">
-            {analyticsData.comparisonList.map((inst) => (
+            {analyticsData.comparisonList.length > 0 ? (
+              analyticsData.comparisonList.map((inst) => (
               <div key={inst.id} className="space-y-1">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-medium text-slate-700">{inst.name}</span>
@@ -458,7 +469,12 @@ const CrossInstituteAnalyticsView = () => {
                   />
                 </div>
               </div>
-            ))}
+            ))
+            ) : (
+              <div className="py-8 text-center text-slate-400 text-xs">
+                No attendance telemetry recorded yet.
+              </div>
+            )}
           </div>
         </div>
 
@@ -473,7 +489,8 @@ const CrossInstituteAnalyticsView = () => {
           </div>
 
           <div className="space-y-3 pt-2">
-            {analyticsData.comparisonList.map((inst) => (
+            {analyticsData.comparisonList.length > 0 ? (
+              analyticsData.comparisonList.map((inst) => (
               <div key={inst.id} className="space-y-1">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-medium text-slate-700">{inst.name}</span>
@@ -492,7 +509,12 @@ const CrossInstituteAnalyticsView = () => {
                   />
                 </div>
               </div>
-            ))}
+            ))
+            ) : (
+              <div className="py-8 text-center text-slate-400 text-xs">
+                No tuition fee recovery telemetry recorded yet.
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -782,8 +804,8 @@ const CrossInstituteAnalyticsView = () => {
                 </div>
                 <div className="p-3 bg-purple-50/70 border border-purple-100 rounded-xl">
                   <span className="text-[10px] uppercase font-bold text-purple-700 tracking-wider">Largest Campus</span>
-                  <p className="text-sm font-extrabold text-purple-900 mt-0.5 truncate">{topPerformers.largestEnrollment?.name || 'Allied School'}</p>
-                  <span className="text-[11px] text-purple-700 font-semibold">{topPerformers.largestEnrollment?.studentCount || 840} Students</span>
+                  <p className="text-sm font-extrabold text-purple-900 mt-0.5 truncate">{topPerformers.largestEnrollment?.name || '—'}</p>
+                  <span className="text-[11px] text-purple-700 font-semibold">{topPerformers.largestEnrollment?.studentCount || 0} Students</span>
                 </div>
               </>
             )}
@@ -807,8 +829,8 @@ const CrossInstituteAnalyticsView = () => {
                 </div>
                 <div className="p-3 bg-emerald-50/70 border border-emerald-100 rounded-xl">
                   <span className="text-[10px] uppercase font-bold text-emerald-700 tracking-wider">Top Faculty Hub</span>
-                  <p className="text-sm font-extrabold text-emerald-900 mt-0.5 truncate">{analyticsData.comparisonList[0]?.name || 'Allied School'}</p>
-                  <span className="text-[11px] text-emerald-700 font-semibold">{analyticsData.comparisonList[0]?.teacherCount || 48} Instructors</span>
+                  <p className="text-sm font-extrabold text-emerald-900 mt-0.5 truncate">{analyticsData.comparisonList[0]?.name || '—'}</p>
+                  <span className="text-[11px] text-emerald-700 font-semibold">{analyticsData.comparisonList[0]?.teacherCount || 0} Instructors</span>
                 </div>
               </>
             )}
@@ -822,13 +844,13 @@ const CrossInstituteAnalyticsView = () => {
                 </div>
                 <div className="p-3 bg-emerald-50/70 border border-emerald-100 rounded-xl">
                   <span className="text-[10px] uppercase font-bold text-emerald-700 tracking-wider">Highest Attendance</span>
-                  <p className="text-sm font-extrabold text-emerald-900 mt-0.5 truncate">{topPerformers.topAttendance?.name || 'Allied School'}</p>
-                  <span className="text-[11px] text-emerald-700 font-semibold">{topPerformers.topAttendance?.attendanceRate || 94.2}% Present</span>
+                  <p className="text-sm font-extrabold text-emerald-900 mt-0.5 truncate">{topPerformers.topAttendance?.name || '—'}</p>
+                  <span className="text-[11px] text-emerald-700 font-semibold">{topPerformers.topAttendance ? `${topPerformers.topAttendance.attendanceRate}% Present` : '—'}</span>
                 </div>
                 <div className="p-3 bg-amber-50/70 border border-amber-100 rounded-xl">
                   <span className="text-[10px] uppercase font-bold text-amber-700 tracking-wider">Attention Campus</span>
-                  <p className="text-sm font-extrabold text-amber-900 mt-0.5 truncate">{topPerformers.lowestAttendance?.name || 'Allama Iqbal'}</p>
-                  <span className="text-[11px] text-amber-700 font-semibold">{topPerformers.lowestAttendance?.attendanceRate || 80.1}% Present</span>
+                  <p className="text-sm font-extrabold text-amber-900 mt-0.5 truncate">{topPerformers.lowestAttendance?.name || '—'}</p>
+                  <span className="text-[11px] text-amber-700 font-semibold">{topPerformers.lowestAttendance ? `${topPerformers.lowestAttendance.attendanceRate}% Present` : '—'}</span>
                 </div>
                 <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl">
                   <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Active Monitoring</span>

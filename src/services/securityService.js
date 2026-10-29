@@ -186,32 +186,8 @@ export const SecurityService = {
         ipAddress: '127.0.0.1',
         deviceInfo: 'Chrome 124 (Windows NT 10.0)',
         location: 'Lahore, Pakistan',
-        startedAt: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
+        startedAt: new Date().toISOString(),
         isCurrent: true
-      },
-      {
-        id: 'sess-beacon-1',
-        userEmail: 'admin.beacon@sms.edu',
-        userName: 'Beaconhouse Admin',
-        userRole: 'institute_admin',
-        instituteName: 'Beaconhouse Central High School',
-        ipAddress: '192.168.1.115',
-        deviceInfo: 'Firefox 125 (Windows NT 10.0)',
-        location: 'Lahore, Pakistan',
-        startedAt: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
-        isCurrent: false
-      },
-      {
-        id: 'sess-city-1',
-        userEmail: 'city.model@sms.edu',
-        userName: 'City College Admin',
-        userRole: 'institute_admin',
-        instituteName: 'City School Model Town Campus',
-        ipAddress: '192.168.1.120',
-        deviceInfo: 'Edge 123 (Windows NT 10.0)',
-        location: 'Lahore, Pakistan',
-        startedAt: new Date(Date.now() - 90 * 60 * 1000).toISOString(),
-        isCurrent: false
       }
     ]
     store.activeSessionsList = defaultList
