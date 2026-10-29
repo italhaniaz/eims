@@ -401,9 +401,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
   const [reportSuccess, setReportSuccess] = useState(false)
 
   // Selected row state for interactive table
-  const [selectedCampusIds, setSelectedCampusIds] = useState(() => {
-    return institutes.slice(0, 1).map(i => i.id)
-  })
+  const [selectedCampusIds, setSelectedCampusIds] = useState([])
 
   // User form data
   const [newUserData, setNewUserData] = useState({
@@ -451,6 +449,27 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
     setSelectedCampusIds(prev => 
       prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
     )
+  }
+
+  const displayedInstitutes = useMemo(() => {
+    return (filteredInstitutes || []).slice(0, 6)
+  }, [filteredInstitutes])
+
+  const isAllVisibleSelected = useMemo(() => {
+    return displayedInstitutes.length > 0 && displayedInstitutes.every(inst => selectedCampusIds.includes(inst.id))
+  }, [displayedInstitutes, selectedCampusIds])
+
+  const isSomeVisibleSelected = useMemo(() => {
+    return displayedInstitutes.some(inst => selectedCampusIds.includes(inst.id))
+  }, [displayedInstitutes, selectedCampusIds])
+
+  const handleToggleSelectAll = () => {
+    const displayedIds = displayedInstitutes.map(inst => inst.id)
+    if (isAllVisibleSelected) {
+      setSelectedCampusIds(prev => prev.filter(id => !displayedIds.includes(id)))
+    } else {
+      setSelectedCampusIds(prev => Array.from(new Set([...prev, ...displayedIds])))
+    }
   }
 
   const handleCreateUser = async (e) => {
@@ -1230,6 +1249,19 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 <h2 className="text-base font-bold text-slate-900 tracking-tight font-heading">
                   Registered Campuses & Wings
                 </h2>
+                {selectedCampusIds.length > 0 && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 inline-flex items-center gap-1.5 animate-in fade-in">
+                    <span>{selectedCampusIds.length} Selected</span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedCampusIds([])}
+                      className="hover:text-purple-900 ml-0.5 cursor-pointer"
+                      title="Clear selection"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )}
                 {selectedTierFilter !== 'all' && (
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 border border-purple-200 inline-flex items-center gap-1">
                     <span>{currentFilterConfig.label}</span>
@@ -1264,7 +1296,19 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               <thead>
                 <tr className="border-b border-slate-100 text-slate-400 font-semibold text-[11px] uppercase tracking-wider">
                   <th className="py-3 px-2 w-8">
-                    <span className="sr-only">Select</span>
+                    <input 
+                      type="checkbox"
+                      aria-label="Select all visible campuses"
+                      checked={isAllVisibleSelected}
+                      ref={el => {
+                        if (el) {
+                          el.indeterminate = isSomeVisibleSelected && !isAllVisibleSelected
+                        }
+                      }}
+                      onChange={handleToggleSelectAll}
+                      className="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500 cursor-pointer accent-purple-600"
+                      title={isAllVisibleSelected ? "Deselect all visible campuses" : "Select all visible campuses"}
+                    />
                   </th>
                   <th className="py-3 px-3">Campus Name</th>
                   <th className="py-3 px-3">Code</th>
@@ -1287,12 +1331,22 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                         onClick={() => toggleSelectCampus(inst.id)}
                       >
                         {/* Checkbox with purple checked style */}
-                        <td className="py-3.5 px-2">
+                        <td 
+                          className="py-3.5 px-2"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            if (e.target.tagName !== 'INPUT') {
+                              toggleSelectCampus(inst.id)
+                            }
+                          }}
+                        >
                           <input 
                             type="checkbox"
                             checked={isSelected}
                             onChange={() => toggleSelectCampus(inst.id)}
-                            className="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500 cursor-pointer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500 cursor-pointer accent-purple-600"
+                            aria-label={`Select ${inst.name}`}
                           />
                         </td>
 

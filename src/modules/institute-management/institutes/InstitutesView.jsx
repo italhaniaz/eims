@@ -140,6 +140,88 @@ export const InstitutesView = () => {
   const [viewingDetails, setViewingDetails] = useState(null)
   const [detailsTab, setDetailsTab] = useState('overview') // overview, campuses, admins, modules, plan, activity
 
+  // Institute Overview Modal Form State & Validation
+  const [overviewForm, setOverviewForm] = useState({
+    principal: '',
+    phone: '',
+    affiliatedBoard: '',
+    email: ''
+  })
+  const [overviewErrors, setOverviewErrors] = useState({})
+
+  useEffect(() => {
+    if (viewingDetails) {
+      setOverviewForm({
+        principal: viewingDetails.principal || '',
+        phone: viewingDetails.phone || '',
+        affiliatedBoard: viewingDetails.affiliatedBoard || 'BISE Lahore',
+        email: viewingDetails.email || ''
+      })
+      setOverviewErrors({})
+    }
+  }, [viewingDetails])
+
+  const handleOverviewFieldChange = (field, value) => {
+    setOverviewForm(prev => ({ ...prev, [field]: value }))
+    if (overviewErrors[field]) {
+      setOverviewErrors(prev => ({ ...prev, [field]: false }))
+    }
+  }
+
+  const validateOverviewFields = () => {
+    const errors = {}
+    if (!overviewForm.principal || !overviewForm.principal.trim()) {
+      errors.principal = true
+    }
+    if (!overviewForm.phone || !overviewForm.phone.trim()) {
+      errors.phone = true
+    }
+    setOverviewErrors(errors)
+    return Object.keys(errors).length === 0
+  }
+
+  const handleDetailTabChange = (targetTab) => {
+    if (detailsTab === 'overview' && targetTab !== 'overview') {
+      const isValid = validateOverviewFields()
+      if (!isValid) {
+        toast.error('Please fill in the mandatory fields (Principal / Head and Contact Phone) to proceed.')
+        return
+      }
+    }
+    setDetailsTab(targetTab)
+  }
+
+  const handleOverviewNext = async () => {
+    const isValid = validateOverviewFields()
+    if (!isValid) {
+      toast.error('Please fill in the mandatory fields (Principal / Head and Contact Phone) to proceed.')
+      return
+    }
+
+    try {
+      if (updateItem && viewingDetails?.id) {
+        await updateItem('institutes', viewingDetails.id, {
+          principal: overviewForm.principal.trim(),
+          phone: overviewForm.phone.trim()
+        })
+      }
+      setViewingDetails(prev => prev ? ({
+        ...prev,
+        principal: overviewForm.principal.trim(),
+        phone: overviewForm.phone.trim()
+      }) : null)
+      toast.success('Institute details updated successfully.')
+    } catch (err) {
+      console.error('Failed to update institute details:', err)
+    }
+
+    const tabs = ['overview', 'campuses', 'admins', 'modules', 'plan', 'activity']
+    const currentIndex = tabs.indexOf(detailsTab)
+    if (currentIndex < tabs.length - 1) {
+      setDetailsTab(tabs[currentIndex + 1])
+    }
+  }
+
   // Suspension Modal
   const [suspensionTarget, setSuspensionTarget] = useState(null)
   const [suspensionReason, setSuspensionReason] = useState('')
@@ -2732,7 +2814,7 @@ export const InstitutesView = () => {
               {['overview', 'campuses', 'admins', 'modules', 'plan', 'activity'].map(tab => (
                 <button
                   key={tab}
-                  onClick={() => setDetailsTab(tab)}
+                  onClick={() => handleDetailTabChange(tab)}
                   className={`px-3 py-1.5 rounded-lg font-bold capitalize transition-colors ${
                     detailsTab === tab ? 'bg-[#f5eeff] text-purple-700 border border-purple-200' : 'text-slate-500 hover:text-slate-900'
                   }`}
@@ -2759,21 +2841,64 @@ export const InstitutesView = () => {
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="p-2.5 bg-white rounded-lg border border-slate-200">
-                    <span className="text-[10px] text-slate-400 block uppercase font-bold">Principal / Head</span>
-                    <span className="font-semibold text-slate-800">{viewingDetails.principal || 'In-Charge Principal'}</span>
+                  {/* Principal / Head - MANDATORY */}
+                  <div className={`p-2.5 bg-white rounded-lg border transition-all ${
+                    overviewErrors.principal 
+                      ? 'border-red-400 bg-red-50/30 ring-1 ring-red-400' 
+                      : 'border-slate-200 focus-within:border-purple-400 focus-within:ring-1 focus-within:ring-purple-300'
+                  }`}>
+                    <label className="text-[10px] text-slate-500 block uppercase font-bold flex items-center justify-between">
+                      <span className="flex items-center gap-1">
+                        Principal / Head
+                        <span className="text-red-500 font-extrabold text-xs">*</span>
+                      </span>
+                      {overviewErrors.principal && (
+                        <span className="text-red-600 text-[10px] font-semibold tracking-normal lowercase">Required</span>
+                      )}
+                    </label>
+                    <input 
+                      type="text"
+                      value={overviewForm.principal}
+                      onChange={(e) => handleOverviewFieldChange('principal', e.target.value)}
+                      placeholder="e.g. Dr. Shahida Parveen"
+                      className="w-full mt-1 font-semibold text-slate-800 bg-transparent border-0 p-0 text-xs focus:ring-0 focus:outline-none placeholder:text-slate-300"
+                    />
                   </div>
+
+                  {/* Board Affiliation */}
                   <div className="p-2.5 bg-white rounded-lg border border-slate-200">
                     <span className="text-[10px] text-slate-400 block uppercase font-bold">Board Affiliation</span>
-                    <span className="font-semibold text-purple-700">{viewingDetails.affiliatedBoard || 'BISE Lahore'}</span>
+                    <span className="font-semibold text-purple-700 block mt-1">{viewingDetails.affiliatedBoard || 'BISE Lahore'}</span>
                   </div>
+
+                  {/* Official Email */}
                   <div className="p-2.5 bg-white rounded-lg border border-slate-200">
                     <span className="text-[10px] text-slate-400 block uppercase font-bold">Official Email</span>
-                    <span className="font-semibold text-purple-600 truncate block">{viewingDetails.email || '—'}</span>
+                    <span className="font-semibold text-purple-600 truncate block mt-1">{viewingDetails.email || '—'}</span>
                   </div>
-                  <div className="p-2.5 bg-white rounded-lg border border-slate-200">
-                    <span className="text-[10px] text-slate-400 block uppercase font-bold">Contact Phone</span>
-                    <span className="font-semibold text-slate-800">{viewingDetails.phone || '—'}</span>
+
+                  {/* Contact Phone - MANDATORY */}
+                  <div className={`p-2.5 bg-white rounded-lg border transition-all ${
+                    overviewErrors.phone 
+                      ? 'border-red-400 bg-red-50/30 ring-1 ring-red-400' 
+                      : 'border-slate-200 focus-within:border-purple-400 focus-within:ring-1 focus-within:ring-purple-300'
+                  }`}>
+                    <label className="text-[10px] text-slate-500 block uppercase font-bold flex items-center justify-between">
+                      <span className="flex items-center gap-1">
+                        Contact Phone
+                        <span className="text-red-500 font-extrabold text-xs">*</span>
+                      </span>
+                      {overviewErrors.phone && (
+                        <span className="text-red-600 text-[10px] font-semibold tracking-normal lowercase">Required</span>
+                      )}
+                    </label>
+                    <input 
+                      type="text"
+                      value={overviewForm.phone}
+                      onChange={(e) => handleOverviewFieldChange('phone', e.target.value)}
+                      placeholder="e.g. +92 42 35789012"
+                      className="w-full mt-1 font-semibold text-slate-800 bg-transparent border-0 p-0 text-xs focus:ring-0 focus:outline-none placeholder:text-slate-300"
+                    />
                   </div>
                 </div>
               </div>
@@ -2892,13 +3017,62 @@ export const InstitutesView = () => {
               </div>
             )}
 
-            <div className="flex justify-end pt-2 border-t border-slate-100">
+            <div className="flex items-center justify-between pt-3 border-t border-slate-100">
               <button
+                type="button"
                 onClick={() => setViewingDetails(null)}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-colors"
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
               >
                 Close Profile
               </button>
+
+              <div className="flex items-center gap-2">
+                {detailsTab !== 'overview' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const tabs = ['overview', 'campuses', 'admins', 'modules', 'plan', 'activity']
+                      const currentIndex = tabs.indexOf(detailsTab)
+                      if (currentIndex > 0) setDetailsTab(tabs[currentIndex - 1])
+                    }}
+                    className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+                  >
+                    Back
+                  </button>
+                )}
+
+                {detailsTab === 'overview' ? (
+                  <button
+                    type="button"
+                    onClick={handleOverviewNext}
+                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <span>Next</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                ) : detailsTab !== 'activity' ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const tabs = ['overview', 'campuses', 'admins', 'modules', 'plan', 'activity']
+                      const currentIndex = tabs.indexOf(detailsTab)
+                      if (currentIndex < tabs.length - 1) setDetailsTab(tabs[currentIndex + 1])
+                    }}
+                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <span>Next</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setViewingDetails(null)}
+                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer"
+                  >
+                    Done
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </Modal>
