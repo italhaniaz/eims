@@ -115,7 +115,7 @@ const AppContent = () => {
   const [publicView, setPublicView] = useState(() => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash.replace(/^#\/?/, '')
-      if (hash === 'login' || hash === 'signin') return 'login'
+      if (hash === 'login' || hash === 'signin' || hash === 'superadmin' || hash === 'superadmin-login') return 'login'
       if (hash === 'demo' || hash === 'live-demo') return 'demo'
     }
     return 'landing'
@@ -163,7 +163,7 @@ const AppContent = () => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace(/^#\/?/, '')
       if (!user) {
-        if (hash === 'login' || hash === 'signin') {
+        if (hash === 'login' || hash === 'signin' || hash === 'superadmin' || hash === 'superadmin-login') {
           setPublicView('login')
         } else if (hash === 'demo' || hash === 'live-demo') {
           setPublicView('demo')
