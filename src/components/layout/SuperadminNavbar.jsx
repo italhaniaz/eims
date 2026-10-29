@@ -7,12 +7,19 @@ import {
   LogOut, 
   Key, 
   Search,
-  MessageSquare
+  MessageSquare,
+  Megaphone,
+  Globe,
+  School,
+  CheckCircle2,
+  Sparkles,
+  ArrowRight
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useAppData } from '../../context/AppDataContext'
 import ChangePasswordModal from '../common/ChangePasswordModal'
 import CloudSyncBadge from '../common/CloudSyncBadge'
+import AnnouncementService from '../../services/announcementService'
 
 export const SuperadminNavbar = ({ 
   currentRoute, 
@@ -26,12 +33,18 @@ export const SuperadminNavbar = ({
   const [showNotifications, setShowNotifications] = useState(false)
   const [showProfileMenu, setShowProfileMenu] = useState(false)
   const [showPasswordModal, setShowPasswordModal] = useState(false)
+  const [showAnnouncementsMenu, setShowAnnouncementsMenu] = useState(false)
   const [clearedNotifications, setClearedNotifications] = useState(false)
   const [searchValue, setSearchValue] = useState('')
   const [pendingApprovals, setPendingApprovals] = useState([])
+
+  // Live Announcements & Landing Banner state
+  const [landingBanner, setLandingBanner] = useState(() => AnnouncementService.getLandingBannerConfig())
+  const [announcementsList, setAnnouncementsList] = useState(() => AnnouncementService.getAllAnnouncements())
   
   const profileRef = useRef(null)
   const notifRef = useRef(null)
+  const announcementsRef = useRef(null)
 
   // Load live pending approval requests from local storage
   useEffect(() => {
@@ -55,6 +68,20 @@ export const SuperadminNavbar = ({
     }
   }, [])
 
+  // Sync announcements & landing banner live
+  useEffect(() => {
+    const handleAnnouncementsUpdate = () => {
+      setLandingBanner(AnnouncementService.getLandingBannerConfig())
+      setAnnouncementsList(AnnouncementService.getAllAnnouncements())
+    }
+    window.addEventListener('sms_announcements_updated', handleAnnouncementsUpdate)
+    window.addEventListener('storage', handleAnnouncementsUpdate)
+    return () => {
+      window.removeEventListener('sms_announcements_updated', handleAnnouncementsUpdate)
+      window.removeEventListener('storage', handleAnnouncementsUpdate)
+    }
+  }, [])
+
   // Real dynamic notification count
   const unreadCount = clearedNotifications 
     ? 0 
@@ -69,10 +96,20 @@ export const SuperadminNavbar = ({
       if (notifRef.current && !notifRef.current.contains(e.target)) {
         setShowNotifications(false)
       }
+      if (announcementsRef.current && !announcementsRef.current.contains(e.target)) {
+        setShowAnnouncementsMenu(false)
+      }
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  // Quick 1-click toggle for landing page banner from navbar
+  const handleToggleLandingBanner = (e) => {
+    e.stopPropagation()
+    const updated = AnnouncementService.toggleLandingBanner()
+    setLandingBanner(updated)
+  }
 
   return (
     <header className="h-16 sm:h-20 min-h-[64px] sm:min-h-[80px] bg-white border-b border-slate-100 px-3.5 sm:px-6 md:px-8 flex items-center justify-between sticky top-0 z-30 shrink-0 shadow-[0_1px_4px_rgba(0,0,0,0.02)]">
@@ -87,7 +124,7 @@ export const SuperadminNavbar = ({
           <Menu className="w-5 h-5" />
         </button>
 
-        {/* Wide Pill Search Bar matching reference image */}
+        {/* Wide Pill Search Bar */}
         <div 
           onClick={onOpenCommandPalette}
           className="relative w-full max-w-[210px] xs:max-w-[260px] sm:max-w-md group cursor-pointer"
@@ -112,8 +149,147 @@ export const SuperadminNavbar = ({
       </div>
 
       {/* Right Side Icons & Profile Info */}
-      <div className="flex items-center gap-2.5 sm:gap-4 shrink-0">
-        {/* Notification Bell */}
+      <div className="flex items-center gap-2 sm:gap-3.5 shrink-0">
+        {/* 1. Announcements & Broadcast Navbar Control */}
+        <div className="relative" ref={announcementsRef}>
+          <button
+            onClick={() => setShowAnnouncementsMenu(!showAnnouncementsMenu)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs ${
+              showAnnouncementsMenu || currentRoute === 'announcements'
+                ? 'bg-purple-600 text-white shadow-xs'
+                : 'bg-[#f5eeff] hover:bg-[#ede0fe] text-purple-700 hover:text-purple-900 border border-purple-200/80'
+            }`}
+            title="Platform Announcements & Broadcast Control"
+          >
+            <Megaphone className={`w-3.5 h-3.5 ${showAnnouncementsMenu || currentRoute === 'announcements' ? 'text-white' : 'text-purple-600'}`} />
+            <span className="hidden xs:inline">Announcements</span>
+            {landingBanner?.isActive ? (
+              <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-extrabold ${
+                showAnnouncementsMenu || currentRoute === 'announcements'
+                  ? 'bg-purple-700 text-purple-100'
+                  : 'bg-emerald-100 text-emerald-700'
+              }`}>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span className="hidden md:inline">Live</span>
+              </span>
+            ) : (
+              <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                showAnnouncementsMenu || currentRoute === 'announcements'
+                  ? 'bg-purple-700 text-purple-200'
+                  : 'bg-slate-200 text-slate-600'
+              }`}>
+                Off
+              </span>
+            )}
+          </button>
+
+          {/* Quick Dropdown Control Panel */}
+          {showAnnouncementsMenu && (
+            <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-xl border border-slate-100 py-3 px-4 z-50 animate-in fade-in zoom-in-95 space-y-3.5">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <Megaphone className="w-4 h-4 text-purple-600" />
+                    <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                      Announcements Hub
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    Landing page banner & campus directives
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    onRouteChange('announcements')
+                    setShowAnnouncementsMenu(false)
+                  }}
+                  className="text-xs font-bold text-purple-600 hover:text-purple-800 cursor-pointer flex items-center gap-0.5"
+                >
+                  <span>Full Hub</span>
+                  <ArrowRight className="w-3 h-3" />
+                </button>
+              </div>
+
+              {/* Quick Landing Page Banner Switch Card */}
+              <div className="bg-[#fcfaff] rounded-xl p-3 border border-purple-100 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                    <Globe className="w-3.5 h-3.5 text-purple-600" />
+                    <span>Landing Page Top Banner</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleToggleLandingBanner}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                      landingBanner?.isActive
+                        ? 'bg-emerald-100 hover:bg-emerald-200 text-emerald-800 border border-emerald-300'
+                        : 'bg-slate-200 hover:bg-slate-300 text-slate-700'
+                    }`}
+                  >
+                    {landingBanner?.isActive ? '● Live (Turn Off)' : '○ Inactive (Turn On)'}
+                  </button>
+                </div>
+
+                {/* Banner mini preview */}
+                <div className="bg-[#f5eeff] border border-purple-200/90 rounded-lg p-2 text-[11.5px] text-purple-950 font-medium line-clamp-2">
+                  <span className="font-bold text-purple-700 mr-1">
+                    {landingBanner?.badgeText || 'New Release'}:
+                  </span>
+                  <span>{landingBanner?.message || '14-Day Free Evaluation Tier is now active for all educational institutions.'}</span>
+                </div>
+              </div>
+
+              {/* Campus Directives Status */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-slate-700 flex items-center gap-1">
+                    <School className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>Active Campus Directives</span>
+                  </span>
+                  <span className="text-[11px] font-bold text-slate-500">
+                    {announcementsList.filter(a => a.target === 'institute_admin' || a.target === 'all').length} Active
+                  </span>
+                </div>
+
+                <div className="divide-y divide-slate-50 max-h-36 overflow-y-auto pr-1">
+                  {announcementsList
+                    .filter(a => a.target === 'institute_admin' || a.target === 'all')
+                    .slice(0, 3)
+                    .map(item => (
+                      <div key={item.id} className="py-1.5 text-xs flex items-center justify-between">
+                        <div className="min-w-0 pr-2">
+                          <p className="font-semibold text-slate-800 truncate">{item.title}</p>
+                          <p className="text-[10.5px] text-slate-400 truncate">{item.targetCampus} • {item.priority} Priority</p>
+                        </div>
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 ${
+                          item.priority === 'Urgent' ? 'bg-red-50 text-red-600' : 'bg-purple-50 text-purple-700'
+                        }`}>
+                          {item.priority}
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              </div>
+
+              {/* Action Button */}
+              <div className="pt-1 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onRouteChange('announcements')
+                    setShowAnnouncementsMenu(false)
+                  }}
+                  className="w-full py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <Megaphone className="w-3.5 h-3.5" />
+                  <span>Open Full Announcements Hub</span>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 2. Notification Bell */}
         <div className="relative" ref={notifRef}>
           <button 
             onClick={() => setShowNotifications(!showNotifications)}
@@ -201,7 +377,7 @@ export const SuperadminNavbar = ({
           )}
         </div>
 
-        {/* Messages / Gateway Shortcut */}
+        {/* 3. Messages / Gateway Shortcut */}
         <button 
           onClick={() => onRouteChange('communication')}
           className="p-2.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50/50 rounded-full transition-colors cursor-pointer"
@@ -210,18 +386,16 @@ export const SuperadminNavbar = ({
           <MessageSquare className="w-5 h-5" />
         </button>
 
-        {/* User Profile: Circular Avatar + Name + Role Side-by-Side */}
+        {/* 4. User Profile */}
         <div className="relative pl-1 sm:pl-2" ref={profileRef}>
           <button 
             onClick={() => setShowProfileMenu(!showProfileMenu)}
             className="flex items-center gap-2.5 p-1 rounded-full hover:bg-slate-50 transition-all cursor-pointer focus:outline-none group"
             title="User Profile & Settings"
           >
-            {/* Avatar Circle with Picture or Initials */}
             <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-500 text-white font-bold flex items-center justify-center text-xs ring-2 ring-purple-100 shadow-xs">
               <span>SA</span>
             </div>
-            {/* Name & Role Text */}
             <div className="hidden sm:flex flex-col text-left pr-1">
               <span className="text-xs font-bold text-slate-800 leading-tight group-hover:text-purple-700 transition-colors">
                 Super Administrator
@@ -262,15 +436,26 @@ export const SuperadminNavbar = ({
                   }}
                   className="w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-purple-50/50 flex items-center gap-2.5 transition-colors cursor-pointer"
                 >
-                  <Settings className="w-3.5 h-3.5 text-slate-500" />
-                  <span>Platform Settings</span>
+                  <Settings className="w-3.5 h-3.5 text-purple-600" />
+                  <span>Cloud Settings</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    onRouteChange('announcements')
+                    setShowProfileMenu(false)
+                  }}
+                  className="w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-purple-50/50 flex items-center gap-2.5 transition-colors cursor-pointer"
+                >
+                  <Megaphone className="w-3.5 h-3.5 text-purple-600" />
+                  <span>Announcements Hub</span>
                 </button>
               </div>
 
-              <div className="pt-1 border-t border-slate-100">
+              <div className="border-t border-slate-100 pt-1 mt-1">
                 <button
-                  onClick={logout}
-                  className="w-full text-left px-4 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition-colors cursor-pointer"
+                  onClick={() => logout()}
+                  className="w-full text-left px-4 py-2.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2.5 transition-colors cursor-pointer"
                 >
                   <LogOut className="w-3.5 h-3.5 text-rose-500" />
                   <span>Sign Out</span>

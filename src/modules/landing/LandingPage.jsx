@@ -35,6 +35,7 @@ import {
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { getStoredData, saveStoredData } from '../../services/dataService'
+import AnnouncementService from '../../services/announcementService'
 
 // 26-point refined serrated starburst sticker geometry (Compact Awwwards-style Action Badge)
 const STARBURST_POINTS = (() => {
@@ -122,7 +123,21 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
   const { showToast } = useToast()
 
   // State
+  const [landingBanner, setLandingBanner] = useState(() => AnnouncementService.getLandingBannerConfig())
   const [showAnnouncementBanner, setShowAnnouncementBanner] = useState(true)
+
+  // Listen for real-time announcement updates from Super Admin
+  useEffect(() => {
+    const handleBannerSync = () => {
+      setLandingBanner(AnnouncementService.getLandingBannerConfig())
+    }
+    window.addEventListener('sms_announcements_updated', handleBannerSync)
+    window.addEventListener('storage', handleBannerSync)
+    return () => {
+      window.removeEventListener('sms_announcements_updated', handleBannerSync)
+      window.removeEventListener('storage', handleBannerSync)
+    }
+  }, [])
   const [activeSection, setActiveSection] = useState('hero')
   const [activeTab, setActiveTab] = useState('school') // 'school', 'college', 'university', 'custom'
   const [billingCycle, setBillingCycle] = useState('monthly') // 'monthly', 'annual'
@@ -585,31 +600,89 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
   return (
     <div className="min-h-screen w-full bg-[#fcfaff] text-slate-900 font-sans selection:bg-purple-100 selection:text-purple-900 overflow-x-clip relative">
       
-      {/* 1. TOP ANNOUNCEMENT BANNER */}
-      {showAnnouncementBanner && (
-        <div className="bg-[#f5eeff] border-b border-purple-200/80 px-4 py-2 text-xs font-medium text-purple-900 relative flex items-center justify-center">
+      {/* 1. TOP ANNOUNCEMENT BANNER (Controlled Live via Super Admin) */}
+      {landingBanner?.isActive && showAnnouncementBanner && (
+        <div
+          className={`border-b px-4 py-2 text-xs font-medium relative flex items-center justify-center transition-all ${
+            landingBanner.theme === 'emerald'
+              ? 'bg-emerald-50 text-emerald-950 border-emerald-200/80'
+              : landingBanner.theme === 'rose'
+              ? 'bg-rose-50 text-rose-950 border-rose-200/80'
+              : landingBanner.theme === 'amber'
+              ? 'bg-amber-50 text-amber-950 border-amber-200/80'
+              : landingBanner.theme === 'indigo'
+              ? 'bg-indigo-50 text-indigo-950 border-indigo-200/80'
+              : 'bg-[#f5eeff] text-purple-900 border-purple-200/80'
+          }`}
+        >
           <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 text-center pr-8 sm:pr-0">
-            <span className="w-2 h-2 rounded-full bg-purple-600 animate-pulse shrink-0"></span>
+            <span
+              className={`w-2 h-2 rounded-full animate-pulse shrink-0 ${
+                landingBanner.theme === 'emerald'
+                  ? 'bg-emerald-600'
+                  : landingBanner.theme === 'rose'
+                  ? 'bg-rose-600'
+                  : landingBanner.theme === 'amber'
+                  ? 'bg-amber-600'
+                  : landingBanner.theme === 'indigo'
+                  ? 'bg-indigo-600'
+                  : 'bg-purple-600'
+              }`}
+            ></span>
             <span>
-              <strong>New Release:</strong> 14-Day Free Evaluation Tier is now active for all educational institutions.
+              <strong>{landingBanner.badgeText || 'New Release'}:</strong>{' '}
+              {landingBanner.message || '14-Day Free Evaluation Tier is now active for all educational institutions.'}
             </span>
-            <button
-              onClick={() => setIsTrialModalOpen(true)}
-              className="ml-1 underline font-bold hover:text-purple-700 cursor-pointer inline-flex items-center gap-0.5"
-            >
-              <span>Claim Free Access</span>
-              <ArrowRight className="w-3 h-3" />
-            </button>
+            {landingBanner.ctaText && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  if (landingBanner.ctaAction === 'trial_modal') {
+                    setIsTrialModalOpen(true)
+                  } else if (landingBanner.ctaAction === 'login') {
+                    onNavigateToLogin('signin')
+                  } else if (landingBanner.ctaAction === 'pricing') {
+                    scrollToSection(e, 'pricing')
+                  } else if (landingBanner.ctaLink) {
+                    if (landingBanner.ctaLink.startsWith('#')) {
+                      const section = landingBanner.ctaLink.replace('#', '')
+                      if (section === 'trial') setIsTrialModalOpen(true)
+                      else scrollToSection(e, section)
+                    } else {
+                      window.open(landingBanner.ctaLink, '_blank')
+                    }
+                  } else {
+                    setIsTrialModalOpen(true)
+                  }
+                }}
+                className={`ml-1 underline font-bold cursor-pointer inline-flex items-center gap-0.5 ${
+                  landingBanner.theme === 'emerald'
+                    ? 'hover:text-emerald-700'
+                    : landingBanner.theme === 'rose'
+                    ? 'hover:text-rose-700'
+                    : landingBanner.theme === 'amber'
+                    ? 'hover:text-amber-800'
+                    : landingBanner.theme === 'indigo'
+                    ? 'hover:text-indigo-700'
+                    : 'hover:text-purple-700'
+                }`}
+              >
+                <span>{landingBanner.ctaText}</span>
+                <ArrowRight className="w-3 h-3" />
+              </button>
+            )}
           </div>
-          <button
-            type="button"
-            onClick={() => setShowAnnouncementBanner(false)}
-            className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 p-1 rounded-lg hover:bg-purple-200/70 text-purple-700 hover:text-purple-950 transition-colors cursor-pointer shrink-0"
-            aria-label="Dismiss banner"
-            title="Dismiss announcement"
-          >
-            <X className="w-3.5 h-3.5 stroke-[2.5]" />
-          </button>
+          {landingBanner.dismissible !== false && (
+            <button
+              type="button"
+              onClick={() => setShowAnnouncementBanner(false)}
+              className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 p-1 rounded-lg hover:bg-black/5 text-slate-500 hover:text-slate-800 transition-colors cursor-pointer shrink-0"
+              aria-label="Dismiss banner"
+              title="Dismiss announcement"
+            >
+              <X className="w-3.5 h-3.5 stroke-[2.5]" />
+            </button>
+          )}
         </div>
       )}
 

@@ -414,7 +414,7 @@ export const SuperadminSidebar = ({
                     }`}
                   >
                     <Megaphone className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('announcements') ? 'text-purple-600' : 'text-slate-400'}`} />
-                    <span>Directives</span>
+                    <span>Announcements & Broadcasts</span>
                   </button>
                 </div>
 
