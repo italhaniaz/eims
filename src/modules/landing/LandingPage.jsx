@@ -24,7 +24,13 @@ import {
   Menu,
   ArrowUp,
   Send,
-  Clock
+  Clock,
+  Eye,
+  EyeOff,
+  MapPin,
+  User,
+  ArrowLeft,
+  Gift
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
@@ -51,51 +57,63 @@ const STARBURST_POINTS = (() => {
 const PLAN_CONFIGS = {
   trial: {
     id: 'trial',
-    tier: 'school',
+    wing: 'school',
     isMultiCampus: false,
-    title: 'Start 14-Day Free Trial',
-    badge: '₨ 0 · No Credit Card Required · Super Admin Verification',
-    badgeColor: 'text-emerald-600',
-    description: 'Enter your institutional details below. Your request will be securely submitted to Super Admin headquarters. Upon verification, your official portal login credentials will be dispatched to your email & phone.',
-    buttonText: 'Submit Trial Request for Approval',
-    buttonClass: 'bg-purple-600 hover:bg-purple-700 shadow-purple-600/25',
-    iconBg: 'bg-[#f5eeff] text-purple-700'
+    title: '14-Day Free Evaluation Tier',
+    planName: '14-Day Free Trial',
+    priceDisplay: 'Rs. 0',
+    priceSub: 'No Credit Card · 14 Days Full Access',
+    badge: '14 Days full testing access',
+    badgeColor: 'text-emerald-400',
+    description: 'Enter your institutional details below to immediately launch an isolated 14-day evaluation request for your school or college.',
+    buttonText: 'Submit Institution Registration Request',
+    buttonClass: 'bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold shadow-lg shadow-purple-600/30',
+    iconBg: 'bg-emerald-950/80 text-emerald-400 border border-emerald-500/30'
   },
   school: {
     id: 'school',
-    tier: 'school',
+    wing: 'school',
     isMultiCampus: false,
-    title: 'Apply for School Plan',
-    badge: '₨ 25,000 / month (or ₨ 21,250 annual) · 1,500 Students · 2 Campuses',
-    badgeColor: 'text-purple-700',
-    description: 'Submit institutional onboarding details for primary or matriculation school campus. Super Admin will verify and activate your portal credentials.',
-    buttonText: 'Submit School Plan Request for Approval',
-    buttonClass: 'bg-purple-600 hover:bg-purple-700 shadow-purple-600/25',
-    iconBg: 'bg-purple-100 text-purple-700'
+    title: 'School Plan (Primary & Matric)',
+    planName: 'School Plan',
+    priceDisplay: 'PKR 25,000/mo',
+    priceSub: 'Up to 1,500 Students · 2 Campuses',
+    badge: '14 Days full testing access',
+    badgeColor: 'text-purple-400',
+    description: 'Submit institutional onboarding details for primary or matriculation school campus.',
+    buttonText: 'Submit Institution Registration Request',
+    buttonClass: 'bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold shadow-lg shadow-purple-600/30',
+    iconBg: 'bg-purple-950/80 text-purple-400 border border-purple-500/30'
   },
   college: {
     id: 'college',
-    tier: 'college',
+    wing: 'college',
     isMultiCampus: false,
-    title: 'Apply for College Plan',
-    badge: '₨ 35,000 / month (or ₨ 29,750 annual) · 3,000 Students · 3 Campuses',
-    badgeColor: 'text-indigo-700',
-    description: 'Submit higher secondary college registration (F.Sc, ICS, I.Com) for Super Admin review and portal credentials provision.',
-    buttonText: 'Submit College Plan Request for Approval',
-    buttonClass: 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-600/25',
-    iconBg: 'bg-indigo-100 text-indigo-700'
+    title: 'College Plan (Intermediate & Inter)',
+    planName: 'College Plan',
+    priceDisplay: 'PKR 35,000/mo',
+    priceSub: 'Up to 3,000 Students · 3 Campuses',
+    badge: '14 Days full testing access',
+    badgeColor: 'text-indigo-400',
+    description: 'Submit higher secondary college registration (F.Sc, ICS, FA, I.Com) for Super Admin review.',
+    buttonText: 'Submit Institution Registration Request',
+    buttonClass: 'bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold shadow-lg shadow-purple-600/30',
+    iconBg: 'bg-indigo-950/80 text-indigo-400 border border-indigo-500/30'
   },
   university: {
     id: 'university',
-    tier: 'undergraduate',
+    wing: 'university',
     isMultiCampus: true,
-    title: 'Apply for University / Hybrid Plan',
-    badge: '₨ 55,000 / month · 8,000+ Students · 15+ Campuses · Multi-Wing HQ',
-    badgeColor: 'text-purple-800',
-    description: 'Submit multi-campus university network application for Super Admin review and dedicated enterprise portal credentialing.',
-    buttonText: 'Submit University Plan Request for Approval',
-    buttonClass: 'bg-purple-700 hover:bg-purple-800 shadow-purple-700/25',
-    iconBg: 'bg-purple-100 text-purple-700'
+    title: 'Apex Enterprise / University Plan',
+    planName: 'Apex Enterprise Plan',
+    priceDisplay: 'PKR 55,000/mo',
+    priceSub: '8,000+ Students · Multi-Campus HQ',
+    badge: '14 Days full testing access',
+    badgeColor: 'text-purple-400',
+    description: 'Submit multi-campus university network application for dedicated enterprise portal credentialing.',
+    buttonText: 'Submit Institution Registration Request',
+    buttonClass: 'bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold shadow-lg shadow-purple-600/30',
+    iconBg: 'bg-purple-950/80 text-purple-400 border border-purple-500/30'
   }
 }
 
@@ -193,17 +211,22 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
     return () => window.removeEventListener('hashchange', handleHash)
   }, [])
 
-  // Free Trial Form State
+  // Institutional Registration Form State
   const [trialForm, setTrialForm] = useState({
     instituteName: '',
     adminName: '',
     email: '',
-    countryCode: '+92',
     phone: '',
-    tier: 'school',
-    isMultiCampus: false,
-    city: 'Lahore'
+    city: 'Lahore',
+    wing: 'school', // 'school', 'college', 'university', 'multi-campus'
+    adminPassword: '',
+    confirmPassword: '',
+    notes: '',
+    agreedToTerms: true
   })
+  const [modalStep, setModalStep] = useState(2) // 1: Select Package, 2: Enter Details
+  const [showAdminPassword, setShowAdminPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isSubmittingTrial, setIsSubmittingTrial] = useState(false)
 
   // Scroll Spy: Track which section is in view and highlight in navbar
@@ -272,14 +295,17 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
   // Smart Plan Modal Opener: Dynamically configures modal title, badge, icon, and default tier
   const openPlanModal = (planKey = 'trial') => {
     setActiveModalPlan(planKey)
+    setModalStep(2) // Jump directly to Step 2 (Enter Details) with preselected plan
     if (planKey === 'school') {
-      setTrialForm(prev => ({ ...prev, tier: 'school', isMultiCampus: false }))
+      setTrialForm(prev => ({ ...prev, wing: 'school' }))
     } else if (planKey === 'college') {
-      setTrialForm(prev => ({ ...prev, tier: 'college', isMultiCampus: false }))
+      setTrialForm(prev => ({ ...prev, wing: 'college' }))
     } else if (planKey === 'university') {
-      setTrialForm(prev => ({ ...prev, tier: 'undergraduate', isMultiCampus: true }))
+      setTrialForm(prev => ({ ...prev, wing: 'university' }))
+    } else if (planKey === 'custom') {
+      setTrialForm(prev => ({ ...prev, wing: 'multi-campus' }))
     } else {
-      setTrialForm(prev => ({ ...prev, tier: 'school', isMultiCampus: false }))
+      setTrialForm(prev => ({ ...prev, wing: 'school' }))
     }
     setIsTrialModalOpen(true)
   }
@@ -297,11 +323,31 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
     }
   }
 
-    // Handle Free Trial / Plan Registration Submission to Super Admin
+  // Handle Free Trial / Plan Registration Submission to Super Admin
   const handleSubmitTrial = (e) => {
     e.preventDefault()
-    if (!trialForm.instituteName.trim() || !trialForm.email.trim()) {
-      showToast('Please enter Institute Name and Email.')
+    if (!trialForm.instituteName.trim()) {
+      showToast('Please enter your Institution Name.')
+      return
+    }
+    if (!trialForm.email.trim()) {
+      showToast('Please enter your Official Email Address.')
+      return
+    }
+    if (!trialForm.phone.trim()) {
+      showToast('Please enter your Mobile / WhatsApp Number.')
+      return
+    }
+    if (!trialForm.adminPassword) {
+      showToast('Please create an Admin Password.')
+      return
+    }
+    if (trialForm.adminPassword !== trialForm.confirmPassword) {
+      showToast('Admin Passwords do not match. Please verify.')
+      return
+    }
+    if (!trialForm.agreedToTerms) {
+      showToast('Please agree to the Terms of Service & Software Usage Agreement.')
       return
     }
 
@@ -309,83 +355,65 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
 
     setTimeout(() => {
       try {
-        const fullPhone = trialForm.phone.trim() 
-          ? `${trialForm.countryCode} ${trialForm.phone.trim()}`
-          : `${trialForm.countryCode} 300 1234567`
+        const fullPhone = trialForm.phone.trim().startsWith('+') ? trialForm.phone.trim() : `+92 ${trialForm.phone.trim().replace(/^0+/, '')}`
         const newInstId = `inst-trial-${Date.now().toString().slice(-4)}`
-        
-        // Save new pending institute to stored data
-        const currentData = getStoredData()
-        const enabledTiers = trialForm.isMultiCampus
-          ? [trialForm.tier, trialForm.tier === 'school' ? 'college' : 'school']
-          : [trialForm.tier]
+        const approvalId = `appr-reg-${Date.now().toString().slice(-6)}`
+        const instCode = trialForm.instituteName.replace(/[^A-Za-z0-9]/g, '').slice(0, 4).toUpperCase() || 'INST'
 
-        let planTierName = '14-Day Free Evaluation Tier'
+        const currentPlanConfig = PLAN_CONFIGS[activeModalPlan] || PLAN_CONFIGS.trial
+        const planTierName = currentPlanConfig.planName
+
         let planPrice = 0
-
         if (activeModalPlan === 'school') {
-          planTierName = 'School Plan (Primary & Matric)'
           planPrice = billingCycle === 'annual' ? 21250 : 25000
         } else if (activeModalPlan === 'college') {
-          planTierName = 'College Plan (Intermediate & Inter)'
           planPrice = billingCycle === 'annual' ? 29750 : 35000
         } else if (activeModalPlan === 'university') {
-          planTierName = 'University / Enterprise Plan'
           planPrice = billingCycle === 'annual' ? 46750 : 55000
         }
 
-        const planTypeCode = trialForm.isMultiCampus
-          ? 'CUSTOM'
-          : trialForm.tier === 'school'
-          ? 'SCHOOL'
-          : trialForm.tier === 'college'
-          ? 'COLLEGE'
-          : 'UNIVERSITY'
+        const wingType = trialForm.wing === 'school' ? 'School' : trialForm.wing === 'college' ? 'College' : trialForm.wing === 'university' ? 'University' : 'Multi-Campus Hybrid'
 
-        const instTypeName = trialForm.isMultiCampus
-          ? 'Custom Group'
-          : trialForm.tier === 'school'
-          ? 'School'
-          : trialForm.tier === 'college'
-          ? 'College'
-          : 'University'
-
+        // 1. Create Institute Entry in storedData
         const newInstitute = {
           id: newInstId,
           name: trialForm.instituteName.trim(),
-          code: trialForm.instituteName.replace(/[^A-Za-z0-9]/g, '').slice(0, 4).toUpperCase() || 'TRL1',
+          code: instCode,
           contactPerson: trialForm.adminName.trim() || 'Principal Administrator',
           email: trialForm.email.trim(),
           phone: fullPhone,
-          address: `${trialForm.city}, Pakistan`,
-          city: trialForm.city,
+          address: `${trialForm.city || 'Lahore'}, Pakistan`,
+          city: trialForm.city || 'Lahore',
           country: 'Pakistan',
           planTier: planTierName,
-          planType: planTypeCode,
-          type: instTypeName,
+          planType: trialForm.wing.toUpperCase(),
+          type: wingType,
           subscriptionStatus: 'PENDING_APPROVAL',
           lifecycleStatus: 'Pending',
           trialEndsAt: new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
-          enabledTiers: enabledTiers,
+          enabledTiers: [trialForm.wing === 'university' ? 'undergraduate' : trialForm.wing],
           createdAt: new Date().toISOString().slice(0, 10),
           status: 'Pending Approval',
-          wingsCount: enabledTiers.length,
-          campusesCount: trialForm.isMultiCampus ? 2 : 1,
+          wingsCount: 1,
+          campusesCount: trialForm.wing === 'multi-campus' ? 3 : 1,
           studentCount: 0,
-          facultyCount: 0
+          facultyCount: 0,
+          adminPassword: trialForm.adminPassword,
+          notes: trialForm.notes.trim()
         }
 
+        const currentData = getStoredData()
         const updatedInstitutes = [newInstitute, ...(currentData.institutes || [])]
         saveStoredData({ ...currentData, institutes: updatedInstitutes })
 
-        // Register in billing subscriptions as pending approval
+        // 2. Register in billing subscriptions as pending approval
         const trialSub = {
-          id: `sub-trial-${Date.now().toString().slice(-4)}`,
+          id: `sub-reg-${Date.now().toString().slice(-4)}`,
           instituteId: newInstId,
           instituteName: trialForm.instituteName.trim(),
-          planId: `plan-trial-${trialForm.tier}`,
+          planId: `plan-${activeModalPlan}`,
           planName: planTierName,
-          enabledTiers: enabledTiers,
+          enabledTiers: [trialForm.wing === 'university' ? 'undergraduate' : trialForm.wing],
           status: 'PENDING_APPROVAL',
           billingCycle: activeModalPlan === 'trial' ? '14-day trial' : billingCycle,
           pricePKR: planPrice,
@@ -393,8 +421,8 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
           renewalDate: new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
           trialEndsAt: new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
           autoRenew: false,
-          isWaived: false,
-          waiveReason: `${planTierName} Pending Verification`
+          isWaived: activeModalPlan === 'trial',
+          waiveReason: activeModalPlan === 'trial' ? '14-Day Free Evaluation' : 'Standard Evaluation'
         }
 
         const localSubs = localStorage.getItem('sms_institute_subscriptions')
@@ -405,27 +433,34 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
         subsList.unshift(trialSub)
         localStorage.setItem('sms_institute_subscriptions', JSON.stringify(subsList))
 
-        // Also push an official approval ticket to sms_approval_requests for Super Admin
+        // 3. Push official approval petition to sms_approval_requests for Super Admin
         const localApprovals = localStorage.getItem('sms_approval_requests')
         let approvalsList = []
         if (localApprovals) {
           try { approvalsList = JSON.parse(localApprovals) } catch {}
         }
         const approvalEntry = {
-          id: `appr-trial-${Date.now().toString().slice(-6)}`,
+          id: approvalId,
           requestType: 'INSTITUTE_ONBOARDING',
           instituteId: newInstId,
           instituteName: trialForm.instituteName.trim(),
-          title: `New Onboarding & Evaluation: ${trialForm.instituteName.trim()}`,
+          title: `New Onboarding Petition: ${trialForm.instituteName.trim()} (${planTierName})`,
           details: {
+            instituteName: trialForm.instituteName.trim(),
+            campusCode: instCode,
             contactPerson: trialForm.adminName.trim() || 'Principal Administrator',
             email: trialForm.email.trim(),
             phone: fullPhone,
-            city: trialForm.city,
-            tier: trialForm.tier,
+            city: trialForm.city || 'Lahore',
+            wing: trialForm.wing,
+            wingType: wingType,
             planTier: planTierName,
-            isMultiCampus: trialForm.isMultiCampus,
-            notes: 'Awaiting Super Admin credential generation and account activation.'
+            planPrice: planPrice,
+            billingCycle: billingCycle,
+            adminPassword: trialForm.adminPassword,
+            notes: trialForm.notes.trim() || 'Awaiting Super Admin credential review and activation.',
+            agreedToTerms: true,
+            submittedAt: new Date().toISOString()
           },
           status: 'PENDING',
           reviewerNotes: null,
@@ -434,22 +469,29 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
         approvalsList.unshift(approvalEntry)
         localStorage.setItem('sms_approval_requests', JSON.stringify(approvalsList))
 
-        // Save submitted details for the Animated Green Success Popup
+        // 4. Dispatch storage and custom events for real-time reactivity across Super Admin views
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('sms_approval_created'))
+          window.dispatchEvent(new Event('storage'))
+        }
+
+        // 5. Save submitted details for the Animated Green Success Popup
         setSubmittedSuccessData({
           requestId: approvalEntry.id,
           instituteName: trialForm.instituteName.trim(),
           adminName: trialForm.adminName.trim() || 'Principal Administrator',
           email: trialForm.email.trim(),
           phone: fullPhone,
-          city: trialForm.city,
-          tierName: instTypeName,
-          planTier: planTierName
+          city: trialForm.city || 'Lahore',
+          tierName: wingType,
+          planTier: planTierName,
+          adminPassword: trialForm.adminPassword
         })
 
         setIsSubmittingTrial(false)
         setIsTrialModalOpen(false)
         setIsSuccessModalOpen(true)
-        showToast('Request submitted successfully for Super Admin approval!')
+        showToast('Registration submitted successfully for Super Admin approval!')
       } catch (err) {
         setIsSubmittingTrial(false)
         showToast('Submission error: ' + err.message)
@@ -1393,7 +1435,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
 
               <div className="mt-6 pt-4 border-t border-slate-100">
                 <button
-                  onClick={() => setIsTrialModalOpen(true)}
+                  onClick={() => openPlanModal('school')}
                   className="w-full py-2.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs transition-colors cursor-pointer"
                 >
                   Choose School Plan
@@ -1854,288 +1896,488 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
 
     </div>{/* end bottomWrapperRef */}
 
-      {/* 11. START 14-DAY FREE TRIAL MODAL (Clean UX, Zero Corner Overflow, Sleek Scrollbar) */}
+      {/* 11. START 14-DAY FREE TRIAL / PLAN REGISTRATION MODAL */}
       {isTrialModalOpen && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200"
           onClick={() => setIsTrialModalOpen(false)}
         >
-          {/* Outer Card: Holds border-radius and overflow-hidden so native scrollbar never clips corners */}
           <div 
-            className="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-purple-100 relative max-h-[92vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
+            className="bg-[#0B0F19] text-slate-100 rounded-3xl max-w-4xl w-full shadow-2xl border border-slate-800 relative max-h-[94vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header: Fixed at top with persistent close button */}
-            <div className="p-5 sm:p-6 pb-3.5 relative shrink-0 border-b border-slate-100/90 bg-white">
-              {/* Close Button */}
+            {/* 1. TOP STEPPER (Select Package -> Enter Details) */}
+            <div className="flex items-center justify-center gap-3 sm:gap-6 py-3.5 px-6 border-b border-slate-800/80 bg-[#0B0F19] shrink-0 select-none">
               <button
-                onClick={() => setIsTrialModalOpen(false)}
-                className="absolute top-4 right-4 sm:top-5 sm:right-5 p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-                title="Close dialog"
-                aria-label="Close dialog"
+                type="button"
+                onClick={() => setModalStep(1)}
+                className="flex items-center gap-2 cursor-pointer transition-colors group"
               >
-                <X className="w-5 h-5" />
+                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                  modalStep === 1 
+                    ? 'bg-purple-600 text-white ring-4 ring-purple-500/20 shadow-md shadow-purple-600/30' 
+                    : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                }`}>
+                  {modalStep === 1 ? '1' : '✓'}
+                </span>
+                <span className={`text-xs ${
+                  modalStep === 1 ? 'text-white font-bold' : 'text-emerald-400 font-semibold group-hover:text-emerald-300'
+                }`}>
+                  Select Package
+                </span>
               </button>
 
-{(() => {
-                const currentPlanConfig = PLAN_CONFIGS[activeModalPlan] || PLAN_CONFIGS.trial
-                const PlanHeaderIcon = activeModalPlan === 'school' ? School : activeModalPlan === 'college' ? Building2 : activeModalPlan === 'university' ? GraduationCap : Sparkles
+              <div className="h-0.5 w-10 sm:w-20 bg-slate-800"></div>
 
-                return (
-                  <div>
-                    <div className="flex items-center gap-2.5">
-                      <div className={`w-9 h-9 rounded-xl ${currentPlanConfig.iconBg} flex items-center justify-center shrink-0 shadow-2xs`}>
-                        <PlanHeaderIcon className="w-5 h-5" />
-                      </div>
-                      <div className="pr-8">
-                        <h3 className="text-base sm:text-lg font-extrabold text-slate-900 font-heading leading-tight">
-                          {currentPlanConfig.title}
-                        </h3>
-                        <span className={`text-[11px] font-semibold block mt-0.5 ${currentPlanConfig.badgeColor}`}>
-                          {currentPlanConfig.badge}
-                        </span>
-                      </div>
-                    </div>
-
-                    <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-                      {currentPlanConfig.description}
-                    </p>
-                  </div>
-                )
-              })()}
+              <button
+                type="button"
+                onClick={() => setModalStep(2)}
+                className="flex items-center gap-2 cursor-pointer transition-colors"
+              >
+                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                  modalStep === 2 
+                    ? 'bg-purple-600 text-white ring-4 ring-purple-500/20 shadow-md shadow-purple-600/30' 
+                    : 'bg-slate-800 text-slate-400 border border-slate-700'
+                }`}>
+                  2
+                </span>
+                <span className={`text-xs ${
+                  modalStep === 2 ? 'text-white font-bold' : 'text-slate-400 font-semibold'
+                }`}>
+                  Enter Details
+                </span>
+              </button>
             </div>
 
-            {/* Scrollable Form Body: Inner container with sleek modal-scrollbar */}
-            <div className="overflow-y-auto p-5 sm:p-6 pt-4 modal-scrollbar flex-1">
-              <form onSubmit={handleSubmitTrial} className="space-y-3.5">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Institute Name <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={trialForm.instituteName}
-                  onChange={(e) => setTrialForm({ ...trialForm, instituteName: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-xs sm:text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none"
-                  placeholder="e.g. Allied Grammar High School"
-                />
-              </div>
+            {/* 2. TOP BAR (Change Plan, Selected Subscription, 14 Days testing access badge) */}
+            <div className="flex flex-wrap items-center justify-between gap-3 px-5 sm:px-6 py-3.5 border-b border-slate-800/80 bg-[#111827]/70 shrink-0">
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setModalStep(modalStep === 1 ? 2 : 1)}
+                  className="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/90 hover:bg-slate-700 text-xs font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>{modalStep === 1 ? 'Continue to Details' : 'Change Plan'}</span>
+                </button>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Principal / Admin Full Name
-                </label>
-                <input
-                  type="text"
-                  value={trialForm.adminName}
-                  onChange={(e) => setTrialForm({ ...trialForm, adminName: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-xs sm:text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none"
-                  placeholder="e.g. Prof. Tariq Mahmood"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Official Email Address <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="email"
-                  required
-                  value={trialForm.email}
-                  onChange={(e) => setTrialForm({ ...trialForm, email: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-xs sm:text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none"
-                  placeholder="e.g. principal@alliedschool.edu.pk"
-                />
-              </div>
-
-              {/* Dedicated Educational Wing Selection Cards */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-xs font-bold text-slate-800">
-                    Educational Wing <span className="text-rose-500">*</span>
-                  </label>
-                  <span className="text-[10px] font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200">
-                    Isolated Architecture
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                    Selected Subscription
+                  </span>
+                  <span className="text-sm font-bold text-white flex items-center gap-2">
+                    <span>{(PLAN_CONFIGS[activeModalPlan] || PLAN_CONFIGS.trial).planName}</span>
+                    <span className="text-purple-400 font-mono text-xs">
+                      ({(PLAN_CONFIGS[activeModalPlan] || PLAN_CONFIGS.trial).priceDisplay})
+                    </span>
                   </span>
                 </div>
-
-                <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
-                  {/* Card 1: School */}
-                  <button
-                    type="button"
-                    onClick={() => { setActiveModalPlan('school'); setTrialForm({ ...trialForm, tier: 'school', isMultiCampus: false }); }}
-                    className={`p-2.5 sm:p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
-                      trialForm.tier === 'school'
-                        ? 'bg-purple-50/80 border-purple-500 ring-2 ring-purple-500/20 shadow-xs'
-                        : 'bg-white border-slate-200 hover:border-purple-200 hover:bg-slate-50/60'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <div className={`w-7 h-7 rounded-xl flex items-center justify-center ${
-                        trialForm.tier === 'school' ? 'bg-purple-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600'
-                      }`}>
-                        <School className="w-4 h-4" />
-                      </div>
-                      {trialForm.tier === 'school' && (
-                        <CheckCircle2 className="w-4 h-4 text-purple-600 shrink-0" />
-                      )}
-                    </div>
-                    <div className="mt-2">
-                      <span className="block text-xs font-bold text-slate-900 leading-tight">School</span>
-                      <span className="block text-[10px] text-slate-500 leading-tight mt-0.5">Matric & Primary</span>
-                    </div>
-                  </button>
-
-                  {/* Card 2: College */}
-                  <button
-                    type="button"
-                    onClick={() => { setActiveModalPlan('college'); setTrialForm({ ...trialForm, tier: 'college', isMultiCampus: false }); }}
-                    className={`p-2.5 sm:p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
-                      trialForm.tier === 'college'
-                        ? 'bg-indigo-50/80 border-indigo-500 ring-2 ring-indigo-500/20 shadow-xs'
-                        : 'bg-white border-slate-200 hover:border-indigo-200 hover:bg-slate-50/60'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <div className={`w-7 h-7 rounded-xl flex items-center justify-center ${
-                        trialForm.tier === 'college' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600'
-                      }`}>
-                        <Building2 className="w-4 h-4" />
-                      </div>
-                      {trialForm.tier === 'college' && (
-                        <CheckCircle2 className="w-4 h-4 text-indigo-600 shrink-0" />
-                      )}
-                    </div>
-                    <div className="mt-2">
-                      <span className="block text-xs font-bold text-slate-900 leading-tight">College</span>
-                      <span className="block text-[10px] text-slate-500 leading-tight mt-0.5">F.Sc & ICS (BISE)</span>
-                    </div>
-                  </button>
-
-                  {/* Card 3: University */}
-                  <button
-                    type="button"
-                    onClick={() => { setActiveModalPlan('university'); setTrialForm({ ...trialForm, tier: 'undergraduate' }); }}
-                    className={`p-2.5 sm:p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
-                      trialForm.tier === 'undergraduate'
-                        ? 'bg-emerald-50/80 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs'
-                        : 'bg-white border-slate-200 hover:border-emerald-200 hover:bg-slate-50/60'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <div className={`w-7 h-7 rounded-xl flex items-center justify-center ${
-                        trialForm.tier === 'undergraduate' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600'
-                      }`}>
-                        <GraduationCap className="w-4 h-4" />
-                      </div>
-                      {trialForm.tier === 'undergraduate' && (
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                      )}
-                    </div>
-                    <div className="mt-2">
-                      <span className="block text-xs font-bold text-slate-900 leading-tight">University</span>
-                      <span className="block text-[10px] text-slate-500 leading-tight mt-0.5">BS & Semesters</span>
-                    </div>
-                  </button>
-                </div>
-
-                {/* Optional Multi-Campus / Multi-Wing Support Toggle */}
-                <div className="mt-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-start gap-2.5">
-                  <input
-                    type="checkbox"
-                    id="multiCampusToggle"
-                    checked={trialForm.isMultiCampus}
-                    onChange={(e) => setTrialForm({ ...trialForm, isMultiCampus: e.target.checked })}
-                    className="mt-0.5 w-4 h-4 rounded text-purple-600 focus:ring-purple-500 border-slate-300 cursor-pointer"
-                  />
-                  <label htmlFor="multiCampusToggle" className="text-xs cursor-pointer select-none">
-                    <span className="font-bold text-slate-900 flex items-center gap-1.5">
-                      <span>Enable Multi-Campus / Multi-Wing Network</span>
-                      <span className="text-[10px] font-bold text-purple-700 bg-purple-100/70 px-1.5 py-0.2 rounded border border-purple-200">Optional</span>
-                    </span>
-                    <span className="text-[11px] text-slate-500 block mt-0.5 leading-snug">
-                      Combine multiple school, college, or university branches under one unified central headquarters.
-                    </span>
-                  </label>
-                </div>
               </div>
 
-              {/* Phone and City in 2 Columns */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Phone Number
-                  </label>
-                  <div className="flex">
-                    <span className="inline-flex items-center px-2.5 rounded-l-xl border border-r-0 border-slate-200 bg-slate-50 text-xs font-semibold text-slate-600">
-                      +92
-                    </span>
-                    <input
-                      type="text"
-                      value={trialForm.phone}
-                      onChange={(e) => setTrialForm({ ...trialForm, phone: e.target.value })}
-                      className="w-full px-3 py-2 text-xs border border-slate-200 rounded-r-xl focus:ring-2 focus:ring-purple-500 focus:outline-none font-mono"
-                      placeholder="300 1234567"
-                    />
-                  </div>
-                </div>
+              <div className="flex items-center gap-3">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-950/60 text-emerald-400 border border-emerald-500/30">
+                  <Clock className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>14 Days full testing access</span>
+                </span>
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    City
-                  </label>
-                  <select
-                    value={trialForm.city}
-                    onChange={(e) => setTrialForm({ ...trialForm, city: e.target.value })}
-                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none bg-white font-medium"
-                  >
-                    <option value="Lahore">Lahore</option>
-                    <option value="Islamabad">Islamabad</option>
-                    <option value="Rawalpindi">Rawalpindi</option>
-                    <option value="Karachi">Karachi</option>
-                    <option value="Faisalabad">Faisalabad</option>
-                    <option value="Multan">Multan</option>
-                    <option value="Peshawar">Peshawar</option>
-                    <option value="Quetta">Quetta</option>
-                    <option value="Other">Other City</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="pt-2">
                 <button
-                  type="submit"
-                  disabled={isSubmittingTrial}
-                  className={`w-full py-3.5 px-4 rounded-xl text-white font-bold text-xs sm:text-sm shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 ${
-                    (PLAN_CONFIGS[activeModalPlan] || PLAN_CONFIGS.trial).buttonClass || 'bg-purple-600 hover:bg-purple-700 shadow-purple-600/25'
-                  }`}
+                  onClick={() => setIsTrialModalOpen(false)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                  title="Close dialog"
+                  aria-label="Close dialog"
                 >
-                  {isSubmittingTrial ? (
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                      <span>Submitting Request to Super Admin...</span>
-                    </div>
-                  ) : (
-                    <>
-                      <Send className="w-4 h-4" />
-                      <span>{(PLAN_CONFIGS[activeModalPlan] || PLAN_CONFIGS.trial).buttonText || 'Submit Request for Approval'}</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </>
-                  )}
+                  <X className="w-5 h-5" />
                 </button>
               </div>
+            </div>
 
-              <div className="text-center text-[10.5px] text-slate-500 pt-1 leading-relaxed">
-                Your request is securely forwarded to Super Admin headquarters. Upon review & approval, official portal Login ID & Password will be delivered to your registered email & phone.
-              </div>
-            </form>
+            {/* 3. SCROLLABLE CONTAINER */}
+            <div className="overflow-y-auto p-5 sm:p-7 modal-scrollbar flex-1 space-y-5">
+              {modalStep === 1 ? (
+                <div className="space-y-4">
+                  <div className="text-center max-w-md mx-auto mb-2">
+                    <h3 className="text-lg sm:text-xl font-bold text-white font-heading">
+                      Select Your Subscription Package
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Choose an institutional plan to proceed to credential setup and Super Admin verification.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                    {Object.keys(PLAN_CONFIGS).map((planKey) => {
+                      const p = PLAN_CONFIGS[planKey]
+                      const isSelected = activeModalPlan === planKey
+                      const PlanCardIcon = planKey === 'school' ? School : planKey === 'college' ? Building2 : planKey === 'university' ? GraduationCap : Sparkles
+
+                      return (
+                        <div
+                          key={p.id}
+                          onClick={() => {
+                            setActiveModalPlan(planKey)
+                            if (planKey === 'school') setTrialForm(prev => ({ ...prev, wing: 'school' }))
+                            else if (planKey === 'college') setTrialForm(prev => ({ ...prev, wing: 'college' }))
+                            else if (planKey === 'university') setTrialForm(prev => ({ ...prev, wing: 'university' }))
+                            else setTrialForm(prev => ({ ...prev, wing: 'school' }))
+                            setModalStep(2)
+                          }}
+                          className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${
+                            isSelected
+                              ? 'bg-purple-950/40 border-purple-500 ring-2 ring-purple-500/30 shadow-lg shadow-purple-900/20'
+                              : 'bg-[#12192b]/80 border-slate-800 hover:border-slate-700 hover:bg-[#16213a]'
+                          }`}
+                        >
+                          <div>
+                            <div className="flex items-center justify-between mb-3">
+                              <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${p.iconBg}`}>
+                                <PlanCardIcon className="w-5 h-5" />
+                              </div>
+                              {isSelected && (
+                                <span className="text-[10px] font-bold text-purple-400 bg-purple-500/20 px-2 py-0.5 rounded-full border border-purple-500/30">
+                                  Active
+                                </span>
+                              )}
+                            </div>
+
+                            <h4 className="text-sm font-bold text-white">{p.planName}</h4>
+                            <div className="mt-1 font-mono text-base font-extrabold text-purple-400">
+                              {p.priceDisplay}
+                            </div>
+                            <p className="text-[11px] text-slate-400 mt-1 leading-snug">
+                              {p.priceSub}
+                            </p>
+                          </div>
+
+                          <button
+                            type="button"
+                            className={`w-full mt-4 py-2 px-3 rounded-xl font-bold text-xs transition-colors flex items-center justify-center gap-1.5 ${
+                              isSelected
+                                ? 'bg-purple-600 text-white'
+                                : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
+                            }`}
+                          >
+                            <span>Select Package</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmitTrial} className="space-y-4">
+                  {/* Header: Enter Your Educational Institute & Admin Credentials */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-800/60">
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-6 h-6 rounded-full bg-purple-600 text-white flex items-center justify-center text-xs font-bold shrink-0 shadow-xs shadow-purple-600/30">
+                        2
+                      </span>
+                      <h3 className="text-base sm:text-lg font-bold text-white font-heading">
+                        Enter Your Educational Institute & Admin Credentials
+                      </h3>
+                    </div>
+                    <span className="text-[11px] text-slate-400">
+                      Fields marked with <span className="text-rose-400 font-bold">*</span> are mandatory
+                    </span>
+                  </div>
+
+                  {/* Guarantee Box */}
+                  <div className="p-3.5 rounded-2xl bg-emerald-950/20 border border-emerald-500/30 text-emerald-300">
+                    <div className="flex items-center gap-2 text-xs font-bold text-emerald-400">
+                      <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>14-Day Free Evaluation Guarantee</span>
+                    </div>
+                    <p className="text-[11.5px] sm:text-xs text-emerald-200/80 mt-1 leading-relaxed">
+                      No credit card or payment TRX required upfront. You will receive 14 days of full feature access to test computerized fee challans, live attendance, multi-wing telemetry, and academic grading.
+                    </p>
+                  </div>
+
+                  {/* Group 1: INSTITUTION & CAMPUS PROFILE */}
+                  <div className="space-y-2.5 pt-1">
+                    <span className="text-xs font-bold uppercase tracking-wider text-purple-400 flex items-center gap-1.5">
+                      <Building2 className="w-3.5 h-3.5 text-purple-400" />
+                      <span>Institution & Campus Profile</span>
+                    </span>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      {/* Institution Name */}
+                      <div>
+                        <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1">
+                          Institution / Campus Name <span className="text-rose-400">*</span>
+                        </label>
+                        <div className="relative">
+                          <Building2 className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                          <input
+                            type="text"
+                            required
+                            value={trialForm.instituteName}
+                            onChange={(e) => setTrialForm({ ...trialForm, instituteName: e.target.value })}
+                            placeholder="e.g. Beaconhouse High School / The Educators"
+                            className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm bg-[#161f36] border border-slate-700/80 text-white placeholder-slate-500 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Institution Type / Wing */}
+                      <div>
+                        <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1">
+                          Institution Type / Educational Wing <span className="text-rose-400">*</span>
+                        </label>
+                        <div className="relative">
+                          <School className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                          <select
+                            value={trialForm.wing}
+                            onChange={(e) => setTrialForm({ ...trialForm, wing: e.target.value })}
+                            className="w-full pl-10 pr-8 py-2.5 text-xs sm:text-sm bg-[#161f36] border border-slate-700/80 text-white rounded-xl focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all cursor-pointer font-medium appearance-none"
+                          >
+                            <option value="school" className="bg-slate-900 text-white">School Wing (Primary to Matric / O-Levels)</option>
+                            <option value="college" className="bg-slate-900 text-white">College Wing (F.Sc, ICS, FA, I.Com)</option>
+                            <option value="university" className="bg-slate-900 text-white">University Wing (BS Degrees & Semesters)</option>
+                            <option value="multi-campus" className="bg-slate-900 text-white">Multi-Campus / Hybrid Educational Network</option>
+                          </select>
+                          <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        </div>
+                      </div>
+
+                      {/* City / District */}
+                      <div>
+                        <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1">
+                          City / District (Optional)
+                        </label>
+                        <div className="relative">
+                          <MapPin className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                          <input
+                            type="text"
+                            value={trialForm.city}
+                            onChange={(e) => setTrialForm({ ...trialForm, city: e.target.value })}
+                            placeholder="e.g. Lahore, Karachi, Islamabad, Kasur..."
+                            className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm bg-[#161f36] border border-slate-700/80 text-white placeholder-slate-500 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Principal / Administrator Full Name */}
+                      <div>
+                        <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1">
+                          Principal / Administrator Full Name <span className="text-rose-400">*</span>
+                        </label>
+                        <div className="relative">
+                          <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                          <input
+                            type="text"
+                            required
+                            value={trialForm.adminName}
+                            onChange={(e) => setTrialForm({ ...trialForm, adminName: e.target.value })}
+                            placeholder="e.g. Prof. Tariq Mahmood"
+                            className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm bg-[#161f36] border border-slate-700/80 text-white placeholder-slate-500 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Group 2: ACCOUNT ACCESS & SECURITY */}
+                  <div className="space-y-2.5 pt-1">
+                    <span className="text-xs font-bold uppercase tracking-wider text-purple-400 flex items-center gap-1.5">
+                      <Lock className="w-3.5 h-3.5 text-purple-400" />
+                      <span>Account Access & Security</span>
+                    </span>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      {/* Email Address */}
+                      <div>
+                        <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1">
+                          Email Address <span className="text-rose-400">*</span>
+                        </label>
+                        <div className="relative">
+                          <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                          <input
+                            type="email"
+                            required
+                            value={trialForm.email}
+                            onChange={(e) => setTrialForm({ ...trialForm, email: e.target.value })}
+                            placeholder="e.g. principal@institution.edu.pk"
+                            className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm bg-[#161f36] border border-slate-700/80 text-white placeholder-slate-500 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Mobile / WhatsApp */}
+                      <div>
+                        <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1">
+                          Mobile / WhatsApp Number <span className="text-rose-400">*</span>
+                        </label>
+                        <div className="relative">
+                          <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                          <input
+                            type="text"
+                            required
+                            value={trialForm.phone}
+                            onChange={(e) => setTrialForm({ ...trialForm, phone: e.target.value })}
+                            placeholder="0300-1234567"
+                            className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm bg-[#161f36] border border-slate-700/80 text-white placeholder-slate-500 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 font-mono transition-all"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Create Admin Password */}
+                      <div>
+                        <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1">
+                          Create Admin Password <span className="text-rose-400">*</span>
+                        </label>
+                        <div className="relative">
+                          <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                          <input
+                            type={showAdminPassword ? "text" : "password"}
+                            required
+                            value={trialForm.adminPassword}
+                            onChange={(e) => setTrialForm({ ...trialForm, adminPassword: e.target.value })}
+                            placeholder="••••••••••••"
+                            className="w-full pl-10 pr-10 py-2.5 text-xs sm:text-sm bg-[#161f36] border border-slate-700/80 text-white placeholder-slate-500 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 font-mono transition-all"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowAdminPassword(!showAdminPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                            title="Toggle password visibility"
+                          >
+                            {showAdminPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Confirm Admin Password */}
+                      <div>
+                        <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1 flex items-center justify-between">
+                          <span>Confirm Admin Password <span className="text-rose-400">*</span></span>
+                          {trialForm.confirmPassword && (
+                            <span className={`text-[10px] font-bold ${
+                              trialForm.adminPassword === trialForm.confirmPassword ? 'text-emerald-400' : 'text-rose-400'
+                            }`}>
+                              {trialForm.adminPassword === trialForm.confirmPassword ? '✓ Passwords match' : '✕ Passwords do not match'}
+                            </span>
+                          )}
+                        </label>
+                        <div className="relative">
+                          <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                          <input
+                            type={showConfirmPassword ? "text" : "password"}
+                            required
+                            value={trialForm.confirmPassword}
+                            onChange={(e) => setTrialForm({ ...trialForm, confirmPassword: e.target.value })}
+                            placeholder="••••••••••••"
+                            className={`w-full pl-10 pr-10 py-2.5 text-xs sm:text-sm bg-[#161f36] border rounded-xl focus:outline-none font-mono transition-all ${
+                              trialForm.confirmPassword && trialForm.adminPassword !== trialForm.confirmPassword
+                                ? 'border-rose-500 text-white focus:border-rose-500 focus:ring-1 focus:ring-rose-500'
+                                : 'border-slate-700/80 text-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500'
+                            }`}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                            title="Toggle password visibility"
+                          >
+                            {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Plan Active Status Banner */}
+                  <div className="p-3.5 rounded-2xl bg-emerald-950/25 border border-emerald-500/30 flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                      <Sparkles className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-xs font-bold text-white">
+                          {(PLAN_CONFIGS[activeModalPlan] || PLAN_CONFIGS.trial).planName} Active (100% Free / Verified)
+                        </span>
+                        <span className="text-[10px] font-black tracking-wider uppercase text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded-md border border-emerald-500/30">
+                          ZERO UPFRONT PAYMENT
+                        </span>
+                      </div>
+                      <p className="text-[11.5px] text-slate-300 mt-1 leading-relaxed">
+                        No payment, credit card, or Transaction ID is required for your trial. You will receive immediate full access to all campus features upon Super Admin review.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Group 3: ADDITIONAL INSTRUCTIONS OR CUSTOM CAMPUS REQUIREMENTS */}
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1">
+                      Additional Instructions or Custom Campus Requirements (Optional)
+                    </label>
+                    <textarea
+                      rows="3"
+                      value={trialForm.notes}
+                      onChange={(e) => setTrialForm({ ...trialForm, notes: e.target.value })}
+                      placeholder="e.g. Multi-campus branch sync, biometric machine integration, custom fee voucher format, or specific BISE / HEC grading guidelines..."
+                      className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-[#161f36] border border-slate-700/80 text-white placeholder-slate-500 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all resize-y"
+                    />
+                  </div>
+
+                  {/* Terms Agreement Checkbox */}
+                  <div className="p-3.5 rounded-2xl bg-[#161f36]/60 border border-slate-700/70 flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      id="termsAgreement"
+                      checked={trialForm.agreedToTerms}
+                      onChange={(e) => setTrialForm({ ...trialForm, agreedToTerms: e.target.checked })}
+                      className="mt-1 w-4 h-4 rounded text-purple-600 focus:ring-purple-500 border-slate-600 bg-slate-800 cursor-pointer"
+                    />
+                    <label htmlFor="termsAgreement" className="text-xs cursor-pointer select-none">
+                      <span className="font-bold text-slate-200 block">
+                        I agree to the Terms of Service & Institutional Usage Agreement.
+                      </span>
+                      <span className="text-[11px] text-slate-400 block mt-0.5 leading-relaxed">
+                        I verify that all submitted educational institution information is accurate and understand my account will be activated upon Super Admin approval.
+                      </span>
+                    </label>
+                  </div>
+
+                  {/* Bottom Buttons */}
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setModalStep(1)}
+                      className="w-full sm:w-auto px-5 py-3 rounded-xl border border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-slate-300 font-semibold text-xs sm:text-sm transition-colors cursor-pointer"
+                    >
+                      Back to Plans
+                    </button>
+
+                    <button
+                      type="submit"
+                      disabled={isSubmittingTrial}
+                      className="w-full sm:flex-1 py-3 px-6 rounded-xl bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs sm:text-sm shadow-lg shadow-purple-600/30 transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      {isSubmittingTrial ? (
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                          <span>Submitting Request to Super Admin...</span>
+                        </div>
+                      ) : (
+                        <>
+                          <span>Submit Institution Registration Request</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="text-center text-[10.5px] text-slate-500 pt-1 leading-relaxed">
+                    Your request is securely forwarded to Super Admin headquarters. Upon review & approval, official portal Login ID & Password will be confirmed and activated.
+                  </div>
+                </form>
+              )}
+            </div>
           </div>
         </div>
-      </div>
       )}
 
-            {/* 11.B ANIMATED GREEN SUCCESS MODAL (Super Admin Approval Submission Confirmation) */}
+      {/* 11.B ANIMATED GREEN SUCCESS MODAL (Super Admin Approval Submission Confirmation) */}
       {isSuccessModalOpen && (
         <div 
           className="fixed inset-0 z-[60] flex items-center justify-center p-3.5 sm:p-4 bg-slate-900/65 backdrop-blur-sm animate-in fade-in duration-300"

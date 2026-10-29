@@ -28,14 +28,37 @@ export const SuperadminNavbar = ({
   const [showPasswordModal, setShowPasswordModal] = useState(false)
   const [clearedNotifications, setClearedNotifications] = useState(false)
   const [searchValue, setSearchValue] = useState('')
+  const [pendingApprovals, setPendingApprovals] = useState([])
   
   const profileRef = useRef(null)
   const notifRef = useRef(null)
 
+  // Load live pending approval requests from local storage
+  useEffect(() => {
+    const loadPendingApprovals = () => {
+      try {
+        const raw = localStorage.getItem('sms_approval_requests')
+        if (raw) {
+          const list = JSON.parse(raw)
+          setPendingApprovals(list.filter(a => a.status === 'PENDING'))
+        }
+      } catch {}
+    }
+    loadPendingApprovals()
+    window.addEventListener('sms_approval_created', loadPendingApprovals)
+    window.addEventListener('sms_approvals_updated', loadPendingApprovals)
+    window.addEventListener('storage', loadPendingApprovals)
+    return () => {
+      window.removeEventListener('sms_approval_created', loadPendingApprovals)
+      window.removeEventListener('sms_approvals_updated', loadPendingApprovals)
+      window.removeEventListener('storage', loadPendingApprovals)
+    }
+  }, [])
+
   // Real dynamic notification count
   const unreadCount = clearedNotifications 
     ? 0 
-    : (notices.filter(n => n.pinned || n.category === 'Urgent').length + Math.min(recentActivity.length, 2))
+    : (pendingApprovals.length + notices.filter(n => n.pinned || n.category === 'Urgent').length + Math.min(recentActivity.length, 2))
 
   // Click outside to close dropdowns
   useEffect(() => {
@@ -115,7 +138,41 @@ export const SuperadminNavbar = ({
                   Mark all read
                 </button>
               </div>
-              <div className="divide-y divide-slate-50 max-h-64 overflow-y-auto">
+              <div className="divide-y divide-slate-50 max-h-72 overflow-y-auto">
+                {/* Pending Institution Onboarding Petitions */}
+                {pendingApprovals && pendingApprovals.length > 0 && (
+                  <div className="bg-purple-50/60 p-2.5 border-b border-purple-100">
+                    <div className="px-1.5 py-0.5 text-[10px] font-bold text-purple-900 uppercase tracking-wider flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-purple-600 animate-pulse"></span>
+                        <span>Pending Registrations ({pendingApprovals.length})</span>
+                      </span>
+                      <span className="text-[10px] text-purple-600 font-semibold">Action Required</span>
+                    </div>
+                    {pendingApprovals.slice(0, 3).map((appr) => (
+                      <div
+                        key={appr.id}
+                        onClick={() => {
+                          onRouteChange('support-approvals')
+                          setShowNotifications(false)
+                        }}
+                        className="p-2 rounded-xl hover:bg-white transition-all cursor-pointer border border-transparent hover:border-purple-200 mt-1.5 shadow-2xs"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-bold text-purple-700 bg-purple-100 px-1.5 py-0.2 rounded">
+                            {appr.details?.planTier || 'New Plan'}
+                          </span>
+                          <span className="text-[10px] font-semibold text-purple-600">Review Petition &rarr;</span>
+                        </div>
+                        <p className="text-xs font-bold text-slate-900 mt-0.5 line-clamp-1">{appr.instituteName}</p>
+                        <p className="text-[10.5px] text-slate-500 line-clamp-1">
+                          Admin: {appr.details?.contactPerson || 'Principal'} • {appr.details?.city || 'Pakistan'}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 {recentActivity && recentActivity.length > 0 ? (
                   recentActivity.slice(0, 4).map((act, i) => (
                     <div key={act.id || i} className="px-4 py-2.5 hover:bg-slate-50 transition-colors">
@@ -123,7 +180,7 @@ export const SuperadminNavbar = ({
                       <span className="text-[10px] text-slate-400 mt-0.5 inline-block">{act.time}</span>
                     </div>
                   ))
-                ) : (
+                ) : (!pendingApprovals || pendingApprovals.length === 0) && (
                   <div className="px-4 py-6 text-center text-xs text-slate-400">
                     No unread notifications.
                   </div>

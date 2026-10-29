@@ -406,7 +406,24 @@ const getActiveUserEmail = () => {
 }
 
 // Data service API
-export const DataService = {
+export const DataService = {
+  logActivity(action, details, actor = 'System') {
+    try {
+      const store = getStoredData()
+      if (!store.recentActivity) store.recentActivity = []
+      store.recentActivity.unshift({
+        id: `act-${Date.now()}`,
+        text: `${action}: ${details}`,
+        time: 'Just now',
+        type: 'SYSTEM',
+        dotColor: '#8b5cf6'
+      })
+      if (store.recentActivity.length > 25) store.recentActivity.pop()
+      saveStoredData(store)
+    } catch (e) {
+      console.warn('Failed to log activity:', e)
+    }
+  },
   async getCollection(collectionName) {
     if (isSupabaseConfigured && supabase) {
       try {
