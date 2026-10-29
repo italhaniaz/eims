@@ -52,10 +52,10 @@ const PLAN_CONFIGS = {
     tier: 'school',
     isMultiCampus: false,
     title: 'Start 14-Day Free Trial',
-    badge: '₨ 0 · No Credit Card Required · Instant Activation',
+    badge: '₨ 0 · No Credit Card Required · Super Admin Verification',
     badgeColor: 'text-emerald-600',
-    description: 'Enter your institutional details below to immediately launch an isolated 14-day evaluation environment for your school or college.',
-    buttonText: 'Activate 14-Day Free Trial',
+    description: 'Enter your institutional details below. Your request will be securely submitted to Super Admin headquarters. Upon verification, your official portal login credentials will be dispatched to your email & phone.',
+    buttonText: 'Submit Trial Request for Approval',
     buttonClass: 'bg-purple-600 hover:bg-purple-700 shadow-purple-600/25',
     iconBg: 'bg-[#f5eeff] text-purple-700'
   },
@@ -63,11 +63,11 @@ const PLAN_CONFIGS = {
     id: 'school',
     tier: 'school',
     isMultiCampus: false,
-    title: 'Subscribe to School Plan',
+    title: 'Apply for School Plan',
     badge: '₨ 25,000 / month (or ₨ 21,250 annual) · 1,500 Students · 2 Campuses',
     badgeColor: 'text-purple-700',
-    description: 'Setup and register your primary or matriculation school campus with computerized fee vouchers, exam admit cards, and daily attendance.',
-    buttonText: 'Activate School Plan',
+    description: 'Submit institutional onboarding details for primary or matriculation school campus. Super Admin will verify and activate your portal credentials.',
+    buttonText: 'Submit School Plan Request for Approval',
     buttonClass: 'bg-purple-600 hover:bg-purple-700 shadow-purple-600/25',
     iconBg: 'bg-purple-100 text-purple-700'
   },
@@ -75,11 +75,11 @@ const PLAN_CONFIGS = {
     id: 'college',
     tier: 'college',
     isMultiCampus: false,
-    title: 'Subscribe to College Plan',
+    title: 'Apply for College Plan',
     badge: '₨ 35,000 / month (or ₨ 29,750 annual) · 3,000 Students · 3 Campuses',
     badgeColor: 'text-indigo-700',
-    description: 'Deploy higher secondary intermediate college management for F.Sc, ICS, and I.Com with BISE board registrations and lab scheduling.',
-    buttonText: 'Activate College Plan',
+    description: 'Submit higher secondary college registration (F.Sc, ICS, I.Com) for Super Admin review and portal credentials provision.',
+    buttonText: 'Submit College Plan Request for Approval',
     buttonClass: 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-600/25',
     iconBg: 'bg-indigo-100 text-indigo-700'
   },
@@ -87,11 +87,11 @@ const PLAN_CONFIGS = {
     id: 'university',
     tier: 'undergraduate',
     isMultiCampus: true,
-    title: 'Subscribe to University / Hybrid Plan',
+    title: 'Apply for University / Hybrid Plan',
     badge: '₨ 55,000 / month · 8,000+ Students · 15+ Campuses · Multi-Wing HQ',
     badgeColor: 'text-purple-800',
-    description: 'Launch an enterprise academic operating system for universities, degree colleges, and large multi-campus educational conglomerates.',
-    buttonText: 'Activate University Plan',
+    description: 'Submit multi-campus university network application for Super Admin review and dedicated enterprise portal credentialing.',
+    buttonText: 'Submit University Plan Request for Approval',
     buttonClass: 'bg-purple-700 hover:bg-purple-800 shadow-purple-700/25',
     iconBg: 'bg-purple-100 text-purple-700'
   }
@@ -108,6 +108,8 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
   const [billingCycle, setBillingCycle] = useState('monthly') // 'monthly', 'annual'
   const [isTrialModalOpen, setIsTrialModalOpen] = useState(false)
   const [activeModalPlan, setActiveModalPlan] = useState('trial')
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false)
+  const [submittedSuccessData, setSubmittedSuccessData] = useState(null)
   const [expandedFaq, setExpandedFaq] = useState(0)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [showScrollTop, setShowScrollTop] = useState(false)
@@ -281,10 +283,10 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
     }
   }
 
-  // Handle Free Trial Registration
+    // Handle Free Trial / Plan Registration Submission to Super Admin
   const handleSubmitTrial = (e) => {
     e.preventDefault()
-    if (!trialForm.instituteName || !trialForm.email) {
+    if (!trialForm.instituteName.trim() || !trialForm.email.trim()) {
       showToast('Please enter Institute Name and Email.')
       return
     }
@@ -293,40 +295,29 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
 
     setTimeout(() => {
       try {
-        const fullPhone = `${trialForm.countryCode} ${trialForm.phone}`
+        const fullPhone = trialForm.phone.trim() 
+          ? `${trialForm.countryCode} ${trialForm.phone.trim()}`
+          : `${trialForm.countryCode} 300 1234567`
         const newInstId = `inst-trial-${Date.now().toString().slice(-4)}`
         
-        // Save new trial institute to stored data
+        // Save new pending institute to stored data
         const currentData = getStoredData()
-        // Configure exact enabled wing tiers
         const enabledTiers = trialForm.isMultiCampus
           ? [trialForm.tier, trialForm.tier === 'school' ? 'college' : 'school']
           : [trialForm.tier]
 
-        const wingLabel = trialForm.isMultiCampus
-          ? 'Multi-Wing Conglomerate'
-          : trialForm.tier === 'school'
-          ? 'School Wing'
-          : trialForm.tier === 'college'
-          ? 'College Wing'
-          : 'University Wing'
-
         let planTierName = '14-Day Free Evaluation Tier'
         let planPrice = 0
-        let planStatus = 'TRIAL'
 
         if (activeModalPlan === 'school') {
           planTierName = 'School Plan (Primary & Matric)'
           planPrice = billingCycle === 'annual' ? 21250 : 25000
-          planStatus = 'ACTIVE'
         } else if (activeModalPlan === 'college') {
           planTierName = 'College Plan (Intermediate & Inter)'
           planPrice = billingCycle === 'annual' ? 29750 : 35000
-          planStatus = 'ACTIVE'
         } else if (activeModalPlan === 'university') {
           planTierName = 'University / Enterprise Plan'
           planPrice = billingCycle === 'annual' ? 46750 : 55000
-          planStatus = 'ACTIVE'
         }
 
         const planTypeCode = trialForm.isMultiCampus
@@ -347,10 +338,10 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
 
         const newInstitute = {
           id: newInstId,
-          name: trialForm.instituteName,
+          name: trialForm.instituteName.trim(),
           code: trialForm.instituteName.replace(/[^A-Za-z0-9]/g, '').slice(0, 4).toUpperCase() || 'TRL1',
-          contactPerson: trialForm.adminName || 'Principal Administrator',
-          email: trialForm.email,
+          contactPerson: trialForm.adminName.trim() || 'Principal Administrator',
+          email: trialForm.email.trim(),
           phone: fullPhone,
           address: `${trialForm.city}, Pakistan`,
           city: trialForm.city,
@@ -358,11 +349,12 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
           planTier: planTierName,
           planType: planTypeCode,
           type: instTypeName,
-          subscriptionStatus: 'TRIAL',
+          subscriptionStatus: 'PENDING_APPROVAL',
+          lifecycleStatus: 'Pending',
           trialEndsAt: new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
           enabledTiers: enabledTiers,
           createdAt: new Date().toISOString().slice(0, 10),
-          status: 'Active',
+          status: 'Pending Approval',
           wingsCount: enabledTiers.length,
           campusesCount: trialForm.isMultiCampus ? 2 : 1,
           studentCount: 0,
@@ -372,23 +364,23 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
         const updatedInstitutes = [newInstitute, ...(currentData.institutes || [])]
         saveStoredData({ ...currentData, institutes: updatedInstitutes })
 
-        // Register in billing subscriptions
+        // Register in billing subscriptions as pending approval
         const trialSub = {
           id: `sub-trial-${Date.now().toString().slice(-4)}`,
           instituteId: newInstId,
-          instituteName: trialForm.instituteName,
+          instituteName: trialForm.instituteName.trim(),
           planId: `plan-trial-${trialForm.tier}`,
           planName: planTierName,
           enabledTiers: enabledTiers,
-          status: planStatus,
-          billingCycle: '14-day trial',
+          status: 'PENDING_APPROVAL',
+          billingCycle: activeModalPlan === 'trial' ? '14-day trial' : billingCycle,
           pricePKR: planPrice,
           startDate: new Date().toISOString().slice(0, 10),
           renewalDate: new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
           trialEndsAt: new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
           autoRenew: false,
           isWaived: false,
-          waiveReason: `14-Day Free Evaluation Access (${wingLabel})`
+          waiveReason: `${planTierName} Pending Verification`
         }
 
         const localSubs = localStorage.getItem('sms_institute_subscriptions')
@@ -399,15 +391,54 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
         subsList.unshift(trialSub)
         localStorage.setItem('sms_institute_subscriptions', JSON.stringify(subsList))
 
+        // Also push an official approval ticket to sms_approval_requests for Super Admin
+        const localApprovals = localStorage.getItem('sms_approval_requests')
+        let approvalsList = []
+        if (localApprovals) {
+          try { approvalsList = JSON.parse(localApprovals) } catch {}
+        }
+        const approvalEntry = {
+          id: `appr-trial-${Date.now().toString().slice(-6)}`,
+          requestType: 'INSTITUTE_ONBOARDING',
+          instituteId: newInstId,
+          instituteName: trialForm.instituteName.trim(),
+          title: `New Onboarding & Evaluation: ${trialForm.instituteName.trim()}`,
+          details: {
+            contactPerson: trialForm.adminName.trim() || 'Principal Administrator',
+            email: trialForm.email.trim(),
+            phone: fullPhone,
+            city: trialForm.city,
+            tier: trialForm.tier,
+            planTier: planTierName,
+            isMultiCampus: trialForm.isMultiCampus,
+            notes: 'Awaiting Super Admin credential generation and account activation.'
+          },
+          status: 'PENDING',
+          reviewerNotes: null,
+          createdAt: new Date().toISOString()
+        }
+        approvalsList.unshift(approvalEntry)
+        localStorage.setItem('sms_approval_requests', JSON.stringify(approvalsList))
+
+        // Save submitted details for the Animated Green Success Popup
+        setSubmittedSuccessData({
+          requestId: approvalEntry.id,
+          instituteName: trialForm.instituteName.trim(),
+          adminName: trialForm.adminName.trim() || 'Principal Administrator',
+          email: trialForm.email.trim(),
+          phone: fullPhone,
+          city: trialForm.city,
+          tierName: instTypeName,
+          planTier: planTierName
+        })
+
         setIsSubmittingTrial(false)
         setIsTrialModalOpen(false)
-        showToast(`Congratulations! ${planTierName} successfully activated for ${trialForm.instituteName}.`)
-
-        // Automatically log in as the newly created trial campus admin
-        login('institute_admin', trialForm.email, true)
+        setIsSuccessModalOpen(true)
+        showToast('Request submitted successfully for Super Admin approval!')
       } catch (err) {
         setIsSubmittingTrial(false)
-        showToast('Trial activation error: ' + err.message)
+        showToast('Submission error: ' + err.message)
       }
     }, 600)
   }
@@ -2062,22 +2093,27 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                 <button
                   type="submit"
                   disabled={isSubmittingTrial}
-                  className="w-full py-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-purple-600/25 transition-all cursor-pointer flex items-center justify-center gap-2"
+                  className={`w-full py-3.5 px-4 rounded-xl text-white font-bold text-xs sm:text-sm shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                    (PLAN_CONFIGS[activeModalPlan] || PLAN_CONFIGS.trial).buttonClass || 'bg-purple-600 hover:bg-purple-700 shadow-purple-600/25'
+                  }`}
                 >
                   {isSubmittingTrial ? (
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      <span>Submitting Request to Super Admin...</span>
+                    </div>
                   ) : (
                     <>
-                      <Sparkles className="w-4 h-4 text-purple-200" />
-                      <span>Activate 14-Day Free Trial</span>
+                      <Send className="w-4 h-4" />
+                      <span>{(PLAN_CONFIGS[activeModalPlan] || PLAN_CONFIGS.trial).buttonText || 'Submit Request for Approval'}</span>
                       <ArrowRight className="w-4 h-4" />
                     </>
                   )}
                 </button>
               </div>
 
-              <div className="text-center text-[10px] text-slate-400 pt-1">
-                By activating, your evaluation instance will be initialized instantly under our standard privacy and multi-tenant security policies.
+              <div className="text-center text-[10.5px] text-slate-500 pt-1 leading-relaxed">
+                Your request is securely forwarded to Super Admin headquarters. Upon review & approval, official portal Login ID & Password will be delivered to your registered email & phone.
               </div>
             </form>
           </div>
@@ -2085,7 +2121,132 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
       </div>
       )}
 
-      {/* 12. FLOATING USER INTERACTION & RESPONSE WIDGETS */}
+            {/* 11.B ANIMATED GREEN SUCCESS MODAL (Super Admin Approval Submission Confirmation) */}
+      {isSuccessModalOpen && (
+        <div 
+          className="fixed inset-0 z-[60] flex items-center justify-center p-3.5 sm:p-4 bg-slate-900/65 backdrop-blur-sm animate-in fade-in duration-300"
+          onClick={() => setIsSuccessModalOpen(false)}
+        >
+          <div 
+            className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 text-center shadow-2xl border border-emerald-100 relative overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col items-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Top decorative emerald gradient bar */}
+            <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-emerald-400 via-teal-500 to-emerald-600"></div>
+
+            {/* Close Cross Button */}
+            <button
+              onClick={() => setIsSuccessModalOpen(false)}
+              className="absolute top-4 right-4 p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+              title="Close dialog"
+              aria-label="Close dialog"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* GREEN ANIMATED TICK / CHECKMARK BADGE */}
+            <div className="relative my-3 flex items-center justify-center">
+              {/* Outer Ripple / Ping Ring Animation */}
+              <div className="absolute w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-emerald-400/25 animate-ping"></div>
+              <div className="absolute w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-emerald-100 animate-pulse"></div>
+
+              {/* Main Green Circular Badge */}
+              <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center shadow-xl shadow-emerald-600/35 border-4 border-white">
+                <Check className="w-10 h-10 sm:w-12 sm:h-12 text-white stroke-[3.5] animate-in zoom-in-50 duration-500" />
+              </div>
+            </div>
+
+            {/* Status Pill */}
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200/80 mb-2 mt-1">
+              <Clock className="w-3.5 h-3.5 text-amber-600 animate-spin" style={{ animationDuration: '6s' }} />
+              <span>Submitted · Awaiting Super Admin Approval</span>
+            </div>
+
+            {/* Main Headline */}
+            <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight font-heading">
+              Request Submitted Successfully!
+            </h3>
+
+            {/* Narrative Explanation */}
+            <p className="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed max-w-md">
+              Your evaluation request for <span className="font-bold text-slate-900">{submittedSuccessData?.instituteName || 'your institution'}</span> has been forwarded to Super Admin headquarters for verification.
+            </p>
+
+            {/* Credentials Delivery Notice */}
+            <div className="w-full bg-emerald-50/70 border border-emerald-200/80 rounded-2xl p-3.5 sm:p-4 my-4 text-left">
+              <div className="flex items-start gap-2.5">
+                <div className="w-7 h-7 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5">
+                  <ShieldCheck className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-emerald-950">
+                    How will you receive your credentials?
+                  </div>
+                  <div className="text-[11px] sm:text-xs text-emerald-900/85 mt-1 leading-relaxed">
+                    Once the Super Administrator reviews and approves your request, your official <strong className="text-emerald-950">Portal Login ID</strong> and <strong className="text-emerald-950">Password</strong> will be dispatched to your registered email and WhatsApp/SMS.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Application Summary Box */}
+            <div className="w-full bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 sm:p-4 text-left text-xs space-y-2">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-200 text-slate-500 font-semibold text-[11px]">
+                <span>APPLICATION SUMMARY</span>
+                <span className="font-mono text-purple-700 bg-purple-100/70 px-2 py-0.5 rounded font-bold">
+                  {submittedSuccessData?.requestId || 'APPR-PENDING'}
+                </span>
+              </div>
+              
+              <div className="flex justify-between items-center text-slate-700">
+                <span className="text-slate-500">Institution:</span>
+                <span className="font-bold text-slate-900 text-right">{submittedSuccessData?.instituteName}</span>
+              </div>
+
+              <div className="flex justify-between items-center text-slate-700">
+                <span className="text-slate-500">Contact Person:</span>
+                <span className="font-semibold text-slate-900">{submittedSuccessData?.adminName}</span>
+              </div>
+
+              <div className="flex justify-between items-center text-slate-700">
+                <span className="text-slate-500">Selected Plan:</span>
+                <span className="font-bold text-purple-700">{submittedSuccessData?.planTier}</span>
+              </div>
+
+              <div className="flex justify-between items-center text-slate-700">
+                <span className="text-slate-500">Official Email:</span>
+                <span className="font-mono font-medium text-slate-900">{submittedSuccessData?.email}</span>
+              </div>
+
+              <div className="flex justify-between items-center text-slate-700">
+                <span className="text-slate-500">Mobile / WhatsApp:</span>
+                <span className="font-mono font-medium text-slate-900">{submittedSuccessData?.phone}</span>
+              </div>
+
+              <div className="flex justify-between items-center pt-1 border-t border-slate-200 text-slate-700">
+                <span className="text-slate-500">Expected Approval:</span>
+                <span className="font-bold text-emerald-700 flex items-center gap-1">
+                  <Clock className="w-3.5 h-3.5 text-emerald-600" />
+                  Typically 15 – 30 Minutes
+                </span>
+              </div>
+            </div>
+
+            {/* Back to Home / Got it Button */}
+            <div className="w-full mt-3">
+              <button
+                type="button"
+                onClick={() => setIsSuccessModalOpen(false)}
+                className="w-full py-3 sm:py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm shadow-md transition-all hover:scale-[1.01] active:scale-98 cursor-pointer flex items-center justify-center gap-2"
+              >
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <span>Got it, Return to Portal Home</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      )}
       {/* WhatsApp Quick Chat Floating Pill */}
       <a
         href="https://wa.me/923001234567?text=Hello%20ApexEd%20ERP%20Team!%20I%20am%20interested%20in%20a%20demo%20and%20pricing%20for%20our%20institution."

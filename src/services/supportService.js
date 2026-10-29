@@ -1,4 +1,4 @@
-import { DataService } from './dataService'
+import { DataService, getStoredData, saveStoredData } from './dataService'
 
 const API_BASE_URL = 'http://localhost:5000'
 
@@ -197,6 +197,25 @@ export const SupportService = {
       item.status = 'APPROVED'
       item.reviewerNotes = notes || 'Approved by Super Administrator'
       localStorage.setItem('sms_approval_requests', JSON.stringify(list))
+
+      // If this was an onboarding request with an instituteId, activate the institute in storedData
+      if (item.requestType === 'INSTITUTE_ONBOARDING' && item.instituteId) {
+        try {
+          const currentData = getStoredData()
+          if (currentData && currentData.institutes) {
+            const inst = currentData.institutes.find(i => i.id === item.instituteId)
+            if (inst) {
+              inst.status = 'Active'
+              inst.lifecycleStatus = 'Active'
+              inst.subscriptionStatus = 'ACTIVE'
+              saveStoredData(currentData)
+            }
+          }
+        } catch (e) {
+          console.error('Error activating institute on approval:', e)
+        }
+      }
+
       DataService.logActivity('Approval Request Granted', `Approved: "${item.title}"`, 'Super Admin')
       return { success: true, request: item }
     }
