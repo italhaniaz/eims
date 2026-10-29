@@ -22,7 +22,9 @@ import {
   X,
   MessageCircle,
   Menu,
-  ArrowUp
+  ArrowUp,
+  Send,
+  Clock
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
