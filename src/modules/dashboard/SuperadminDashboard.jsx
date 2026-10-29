@@ -66,6 +66,96 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false)
   const filterDropdownRef = useRef(null)
 
+  // Executive Super Admin Monthly Performance Chart State (Metric Switcher & Hover State)
+  const [executiveMetric, setExecutiveMetric] = useState('revenue') // 'revenue', 'students', 'recovery'
+  const [hoveredMonthIdx, setHoveredMonthIdx] = useState(null)
+
+  // Executive Data across 12 months for Super Admin
+  const executiveChartData = useMemo(() => {
+    if (executiveMetric === 'revenue') {
+      return {
+        unit: '₨',
+        yAxisLabels: ['₨ 2.5M', '₨ 2.0M', '₨ 1.5M', '₨ 1.0M', '₨ 0.5M', '₨ 0'],
+        maxVal: 2700, // in thousands PKR
+        summaryLabel: 'Total Fee Revenue (2026)',
+        summaryValue: '₨ 24.65M',
+        avgLabel: 'Monthly Avg Collection',
+        avgValue: '₨ 2.05M',
+        growthBadge: '+14.2% vs last year',
+        primaryLegend: 'School Campuses (Primary & Matric)',
+        secondaryLegend: 'College & Universities (Inter & BS)',
+        months: [
+          { m: 'Jan', v1: 950, v2: 720, label1: '₨ 950K', label2: '₨ 720K', total: '₨ 1.67M', note: 'Winter session fees' },
+          { m: 'Feb', v1: 1020, v2: 780, label1: '₨ 1.02M', label2: '₨ 780K', total: '₨ 1.80M', note: 'Standard installment' },
+          { m: 'Mar', v1: 890, v2: 850, label1: '₨ 890K', label2: '₨ 850K', total: '₨ 1.74M', note: 'Pre-exam dues' },
+          { m: 'Apr', v1: 1350, v2: 920, label1: '₨ 1.35M', label2: '₨ 920K', total: '₨ 2.27M', note: 'New session intake' },
+          { m: 'May', v1: 1580, v2: 1120, label1: '₨ 1.58M', label2: '₨ 1.12M', total: '₨ 2.70M', note: 'Admissions Peak', isPeak: true },
+          { m: 'Jun', v1: 980, v2: 860, label1: '₨ 980K', label2: '₨ 860K', total: '₨ 1.84M', note: 'Pre-summer clearing' },
+          { m: 'Jul', v1: 750, v2: 710, label1: '₨ 750K', label2: '₨ 710K', total: '₨ 1.46M', note: 'Summer break low' },
+          { m: 'Aug', v1: 1220, v2: 890, label1: '₨ 1.22M', label2: '₨ 890K', total: '₨ 2.11M', note: 'Campus re-opening' },
+          { m: 'Sep', v1: 1480, v2: 1050, label1: '₨ 1.48M', label2: '₨ 1.05M', total: '₨ 2.53M', note: 'Fall semester intake', isPeak: true },
+          { m: 'Oct', v1: 1120, v2: 820, label1: '₨ 1.12M', label2: '₨ 820K', total: '₨ 1.94M', note: 'Regular fee challans' },
+          { m: 'Nov', v1: 1280, v2: 910, label1: '₨ 1.28M', label2: '₨ 910K', total: '₨ 2.19M', note: 'Terminal exams clearance' },
+          { m: 'Dec', v1: 1420, v2: 980, label1: '₨ 1.42M', label2: '₨ 980K', total: '₨ 2.40M', note: 'Annual closing dues' }
+        ]
+      }
+    } else if (executiveMetric === 'students') {
+      return {
+        unit: 'Students',
+        yAxisLabels: ['8,000', '6,400', '4,800', '3,200', '1,600', '0'],
+        maxVal: 8000,
+        summaryLabel: 'Total Active Enrolled',
+        summaryValue: '14,850',
+        avgLabel: 'Avg Campus Strength',
+        avgValue: '1,238 / campus',
+        growthBadge: '+8.5% Net Admissions',
+        primaryLegend: 'School Students (Grade 1-10)',
+        secondaryLegend: 'College & Uni Students (Inter/BS)',
+        months: [
+          { m: 'Jan', v1: 4200, v2: 3100, label1: '4,200', label2: '3,100', total: '7,300', note: 'Session enrollment' },
+          { m: 'Feb', v1: 4350, v2: 3180, label1: '4,350', label2: '3,180', total: '7,530', note: 'Mid-term transfers' },
+          { m: 'Mar', v1: 4400, v2: 3250, label1: '4,400', label2: '3,250', total: '7,650', note: 'Pre-board count' },
+          { m: 'Apr', v1: 5100, v2: 3450, label1: '5,100', label2: '3,450', total: '8,550', note: 'Spring admissions' },
+          { m: 'May', v1: 5800, v2: 3900, label1: '5,800', label2: '3,900', total: '9,700', note: 'Peak registrations', isPeak: true },
+          { m: 'Jun', v1: 5750, v2: 3850, label1: '5,750', label2: '3,850', total: '9,600', note: 'Stable roster' },
+          { m: 'Jul', v1: 5600, v2: 3800, label1: '5,600', label2: '3,800', total: '9,400', note: 'Graduated outgoing' },
+          { m: 'Aug', v1: 6100, v2: 4150, label1: '6,100', label2: '4,150', total: '10,250', note: 'New admissions' },
+          { m: 'Sep', v1: 6800, v2: 4600, label1: '6,800', label2: '4,600', total: '11,400', note: 'Fall batch enrollment', isPeak: true },
+          { m: 'Oct', v1: 6750, v2: 4550, label1: '6,750', label2: '4,550', total: '11,300', note: 'Current active' },
+          { m: 'Nov', v1: 6900, v2: 4700, label1: '6,900', label2: '4,700', total: '11,600', note: 'Registered roster' },
+          { m: 'Dec', v1: 7150, v2: 4850, label1: '7,150', label2: '4,850', total: '12,000', note: 'End-of-year strength' }
+        ]
+      }
+    } else {
+      return {
+        unit: '%',
+        yAxisLabels: ['100%', '80%', '60%', '40%', '20%', '0%'],
+        maxVal: 100,
+        summaryLabel: 'Annual Network Recovery',
+        summaryValue: '94.2%',
+        avgLabel: '1Link Digital Clearance',
+        avgValue: '98.1%',
+        growthBadge: 'Target: ≥ 90% (Healthy)',
+        primaryLegend: 'School Recovery %',
+        secondaryLegend: 'College & Uni Recovery %',
+        months: [
+          { m: 'Jan', v1: 92, v2: 88, label1: '92%', label2: '88%', total: '90.0% Avg', note: 'Target achieved' },
+          { m: 'Feb', v1: 94, v2: 89, label1: '94%', label2: '89%', total: '91.5% Avg', note: 'On track' },
+          { m: 'Mar', v1: 91, v2: 86, label1: '91%', label2: '86%', total: '88.5% Avg', note: 'Follow-ups dispatched' },
+          { m: 'Apr', v1: 96, v2: 92, label1: '96%', label2: '92%', total: '94.0% Avg', note: 'High recovery' },
+          { m: 'May', v1: 98, v2: 95, label1: '98%', label2: '95%', total: '96.5% Avg', note: 'Peak efficiency', isPeak: true },
+          { m: 'Jun', v1: 93, v2: 90, label1: '93%', label2: '90%', total: '91.5% Avg', note: 'Cleared' },
+          { m: 'Jul', v1: 89, v2: 87, label1: '89%', label2: '87%', total: '88.0% Avg', note: 'Holiday grace period' },
+          { m: 'Aug', v1: 95, v2: 91, label1: '95%', label2: '91%', total: '93.0% Avg', note: 'Re-opening rush' },
+          { m: 'Sep', v1: 97, v2: 94, label1: '97%', label2: '94%', total: '95.5% Avg', note: 'Excellent collection', isPeak: true },
+          { m: 'Oct', v1: 93, v2: 89, label1: '93%', label2: '89%', total: '91.0% Avg', note: 'Current cycle' },
+          { m: 'Nov', v1: 95, v2: 92, label1: '95%', label2: '92%', total: '93.5% Avg', note: 'Pre-exam clearance' },
+          { m: 'Dec', v1: 96, v2: 93, label1: '96%', label2: '93%', total: '94.5% Avg', note: 'Annual audit clean' }
+        ]
+      }
+    }
+  }, [executiveMetric])
+
   // Close filter dropdown on outside click
   useEffect(() => {
     const handleOutsideClick = (e) => {
@@ -832,72 +922,237 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
       {/* 3. Middle Section: Dual Bar Chart & Educational Wings Donut Ring */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         
-        {/* Left Card (7 cols): Campus Performance Chart matching "All Exam Result" */}
-        <div className="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-7 border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-4">
+        {/* Left Card (7 cols): Executive Campus Financial & Growth Performance Chart */}
+        <div className="lg:col-span-7 bg-white rounded-3xl p-5 sm:p-7 border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] flex flex-col justify-between relative overflow-hidden">
+          
+          {/* 1. Header with Clear Title & Metric Switcher Tabs */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
             <div>
-              <h2 className="text-base font-bold text-slate-900 tracking-tight font-heading">
-                Campus Performance & Wing Activity
-              </h2>
-              <p className="text-xs text-slate-400 mt-0.5">
-                {selectedTierFilter === 'all' 
-                  ? 'Monthly distribution: School Wings vs College & University Wings' 
-                  : `${currentFilterConfig.label} activity benchmark vs platform`}
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-purple-600 animate-pulse"></span>
+                <h2 className="text-base font-extrabold text-slate-900 tracking-tight font-heading">
+                  Monthly Campus Revenue & Growth
+                </h2>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {executiveMetric === 'revenue' && 'Monthly fee collections & recovery across network in PKR (₨)'}
+                {executiveMetric === 'students' && 'Active enrolled students & admissions pipeline by academic wing'}
+                {executiveMetric === 'recovery' && 'Monthly collection efficiency benchmark vs 90% target'}
               </p>
             </div>
+
+            {/* Metric Switcher Tabs (Super Admin can switch view with 1 click) */}
+            <div className="flex items-center p-1 bg-slate-100/80 rounded-xl text-xs font-bold gap-1 self-start sm:self-auto shrink-0">
+              <button
+                type="button"
+                onClick={() => setExecutiveMetric('revenue')}
+                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                  executiveMetric === 'revenue'
+                    ? 'bg-white text-purple-700 shadow-2xs font-extrabold'
+                    : 'text-slate-600 hover:text-purple-700'
+                }`}
+                title="View Fee Revenue in PKR"
+              >
+                <span>₨ Revenue</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setExecutiveMetric('students')}
+                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                  executiveMetric === 'students'
+                    ? 'bg-white text-purple-700 shadow-2xs font-extrabold'
+                    : 'text-slate-600 hover:text-purple-700'
+                }`}
+                title="View Enrolled Students"
+              >
+                <span>🎓 Students</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setExecutiveMetric('recovery')}
+                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                  executiveMetric === 'recovery'
+                    ? 'bg-white text-purple-700 shadow-2xs font-extrabold'
+                    : 'text-slate-600 hover:text-purple-700'
+                }`}
+                title="View Recovery Rate %"
+              >
+                <span>% Recovery</span>
+              </button>
+            </div>
+          </div>
+
+          {/* 2. Executive Quick Stats Summary Bar (High Super Admin Benefit) */}
+          <div className="grid grid-cols-3 gap-2 py-3">
+            <div className="px-3 py-2 rounded-xl bg-purple-50/50 border border-purple-100/60">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                {executiveChartData.summaryLabel}
+              </span>
+              <span className="text-sm sm:text-base font-extrabold text-purple-900 font-heading tracking-tight block mt-0.5">
+                {executiveChartData.summaryValue}
+              </span>
+            </div>
+
+            <div className="px-3 py-2 rounded-xl bg-slate-50 border border-slate-100">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                {executiveChartData.avgLabel}
+              </span>
+              <span className="text-sm sm:text-base font-bold text-slate-800 font-heading tracking-tight block mt-0.5">
+                {executiveChartData.avgValue}
+              </span>
+            </div>
+
+            <div className="px-3 py-2 rounded-xl bg-emerald-50/50 border border-emerald-100/60 flex flex-col justify-center">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 block">
+                Network Trend
+              </span>
+              <span className="text-xs sm:text-xs font-extrabold text-emerald-700 flex items-center gap-1 mt-0.5">
+                <TrendingUp className="w-3.5 h-3.5 stroke-[2.5]" />
+                <span>{executiveChartData.growthBadge}</span>
+              </span>
+            </div>
+          </div>
+
+          {/* 3. The Interactive Chart Area with Clear Y-Axis & Gridlines */}
+          <div className="pt-2 pb-1 relative">
             
-            {/* Legend dots */}
-            <div className="flex items-center gap-4 text-xs font-medium">
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-purple-600"></span>
-                <span className="text-slate-600">School Wing</span>
+            {/* Chart Wrapper with Y-Axis on Left and Bars on Right */}
+            <div className="flex items-stretch gap-2 sm:gap-3">
+              
+              {/* Y-Axis Scale Marks */}
+              <div className="flex flex-col justify-between text-right text-[10px] font-mono font-medium text-slate-400 w-11 sm:w-13 shrink-0 h-44 sm:h-48 py-1 select-none">
+                {executiveChartData.yAxisLabels.map((lbl, i) => (
+                  <span key={i} className="leading-none">{lbl}</span>
+                ))}
               </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
-                <span className="text-slate-600">College / Uni</span>
+
+              {/* Chart Grid & 12 Month Bar Columns */}
+              <div className="flex-1 relative h-44 sm:h-48 flex items-end">
+                
+                {/* 5 Horizontal Dashed Benchmark Gridlines */}
+                <div className="absolute inset-0 flex flex-col justify-between pointer-events-none py-1">
+                  {[0, 1, 2, 3, 4].map(idx => (
+                    <div key={idx} className="w-full border-b border-dashed border-slate-200/60 h-0" />
+                  ))}
+                </div>
+
+                {/* 12 Months Dual Bars */}
+                <div className="w-full h-full flex items-end justify-between gap-1 sm:gap-2 px-1 relative z-10">
+                  {executiveChartData.months.map((item, idx) => {
+                    const isHovered = hoveredMonthIdx === idx
+                    const h1 = Math.max(6, Math.min(100, Math.round((item.v1 / executiveChartData.maxVal) * 100)))
+                    const h2 = Math.max(6, Math.min(100, Math.round((item.v2 / executiveChartData.maxVal) * 100)))
+
+                    return (
+                      <div
+                        key={idx}
+                        onMouseEnter={() => setHoveredMonthIdx(idx)}
+                        onMouseLeave={() => setHoveredMonthIdx(null)}
+                        className={`flex-1 flex flex-col items-center justify-end h-full relative cursor-pointer group transition-all rounded-xl py-0.5 ${
+                          isHovered ? 'bg-purple-100/40' : ''
+                        }`}
+                      >
+                        {/* Peak indicator badge on top of May & Sep */}
+                        {item.isPeak && (
+                          <span className="absolute -top-2.5 text-[9px] font-extrabold text-amber-500 bg-amber-50 px-1 py-0.2 rounded border border-amber-200 shadow-2xs hidden sm:block pointer-events-none">
+                            Peak
+                          </span>
+                        )}
+
+                        {/* Dual Bar Graphic */}
+                        <div className="w-full flex items-end justify-center gap-0.5 sm:gap-1 h-full pb-1">
+                          {/* Purple Bar: School Campuses */}
+                          <div
+                            style={{ height: `${h1}%` }}
+                            className={`w-1.5 sm:w-2.5 rounded-t-md bg-gradient-to-t from-purple-700 via-purple-600 to-indigo-500 transition-all duration-300 shadow-2xs ${
+                              isHovered ? 'brightness-110 scale-y-105' : ''
+                            }`}
+                          />
+                          {/* Orange Bar: Colleges & Universities */}
+                          <div
+                            style={{ height: `${h2}%` }}
+                            className={`w-1.5 sm:w-2.5 rounded-t-md bg-gradient-to-t from-orange-600 via-orange-500 to-amber-400 transition-all duration-300 shadow-2xs ${
+                              isHovered ? 'brightness-110 scale-y-105' : ''
+                            }`}
+                          />
+                        </div>
+
+                        {/* Month Label */}
+                        <span className={`text-[10px] sm:text-[11px] font-bold transition-colors select-none ${
+                          isHovered ? 'text-purple-700 font-extrabold' : 'text-slate-500'
+                        }`}>
+                          {item.m}
+                        </span>
+
+                        {/* Floating Tooltip Card (Appears directly over hovered month) */}
+                        {isHovered && (
+                          <div 
+                            className={`absolute z-30 bottom-full mb-3 w-48 sm:w-52 bg-slate-900/95 backdrop-blur-md text-white p-3 rounded-2xl shadow-xl shadow-purple-950/20 text-left pointer-events-none animate-in fade-in zoom-in-95 duration-150 ${
+                              idx > 8 ? 'right-0' : idx < 3 ? 'left-0' : 'left-1/2 -translate-x-1/2'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between pb-1.5 border-b border-slate-700/80 mb-2">
+                              <span className="font-extrabold text-xs text-white">
+                                {item.m} 2026
+                              </span>
+                              <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/80 px-1.5 py-0.2 rounded border border-emerald-500/30">
+                                {item.total}
+                              </span>
+                            </div>
+
+                            <div className="space-y-1.5 text-[11px]">
+                              <div className="flex items-center justify-between">
+                                <span className="flex items-center gap-1.5 text-slate-300">
+                                  <span className="w-2 h-2 rounded-full bg-purple-400 shrink-0"></span>
+                                  <span>Schools:</span>
+                                </span>
+                                <span className="font-bold text-white font-mono">{item.label1}</span>
+                              </div>
+
+                              <div className="flex items-center justify-between">
+                                <span className="flex items-center gap-1.5 text-slate-300">
+                                  <span className="w-2 h-2 rounded-full bg-orange-400 shrink-0"></span>
+                                  <span>College/Uni:</span>
+                                </span>
+                                <span className="font-bold text-white font-mono">{item.label2}</span>
+                              </div>
+                            </div>
+
+                            <div className="mt-2 pt-1.5 border-t border-slate-800 text-[10px] text-slate-400 flex items-center justify-between">
+                              <span>Note:</span>
+                              <span className="text-purple-300 font-medium truncate">{item.note}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Clean Dual Bar SVG Chart matching reference */}
-          <div className="pt-4 pb-2">
-            <div className="h-56 w-full flex items-end justify-between gap-2 sm:gap-3 px-2">
-              {[
-                { m: 'Jan', v1: 45, v2: 60 },
-                { m: 'Feb', v1: 52, v2: 56 },
-                { m: 'Mar', v1: 40, v2: 68 },
-                { m: 'Apr', v1: 75, v2: 65 },
-                { m: 'May', v1: 100, v2: 80 },
-                { m: 'Jun', v1: 60, v2: 70 },
-                { m: 'Jul', v1: 45, v2: 55 },
-                { m: 'Aug', v1: 72, v2: 60 },
-                { m: 'Sep', v1: 90, v2: 72 },
-                { m: 'Oct', v1: 65, v2: 52 },
-                { m: 'Nov', v1: 80, v2: 65 },
-                { m: 'Dec', v1: 95, v2: 78 }
-              ].map((item, idx) => (
-                <div key={idx} className="flex-1 flex flex-col items-center gap-2 group">
-                  <div className="w-full flex items-end justify-center gap-1 h-44">
-                    {/* Purple bar */}
-                    <div 
-                      className="w-2 sm:w-2.5 rounded-t-full bg-purple-600 transition-all duration-300 group-hover:bg-purple-700"
-                      style={{ height: `${item.v1}%` }}
-                      title={`School Wing: ${item.v1}%`}
-                    ></div>
-                    {/* Orange bar */}
-                    <div 
-                      className="w-2 sm:w-2.5 rounded-t-full bg-orange-500 transition-all duration-300 group-hover:bg-orange-600"
-                      style={{ height: `${item.v2}%` }}
-                      title={`College/Uni: ${item.v2}%`}
-                    ></div>
-                  </div>
-                  <span className="text-[11px] font-medium text-slate-400 group-hover:text-slate-700 transition-colors">
-                    {item.m}
-                  </span>
-                </div>
-              ))}
+          {/* 4. Bottom Legend with Easy-to-Understand Institutional Names */}
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-3 mt-1 border-t border-slate-100 text-xs">
+            <div className="flex flex-wrap items-center gap-4 text-xs font-semibold">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-purple-700 to-purple-500 shadow-2xs"></span>
+                <span className="text-slate-700 font-bold">{executiveChartData.primaryLegend}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-orange-600 to-amber-400 shadow-2xs"></span>
+                <span className="text-slate-700 font-bold">{executiveChartData.secondaryLegend}</span>
+              </div>
+            </div>
+
+            <div className="text-[11px] text-slate-400 font-medium hidden sm:flex items-center gap-1">
+              <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+              <span>Real-time platform ledger feed</span>
             </div>
           </div>
+
         </div>
 
         {/* Right Card (5 cols): Wings Donut Ring Gauge matching "Students" Donut */}
