@@ -96,6 +96,7 @@ export const SuperadminSidebar = ({
   const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0)
   const [campusesCount, setCampusesCount] = useState(0)
   const [usersCount, setUsersCount] = useState(0)
+  const [studentsCount, setStudentsCount] = useState(0)
 
   useEffect(() => {
     const updateCount = () => {
@@ -150,24 +151,61 @@ export const SuperadminSidebar = ({
       }
     }
 
+    const updateStudentCount = () => {
+      try {
+        const dbRaw = localStorage.getItem('sms_database_v3_enterprise')
+        if (dbRaw) {
+          const parsed = JSON.parse(dbRaw)
+          if (Array.isArray(parsed?.students)) {
+            setStudentsCount(parsed.students.length)
+            return
+          }
+        }
+        const raw2 = localStorage.getItem('edu_sms_data_v2')
+        if (raw2) {
+          const parsed2 = JSON.parse(raw2)
+          if (Array.isArray(parsed2?.students)) {
+            setStudentsCount(parsed2.students.length)
+            return
+          }
+        }
+        const raw3 = localStorage.getItem('sms_students')
+        if (raw3) {
+          const parsed3 = JSON.parse(raw3)
+          if (Array.isArray(parsed3)) {
+            setStudentsCount(parsed3.length)
+            return
+          }
+        }
+        setStudentsCount(0)
+      } catch {
+        setStudentsCount(0)
+      }
+    }
+
     updateCount()
     updateCampusCount()
     updateUserCount()
+    updateStudentCount()
     window.addEventListener('sms_approval_created', updateCount)
     window.addEventListener('sms_approvals_updated', updateCount)
     window.addEventListener('sms_institutes_updated', updateCampusCount)
     window.addEventListener('sms_users_updated', updateUserCount)
+    window.addEventListener('sms_students_updated', updateStudentCount)
     window.addEventListener('storage', updateCount)
     window.addEventListener('storage', updateCampusCount)
     window.addEventListener('storage', updateUserCount)
+    window.addEventListener('storage', updateStudentCount)
     return () => {
       window.removeEventListener('sms_approval_created', updateCount)
       window.removeEventListener('sms_approvals_updated', updateCount)
       window.removeEventListener('sms_institutes_updated', updateCampusCount)
       window.removeEventListener('sms_users_updated', updateUserCount)
+      window.removeEventListener('sms_students_updated', updateStudentCount)
       window.removeEventListener('storage', updateCount)
       window.removeEventListener('storage', updateCampusCount)
       window.removeEventListener('storage', updateUserCount)
+      window.removeEventListener('storage', updateStudentCount)
     }
   }, [])
 
@@ -691,18 +729,29 @@ export const SuperadminSidebar = ({
                 if (collapsed) setCollapsed(false)
                 setStudentsOpen(!studentsOpen)
               }}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-50/80 transition-colors cursor-pointer group"
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors cursor-pointer group ${
+                isStudentsRoute 
+                  ? 'bg-purple-50/70 text-purple-900 font-semibold shadow-2xs' 
+                  : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/80'
+              }`}
             >
               <div className="flex items-center gap-3">
-                <GraduationCap className="w-[18px] h-[18px] text-slate-400 group-hover:text-purple-600 transition-colors shrink-0" />
+                <GraduationCap className={`w-[18px] h-[18px] transition-colors shrink-0 ${isStudentsRoute ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'}`} />
                 {(!collapsed || isMobileOpen) && (
-                  <span className="font-medium text-slate-600 group-hover:text-slate-900">
+                  <span className={`font-medium ${isStudentsRoute ? 'text-purple-900 font-bold' : 'text-slate-600 group-hover:text-slate-900'}`}>
                     Students
                   </span>
                 )}
               </div>
               {(!collapsed || isMobileOpen) && (
-                studentsOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                <div className="flex items-center gap-1.5">
+                  {studentsCount > 0 && (
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                      {studentsCount}
+                    </span>
+                  )}
+                  {studentsOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
+                </div>
               )}
             </button>
 
