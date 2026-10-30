@@ -152,16 +152,79 @@ export const SuperadminPoliciesView = ({ activeTab = 'academic', onTabChange = (
         </div>
       )}
 
-      {/* Fallback for other tabs */}
+
+      {/* Category Policy Viewer & Editor */}
       {['academic', 'fees', 'attendance', 'discipline', 'privacy'].includes(effectiveTab) && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6 space-y-4">
-          <h3 className="font-bold text-slate-900 capitalize">{effectiveTab} Policy Directives</h3>
-          <p className="text-xs text-slate-500">Enforced uniformly across all branch campuses to guarantee legal compliance.</p>
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-600 leading-relaxed">
-            Every revision to this code triggers an automated notification to campus administrative heads and updates the official student handbook.
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="font-bold text-slate-900 text-base capitalize">{effectiveTab} Official Directive Suite</h3>
+              <p className="text-xs text-slate-500">Standard operating policies active across all affiliated campus branches.</p>
+            </div>
+            <button
+              onClick={() => toast?.success?.(`Initiated new ${effectiveTab} policy directive draft`)}
+              className="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs shrink-0"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Draft Policy Revision</span>
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            {(
+              effectiveTab === 'academic' ? [
+                { id: 'POL-AC-01', title: 'Minimum Examination Eligibility Attendance Threshold', ver: 'v3.2', scope: 'All Wings', summary: 'Students must maintain minimum 75% verified biometric attendance in every registered subject to sit for annual Board / University examinations.' },
+                { id: 'POL-AC-02', title: 'Grading Curve & Relative Normalization Directive', ver: 'v2.0', scope: 'College & University Wings', summary: 'Standardized GPA relative grading curve guidelines to ensure parity across campus branches and affiliated colleges.' }
+              ] : effectiveTab === 'fees' ? [
+                { id: 'POL-FE-01', title: 'Withdrawal & Security Deposit Refund Schedule', ver: 'v2.4', scope: 'All Campuses', summary: 'Advance security deposit refundable within 30 days of issuance of formal School Leaving Certificate (SLC).' },
+                { id: 'POL-FE-02', title: 'Hardship Concession & Sibling Discount Governance', ver: 'v1.9', scope: 'School Wing', summary: 'Sibling discounts apply automatically at 25% for 2nd enrolled child and 50% for 3rd enrolled child.' }
+              ] : effectiveTab === 'attendance' ? [
+                { id: 'POL-AT-01', title: 'Unexcused Absence (AWOL) & Strike-Off Policy', ver: 'v3.0', scope: 'All Campuses', summary: 'Absence of 6 consecutive days without written parent notice results in formal strike-off notice from campus register.' },
+                { id: 'POL-AT-02', title: 'Faculty Biometric Verification & Duty Leave Norms', ver: 'v2.1', scope: 'Staff & Faculty', summary: 'Daily thumbprint/face scan required prior to 08:15 AM PKT. Three late arrivals equivalent to half-day casual leave.' }
+              ] : effectiveTab === 'discipline' ? [
+                { id: 'POL-DS-01', title: 'Zero-Tolerance Anti-Bullying & Cyber Safety Code', ver: 'v4.0', scope: 'All Campuses', summary: 'Strict prohibition of physical or digital harassment. Immediate referral to central disciplinary hearing committee.' },
+                { id: 'POL-DS-02', title: 'Examination Hall Integrity & Malpractice Sanctions', ver: 'v2.8', scope: 'College & University', summary: 'Possession of unauthorized electronic devices during examination results in paper cancellation and 1-year board debarment.' }
+              ] : [
+                { id: 'POL-PR-01', title: 'Child Data Protection & Biometric Minimization Policy', ver: 'v3.1', scope: 'GDPR / PECRA Aligned', summary: 'All facial recognition and biometric scan templates encrypted with AES-256 at rest. Never shared with third parties.' },
+                { id: 'POL-PR-02', title: 'Student Media & Online Publication Consent Guidelines', ver: 'v2.0', scope: 'Parental Consent Required', summary: 'Annual parental media release agreement mandatory prior to publishing student images in prospectuses or digital portals.' }
+              ]
+            ).map((pol) => (
+              <div key={pol.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-purple-100 text-purple-800">{pol.id}</span>
+                    <h4 className="font-bold text-slate-900 text-xs sm:text-sm">{pol.title}</h4>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-700 font-mono">{pol.ver}</span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">{pol.scope}</span>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">{pol.summary}</p>
+                <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between text-xs text-slate-500">
+                  <span>Enforcement: Immediate &bull; Legally Binding</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => toast?.info?.(`Viewing full text for ${pol.id}`)}
+                      className="text-purple-700 font-bold hover:underline cursor-pointer"
+                    >
+                      Read Full Directive
+                    </button>
+                    &bull;
+                    <button
+                      onClick={() => toast?.success?.(`Editing ${pol.id}`)}
+                      className="text-slate-600 font-bold hover:underline cursor-pointer"
+                    >
+                      Edit Directive
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
+
     </div>
   )
 }

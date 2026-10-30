@@ -175,16 +175,100 @@ export const SuperadminCommunicationView = ({ activeTab = 'announcements', onTab
         </div>
       )}
 
-      {/* Tab 3: Circulars & Tab 5: Logs */}
-      {['circulars', 'logs'].includes(effectiveTab) && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6 space-y-4">
-          <h3 className="font-bold text-slate-900 capitalize">{effectiveTab} Archival</h3>
-          <p className="text-xs text-slate-500">Delivery status reports with PTA DLR receipt codes and SMS balance telemetry.</p>
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-600">
-            SMS Gateway Balance: <span className="font-bold text-slate-900">42,850 SMS Credits remaining</span> &bull; WhatsApp Cloud API: <b>Active (Green Verified)</b>
+
+      {/* Tab 3: Official Circulars */}
+      {effectiveTab === 'circulars' && (
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="font-bold text-slate-900 text-base">Official Cross-Campus Circulars &amp; Directives</h3>
+              <p className="text-xs text-slate-500">Centrally signed administrative orders, public holiday announcements, and exam schedules.</p>
+            </div>
+            <button
+              onClick={() => toast?.success?.('Drafted new official circular')}
+              className="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs shrink-0"
+            >
+              <span>Issue New Circular</span>
+            </button>
+          </div>
+
+          <div className="space-y-3">
+            {[
+              { id: 'CIR-2026-041', title: 'Winter Break & Smog Advisory Notification', date: 'Oct 2026', scope: 'All Punjab Campuses', status: 'Published' },
+              { id: 'CIR-2026-039', title: 'Annual Sports Gala Schedule & Inter-Wing Matches', date: 'Oct 2026', scope: 'All Campuses', status: 'Published' },
+              { id: 'CIR-2026-037', title: 'Federal Board (FBISE) Examination Registration Final Call', date: 'Sep 2026', scope: 'College Wing', status: 'Archived' }
+            ].map((c, i) => (
+              <div key={i} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-purple-100 text-purple-800">{c.id}</span>
+                    <h4 className="font-bold text-slate-900 text-xs sm:text-sm">{c.title}</h4>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">Scope: {c.scope} &bull; Published: {c.date}</p>
+                </div>
+                <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold self-start sm:self-center">
+                  {c.status}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       )}
+
+      {/* Tab 5: Gateway Delivery Logs */}
+      {effectiveTab === 'logs' && (
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="font-bold text-slate-900 text-base">Real-Time Telecom &amp; Email Delivery Ledger</h3>
+              <p className="text-xs text-slate-500">PTA Handset DLR receipts, WhatsApp Business delivery blue-ticks, and bounce telemetry.</p>
+            </div>
+            <div className="text-xs text-slate-600 font-mono">
+              Gateway Credits: <strong className="text-purple-700">42,850 SMS Left</strong>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto rounded-xl border border-slate-100">
+            <table className="w-full text-left text-xs text-slate-600">
+              <thead className="bg-slate-50 text-[11px] font-bold text-slate-700 uppercase tracking-wider border-b border-slate-100">
+                <tr>
+                  <th className="py-3 px-4">Message ID &amp; Type</th>
+                  <th className="py-3 px-4">Recipient</th>
+                  <th className="py-3 px-4">Campus &amp; Event</th>
+                  <th className="py-3 px-4">Timestamp</th>
+                  <th className="py-3 px-4 text-right">DLR Receipt</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {[
+                  { id: 'MSG-SMS-9921', type: 'SMS (Telenor)', to: '0300-4829101', campus: 'Beaconhouse High', event: 'Fee Due Reminder', time: 'Just now', dlr: 'Delivered (DLR 0)' },
+                  { id: 'MSG-WA-8812', type: 'WhatsApp API', to: '0321-9988771', campus: 'City School Senior', event: 'Result Gazette Card', time: '5m ago', dlr: 'Read by Parent' },
+                  { id: 'MSG-EML-4410', type: 'Email (SMTP)', to: 'admin@lgs.edu.pk', campus: 'Lahore Grammar', event: 'Payroll Batch Approval', time: '12m ago', dlr: 'Delivered (250 OK)' }
+                ].map((l, i) => (
+                  <tr key={i} className="hover:bg-slate-50/60">
+                    <td className="py-3.5 px-4">
+                      <div className="font-bold text-slate-900 font-mono">{l.id}</div>
+                      <span className="text-[10px] text-purple-700 font-semibold">{l.type}</span>
+                    </td>
+                    <td className="py-3.5 px-4 font-mono font-medium text-slate-700">{l.to}</td>
+                    <td className="py-3.5 px-4">
+                      <div className="text-slate-800 font-medium">{l.campus}</div>
+                      <span className="text-[10px] text-slate-400">{l.event}</span>
+                    </td>
+                    <td className="py-3.5 px-4 text-slate-500">{l.time}</td>
+                    <td className="py-3.5 px-4 text-right">
+                      <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
+                        {l.dlr}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }

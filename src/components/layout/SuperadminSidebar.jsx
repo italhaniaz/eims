@@ -144,26 +144,47 @@ export const SuperadminSidebar = ({
   const [policiesOpen, setPoliciesOpen] = useState(isPoliciesRoute)
   const [settingsOpen, setSettingsOpen] = useState(isSettingsRoute)
 
-  // Auto-expand section when navigated
+  const closeAllGroups = () => {
+    setPlatformOpen(false)
+    setUsersOpen(false)
+    setOperationsOpen(false)
+    setStudentsOpen(false)
+    setAdmissionsOpen(false)
+    setStaffFacultyOpen(false)
+    setExamsResultsOpen(false)
+    setAcademicsOpen(false)
+    setAttendanceOpen(false)
+    setFeesOpen(false)
+    setAccountsOpen(false)
+    setCertificatesOpen(false)
+    setServicesOpen(false)
+    setLearningOpen(false)
+    setCommunicationOpen(false)
+    setReportsOpen(false)
+    setPoliciesOpen(false)
+    setSettingsOpen(false)
+  }
+
+  // Auto-expand active group and collapse inactive groups on route navigation
   useEffect(() => {
-    if (isPlatformRoute) setPlatformOpen(true)
-    if (isUserRoute) setUsersOpen(true)
-    if (isOperationsRoute) setOperationsOpen(true)
-    if (isStudentsRoute) setStudentsOpen(true)
-    if (isAdmissionsRoute) setAdmissionsOpen(true)
-    if (isStaffRoute) setStaffFacultyOpen(true)
-    if (isExamsRoute) setExamsResultsOpen(true)
-    if (isAcademicsRoute) setAcademicsOpen(true)
-    if (isAttendanceRoute) setAttendanceOpen(true)
-    if (isFeesRoute) setFeesOpen(true)
-    if (isAccountsRoute) setAccountsOpen(true)
-    if (isCertificatesRoute) setCertificatesOpen(true)
-    if (isServicesRoute) setServicesOpen(true)
-    if (isLearningRoute) setLearningOpen(true)
-    if (isCommunicationRoute) setCommunicationOpen(true)
-    if (isReportsRoute) setReportsOpen(true)
-    if (isPoliciesRoute) setPoliciesOpen(true)
-    if (isSettingsRoute) setSettingsOpen(true)
+    if (isPlatformRoute) { closeAllGroups(); setPlatformOpen(true); return; }
+    if (isUserRoute) { closeAllGroups(); setUsersOpen(true); return; }
+    if (isOperationsRoute) { closeAllGroups(); setOperationsOpen(true); return; }
+    if (isStudentsRoute) { closeAllGroups(); setStudentsOpen(true); return; }
+    if (isAdmissionsRoute) { closeAllGroups(); setAdmissionsOpen(true); return; }
+    if (isStaffRoute) { closeAllGroups(); setStaffFacultyOpen(true); return; }
+    if (isExamsRoute) { closeAllGroups(); setExamsResultsOpen(true); return; }
+    if (isAcademicsRoute) { closeAllGroups(); setAcademicsOpen(true); return; }
+    if (isAttendanceRoute) { closeAllGroups(); setAttendanceOpen(true); return; }
+    if (isFeesRoute) { closeAllGroups(); setFeesOpen(true); return; }
+    if (isAccountsRoute) { closeAllGroups(); setAccountsOpen(true); return; }
+    if (isCertificatesRoute) { closeAllGroups(); setCertificatesOpen(true); return; }
+    if (isServicesRoute) { closeAllGroups(); setServicesOpen(true); return; }
+    if (isLearningRoute) { closeAllGroups(); setLearningOpen(true); return; }
+    if (isCommunicationRoute) { closeAllGroups(); setCommunicationOpen(true); return; }
+    if (isReportsRoute) { closeAllGroups(); setReportsOpen(true); return; }
+    if (isPoliciesRoute) { closeAllGroups(); setPoliciesOpen(true); return; }
+    if (isSettingsRoute) { closeAllGroups(); setSettingsOpen(true); return; }
   }, [currentRoute])
 
   const isRouteActive = (route) => currentRoute === route
@@ -254,8 +275,23 @@ export const SuperadminSidebar = ({
 
 
 
+          {/* Section Divider & Quick Collapse */}
+          {(!collapsed || isMobileOpen) && (
+            <div className="pt-3 pb-1 px-3 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              <span>Governance Modules</span>
+              <button
+                type="button"
+                onClick={closeAllGroups}
+                className="hover:text-purple-600 transition-colors cursor-pointer lowercase font-medium"
+                title="Collapse all sections"
+              >
+                collapse all
+              </button>
+            </div>
+          )}
+
           {/* 2. Group: Campuses & Wings */}
-          <div className="pt-2">
+          <div className="pt-1">
             <button
               onClick={() => {
                 if (collapsed) setCollapsed(false)

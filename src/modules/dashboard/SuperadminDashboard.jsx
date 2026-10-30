@@ -2530,7 +2530,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
 👤 Admin Name: ${newlyCreatedCreds.adminName}
 📧 Login Email: ${newlyCreatedCreds.adminEmail}
 🔑 Password: ${newlyCreatedCreds.password}
-🌐 Login URL: https://eims-app.vercel.app/`
+🌐 Login URL: ${typeof window !== 'undefined' ? window.location.origin : 'https://eims-app.vercel.app'}/`
                 if (navigator?.clipboard?.writeText) {
                   navigator.clipboard.writeText(text)
                 }

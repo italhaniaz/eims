@@ -357,14 +357,30 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
     e.preventDefault()
     if (!formData.name || !formData.email) return
 
-    if (editingUser) {
-      await updateItem('users', editingUser.id, formData)
-      triggerToast(`User "${formData.name}" profile updated.`)
-    } else {
-      await addItem('users', formData)
-      triggerToast(`User "${formData.name}" registered successfully.`)
+    try {
+      const payload = { ...formData }
+      if (payload.password) {
+        payload.passwordHash = await hashPassword(payload.password)
+      } else if (!editingUser) {
+        payload.password = 'Password123!'
+        payload.passwordHash = await hashPassword('Password123!')
+      }
+
+      if (editingUser) {
+        if (!payload.password) {
+          delete payload.password
+        }
+        await updateItem('users', editingUser.id, payload)
+        triggerToast(`User "${formData.name}" profile updated successfully.`)
+      } else {
+        await addItem('users', payload)
+        triggerToast(`User "${formData.name}" registered with secure SHA-256 credentials.`)
+      }
+      setIsModalOpen(false)
+    } catch (err) {
+      console.error('Failed to save user:', err)
+      triggerToast('Failed to save user record.')
     }
-    setIsModalOpen(false)
   }
 
   const handleDelete = async (id, name) => {

@@ -140,16 +140,58 @@ export const SuperadminLearningView = ({ activeTab = 'lms', onTabChange = () => 
         </div>
       )}
 
-      {/* Tab 3: Library & Tab 4: Digital */}
-      {['library', 'digital'].includes(effectiveTab) && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6 space-y-4">
-          <h3 className="font-bold text-slate-900 capitalize">{effectiveTab} Master Repositories</h3>
-          <p className="text-xs text-slate-500">Universal ISBN lookup, Dewey Decimal classification, and high-speed PDF distribution.</p>
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-600">
-            Over 24,000 curriculum textbooks, research papers, and digitized past board papers accessible across all campuses.
+
+      {/* Tab 3: Central Library Policies */}
+      {effectiveTab === 'library' && (
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6 space-y-6">
+          <div>
+            <h3 className="font-bold text-slate-900 text-base">Central Library Catalog &amp; Lending Directives</h3>
+            <p className="text-xs text-slate-500">Universal ISBN indexing, inter-campus book lending rules, and overdue fines.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[
+              { name: 'Total Cataloged Volumes', value: '24,850 Titles', desc: 'Dewey Decimal indexed' },
+              { name: 'Active Issued Books', value: '3,412 Books', desc: 'Across 4 main libraries' },
+              { name: 'Inter-Campus Lending SLA', value: '48 Hours Transit', desc: 'Free courier between wings' }
+            ].map((lib, i) => (
+              <div key={i} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50">
+                <span className="text-xs text-slate-500 block">{lib.name}</span>
+                <span className="text-xl font-extrabold text-slate-900 block mt-1">{lib.value}</span>
+                <span className="text-[11px] text-purple-700 font-bold block mt-0.5">{lib.desc}</span>
+              </div>
+            ))}
           </div>
         </div>
       )}
+
+      {/* Tab 4: Digital Resources */}
+      {effectiveTab === 'digital' && (
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6 space-y-6">
+          <div>
+            <h3 className="font-bold text-slate-900 text-base">Central Digital Courseware &amp; Past Board Papers</h3>
+            <p className="text-xs text-slate-500">High-speed CDN distribution for digitized curriculum slides, past board solved papers, and video lectures.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[
+              { title: 'Matric & FSc Solved Board Papers (2015-2025)', size: '1.4 GB PDF Bundle', status: 'CDN Synced' },
+              { title: 'Cambridge O/A-Levels Examiner Reports', size: '840 MB Archive', status: 'CDN Synced' },
+              { title: 'STEM & Robotics Lab Digital Curriculum Guides', size: '2.1 GB Multimedia', status: 'CDN Synced' },
+              { title: 'University Undergraduate Lecture Video Repository', size: '48.5 GB Stream Host', status: 'CDN Synced' }
+            ].map((res, i) => (
+              <div key={i} className="p-4 rounded-xl border border-slate-200 bg-slate-50/60 flex items-center justify-between">
+                <div>
+                  <h4 className="font-bold text-slate-900 text-xs">{res.title}</h4>
+                  <span className="text-[10px] text-slate-500 font-mono mt-0.5 block">{res.size}</span>
+                </div>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
+                  {res.status}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }

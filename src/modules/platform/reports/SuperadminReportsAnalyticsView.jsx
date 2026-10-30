@@ -196,16 +196,156 @@ export const SuperadminReportsAnalyticsView = ({ activeTab = 'trends', onTabChan
         </div>
       )}
 
-      {/* Fallback for other tabs */}
-      {['performance', 'collection', 'builder', 'scheduled'].includes(effectiveTab) && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6 space-y-4">
-          <h3 className="font-bold text-slate-900 capitalize">{effectiveTab} Intelligence Engine</h3>
-          <p className="text-xs text-slate-500">Automated SQL aggregates synthesize multi-tenant data into interactive reports.</p>
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-600">
-            Real-time caching layer refreshes every 15 minutes to guarantee sub-second dashboard query speeds.
+
+      {/* Tab: Academic Performance Analysis */}
+      {effectiveTab === 'performance' && (
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="font-bold text-slate-900 text-base">Cross-Campus Academic Performance Benchmarking</h3>
+              <p className="text-xs text-slate-500">Consolidated Grade Point Average (GPA), Board exam pass ratios, and standardized learning mastery.</p>
+            </div>
+            <button
+              onClick={() => toast?.success?.('Exported academic benchmarking report')}
+              className="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs shrink-0"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Export Performance Gazette</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { title: 'Platform Pass Percentage', value: '96.2%', sub: 'BISE & Cambridge exams' },
+              { title: 'Average Overall CGPA', value: '3.42 / 4.00', sub: 'Higher Education Wings' },
+              { title: 'A+ / Distinction Count', value: '348 Students', sub: 'Top 10th percentile' },
+              { title: 'Remedial Support Rate', value: '3.8%', sub: 'Enrolled in tutoring' }
+            ].map((k, i) => (
+              <div key={i} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50">
+                <span className="text-xs text-slate-500 block">{k.title}</span>
+                <span className="text-xl font-extrabold text-slate-900 block mt-1">{k.value}</span>
+                <span className="text-[11px] text-purple-600 font-bold block mt-0.5">{k.sub}</span>
+              </div>
+            ))}
           </div>
         </div>
       )}
+
+      {/* Tab: Fee Collection vs Outstanding */}
+      {effectiveTab === 'collection' && (
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6 space-y-6">
+          <div>
+            <h3 className="font-bold text-slate-900 text-base">Fee Realization Efficiency vs. Outstanding Arrears</h3>
+            <p className="text-xs text-slate-500">Breakdown of recovery speed across banking switches and payment channels.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[
+              { channel: 'Online IPG (KuickPay / 1Bill)', collected: 'PKR 84.2M', share: '61.8%', speed: 'Instant T+0' },
+              { channel: 'Bank Over-the-Counter (HBL / Meezan)', collected: 'PKR 42.1M', share: '30.9%', speed: 'Batch T+1' },
+              { channel: 'Mobile Wallets (JazzCash / EasyPaisa)', collected: 'PKR 9.9M', share: '7.3%', speed: 'Instant T+0' }
+            ].map((c, i) => (
+              <div key={i} className="p-4 rounded-xl border border-slate-200 bg-slate-50/60 space-y-2">
+                <span className="text-xs font-bold text-slate-900 block">{c.channel}</span>
+                <span className="text-lg font-extrabold text-purple-700 block font-mono">{c.collected}</span>
+                <div className="flex justify-between text-[11px] text-slate-500 pt-2 border-t border-slate-200/60">
+                  <span>Share: {c.share}</span>
+                  <span className="font-mono">{c.speed}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Tab: Custom Report Builder */}
+      {effectiveTab === 'builder' && (
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6 space-y-6">
+          <div>
+            <h3 className="font-bold text-slate-900 text-base">Custom SQL &amp; Dynamic Report Builder</h3>
+            <p className="text-xs text-slate-500">Construct tailored cross-campus queries with dimensions, filters, and pivot aggregation.</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-5 rounded-2xl bg-slate-50/70 border border-slate-200/70">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Primary Dimension</label>
+              <select className="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-white">
+                <option>By Affiliated Campus</option>
+                <option>By Academic Wing (School, College, University)</option>
+                <option>By Grade / Class Cohort</option>
+                <option>By Fee Payment Status</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Metric Aggregation</label>
+              <select className="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-white">
+                <option>Student Headcount &amp; Capacity</option>
+                <option>Total Realized Revenue (PKR)</option>
+                <option>Attendance Rate Percentage</option>
+                <option>GPA &amp; Examination Pass Rate</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Date Range</label>
+              <select className="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-white">
+                <option>Current Academic Session (2025-2026)</option>
+                <option>Past 30 Days (Rolling)</option>
+                <option>Current Fiscal Year (YTD)</option>
+              </select>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => toast?.success?.('Generated dynamic aggregate report!')}
+              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs cursor-pointer"
+            >
+              <Play className="w-3.5 h-3.5" />
+              <span>Generate Dynamic Report</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Tab: Scheduled Reports */}
+      {effectiveTab === 'scheduled' && (
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="font-bold text-slate-900 text-base">Automated Scheduled Executive Reports</h3>
+              <p className="text-xs text-slate-500">Cron jobs dispatching encrypted PDF digests to Superadmin and Board of Trustees.</p>
+            </div>
+            <button
+              onClick={() => toast?.success?.('Opened schedule new cron report dialog')}
+              className="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs shrink-0"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Schedule New Digest</span>
+            </button>
+          </div>
+
+          <div className="space-y-3">
+            {[
+              { name: 'Weekly Executive Board Performance Digest', cron: 'Every Monday at 08:00 AM PKT', format: 'PDF + Excel', recipients: 'board@eims-headquarters.edu.pk', status: 'Active' },
+              { name: 'Monthly Central Fee Realization Audit', cron: '1st of every month at 00:00 PKT', format: 'Audited CSV + PDF', recipients: 'finance@central-command.edu.pk', status: 'Active' },
+              { name: 'Daily Attendance Shortage Defaulters Alert', cron: 'Every weekday at 14:00 PKT', format: 'Direct Email Alert', recipients: 'superadmin@eims.edu.pk', status: 'Active' }
+            ].map((s, i) => (
+              <div key={i} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h4 className="font-bold text-slate-900 text-xs sm:text-sm">{s.name}</h4>
+                  <div className="flex items-center gap-2 text-xs text-slate-500 mt-1">
+                    <span className="font-mono text-purple-700">{s.cron}</span>
+                    &bull;
+                    <span>{s.format}</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Recipients: {s.recipients}</p>
+                </div>
+                <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold self-start sm:self-center">
+                  {s.status}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }

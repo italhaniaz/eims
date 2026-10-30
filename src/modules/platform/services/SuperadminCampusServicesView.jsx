@@ -197,16 +197,159 @@ export const SuperadminCampusServicesView = ({ activeTab = 'transport', onTabCha
         </div>
       )}
 
-      {/* Fallback for other tabs */}
-      {['drivers', 'reports', 'discipline', 'health'].includes(effectiveTab) && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6 space-y-4">
-          <h3 className="font-bold text-slate-900 capitalize">{effectiveTab} Oversight</h3>
-          <p className="text-xs text-slate-500">Central compliance parameters ensure high-quality welfare and child safeguarding.</p>
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-600">
-            All bus drivers and campus guards undergo mandatory biometric background checks and traffic police fitness verification.
+
+      {/* Tab: Driver & Vehicle Compliance */}
+      {effectiveTab === 'drivers' && (
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6 space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="font-bold text-slate-900 text-base">Transport Driver &amp; Vehicle Fitness Compliance</h3>
+              <p className="text-xs text-slate-500">Commercial driver license verification, police background clearances, and vehicle roadworthiness inspection.</p>
+            </div>
+            <button
+              onClick={() => toast?.success?.('Driver onboarding dialog initiated.')}
+              className="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs shrink-0"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Register Fleet Driver</span>
+            </button>
+          </div>
+
+          <div className="overflow-x-auto rounded-xl border border-slate-100">
+            <table className="w-full text-left text-xs text-slate-600">
+              <thead className="bg-slate-50 text-[11px] font-bold text-slate-700 uppercase tracking-wider border-b border-slate-100">
+                <tr>
+                  <th className="py-3 px-4">Driver Name &amp; CNIC</th>
+                  <th className="py-3 px-4">Assigned Vehicle</th>
+                  <th className="py-3 px-4">Route Name</th>
+                  <th className="py-3 px-4">Driving License (HTV)</th>
+                  <th className="py-3 px-4">Police Clearance</th>
+                  <th className="py-3 px-4 text-right">Fitness Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {[
+                  { name: 'Muhammad Akram', cnic: '35201-8492019-1', bus: 'Bus #14 (Toyota Coaster - LEA-8941)', route: 'Gulberg &bull; Model Town', lic: 'HTV-88492 (Valid 2028)', police: 'Verified (Special Branch)', status: 'Certified Fit' },
+                  { name: 'Sajid Hussain', cnic: '35202-1192841-3', bus: 'Bus #08 (Hino 45-Seater - LHR-3321)', route: 'DHA Phase 5 &bull; Ring Road', lic: 'HTV-19401 (Valid 2027)', police: 'Verified (Special Branch)', status: 'Certified Fit' },
+                  { name: 'Rashid Khan', cnic: '37405-9988412-5', bus: 'Van #03 (Toyota HiAce - RWP-5512)', route: 'Saddar &bull; Westridge Rawalpindi', lic: 'LTV-99412 (Valid 2026)', police: 'Renewal In-Progress', status: 'Conditional' }
+                ].map((d, i) => (
+                  <tr key={i} className="hover:bg-slate-50/60">
+                    <td className="py-3.5 px-4">
+                      <div className="font-bold text-slate-900">{d.name}</div>
+                      <span className="font-mono text-[10px] text-slate-400">{d.cnic}</span>
+                    </td>
+                    <td className="py-3.5 px-4 font-medium text-slate-800">{d.bus}</td>
+                    <td className="py-3.5 px-4 text-slate-600">{d.route}</td>
+                    <td className="py-3.5 px-4 font-mono text-purple-700 font-bold">{d.lic}</td>
+                    <td className="py-3.5 px-4">
+                      <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
+                        {d.police}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 text-right">
+                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${d.status === 'Certified Fit' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
+                        {d.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
+
+      {/* Tab: Campus Services Reports */}
+      {effectiveTab === 'reports' && (
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="font-bold text-slate-900 text-base">Transport &amp; Hostel Operations Analytics</h3>
+              <p className="text-xs text-slate-500">Fleet fuel efficiency, seat occupancy rates, and hostel residential capacity allocation.</p>
+            </div>
+            <button
+              onClick={() => toast?.success?.('Exported transport & hostel utilization analytics to CSV!')}
+              className="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs shrink-0"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Export Services Report</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { title: 'Total Fleet Capacity', value: '1,450 Seats', sub: '88.4% Occupancy' },
+              { title: 'Hostel Resident Count', value: '640 Students', sub: '91.2% Occupied' },
+              { title: 'Active Transport Routes', value: '28 Routes', sub: 'Across 4 Campuses' },
+              { title: 'Fleet Safety Record', value: '100% Clear', sub: 'Zero violations YTD' }
+            ].map((k, i) => (
+              <div key={i} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50">
+                <span className="text-xs text-slate-500 block">{k.title}</span>
+                <span className="text-xl font-extrabold text-slate-900 block mt-1">{k.value}</span>
+                <span className="text-[11px] text-purple-600 font-bold block mt-0.5">{k.sub}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Tab: Discipline Records Overview */}
+      {effectiveTab === 'discipline' && (
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6 space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="font-bold text-slate-900 text-base">Campus Student Discipline &amp; Incident Register</h3>
+              <p className="text-xs text-slate-500">Consolidated behavioral records, warnings, and central disciplinary committee hearing logs.</p>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {[
+              { id: 'DIS-201', student: 'Ahmed Raza', roll: 'BHS-902', campus: 'Beaconhouse Central High', incident: 'Examination Hall Electronic Device Possession', penalty: 'Formal Warning + Paper Nullification', date: 'Oct 2026', status: 'Resolved' },
+              { id: 'DIS-202', student: 'Farhan Zaidi', roll: 'TCS-441', campus: 'The City School Senior Branch', incident: 'Classroom Bullying Incident', penalty: '3-Day Suspension + Parent Conference', date: 'Oct 2026', status: 'Under Review' }
+            ].map(d => (
+              <div key={d.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-purple-100 text-purple-800">{d.id}</span>
+                    <span className="font-bold text-slate-900 text-xs sm:text-sm">{d.student} ({d.roll})</span>
+                    <span className="text-xs text-slate-400">&bull; {d.campus}</span>
+                  </div>
+                  <p className="text-xs text-slate-700 font-medium mt-1">Incident: {d.incident}</p>
+                  <p className="text-xs text-rose-700 font-semibold mt-0.5">Sanction: {d.penalty}</p>
+                </div>
+                <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold self-start sm:self-center ${d.status === 'Resolved' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
+                  {d.status}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Tab: Health & Welfare Policies */}
+      {effectiveTab === 'health' && (
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6 space-y-6">
+          <div>
+            <h3 className="font-bold text-slate-900 text-base">Campus Health, Medical Room &amp; Child Welfare</h3>
+            <p className="text-xs text-slate-500">First-aid clinic protocols, student allergen registers, and emergency hospital liaison agreements.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[
+              { name: 'Campus First-Aid Clinic Standard', scope: 'Registered Nurse on-duty at all branch campuses during school hours.' },
+              { name: 'Student Medical Record & Allergies', scope: 'Critical asthma and peanut allergen emergency tags synced with canteen and sports staff.' },
+              { name: 'Affiliated Hospital Emergency MOUs', scope: 'Priority emergency admission agreements with Shaukat Khanum, Shifa International & CMH.' }
+            ].map((h, i) => (
+              <div key={i} className="p-4 rounded-xl border border-slate-200 bg-slate-50/60 space-y-2">
+                <h4 className="font-bold text-slate-900 text-xs">{h.name}</h4>
+                <p className="text-xs text-slate-600 leading-relaxed">{h.scope}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }

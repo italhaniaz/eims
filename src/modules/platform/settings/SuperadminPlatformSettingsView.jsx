@@ -34,11 +34,14 @@ import {
 } from 'lucide-react'
 import { useToast } from '../../../context/ToastContext'
 import { useAppData } from '../../../context/AppDataContext'
+import { useAuth } from '../../../context/AuthContext'
+import { PlatformService } from '../../../services/platformService'
 import { OperationsService } from '../../../services/operationsService'
 
 export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabChange = () => {} }) => {
   const { toast } = useToast()
   const { institutes = [] } = useAppData()
+  const { user, login } = useAuth()
   const [currentTab, setCurrentTab] = useState(activeTab)
   const effectiveTab = currentTab || activeTab || 'general'
 
@@ -177,6 +180,24 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
   const handleSaveGeneral = (e) => {
     e.preventDefault()
     toast?.success?.('Platform global settings saved successfully.')
+  }
+
+  
+  const [impersonateSearch, setImpersonateSearch] = useState('')
+  const handleRealImpersonation = async (inst) => {
+    if (inst.lifecycleStatus === 'Suspended' || inst.status === 'Suspended') {
+      toast?.error?.('Cannot impersonate a Suspended campus. Reactivate the campus first.')
+      return
+    }
+    try {
+      if (PlatformService?.startImpersonation) {
+        await PlatformService.startImpersonation(inst, user)
+      }
+      login('institute_admin', `admin@${inst.slug || 'campus'}.edu`)
+      toast?.info?.(`Now impersonating "${inst.name}". A 60-minute delegation session is active.`)
+    } catch (err) {
+      toast?.error?.(err.message || 'Failed to initiate impersonation session')
+    }
   }
 
   const handleSimulateImpersonation = (campusName) => {
@@ -697,17 +718,7 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
         </div>
       )}
 
-      {/* Fallback for other tabs */}
-      {['branding', 'integrations', 'compliance', 'legal'].includes(effectiveTab) && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6 space-y-4">
-          <h3 className="font-bold text-slate-900 capitalize">{effectiveTab} Infrastructure</h3>
-          <p className="text-xs text-slate-500">SSL certificates, custom subdomains, NADRA API keys, and legal SLA documentation.</p>
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-600">
-            Encrypted with AES-256 at rest. Webhooks authenticate using SHA-256 HMAC digital signatures.
           </div>
-        </div>
-      )}
-    </div>
   )
 }
 

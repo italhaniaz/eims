@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import { 
-  Clock, 
+  Clock,
+  UserCheck,
+  FileText, 
   Calendar, 
   Users, 
   AlertTriangle, 
@@ -21,6 +23,36 @@ import { useToast } from '../../../context/ToastContext'
 
 export const SuperadminAttendanceView = ({ activeTab = 'overview', onTabChange = () => {} }) => {
   const { toast } = useToast()
+  const [leaveRequests, setLeaveRequests] = useState([
+    { id: 'LV-101', name: 'Dr. Tariq Mehmood', campus: 'Beaconhouse Central High', role: 'Senior Physics Faculty', type: 'Medical Leave (3 Days)', reason: 'Post-operative recovery, doctor certificate attached', status: 'Pending Approval' },
+    { id: 'LV-102', name: 'Ayesha Siddiqui', campus: 'The City School Senior Branch', role: 'Headmistress (Primary)', type: 'Duty Leave (1 Day)', reason: 'Attending Cambridge curriculum seminar', status: 'Pending Approval' }
+  ])
+
+  const handleApproveLeave = (id) => {
+    setLeaveRequests(prev => prev.map(l => l.id === id ? { ...l, status: 'Approved' } : l))
+    toast?.success?.('Leave request approved and logged to campus roster.')
+  }
+
+  const handleRejectLeave = (id) => {
+    setLeaveRequests(prev => prev.map(l => l.id === id ? { ...l, status: 'Rejected' } : l))
+    toast?.info?.('Leave request rejected.')
+  }
+
+  const handleExportAttendanceReport = () => {
+    try {
+      const csv = 'Campus,Total Students,Attendance Rate,Staff Present %,Shortage Count (<75%)\nBeaconhouse Central,1314,94.2%,98.1%,18\nCity School Senior,1211,92.5%,96.4%,24\nLahore Grammar School,895,95.1%,99.0%,11\nArmy Public School,940,91.8%,95.2%,31'
+      const blob = new Blob([csv], { type: 'text/csv' })
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `Central_Attendance_Analytics_${new Date().toISOString().slice(0, 10)}.csv`
+      a.click()
+      toast?.success?.('Attendance analytics report exported to CSV!')
+    } catch {
+      toast?.error?.('Export failed')
+    }
+  }
+
   const [currentTab, setCurrentTab] = useState(activeTab)
   const effectiveTab = currentTab || activeTab || 'overview'
 
@@ -328,16 +360,130 @@ export const SuperadminAttendanceView = ({ activeTab = 'overview', onTabChange =
         </div>
       )}
 
-      {/* General Fallback for other tabs */}
-      {['leave', 'staff', 'reports'].includes(effectiveTab) && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6 space-y-4">
-          <h3 className="font-bold text-slate-900 capitalize">{effectiveTab} Intelligence & Policies</h3>
-          <p className="text-xs text-slate-500">Standardized attendance records and automated summaries are generated nightly.</p>
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-600">
-            Daily logs are synchronized with the central audit ledger. All absences beyond 3 consecutive days require digital clearance.
+
+      {/* Tab: Leave Policies & Central Approvals */}
+      {effectiveTab === 'leave' && (
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6 space-y-5">
+          <div>
+            <h3 className="font-bold text-slate-900 text-base">Campus Faculty &amp; Staff Leave Approvals</h3>
+            <p className="text-xs text-slate-500">Cross-campus leave authorization for senior faculty, headmasters, and administrative officers.</p>
+          </div>
+
+          <div className="space-y-3">
+            {leaveRequests.map(l => (
+              <div key={l.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-slate-900 text-sm">{l.name}</span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-100 text-purple-800">{l.role}</span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">{l.campus} &bull; <strong className="text-purple-700">{l.type}</strong></p>
+                  <p className="text-xs text-slate-600 mt-1 italic">"{l.reason}"</p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {l.status === 'Pending Approval' ? (
+                    <>
+                      <button
+                        onClick={() => handleApproveLeave(l.id)}
+                        className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs cursor-pointer shadow-xs"
+                      >
+                        Approve Leave
+                      </button>
+                      <button
+                        onClick={() => handleRejectLeave(l.id)}
+                        className="px-3 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs cursor-pointer"
+                      >
+                        Reject
+                      </button>
+                    </>
+                  ) : (
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${l.status === 'Approved' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
+                      {l.status}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
+
+      {/* Tab: Staff Attendance Overview */}
+      {effectiveTab === 'staff' && (
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6 space-y-5">
+          <div>
+            <h3 className="font-bold text-slate-900 text-base">Campus Staff Biometric Check-In Overview</h3>
+            <p className="text-xs text-slate-500">Live RFID &amp; Biometric check-ins captured across all campus entry portals today.</p>
+          </div>
+
+          <div className="overflow-x-auto rounded-xl border border-slate-100">
+            <table className="w-full text-left text-xs text-slate-600">
+              <thead className="bg-slate-50 text-[11px] font-bold text-slate-700 uppercase tracking-wider border-b border-slate-100">
+                <tr>
+                  <th className="py-3 px-4">Campus Name</th>
+                  <th className="py-3 px-4">Total Staff</th>
+                  <th className="py-3 px-4">Biometric Verified Today</th>
+                  <th className="py-3 px-4">Late Arrivals (&gt;8:15 AM)</th>
+                  <th className="py-3 px-4">On Authorized Leave</th>
+                  <th className="py-3 px-4 text-right">Attendance Rate</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {[
+                  { name: 'Beaconhouse Central High', total: 184, present: 180, late: 4, leave: 3, rate: '97.8%' },
+                  { name: 'The City School Senior Branch', total: 142, present: 137, late: 5, leave: 4, rate: '96.5%' },
+                  { name: 'Lahore Grammar Model Town', total: 98, present: 97, late: 2, leave: 1, rate: '99.0%' },
+                  { name: 'Army Public School & College', total: 115, present: 110, late: 6, leave: 3, rate: '95.7%' }
+                ].map((row, i) => (
+                  <tr key={i} className="hover:bg-slate-50/60">
+                    <td className="py-3.5 px-4 font-bold text-slate-900">{row.name}</td>
+                    <td className="py-3.5 px-4 font-mono font-medium">{row.total}</td>
+                    <td className="py-3.5 px-4 font-mono font-bold text-emerald-700">{row.present}</td>
+                    <td className="py-3.5 px-4 font-mono text-amber-700">{row.late}</td>
+                    <td className="py-3.5 px-4 font-mono text-purple-700">{row.leave}</td>
+                    <td className="py-3.5 px-4 text-right font-mono font-bold text-purple-700">{row.rate}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Tab: Attendance Reports */}
+      {effectiveTab === 'reports' && (
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="font-bold text-slate-900 text-base">Consolidated Cross-Campus Attendance Reports</h3>
+              <p className="text-xs text-slate-500">Student &amp; staff attendance averages and board exam shortage threshold analytics.</p>
+            </div>
+            <button
+              onClick={handleExportAttendanceReport}
+              className="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs shrink-0"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Export CSV Report</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { title: 'Platform Student Average', value: '93.4%', sub: 'Target: 85.0% Minimum' },
+              { title: 'Staff Punctuality Rate', value: '97.2%', sub: 'Across All Campuses' },
+              { title: 'Shortage Defaulters (<75%)', value: '84 Students', sub: 'Action notices generated' },
+              { title: 'Total Biometric Check-ins', value: '18,490', sub: 'Verified this month' }
+            ].map((k, i) => (
+              <div key={i} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50">
+                <span className="text-xs text-slate-500 block">{k.title}</span>
+                <span className="text-xl font-extrabold text-slate-900 block mt-1">{k.value}</span>
+                <span className="text-[11px] text-purple-600 font-bold block mt-0.5">{k.sub}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }

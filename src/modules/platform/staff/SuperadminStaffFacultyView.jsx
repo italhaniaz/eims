@@ -19,10 +19,39 @@ import {
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
+import Modal from '../../../components/common/Modal'
 
 export const SuperadminStaffFacultyView = ({ activeTab = 'all', onTabChange = () => {} }) => {
   const { teachers = [], institutes = [] } = useAppData()
   const { toast } = useToast()
+  const [inspectingStaff, setInspectingStaff] = useState(null)
+
+  const handleExportStaffCSV = () => {
+    try {
+      const headers = ['Staff ID', 'Name', 'Designation', 'Role', 'Campus', 'Qualification', 'Status']
+      const rows = filteredStaff.map(s => [
+        s.id,
+        `"${(s.name || '').replace(/"/g, '""')}"`,
+        `"${(s.designation || '').replace(/"/g, '""')}"`,
+        `"${(s.role || '').replace(/"/g, '""')}"`,
+        `"${(s.campus || '').replace(/"/g, '""')}"`,
+        `"${(s.qualification || '').replace(/"/g, '""')}"`,
+        s.status || 'Active'
+      ])
+      const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n')
+      const encodedUri = encodeURI(csvContent)
+      const link = document.createElement('a')
+      link.setAttribute('href', encodedUri)
+      link.setAttribute('download', `Faculty_Staff_Registry_${new Date().toISOString().slice(0, 10)}.csv`)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      toast?.success?.(`Successfully exported ${filteredStaff.length} faculty and staff records to CSV!`)
+    } catch {
+      toast?.error?.('Failed to export CSV.')
+    }
+  }
+
 
   const [currentTab, setCurrentTab] = useState(activeTab)
   const effectiveTab = currentTab || activeTab || 'all'
@@ -168,7 +197,7 @@ export const SuperadminStaffFacultyView = ({ activeTab = 'all', onTabChange = ()
 
               <button
                 type="button"
-                onClick={() => toast?.success?.(`Exported ${filteredStaff.length} staff records to CSV.`)}
+                onClick={handleExportStaffCSV}
                 className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-1.5 cursor-pointer shrink-0"
               >
                 <Download className="w-3.5 h-3.5" />
@@ -219,7 +248,7 @@ export const SuperadminStaffFacultyView = ({ activeTab = 'all', onTabChange = ()
                     <td className="py-3.5 px-4 text-right">
                       <button
                         type="button"
-                        onClick={() => toast?.info?.(`Inspecting staff profile for ${st.name}`)}
+                        onClick={() => setInspectingStaff(st)}
                         className="p-1.5 text-purple-600 hover:text-purple-900 hover:bg-purple-50 rounded-lg cursor-pointer"
                         title="View Full Profile"
                       >
@@ -356,6 +385,62 @@ export const SuperadminStaffFacultyView = ({ activeTab = 'all', onTabChange = ()
           </div>
         </div>
       )}
+    
+      {/* Staff 360 Inspection Modal */}
+      {inspectingStaff && (
+        <Modal
+          isOpen={true}
+          onClose={() => setInspectingStaff(null)}
+          title={`Staff Profile: ${inspectingStaff.name}`}
+        >
+          <div className="space-y-4 text-xs">
+            <div className="p-4 rounded-2xl bg-purple-50/60 border border-purple-100 flex items-center justify-between">
+              <div>
+                <h4 className="font-extrabold text-slate-900 text-sm">{inspectingStaff.name}</h4>
+                <p className="text-purple-700 font-mono text-xs font-bold mt-0.5">{inspectingStaff.designation} &bull; {inspectingStaff.id}</p>
+              </div>
+              <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                {inspectingStaff.status || 'Active'}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 text-slate-600">
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/70">
+                <span className="text-[10px] text-slate-400 block font-bold uppercase">Affiliated Campus</span>
+                <span className="font-semibold text-slate-900 text-xs">{inspectingStaff.campus || 'Main Campus'}</span>
+              </div>
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/70">
+                <span className="text-[10px] text-slate-400 block font-bold uppercase">Qualification</span>
+                <span className="font-semibold text-slate-900 text-xs">{inspectingStaff.qualification || 'M.Phil / Master'}</span>
+              </div>
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/70">
+                <span className="text-[10px] text-slate-400 block font-bold uppercase">Department / Wing</span>
+                <span className="font-semibold text-slate-900 text-xs">{inspectingStaff.role || 'Science Faculty'}</span>
+              </div>
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/70">
+                <span className="text-[10px] text-slate-400 block font-bold uppercase">Biometric Check-in Rate</span>
+                <span className="font-bold text-emerald-700 text-xs">98.2% Punctual</span>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                onClick={() => toast?.info?.('Printable Faculty ID Card generated')}
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold cursor-pointer"
+              >
+                Print Staff ID Card
+              </button>
+              <button
+                onClick={() => setInspectingStaff(null)}
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-bold cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
     </div>
   )
 }

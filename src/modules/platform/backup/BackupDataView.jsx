@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import {
+  ShieldCheck,
+  Eye,
+  RotateCcw,
   Database,
   Download,
   Upload,
@@ -25,6 +28,8 @@ import { DataService, getStoredData } from '../../../services/dataService'
 
 const BackupDataView = ({ initialTab = 'backups' }) => {
   const [activeTab, setActiveTab] = useState(initialTab)
+  const [inspectingSessionBackup, setInspectingSessionBackup] = useState(null)
+  const [sessionBackupSearch, setSessionBackupSearch] = useState('')
   const [sessionBackups, setSessionBackups] = useState(() => {
     try { return OperationsService.getSessionBackups ? OperationsService.getSessionBackups() : [] } catch { return [] }
   }) // 'backups', 'export-isolated', 'bulk-import', 'retention'
@@ -81,6 +86,33 @@ const BackupDataView = ({ initialTab = 'backups' }) => {
       console.error(err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  
+  const handleDownloadSessionBackup = (backup) => {
+    try {
+      OperationsService.downloadSessionBackupFile(backup)
+      showToast(`Session backup downloaded for ${backup.userName}!`)
+    } catch (err) {
+      showToast('Failed to download session backup file.')
+    }
+  }
+
+  const handleDeleteSessionBackup = (id) => {
+    if (window.confirm('Delete this force-logout backup archive?')) {
+      const updated = OperationsService.deleteSessionBackup(id)
+      setSessionBackups(updated || [])
+      showToast('Session backup deleted.')
+    }
+  }
+
+  const handleRestoreSession = (backup) => {
+    try {
+      OperationsService.restoreSessionBackup(backup)
+      showToast(`Session for ${backup.userName} restored back to Active Sessions!`)
+    } catch (err) {
+      showToast('Failed to restore session.')
     }
   }
 
@@ -329,6 +361,169 @@ const BackupDataView = ({ initialTab = 'backups' }) => {
           </button>
         </nav>
       </div>
+
+      
+      {/* TAB 5: FORCE-LOGOUT EMERGENCY SESSION BACKUPS */}
+      {activeTab === 'session-backups' && (
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-2xs space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="font-bold text-slate-900 text-base">Emergency Force-Logout Session Backups</h3>
+              <p className="text-xs text-slate-500">
+                Snapshots captured instantly when an active user session is terminated for policy violation or revocation.
+              </p>
+            </div>
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search by user, campus, IP..."
+                value={sessionBackupSearch}
+                onChange={(e) => setSessionBackupSearch(e.target.value)}
+                className="pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-purple-500 w-full sm:w-64"
+              />
+            </div>
+          </div>
+
+          <div className="overflow-x-auto rounded-xl border border-slate-100">
+            <table className="w-full text-left text-xs text-slate-600">
+              <thead className="bg-slate-50 text-[11px] font-bold text-slate-700 uppercase tracking-wider border-b border-slate-200/60">
+                <tr>
+                  <th className="py-3 px-4">User & Role</th>
+                  <th className="py-3 px-4">Campus</th>
+                  <th className="py-3 px-4">IP & Device</th>
+                  <th className="py-3 px-4">Terminated At</th>
+                  <th className="py-3 px-4">Revocation Reason</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {sessionBackups.filter(b => {
+                  if (!sessionBackupSearch) return true;
+                  const q = sessionBackupSearch.toLowerCase();
+                  return (
+                    (b.userName || '').toLowerCase().includes(q) ||
+                    (b.campusName || '').toLowerCase().includes(q) ||
+                    (b.ipAddress || '').toLowerCase().includes(q) ||
+                    (b.reason || '').toLowerCase().includes(q)
+                  );
+                }).length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-12 text-center text-slate-400">
+                      <ShieldAlert className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                      <p className="font-semibold text-slate-600">No session backups found</p>
+                      <p className="text-xs text-slate-400 mt-1">Force-logged out sessions will archive their payload here.</p>
+                    </td>
+                  </tr>
+                ) : (
+                  sessionBackups
+                    .filter(b => {
+                      if (!sessionBackupSearch) return true;
+                      const q = sessionBackupSearch.toLowerCase();
+                      return (
+                        (b.userName || '').toLowerCase().includes(q) ||
+                        (b.campusName || '').toLowerCase().includes(q) ||
+                        (b.ipAddress || '').toLowerCase().includes(q) ||
+                        (b.reason || '').toLowerCase().includes(q)
+                      );
+                    })
+                    .map((b) => (
+                      <tr key={b.id} className="hover:bg-slate-50/70 transition-colors">
+                        <td className="py-3.5 px-4">
+                          <div className="font-bold text-slate-900">{b.userName}</div>
+                          <span className="text-[10px] font-semibold text-purple-700 uppercase">{b.userRole}</span>
+                        </td>
+                        <td className="py-3.5 px-4 font-medium text-slate-700">{b.campusName}</td>
+                        <td className="py-3.5 px-4 font-mono text-[11px] text-slate-500">
+                          <div>{b.ipAddress}</div>
+                          <div className="text-[10px] text-slate-400">{b.deviceInfo}</div>
+                        </td>
+                        <td className="py-3.5 px-4 text-slate-500">
+                          {b.terminatedAt ? new Date(b.terminatedAt).toLocaleString() : 'N/A'}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span className="px-2 py-0.5 rounded-md bg-rose-50 text-rose-700 border border-rose-200 text-[11px]">
+                            {b.reason || 'Admin Revocation'}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 text-right">
+                          <div className="inline-flex items-center gap-1.5">
+                            <button
+                              onClick={() => setInspectingSessionBackup(b)}
+                              className="p-1.5 rounded-lg border border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-700 transition-all cursor-pointer shadow-2xs"
+                              title="Inspect JSON Payload"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDownloadSessionBackup(b)}
+                              className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-all cursor-pointer shadow-2xs"
+                              title="Download Backup (.json)"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleRestoreSession(b)}
+                              className="p-1.5 rounded-lg border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition-all cursor-pointer shadow-2xs"
+                              title="Restore Session"
+                            >
+                              <RotateCcw className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteSessionBackup(b.id)}
+                              className="p-1.5 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 transition-all cursor-pointer shadow-2xs"
+                              title="Delete Archive"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Inspect Modal */}
+      {inspectingSessionBackup && (
+        <Modal
+          isOpen={true}
+          onClose={() => setInspectingSessionBackup(null)}
+          title={`Session Backup: ${inspectingSessionBackup.userName}`}
+        >
+          <div className="space-y-4 text-xs">
+            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
+              <div><strong>Campus:</strong> {inspectingSessionBackup.campusName}</div>
+              <div><strong>IP:</strong> {inspectingSessionBackup.ipAddress}</div>
+              <div><strong>Terminated:</strong> {new Date(inspectingSessionBackup.terminatedAt).toLocaleString()}</div>
+              <div><strong>Reason:</strong> {inspectingSessionBackup.reason}</div>
+            </div>
+            <div>
+              <span className="font-bold text-slate-700 block mb-1">State Payload JSON:</span>
+              <pre className="p-3 bg-slate-900 text-emerald-400 font-mono text-[11px] rounded-xl overflow-x-auto max-h-60">
+                {JSON.stringify(inspectingSessionBackup, null, 2)}
+              </pre>
+            </div>
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                onClick={() => handleDownloadSessionBackup(inspectingSessionBackup)}
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold cursor-pointer"
+              >
+                Download JSON
+              </button>
+              <button
+                onClick={() => setInspectingSessionBackup(null)}
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-bold cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {/* TAB 1: SYSTEM BACKUPS & RESTORE */}
       {activeTab === 'backups' && (

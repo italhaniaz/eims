@@ -16,7 +16,8 @@ import {
   TrendingUp,
   FileCheck,
   Check,
-  Edit2
+  Edit2,
+  X
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
@@ -31,6 +32,64 @@ export const SuperadminAdmissionsView = ({ activeTab = 'overview', onTabChange =
   const handleTabSwitch = (tabKey) => {
     setCurrentTab(tabKey)
     onTabChange(tabKey)
+  }
+
+  // Modal State for New Admission Cycle
+  const [isCycleModalOpen, setIsCycleModalOpen] = useState(false)
+  const [newCycle, setNewCycle] = useState({
+    name: '',
+    campusScope: 'All Campuses (Central)',
+    startDate: '',
+    endDate: '',
+    capacity: 250,
+    status: 'Active (Open)'
+  })
+
+  // Modal State for Merit Policy Editor
+  const [isMeritModalOpen, setIsMeritModalOpen] = useState(false)
+  const [editingMerit, setEditingMerit] = useState(null)
+
+  const handleCreateCycle = (e) => {
+    e.preventDefault()
+    if (!newCycle.name || !newCycle.startDate || !newCycle.endDate) {
+      toast?.error?.('Please complete all required fields.')
+      return
+    }
+
+    const createdCycle = {
+      id: `CYC-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
+      name: newCycle.name,
+      campusScope: newCycle.campusScope,
+      startDate: newCycle.startDate,
+      endDate: newCycle.endDate,
+      status: newCycle.status,
+      applications: 0
+    }
+
+    setCycles(prev => [createdCycle, ...prev])
+    setIsCycleModalOpen(false)
+    setNewCycle({
+      name: '',
+      campusScope: 'All Campuses (Central)',
+      startDate: '',
+      endDate: '',
+      capacity: 250,
+      status: 'Active (Open)'
+    })
+    toast?.success?.(`Admission cycle "${createdCycle.name}" launched successfully!`)
+  }
+
+  const handleOpenMeritModal = (policy) => {
+    setEditingMerit({ ...policy })
+    setIsMeritModalOpen(true)
+  }
+
+  const handleSaveMerit = (e) => {
+    e.preventDefault()
+    if (!editingMerit) return
+    setMeritPolicies(prev => prev.map(m => m.wing === editingMerit.wing ? editingMerit : m))
+    setIsMeritModalOpen(false)
+    toast?.success?.(`Merit formula for ${editingMerit.wing} successfully updated and published.`)
   }
 
   // 1. Admission Cycles
@@ -90,7 +149,7 @@ export const SuperadminAdmissionsView = ({ activeTab = 'overview', onTabChange =
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => toast?.success?.('Initiated new admission cycle modal.')}
+              onClick={() => setIsCycleModalOpen(true)}
               className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow-md cursor-pointer inline-flex items-center gap-1.5"
             >
               <Plus className="w-4 h-4" />
@@ -231,8 +290,8 @@ export const SuperadminAdmissionsView = ({ activeTab = 'overview', onTabChange =
                 </div>
                 <button
                   type="button"
-                  onClick={() => toast?.success?.(`Updated merit formula for ${m.wing}`)}
-                  className="w-full py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                  onClick={() => handleOpenMeritModal(m)}
+                  className="w-full py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-xl text-xs font-bold transition-all cursor-pointer"
                 >
                   Configure Formula
                 </button>
@@ -315,6 +374,200 @@ export const SuperadminAdmissionsView = ({ activeTab = 'overview', onTabChange =
                 </button>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+      {/* Modal: Launch Admission Cycle */}
+      {isCycleModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-100 overflow-hidden">
+            <div className="bg-gradient-to-r from-purple-900 to-indigo-900 p-6 text-white flex items-center justify-between">
+              <div>
+                <h3 className="font-extrabold text-lg">Launch New Admission Cycle</h3>
+                <p className="text-xs text-purple-200 mt-0.5">Central platform intake authorization</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCycleModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateCycle} className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Cycle Title / Name *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Spring 2027 Lateral Intake"
+                  value={newCycle.name}
+                  onChange={(e) => setNewCycle({ ...newCycle, name: e.target.value })}
+                  className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-purple-500 font-medium text-slate-800"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Campus & Wing Scope *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. All Campuses (Central) or High School Wing"
+                  value={newCycle.campusScope}
+                  onChange={(e) => setNewCycle({ ...newCycle, campusScope: e.target.value })}
+                  className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-purple-500 font-medium text-slate-800"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Start Date *</label>
+                  <input
+                    type="date"
+                    required
+                    value={newCycle.startDate}
+                    onChange={(e) => setNewCycle({ ...newCycle, startDate: e.target.value })}
+                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-purple-500 font-medium text-slate-800"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">End Date *</label>
+                  <input
+                    type="date"
+                    required
+                    value={newCycle.endDate}
+                    onChange={(e) => setNewCycle({ ...newCycle, endDate: e.target.value })}
+                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-purple-500 font-medium text-slate-800"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Initial Status</label>
+                  <select
+                    value={newCycle.status}
+                    onChange={(e) => setNewCycle({ ...newCycle, status: e.target.value })}
+                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-purple-500 font-medium text-slate-800"
+                  >
+                    <option value="Active (Open)">Active (Open)</option>
+                    <option value="Scheduled">Scheduled</option>
+                    <option value="Draft">Draft</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Target Capacity</label>
+                  <input
+                    type="number"
+                    min="10"
+                    max="5000"
+                    value={newCycle.capacity}
+                    onChange={(e) => setNewCycle({ ...newCycle, capacity: Number(e.target.value) })}
+                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-purple-500 font-medium text-slate-800"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsCycleModalOpen(false)}
+                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-xl shadow-md transition-all cursor-pointer"
+                >
+                  Launch Cycle
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Configure Merit Formula */}
+      {isMeritModalOpen && editingMerit && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white rounded-3xl max-w-md w-full shadow-2xl border border-slate-100 overflow-hidden">
+            <div className="bg-gradient-to-r from-purple-900 to-indigo-900 p-6 text-white flex items-center justify-between">
+              <div>
+                <h3 className="font-extrabold text-lg">Merit Weightage Engine</h3>
+                <p className="text-xs text-purple-200 mt-0.5">{editingMerit.wing}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsMeritModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveMerit} className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Minimum Eligibility Cut-off</label>
+                <input
+                  type="text"
+                  required
+                  value={editingMerit.minPercentage}
+                  onChange={(e) => setEditingMerit({ ...editingMerit, minPercentage: e.target.value })}
+                  className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-purple-500 font-medium text-slate-800"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Entrance Test Weightage</label>
+                <input
+                  type="text"
+                  required
+                  value={editingMerit.testWeight}
+                  onChange={(e) => setEditingMerit({ ...editingMerit, testWeight: e.target.value })}
+                  className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-purple-500 font-medium text-slate-800"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Interview / Personal Assessment</label>
+                <input
+                  type="text"
+                  required
+                  value={editingMerit.interviewWeight}
+                  onChange={(e) => setEditingMerit({ ...editingMerit, interviewWeight: e.target.value })}
+                  className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-purple-500 font-medium text-slate-800"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Past Academic Transcript</label>
+                <input
+                  type="text"
+                  required
+                  value={editingMerit.pastAcademicWeight}
+                  onChange={(e) => setEditingMerit({ ...editingMerit, pastAcademicWeight: e.target.value })}
+                  className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-purple-500 font-medium text-slate-800"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsMeritModalOpen(false)}
+                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-xl shadow-md transition-all cursor-pointer"
+                >
+                  Save Formula
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

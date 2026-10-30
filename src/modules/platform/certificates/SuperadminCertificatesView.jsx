@@ -262,16 +262,70 @@ export const SuperadminCertificatesView = ({ activeTab = 'templates', onTabChang
         </div>
       )}
 
-      {/* Fallback for other tabs */}
-      {['numbering', 'portal'].includes(effectiveTab) && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6 space-y-4">
-          <h3 className="font-bold text-slate-900 capitalize">{effectiveTab} Configuration</h3>
-          <p className="text-xs text-slate-500">Public verification URL allows employers and foreign embassies to verify credentials in real-time.</p>
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-600">
-            Public portal endpoint: <span className="font-mono text-purple-700 font-bold">https://verify.eims-edu.pk/credential/[QR_HASH]</span>
+
+      {/* Tab: Serial Numbering & QR Rules */}
+      {effectiveTab === 'numbering' && (
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6 space-y-6">
+          <div>
+            <h3 className="font-bold text-slate-900 text-base">Certificate Numbering &amp; Cryptographic QR Generation</h3>
+            <p className="text-xs text-slate-500">Define anti-forgery serial formats and cryptographic SHA-256 validation signatures.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-5 rounded-2xl bg-slate-50/70 border border-slate-200/70 space-y-3">
+              <h4 className="font-bold text-slate-800 text-xs uppercase tracking-wider">Numbering Pattern Engine</h4>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Pattern Template</label>
+                <div className="p-2.5 bg-white rounded-xl border border-slate-200 font-mono text-xs font-bold text-purple-700">
+                  {"{{CAMPUS_CODE}}-{{YEAR}}-{{TYPE}}-{{SEQ:5}}"}
+                </div>
+              </div>
+              <div>
+                <span className="text-xs text-slate-500">Live Sample Generation:</span>
+                <div className="mt-1 p-2.5 bg-slate-900 text-emerald-400 font-mono text-xs font-bold rounded-xl">
+                  BHS-2026-CHAR-00812
+                </div>
+              </div>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-slate-50/70 border border-slate-200/70 space-y-3">
+              <h4 className="font-bold text-slate-800 text-xs uppercase tracking-wider">QR Code Security Protocol</h4>
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between items-center p-2.5 bg-white rounded-xl border border-slate-200">
+                  <span>Cryptographic Algorithm:</span>
+                  <span className="font-mono font-bold text-purple-700">HMAC-SHA256</span>
+                </div>
+                <div className="flex justify-between items-center p-2.5 bg-white rounded-xl border border-slate-200">
+                  <span>Anti-Tamper Digital Watermark:</span>
+                  <span className="font-bold text-emerald-700">Active</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
+
+      {/* Tab: Public Verification Portal Settings */}
+      {effectiveTab === 'portal' && (
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6 space-y-6">
+          <div>
+            <h3 className="font-bold text-slate-900 text-base">Public Verification Web Portal Settings</h3>
+            <p className="text-xs text-slate-500">Public validation service for foreign embassies, HEC, and prospective employers.</p>
+          </div>
+
+          <div className="p-5 rounded-2xl bg-slate-50/70 border border-slate-200 space-y-3">
+            <h4 className="font-bold text-slate-800 text-xs uppercase tracking-wider">Verification Service URL</h4>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input type="text" readOnly value="https://verify.eims-edu.pk/credential/verify" className="flex-1 p-2.5 bg-white rounded-xl border border-slate-200 font-mono text-xs text-purple-700 font-bold" />
+              <button onClick={() => toast?.success?.('Test credential verified: Beaconhouse HSSC Certificate Authentic!')} className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl cursor-pointer">
+                Test Scan Validation
+              </button>
+            </div>
+            <p className="text-[11px] text-slate-500">Scanning any issued QR code redirects directly to an official HTTPS validation certificate badge.</p>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }

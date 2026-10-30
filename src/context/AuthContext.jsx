@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react'
 const AuthContext = createContext(null)
 
 // Client-side cryptographic hashing helper for secure offline password verification
-const hashPassword = async (pass, salt = 'sms_auth_sec_salt_2026') => {
+export const hashPassword = async (pass, salt = 'sms_auth_sec_salt_2026') => {
   try {
     if (typeof window !== 'undefined' && window.crypto?.subtle) {
       const encoder = new TextEncoder()

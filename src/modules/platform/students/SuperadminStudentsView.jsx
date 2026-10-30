@@ -27,10 +27,65 @@ import {
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
+import Modal from '../../../components/common/Modal'
 
 export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => {} }) => {
   const { students = [], institutes = [] } = useAppData()
   const { toast } = useToast()
+  const [inspectingStudent, setInspectingStudent] = useState(null)
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false)
+  const [transferFormData, setTransferFormData] = useState({
+    student: '',
+    roll: '',
+    from: 'Beaconhouse Central High',
+    to: 'The City School Senior Branch',
+    reason: 'Family residential relocation to new municipal district'
+  })
+
+  const handleExportStudentsCSV = () => {
+    try {
+      const headers = ['ID', 'Name', 'Roll Number', 'Campus', 'Wing', 'Grade', 'Status', 'Contact']
+      const rows = filteredStudents.map(s => [
+        s.id || '',
+        `"${(s.name || '').replace(/"/g, '""')}"`,
+        s.rollNo || s.id || '',
+        `"${(s.campus || 'Main Campus').replace(/"/g, '""')}"`,
+        s.wing || 'School',
+        s.grade || 'Standard',
+        s.status || 'Active',
+        s.contact || 'N/A'
+      ])
+      const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n')
+      const encodedUri = encodeURI(csvContent)
+      const link = document.createElement('a')
+      link.setAttribute('href', encodedUri)
+      link.setAttribute('download', `Students_Roster_${new Date().toISOString().slice(0, 10)}.csv`)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      toast?.success?.(`Successfully exported ${filteredStudents.length} student records to CSV!`)
+    } catch {
+      toast?.error?.('Failed to generate CSV export.')
+    }
+  }
+
+  const handleCreateTransferSubmit = (e) => {
+    e.preventDefault()
+    if (!transferFormData.student) return
+    const newTr = {
+      id: `TR-${Date.now().toString().slice(-4)}`,
+      student: transferFormData.student,
+      roll: transferFormData.roll || 'AUTO-GEN',
+      from: transferFormData.from,
+      to: transferFormData.to,
+      requestedOn: new Date().toLocaleDateString(),
+      status: 'Pending Superadmin Approval'
+    }
+    setTransfers(prev => [newTr, ...prev])
+    setIsTransferModalOpen(false)
+    toast?.success?.(`Inter-campus transfer registered for ${transferFormData.student}!`)
+  }
+
 
   const [currentTab, setCurrentTab] = useState(activeTab)
   const [searchQuery, setSearchQuery] = useState('')
@@ -221,7 +276,7 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
 
               <button
                 type="button"
-                onClick={() => toast?.success?.(`Exported ${filteredStudents.length} student records to CSV.`)}
+                onClick={handleExportStudentsCSV}
                 className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-1.5 cursor-pointer shrink-0"
               >
                 <Download className="w-3.5 h-3.5" />
@@ -283,7 +338,7 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
                         <td className="py-3.5 px-4 text-right">
                           <button
                             type="button"
-                            onClick={() => toast?.info?.(`Viewing global file for student "${st.name}"`)}
+                            onClick={() => setInspectingStudent(st)}
                             className="p-1.5 text-purple-600 hover:text-purple-900 hover:bg-purple-50 rounded-lg transition-colors cursor-pointer"
                             title="Inspect Student Record"
                           >
@@ -315,7 +370,7 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
             </div>
             <button
               type="button"
-              onClick={() => toast?.info?.('Transfer initiation workflow open.')}
+              onClick={() => setIsTransferModalOpen(true)}
               className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-2xs transition-all cursor-pointer shrink-0"
             >
               + Initiate Transfer
@@ -632,6 +687,155 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
           </div>
         </div>
       )}
+    
+      {/* Student 360 Inspection Modal */}
+      {inspectingStudent && (
+        <Modal
+          isOpen={true}
+          onClose={() => setInspectingStudent(null)}
+          title={`Student Profile: ${inspectingStudent.name}`}
+        >
+          <div className="space-y-4 text-xs">
+            <div className="p-4 rounded-2xl bg-purple-50/60 border border-purple-100 flex items-center justify-between">
+              <div>
+                <h4 className="font-extrabold text-slate-900 text-sm">{inspectingStudent.name}</h4>
+                <p className="text-purple-700 font-mono text-xs font-bold mt-0.5">Roll No: {inspectingStudent.rollNo || inspectingStudent.id}</p>
+              </div>
+              <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                {inspectingStudent.status || 'Active Enrolled'}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 text-slate-600">
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/70">
+                <span className="text-[10px] text-slate-400 block font-bold uppercase">Affiliated Campus</span>
+                <span className="font-semibold text-slate-900 text-xs">{inspectingStudent.campus || 'Main Campus'}</span>
+              </div>
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/70">
+                <span className="text-[10px] text-slate-400 block font-bold uppercase">Academic Wing &amp; Grade</span>
+                <span className="font-semibold text-slate-900 text-xs">{inspectingStudent.wing || 'School'} &bull; {inspectingStudent.grade || 'Grade 10'}</span>
+              </div>
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/70">
+                <span className="text-[10px] text-slate-400 block font-bold uppercase">Emergency Contact</span>
+                <span className="font-semibold text-slate-900 text-xs font-mono">{inspectingStudent.contact || '0300-XXXXXXX'}</span>
+              </div>
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/70">
+                <span className="text-[10px] text-slate-400 block font-bold uppercase">Biometric Attendance</span>
+                <span className="font-bold text-emerald-700 text-xs">94.8% Present Rate</span>
+              </div>
+            </div>
+
+            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/70">
+              <span className="text-[10px] text-slate-400 block font-bold uppercase mb-1">Fee Status &amp; Clearance</span>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-700">Monthly Tuition Status:</span>
+                <span className="font-bold text-emerald-700">Paid in Full (Challan #BHS-9941)</span>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                onClick={() => toast?.info?.('Generating printable Student ID card badge...')}
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold cursor-pointer"
+              >
+                Print Student ID Card
+              </button>
+              <button
+                onClick={() => setInspectingStudent(null)}
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-bold cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Transfer Initiation Modal */}
+      {isTransferModalOpen && (
+        <Modal
+          isOpen={true}
+          onClose={() => setIsTransferModalOpen(false)}
+          title="Initiate Inter-Campus Student Transfer"
+        >
+          <form onSubmit={handleCreateTransferSubmit} className="space-y-4 text-xs">
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Student Full Name</label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. Daniyal Aslam"
+                value={transferFormData.student}
+                onChange={e => setTransferFormData({ ...transferFormData, student: e.target.value })}
+                className="w-full p-2.5 rounded-xl border border-slate-200 bg-white"
+              />
+            </div>
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Roll / Admission Number</label>
+              <input
+                type="text"
+                placeholder="e.g. BHS-4910"
+                value={transferFormData.roll}
+                onChange={e => setTransferFormData({ ...transferFormData, roll: e.target.value })}
+                className="w-full p-2.5 rounded-xl border border-slate-200 bg-white"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Origin Campus</label>
+                <select
+                  value={transferFormData.from}
+                  onChange={e => setTransferFormData({ ...transferFormData, from: e.target.value })}
+                  className="w-full p-2.5 rounded-xl border border-slate-200 bg-white"
+                >
+                  <option>Beaconhouse Central High</option>
+                  <option>The City School Senior Branch</option>
+                  <option>Lahore Grammar Model Town</option>
+                  <option>Army Public School &amp; College</option>
+                </select>
+              </div>
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Destination Campus</label>
+                <select
+                  value={transferFormData.to}
+                  onChange={e => setTransferFormData({ ...transferFormData, to: e.target.value })}
+                  className="w-full p-2.5 rounded-xl border border-slate-200 bg-white"
+                >
+                  <option>The City School Senior Branch</option>
+                  <option>Beaconhouse Central High</option>
+                  <option>Lahore Grammar Model Town</option>
+                  <option>Army Public School &amp; College</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Reason for Relocation</label>
+              <textarea
+                rows={2}
+                value={transferFormData.reason}
+                onChange={e => setTransferFormData({ ...transferFormData, reason: e.target.value })}
+                className="w-full p-2.5 rounded-xl border border-slate-200 bg-white"
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="submit"
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold cursor-pointer"
+              >
+                Submit Transfer Request
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsTransferModalOpen(false)}
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-bold cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
     </div>
   )
 }
