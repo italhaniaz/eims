@@ -49,7 +49,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
   const [statusFilter, setStatusFilter] = useState('ACTIVE') // Default to active users only
   
   // Expanded role specifications state (embedded directly inside each individual role card)
-  const [expandedRoles, setExpandedRoles] = useState({ superadmin: true })
+  const [expandedRoles, setExpandedRoles] = useState({})
 
   const handleToggleRoleExpand = (roleId) => {
     setExpandedRoles(prev => ({
@@ -1165,19 +1165,9 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
                   >
                     {/* Role Header Strip */}
                     <div
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => handleToggleRoleExpand(r.id)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault()
-                          handleToggleRoleExpand(r.id)
-                        }
-                      }}
-                      className={`p-4 sm:p-5 flex items-center justify-between gap-3 cursor-pointer select-none transition-colors ${
-                        isExpanded ? 'bg-slate-50/60' : 'hover:bg-slate-50/70'
+                      className={`p-4 sm:p-5 flex items-start sm:items-center justify-between gap-3 transition-colors ${
+                        isExpanded ? 'bg-slate-50/60' : 'bg-white'
                       }`}
-                      aria-expanded={isExpanded}
                     >
                       <div className="flex items-center gap-3.5 min-w-0">
                         <div className={`p-2.5 sm:p-3 rounded-2xl transition-transform ${r.badgeClass} shrink-0`}>
@@ -1204,29 +1194,22 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
                         </div>
                       </div>
 
-                      {/* Prominent Eye Action & Chevron */}
-                      <div className="flex items-center gap-2 shrink-0">
+                      {/* Prominent Eye Action (Sole Inspection Trigger) */}
+                      <div className="flex items-center shrink-0">
                         <button
                           type="button"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleToggleRoleExpand(r.id)
-                          }}
+                          onClick={() => handleToggleRoleExpand(r.id)}
                           className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
                             isExpanded
                               ? 'bg-purple-600 text-white shadow-xs hover:bg-purple-700 ring-2 ring-purple-300'
                               : 'bg-purple-50 text-purple-700 hover:bg-purple-600 hover:text-white border border-purple-200'
                           }`}
                           title={isExpanded ? `Hide ${r.shortName} Specifications` : `View ${r.shortName} Specifications`}
-                          aria-label={`View ${r.shortName} Specifications`}
+                          aria-label={isExpanded ? `Hide ${r.shortName} Specifications` : `View ${r.shortName} Specifications`}
                         >
                           <Eye className="w-3.5 h-3.5" />
-                          <span className="hidden sm:inline">{isExpanded ? 'Viewing Specs' : 'Inspect'}</span>
+                          <span>{isExpanded ? 'Viewing Specs' : 'Inspect'}</span>
                         </button>
-
-                        <div className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg transition-colors">
-                          {isExpanded ? <ChevronUp className="w-4 h-4 text-purple-600" /> : <ChevronDown className="w-4 h-4" />}
-                        </div>
                       </div>
                     </div>
 
