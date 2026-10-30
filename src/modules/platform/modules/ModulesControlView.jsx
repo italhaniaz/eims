@@ -396,35 +396,44 @@ export const ModulesControlView = () => {
       </div>
 
       {/* Navigation Tabs & Wing Filter Bar */}
-      <div className="bg-white p-2 rounded-2xl border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-        <nav className="flex space-x-2 overflow-x-auto text-xs sm:text-sm font-medium">
+      <div className="bg-white p-2.5 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col xl:flex-row xl:items-center justify-between gap-3">
+        {/* Navigation Tabs Styled as Modern Segmented Control without overflow scrollbar */}
+        <nav className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100/90 rounded-xl">
           <button
+            type="button"
             onClick={() => setActiveControlTab('wings')}
-            className={`py-2 px-4 rounded-xl flex items-center gap-2 transition-all cursor-pointer shrink-0 ${
+            className={`py-2 px-3.5 rounded-lg flex items-center gap-2 text-xs font-bold transition-all cursor-pointer ${
               activeControlTab === 'wings'
-                ? 'bg-[#f5eeff] text-purple-700 font-bold shadow-2xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                ? 'bg-white text-purple-700 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
             }`}
           >
-            <GraduationCap className="w-4 h-4" />
-            <span>Educational Wings Matrix (School • College • University)</span>
+            <GraduationCap className="w-4 h-4 text-purple-600" />
+            <span>Educational Wings Matrix</span>
+            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200/60 hidden sm:inline-block">
+              School • College • Uni
+            </span>
           </button>
 
           <button
+            type="button"
             onClick={() => setActiveControlTab('features')}
-            className={`py-2 px-4 rounded-xl flex items-center gap-2 transition-all cursor-pointer shrink-0 ${
+            className={`py-2 px-3.5 rounded-lg flex items-center gap-2 text-xs font-bold transition-all cursor-pointer ${
               activeControlTab === 'features'
-                ? 'bg-[#f5eeff] text-purple-700 font-bold shadow-2xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                ? 'bg-white text-purple-700 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
             }`}
           >
-            <Sliders className="w-4 h-4" />
-            <span>Feature Capabilities Matrix (10 Modules)</span>
+            <Sliders className="w-4 h-4 text-purple-600" />
+            <span>Feature Capabilities Matrix</span>
+            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200/60">
+              10 Modules
+            </span>
           </button>
         </nav>
 
-        {/* Wing Filter Control (Positioned in the red box area) */}
-        <div className="flex flex-wrap items-center gap-2 self-start lg:self-center shrink-0 pr-1">
+        {/* Wing Filter Control */}
+        <div className="flex flex-wrap items-center gap-2 self-start xl:self-center shrink-0 pr-1">
           {/* Quick Search Box */}
           <div className="relative">
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -433,7 +442,7 @@ export const ModulesControlView = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search campus or code..."
-              className="pl-8 pr-7 py-1.5 bg-slate-50 hover:bg-slate-100/70 focus:bg-white text-xs text-slate-800 placeholder-slate-400 rounded-xl border border-slate-200/90 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all w-36 sm:w-44 font-medium"
+              className="pl-8 pr-7 py-1.5 bg-slate-50 hover:bg-slate-100/70 focus:bg-white text-xs text-slate-800 placeholder-slate-400 rounded-xl border border-slate-200/90 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all w-40 sm:w-48 font-medium"
             />
             {searchTerm && (
               <button
@@ -457,10 +466,10 @@ export const ModulesControlView = () => {
               className="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer pr-1"
             >
               <option value="ALL">All Wings & Campuses ({institutes.length})</option>
-              <option value="school">🏫 School Wing ({schoolCount})</option>
-              <option value="college">🏛️ College Wing ({collegeCount})</option>
-              <option value="university">🎓 University Wing ({uniCount})</option>
-              <option value="hybrid">✨ Hybrid / Multi-Wing ({hybridCount})</option>
+              <option value="school">School Wing ({schoolCount})</option>
+              <option value="college">College Wing ({collegeCount})</option>
+              <option value="university">University Wing ({uniCount})</option>
+              <option value="hybrid">Hybrid / Multi-Wing ({hybridCount})</option>
             </select>
           </div>
 
@@ -692,35 +701,6 @@ export const ModulesControlView = () => {
           >
             Apply to Filtered ({filteredInstitutes.length})
           </button>
-        </div>
-      </div>
-
-      {/* Filter and Search Bar */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder="Search institute name or code..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
-          />
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-400 font-medium">Filter Type:</span>
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 font-medium focus:outline-none"
-          >
-            <option value="ALL">All Wings ({institutes.length})</option>
-            <option value="school">🏫 School Wing ({schoolCount})</option>
-            <option value="college">🏛️ College Wing ({collegeCount})</option>
-            <option value="university">🎓 University Wing ({uniCount})</option>
-            <option value="hybrid">✨ Hybrid / Multi-Wing ({hybridCount})</option>
-          </select>
         </div>
       </div>
 
