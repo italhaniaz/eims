@@ -39,7 +39,8 @@ const SupportApprovalsView = () => {
   const [tickets, setTickets] = useState([])
   const [approvals, setApprovals] = useState([])
   const [loading, setLoading] = useState(true)
-  const [ticketStatusFilter, setTicketStatusFilter] = useState('ALL')
+  const [ticketStatusFilter, setTicketStatusFilter] = useState('ALL') // ALL, ACTIVE, OPEN, IN_PROGRESS, RESOLVED
+  const [approvalFilter, setApprovalFilter] = useState('PENDING') // PENDING, APPROVED, REJECTED, ALL
   const [isNewTicketModalOpen, setIsNewTicketModalOpen] = useState(false)
   const [newTicketForm, setNewTicketForm] = useState({ subject: '', category: 'General', priority: 'Medium', message: '', instituteName: '' })
 
@@ -104,6 +105,17 @@ const SupportApprovalsView = () => {
 
   useEffect(() => {
     loadAll()
+    const handleSync = () => loadAll()
+    window.addEventListener('sms_tickets_updated', handleSync)
+    window.addEventListener('sms_approvals_updated', handleSync)
+    window.addEventListener('sms_approval_created', handleSync)
+    window.addEventListener('storage', handleSync)
+    return () => {
+      window.removeEventListener('sms_tickets_updated', handleSync)
+      window.removeEventListener('sms_approvals_updated', handleSync)
+      window.removeEventListener('sms_approval_created', handleSync)
+      window.removeEventListener('storage', handleSync)
+    }
   }, [])
 
   useEffect(() => {
@@ -142,6 +154,31 @@ const SupportApprovalsView = () => {
   }
 
   // --- Ticket Actions ---
+  const handleCreateNewTicket = async (e) => {
+    e.preventDefault()
+    if (!newTicketForm.subject.trim() || !newTicketForm.instituteName.trim()) return
+
+    try {
+      await SupportService.createTicket({
+        instituteName: newTicketForm.instituteName.trim(),
+        subject: newTicketForm.subject.trim(),
+        category: newTicketForm.category,
+        priority: newTicketForm.priority,
+        message: newTicketForm.message.trim(),
+        requesterName: 'Super Administrator',
+        requesterEmail: 'superadmin@eims.edu.pk'
+      })
+      await loadAll()
+      setIsNewTicketModalOpen(false)
+      setNewTicketForm({ subject: '', category: 'General', priority: 'Medium', message: '', instituteName: '' })
+      setActiveTab('tickets')
+      setTicketStatusFilter('ALL')
+      showToast('Support ticket created successfully!')
+    } catch (err) {
+      showToast('Failed to create ticket: ' + err.message)
+    }
+  }
+
   const handleOpenTicketThread = (ticket) => {
     setSelectedTicket(ticket)
     setReplyText('')
@@ -213,7 +250,20 @@ const SupportApprovalsView = () => {
   }
 
   const pendingApprovalsCount = approvals.filter(a => a.status === 'PENDING').length
+  const approvedApprovalsCount = approvals.filter(a => a.status === 'APPROVED').length
+  const rejectedApprovalsCount = approvals.filter(a => a.status === 'REJECTED').length
   const openTicketsCount = tickets.filter(t => t.status === 'OPEN' || t.status === 'IN_PROGRESS').length
+
+  const filteredTickets = React.useMemo(() => {
+    if (ticketStatusFilter === 'ALL') return tickets
+    if (ticketStatusFilter === 'ACTIVE') return tickets.filter(t => t.status === 'OPEN' || t.status === 'IN_PROGRESS')
+    return tickets.filter(t => t.status === ticketStatusFilter)
+  }, [tickets, ticketStatusFilter])
+
+  const filteredApprovals = React.useMemo(() => {
+    if (approvalFilter === 'ALL') return approvals
+    return approvals.filter(a => a.status === approvalFilter)
+  }, [approvals, approvalFilter])
 
   return (
     <div className="p-4 sm:p-6 md:p-8 pb-16 space-y-6 max-w-[1400px] mx-auto">
@@ -259,9 +309,9 @@ const SupportApprovalsView = () => {
           color="blue"
           showActions={true}
           showAllText="Show all"
-          onShowAll={() => setActiveTab('tickets')}
-          onView={() => setActiveTab('tickets')}
-          viewTooltip="View All Support Tickets"
+          onShowAll={() => { setActiveTab('tickets'); setTicketStatusFilter('ALL'); }}
+          onView={() => { setActiveTab('tickets'); setTicketStatusFilter('ACTIVE'); }}
+          viewTooltip="View Active Inquiries & Reply"
           onAdd={() => setIsNewTicketModalOpen(true)}
           addTooltip="Create Support Ticket"
         />
@@ -367,9 +417,80 @@ const SupportApprovalsView = () => {
 
       {/* TAB 1: SUPPORT TICKETS */}
       {activeTab === 'tickets' && (
-        <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs sm:text-sm">
+        <div className="space-y-3">
+          {/* Sub-toolbar with filter pills & Create Ticket */}
+          <div className="bg-white p-2.5 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setTicketStatusFilter('ALL')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  ticketStatusFilter === 'ALL'
+                    ? 'bg-purple-600 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                All Tickets ({tickets.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setTicketStatusFilter('ACTIVE')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  ticketStatusFilter === 'ACTIVE'
+                    ? 'bg-purple-600 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                Active / Unresolved ({openTicketsCount})
+              </button>
+              <button
+                type="button"
+                onClick={() => setTicketStatusFilter('OPEN')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  ticketStatusFilter === 'OPEN'
+                    ? 'bg-purple-600 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                Open ({tickets.filter(t => t.status === 'OPEN').length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setTicketStatusFilter('IN_PROGRESS')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  ticketStatusFilter === 'IN_PROGRESS'
+                    ? 'bg-purple-600 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                In Progress ({tickets.filter(t => t.status === 'IN_PROGRESS').length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setTicketStatusFilter('RESOLVED')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  ticketStatusFilter === 'RESOLVED'
+                    ? 'bg-purple-600 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                Resolved ({tickets.filter(t => t.status === 'RESOLVED').length})
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsNewTicketModalOpen(true)}
+              className="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
+            >
+              <LifeBuoy className="w-3.5 h-3.5" />
+              <span>+ New Ticket</span>
+            </button>
+          </div>
+
+          <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs sm:text-sm">
               <thead className="bg-slate-50/80 text-slate-600 font-semibold border-b border-slate-100 uppercase text-[11px] tracking-wider">
                 <tr>
                   <th className="py-3.5 px-4">Ticket #</th>
@@ -381,8 +502,8 @@ const SupportApprovalsView = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
-                {(ticketStatusFilter === "ALL" ? tickets : tickets.filter(t => t.status === ticketStatusFilter)).length > 0 ? (
-                  (ticketStatusFilter === "ALL" ? tickets : tickets.filter(t => t.status === ticketStatusFilter)).map((tkt) => (
+                {filteredTickets.length > 0 ? (
+                  filteredTickets.map((tkt) => (
                   <tr key={tkt.id} className="hover:bg-slate-50/70 transition-colors">
                     <td className="py-3.5 px-4 font-mono font-semibold text-slate-900">
                       {tkt.ticketNumber}
@@ -444,14 +565,87 @@ const SupportApprovalsView = () => {
               </tbody>
             </table>
           </div>
+          </div>
         </div>
       )}
 
       {/* TAB 2: APPROVAL QUEUE */}
       {activeTab === 'approvals' && (
         <div className="space-y-4">
-          {approvals.length > 0 ? (
-            approvals.map((appr) => {
+          {/* Sub-toolbar with filter pills */}
+          <div className="bg-white p-2.5 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-wrap items-center justify-between gap-2.5">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setApprovalFilter('PENDING')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  approvalFilter === 'PENDING'
+                    ? 'bg-amber-500 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                <span>Pending Review</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                  approvalFilter === 'PENDING' ? 'bg-amber-600 text-white' : 'bg-slate-200 text-slate-700'
+                }`}>
+                  {pendingApprovalsCount}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setApprovalFilter('APPROVED')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  approvalFilter === 'APPROVED'
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                <span>Approved</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                  approvalFilter === 'APPROVED' ? 'bg-emerald-700 text-white' : 'bg-slate-200 text-slate-700'
+                }`}>
+                  {approvedApprovalsCount}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setApprovalFilter('REJECTED')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  approvalFilter === 'REJECTED'
+                    ? 'bg-rose-600 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                <span>Declined</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                  approvalFilter === 'REJECTED' ? 'bg-rose-700 text-white' : 'bg-slate-200 text-slate-700'
+                }`}>
+                  {rejectedApprovalsCount}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setApprovalFilter('ALL')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  approvalFilter === 'ALL'
+                    ? 'bg-purple-600 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                All Petitions ({approvals.length})
+              </button>
+            </div>
+
+            <p className="text-[11px] text-slate-400 font-medium">
+              Approving an onboarding request automatically activates the campus & credentials.
+            </p>
+          </div>
+
+          {filteredApprovals.length > 0 ? (
+            filteredApprovals.map((appr) => {
             const isPending = appr.status === 'PENDING'
             const isOnboarding = appr.requestType === 'INSTITUTE_ONBOARDING'
             const details = appr.details || {}
@@ -597,9 +791,62 @@ const SupportApprovalsView = () => {
                           </div>
                         )}
                       </div>
+                    ) : appr.requestType === 'QUOTA_INCREASE' ? (
+                      <div className="mt-3 p-3.5 sm:p-4 bg-slate-50/80 rounded-2xl border border-slate-200/80 space-y-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 text-xs">
+                          <div className="bg-white p-2.5 rounded-xl border border-slate-100">
+                            <span className="text-[10px] uppercase font-bold text-slate-400 block">Current Capacity</span>
+                            <span className="font-bold text-slate-800 mt-0.5 block">
+                              {details.currentQuota ? Number(details.currentQuota).toLocaleString() + ' Students' : 'N/A'}
+                            </span>
+                          </div>
+
+                          <div className="bg-white p-2.5 rounded-xl border border-slate-100">
+                            <span className="text-[10px] uppercase font-bold text-slate-400 block">Requested Quota</span>
+                            <span className="font-bold text-purple-700 mt-0.5 flex items-center gap-1.5">
+                              <span>{details.requestedQuota ? Number(details.requestedQuota).toLocaleString() + ' Students' : 'N/A'}</span>
+                              {details.requestedQuota && details.currentQuota && (
+                                <span className="text-[10px] bg-purple-100 text-purple-800 font-extrabold px-1.5 py-0.2 rounded">
+                                  +{Number(details.requestedQuota) - Number(details.currentQuota)}
+                                </span>
+                              )}
+                            </span>
+                          </div>
+
+                          <div className="bg-white p-2.5 rounded-xl border border-slate-100">
+                            <span className="text-[10px] uppercase font-bold text-slate-400 block">Subscription Tier</span>
+                            <span className="font-bold text-emerald-700 mt-0.5 block">
+                              {details.plan || 'Standard Tier'}
+                            </span>
+                          </div>
+
+                          <div className="bg-white p-2.5 rounded-xl border border-slate-100">
+                            <span className="text-[10px] uppercase font-bold text-slate-400 block">Evaluation Status</span>
+                            <span className="font-bold text-amber-700 mt-0.5 block">
+                              Awaiting Governance Review
+                            </span>
+                          </div>
+                        </div>
+
+                        {details.reason && (
+                          <div className="p-2.5 rounded-xl bg-purple-50/70 border border-purple-100 text-xs">
+                            <span className="font-bold text-purple-800 text-[11px] block">Quota Extension Justification:</span>
+                            <p className="mt-0.5 text-slate-700 leading-relaxed">{details.reason}</p>
+                          </div>
+                        )}
+                      </div>
                     ) : (
-                      <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100 text-xs font-mono text-slate-700 mt-2">
-                        {JSON.stringify(details)}
+                      <div className="mt-3 p-3 bg-slate-50 rounded-2xl border border-slate-200/80 text-xs space-y-1.5">
+                        {Object.entries(details).length > 0 ? (
+                          Object.entries(details).map(([k, v]) => (
+                            <div key={k} className="flex items-center gap-2">
+                              <span className="font-semibold text-slate-700 capitalize">{k.replace(/([A-Z])/g, ' $1')}:</span>
+                              <span className="text-slate-600 font-mono text-[11px]">{typeof v === 'object' ? JSON.stringify(v) : String(v)}</span>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-slate-400 italic">No additional request payload parameters.</p>
+                        )}
                       </div>
                     )}
 
@@ -868,6 +1115,109 @@ const SupportApprovalsView = () => {
           </form>
         </div>
       </Modal>
+
+      {/* CREATE NEW SUPPORT TICKET MODAL */}
+      {isNewTicketModalOpen && (
+        <Modal
+          isOpen={isNewTicketModalOpen}
+          onClose={() => setIsNewTicketModalOpen(false)}
+          title="Create New Campus Support Ticket"
+          maxWidth="max-w-lg"
+        >
+          <form onSubmit={handleCreateNewTicket} className="space-y-3.5 text-xs">
+            <div>
+              <label className="block font-semibold text-slate-700 uppercase mb-1">
+                Campus / Institute Name <span className="text-rose-500 font-bold">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. Allama Iqbal Campus / Kips College"
+                value={newTicketForm.instituteName}
+                onChange={(e) => setNewTicketForm({ ...newTicketForm, instituteName: e.target.value })}
+                className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block font-semibold text-slate-700 uppercase mb-1">
+                Ticket Subject <span className="text-rose-500 font-bold">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. Assistance configuring online fee payment gateway"
+                value={newTicketForm.subject}
+                onChange={(e) => setNewTicketForm({ ...newTicketForm, subject: e.target.value })}
+                className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block font-semibold text-slate-700 uppercase mb-1">Category</label>
+                <select
+                  value={newTicketForm.category}
+                  onChange={(e) => setNewTicketForm({ ...newTicketForm, category: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 bg-white"
+                >
+                  <option value="General">General Inquiry</option>
+                  <option value="Billing & POS">Billing & POS</option>
+                  <option value="Academic Operations">Academic Operations</option>
+                  <option value="Exams & Grading">Exams & Grading</option>
+                  <option value="Attendance & SIS">Attendance & SIS</option>
+                  <option value="Security & Access">Security & Access</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 uppercase mb-1">Priority</label>
+                <select
+                  value={newTicketForm.priority}
+                  onChange={(e) => setNewTicketForm({ ...newTicketForm, priority: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 bg-white"
+                >
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                  <option value="Urgent">Urgent Critical</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block font-semibold text-slate-700 uppercase mb-1">
+                Initial Message / Description <span className="text-rose-500 font-bold">*</span>
+              </label>
+              <textarea
+                rows={3}
+                required
+                placeholder="Describe the inquiry or support requirements..."
+                value={newTicketForm.message}
+                onChange={(e) => setNewTicketForm({ ...newTicketForm, message: e.target.value })}
+                className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setIsNewTicketModalOpen(false)}
+                className="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl font-semibold hover:bg-slate-200 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 shadow-sm flex items-center gap-1.5 cursor-pointer"
+              >
+                <Send className="w-3.5 h-3.5" />
+                <span>Create & Open Ticket</span>
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
 
       {/* APPROVAL DECISION MODAL */}
       <Modal

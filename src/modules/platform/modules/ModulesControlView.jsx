@@ -27,7 +27,7 @@ import Modal from '../../../components/common/Modal'
 import { PlatformService, PLATFORM_MODULES } from '../../../services/platformService'
 
 export const ModulesControlView = () => {
-  const { institutes = [], refreshData } = useAppData()
+  const { institutes = [], students = [], refreshData } = useAppData()
   const { toast } = useToast()
 
   const [matrixData, setMatrixData] = useState([])
@@ -320,9 +320,11 @@ export const ModulesControlView = () => {
     }
   }
 
-  // Summary Metrics
-  const totalAllocatedStudents = institutes.reduce((acc, i) => acc + (i.quotaStudents || 1500), 0)
-  const totalAllocatedStorageGB = Math.round(institutes.reduce((acc, i) => acc + (i.quotaStorageMb || 2048), 0) / 1024)
+  // Dynamic Real Metrics (no dummy fallback data)
+  const enrolledStudentsCount = students.length
+  const totalAllocatedStudents = institutes.reduce((acc, i) => acc + (Number(i.quotaStudents) || 0), 0)
+  const totalAllocatedStorageGB = Math.round(institutes.reduce((acc, i) => acc + (Number(i.quotaStorageMb) || 0), 0) / 1024)
+  const activeCampusesCount = institutes.filter(i => (i.status || i.lifecycleStatus) === 'Active').length
 
   return (
     <div className="p-4 sm:p-6 md:p-8 pb-16 space-y-6 max-w-[1400px] mx-auto">
@@ -352,12 +354,13 @@ export const ModulesControlView = () => {
         </button>
       </div>
 
-      {/* KPI Overview Grid */}
+      {/* Dynamic KPI Overview Grid (Real Data Sync) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs flex items-center justify-between">
           <div>
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Institutes Governed</span>
-            <span className="text-xl font-bold text-slate-900 mt-1 block">{institutes.length}</span>
+            <span className="text-xl font-bold text-slate-900 mt-0.5 block">{institutes.length} Campuses</span>
+            <span className="text-[10px] text-emerald-600 font-semibold mt-0.5 inline-block">{activeCampusesCount} Active & Verified</span>
           </div>
           <div className="w-9 h-9 rounded-lg bg-[#f5eeff] text-purple-600 flex items-center justify-center">
             <Building2 className="w-5 h-5" />
@@ -366,8 +369,9 @@ export const ModulesControlView = () => {
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Available Modules</span>
-            <span className="text-xl font-bold text-slate-900 mt-1 block">{PLATFORM_MODULES.length} Systems</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Core Capabilities</span>
+            <span className="text-xl font-bold text-slate-900 mt-0.5 block">{PLATFORM_MODULES.length} Systems</span>
+            <span className="text-[10px] text-purple-600 font-semibold mt-0.5 inline-block">{matrixData.filter(m => m.enabled).length} Active Flags</span>
           </div>
           <div className="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
             <Layers className="w-5 h-5" />
@@ -376,8 +380,11 @@ export const ModulesControlView = () => {
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Total Student Capacity</span>
-            <span className="text-xl font-bold text-slate-900 mt-1 block">{totalAllocatedStudents.toLocaleString()}</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Live Enrolled Students</span>
+            <span className="text-xl font-bold text-slate-900 mt-0.5 block">{enrolledStudentsCount.toLocaleString()} Enrolled</span>
+            <span className="text-[10px] text-slate-500 font-medium mt-0.5 inline-block">
+              {totalAllocatedStudents > 0 ? `Quota: ${totalAllocatedStudents.toLocaleString()}` : 'Dynamic Scaling'}
+            </span>
           </div>
           <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
             <Users className="w-5 h-5" />
@@ -386,8 +393,13 @@ export const ModulesControlView = () => {
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Cloud Storage Pool</span>
-            <span className="text-xl font-bold text-slate-900 mt-1 block">{totalAllocatedStorageGB} GB</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Allocated Cloud Storage</span>
+            <span className="text-xl font-bold text-slate-900 mt-0.5 block">
+              {totalAllocatedStorageGB > 0 ? `${totalAllocatedStorageGB} GB` : 'Dynamic Quota'}
+            </span>
+            <span className="text-[10px] text-slate-500 font-medium mt-0.5 inline-block">
+              {institutes.length > 0 ? `${institutes.length} Cloud Nodes` : 'No Active Storage'}
+            </span>
           </div>
           <div className="w-9 h-9 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
             <HardDrive className="w-5 h-5" />
@@ -395,81 +407,80 @@ export const ModulesControlView = () => {
         </div>
       </div>
 
-      {/* Navigation Tabs & Wing Filter Bar */}
-      <div className="bg-white p-2.5 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col xl:flex-row xl:items-center justify-between gap-3">
-        {/* Navigation Tabs Styled as Modern Segmented Control without overflow scrollbar */}
-        <nav className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100/90 rounded-xl">
+      {/* Navigation Tabs & Compact Wing Filter Bar */}
+      <div className="bg-white p-2 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-2.5">
+        {/* Sleek Segmented Control without overflow scrollbar */}
+        <nav className="flex items-center gap-1 p-1 bg-slate-100/90 rounded-xl">
           <button
             type="button"
             onClick={() => setActiveControlTab('wings')}
-            className={`py-2 px-3.5 rounded-lg flex items-center gap-2 text-xs font-bold transition-all cursor-pointer ${
+            className={`py-1.5 px-3 rounded-lg flex items-center gap-1.5 text-xs font-bold transition-all cursor-pointer ${
               activeControlTab === 'wings'
                 ? 'bg-white text-purple-700 shadow-xs'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
             }`}
           >
-            <GraduationCap className="w-4 h-4 text-purple-600" />
+            <GraduationCap className="w-3.5 h-3.5 text-purple-600" />
             <span>Educational Wings Matrix</span>
-            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200/60 hidden sm:inline-block">
-              School • College • Uni
+            <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-purple-50 text-purple-700 border border-purple-200/60 hidden sm:inline-block">
+              Wings
             </span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveControlTab('features')}
-            className={`py-2 px-3.5 rounded-lg flex items-center gap-2 text-xs font-bold transition-all cursor-pointer ${
+            className={`py-1.5 px-3 rounded-lg flex items-center gap-1.5 text-xs font-bold transition-all cursor-pointer ${
               activeControlTab === 'features'
                 ? 'bg-white text-purple-700 shadow-xs'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
             }`}
           >
-            <Sliders className="w-4 h-4 text-purple-600" />
+            <Sliders className="w-3.5 h-3.5 text-purple-600" />
             <span>Feature Capabilities Matrix</span>
-            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200/60">
+            <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-purple-50 text-purple-700 border border-purple-200/60">
               10 Modules
             </span>
           </button>
         </nav>
 
-        {/* Wing Filter Control */}
-        <div className="flex flex-wrap items-center gap-2 self-start xl:self-center shrink-0 pr-1">
-          {/* Quick Search Box */}
+        {/* Compact Wing Filter & Search Controls */}
+        <div className="flex items-center gap-2 self-start md:self-center shrink-0 pr-1">
+          {/* Quick Compact Search Box */}
           <div className="relative">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <Search className="w-3 h-3 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search campus or code..."
-              className="pl-8 pr-7 py-1.5 bg-slate-50 hover:bg-slate-100/70 focus:bg-white text-xs text-slate-800 placeholder-slate-400 rounded-xl border border-slate-200/90 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all w-40 sm:w-48 font-medium"
+              placeholder="Search campus..."
+              className="pl-7 pr-6 py-1 bg-slate-50 hover:bg-slate-100/70 focus:bg-white text-xs text-slate-800 placeholder-slate-400 rounded-lg border border-slate-200/90 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all w-32 sm:w-40 font-medium"
             />
             {searchTerm && (
               <button
                 type="button"
                 onClick={() => setSearchTerm('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
               >
                 <X className="w-3 h-3" />
               </button>
             )}
           </div>
 
-          {/* Wing Filter Dropdown */}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-100/70 border border-slate-200/90 rounded-xl transition-all shadow-2xs">
-            <Filter className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider hidden sm:inline">Filter Wing:</span>
+          {/* Compact Sized Wing Filter Dropdown */}
+          <div className="flex items-center gap-1 px-2 py-1 bg-slate-50 hover:bg-slate-100/70 border border-slate-200/90 rounded-lg transition-all shadow-2xs">
+            <Filter className="w-3 h-3 text-purple-600 shrink-0" />
             <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
               aria-label="Filter institutes by educational wing"
-              className="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer pr-1"
+              className="bg-transparent text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer pr-1"
             >
-              <option value="ALL">All Wings & Campuses ({institutes.length})</option>
-              <option value="school">School Wing ({schoolCount})</option>
-              <option value="college">College Wing ({collegeCount})</option>
-              <option value="university">University Wing ({uniCount})</option>
-              <option value="hybrid">Hybrid / Multi-Wing ({hybridCount})</option>
+              <option value="ALL">All Wings ({institutes.length})</option>
+              <option value="school">School ({schoolCount})</option>
+              <option value="college">College ({collegeCount})</option>
+              <option value="university">University ({uniCount})</option>
+              <option value="hybrid">Hybrid ({hybridCount})</option>
             </select>
           </div>
 
@@ -477,7 +488,7 @@ export const ModulesControlView = () => {
             <button
               type="button"
               onClick={() => setTypeFilter('ALL')}
-              className="px-2 py-1 text-[11px] font-semibold text-purple-700 hover:text-purple-800 hover:bg-purple-50 rounded-lg transition-colors cursor-pointer"
+              className="px-1.5 py-0.5 text-[11px] font-semibold text-purple-700 hover:text-purple-800 hover:bg-purple-50 rounded transition-colors cursor-pointer"
               title="Reset Wing Filter"
             >
               Reset

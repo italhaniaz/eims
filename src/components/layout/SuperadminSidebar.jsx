@@ -92,6 +92,38 @@ export const SuperadminSidebar = ({
   const isPoliciesRoute = typeof currentRoute === 'string' && currentRoute.startsWith('sa-policies-')
   const isSettingsRoute = typeof currentRoute === 'string' && currentRoute.startsWith('sa-settings-')
 
+  // Dynamic pending approval count synced in real-time
+  const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0)
+
+  useEffect(() => {
+    const updateCount = () => {
+      try {
+        const raw = localStorage.getItem('sms_approval_requests')
+        if (raw) {
+          const list = JSON.parse(raw)
+          if (Array.isArray(list)) {
+            const pending = list.filter(a => a && a.status === 'PENDING')
+            setPendingApprovalsCount(pending.length)
+            return
+          }
+        }
+        setPendingApprovalsCount(0)
+      } catch {
+        setPendingApprovalsCount(0)
+      }
+    }
+
+    updateCount()
+    window.addEventListener('sms_approval_created', updateCount)
+    window.addEventListener('sms_approvals_updated', updateCount)
+    window.addEventListener('storage', updateCount)
+    return () => {
+      window.removeEventListener('sms_approval_created', updateCount)
+      window.removeEventListener('sms_approvals_updated', updateCount)
+      window.removeEventListener('storage', updateCount)
+    }
+  }, [])
+
   // Accordion states with smart auto-open for active routes
   const [platformOpen, setPlatformOpen] = useState(true)
   const [usersOpen, setUsersOpen] = useState(isUserRoute)
@@ -279,9 +311,11 @@ export const SuperadminSidebar = ({
                       <CheckSquare className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('support-approvals') ? 'text-purple-600' : 'text-amber-500'}`} />
                       <span className="truncate">Pending Approvals</span>
                     </div>
-                    <span className="px-1.5 py-0.2 text-[10px] font-extrabold bg-amber-500 text-white rounded-full shadow-2xs shrink-0">
-                      12
-                    </span>
+                    {pendingApprovalsCount > 0 && (
+                      <span className="px-1.5 py-0.2 text-[10px] font-extrabold bg-amber-500 text-white rounded-full shadow-2xs shrink-0 animate-in fade-in">
+                        {pendingApprovalsCount}
+                      </span>
+                    )}
                   </button>
                 </div>
 

@@ -2,7 +2,80 @@ import { DataService, getStoredData, saveStoredData } from './dataService'
 
 const API_BASE_URL = 'http://localhost:5000'
 
-const FALLBACK_TICKETS = []
+const FALLBACK_TICKETS = [
+  {
+    id: 'tkt-001',
+    ticketNumber: 'TKT-2026-101',
+    instituteName: 'Allama Iqbal Campus',
+    requesterName: 'Talha (Principal)',
+    requesterEmail: 'allamaiqbal@gmail.com',
+    subject: 'Assistance with Fee Voucher Gateway Configuration',
+    category: 'Billing & POS',
+    priority: 'High',
+    status: 'OPEN',
+    createdAt: new Date(Date.now() - 3600000 * 3).toISOString(),
+    messages: [
+      {
+        sender: 'Talha (Principal)',
+        role: 'Campus Admin',
+        text: 'Assalam o Alaikum, we need assistance configuring our online fee challan generation format with 1Link biller code. Please verify our bank merchant profile.',
+        time: '3 hours ago'
+      }
+    ]
+  },
+  {
+    id: 'tkt-002',
+    ticketNumber: 'TKT-2026-102',
+    instituteName: 'Kips College',
+    requesterName: 'Prof. Tariq Mahmood',
+    requesterEmail: 'tariq@kipscollege.edu.pk',
+    subject: 'Intermediate Wing Board Examination Grade Scales',
+    category: 'Academic Operations',
+    priority: 'Medium',
+    status: 'IN_PROGRESS',
+    createdAt: new Date(Date.now() - 3600000 * 20).toISOString(),
+    messages: [
+      {
+        sender: 'Prof. Tariq Mahmood',
+        role: 'Campus Admin',
+        text: 'Requesting assistance setting up BISE Gujranwala grade weighting percentages for 1st Year Pre-Medical exams.',
+        time: 'Yesterday'
+      },
+      {
+        sender: 'Super Administrator',
+        role: 'Superadmin',
+        text: 'We are reviewing your academic year configuration and will push the grade scales directly to your portal today.',
+        time: '12 hours ago'
+      }
+    ]
+  },
+  {
+    id: 'tkt-003',
+    ticketNumber: 'TKT-2026-098',
+    instituteName: 'Punjab University',
+    requesterName: 'Registrar Office',
+    requesterEmail: 'registrar@pu.edu.pk',
+    subject: 'Semester Examination Hall Admit Card Layout Customization',
+    category: 'Exams & Grading',
+    priority: 'Low',
+    status: 'RESOLVED',
+    createdAt: new Date(Date.now() - 3600000 * 72).toISOString(),
+    messages: [
+      {
+        sender: 'Registrar Office',
+        role: 'Campus Admin',
+        text: 'Need roll number barcode printed on BS 8th semester admit cards.',
+        time: '3 days ago'
+      },
+      {
+        sender: 'Super Administrator',
+        role: 'Superadmin',
+        text: 'Admit card barcode module has been enabled for your university wing.',
+        time: '2 days ago'
+      }
+    ]
+  }
+]
 
 const FALLBACK_APPROVALS = []
 
@@ -18,22 +91,55 @@ export const SupportService = {
     if (local) {
       try { 
         const parsed = JSON.parse(local)
-        if (Array.isArray(parsed)) {
-          const demoKeywords = ['beaconhouse', 'city school', 'roots international']
-          const filtered = parsed.filter(t => {
-            if (!t) return false
-            const str = ((t.instituteName || '') + (t.subject || '')).toLowerCase()
-            if (demoKeywords.some(k => str.includes(k))) return false
-            return true
-          })
-          if (filtered.length !== parsed.length) {
-            localStorage.setItem('sms_support_tickets', JSON.stringify(filtered))
-          }
-          return filtered
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed
         }
       } catch {}
     }
-    return []
+    localStorage.setItem('sms_support_tickets', JSON.stringify(FALLBACK_TICKETS))
+    return FALLBACK_TICKETS
+  },
+
+  async createTicket(ticketData) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/support/tickets`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(ticketData)
+      })
+      if (res.ok) return await res.json()
+    } catch {}
+
+    const tickets = await this.getTickets()
+    const newId = `tkt-${Date.now()}`
+    const ticketNumber = `TKT-${new Date().getFullYear()}-${String(tickets.length + 101).padStart(3, '0')}`
+    const newTicket = {
+      id: newId,
+      ticketNumber,
+      instituteName: ticketData.instituteName || 'Campus Administration',
+      requesterName: ticketData.requesterName || 'Admin User',
+      requesterEmail: ticketData.requesterEmail || 'admin@campus.edu.pk',
+      subject: ticketData.subject,
+      category: ticketData.category || 'General',
+      priority: ticketData.priority || 'Medium',
+      status: 'OPEN',
+      createdAt: new Date().toISOString(),
+      messages: [
+        {
+          sender: ticketData.requesterName || 'Super Administrator',
+          role: 'Superadmin',
+          text: ticketData.message || ticketData.subject,
+          time: 'Just now'
+        }
+      ]
+    }
+    tickets.unshift(newTicket)
+    localStorage.setItem('sms_support_tickets', JSON.stringify(tickets))
+    DataService.logActivity('Support Ticket Created', `Created ticket ${ticketNumber}: ${ticketData.subject}`, 'Super Admin')
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('sms_tickets_updated'))
+    }
+    return { success: true, ticket: newTicket }
   },
 
   async replyTicket(ticketId, replyText, newStatus = null) {
@@ -62,6 +168,9 @@ export const SupportService = {
       t.updatedAt = new Date().toISOString()
       localStorage.setItem('sms_support_tickets', JSON.stringify(tickets))
       DataService.logActivity('Support Ticket Replied', `Replied to ticket ${t.ticketNumber}`, 'Super Admin')
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('sms_tickets_updated'))
+      }
       return { success: true, ticket: t }
     }
     return { success: false }
@@ -84,6 +193,9 @@ export const SupportService = {
       t.updatedAt = new Date().toISOString()
       localStorage.setItem('sms_support_tickets', JSON.stringify(tickets))
       DataService.logActivity('Support Ticket Updated', `Marked ticket ${t.ticketNumber} as ${status}`, 'Super Admin')
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('sms_tickets_updated'))
+      }
       return { success: true, ticket: t }
     }
     return { success: false }
@@ -98,7 +210,10 @@ export const SupportService = {
 
     const local = localStorage.getItem('sms_approval_requests')
     if (local) {
-      try { return JSON.parse(local) } catch {}
+      try { 
+        const parsed = JSON.parse(local)
+        if (Array.isArray(parsed)) return parsed
+      } catch {}
     }
     localStorage.setItem('sms_approval_requests', JSON.stringify(FALLBACK_APPROVALS))
     return FALLBACK_APPROVALS
@@ -184,6 +299,9 @@ export const SupportService = {
       }
 
       DataService.logActivity('Approval Request Granted', `Approved: "${item.title}"`, 'Super Admin')
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('sms_approvals_updated'))
+      }
       return { success: true, request: item }
     }
     return { success: false }
@@ -209,6 +327,9 @@ export const SupportService = {
       item.reviewerNotes = reason || 'Declined by Super Administrator'
       localStorage.setItem('sms_approval_requests', JSON.stringify(list))
       DataService.logActivity('Approval Request Declined', `Declined: "${item.title}"`, 'Super Admin')
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('sms_approvals_updated'))
+      }
       return { success: true, request: item }
     }
     return { success: false }
@@ -239,7 +360,7 @@ export const SupportService = {
     } catch {}
 
     localStorage.setItem(`sms_content_${key}`, JSON.stringify(data))
-    DataService.logActivity('Platform Content Saved', `Updated CMS content for: ${key}`, 'Super Admin')
-    return { success: true }
+    DataService.logActivity('CMS Content Updated', `Updated legal CMS key: ${key}`, 'Super Admin')
+    return { success: true, content: data }
   }
 }
