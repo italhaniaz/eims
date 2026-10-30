@@ -29,8 +29,10 @@ import StatCard from '../../../components/common/StatCard'
 import Modal from '../../../components/common/Modal'
 import { AnalyticsService } from '../../../services/analyticsService'
 import { DataService } from '../../../services/dataService'
+import { useAppData } from '../../../context/AppDataContext'
 
 const CrossInstituteAnalyticsView = () => {
+  const { institutes = [], students = [], teachers = [], fees = [] } = useAppData()
   const [period, setPeriod] = useState('last30')
   const [typeFilter, setTypeFilter] = useState('ALL')
   const [searchTerm, setSearchTerm] = useState('')
@@ -61,12 +63,12 @@ const CrossInstituteAnalyticsView = () => {
 
   useEffect(() => {
     loadData()
-  }, [period])
+  }, [period, institutes, students, teachers, fees])
 
   const loadData = () => {
     setLoading(true)
     setTimeout(() => {
-      const data = AnalyticsService.getCrossInstituteData(period)
+      const data = AnalyticsService.getCrossInstituteData(period, { institutes, students, teachers, fees })
       setAnalyticsData(data)
       setLoading(false)
     }, 150)
@@ -780,7 +782,7 @@ const CrossInstituteAnalyticsView = () => {
                   )}
                   {visibleColumns.collected && (
                     <td className="py-3.5 px-4 text-right font-mono font-medium text-slate-800">
-                      ₨ {inst.totalCollectedPKR.toLocaleString()}
+                      Rs. {inst.totalCollectedPKR.toLocaleString()}
                     </td>
                   )}
                   {visibleColumns.health && (
@@ -791,6 +793,8 @@ const CrossInstituteAnalyticsView = () => {
                             ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                             : inst.health === 'Good'
                             ? 'bg-[#f5eeff] text-purple-700 border border-purple-200'
+                            : inst.health === 'New Campus'
+                            ? 'bg-slate-100 text-slate-700 border border-slate-200 font-medium'
                             : 'bg-amber-50 text-amber-700 border border-amber-200'
                         }`}
                       >
@@ -972,7 +976,7 @@ const CrossInstituteAnalyticsView = () => {
                         <td className="p-2 text-right border-r border-slate-200">{inst.teacherCount}</td>
                         <td className="p-2 text-center font-semibold border-r border-slate-200">{inst.attendanceRate}%</td>
                         <td className="p-2 text-center font-semibold border-r border-slate-200">{inst.feeRecoveryRate}%</td>
-                        <td className="p-2 text-right font-mono font-medium">₨ {inst.totalCollectedPKR.toLocaleString()}</td>
+                        <td className="p-2 text-right font-mono font-medium">Rs. {inst.totalCollectedPKR.toLocaleString()}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -1359,7 +1363,7 @@ const CrossInstituteAnalyticsView = () => {
                               {inst.feeRecoveryRate}% <span className="text-xs font-semibold text-slate-500">Collected</span>
                             </span>
                             <p className="text-[11px] font-mono text-emerald-700 font-semibold mt-0.5">
-                              ₨ {inst.totalCollectedPKR.toLocaleString()}
+                              Rs. {inst.totalCollectedPKR.toLocaleString()}
                             </p>
                           </div>
                         )}

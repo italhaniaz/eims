@@ -283,6 +283,11 @@ export const ModulesControlView = () => {
       return
     }
 
+    const actionText = bulkActionState ? 'ENABLE' : 'DISABLE'
+    if (!window.confirm(`Are you sure you want to ${actionText} module "${moduleObj?.name || bulkModuleKey}" across ${instituteIds.length} institute(s)?`)) {
+      return
+    }
+
     try {
       await PlatformService.bulkApplyModuleStatus(bulkModuleKey, bulkActionState, instituteIds)
       await loadMatrix()
@@ -516,7 +521,7 @@ export const ModulesControlView = () => {
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="bg-slate-50/90 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
-                    <th className="py-3.5 px-4 min-w-[200px]">Institute / Campus</th>
+                    <th className="py-3.5 px-4 min-w-[200px] sticky left-0 bg-slate-50 z-20 shadow-[2px_0_5px_rgba(0,0,0,0.04)]">Institute / Campus</th>
                     <th className="py-3.5 px-3 min-w-[120px]">Subscription Plan</th>
                     <th className="py-3.5 px-3 text-center min-w-[130px]">🏫 School Wing</th>
                     <th className="py-3.5 px-3 text-center min-w-[130px]">🏛️ College Wing</th>
@@ -540,7 +545,7 @@ export const ModulesControlView = () => {
                       return (
                         <tr key={inst.id} className="hover:bg-slate-50/60 transition-colors">
                           {/* Institute Column */}
-                          <td className="py-3.5 px-4">
+                          <td className="py-3.5 px-4 sticky left-0 bg-white z-10 shadow-[2px_0_5px_rgba(0,0,0,0.04)] border-r border-slate-100">
                             <div className="flex items-center gap-2.5">
                               <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold shrink-0 transition-colors shadow-2xs border ${
                                 isUniOn 

@@ -223,6 +223,61 @@ export const BillingService = {
   },
 
   // 3. SUBSCRIPTIONS
+  createInitialSubscriptionForInstitute(inst) {
+    if (!inst) return null
+    const tierName = inst.tier || inst.type || 'School'
+    const planTierLower = (inst.planTier || '').toLowerCase()
+    const isTrial = planTierLower.includes('trial') || (inst.status || '').toLowerCase().includes('trial')
+
+    let planId = 'plan-school'
+    let planName = 'School Plan'
+    let pricePKR = 25000
+    let enabledTiers = ['school']
+
+    if (isTrial) {
+      planId = 'plan-trial'
+      planName = 'Free Trial Plan'
+      pricePKR = 0
+      enabledTiers = ['school']
+    } else if (tierName === 'College') {
+      planId = 'plan-college'
+      planName = 'College Plan'
+      pricePKR = 35000
+      enabledTiers = ['college']
+    } else if (tierName === 'University') {
+      planId = 'plan-university'
+      planName = 'University Plan'
+      pricePKR = 55000
+      enabledTiers = ['undergraduate']
+    }
+
+    const startDate = new Date()
+    const renewalDate = new Date()
+    if (isTrial) {
+      renewalDate.setDate(renewalDate.getDate() + 14)
+    } else {
+      renewalDate.setMonth(renewalDate.getMonth() + 1)
+    }
+
+    return {
+      id: `sub_${inst.id || Date.now()}`,
+      instituteId: inst.id,
+      instituteName: inst.name,
+      planId,
+      planName: inst.planTier || planName,
+      status: isTrial ? 'TRIAL' : (inst.status === 'Suspended' ? 'EXPIRED' : 'ACTIVE'),
+      pricePKR,
+      billingCycle: isTrial ? '14-day trial' : 'monthly',
+      startDate: startDate.toISOString().slice(0, 10),
+      renewalDate: renewalDate.toISOString().slice(0, 10),
+      trialEndsAt: isTrial ? renewalDate.toISOString().slice(0, 10) : null,
+      enabledTiers: inst.enabledTiers || enabledTiers,
+      autoRenew: true,
+      lastPaymentDate: isTrial ? null : startDate.toISOString().slice(0, 10),
+      paymentMethod: 'Bank Transfer'
+    }
+  },
+
   async getSubscriptions() {
     try {
       const res = await fetch(`${API_BASE_URL}/api/billing/subscriptions`)
@@ -234,6 +289,7 @@ export const BillingService = {
       if (!error && data && data.length > 0) return data
     }
 
+    let subs = []
     const local = localStorage.getItem('sms_institute_subscriptions')
     if (local) {
       try { 
@@ -241,33 +297,66 @@ export const BillingService = {
         if (Array.isArray(parsed)) {
           const demoInstKeywords = ['beaconhouse', 'city school', 'roots international', 'al-huda']
           const demoSubIds = ['sub-1', 'sub-2', 'sub-3', 'sub-4', 'c1000000-0000-0000-0000-000000000001', 'c1000000-0000-0000-0000-000000000002', 'c1000000-0000-0000-0000-000000000003', 'c1000000-0000-0000-0000-000000000004']
-          const filtered = parsed.filter(s => {
+          subs = parsed.filter(s => {
             if (!s) return false
             if (demoSubIds.includes(s.id) || demoSubIds.includes(s.instituteId)) return false
             const name = (s.instituteName || '').toLowerCase()
             if (demoInstKeywords.some(k => name.includes(k))) return false
             return true
           })
-          if (filtered.length !== parsed.length) {
-            localStorage.setItem('sms_institute_subscriptions', JSON.stringify(filtered))
-          }
-          return filtered.map(s => ({
-            ...s,
-            daysRemaining: this.calculateDaysRemaining(s.renewalDate)
-          }))
         }
       } catch {}
     }
-    return []
+
+    // Auto-sync with registered institutes: Ensure every registered campus has an active subscription record
+    try {
+      const stored = getStoredData()
+      const registeredInstitutes = stored?.institutes || []
+      let mutated = false
+
+      registeredInstitutes.forEach(inst => {
+        if (!inst || !inst.id) return
+        const exists = subs.some(s => s.instituteId === inst.id || (s.instituteName && inst.name && s.instituteName.toLowerCase() === inst.name.toLowerCase()))
+        if (!exists) {
+          const autoSub = this.createInitialSubscriptionForInstitute(inst)
+          if (autoSub) {
+            subs.push(autoSub)
+            mutated = true
+          }
+        }
+      })
+
+      if (mutated || (local && subs.length !== JSON.parse(local).length)) {
+        localStorage.setItem('sms_institute_subscriptions', JSON.stringify(subs))
+      }
+    } catch {}
+
+    return subs.map(s => ({
+      ...s,
+      daysRemaining: this.calculateDaysRemaining(s.renewalDate)
+    }))
   },
 
   getSubscriptionForInstitute(instituteId) {
     const local = localStorage.getItem('sms_institute_subscriptions')
-    let subs = FALLBACK_SUBSCRIPTIONS
+    let subs = []
     if (local) {
       try { subs = JSON.parse(local) } catch {}
     }
-    const sub = subs.find(s => s.instituteId === instituteId)
+    let sub = subs.find(s => s.instituteId === instituteId)
+    if (!sub) {
+      try {
+        const stored = getStoredData()
+        const inst = (stored?.institutes || []).find(i => i.id === instituteId)
+        if (inst) {
+          sub = this.createInitialSubscriptionForInstitute(inst)
+          if (sub) {
+            subs.push(sub)
+            localStorage.setItem('sms_institute_subscriptions', JSON.stringify(subs))
+          }
+        }
+      } catch {}
+    }
     if (!sub) return null
     const daysRemaining = this.calculateDaysRemaining(sub.renewalDate)
     return {

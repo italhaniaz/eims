@@ -72,6 +72,8 @@ export const InstitutesView = () => {
     districts = [], 
     examinationBodies = [], 
     users = [],
+    students = [],
+    teachers = [],
     auditLogs = [],
     recentActivity = [],
     addItem, 
@@ -84,6 +86,16 @@ export const InstitutesView = () => {
     logAuditEvent,
     refreshData
   } = useAppData()
+
+  const getInstituteStats = (inst) => {
+    if (!inst) return { studentCount: 0, teacherCount: 0 }
+    const realStudents = (students || []).filter(s => s && (s.instituteId === inst.id || s.institute === inst.name || s.instituteCode === inst.code)).length
+    const realTeachers = (teachers || []).filter(t => t && (t.instituteId === inst.id || t.institute === inst.name || t.instituteCode === inst.code)).length
+    return {
+      studentCount: realStudents > 0 ? realStudents : (Number(inst.totalStudents) || 0),
+      teacherCount: realTeachers > 0 ? realTeachers : (Number(inst.totalTeachers) || 0)
+    }
+  }
 
   const { user, login } = useAuth()
   const { toast } = useToast()
@@ -2044,11 +2056,11 @@ export const InstitutesView = () => {
                     <div className="mt-4 grid grid-cols-2 gap-2 pt-3 border-t border-slate-100">
                       <div className="bg-slate-50 p-2 rounded-lg text-center">
                         <span className="block text-[10px] text-slate-400 uppercase font-semibold">Enrolled Students</span>
-                        <span className="text-sm font-bold text-slate-800">{inst.totalStudents || 0}</span>
+                        <span className="text-sm font-bold text-slate-800">{getInstituteStats(inst).studentCount}</span>
                       </div>
                       <div className="bg-slate-50 p-2 rounded-lg text-center">
                         <span className="block text-[10px] text-slate-400 uppercase font-semibold">Faculty & Staff</span>
-                        <span className="text-sm font-bold text-slate-800">{inst.totalTeachers || 0}</span>
+                        <span className="text-sm font-bold text-slate-800">{getInstituteStats(inst).teacherCount}</span>
                       </div>
                     </div>
                   </div>
@@ -2227,8 +2239,8 @@ export const InstitutesView = () => {
 
                           {/* Students / Staff */}
                           <td className="py-4 px-4 text-center">
-                            <span className="font-bold text-slate-800 text-xs">{inst.totalStudents || 0}</span>
-                            <span className="text-[10px] text-slate-400 block">{inst.totalTeachers || 0} faculty</span>
+                            <span className="font-bold text-slate-800 text-xs">{getInstituteStats(inst).studentCount}</span>
+                            <span className="text-[10px] text-slate-400 block">{getInstituteStats(inst).teacherCount} faculty</span>
                           </td>
 
                           {/* Status */}
@@ -2278,10 +2290,10 @@ export const InstitutesView = () => {
           )}
 
           {/* Pagination */}
-          {totalPages > 1 && (
+          {totalPages > 1 ? (
             <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 text-xs text-slate-500">
               <div>
-                Showing Page <span className="font-semibold text-slate-700">{currentPage}</span> of <span className="font-semibold text-slate-700">{totalPages}</span>
+                Showing Page <span className="font-semibold text-slate-700">{currentPage}</span> of <span className="font-semibold text-slate-700">{totalPages}</span> ({totalInstitutes} campuses)
               </div>
               <div className="flex items-center gap-1">
                 <button
@@ -2313,7 +2325,12 @@ export const InstitutesView = () => {
                 </button>
               </div>
             </div>
-          )}
+          ) : totalInstitutes > 0 ? (
+            <div className="flex items-center justify-between px-4 py-3 bg-white rounded-xl border border-slate-200 text-xs text-slate-500">
+              <span>Showing all <strong className="text-slate-700">{totalInstitutes}</strong> registered campuses</span>
+              <span className="text-slate-400 font-medium">Page 1 of 1</span>
+            </div>
+          ) : null}
         </div>
       ) : (
         <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center shadow-sm">

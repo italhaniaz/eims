@@ -88,7 +88,24 @@ const SubscriptionsBillingView = () => {
 
   useEffect(() => {
     fetchBillingData()
+    const handleSync = () => fetchBillingData()
+    window.addEventListener('sms_billing_updated', handleSync)
+    window.addEventListener('sms_institutes_updated', handleSync)
+    window.addEventListener('storage', handleSync)
+    return () => {
+      window.removeEventListener('sms_billing_updated', handleSync)
+      window.removeEventListener('sms_institutes_updated', handleSync)
+      window.removeEventListener('storage', handleSync)
+    }
   }, [])
+
+  const expiringTrials = useMemo(() => {
+    return (subscriptions || []).filter(s => {
+      if (s.status !== 'TRIAL') return false
+      const days = Number(s.daysRemaining)
+      return !isNaN(days) && days <= 3 && days >= 0
+    })
+  }, [subscriptions])
 
   const fetchBillingData = async () => {
     setLoading(true)
@@ -678,6 +695,37 @@ const SubscriptionsBillingView = () => {
         />
       </div>
 
+      {/* Expiring Trials Alert Banner */}
+      {expiringTrials.length > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs animate-in fade-in">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+              <Clock className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-amber-900">
+                {expiringTrials.length} Trial Campus{expiringTrials.length > 1 ? 'es' : ''} Expiring Within 3 Days
+              </h4>
+              <p className="text-xs text-amber-700 mt-0.5">
+                {expiringTrials.map(t => t.instituteName).slice(0, 3).join(', ')}
+                {expiringTrials.length > 3 ? ` and ${expiringTrials.length - 3} more` : ''} — Review or extend their evaluation cycle before automatic suspension.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => {
+                setActiveTab('subscriptions')
+                setStatusFilter('TRIAL')
+              }}
+              className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow-xs transition-colors cursor-pointer"
+            >
+              Review Trials
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Navigation Tabs */}
       <div className="bg-white p-1.5 rounded-2xl border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
         <nav className="flex space-x-2 overflow-x-auto text-xs sm:text-sm font-medium">
@@ -1041,11 +1089,11 @@ const SubscriptionsBillingView = () => {
                       <td className="py-3.5 px-4 font-mono font-medium text-slate-800">
                         {sub.isWaived ? (
                           <div>
-                            <span className="line-through text-slate-400 text-xs">₨ {sub.pricePKR?.toLocaleString()}</span>
-                            <span className="block text-emerald-700 font-bold text-xs">₨ 0 (Waived)</span>
+                            <span className="line-through text-slate-400 text-xs">Rs. {sub.pricePKR?.toLocaleString()}</span>
+                            <span className="block text-emerald-700 font-bold text-xs">Rs. 0 (Waived)</span>
                           </div>
                         ) : (
-                          <span>₨ {sub.pricePKR?.toLocaleString()} / {sub.billingCycle}</span>
+                          <span>Rs. {sub.pricePKR?.toLocaleString()} / {sub.billingCycle}</span>
                         )}
                       </td>
                       <td className="py-3.5 px-4">
@@ -1263,7 +1311,7 @@ const SubscriptionsBillingView = () => {
 
                   <div className="mt-4 mb-5 p-3 rounded-xl bg-emerald-50/60 border border-emerald-100">
                     <div className="flex items-baseline gap-1 font-heading">
-                      <span className="text-lg font-bold text-emerald-600">₨</span>
+                      <span className="text-lg font-bold text-emerald-600">Rs.</span>
                       <span className="text-3xl sm:text-4xl font-extrabold text-emerald-700 tracking-tight">0</span>
                       <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full ml-1.5 border border-emerald-200">
                         FREE
@@ -1341,7 +1389,7 @@ const SubscriptionsBillingView = () => {
 
                   <div className="mt-4 mb-5 p-3 rounded-xl bg-slate-50 border border-slate-100">
                     <div className="flex items-baseline gap-1 font-heading">
-                      <span className="text-lg font-bold text-slate-500">₨</span>
+                      <span className="text-lg font-bold text-slate-500">Rs.</span>
                       <span className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
                         {billingCycle === 'annual' ? Math.round((schoolPlan.pricePKR || 25000) * 0.85).toLocaleString() : (schoolPlan.pricePKR || 25000).toLocaleString()}
                       </span>
@@ -1419,7 +1467,7 @@ const SubscriptionsBillingView = () => {
 
                   <div className="mt-4 mb-5 p-3 rounded-xl bg-slate-50 border border-slate-100">
                     <div className="flex items-baseline gap-1 font-heading">
-                      <span className="text-lg font-bold text-slate-500">₨</span>
+                      <span className="text-lg font-bold text-slate-500">Rs.</span>
                       <span className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
                         {billingCycle === 'annual' ? Math.round((collegePlan.pricePKR || 35000) * 0.85).toLocaleString() : (collegePlan.pricePKR || 35000).toLocaleString()}
                       </span>
@@ -1497,7 +1545,7 @@ const SubscriptionsBillingView = () => {
 
                   <div className="mt-4 mb-5 p-3 rounded-xl bg-white border border-purple-100 shadow-2xs">
                     <div className="flex items-baseline gap-1 font-heading">
-                      <span className="text-lg font-bold text-purple-600">₨</span>
+                      <span className="text-lg font-bold text-purple-600">Rs.</span>
                       <span className="text-3xl sm:text-4xl font-extrabold text-purple-700 tracking-tight">
                         {billingCycle === 'annual' ? Math.round((uniPlan.pricePKR || 55000) * 0.85).toLocaleString() : (uniPlan.pricePKR || 55000).toLocaleString()}
                         <span className="text-2xl text-purple-500 font-bold">+</span>
@@ -1636,7 +1684,7 @@ const SubscriptionsBillingView = () => {
                           {/* Pricing Box */}
                           <div className="mb-5 p-3.5 rounded-2xl bg-white border border-purple-100 shadow-2xs">
                             <div className="flex items-baseline gap-1 font-heading">
-                              <span className="text-lg font-bold text-purple-600">₨</span>
+                              <span className="text-lg font-bold text-purple-600">Rs.</span>
                               <span className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
                                 {billingCycle === 'annual'
                                   ? Math.round((Number(plan.pricePKR) || 75000) * 0.85).toLocaleString()
@@ -1759,7 +1807,7 @@ const SubscriptionsBillingView = () => {
                         <div className="text-[11px] text-slate-400">{inv.planName}</div>
                       </td>
                       <td className="py-3.5 px-4 font-mono font-bold text-slate-900">
-                        ₨ {Number(inv.amountPKR).toLocaleString()}
+                        Rs. {Number(inv.amountPKR).toLocaleString()}
                       </td>
                       <td className="py-3.5 px-4 text-xs">
                         <div>Issued: {inv.issueDate}</div>
@@ -1846,7 +1894,7 @@ const SubscriptionsBillingView = () => {
               </div>
               <div>
                 <div className="text-xs font-bold text-emerald-950">Free Trial / Evaluation Package</div>
-                <div className="text-[11px] text-emerald-700">Quickly configure a ₨ 0 evaluation tier for prospective clients to test the software.</div>
+                <div className="text-[11px] text-emerald-700">Quickly configure a Rs. 0 evaluation tier for prospective clients to test the software.</div>
               </div>
             </div>
             <button
@@ -1908,7 +1956,7 @@ const SubscriptionsBillingView = () => {
                     : 'bg-white border-slate-200'
                 }`}
               >
-                <option value="Trial">Free Trial Tier (₨ 0 Evaluation)</option>
+                <option value="Trial">Free Trial Tier (Rs. 0 Evaluation)</option>
                 <option value="School">School Tier (Primary / Matric)</option>
                 <option value="College">College Tier (Inter / F.Sc / A-Levels)</option>
                 <option value="University">University Tier (BS / Degrees)</option>
@@ -2243,7 +2291,7 @@ const SubscriptionsBillingView = () => {
                 >
                   <span className="text-xs font-bold block">{plan.name}</span>
                   <span className="text-[11px] font-mono text-indigo-700 block mt-0.5">
-                    {Number(plan.pricePKR) === 0 ? 'FREE TRIAL (₨ 0)' : `₨ ${Number(plan.pricePKR).toLocaleString()}/mo`}
+                    {Number(plan.pricePKR) === 0 ? 'FREE TRIAL (Rs. 0)' : `Rs. ${Number(plan.pricePKR).toLocaleString()}/mo`}
                   </span>
                   <span className="text-[10px] text-slate-400 block mt-1 line-clamp-1">{plan.description}</span>
                 </button>

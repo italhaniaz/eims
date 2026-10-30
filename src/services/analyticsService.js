@@ -7,12 +7,12 @@ const FALLBACK_SCHEDULED_REPORTS = []
 
 export const AnalyticsService = {
   // 1. GET AGGREGATED CROSS-INSTITUTE DATA
-  getCrossInstituteData(period = 'last30') {
+  getCrossInstituteData(period = 'last30', liveData = null) {
     const store = getStoredData()
-    const institutes = store.institutes || []
-    const students = store.students || []
-    const teachers = store.teachers || []
-    const fees = store.fees || []
+    const institutes = liveData?.institutes || store.institutes || []
+    const students = liveData?.students || store.students || []
+    const teachers = liveData?.teachers || store.teachers || []
+    const fees = liveData?.fees || store.fees || []
 
     if (institutes.length === 0) {
       return {
@@ -39,30 +39,30 @@ export const AnalyticsService = {
 
     // Compute metrics for each genuine institute
     const comparisonList = institutes.map((inst, index) => {
-      const instStudents = students.filter(s => s.instituteId === inst.id)
-      const instTeachers = teachers.filter(t => t.instituteId === inst.id)
+      const instStudents = students.filter(s => s && (s.instituteId === inst.id || s.institute === inst.name || s.instituteCode === inst.code))
+      const instTeachers = teachers.filter(t => t && (t.instituteId === inst.id || t.institute === inst.name || t.instituteCode === inst.code))
 
       const studentCount = instStudents.length > 0 ? instStudents.length : (Number(inst.totalStudents) || 0)
       const teacherCount = instTeachers.length > 0 ? instTeachers.length : (Number(inst.totalTeachers) || 0)
-      const studentTeacherRatio = teacherCount > 0 ? `${Math.round(studentCount / teacherCount)}:1` : '0:1'
+      const studentTeacherRatio = teacherCount > 0 ? `${Math.round(studentCount / teacherCount)}:1` : studentCount > 0 ? `${studentCount}:0` : '—'
 
       // Real attendance rate or 0 if no records
       let attendanceRate = 0
-      const instAttendance = store.attendance ? Object.values(store.attendance).filter(a => a.instituteId === inst.id) : []
+      const instAttendance = store.attendance ? Object.values(store.attendance).filter(a => a && (a.instituteId === inst.id || a.institute === inst.name)) : []
       if (instAttendance.length > 0) {
-        const present = instAttendance.filter(a => a.status === 'Present').length
+        const present = instAttendance.filter(a => a && a.status === 'Present').length
         attendanceRate = Math.round((present / instAttendance.length) * 1000) / 10
       }
 
       // Real fee recovery calculation
-      const instFees = fees.filter(f => f.instituteId === inst.id)
+      const instFees = fees.filter(f => f && (f.instituteId === inst.id || f.institute === inst.name))
       let feeRecoveryRate = 0
       let totalBilledPKR = 0
       let totalCollectedPKR = 0
 
       if (instFees.length > 0) {
         const total = instFees.reduce((sum, f) => sum + (Number(f.amount) || 0), 0)
-        const paid = instFees.filter(f => f.status === 'Paid').reduce((sum, f) => sum + (Number(f.amount) || 0), 0)
+        const paid = instFees.filter(f => f && f.status === 'Paid').reduce((sum, f) => sum + (Number(f.amount) || 0), 0)
         if (total > 0) {
           totalBilledPKR = total
           totalCollectedPKR = paid
@@ -71,7 +71,8 @@ export const AnalyticsService = {
       }
 
       const growthRate = '+0.0%'
-      const health = feeRecoveryRate >= 90 && attendanceRate >= 90 ? 'Excellent' : feeRecoveryRate >= 80 ? 'Good' : 'Needs Attention'
+      const isNewCampus = studentCount === 0 && teacherCount === 0 && instFees.length === 0
+      const health = isNewCampus ? 'New Campus' : (feeRecoveryRate >= 90 && attendanceRate >= 90 ? 'Excellent' : feeRecoveryRate >= 80 ? 'Good' : 'Needs Attention')
 
       return {
         id: inst.id,

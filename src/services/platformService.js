@@ -601,6 +601,70 @@ export const PlatformService = {
 
     saveStoredData(store)
 
+    // Synchronize initial billing subscription and broadcast update events
+    try {
+      const existingSubsRaw = localStorage.getItem('sms_institute_subscriptions')
+      let existingSubs = existingSubsRaw ? JSON.parse(existingSubsRaw) : []
+      if (!Array.isArray(existingSubs)) existingSubs = []
+
+      const isTrial = (newInstitute.planTier || '').toLowerCase().includes('trial') || (newInstitute.status || '').toLowerCase().includes('trial')
+      let planId = 'plan-school'
+      let planName = 'School Plan'
+      let pricePKR = 25000
+      let enabledTiers = ['school']
+
+      if (isTrial) {
+        planId = 'plan-trial'
+        planName = 'Free Trial Plan'
+        pricePKR = 0
+        enabledTiers = ['school']
+      } else if (newInstitute.type === 'College') {
+        planId = 'plan-college'
+        planName = 'College Plan'
+        pricePKR = 35000
+        enabledTiers = ['college']
+      } else if (newInstitute.type === 'University') {
+        planId = 'plan-university'
+        planName = 'University Plan'
+        pricePKR = 55000
+        enabledTiers = ['undergraduate']
+      }
+
+      const now = new Date()
+      const renewal = new Date()
+      if (isTrial) renewal.setDate(renewal.getDate() + 14)
+      else renewal.setMonth(renewal.getMonth() + 1)
+
+      const autoSub = {
+        id: `sub_${newInstitute.id}`,
+        instituteId: newInstitute.id,
+        instituteName: newInstitute.name,
+        planId,
+        planName: newInstitute.planTier || planName,
+        status: isTrial ? 'TRIAL' : 'ACTIVE',
+        pricePKR,
+        billingCycle: isTrial ? '14-day trial' : 'monthly',
+        startDate: now.toISOString().slice(0, 10),
+        renewalDate: renewal.toISOString().slice(0, 10),
+        trialEndsAt: isTrial ? renewal.toISOString().slice(0, 10) : null,
+        enabledTiers: newInstitute.enabledTiers || enabledTiers,
+        autoRenew: true,
+        lastPaymentDate: isTrial ? null : now.toISOString().slice(0, 10),
+        paymentMethod: 'Bank Transfer'
+      }
+
+      // Avoid duplicates
+      if (!existingSubs.some(s => s.instituteId === newInstitute.id)) {
+        existingSubs.unshift(autoSub)
+        localStorage.setItem('sms_institute_subscriptions', JSON.stringify(existingSubs))
+      }
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('sms_billing_updated'))
+        window.dispatchEvent(new Event('sms_institutes_updated'))
+      }
+    } catch {}
+
     // Supabase cloud sync
     if (isSupabaseConfigured && supabase) {
       try {

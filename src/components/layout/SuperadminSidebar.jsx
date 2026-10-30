@@ -94,6 +94,7 @@ export const SuperadminSidebar = ({
 
   // Dynamic pending approval count synced in real-time
   const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0)
+  const [campusesCount, setCampusesCount] = useState(0)
 
   useEffect(() => {
     const updateCount = () => {
@@ -113,14 +114,38 @@ export const SuperadminSidebar = ({
       }
     }
 
+    const updateCampusCount = () => {
+      try {
+        const raw = localStorage.getItem('sms_institutes') || localStorage.getItem('app_data')
+        if (raw) {
+          const parsed = JSON.parse(raw)
+          if (Array.isArray(parsed)) {
+            setCampusesCount(parsed.length)
+            return
+          } else if (parsed && Array.isArray(parsed.institutes)) {
+            setCampusesCount(parsed.institutes.length)
+            return
+          }
+        }
+        setCampusesCount(0)
+      } catch {
+        setCampusesCount(0)
+      }
+    }
+
     updateCount()
+    updateCampusCount()
     window.addEventListener('sms_approval_created', updateCount)
     window.addEventListener('sms_approvals_updated', updateCount)
+    window.addEventListener('sms_institutes_updated', updateCampusCount)
     window.addEventListener('storage', updateCount)
+    window.addEventListener('storage', updateCampusCount)
     return () => {
       window.removeEventListener('sms_approval_created', updateCount)
       window.removeEventListener('sms_approvals_updated', updateCount)
+      window.removeEventListener('sms_institutes_updated', updateCampusCount)
       window.removeEventListener('storage', updateCount)
+      window.removeEventListener('storage', updateCampusCount)
     }
   }, [])
 
@@ -320,14 +345,21 @@ export const SuperadminSidebar = ({
                   )}
                   <button
                     onClick={() => handleNavClick('institutes')}
-                    className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
+                    className={`w-full flex items-center justify-between text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                       isRouteActive('institutes')
                         ? 'bg-[#f5eeff] text-purple-700 font-semibold'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                     }`}
                   >
-                    <Building2 className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('institutes') ? 'text-purple-600' : 'text-slate-400'}`} />
-                    <span>All Campuses</span>
+                    <div className="flex items-center gap-2.5 truncate">
+                      <Building2 className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('institutes') ? 'text-purple-600' : 'text-slate-400'}`} />
+                      <span className="truncate">All Campuses</span>
+                    </div>
+                    {campusesCount > 0 && (
+                      <span className="px-1.5 py-0.5 text-[10px] font-bold bg-slate-100 text-slate-600 rounded-md shrink-0">
+                        {campusesCount}
+                      </span>
+                    )}
                   </button>
                 </div>
 
