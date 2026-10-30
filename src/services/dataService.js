@@ -433,6 +433,11 @@ export const saveStoredData = (data) => {
       stats: updatedStats
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload))
+    if (typeof window !== 'undefined') {
+      try {
+        window.dispatchEvent(new CustomEvent('app-data-sync', { detail: payload }))
+      } catch (evtErr) {}
+    }
     return payload
   } catch (e) {
     console.error('LocalStorage save error:', e)
@@ -490,6 +495,57 @@ export const DataService = {
     }
 
   },
+  async syncAllFromSupabase() {
+    if (!isSupabaseConfigured || !supabase) {
+      return getStoredData()
+    }
+    try {
+      const collections = [
+        'institutes',
+        'students',
+        'teachers',
+        'fees',
+        'classes',
+        'users',
+        'exams',
+        'notices',
+        'auditLogs',
+        'communicationLogs'
+      ]
+
+      const store = getStoredData()
+      let hasUpdates = false
+
+      const results = await Promise.allSettled(
+        collections.map(async (col) => {
+          const { data, error } = await supabase.from(col).select('*')
+          if (!error && Array.isArray(data)) {
+            return { col, data }
+          }
+          return null
+        })
+      )
+
+      results.forEach((res) => {
+        if (res.status === 'fulfilled' && res.value && Array.isArray(res.value.data)) {
+          const { col, data } = res.value
+          if (data.length > 0) {
+            store[col] = data
+            hasUpdates = true
+          }
+        }
+      })
+
+      if (hasUpdates) {
+        saveStoredData(store)
+      }
+      return store
+    } catch (err) {
+      console.warn('Supabase full sync error:', err)
+      return getStoredData()
+    }
+  },
+
   async getCollection(collectionName) {
     if (isSupabaseConfigured && supabase) {
       try {

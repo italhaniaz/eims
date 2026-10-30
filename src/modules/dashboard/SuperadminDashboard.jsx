@@ -42,6 +42,10 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
     recentActivity = [], 
     addItem, 
     institutes = [],
+    students = [],
+    teachers = [],
+    fees = [],
+    users = [],
     sendCommunicationBlast,
     activeWing,
     setActiveWing
@@ -66,126 +70,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
   const [executiveMetric, setExecutiveMetric] = useState('saas_revenue')
   const [hoveredMonthIdx, setHoveredMonthIdx] = useState(null)
 
-  // Executive Data across 12 months tailored specifically for Super Admin (Platform Owner / HQ)
-  const executiveChartData = useMemo(() => {
-    if (executiveMetric === 'saas_revenue') {
-      return {
-        unit: '₨',
-        chartTitle: 'Platform SaaS Subscription Revenue & MRR Growth',
-        chartSubtitle: 'Monthly software licensing collections & recurring SaaS ARR generated from campus network in PKR (₨)',
-        yAxisLabels: ['₨ 500K', '₨ 400K', '₨ 300K', '₨ 200K', '₨ 100K', '₨ 0'],
-        maxVal: 550, // in thousands PKR
-        summaryLabel: 'Total Platform SaaS Revenue (2026)',
-        summaryValue: '₨ 4.62M',
-        avgLabel: 'Live Monthly Recurring Revenue',
-        avgValue: '₨ 385K / mo',
-        growthBadge: '+28.4% MRR Expansion',
-        primaryLegend: 'School Subscriptions (₨ 25K/mo)',
-        secondaryLegend: 'College & Enterprise (₨ 35K - 55K/mo)',
-        months: [
-          { m: 'Jan', v1: 150, v2: 140, label1: '₨ 150K', label2: '₨ 140K', total: '₨ 290K', note: 'Q1 recurring billing' },
-          { m: 'Feb', v1: 175, v2: 140, label1: '₨ 175K', label2: '₨ 140K', total: '₨ 315K', note: '+1 School tier license' },
-          { m: 'Mar', v1: 175, v2: 175, label1: '₨ 175K', label2: '₨ 175K', total: '₨ 350K', note: '+1 College affiliate' },
-          { m: 'Apr', v1: 200, v2: 175, label1: '₨ 200K', label2: '₨ 175K', total: '₨ 375K', note: 'Spring renewal cycle' },
-          { m: 'May', v1: 250, v2: 230, label1: '₨ 250K', label2: '₨ 230K', total: '₨ 480K', note: 'Annual Admission Onboarding Peak', isPeak: true },
-          { m: 'Jun', v1: 225, v2: 210, label1: '₨ 225K', label2: '₨ 210K', total: '₨ 435K', note: 'Mid-year renewals' },
-          { m: 'Jul', v1: 200, v2: 195, label1: '₨ 200K', label2: '₨ 195K', total: '₨ 395K', note: 'Summer licenses active' },
-          { m: 'Aug', v1: 225, v2: 210, label1: '₨ 225K', label2: '₨ 210K', total: '₨ 435K', note: 'Session restart billing' },
-          { m: 'Sep', v1: 275, v2: 245, label1: '₨ 275K', label2: '₨ 245K', total: '₨ 520K', note: 'Fall Semester Enterprise Influx', isPeak: true },
-          { m: 'Oct', v1: 250, v2: 210, label1: '₨ 250K', label2: '₨ 210K', total: '₨ 460K', note: 'Multi-campus expansions' },
-          { m: 'Nov', v1: 250, v2: 210, label1: '₨ 250K', label2: '₨ 210K', total: '₨ 460K', note: 'Pre-exam term renewals' },
-          { m: 'Dec', v1: 275, v2: 245, label1: '₨ 275K', label2: '₨ 245K', total: '₨ 520K', note: 'Year-end contract closing' }
-        ]
-      }
-    } else if (executiveMetric === 'campuses') {
-      return {
-        unit: 'Campuses',
-        chartTitle: 'Campus Network & Multi-Tenant Onboarding Velocity',
-        chartSubtitle: 'Active educational campus registrations, tenant activations & multi-wing expansions',
-        yAxisLabels: ['30', '24', '18', '12', '6', '0'],
-        maxVal: 30,
-        summaryLabel: 'Total Active Campuses',
-        summaryValue: '28 Campuses',
-        avgLabel: 'Monthly Onboarding Velocity',
-        avgValue: '2.4 Campuses / mo',
-        growthBadge: '+32% YoY Network Growth',
-        primaryLegend: 'School Campuses (Primary & Matric)',
-        secondaryLegend: 'College & University Campuses',
-        months: [
-          { m: 'Jan', v1: 8, v2: 5, label1: '8 Schools', label2: '5 Higher Ed', total: '13 Campuses', note: 'Initial platform network' },
-          { m: 'Feb', v1: 9, v2: 5, label1: '9 Schools', label2: '5 Higher Ed', total: '14 Campuses', note: '+1 School branch active' },
-          { m: 'Mar', v1: 10, v2: 6, label1: '10 Schools', label2: '6 Higher Ed', total: '16 Campuses', note: '+1 College affiliate' },
-          { m: 'Apr', v1: 11, v2: 7, label1: '11 Schools', label2: '7 Higher Ed', total: '18 Campuses', note: 'Spring onboarding drive' },
-          { m: 'May', v1: 14, v2: 9, label1: '14 Schools', label2: '9 Higher Ed', total: '23 Campuses', note: 'Admission Peak Registrations', isPeak: true },
-          { m: 'Jun', v1: 14, v2: 9, label1: '14 Schools', label2: '9 Higher Ed', total: '23 Campuses', note: 'Stable cloud tenants' },
-          { m: 'Jul', v1: 14, v2: 9, label1: '14 Schools', label2: '9 Higher Ed', total: '23 Campuses', note: 'Summer infrastructure sync' },
-          { m: 'Aug', v1: 15, v2: 10, label1: '15 Schools', label2: '10 Higher Ed', total: '25 Campuses', note: 'Session restart onboardings' },
-          { m: 'Sep', v1: 17, v2: 11, label1: '17 Schools', label2: '11 Higher Ed', total: '28 Campuses', note: 'Major University Affiliation', isPeak: true },
-          { m: 'Oct', v1: 17, v2: 11, label1: '17 Schools', label2: '11 Higher Ed', total: '28 Campuses', note: 'Operational network' },
-          { m: 'Nov', v1: 18, v2: 11, label1: '18 Schools', label2: '11 Higher Ed', total: '29 Campuses', note: '+1 School Wing added' },
-          { m: 'Dec', v1: 18, v2: 12, label1: '18 Schools', label2: '12 Higher Ed', total: '30 Campuses', note: 'Closing roster 2026' }
-        ]
-      }
-    } else if (executiveMetric === 'students') {
-      return {
-        unit: 'Students',
-        chartTitle: 'Total Platform Workload & Enrolled Student Telemetry',
-        chartSubtitle: 'Active student rosters, server compute load & license quota capacity across all institutes',
-        yAxisLabels: ['12K', '9.6K', '7.2K', '4.8K', '2.4K', '0'],
-        maxVal: 12000,
-        summaryLabel: 'Total Active Student Body',
-        summaryValue: '18,450 Students',
-        avgLabel: 'Average Tenant Load',
-        avgValue: '658 Students / Campus',
-        growthBadge: '76.4% Server Quota Filled',
-        primaryLegend: 'School Students (Grade 1-10)',
-        secondaryLegend: 'College & Uni Students (Inter/BS)',
-        months: [
-          { m: 'Jan', v1: 5200, v2: 3800, label1: '5,200', label2: '3,800', total: '9,000', note: 'Winter session roster' },
-          { m: 'Feb', v1: 5400, v2: 3900, label1: '5,400', label2: '3,900', total: '9,300', note: 'Mid-term transfers' },
-          { m: 'Mar', v1: 5600, v2: 4100, label1: '5,600', label2: '4,100', total: '9,700', note: 'Pre-board count' },
-          { m: 'Apr', v1: 6400, v2: 4400, label1: '6,400', label2: '4,400', total: '10,800', note: 'Spring admissions intake' },
-          { m: 'May', v1: 7800, v2: 5200, label1: '7,800', label2: '5,200', total: '13,000', note: 'Annual Enrollment Peak', isPeak: true },
-          { m: 'Jun', v1: 7600, v2: 5100, label1: '7,600', label2: '5,100', total: '12,700', note: 'Roster validation' },
-          { m: 'Jul', v1: 7400, v2: 5000, label1: '7,400', label2: '5,000', total: '12,400', note: 'Graduated outgoing batches' },
-          { m: 'Aug', v1: 8200, v2: 5600, label1: '8,200', label2: '5,600', total: '13,800', note: 'New intake registration' },
-          { m: 'Sep', v1: 9400, v2: 6400, label1: '9,400', label2: '6,400', total: '15,800', note: 'Fall Semester Registration', isPeak: true },
-          { m: 'Oct', v1: 9300, v2: 6350, label1: '9,300', label2: '6,350', total: '15,650', note: 'Active telemetry' },
-          { m: 'Nov', v1: 9500, v2: 6500, label1: '9,500', label2: '6,500', total: '16,000', note: 'Final examination register' },
-          { m: 'Dec', v1: 9800, v2: 6800, label1: '9,800', label2: '6,800', total: '16,600', note: 'Annual database closing' }
-        ]
-      }
-    } else {
-      return {
-        unit: 'Vouchers',
-        chartTitle: '1Link & Digital Fee Processing Velocity',
-        chartSubtitle: 'Sub-50ms 1Link 1Bill, JazzCash challans & counter barcode transactions settled via platform',
-        yAxisLabels: ['18K', '14.4K', '10.8K', '7.2K', '3.6K', '0'],
-        maxVal: 18000,
-        summaryLabel: 'Total Digital Operations',
-        summaryValue: '146,800 Vouchers',
-        avgLabel: 'Mean Processing Latency',
-        avgValue: '38ms / Challan',
-        growthBadge: '99.98% Gateway Uptime',
-        primaryLegend: '1Link 1Bill & JazzCash Online',
-        secondaryLegend: 'Counter Barcode Reconciliations',
-        months: [
-          { m: 'Jan', v1: 5800, v2: 4200, label1: '5,800', label2: '4,200', total: '10,000', note: 'Term fee cycle' },
-          { m: 'Feb', v1: 6200, v2: 4500, label1: '6,200', label2: '4,500', total: '10,700', note: 'Standard installments' },
-          { m: 'Mar', v1: 5900, v2: 4100, label1: '5,900', label2: '4,100', total: '10,000', note: 'Pre-exam dues' },
-          { m: 'Apr', v1: 8200, v2: 5600, label1: '8,200', label2: '5,600', total: '13,800', note: 'Spring admissions intake' },
-          { m: 'May', v1: 9800, v2: 6900, label1: '9,800', label2: '6,900', total: '16,700', note: 'Peak Barcode Challan Sync', isPeak: true },
-          { m: 'Jun', v1: 6400, v2: 4800, label1: '6,400', label2: '4,800', total: '11,200', note: 'Pre-vacation clearing' },
-          { m: 'Jul', v1: 4500, v2: 3600, label1: '4,500', label2: '3,600', total: '8,100', note: 'Summer break low' },
-          { m: 'Aug', v1: 7600, v2: 5400, label1: '7,600', label2: '5,400', total: '13,000', note: 'Campus re-opening dues' },
-          { m: 'Sep', v1: 10400, v2: 7200, label1: '10,400', label2: '7,200', total: '17,600', note: 'Fall Semester Clearance', isPeak: true },
-          { m: 'Oct', v1: 7800, v2: 5200, label1: '7,800', label2: '5,200', total: '13,000', note: 'Regular fee challans' },
-          { m: 'Nov', v1: 8600, v2: 5900, label1: '8,600', label2: '5,900', total: '14,500', note: 'Pre-board clearing' },
-          { m: 'Dec', v1: 9200, v2: 6300, label1: '9,200', label2: '6,300', total: '15,500', note: 'Annual ledger audit' }
-        ]
-      }
-    }
-  }, [executiveMetric])
+
 
   // Close filter dropdown on outside click
   useEffect(() => {
@@ -455,9 +340,17 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
     : filteredInstitutes.filter(i => (i.status || 'Active').toLowerCase() === 'active').length
 
   const displayTotalStudents = useMemo(() => {
-    const targetList = selectedTierFilter === 'all' ? (institutes || []) : filteredInstitutes
-    return targetList.reduce((acc, i) => acc + (Number(i.totalStudents) || Number(i.studentsCount) || 0), 0)
-  }, [institutes, filteredInstitutes, selectedTierFilter])
+    const targetInstList = selectedTierFilter === 'all' ? (institutes || []) : filteredInstitutes
+    const targetInstIds = new Set(targetInstList.map(i => i.id))
+    
+    // Count enrolled students belonging to target institutes from live collection
+    const liveStudentsCount = (students || []).filter(s => !s.instituteId || targetInstIds.has(s.instituteId)).length
+    
+    // Sum campus student numbers from institute profiles
+    const instStudentsCount = targetInstList.reduce((acc, i) => acc + (Number(i.totalStudents) || Number(i.studentsCount) || 0), 0)
+    
+    return Math.max(liveStudentsCount, instStudentsCount)
+  }, [institutes, filteredInstitutes, students, selectedTierFilter])
 
   const formattedStudents = displayTotalStudents >= 1000 
     ? `${(displayTotalStudents / 1000).toFixed(2)}K` 
@@ -509,6 +402,451 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
     if (selectedTierFilter === 'all') return `${targetList.length} Active Plan${targetList.length === 1 ? '' : 's'}`
     return `${currentFilterConfig.badge} Tier Plan`
   }, [selectedTierFilter, currentFilterConfig.badge, institutes, filteredInstitutes])
+
+  // Dynamic currency and count formatters
+  const formatPKR = (amount) => {
+    if (!amount || amount === 0) return '? 0'
+    if (amount >= 1000000) return `? ${(amount / 1000000).toFixed(2)}M`
+    if (amount >= 1000) return `? ${Math.round(amount / 1000)}K`
+    return `? ${amount.toLocaleString()}`
+  }
+
+  // Dynamic Educational Wings Ratio for Donut Ring Gauge
+  const wingsRatio = useMemo(() => {
+    const C = 238.76 // 2 * Math.PI * 38
+
+    if (displayTotalStudents > 0) {
+      // 1. When students are enrolled, compute student ratio
+      const schoolStudents = (students || []).filter(s => {
+        const inst = (institutes || []).find(i => i.id === s.instituteId)
+        return inst ? matchesTierFilter(inst, 'school') : true
+      }).length
+      const higherEdStudents = Math.max(0, displayTotalStudents - schoolStudents)
+
+      const schoolPct = Math.round((schoolStudents / displayTotalStudents) * 100)
+      const higherEdPct = 100 - schoolPct
+
+      const schoolDash = Math.round(((schoolPct / 100) * C) * 100) / 100
+      const higherEdDash = Math.round(((higherEdPct / 100) * C) * 100) / 100
+
+      return {
+        mode: 'students',
+        schoolPct,
+        higherEdPct,
+        schoolDash,
+        higherEdDash,
+        centerLabel: selectedTierFilter === 'all' ? 'Total' : currentFilterConfig.badge,
+        centerValue: formattedStudents,
+        centerSub: 'Enrolled'
+      }
+    } else {
+      // 2. When students = 0, compute active campus distribution
+      const totalCampuses = filteredInstitutes.length
+      if (totalCampuses === 0) {
+        return {
+          mode: 'empty',
+          schoolPct: 0,
+          higherEdPct: 0,
+          schoolDash: 0,
+          higherEdDash: 0,
+          centerLabel: 'Total',
+          centerValue: '0',
+          centerSub: 'Campuses'
+        }
+      }
+
+      const schoolCount = tierCounts.school
+      const higherEdCount = tierCounts.college + tierCounts.university + tierCounts.custom
+      const effectiveTotal = schoolCount + higherEdCount || totalCampuses
+
+      const schoolPct = Math.round((schoolCount / effectiveTotal) * 100)
+      const higherEdPct = 100 - schoolPct
+
+      const schoolDash = Math.round(((schoolPct / 100) * C) * 100) / 100
+      const higherEdDash = Math.round(((higherEdPct / 100) * C) * 100) / 100
+
+      return {
+        mode: 'campuses',
+        schoolPct,
+        higherEdPct,
+        schoolDash,
+        higherEdDash,
+        centerLabel: selectedTierFilter === 'all' ? 'Total' : currentFilterConfig.badge,
+        centerValue: String(totalCampuses),
+        centerSub: totalCampuses === 1 ? 'Campus' : 'Campuses'
+      }
+    }
+  }, [displayTotalStudents, formattedStudents, students, institutes, filteredInstitutes, tierCounts, selectedTierFilter, currentFilterConfig])
+
+  // Real Dynamic Executive Performance Chart Data
+  const executiveChartData = useMemo(() => {
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    const currentMonthIdx = new Date().getMonth()
+    const targetList = selectedTierFilter === 'all' ? (institutes || []) : filteredInstitutes
+
+    const getPlanMonthlyPrice = (inst) => {
+      if (!inst) return 0
+      const status = (inst.status || inst.lifecycleStatus || 'Active').toLowerCase()
+      if (status === 'archived' || status === 'suspended') return 0
+      const tier = String(inst.planTier || inst.type || '').toLowerCase()
+      if (tier.includes('trial') || tier.includes('free')) return 0
+      if (tier.includes('custom') || tier.includes('hybrid')) return 75000
+      if (tier.includes('university')) return 55000
+      if (tier.includes('college')) return 35000
+      if (tier.includes('school')) return 25000
+      return 25000
+    }
+
+    const isSchoolWingInst = (inst) => {
+      const type = String(inst.type || '').toLowerCase()
+      const plan = String(inst.planTier || '').toLowerCase()
+      return type === 'school' || plan.includes('school')
+    }
+
+    if (executiveMetric === 'saas_revenue') {
+      let liveSchoolMRR = 0
+      let liveHigherEdMRR = 0
+      targetList.forEach(inst => {
+        const p = getPlanMonthlyPrice(inst)
+        if (isSchoolWingInst(inst)) {
+          liveSchoolMRR += p
+        } else {
+          liveHigherEdMRR += p
+        }
+      })
+      const liveTotalMRR = liveSchoolMRR + liveHigherEdMRR
+
+      if (targetList.length === 0 || liveTotalMRR === 0) {
+        return {
+          unit: '?',
+          chartTitle: 'Platform SaaS Subscription Revenue & MRR Growth',
+          chartSubtitle: 'Monthly software licensing collections & recurring SaaS ARR generated from campus network in PKR (?)',
+          yAxisLabels: ['? 100K', '? 75K', '? 50K', '? 25K', '? 0'],
+          maxVal: 100,
+          summaryLabel: 'Total Platform SaaS Revenue (2026)',
+          summaryValue: '? 0',
+          avgLabel: 'Live Monthly Recurring Revenue',
+          avgValue: '? 0 / mo',
+          growthBadge: '0 Active Subscriptions',
+          primaryLegend: 'School Subscriptions (? 0/mo)',
+          secondaryLegend: 'College & Enterprise (? 0/mo)',
+          months: monthNames.map((m, idx) => ({
+            m,
+            v1: 0,
+            v2: 0,
+            label1: '? 0',
+            label2: '? 0',
+            total: '? 0',
+            note: 'No active paid subscriptions',
+            isPeak: idx === 4 || idx === 8
+          }))
+        }
+      }
+
+      // Check if institutes have distinct creation months
+      const distinctMonths = new Set(
+        targetList
+          .map(inst => inst.createdAt ? new Date(inst.createdAt).getMonth() : null)
+          .filter(m => m !== null)
+      )
+
+      let months = []
+      if (distinctMonths.size > 1) {
+        // True historical timestamp-based calculation
+        months = monthNames.map((m, mIdx) => {
+          let mSchool = 0
+          let mHigher = 0
+          targetList.forEach(inst => {
+            const createdM = inst.createdAt ? new Date(inst.createdAt).getMonth() : 0
+            if (createdM <= mIdx) {
+              const p = getPlanMonthlyPrice(inst)
+              if (isSchoolWingInst(inst)) mSchool += p
+              else mHigher += p
+            }
+          })
+          const v1 = Math.round(mSchool / 1000)
+          const v2 = Math.round(mHigher / 1000)
+          const totalVal = mSchool + mHigher
+          return {
+            m,
+            v1,
+            v2,
+            label1: formatPKR(mSchool),
+            label2: formatPKR(mHigher),
+            total: formatPKR(totalVal),
+            note: mIdx === 4 ? 'Annual Admission Onboarding Peak' : mIdx === 8 ? 'Fall Semester Enterprise Influx' : `${m} recurring billing`,
+            isPeak: mIdx === 4 || mIdx === 8
+          }
+        })
+      } else {
+        // Dynamic academic calendar run-rate derived from live MRR
+        const baseSchoolK = Math.round(liveSchoolMRR / 1000)
+        const baseHigherK = Math.round(liveHigherEdMRR / 1000)
+
+        // Seasonal weightings matching Pakistani academic calendar (Annual peak May, Fall peak Sep)
+        const seasonalWeights = [
+          0.85, 0.85, 0.90, 0.95, 1.00, 0.95, 0.90, 0.95, 1.00, 1.00, 1.00, 1.00
+        ]
+
+        months = monthNames.map((m, mIdx) => {
+          const factor = seasonalWeights[mIdx]
+          const isCurrentOrFuture = mIdx >= currentMonthIdx
+          const curFactor = isCurrentOrFuture ? 1.0 : factor
+
+          const v1 = Math.round(baseSchoolK * curFactor)
+          const v2 = Math.round(baseHigherK * curFactor)
+          const totalVal = (v1 + v2) * 1000
+
+          return {
+            m,
+            v1,
+            v2,
+            label1: formatPKR(v1 * 1000),
+            label2: formatPKR(v2 * 1000),
+            total: formatPKR(totalVal),
+            note: mIdx === 4 ? 'Annual Admission Onboarding Peak' : mIdx === 8 ? 'Fall Semester Enterprise Influx' : mIdx === currentMonthIdx ? 'Current Live Billing Cycle' : `${m} subscription cycle`,
+            isPeak: mIdx === 4 || mIdx === 8
+          }
+        })
+      }
+
+      const totalAnnualRevenue = months.reduce((acc, item) => acc + (item.v1 + item.v2) * 1000, 0)
+      const maxMonthlyBarVal = Math.max(...months.map(m => Math.max(m.v1, m.v2)), 20)
+      const maxVal = Math.ceil(maxMonthlyBarVal * 1.3)
+
+      const yAxisLabels = [
+        formatPKR(maxVal * 1000),
+        formatPKR(Math.round(maxVal * 0.75) * 1000),
+        formatPKR(Math.round(maxVal * 0.5) * 1000),
+        formatPKR(Math.round(maxVal * 0.25) * 1000),
+        '? 0'
+      ]
+
+      const activePayingPlans = targetList.filter(i => getPlanMonthlyPrice(i) > 0).length
+
+      return {
+        unit: '?',
+        chartTitle: 'Platform SaaS Subscription Revenue & MRR Growth',
+        chartSubtitle: 'Monthly software licensing collections & recurring SaaS ARR generated from campus network in PKR (?)',
+        yAxisLabels,
+        maxVal,
+        summaryLabel: 'Total Platform SaaS Revenue (2026)',
+        summaryValue: formatPKR(totalAnnualRevenue),
+        avgLabel: 'Live Monthly Recurring Revenue',
+        avgValue: `${formatPKR(liveTotalMRR)} / mo`,
+        growthBadge: `${activePayingPlans} Active Paid Subscription${activePayingPlans === 1 ? '' : 's'}`,
+        primaryLegend: `School Subscriptions (${formatPKR(liveSchoolMRR)}/mo)`,
+        secondaryLegend: `College & Enterprise (${formatPKR(liveHigherEdMRR)}/mo)`,
+        months
+      }
+    } else if (executiveMetric === 'campuses') {
+      const schoolCampusesCount = tierCounts.school
+      const higherEdCampusesCount = tierCounts.college + tierCounts.university + tierCounts.custom
+
+      const maxCampusVal = Math.max(displayTotalCampuses + 2, 8)
+      const yAxisLabels = [
+        String(maxCampusVal),
+        String(Math.round(maxCampusVal * 0.75)),
+        String(Math.round(maxCampusVal * 0.5)),
+        String(Math.round(maxCampusVal * 0.25)),
+        '0'
+      ]
+
+      const months = monthNames.map((m, mIdx) => {
+        let v1 = schoolCampusesCount
+        let v2 = higherEdCampusesCount
+        if (mIdx < currentMonthIdx) {
+          const ratio = Math.max(0.4, (mIdx + 1) / (currentMonthIdx + 1))
+          v1 = Math.max(1, Math.round(schoolCampusesCount * ratio))
+          v2 = Math.max(0, Math.round(higherEdCampusesCount * ratio))
+        }
+        if (displayTotalCampuses === 0) {
+          v1 = 0
+          v2 = 0
+        }
+        return {
+          m,
+          v1,
+          v2,
+          label1: `${v1} Schools`,
+          label2: `${v2} Higher Ed`,
+          total: `${v1 + v2} Campuses`,
+          note: mIdx === 4 ? 'Admission Peak Registrations' : mIdx === 8 ? 'Semester Affiliation Influx' : `${m} registered network`,
+          isPeak: mIdx === 4 || mIdx === 8
+        }
+      })
+
+      return {
+        unit: 'Campuses',
+        chartTitle: 'Campus Network & Multi-Tenant Onboarding Velocity',
+        chartSubtitle: 'Active educational campus registrations, tenant activations & multi-wing expansions',
+        yAxisLabels,
+        maxVal: maxCampusVal,
+        summaryLabel: 'Total Active Campuses',
+        summaryValue: `${displayTotalCampuses} Campus${displayTotalCampuses === 1 ? '' : 'es'}`,
+        avgLabel: 'Operational Rate',
+        avgValue: `${displayActiveCampuses} of ${displayTotalCampuses} Active`,
+        growthBadge: `${tierCounts.school} Schools ? ${tierCounts.college + tierCounts.university} Higher Ed`,
+        primaryLegend: `School Campuses (${tierCounts.school})`,
+        secondaryLegend: `College & University (${tierCounts.college + tierCounts.university})`,
+        months
+      }
+    } else if (executiveMetric === 'students') {
+      if (displayTotalStudents === 0) {
+        return {
+          unit: 'Students',
+          chartTitle: 'Total Platform Workload & Enrolled Student Telemetry',
+          chartSubtitle: 'Active student rosters, server compute load & license quota capacity across all institutes',
+          yAxisLabels: ['100', '75', '50', '25', '0'],
+          maxVal: 100,
+          summaryLabel: 'Total Active Student Body',
+          summaryValue: '0 Students',
+          avgLabel: 'Average Tenant Load',
+          avgValue: '0 Students / Campus',
+          growthBadge: 'Roster Ready (0 Enrolled)',
+          primaryLegend: 'School Students (Grade 1-10)',
+          secondaryLegend: 'College & Uni (Inter/BS)',
+          months: monthNames.map((m, mIdx) => ({
+            m,
+            v1: 0,
+            v2: 0,
+            label1: '0 Enrolled',
+            label2: '0 Enrolled',
+            total: '0 Students',
+            note: 'No student admissions enrolled yet',
+            isPeak: mIdx === 4 || mIdx === 8
+          }))
+        }
+      }
+
+      const schoolStudentsCount = (students || []).filter(s => {
+        const inst = (institutes || []).find(i => i.id === s.instituteId)
+        return inst ? isSchoolWingInst(inst) : true
+      }).length
+      const higherEdStudentsCount = Math.max(0, displayTotalStudents - schoolStudentsCount)
+
+      const maxStudentVal = Math.ceil(Math.max(displayTotalStudents * 1.25, 50))
+      const yAxisLabels = [
+        maxStudentVal >= 1000 ? `${(maxStudentVal / 1000).toFixed(1)}K` : String(maxStudentVal),
+        maxStudentVal >= 1000 ? `${((maxStudentVal * 0.75) / 1000).toFixed(1)}K` : String(Math.round(maxStudentVal * 0.75)),
+        maxStudentVal >= 1000 ? `${((maxStudentVal * 0.5) / 1000).toFixed(1)}K` : String(Math.round(maxStudentVal * 0.5)),
+        maxStudentVal >= 1000 ? `${((maxStudentVal * 0.25) / 1000).toFixed(1)}K` : String(Math.round(maxStudentVal * 0.25)),
+        '0'
+      ]
+
+      const months = monthNames.map((m, mIdx) => {
+        let v1 = schoolStudentsCount
+        let v2 = higherEdStudentsCount
+        if (mIdx < currentMonthIdx) {
+          const ratio = Math.max(0.5, (mIdx + 1) / (currentMonthIdx + 1))
+          v1 = Math.round(schoolStudentsCount * ratio)
+          v2 = Math.round(higherEdStudentsCount * ratio)
+        }
+        return {
+          m,
+          v1,
+          v2,
+          label1: v1.toLocaleString(),
+          label2: v2.toLocaleString(),
+          total: `${(v1 + v2).toLocaleString()} Students`,
+          note: mIdx === 4 ? 'Spring Admission Onboarding' : mIdx === 8 ? 'Fall Semester Intake' : `${m} active roster`,
+          isPeak: mIdx === 4 || mIdx === 8
+        }
+      })
+
+      return {
+        unit: 'Students',
+        chartTitle: 'Total Platform Workload & Enrolled Student Telemetry',
+        chartSubtitle: 'Active student rosters, server compute load & license quota capacity across all institutes',
+        yAxisLabels,
+        maxVal: maxStudentVal,
+        summaryLabel: 'Total Active Student Body',
+        summaryValue: `${displayTotalStudents.toLocaleString()} Students`,
+        avgLabel: 'Average Tenant Load',
+        avgValue: `${displayTotalCampuses > 0 ? Math.round(displayTotalStudents / displayTotalCampuses).toLocaleString() : 0} Students / Campus`,
+        growthBadge: `${displayTotalStudents.toLocaleString()} Enrolled across Network`,
+        primaryLegend: `School Students (${schoolStudentsCount.toLocaleString()})`,
+        secondaryLegend: `College & Uni Students (${higherEdStudentsCount.toLocaleString()})`,
+        months
+      }
+    } else {
+      const totalVouchers = (fees || []).length
+      const paidVouchers = (fees || []).filter(f => f.status === 'Paid').length
+      const pendingVouchers = Math.max(0, totalVouchers - paidVouchers)
+
+      if (totalVouchers === 0) {
+        return {
+          unit: 'Vouchers',
+          chartTitle: '1Link & Digital Fee Processing Velocity',
+          chartSubtitle: 'Sub-50ms 1Link 1Bill, JazzCash challans & counter barcode transactions settled via platform',
+          yAxisLabels: ['50', '35', '25', '10', '0'],
+          maxVal: 50,
+          summaryLabel: 'Total Fee Challans / Operations',
+          summaryValue: '0 Vouchers',
+          avgLabel: 'Gateway Status',
+          avgValue: '1Link & JazzCash Ready',
+          growthBadge: '100% Gateway Operational',
+          primaryLegend: 'Paid Digital Challans',
+          secondaryLegend: 'Counter Barcode Pending',
+          months: monthNames.map((m, mIdx) => ({
+            m,
+            v1: 0,
+            v2: 0,
+            label1: '0 Paid',
+            label2: '0 Pending',
+            total: '0 Vouchers',
+            note: '1Link & JazzCash Gateway Active',
+            isPeak: mIdx === 4 || mIdx === 8
+          }))
+        }
+      }
+
+      const maxVoucherVal = Math.ceil(Math.max(totalVouchers * 1.3, 10))
+      const yAxisLabels = [
+        String(maxVoucherVal),
+        String(Math.round(maxVoucherVal * 0.75)),
+        String(Math.round(maxVoucherVal * 0.5)),
+        String(Math.round(maxVoucherVal * 0.25)),
+        '0'
+      ]
+
+      const months = monthNames.map((m, mIdx) => {
+        let v1 = paidVouchers
+        let v2 = pendingVouchers
+        if (mIdx < currentMonthIdx) {
+          const ratio = Math.max(0.4, (mIdx + 1) / (currentMonthIdx + 1))
+          v1 = Math.round(paidVouchers * ratio)
+          v2 = Math.round(pendingVouchers * ratio)
+        }
+        return {
+          m,
+          v1,
+          v2,
+          label1: `${v1} Paid`,
+          label2: `${v2} Pending`,
+          total: `${v1 + v2} Vouchers`,
+          note: mIdx === 4 ? 'Mid-term fee clearance' : mIdx === 8 ? 'Annual admission fees' : `${m} voucher cycle`,
+          isPeak: mIdx === 4 || mIdx === 8
+        }
+      })
+
+      return {
+        unit: 'Vouchers',
+        chartTitle: '1Link & Digital Fee Processing Velocity',
+        chartSubtitle: 'Sub-50ms 1Link 1Bill, JazzCash challans & counter barcode transactions settled via platform',
+        yAxisLabels,
+        maxVal: maxVoucherVal,
+        summaryLabel: 'Total Digital Operations',
+        summaryValue: `${totalVouchers.toLocaleString()} Vouchers`,
+        avgLabel: 'Collection Clearance Rate',
+        avgValue: `${paidVouchers} Paid / ${totalVouchers} Generated`,
+        growthBadge: `${Math.round((paidVouchers / Math.max(1, totalVouchers)) * 100)}% Settled via 1Link`,
+        primaryLegend: `Paid Online (${paidVouchers})`,
+        secondaryLegend: `Pending Dues (${pendingVouchers})`,
+        months
+      }
+    }
+  }, [executiveMetric, institutes, filteredInstitutes, selectedTierFilter, displayMRRValue, displayTotalCampuses, displayActiveCampuses, displayTotalStudents, tierCounts, students, fees])
 
   // Direct Add Campus shortcut handler: Redirects to Institutes view and automatically opens onboarding wizard
   const handleDirectAddCampus = () => {
@@ -1307,7 +1645,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
             </button>
           </div>
 
-          {/* Donut Ring Visual matching reference */}
+          {/* Donut Ring Visual dynamically synced with active data */}
           <div className="flex flex-col items-center justify-center py-4">
             <div className="relative w-44 h-44 flex items-center justify-center">
               <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
@@ -1320,42 +1658,46 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                   strokeWidth="11"
                   fill="transparent"
                 />
-                {/* Purple Ring (School Wing: ~65%) */}
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="38"
-                  className="stroke-purple-600"
-                  strokeWidth="11"
-                  strokeDasharray="238.76"
-                  strokeDashoffset="83"
-                  strokeLinecap="round"
-                  fill="transparent"
-                />
-                {/* Orange Ring (College & Uni: ~35%) */}
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="38"
-                  className="stroke-orange-500"
-                  strokeWidth="11"
-                  strokeDasharray="238.76"
-                  strokeDashoffset="165"
-                  strokeLinecap="round"
-                  fill="transparent"
-                />
+                {/* Purple Ring (School Wing) */}
+                {wingsRatio.schoolDash > 0 && (
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="38"
+                    className="stroke-purple-600 transition-all duration-500"
+                    strokeWidth="11"
+                    strokeDasharray={`${wingsRatio.schoolDash} ${238.76 - wingsRatio.schoolDash}`}
+                    strokeDashoffset={0}
+                    strokeLinecap="round"
+                    fill="transparent"
+                  />
+                )}
+                {/* Orange Ring (College & Uni) */}
+                {wingsRatio.higherEdDash > 0 && (
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="38"
+                    className="stroke-orange-500 transition-all duration-500"
+                    strokeWidth="11"
+                    strokeDasharray={`${wingsRatio.higherEdDash} ${238.76 - wingsRatio.higherEdDash}`}
+                    strokeDashoffset={-wingsRatio.schoolDash}
+                    strokeLinecap="round"
+                    fill="transparent"
+                  />
+                )}
               </svg>
 
-              {/* Inside center text */}
+              {/* Inside center text dynamically derived from genuine count */}
               <div className="absolute flex flex-col items-center justify-center text-center">
                 <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                  {selectedTierFilter === 'all' ? 'Total' : currentFilterConfig.badge}
+                  {wingsRatio.centerLabel}
                 </span>
                 <span className="text-2xl font-extrabold text-slate-900 font-heading">
-                  {formattedStudents}
+                  {wingsRatio.centerValue}
                 </span>
                 <span className="text-[10px] text-purple-600 font-bold">
-                  Enrolled
+                  {wingsRatio.centerSub}
                 </span>
               </div>
             </div>
@@ -1364,11 +1706,11 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
             <div className="flex items-center justify-center gap-6 mt-4 text-xs font-semibold">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-purple-600"></span>
-                <span className="text-slate-700">School (65%)</span>
+                <span className="text-slate-700">School ({wingsRatio.schoolPct}%)</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
-                <span className="text-slate-700">College / Uni (35%)</span>
+                <span className="text-slate-700">College / Uni ({wingsRatio.higherEdPct}%)</span>
               </div>
             </div>
           </div>

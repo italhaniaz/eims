@@ -1,8 +1,14 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import fs from 'fs'
+
+const resolvedRoot = typeof process !== 'undefined' && fs.existsSync(process.cwd()) 
+  ? fs.realpathSync(process.cwd()) 
+  : undefined
 
 // https://vite.dev/config/
 export default defineConfig({
+  root: resolvedRoot,
   plugins: [react()],
   server: {
     port: 3000,

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { DataService, getStoredData, computeRealStats } from '../services/dataService'
 import { PROGRAM_LEVELS } from '../constants/academicLevels'
+import { supabase, isSupabaseConfigured } from '../services/supabaseClient'
 
 const AppDataContext = createContext(null)
 
@@ -9,6 +10,60 @@ export const AppDataProvider = ({ children }) => {
   const [loading, setLoading] = useState(false)
   const [activeProgramLevel, setActiveProgramLevel] = useState('all')
   const [activeWing, setActiveWingState] = useState('all')
+
+  // Real-time Supabase push subscription + Cross-tab broadcast listener
+  useEffect(() => {
+    let channel = null
+
+    // 1. Initial sync with Supabase if online credentials exist
+    if (isSupabaseConfigured && supabase) {
+      DataService.syncAllFromSupabase().then(freshStore => {
+        if (freshStore) setData({ ...freshStore })
+      })
+
+      // 2. Real-time PostgreSQL push notification listener via Supabase Channels
+      try {
+        channel = supabase
+          .channel('public-db-realtime-sync')
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public' },
+            async () => {
+              const freshStore = await DataService.syncAllFromSupabase()
+              if (freshStore) setData({ ...freshStore })
+            }
+          )
+          .subscribe()
+      } catch (err) {
+        console.warn('Realtime Supabase channel initialization notice:', err)
+      }
+    }
+
+    // 3. Instant local sync across tabs and window actions
+    const handleStorageChange = (e) => {
+      if (e.key === 'sms_database_v3_enterprise' || e.key === 'app-data-sync') {
+        const fresh = getStoredData()
+        setData({ ...fresh })
+      }
+    }
+
+    const handleCustomSync = () => {
+      const fresh = getStoredData()
+      setData({ ...fresh })
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    window.addEventListener('app-data-sync', handleCustomSync)
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('app-data-sync', handleCustomSync)
+      if (channel && supabase) {
+        supabase.removeChannel(channel)
+      }
+    }
+  }, [])
+
 
   const setActiveWing = (wing) => {
     setActiveWingState(wing)
