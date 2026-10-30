@@ -618,13 +618,17 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
 
       const totalAnnualProjected = liveTotalMRR * 12
       const maxMonthlyBarVal = Math.max(...months.map(m => Math.max(m.v1, m.v2)), 20)
-      const maxVal = Math.ceil(maxMonthlyBarVal * 1.3)
+      const rawTarget = maxMonthlyBarVal * 1.35
+      const candidateSteps = [10, 20, 25, 30, 40, 50, 75, 100, 150, 200, 250, 500]
+      const roughStep = rawTarget / 4
+      const niceStep = candidateSteps.find(s => s >= roughStep) || Math.ceil(roughStep / 50) * 50
+      const maxVal = niceStep * 4
 
       const yAxisLabels = [
         formatPKR(maxVal * 1000),
-        formatPKR(Math.round(maxVal * 0.75) * 1000),
-        formatPKR(Math.round(maxVal * 0.5) * 1000),
-        formatPKR(Math.round(maxVal * 0.25) * 1000),
+        formatPKR(niceStep * 3 * 1000),
+        formatPKR(niceStep * 2 * 1000),
+        formatPKR(niceStep * 1 * 1000),
         'Rs. 0'
       ]
 
@@ -1425,95 +1429,101 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
         <div className="lg:col-span-7 bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/80 shadow-[0_4px_24px_rgba(0,0,0,0.03)] flex flex-col justify-between relative overflow-hidden">
           
           {/* 1. Header with Title & Metric Switcher Tabs */}
-          <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-100 to-indigo-50 border border-purple-200/70 flex items-center justify-center text-purple-700 shrink-0 shadow-2xs">
-                {executiveMetric === 'saas_revenue' ? (
-                  <CreditCard className="w-5 h-5 stroke-[2.2]" />
-                ) : executiveMetric === 'campuses' ? (
-                  <Building2 className="w-5 h-5 stroke-[2.2]" />
-                ) : executiveMetric === 'students' ? (
-                  <GraduationCap className="w-5 h-5 stroke-[2.2]" />
-                ) : (
-                  <Activity className="w-5 h-5 stroke-[2.2]" />
-                )}
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight font-heading">
-                    {executiveChartData.chartTitle}
-                  </h2>
-                  <span className="w-2 h-2 rounded-full bg-purple-600 animate-pulse shrink-0"></span>
+          <div className="flex flex-col gap-4 pb-4 border-b border-slate-100">
+            <div className="flex flex-col 2xl:flex-row 2xl:items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-purple-100 to-indigo-50 border border-purple-200/70 flex items-center justify-center text-purple-700 shrink-0 shadow-2xs">
+                  {executiveMetric === 'saas_revenue' ? (
+                    <CreditCard className="w-5 h-5 stroke-[2.2]" />
+                  ) : executiveMetric === 'campuses' ? (
+                    <Building2 className="w-5 h-5 stroke-[2.2]" />
+                  ) : executiveMetric === 'students' ? (
+                    <GraduationCap className="w-5 h-5 stroke-[2.2]" />
+                  ) : (
+                    <Activity className="w-5 h-5 stroke-[2.2]" />
+                  )}
                 </div>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  {executiveChartData.chartSubtitle}
-                </p>
+                <div>
+                  <div className="flex items-center gap-2.5 flex-wrap">
+                    <h2 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight font-heading">
+                      {executiveChartData.chartTitle}
+                    </h2>
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold shadow-2xs">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                      Live Radar
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {executiveChartData.chartSubtitle}
+                  </p>
+                </div>
               </div>
-            </div>
 
-            {/* Metric Switcher Tabs */}
-            <div className="flex items-center p-1 bg-slate-100/90 rounded-2xl text-xs font-bold gap-1 self-start xl:self-auto shrink-0 border border-slate-200/60 shadow-2xs">
-              <button
-                type="button"
-                onClick={() => setExecutiveMetric('saas_revenue')}
-                className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
-                  executiveMetric === 'saas_revenue'
-                    ? 'bg-white text-purple-900 shadow-xs font-extrabold border border-purple-200/50'
-                    : 'text-slate-600 hover:text-purple-700 hover:bg-white/60'
-                }`}
-                title="View Platform SaaS Recurring Cashflow in PKR"
-              >
-                <CreditCard className={`w-3.5 h-3.5 ${executiveMetric === 'saas_revenue' ? 'text-purple-600' : 'text-slate-400'}`} />
-                <span>SaaS Cashflow</span>
-              </button>
+              {/* Metric Switcher Tabs */}
+              <div className="flex items-center p-1 bg-slate-100/90 rounded-2xl text-xs font-bold gap-1 self-start 2xl:self-auto shrink-0 border border-slate-200/60 shadow-2xs">
+                <button
+                  type="button"
+                  onClick={() => setExecutiveMetric('saas_revenue')}
+                  className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
+                    executiveMetric === 'saas_revenue'
+                      ? 'bg-white text-purple-900 shadow-xs font-extrabold border border-purple-200/50'
+                      : 'text-slate-600 hover:text-purple-700 hover:bg-white/60'
+                  }`}
+                  title="View Platform SaaS Recurring Cashflow in PKR"
+                >
+                  <CreditCard className={`w-3.5 h-3.5 ${executiveMetric === 'saas_revenue' ? 'text-purple-600' : 'text-slate-400'}`} />
+                  <span>SaaS Cashflow</span>
+                </button>
 
-              <button
-                type="button"
-                onClick={() => setExecutiveMetric('campuses')}
-                className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
-                  executiveMetric === 'campuses'
-                    ? 'bg-white text-purple-900 shadow-xs font-extrabold border border-purple-200/50'
-                    : 'text-slate-600 hover:text-purple-700 hover:bg-white/60'
-                }`}
-                title="View Campus Network Growth"
-              >
-                <Building2 className={`w-3.5 h-3.5 ${executiveMetric === 'campuses' ? 'text-purple-600' : 'text-slate-400'}`} />
-                <span>Campuses</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setExecutiveMetric('campuses')}
+                  className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
+                    executiveMetric === 'campuses'
+                      ? 'bg-white text-purple-900 shadow-xs font-extrabold border border-purple-200/50'
+                      : 'text-slate-600 hover:text-purple-700 hover:bg-white/60'
+                  }`}
+                  title="View Campus Network Growth"
+                >
+                  <Building2 className={`w-3.5 h-3.5 ${executiveMetric === 'campuses' ? 'text-purple-600' : 'text-slate-400'}`} />
+                  <span>Campuses</span>
+                </button>
 
-              <button
-                type="button"
-                onClick={() => setExecutiveMetric('students')}
-                className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
-                  executiveMetric === 'students'
-                    ? 'bg-white text-purple-900 shadow-xs font-extrabold border border-purple-200/50'
-                    : 'text-slate-600 hover:text-purple-700 hover:bg-white/60'
-                }`}
-                title="View Total Student Body Capacity"
-              >
-                <GraduationCap className={`w-3.5 h-3.5 ${executiveMetric === 'students' ? 'text-purple-600' : 'text-slate-400'}`} />
-                <span>Students</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setExecutiveMetric('students')}
+                  className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
+                    executiveMetric === 'students'
+                      ? 'bg-white text-purple-900 shadow-xs font-extrabold border border-purple-200/50'
+                      : 'text-slate-600 hover:text-purple-700 hover:bg-white/60'
+                  }`}
+                  title="View Total Student Body Capacity"
+                >
+                  <GraduationCap className={`w-3.5 h-3.5 ${executiveMetric === 'students' ? 'text-purple-600' : 'text-slate-400'}`} />
+                  <span>Students</span>
+                </button>
 
-              <button
-                type="button"
-                onClick={() => setExecutiveMetric('vouchers')}
-                className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
-                  executiveMetric === 'vouchers'
-                    ? 'bg-white text-purple-900 shadow-xs font-extrabold border border-purple-200/50'
-                    : 'text-slate-600 hover:text-purple-700 hover:bg-white/60'
-                }`}
-                title="View Digital 1Link & Challan Velocity"
-              >
-                <Activity className={`w-3.5 h-3.5 ${executiveMetric === 'vouchers' ? 'text-purple-600' : 'text-slate-400'}`} />
-                <span>1Link Gateway</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setExecutiveMetric('vouchers')}
+                  className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
+                    executiveMetric === 'vouchers'
+                      ? 'bg-white text-purple-900 shadow-xs font-extrabold border border-purple-200/50'
+                      : 'text-slate-600 hover:text-purple-700 hover:bg-white/60'
+                  }`}
+                  title="View Digital 1Link & Challan Velocity"
+                >
+                  <Activity className={`w-3.5 h-3.5 ${executiveMetric === 'vouchers' ? 'text-purple-600' : 'text-slate-400'}`} />
+                  <span>1Link Gateway</span>
+                </button>
+              </div>
             </div>
           </div>
 
           {/* 2. Executive Quick Stats Summary Bar */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 py-3.5">
-            <div className="px-4 py-3 rounded-2xl bg-gradient-to-br from-purple-50/80 via-white to-purple-50/30 border border-purple-100/90 shadow-2xs hover:border-purple-200 transition-all">
+            {/* Card 1: Projected Annual ARR */}
+            <div className="px-4 py-3.5 rounded-2xl bg-gradient-to-br from-purple-50/80 via-white to-purple-50/30 border border-purple-100/90 shadow-2xs hover:border-purple-200 transition-all flex flex-col justify-between">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-extrabold uppercase tracking-wider text-purple-600 block">
                   {executiveChartData.summaryLabel}
@@ -1522,33 +1532,39 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                   <TrendingUp className="w-3.5 h-3.5" />
                 </span>
               </div>
-              <span className="text-base sm:text-lg font-black text-purple-950 font-heading tracking-tight block mt-1">
-                {executiveChartData.summaryValue}
-              </span>
-              <span className="text-[10px] font-medium text-slate-400 block mt-0.5">
-                Contracted 12-mo run-rate
-              </span>
+              <div className="mt-1.5">
+                <span className="text-base sm:text-lg font-black text-purple-950 font-heading tracking-tight block">
+                  {executiveChartData.summaryValue}
+                </span>
+                <span className="text-[10px] font-medium text-slate-400 block mt-0.5">
+                  Contracted 12-mo run-rate
+                </span>
+              </div>
             </div>
 
-            <div className="px-4 py-3 rounded-2xl bg-gradient-to-br from-slate-50 via-white to-slate-50/60 border border-slate-200/80 shadow-2xs hover:border-slate-300 transition-all">
+            {/* Card 2: Live Monthly Cashflow */}
+            <div className="px-4 py-3.5 rounded-2xl bg-gradient-to-br from-slate-50 via-white to-slate-50/60 border border-slate-200/80 shadow-2xs hover:border-slate-300 transition-all flex flex-col justify-between">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 block">
                   {executiveChartData.avgLabel}
                 </span>
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-100/80 border border-emerald-200/70 px-1.5 py-0.5 rounded-full">
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-100/80 border border-emerald-200/70 px-2 py-0.5 rounded-full shrink-0">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                   Live
                 </span>
               </div>
-              <span className="text-base sm:text-lg font-black text-slate-900 font-heading tracking-tight block mt-1">
-                {executiveChartData.avgValue}
-              </span>
-              <span className="text-[10px] font-medium text-slate-400 block mt-0.5">
-                Active monthly billing stream
-              </span>
+              <div className="mt-1.5">
+                <span className="text-base sm:text-lg font-black text-slate-900 font-heading tracking-tight block">
+                  {executiveChartData.avgValue}
+                </span>
+                <span className="text-[10px] font-medium text-slate-400 block mt-0.5">
+                  Active monthly billing stream
+                </span>
+              </div>
             </div>
 
-            <div className="px-4 py-3 rounded-2xl bg-gradient-to-br from-emerald-50/80 via-white to-teal-50/40 border border-emerald-200/70 shadow-2xs hover:border-emerald-300 transition-all">
+            {/* Card 3: Expansion Pipeline */}
+            <div className="px-4 py-3.5 rounded-2xl bg-gradient-to-br from-emerald-50/80 via-white to-teal-50/40 border border-emerald-200/70 shadow-2xs hover:border-emerald-300 transition-all flex flex-col justify-between">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 block">
                   {executiveChartData.badgeLabel || 'Decision Vector'}
@@ -1557,30 +1573,32 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                   <Sparkles className="w-3.5 h-3.5" />
                 </span>
               </div>
-              <span className="text-sm sm:text-base font-black text-emerald-800 font-heading tracking-tight block mt-1 truncate">
-                {executiveChartData.growthBadge}
-              </span>
-              <span className="text-[10px] font-medium text-emerald-600/80 block mt-0.5 truncate">
-                Trial conversion pipeline
-              </span>
+              <div className="mt-1.5">
+                <span className="text-base sm:text-lg font-black text-emerald-800 font-heading tracking-tight block truncate">
+                  {executiveChartData.growthBadge}
+                </span>
+                <span className="text-[10px] font-medium text-emerald-600/80 block mt-0.5 truncate">
+                  Trial conversion pipeline
+                </span>
+              </div>
             </div>
           </div>
 
           {/* 3. The Interactive Chart Area with Clear Y-Axis & Gridlines */}
-          <div className="pt-2 pb-1 relative">
+          <div className="pt-4 pb-1 relative">
             
             {/* Chart Wrapper with Y-Axis on Left and Bars on Right */}
-            <div className="flex items-stretch gap-2 sm:gap-3">
+            <div className="flex items-stretch gap-2 sm:gap-3.5">
               
               {/* Y-Axis Scale Marks */}
-              <div className="flex flex-col justify-between text-right text-[11px] font-mono font-bold text-slate-400 w-14 sm:w-16 shrink-0 h-48 sm:h-52 py-1 select-none pr-1">
+              <div className="flex flex-col justify-between text-right text-[11px] font-mono font-bold text-slate-400 w-14 sm:w-16 shrink-0 h-52 sm:h-56 py-1 select-none pr-1.5">
                 {executiveChartData.yAxisLabels.map((lbl, i) => (
                   <span key={i} className="leading-none">{lbl}</span>
                 ))}
               </div>
 
               {/* Chart Grid & 12 Month Bar Columns */}
-              <div className="flex-1 relative h-48 sm:h-52 flex items-end">
+              <div className="flex-1 relative h-52 sm:h-56 flex items-end">
                 
                 {/* 5 Horizontal Dashed Benchmark Gridlines */}
                 <div className="absolute inset-0 flex flex-col justify-between pointer-events-none py-1">
@@ -1590,7 +1608,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 </div>
 
                 {/* 12 Months Dual Bars */}
-                <div className="w-full h-full flex items-end justify-between gap-1 sm:gap-2 px-1 relative z-10">
+                <div className="w-full h-full flex items-end justify-between gap-1 sm:gap-2 px-1 relative z-10 pb-1">
                   {executiveChartData.months.map((item, idx) => {
                     const isHovered = hoveredMonthIdx === idx
                     const h1 = Math.max(6, Math.min(100, Math.round((item.v1 / executiveChartData.maxVal) * 100)))
@@ -1607,9 +1625,9 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                       >
                         {/* Peak indicator badge on top of May & Sep */}
                         {item.isPeak && (
-                          <span className="absolute -top-3.5 text-[9px] font-black text-amber-700 bg-amber-100 border border-amber-300/80 px-1.5 py-0.5 rounded-full shadow-2xs hidden sm:flex items-center gap-0.5 pointer-events-none tracking-tight">
-                            <span>★</span>
-                            <span>Peak</span>
+                          <span className="absolute -top-7 text-[9px] font-black text-amber-700 bg-amber-50/95 border border-amber-300/80 px-2 py-0.5 rounded-full shadow-2xs hidden sm:flex items-center gap-1 pointer-events-none tracking-tight">
+                            <Sparkles className="w-2.5 h-2.5 text-amber-500 fill-amber-400" />
+                            <span>Peak Intake</span>
                           </span>
                         )}
 
@@ -1631,16 +1649,18 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                           />
                         </div>
 
-                        {/* Month Label */}
-                        <span className={`text-[10px] sm:text-xs font-bold transition-all select-none px-1.5 py-0.5 rounded-md ${
-                          isHovered 
-                            ? 'text-purple-700 font-black bg-purple-100/90 shadow-2xs scale-105' 
-                            : item.isCurrent
-                              ? 'text-purple-800 font-black bg-purple-50 border border-purple-200'
-                              : 'text-slate-500'
-                        }`}>
-                          {item.m}
-                        </span>
+                        {/* Month Label with Unified Center Baseline */}
+                        <div className="h-6 flex items-center justify-center w-full mt-1.5">
+                          <span className={`text-[11px] font-bold transition-all select-none px-2 py-0.5 rounded-full ${
+                            isHovered 
+                              ? 'text-purple-700 font-black bg-purple-100 shadow-2xs scale-105' 
+                              : item.isCurrent
+                                ? 'text-white font-black bg-purple-600 shadow-xs'
+                                : 'text-slate-500'
+                          }`}>
+                            {item.m}
+                          </span>
+                        </div>
 
                         {/* Floating Tooltip Card */}
                         {isHovered && (
@@ -1692,42 +1712,48 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           </div>
 
           {/* 4. Bottom Legend & Real-Time SaaS Telemetry Indicator */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-3.5 mt-1 border-t border-slate-100/90 text-xs">
-            <div className="flex flex-wrap items-center gap-3 sm:gap-5 text-xs font-semibold">
-              <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200/60">
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-3.5 mt-2 border-t border-slate-100/90 text-xs">
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs font-semibold">
+              <div className="flex items-center gap-2 px-3 py-1 rounded-xl bg-purple-50/60 border border-purple-100/80 text-slate-800">
                 <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-purple-700 to-indigo-500 shadow-2xs ring-2 ring-purple-200"></span>
-                <span className="text-slate-800 font-extrabold">{executiveChartData.primaryLegend}</span>
+                <span className="font-extrabold">{executiveChartData.primaryLegend}</span>
               </div>
-              <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200/60">
+              <div className="flex items-center gap-2 px-3 py-1 rounded-xl bg-emerald-50/60 border border-emerald-100/80 text-slate-800">
                 <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-emerald-600 to-teal-400 shadow-2xs ring-2 ring-emerald-200"></span>
-                <span className="text-slate-800 font-extrabold">{executiveChartData.secondaryLegend}</span>
+                <span className="font-extrabold">{executiveChartData.secondaryLegend}</span>
               </div>
             </div>
 
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-50 border border-slate-200/80 text-[11px] font-semibold text-slate-600">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-50 border border-slate-200/80 text-[11px] font-semibold text-slate-600 shadow-2xs">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               <span>Real-time Ledger Feed</span>
             </div>
           </div>
 
           {/* 5. Executive Decision Banner (Actionable Insight Bar) */}
-          <div className="mt-3.5 p-3 rounded-2xl bg-gradient-to-r from-purple-50/90 via-indigo-50/40 to-slate-50 border border-purple-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-                <Sparkles className="w-4 h-4" />
+          <div className="mt-3.5 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-purple-50/90 via-indigo-50/40 to-slate-50 border border-purple-200/80 flex flex-col md:flex-row md:items-center justify-between gap-3.5 shadow-2xs">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                <Sparkles className="w-4 h-4 fill-white/20" />
               </div>
-              <p className="text-xs text-slate-700 leading-relaxed">
-                <span className="font-black text-purple-950 uppercase tracking-wide mr-1.5 text-[11px] bg-purple-200/60 px-1.5 py-0.5 rounded">Executive AI Insight</span>
-                <span className="font-medium text-slate-800">{executiveChartData.executiveInsight || tenantHealthMatrix.insightText}</span>
-              </p>
+              <div>
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-purple-700 bg-purple-100/90 border border-purple-200 px-1.5 py-0.2 rounded">
+                    ✦ Executive AI Insight
+                  </span>
+                </div>
+                <p className="text-xs text-slate-800 font-medium leading-relaxed">
+                  {executiveChartData.executiveInsight || tenantHealthMatrix.insightText}
+                </p>
+              </div>
             </div>
             <button
               type="button"
               onClick={() => onRouteChange('platform-billing')}
-              className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer shadow-sm hover:shadow hover:scale-[1.02] active:scale-[0.98] self-start sm:self-auto"
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs font-bold transition-all flex items-center gap-2 shrink-0 cursor-pointer shadow-sm hover:shadow hover:scale-[1.02] active:scale-[0.98] self-start md:self-auto group"
             >
               <span>Manage Subscriptions</span>
-              <ChevronRight className="w-3.5 h-3.5" />
+              <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
             </button>
           </div>
 
