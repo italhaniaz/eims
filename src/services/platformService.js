@@ -498,6 +498,13 @@ export const PlatformService = {
       name: wizardData.name,
       code: wizardData.code.toUpperCase().trim(),
       type: wizardData.type || 'School', // School, College, University
+      enabledTiers: wizardData.enabledTiers && wizardData.enabledTiers.length > 0
+        ? wizardData.enabledTiers
+        : (
+          wizardData.type === 'University' ? ['undergraduate'] :
+          wizardData.type === 'College' ? ['college'] :
+          ['school']
+        ),
       country: wizardData.country || 'Pakistan',
       city: wizardData.city || 'Lahore',
       province: wizardData.province || 'Punjab',

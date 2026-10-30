@@ -33,6 +33,71 @@ import AnnouncementService, {
   DEFAULT_LANDING_BANNER
 } from '../../services/announcementService'
 
+/**
+ * Extract normalized educational wings for an institute
+ * Supports: 'school', 'college', 'university'
+ */
+export const getInstituteWings = (inst) => {
+  if (!inst) return []
+  const resolved = new Set()
+
+  // 1. Explicit enabledTiers array
+  if (Array.isArray(inst.enabledTiers) && inst.enabledTiers.length > 0) {
+    inst.enabledTiers.forEach((tier) => {
+      const t = String(tier).toLowerCase().trim()
+      if (t === 'school') resolved.add('school')
+      if (t === 'college') resolved.add('college')
+      if (t === 'undergraduate' || t === 'university') resolved.add('university')
+    })
+  }
+
+  // 2. Fallback heuristic from type, planType, planTier, or name
+  if (resolved.size === 0) {
+    const combined = [
+      inst.type || '',
+      inst.planType || '',
+      inst.planTier || '',
+      inst.name || ''
+    ]
+      .join(' ')
+      .toLowerCase()
+
+    if (combined.includes('school')) resolved.add('school')
+    if (combined.includes('college')) resolved.add('college')
+    if (
+      combined.includes('undergrad') ||
+      combined.includes('universit') ||
+      combined.includes('higher ed')
+    ) {
+      resolved.add('university')
+    }
+  }
+
+  // 3. Fallback default to 'school' if completely unspecified
+  if (resolved.size === 0) {
+    resolved.add('school')
+  }
+
+  return Array.from(resolved)
+}
+
+/**
+ * Human-readable display label for educational wings
+ */
+export const getWingDisplayName = (wingKey) => {
+  switch (wingKey) {
+    case 'school':
+      return 'School Wing'
+    case 'college':
+      return 'College Wing'
+    case 'university':
+      return 'University Wing'
+    case 'all':
+    default:
+      return 'All Wings'
+  }
+}
+
 export const NoticeBroadcasterView = () => {
   const { institutes = [] } = useAppData()
   const { toast } = useToast()
@@ -68,6 +133,104 @@ export const NoticeBroadcasterView = () => {
   // Quick Landing Banner Edit Form State
   const [bannerForm, setBannerForm] = useState(DEFAULT_LANDING_BANNER)
   const [isBannerSaving, setIsBannerSaving] = useState(false)
+
+  // Filtered campuses based on selected Target Wing for Modal
+  const availableCampusesForModal = useMemo(() => {
+    if (!formData.wing || formData.wing === 'all') {
+      return institutes
+    }
+    return institutes.filter((inst) => {
+      const wings = getInstituteWings(inst)
+      return wings.includes(formData.wing)
+    })
+  }, [institutes, formData.wing])
+
+  // Currently selected campus object and its detected wings
+  const selectedCampusInst = useMemo(() => {
+    if (!formData.targetCampus || formData.targetCampus === 'All Registered Campuses') {
+      return null
+    }
+    return (
+      institutes.find(
+        (i) => i.name === formData.targetCampus || i.id === formData.targetCampus
+      ) || null
+    )
+  }, [institutes, formData.targetCampus])
+
+  const detectedWingsForSelectedCampus = useMemo(() => {
+    if (!selectedCampusInst) return []
+    return getInstituteWings(selectedCampusInst)
+  }, [selectedCampusInst])
+
+  // Bidirectional Handler: When user selects a Campus -> Auto-detect its wing
+  const handleCampusChange = (e) => {
+    const selectedName = e.target.value
+
+    if (selectedName === 'All Registered Campuses') {
+      setFormData((prev) => ({
+        ...prev,
+        targetCampus: selectedName
+      }))
+      return
+    }
+
+    const foundInst = institutes.find(
+      (i) => i.name === selectedName || i.id === selectedName
+    )
+    if (foundInst) {
+      const wings = getInstituteWings(foundInst)
+      let nextWing = formData.wing
+
+      if (wings.length === 1) {
+        // Single wing campus -> auto-select that wing
+        nextWing = wings[0]
+      } else if (wings.length > 1) {
+        // Multi-wing / Hybrid campus -> if current wing is not supported, default to primary
+        if (formData.wing !== 'all' && !wings.includes(formData.wing)) {
+          nextWing = wings[0]
+        }
+      }
+
+      setFormData((prev) => ({
+        ...prev,
+        targetCampus: selectedName,
+        wing: nextWing
+      }))
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        targetCampus: selectedName
+      }))
+    }
+  }
+
+  // Bidirectional Handler: When user selects a Wing -> Filter campuses and auto-reset incompatible campus
+  const handleWingChange = (e) => {
+    const newWing = e.target.value
+
+    setFormData((prev) => {
+      let nextCampus = prev.targetCampus
+
+      if (nextCampus && nextCampus !== 'All Registered Campuses') {
+        const currentInst = institutes.find(
+          (i) => i.name === nextCampus || i.id === nextCampus
+        )
+        if (currentInst) {
+          const wings = getInstituteWings(currentInst)
+          // If the new wing is specific and this campus doesn't have it, reset to All Registered Campuses
+          if (newWing !== 'all' && !wings.includes(newWing)) {
+            nextCampus = 'All Registered Campuses'
+          }
+        }
+      }
+
+      return {
+        ...prev,
+        wing: newWing,
+        targetCampus: nextCampus
+      }
+    })
+  }
 
   // Load announcements & banner config
   const reloadData = () => {
@@ -117,10 +280,27 @@ export const NoticeBroadcasterView = () => {
   const handleOpenModal = (item = null) => {
     if (item) {
       setEditingItem(item)
+      let initialWing = item.wing || 'all'
+      
+      // Auto-detect wing if campus is specified but wing was all
+      if (
+        item.targetCampus &&
+        item.targetCampus !== 'All Registered Campuses' &&
+        (!item.wing || item.wing === 'all')
+      ) {
+        const found = institutes.find(
+          (i) => i.name === item.targetCampus || i.id === item.targetCampus
+        )
+        if (found) {
+          const wings = getInstituteWings(found)
+          if (wings.length === 1) initialWing = wings[0]
+        }
+      }
+
       setFormData({
         target: item.target || 'institute_admin',
         targetCampus: item.targetCampus || 'All Registered Campuses',
-        wing: item.wing || 'all',
+        wing: initialWing,
         category: item.category || 'General',
         title: item.title || '',
         message: item.message || '',
@@ -887,41 +1067,118 @@ export const NoticeBroadcasterView = () => {
             </div>
           </div>
 
-          {/* Dynamic Campus Target Options if Institute Admin */}
+          {/* Dynamic Campus Target Options if Institute Admin - 2-Way Reactive Sync */}
           {(formData.target === 'institute_admin' || formData.target === 'all') && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200/70">
-              <div>
-                <label className="block font-bold text-slate-700 uppercase mb-1">
-                  Target Campus
-                </label>
-                <select
-                  value={formData.targetCampus}
-                  onChange={(e) => setFormData({ ...formData, targetCampus: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white"
-                >
-                  <option value="All Registered Campuses">All Registered Campuses</option>
-                  {institutes.map((inst) => (
-                    <option key={inst.id} value={inst.name}>
-                      {inst.name}
-                    </option>
-                  ))}
-                </select>
+            <div className="p-3.5 bg-gradient-to-br from-purple-50/40 via-slate-50 to-slate-50 rounded-xl border border-purple-100 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-purple-900 flex items-center gap-1.5">
+                  <Building2 className="w-3.5 h-3.5 text-purple-600" />
+                  <span>Target Scope & Educational Wing Sync</span>
+                </span>
+                <span className="text-[10px] font-semibold text-purple-700 bg-purple-100/70 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-purple-600" />
+                  <span>2-Way Auto Sync</span>
+                </span>
               </div>
 
-              <div>
-                <label className="block font-bold text-slate-700 uppercase mb-1">
-                  Target Wing
-                </label>
-                <select
-                  value={formData.wing}
-                  onChange={(e) => setFormData({ ...formData, wing: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white"
-                >
-                  <option value="all">All Wings (School, College, Uni)</option>
-                  <option value="school">School Wing Only</option>
-                  <option value="college">College Wing Only</option>
-                  <option value="university">University Wing Only</option>
-                </select>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Target Campus */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-bold text-slate-700 uppercase">
+                      Target Campus
+                    </label>
+                    {formData.wing !== 'all' && (
+                      <span className="text-[10px] text-purple-600 font-semibold">
+                        Filtered ({availableCampusesForModal.length})
+                      </span>
+                    )}
+                  </div>
+                  <select
+                    value={formData.targetCampus}
+                    onChange={handleCampusChange}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all cursor-pointer text-xs"
+                  >
+                    <option value="All Registered Campuses">
+                      {formData.wing === 'all'
+                        ? `All Registered Campuses (${institutes.length})`
+                        : `All Campuses with ${getWingDisplayName(formData.wing)} (${availableCampusesForModal.length})`}
+                    </option>
+                    {availableCampusesForModal.map((inst) => {
+                      const wings = getInstituteWings(inst)
+                      const wingsLabel = wings
+                        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                        .join(' & ')
+                      return (
+                        <option key={inst.id} value={inst.name}>
+                          {inst.name} {wingsLabel ? `— [${wingsLabel}]` : ''}
+                        </option>
+                      )
+                    })}
+                  </select>
+
+                  {/* Context status under Campus */}
+                  {selectedCampusInst ? (
+                    <div className="mt-1.5 flex items-center gap-1 text-[11px] text-slate-600">
+                      <span className="font-semibold text-purple-700">
+                        {selectedCampusInst.name}
+                      </span>
+                      <span className="text-slate-400">•</span>
+                      <span className="text-slate-500">
+                        {selectedCampusInst.city || 'Campus'}
+                      </span>
+                    </div>
+                  ) : formData.wing !== 'all' ? (
+                    <div className="mt-1.5 flex items-center gap-1 text-[11px] text-purple-700 font-medium">
+                      <Filter className="w-3 h-3 text-purple-500" />
+                      <span>
+                        Showing only institutes with {getWingDisplayName(formData.wing)}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="mt-1.5 text-[11px] text-slate-400">
+                      Select a specific campus or broadcast to all
+                    </div>
+                  )}
+                </div>
+
+                {/* Target Wing */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-bold text-slate-700 uppercase">
+                      Target Wing
+                    </label>
+                    {selectedCampusInst && (
+                      <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-0.5">
+                        <Check className="w-3 h-3" /> Auto-Detected
+                      </span>
+                    )}
+                  </div>
+                  <select
+                    value={formData.wing}
+                    onChange={handleWingChange}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all cursor-pointer text-xs"
+                  >
+                    <option value="all">All Wings (School, College, Uni)</option>
+                    <option value="school">School Wing Only</option>
+                    <option value="college">College Wing Only</option>
+                    <option value="university">University Wing Only</option>
+                  </select>
+
+                  {/* Context status under Wing */}
+                  {selectedCampusInst ? (
+                    <div className="mt-1.5 flex items-center gap-1 text-[11px] text-emerald-700 font-medium bg-emerald-50 px-2 py-0.5 rounded-md w-fit border border-emerald-200/50">
+                      <Sparkles className="w-3 h-3 text-emerald-600" />
+                      <span>
+                        Detected: {detectedWingsForSelectedCampus.map((w) => getWingDisplayName(w)).join(' & ') || 'School Wing'}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="mt-1.5 text-[11px] text-slate-400">
+                      Selecting a wing filters institutes on the left
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
