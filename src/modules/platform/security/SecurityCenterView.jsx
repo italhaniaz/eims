@@ -58,11 +58,19 @@ export const SecurityCenterView = () => {
     passwordExpiryDays: 90,
     twoFactorAuthEnabled: false,
     ipAllowlist: '127.0.0.1, 192.168.1.0/24',
-    sessionTimeoutMinutes: 30
+    sessionTimeoutMinutes: 30,
+    maxFailedAttempts: 5,
+    lockoutDurationMinutes: 15
   })
 
   const [loading, setLoading] = useState(true)
   const [historySearch, setHistorySearch] = useState('')
+  const [sessionSearch, setSessionSearch] = useState('')
+  const [sessionCampusFilter, setSessionCampusFilter] = useState('ALL')
+  const [historyPage, setHistoryPage] = useState(1)
+  const [historyPageSize, setHistoryPageSize] = useState(10)
+  const [testIpInput, setTestIpInput] = useState('')
+  const [testIpResult, setTestIpResult] = useState(null)
 
   // Pick 1 & Pick 2: Session Telemetry Inspection, Governance Settings, & Emergency Backup Modals
   const [inspectingSession, setInspectingSession] = useState(null)
@@ -502,6 +510,53 @@ export const SecurityCenterView = () => {
       {/* ---------------------------------------------------- */}
       {activeTab === 'sessions' && (
         <div className="space-y-4">
+          {/* Active Sessions Search & Filter Toolbar */}
+          <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+            <div className="relative flex-1 max-w-md">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search sessions by user, email, campus, or IP..."
+                value={sessionSearch}
+                onChange={(e) => setSessionSearch(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 bg-slate-50/60"
+              />
+              {sessionSearch && (
+                <button
+                  type="button"
+                  onClick={() => setSessionSearch('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              <select
+                value={sessionCampusFilter}
+                onChange={(e) => setSessionCampusFilter(e.target.value)}
+                className="px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-700 font-semibold focus:outline-none cursor-pointer"
+              >
+                <option value="ALL">All Campuses ({sessions.length})</option>
+                <option value="SUPERADMIN">Platform Superadmin</option>
+                {Array.from(new Set(sessions.map(s => s.instituteName).filter(Boolean))).map(name => (
+                  <option key={name} value={name}>{name}</option>
+                ))}
+              </select>
+
+              {(sessionSearch || sessionCampusFilter !== 'ALL') && (
+                <button
+                  type="button"
+                  onClick={() => { setSessionSearch(''); setSessionCampusFilter('ALL'); }}
+                  className="px-2.5 py-1.5 text-xs font-semibold text-purple-600 hover:text-purple-800 hover:bg-purple-50 rounded-xl transition-colors cursor-pointer"
+                >
+                  Clear Filters
+                </button>
+              )}
+            </div>
+          </div>
+
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
             <div>
               <h3 className="text-sm font-bold text-slate-800">Concurrent Platform Sessions</h3>
@@ -547,8 +602,8 @@ export const SecurityCenterView = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {sessions.length > 0 ? (
-                    sessions.map((s) => (
+                  {filteredSessions.length > 0 ? (
+                    filteredSessions.map((s) => (
                       <tr key={s.id} className="hover:bg-slate-50/50 transition-colors">
                         <td className="py-3.5 px-4">
                           <div className="flex items-center gap-2.5">
@@ -665,8 +720,8 @@ export const SecurityCenterView = () => {
 
           {/* Mobile Card Layout (Visible on screens < md) */}
           <div className="block md:hidden space-y-3">
-            {sessions.length > 0 ? (
-              sessions.map((s) => (
+            {filteredSessions.length > 0 ? (
+              filteredSessions.map((s) => (
                 <div key={s.id} className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-2xs space-y-3">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2.5">
@@ -806,8 +861,8 @@ export const SecurityCenterView = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {filteredHistory.length > 0 ? (
-                    filteredHistory.map((item) => {
+                  {paginatedHistory.length > 0 ? (
+                    paginatedHistory.map((item) => {
                       const isSuccess = item.status === 'SUCCESS'
                       return (
                         <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
@@ -908,6 +963,49 @@ export const SecurityCenterView = () => {
               </div>
             )}
           </div>
+
+          {/* Login History Pagination Footer */}
+          {filteredHistory.length > 0 && (
+            <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2 text-slate-500 font-medium">
+                <span>Showing <strong>{Math.min(filteredHistory.length, (historyPage - 1) * historyPageSize + 1)}</strong> to <strong>{Math.min(filteredHistory.length, historyPage * historyPageSize)}</strong> of <strong>{filteredHistory.length}</strong> login audit events</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 mr-2">
+                  <span className="text-slate-400 font-medium">Per Page:</span>
+                  <select
+                    value={historyPageSize}
+                    onChange={(e) => { setHistoryPageSize(Number(e.target.value)); setHistoryPage(1); }}
+                    className="px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg text-slate-700 font-semibold focus:outline-none cursor-pointer"
+                  >
+                    <option value={10}>10</option>
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                  </select>
+                </div>
+
+                <button
+                  type="button"
+                  disabled={historyPage <= 1}
+                  onClick={() => setHistoryPage(prev => Math.max(1, prev - 1))}
+                  className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 disabled:opacity-40 disabled:cursor-not-allowed font-bold transition-colors cursor-pointer"
+                >
+                  Previous
+                </button>
+                <span className="px-2.5 py-1 font-mono font-bold text-slate-700 bg-slate-100 rounded-lg">
+                  {historyPage} / {totalHistoryPages}
+                </span>
+                <button
+                  type="button"
+                  disabled={historyPage >= totalHistoryPages}
+                  onClick={() => setHistoryPage(prev => Math.min(totalHistoryPages, prev + 1))}
+                  className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 disabled:opacity-40 disabled:cursor-not-allowed font-bold transition-colors cursor-pointer"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -971,6 +1069,36 @@ export const SecurityCenterView = () => {
                   <option value={30}>30 Minutes (Recommended)</option>
                   <option value={60}>60 Minutes</option>
                   <option value={120}>120 Minutes</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">
+                  Brute-Force Lockout Threshold
+                </label>
+                <select
+                  value={policy?.maxFailedAttempts || 5}
+                  onChange={(e) => setPolicy({ ...policy, maxFailedAttempts: parseInt(e.target.value) })}
+                  className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 font-bold"
+                >
+                  <option value={3}>3 Failed Attempts (Strict)</option>
+                  <option value={5}>5 Failed Attempts (Standard Enterprise)</option>
+                  <option value={10}>10 Failed Attempts (Permissive)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">
+                  Lockout Penalty Duration (Minutes)
+                </label>
+                <select
+                  value={policy?.lockoutDurationMinutes || 15}
+                  onChange={(e) => setPolicy({ ...policy, lockoutDurationMinutes: parseInt(e.target.value) })}
+                  className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 font-bold"
+                >
+                  <option value={15}>15 Minutes</option>
+                  <option value={30}>30 Minutes</option>
+                  <option value={60}>60 Minutes</option>
                 </select>
               </div>
             </div>
@@ -1044,6 +1172,7 @@ export const SecurityCenterView = () => {
       {/* TAB 4: IP ALLOWLIST */}
       {/* ---------------------------------------------------- */}
       {activeTab === 'allowlist' && (
+        <div className="space-y-6">
         <form onSubmit={handleSavePolicy} className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs space-y-5">
           <div>
             <h3 className="text-sm font-bold text-slate-900">Perimeter Defense & IP Allowlisting</h3>
@@ -1084,6 +1213,59 @@ export const SecurityCenterView = () => {
             </button>
           </div>
         </form>
+
+        {/* IP Perimeter Simulator Tool */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
+          <div>
+            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-purple-600" />
+              <span>IP Perimeter Simulation & Verification Tool</span>
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Simulate network ingress to verify if a remote employee or campus IP address matches your current perimeter whitelist before applying policies.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+            <div className="relative flex-1">
+              <input
+                type="text"
+                placeholder="Enter IP address to test (e.g. 192.168.1.55, 10.0.0.12)"
+                value={testIpInput}
+                onChange={(e) => setTestIpInput(e.target.value)}
+                className="w-full px-3.5 py-2 text-xs font-mono rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 bg-slate-50/60"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={handleEvaluateTestIp}
+              className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer shrink-0 shadow-2xs"
+            >
+              Test Ingress IP
+            </button>
+          </div>
+
+          {testIpResult && (
+            <div className={`p-3.5 rounded-xl border animate-in fade-in text-xs flex items-start gap-2.5 ${
+              testIpResult.allowed 
+                ? 'bg-emerald-50/80 border-emerald-200 text-emerald-900' 
+                : 'bg-rose-50/80 border-rose-200 text-rose-900'
+            }`}>
+              {testIpResult.allowed ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+              ) : (
+                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+              )}
+              <div className="space-y-0.5">
+                <span className="font-bold block">
+                  {testIpResult.allowed ? 'VERDICT: INGRESS ALLOWED' : 'VERDICT: INGRESS BLOCKED'}
+                </span>
+                <p className="font-mono text-[11px] opacity-90">{testIpResult.reason}</p>
+              </div>
+            </div>
+          )}
+        </div>
+        </div>
       )}
       {/* ------------------------------------------------------------------ */}
       {/* 1. MODAL: Session Inspection & Live Telemetry (EyeView)            */}

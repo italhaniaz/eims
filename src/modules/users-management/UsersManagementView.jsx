@@ -45,7 +45,12 @@ import {
   Lock,
   Layers,
   FolderOpen,
-  Folder
+  Folder,
+  Upload,
+  FileUp,
+  FileDown,
+  RefreshCw,
+  UserCheck
 } from 'lucide-react'
 import { useAppData } from '../../context/AppDataContext'
 import { useAuth, hashPassword } from '../../context/AuthContext'
@@ -488,7 +493,7 @@ export const UsersManagementView = ({ defaultTab = 'all', onRouteChange }) => {
   })
 
   // Roles to display in Educational System Roles Directory (excluding superadmin card)
-  const directoryRoles = useMemo(() => SYSTEM_ROLES.filter(r => r.id !== 'superadmin'), [])
+  const directoryRoles = useMemo(() => allRoles.filter(r => r.id !== 'superadmin'), [allRoles])
 
   // Check if all directory roles are expanded
   const allRolesExpanded = useMemo(() => {
@@ -606,6 +611,305 @@ export const UsersManagementView = ({ defaultTab = 'all', onRouteChange }) => {
     }
   }
 
+  // --- Quick Password Reset Handler ---
+  const generateSecurePassword = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%&*'
+    let pass = ''
+    for (let i = 0; i < 12; i++) {
+      pass += chars.charAt(Math.floor(Math.random() * chars.length))
+    }
+    setNewResetPassword(pass)
+    setShowResetPasswordText(true)
+    setCopiedResetPassword(false)
+  }
+
+  const openResetPasswordModal = (user) => {
+    setResetPasswordUser(user)
+    generateSecurePassword()
+    setResetPasswordModalOpen(true)
+  }
+
+  const handleSaveResetPassword = async () => {
+    if (!resetPasswordUser || !newResetPassword) return
+    if (newResetPassword.length < 8) {
+      triggerToast('Password must be at least 8 characters long.')
+      return
+    }
+    try {
+      const hashed = await hashPassword(newResetPassword)
+      await updateItem('users', resetPasswordUser.id, {
+        passwordHash: hashed,
+        passwordLastChangedAt: new Date().toISOString()
+      })
+      if (DataService?.logAuditEvent) {
+        DataService.logAuditEvent(
+          `Manually rotated and reset credentials for user account [${resetPasswordUser.email}]`,
+          'Super Administrator',
+          'Success'
+        )
+      }
+      triggerToast(`Temporary password committed for "${resetPasswordUser.name}".`)
+      setResetPasswordModalOpen(false)
+    } catch (e) {
+      console.error(e)
+      triggerToast('Failed to reset password.')
+    }
+  }
+
+  // --- CSV Bulk Roster Ingestion Handlers ---
+  const handleDownloadCsvTemplate = () => {
+    const sample = 'Full Name,Email Address,Role,Campus Affiliation,Phone Number\nDr. Tariq Mahmood,tariq.mahmood@schoolms.edu,teacher,Main Campus,+92 300 5551122\nAyesha Siddiqui,ayesha.s@schoolms.edu,accountant,North Wing Campus,+92 321 8884433\n'
+    const blob = new Blob([sample], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'platform_users_import_template.csv'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    triggerToast('User import template downloaded.')
+  }
+
+  const handleCsvFileSelect = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (evt) => {
+      const text = evt.target?.result
+      if (!text) return
+      parseCsvText(text)
+    }
+    reader.readAsText(file)
+    e.target.value = ''
+  }
+
+  const parseCsvText = (text) => {
+    const lines = text.split(/\r?\n/).filter(line => line.trim().length > 0)
+    if (lines.length < 2) {
+      triggerToast('CSV file is empty or missing data rows.')
+      return
+    }
+
+    const headerLine = lines[0]
+    const headers = headerLine.split(',').map(h => h.trim().replace(/^["']|["']$/g, '').toLowerCase())
+
+    const nameIdx = headers.findIndex(h => h.includes('name'))
+    const emailIdx = headers.findIndex(h => h.includes('email'))
+    const roleIdx = headers.findIndex(h => h.includes('role'))
+    const instIdx = headers.findIndex(h => h.includes('campus') || h.includes('institute'))
+    const phoneIdx = headers.findIndex(h => h.includes('phone') || h.includes('contact'))
+
+    if (nameIdx === -1 || emailIdx === -1) {
+      triggerToast('CSV must include "Full Name" and "Email Address" header columns.')
+      return
+    }
+
+    const validRows = []
+    const errorRows = []
+    const existingEmails = new Set((users || []).map(u => (u.email || '').toLowerCase().trim()))
+    const fileEmails = new Set()
+
+    for (let i = 1; i < lines.length; i++) {
+      const rowStr = lines[i]
+      const cols = rowStr.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.trim().replace(/^["']|["']$/g, ''))
+      const name = cols[nameIdx] || ''
+      const email = (cols[emailIdx] || '').toLowerCase().trim()
+      let role = (cols[roleIdx] || 'teacher').toLowerCase().trim().replace(/\s+/g, '_')
+      const institute = cols[instIdx] || (institutes[0]?.name || 'Central Headquarters')
+      const phone = cols[phoneIdx] || ''
+
+      if (!name || !email) {
+        errorRows.push({ line: i + 1, reason: 'Missing Name or Email', raw: rowStr })
+        continue
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(email)) {
+        errorRows.push({ line: i + 1, reason: `Invalid email format: "${email}"`, raw: rowStr })
+        continue
+      }
+
+      if (existingEmails.has(email)) {
+        errorRows.push({ line: i + 1, reason: `Email "${email}" already registered in system`, raw: rowStr })
+        continue
+      }
+
+      if (fileEmails.has(email)) {
+        errorRows.push({ line: i + 1, reason: `Duplicate email "${email}" within CSV file`, raw: rowStr })
+        continue
+      }
+      fileEmails.add(email)
+
+      const roleExists = allRoles.some(r => r.id === role)
+      if (!roleExists) {
+        role = 'teacher'
+      }
+
+      validRows.push({
+        name,
+        email,
+        role,
+        institute,
+        phone,
+        status: 'Active',
+        password: 'Password123!',
+        passwordLastChangedAt: new Date().toISOString()
+      })
+    }
+
+    setCsvPreviewData(validRows)
+    setCsvErrors(errorRows)
+    setImportModalOpen(true)
+  }
+
+  const handleConfirmImport = async () => {
+    if (csvPreviewData.length === 0) return
+    try {
+      const defaultHash = await hashPassword('Password123!')
+      for (const u of csvPreviewData) {
+        await addItem('users', {
+          ...u,
+          passwordHash: defaultHash
+        })
+      }
+      if (DataService?.logAuditEvent) {
+        DataService.logAuditEvent(
+          `Batch imported ${csvPreviewData.length} user accounts via CSV roster upload`,
+          'Super Administrator',
+          'Success'
+        )
+      }
+      triggerToast(`Successfully registered ${csvPreviewData.length} new users.`)
+      setImportModalOpen(false)
+      setCsvPreviewData([])
+      setCsvErrors([])
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('sms_users_updated'))
+      }
+    } catch (e) {
+      console.error(e)
+      triggerToast('Failed to import user records.')
+    }
+  }
+
+  // --- Dynamic Custom Operational Roles Handlers ---
+  const handleCreateCustomRole = (e) => {
+    e.preventDefault()
+    const cleanName = newRoleForm.name.trim()
+    if (!cleanName) {
+      triggerToast('Please enter a role title.')
+      return
+    }
+    const roleId = 'custom_' + cleanName.toLowerCase().replace(/[^a-z0-9]/g, '_')
+    if (allRoles.some(r => r.id === roleId)) {
+      triggerToast(`A role with title "${cleanName}" already exists.`)
+      return
+    }
+
+    const newRoleObj = {
+      id: roleId,
+      name: cleanName,
+      shortName: cleanName,
+      category: newRoleForm.category,
+      tierLevel: 'Level 3 - Operational Role',
+      badgeClass: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+      dotColor: 'bg-indigo-600',
+      colorKey: 'indigo',
+      scope: newRoleForm.scope || 'Assigned Educational Operations',
+      summary: newRoleForm.summary || `Operational authority designated for ${cleanName} responsibilities.`,
+      icon: ShieldCheck,
+      isCustom: true,
+      responsibilities: newRoleForm.responsibilities
+        ? newRoleForm.responsibilities.split('\n').map(s => s.trim()).filter(Boolean)
+        : ['Execute assigned institutional responsibilities according to delegated permissions']
+    }
+
+    const updatedCustomRoles = [...customRoles, newRoleObj]
+    setCustomRoles(updatedCustomRoles)
+    try {
+      localStorage.setItem('edu_sms_custom_roles', JSON.stringify(updatedCustomRoles))
+      const cloneKey = newRoleForm.cloneFrom
+      setPermissions(prev => {
+        const next = prev.map(p => ({
+          ...p,
+          [roleId]: p[cloneKey] !== undefined ? p[cloneKey] : false
+        }))
+        localStorage.setItem('edu_sms_rbac_permissions', JSON.stringify(next))
+        return next
+      })
+      if (DataService?.logAuditEvent) {
+        DataService.logAuditEvent(`Created custom operational role [${cleanName}]`, 'Super Administrator', 'Success')
+      }
+    } catch (e) {}
+
+    setIsCreateRoleModalOpen(false)
+    setNewRoleForm({ name: '', category: 'Academic Support', scope: '', summary: '', responsibilities: '', cloneFrom: 'teacher' })
+    triggerToast(`Custom role "${cleanName}" created and added to the RBAC matrix.`)
+  }
+
+  const handleDeleteCustomRole = (role) => {
+    const assignedUsers = (users || []).filter(u => u.role === role.id)
+    if (assignedUsers.length > 0) {
+      triggerToast(`Cannot delete role "${role.name}": ${assignedUsers.length} active account(s) are currently assigned to it.`)
+      return
+    }
+    if (window.confirm(`Delete custom role "${role.name}" and remove its rules from the RBAC Matrix?`)) {
+      const updated = customRoles.filter(r => r.id !== role.id)
+      setCustomRoles(updated)
+      try {
+        localStorage.setItem('edu_sms_custom_roles', JSON.stringify(updated))
+        setPermissions(prev => {
+          const next = prev.map(p => {
+            const copy = { ...p }
+            delete copy[role.id]
+            return copy
+          })
+          localStorage.setItem('edu_sms_rbac_permissions', JSON.stringify(next))
+          return next
+        })
+        if (DataService?.logAuditEvent) {
+          DataService.logAuditEvent(`Deleted custom operational role [${role.name}]`, 'Super Administrator', 'Success')
+        }
+      } catch (e) {}
+      triggerToast(`Custom role "${role.name}" deleted.`)
+    }
+  }
+
+  // --- Column-level Batch Permission Grant/Revoke ---
+  const handleBatchRolePermissions = (roleId, grantAll) => {
+    if (roleId === 'superadmin') {
+      triggerToast('Superadmin root privileges are immutable for platform governance.')
+      return
+    }
+    const roleMeta = allRoles.find(r => r.id === roleId)
+    const roleLabel = roleMeta ? roleMeta.shortName : roleId
+    if (window.confirm(`${grantAll ? 'Grant ALL permissions to' : 'Revoke ALL permissions from'} "${roleLabel}"?`)) {
+      setPermissions(prev => {
+        const next = prev.map(p => ({
+          ...p,
+          [roleId]: grantAll
+        }))
+        try {
+          localStorage.setItem('edu_sms_rbac_permissions', JSON.stringify(next))
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('edu_sms_permissions_updated', { detail: next }))
+          }
+          if (DataService?.logAuditEvent) {
+            DataService.logAuditEvent(
+              `${grantAll ? 'Granted all' : 'Revoked all'} RBAC permissions for role [${roleLabel}]`,
+              'Super Administrator',
+              'Success'
+            )
+          }
+        } catch (e) {}
+        return next
+      })
+      triggerToast(`${grantAll ? 'Granted all' : 'Revoked all'} permissions for ${roleLabel}.`)
+    }
+  }
+
   const openAddModal = () => {
     setEditingUser(null)
     setShowModalPassword(false)
@@ -616,7 +920,8 @@ export const UsersManagementView = ({ defaultTab = 'all', onRouteChange }) => {
       institute: institutes[0]?.name || 'Central Headquarters',
       phone: '',
       status: 'Active',
-      password: 'Password123!'
+      password: 'Password123!',
+      changePassword: false
     })
     setIsModalOpen(true)
   }
@@ -631,7 +936,8 @@ export const UsersManagementView = ({ defaultTab = 'all', onRouteChange }) => {
       institute: u.institute || '',
       phone: u.phone || '',
       status: u.status || 'Active',
-      password: ''
+      password: '',
+      changePassword: false
     })
     setIsModalOpen(true)
   }
@@ -679,9 +985,11 @@ export const UsersManagementView = ({ defaultTab = 'all', onRouteChange }) => {
       }
 
       if (editingUser) {
-        if (!payload.password) {
+        if (!payload.changePassword || !payload.password) {
           delete payload.password
+          delete payload.passwordHash
         }
+        delete payload.changePassword
         await updateItem('users', editingUser.id, payload)
         triggerToast(`User "${cleanName}" profile updated successfully.`)
       } else {
@@ -1680,9 +1988,10 @@ export const UsersManagementView = ({ defaultTab = 'all', onRouteChange }) => {
                 <button
                   type="button"
                   onClick={() => {
+                    const target = activeUser
                     setActiveDropdownUserId(null)
                     setDropdownCoords(null)
-                    triggerToast(`Password reset link dispatched to ${activeUser.email}.`)
+                    openResetPasswordModal(target)
                   }}
                   className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-purple-50 hover:text-purple-700 transition-colors cursor-pointer group"
                 >
@@ -1733,7 +2042,15 @@ export const UsersManagementView = ({ defaultTab = 'all', onRouteChange }) => {
                   Comprehensive definition of the {directoryRoles.length} core platform roles, their operational scopes, and authority boundaries
                 </p>
               </div>
-              <div className="flex items-center gap-2.5 shrink-0">
+              <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => setIsCreateRoleModalOpen(true)}
+                  className="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer flex items-center gap-1.5"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Create Custom Role</span>
+                </button>
                 <button
                   type="button"
                   onClick={handleToggleAllRoles}
@@ -1743,7 +2060,7 @@ export const UsersManagementView = ({ defaultTab = 'all', onRouteChange }) => {
                   <span>{allRolesExpanded ? 'Collapse All Roles' : 'Expand All Roles'}</span>
                 </button>
                 <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2.5 py-1.5 rounded-xl border border-slate-200">
-                  {directoryRoles.length} System Roles
+                  {directoryRoles.length} Defined Roles
                 </span>
               </div>
             </div>
@@ -1787,9 +2104,30 @@ export const UsersManagementView = ({ defaultTab = 'all', onRouteChange }) => {
                             <span className="text-slate-300">•</span>
                             <span className="text-slate-500">{r.category}</span>
                             <span className="text-slate-300">•</span>
-                            <span className="inline-flex items-center gap-1 font-mono text-[11px] font-bold text-purple-700 bg-purple-50/80 border border-purple-100 px-2 py-0.5 rounded-md">
-                              {userCount} Active {userCount === 1 ? 'Account' : 'Accounts'}
-                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setActiveTab('all');
+                                setRoleFilter(r.id);
+                                setSearchTerm('');
+                              }}
+                              className="inline-flex items-center gap-1 font-mono text-[11px] font-bold text-purple-700 hover:text-white bg-purple-50 hover:bg-purple-600 border border-purple-200 hover:border-purple-600 px-2 py-0.5 rounded-md transition-colors cursor-pointer"
+                              title="Click to view all users assigned to this role"
+                            >
+                              <span>{userCount} Active {userCount === 1 ? 'Account' : 'Accounts'}</span>
+                              <ChevronRight className="w-3 h-3" />
+                            </button>
+                            {r.isCustom && (
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteCustomRole(r)}
+                                className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-600 hover:text-rose-800 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200 cursor-pointer"
+                                title="Delete this custom role"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                                <span>Delete Role</span>
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -1979,11 +2317,38 @@ export const UsersManagementView = ({ defaultTab = 'all', onRouteChange }) => {
                         <span className="text-[10px] text-purple-600/80 font-medium">Root Authority</span>
                       </div>
                     </th>
-                    <th className="px-4 py-4 text-center text-purple-700">Institute Admin</th>
-                    <th className="px-4 py-4 text-center text-emerald-700">Teacher</th>
-                    <th className="px-4 py-4 text-center text-amber-700">Accountant</th>
-                    <th className="px-4 py-4 text-center text-indigo-700">Student</th>
-                    <th className="px-4 py-4 text-center text-cyan-700">Parent</th>
+                    {[
+                      { id: 'institute_admin', label: 'Institute Admin', color: 'text-purple-700' },
+                      { id: 'teacher', label: 'Teacher', color: 'text-emerald-700' },
+                      { id: 'accountant', label: 'Accountant', color: 'text-amber-700' },
+                      { id: 'student', label: 'Student', color: 'text-indigo-700' },
+                      { id: 'parent', label: 'Parent', color: 'text-cyan-700' },
+                      ...customRoles.map(cr => ({ id: cr.id, label: cr.name, color: 'text-indigo-600' }))
+                    ].map(col => (
+                      <th key={col.id} className={`px-3 py-3 text-center ${col.color}`}>
+                        <div className="flex flex-col items-center gap-1">
+                          <span className="font-bold text-xs whitespace-nowrap">{col.label}</span>
+                          <div className="inline-flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleBatchRolePermissions(col.id, true)}
+                              className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 cursor-pointer"
+                              title={`Grant ALL permissions to ${col.label}`}
+                            >
+                              All
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleBatchRolePermissions(col.id, false)}
+                              className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 cursor-pointer"
+                              title={`Revoke ALL permissions from ${col.label}`}
+                            >
+                              None
+                            </button>
+                          </div>
+                        </div>
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -1996,7 +2361,7 @@ export const UsersManagementView = ({ defaultTab = 'all', onRouteChange }) => {
                           {/* Category Header Row */}
                           <tr className="bg-slate-100/80 border-y border-slate-200">
                             <td 
-                              colSpan={7} 
+                              colSpan={7 + customRoles.length} 
                               onClick={() => toggleCategoryCollapse(categoryName)}
                               className="px-6 py-2.5 font-bold text-slate-800 text-xs cursor-pointer hover:bg-slate-200/60 transition-colors select-none"
                             >
@@ -2020,7 +2385,22 @@ export const UsersManagementView = ({ defaultTab = 'all', onRouteChange }) => {
                           {!isCollapsed && perms.map((p) => (
                             <tr key={p.id} className="hover:bg-slate-50/70 transition-colors">
                               <td className="px-6 py-3.5 sticky left-0 bg-white z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)]">
-                                <div className="font-bold text-slate-800">{p.label}</div>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-bold text-slate-800">{p.label}</span>
+                                  {(() => {
+                                    const defaultRule = DEFAULT_RBAC_PERMISSIONS.find(dp => dp.id === p.id)
+                                    const isCustomized = defaultRule && (
+                                      p.institute_admin !== defaultRule.institute_admin ||
+                                      p.teacher !== defaultRule.teacher ||
+                                      p.accountant !== defaultRule.accountant ||
+                                      p.student !== defaultRule.student ||
+                                      p.parent !== defaultRule.parent
+                                    )
+                                    return isCustomized ? (
+                                      <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" title="Policy rule modified from system factory defaults" />
+                                    ) : null
+                                  })()}
+                                </div>
                                 <div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold flex items-center gap-1.5 mt-0.5">
                                   <span>{p.category}</span>
                                 </div>
@@ -2117,6 +2497,24 @@ export const UsersManagementView = ({ defaultTab = 'all', onRouteChange }) => {
                                   <Check className="w-3.5 h-3.5 stroke-[2.5]" />
                                 </button>
                               </td>
+
+                              {/* Custom Operational Roles Columns */}
+                              {customRoles.map(cr => (
+                                <td key={cr.id} className="px-3 py-3.5 text-center">
+                                  <button
+                                    type="button"
+                                    onClick={() => togglePermission(p.id, cr.id)}
+                                    className={`w-7 h-7 rounded-lg inline-flex items-center justify-center transition-all cursor-pointer ${
+                                      p[cr.id] 
+                                        ? 'bg-indigo-600 text-white shadow-xs hover:bg-indigo-700' 
+                                        : 'bg-slate-100 text-slate-300 hover:bg-slate-200 hover:text-slate-500'
+                                    }`}
+                                    title={`${cr.name}: ${p[cr.id] ? 'Granted' : 'Revoked'}`}
+                                  >
+                                    <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                                  </button>
+                                </td>
+                              ))}
                             </tr>
                           ))}
                         </React.Fragment>
@@ -2330,9 +2728,11 @@ export const UsersManagementView = ({ defaultTab = 'all', onRouteChange }) => {
                     <button
                       type="button"
                       onClick={() => {
-                        triggerToast(`Password reset link dispatched to ${viewingUser.email}.`)
+                        const target = viewingUser
+                        setViewingUser(null)
+                        openResetPasswordModal(target)
                       }}
-                      className="px-3.5 py-2 text-xs font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer inline-flex items-center justify-center gap-1.5"
+                      className="px-3.5 py-2 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-xl transition-colors cursor-pointer inline-flex items-center justify-center gap-1.5"
                     >
                       <KeyRound className="w-3.5 h-3.5" />
                       <span>Reset Password</span>
@@ -2350,6 +2750,278 @@ export const UsersManagementView = ({ defaultTab = 'all', onRouteChange }) => {
               </div>
             )
           })()}
+        </Modal>
+      )}
+
+      {/* Modal: Dedicated Quick Password Reset */}
+      {resetPasswordModalOpen && resetPasswordUser && (
+        <Modal
+          isOpen={resetPasswordModalOpen}
+          onClose={() => setResetPasswordModalOpen(false)}
+          title={`Reset Password: ${resetPasswordUser.name}`}
+          maxWidth="max-w-md"
+        >
+          <div className="space-y-4">
+            <div className="p-3 bg-purple-50 rounded-xl border border-purple-100 text-xs text-purple-900">
+              <span className="font-bold block mb-0.5">Cryptographic Credential Rotation</span>
+              <p className="text-purple-700">Assign a new temporary password for <strong className="font-mono">{resetPasswordUser.email}</strong>. The password will be hashed using SHA-256 upon saving.</p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Generated Temporary Password</label>
+              <div className="relative flex items-center">
+                <input
+                  type={showResetPasswordText ? 'text' : 'password'}
+                  value={newResetPassword}
+                  onChange={(e) => setNewResetPassword(e.target.value)}
+                  className="w-full px-3.5 py-2.5 pr-20 font-mono text-xs font-bold rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 bg-slate-50/60"
+                />
+                <div className="absolute right-2 flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setShowResetPasswordText(!showResetPasswordText)}
+                    className="p-1 text-slate-400 hover:text-slate-700 rounded cursor-pointer"
+                    title={showResetPasswordText ? 'Hide' : 'Show'}
+                  >
+                    {showResetPasswordText ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (navigator?.clipboard?.writeText) {
+                        navigator.clipboard.writeText(newResetPassword)
+                        setCopiedResetPassword(true)
+                        setTimeout(() => setCopiedResetPassword(false), 2000)
+                      }
+                    }}
+                    className="p-1 text-slate-400 hover:text-purple-600 rounded cursor-pointer"
+                    title="Copy Password"
+                  >
+                    {copiedResetPassword ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-2 pt-1">
+              <button
+                type="button"
+                onClick={generateSecurePassword}
+                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+              >
+                <RefreshCw className="w-3 h-3 text-slate-500" />
+                <span>Re-generate</span>
+              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setResetPasswordModalOpen(false)}
+                  className="px-3.5 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveResetPassword}
+                  className="px-4 py-1.5 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-xl shadow-xs transition-colors cursor-pointer"
+                >
+                  Commit New Password
+                </button>
+              </div>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Modal: CSV Roster Ingestion Preview */}
+      {importModalOpen && (
+        <Modal
+          isOpen={importModalOpen}
+          onClose={() => setImportModalOpen(false)}
+          title="Import User Roster from CSV"
+          maxWidth="max-w-2xl"
+        >
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs">
+              <div>
+                <span className="font-bold text-slate-800">CSV Roster Ingestion Summary:</span>
+                <div className="flex items-center gap-3 mt-1">
+                  <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                    {csvPreviewData.length} Valid Accounts
+                  </span>
+                  {csvErrors.length > 0 && (
+                    <span className="text-rose-700 font-bold bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200">
+                      {csvErrors.length} Skipped / Errors
+                    </span>
+                  )}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleDownloadCsvTemplate}
+                className="px-2.5 py-1 text-xs text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-lg font-bold flex items-center gap-1 cursor-pointer"
+              >
+                <Download className="w-3 h-3" />
+                <span>Download Template</span>
+              </button>
+            </div>
+
+            {csvErrors.length > 0 && (
+              <div className="p-3 bg-rose-50/70 border border-rose-200 rounded-xl text-xs space-y-1 max-h-32 overflow-y-auto">
+                <span className="font-bold text-rose-900 block">Identified Parsing Errors:</span>
+                {csvErrors.map((err, i) => (
+                  <div key={i} className="text-rose-700 font-mono text-[11px]">
+                    Line {err.line}: {err.reason}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {csvPreviewData.length > 0 ? (
+              <div className="space-y-2">
+                <span className="text-xs font-bold text-slate-700">Preview (First 5 of {csvPreviewData.length} accounts):</span>
+                <div className="border border-slate-200 rounded-xl overflow-hidden max-h-48 overflow-y-auto text-xs">
+                  <table className="w-full text-left">
+                    <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                      <tr>
+                        <th className="py-2 px-3">Name</th>
+                        <th className="py-2 px-3">Email</th>
+                        <th className="py-2 px-3">Role</th>
+                        <th className="py-2 px-3">Campus</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 font-mono text-[11px]">
+                      {csvPreviewData.slice(0, 5).map((row, idx) => (
+                        <tr key={idx}>
+                          <td className="py-1.5 px-3 font-sans font-medium">{row.name}</td>
+                          <td className="py-1.5 px-3">{row.email}</td>
+                          <td className="py-1.5 px-3 uppercase text-[10px]">{row.role}</td>
+                          <td className="py-1.5 px-3 font-sans">{row.institute}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="text-[11px] text-slate-500">All imported users will be initialized with default temporary credentials: <code className="font-bold text-purple-700 bg-purple-50 px-1 rounded">Password123!</code></p>
+              </div>
+            ) : (
+              <p className="text-xs text-rose-600 font-semibold">No valid user records found in this file.</p>
+            )}
+
+            <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setImportModalOpen(false)}
+                className="px-4 py-2 text-xs text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={csvPreviewData.length === 0}
+                onClick={handleConfirmImport}
+                className="px-5 py-2 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50 rounded-xl shadow-xs transition-colors cursor-pointer"
+              >
+                Commit & Register {csvPreviewData.length} Users
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Modal: Create Custom Operational Role */}
+      {isCreateRoleModalOpen && (
+        <Modal
+          isOpen={isCreateRoleModalOpen}
+          onClose={() => setIsCreateRoleModalOpen(false)}
+          title="Create Custom Operational Role"
+          maxWidth="max-w-lg"
+        >
+          <form onSubmit={handleCreateCustomRole} className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Role Title / Designation</label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. Campus Librarian, Transport Coordinator, Hostel Warden"
+                value={newRoleForm.name}
+                onChange={(e) => setNewRoleForm({ ...newRoleForm, name: e.target.value })}
+                className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Category Domain</label>
+                <select
+                  value={newRoleForm.category}
+                  onChange={(e) => setNewRoleForm({ ...newRoleForm, category: e.target.value })}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 bg-white"
+                >
+                  <option value="Academic Support">Academic Support</option>
+                  <option value="Campus Logistics & Services">Campus Logistics & Services</option>
+                  <option value="Student Affairs">Student Affairs</option>
+                  <option value="Financial & Audit Support">Financial & Audit Support</option>
+                  <option value="Operations & Facilities">Operations & Facilities</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Clone Base Permissions</label>
+                <select
+                  value={newRoleForm.cloneFrom}
+                  onChange={(e) => setNewRoleForm({ ...newRoleForm, cloneFrom: e.target.value })}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 bg-white"
+                >
+                  <option value="teacher">Clone from Teacher</option>
+                  <option value="accountant">Clone from Accountant</option>
+                  <option value="institute_admin">Clone from Institute Admin</option>
+                  <option value="student">Clone from Student</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Operational Scope</label>
+              <input
+                type="text"
+                placeholder="e.g. Single Campus Library Inventory & Book Loans"
+                value={newRoleForm.scope}
+                onChange={(e) => setNewRoleForm({ ...newRoleForm, scope: e.target.value })}
+                className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Responsibilities (One per line)</label>
+              <textarea
+                rows={3}
+                placeholder="Manage book issue and return registers
+Coordinate textbook acquisitions
+Audit library physical assets"
+                value={newRoleForm.responsibilities}
+                onChange={(e) => setNewRoleForm({ ...newRoleForm, responsibilities: e.target.value })}
+                className="w-full p-3 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setIsCreateRoleModalOpen(false)}
+                className="px-4 py-2 text-xs text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-xl shadow-xs transition-colors cursor-pointer"
+              >
+                Create Role & Deploy to RBAC
+              </button>
+            </div>
+          </form>
         </Modal>
       )}
 
@@ -2393,7 +3065,7 @@ export const UsersManagementView = ({ defaultTab = 'all', onRouteChange }) => {
                 onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                 className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm bg-white font-medium"
               >
-                {SYSTEM_ROLES.map(r => (
+                {allRoles.map(r => (
                   <option key={r.id} value={r.id}>{r.name}</option>
                 ))}
               </select>
@@ -2434,7 +3106,7 @@ export const UsersManagementView = ({ defaultTab = 'all', onRouteChange }) => {
             )}
           </div>
 
-          {!editingUser && (
+          {!editingUser ? (
             <div>
               <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Initial Password</label>
               <div className="relative">
@@ -2455,6 +3127,55 @@ export const UsersManagementView = ({ defaultTab = 'all', onRouteChange }) => {
                 </button>
               </div>
               <p className="text-[11px] text-slate-400 mt-1">User will be prompted to reset password on first login.</p>
+            </div>
+          ) : (
+            <div className="pt-2 border-t border-slate-100 space-y-2">
+              <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={formData.changePassword || false}
+                  onChange={(e) => setFormData({ ...formData, changePassword: e.target.checked })}
+                  className="w-4 h-4 text-purple-600 rounded border-slate-300 focus:ring-purple-500 cursor-pointer"
+                />
+                <span>Change / Rotate Password for this Account</span>
+              </label>
+              {formData.changePassword && (
+                <div className="space-y-2 pl-6 animate-in fade-in">
+                  <div className="relative">
+                    <input
+                      type={showModalPassword ? 'text' : 'password'}
+                      value={formData.password || ''}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      className="w-full px-3 py-2 pr-24 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 text-xs font-mono"
+                      placeholder="Enter new strong password"
+                    />
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setShowModalPassword(!showModalPassword)}
+                        className="text-slate-400 hover:text-slate-700 cursor-pointer"
+                        title="Toggle visibility"
+                      >
+                        {showModalPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%&*'
+                          let p = ''
+                          for (let i = 0; i < 10; i++) p += chars.charAt(Math.floor(Math.random() * chars.length))
+                          setFormData({ ...formData, password: p })
+                          setShowModalPassword(true)
+                        }}
+                        className="px-2 py-0.5 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded text-[10px] font-bold border border-purple-200 cursor-pointer"
+                      >
+                        Generate
+                      </button>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-slate-500">Leaving blank or unchecked preserves current user password.</p>
+                </div>
+              )}
             </div>
           )}
 

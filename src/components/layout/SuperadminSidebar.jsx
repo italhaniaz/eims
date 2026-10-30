@@ -95,6 +95,7 @@ export const SuperadminSidebar = ({
   // Dynamic pending approval count synced in real-time
   const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0)
   const [campusesCount, setCampusesCount] = useState(0)
+  const [usersCount, setUsersCount] = useState(0)
 
   useEffect(() => {
     const updateCount = () => {
@@ -133,19 +134,40 @@ export const SuperadminSidebar = ({
       }
     }
 
+    const updateUserCount = () => {
+      try {
+        const stored = localStorage.getItem('edu_sms_data_v2')
+        if (stored) {
+          const parsed = JSON.parse(stored)
+          if (Array.isArray(parsed?.users)) {
+            setUsersCount(parsed.users.length)
+            return
+          }
+        }
+        setUsersCount(0)
+      } catch {
+        setUsersCount(0)
+      }
+    }
+
     updateCount()
     updateCampusCount()
+    updateUserCount()
     window.addEventListener('sms_approval_created', updateCount)
     window.addEventListener('sms_approvals_updated', updateCount)
     window.addEventListener('sms_institutes_updated', updateCampusCount)
+    window.addEventListener('sms_users_updated', updateUserCount)
     window.addEventListener('storage', updateCount)
     window.addEventListener('storage', updateCampusCount)
+    window.addEventListener('storage', updateUserCount)
     return () => {
       window.removeEventListener('sms_approval_created', updateCount)
       window.removeEventListener('sms_approvals_updated', updateCount)
       window.removeEventListener('sms_institutes_updated', updateCampusCount)
+      window.removeEventListener('sms_users_updated', updateUserCount)
       window.removeEventListener('storage', updateCount)
       window.removeEventListener('storage', updateCampusCount)
+      window.removeEventListener('storage', updateUserCount)
     }
   }, [])
 
@@ -463,7 +485,14 @@ export const SuperadminSidebar = ({
                 )}
               </div>
               {(!collapsed || isMobileOpen) && (
-                usersOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                <div className="flex items-center gap-1.5">
+                  {usersCount > 0 && (
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                      {usersCount}
+                    </span>
+                  )}
+                  {usersOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
+                </div>
               )}
             </button>
             
