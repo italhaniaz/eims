@@ -36,6 +36,7 @@ import {
 import Modal from '../../components/common/Modal'
 import { useAppData } from '../../context/AppDataContext'
 import { AnalyticsService } from '../../services/analyticsService'
+import { hashPassword } from '../../context/AuthContext'
 
 export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
   const { 
@@ -342,13 +343,16 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
 
   const displayTotalStudents = useMemo(() => {
     const targetInstList = selectedTierFilter === 'all' ? (institutes || []) : filteredInstitutes
-    const targetInstIds = new Set(targetInstList.map(i => i.id))
+    const targetInstIds = new Set(targetInstList.map(i => String(i.id)))
     
     // Count enrolled students belonging to target institutes from live collection
-    const liveStudentsCount = (students || []).filter(s => !s.instituteId || targetInstIds.has(s.instituteId)).length
+    const liveStudentsCount = (students || []).filter(s => !s.instituteId || targetInstIds.has(String(s.instituteId))).length
     
-    // Sum campus student numbers from institute profiles
-    const instStudentsCount = targetInstList.reduce((acc, i) => acc + (Number(i.totalStudents) || Number(i.studentsCount) || 0), 0)
+    // Sum campus student numbers from institute profiles (supporting totalStudents, studentsCount, students)
+    const instStudentsCount = targetInstList.reduce((acc, i) => {
+      const count = Number(i.totalStudents) || Number(i.studentsCount) || Number(i.students) || 0
+      return acc + count
+    }, 0)
     
     return Math.max(liveStudentsCount, instStudentsCount)
   }, [institutes, filteredInstitutes, students, selectedTierFilter])
@@ -381,8 +385,10 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
 
   const displayMRRValue = useMemo(() => {
     const targetList = selectedTierFilter === 'all' ? (institutes || []) : filteredInstitutes
-    if (targetList.length === 0) return '₨ 0'
+    if (targetList.length === 0) return 'Rs. 0'
     const total = targetList.reduce((sum, inst) => {
+      if (inst.monthlyFee && Number(inst.monthlyFee) > 0) return sum + Number(inst.monthlyFee)
+      if (inst.mrr && Number(inst.mrr) > 0) return sum + Number(inst.mrr)
       const tier = String(inst.planTier || inst.type || '').toLowerCase()
       if (tier.includes('trial') || tier.includes('free')) return sum
       if (tier.includes('custom') || tier.includes('hybrid')) return sum + 75000
@@ -391,10 +397,10 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
       if (tier.includes('school')) return sum + 25000
       return sum + 25000
     }, 0)
-    if (total === 0) return '₨ 0'
-    if (total >= 1000000) return `₨ ${(total / 1000000).toFixed(2)}M`
-    if (total >= 1000) return `₨ ${Math.round(total / 1000)}K`
-    return `₨ ${total.toLocaleString()}`
+    if (total === 0) return 'Rs. 0'
+    if (total >= 1000000) return `Rs. ${(total / 1000000).toFixed(2)}M`
+    if (total >= 1000) return `Rs. ${Math.round(total / 1000)}K`
+    return `Rs. ${total.toLocaleString()}`
   }, [institutes, filteredInstitutes, selectedTierFilter])
 
   const displayMRRBadge = useMemo(() => {
@@ -980,25 +986,35 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
     e.preventDefault()
     if (!newUserData.name || !newUserData.email) return
 
-    await addItem('users', {
-      name: newUserData.name,
-      email: newUserData.email,
-      role: newUserData.role,
-      institute: newUserData.institute || 'Central Headquarters',
-      phone: newUserData.phone || '+92 300 0000000',
-      status: 'Active',
-      lastLogin: 'Just now'
-    })
+    try {
+      const rawPassword = newUserData.password || 'Password123!'
+      const passwordHash = await hashPassword(rawPassword)
 
-    setIsUserModalOpen(false)
-    setNewUserData({
-      name: '',
-      email: '',
-      role: 'institute_admin',
-      institute: '',
-      phone: ''
-    })
-    triggerToast('New user account created and permissions activated!')
+      await addItem('users', {
+        name: newUserData.name,
+        email: newUserData.email,
+        role: newUserData.role,
+        passwordHash,
+        institute: newUserData.institute || 'Central Headquarters',
+        phone: newUserData.phone || '+92 300 0000000',
+        status: 'Active',
+        lastLogin: 'Just now'
+      })
+
+      setIsUserModalOpen(false)
+      setNewUserData({
+        name: '',
+        email: '',
+        role: 'institute_admin',
+        institute: '',
+        phone: '',
+        password: ''
+      })
+      triggerToast('New user account created and permissions activated!')
+    } catch (err) {
+      console.error(err)
+      triggerToast('Failed to provision user account.')
+    }
   }
 
   const handleCreateInstitute = async (e) => {
@@ -1029,11 +1045,12 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
 
     const newInstId = createdInst?.id || `inst-${Date.now()}`
 
-    // Provision campus administrator account
+    // Provision campus administrator account with secure Web Crypto SHA-256 hash
+    const passwordHash = await hashPassword(adminPassword)
     await addItem('users', {
       name: adminName,
       email: adminEmail,
-      password: adminPassword,
+      passwordHash,
       role: 'institute_admin',
       roleTitle: 'Institute Administrator',
       instituteId: newInstId,
@@ -1161,8 +1178,8 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           )}
         </div>
 
-        {/* Action Shortcuts & Educational Tier Filter - Single clean row, no wrap */}
-        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 flex-nowrap">
+        {/* Action Shortcuts & Educational Tier Filter - Fully responsive & feature complete */}
+        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 flex-wrap sm:flex-nowrap overflow-x-auto py-1 max-w-full">
           {/* Clean Educational Tier Dropdown Filter */}
           <div className="relative" ref={filterDropdownRef}>
             <button
@@ -1182,9 +1199,12 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0 ${isFilterDropdownOpen ? 'rotate-180 text-purple-600' : ''}`} />
             </button>
 
-            {/* Dropdown Popover Menu - Clean & Focused */}
+            {/* Dropdown Popover Menu */}
             {isFilterDropdownOpen && (
-              <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl border border-slate-200/90 shadow-xl shadow-purple-900/10 p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150 text-left">
+              <div 
+                role="menu"
+                className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl border border-slate-200/90 shadow-xl shadow-purple-900/10 p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150 text-left"
+              >
                 <div className="px-3 py-2 border-b border-slate-100 mb-1 flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-800">Filter by Tier</span>
                   {selectedTierFilter !== 'all' && (
@@ -1207,6 +1227,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                       <button
                         key={option.id}
                         type="button"
+                        role="menuitem"
                         onClick={() => handleSelectTierFilter(option.id)}
                         className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left text-xs font-semibold transition-all cursor-pointer ${
                           isSelected
@@ -1227,19 +1248,59 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
             )}
           </div>
 
+          {/* Action 1: Add Campus */}
           <button
+            type="button"
             onClick={handleOpenAddCampusModal}
-            className="h-10 px-4 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-semibold shadow-sm shadow-purple-600/25 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 whitespace-nowrap shrink-0"
+            className="h-10 px-3.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-semibold shadow-sm shadow-purple-600/25 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 whitespace-nowrap shrink-0"
+            title="Register New Campus"
           >
             <Plus className="w-4 h-4 shrink-0" />
             <span>Add Campus</span>
           </button>
+
+          {/* Action 2: Add User (Wired Modal) */}
           <button
+            type="button"
+            onClick={() => setIsUserModalOpen(true)}
+            className="h-10 px-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 hover:text-purple-700 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs whitespace-nowrap shrink-0"
+            title="Create System User Account"
+          >
+            <UserPlus className="w-4 h-4 text-purple-600 shrink-0" />
+            <span>+ User</span>
+          </button>
+
+          {/* Action 3: Broadcast (Wired Modal) */}
+          <button
+            type="button"
+            onClick={() => setIsBroadcastModalOpen(true)}
+            className="h-10 px-3 bg-white hover:bg-purple-50/60 border border-slate-200 text-slate-700 hover:text-purple-700 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs whitespace-nowrap shrink-0"
+            title="Dispatch Broadcast to Active Sessions"
+          >
+            <Radio className="w-4 h-4 text-purple-600 shrink-0" />
+            <span className="hidden sm:inline">Broadcast</span>
+          </button>
+
+          {/* Action 4: Export Audit CSV */}
+          <button
+            type="button"
+            onClick={handleGenerateReport}
+            className="h-10 px-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 hover:text-emerald-700 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs whitespace-nowrap shrink-0"
+            title="Export Consolidated Audit Report CSV"
+          >
+            <Download className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span className="hidden md:inline">Export CSV</span>
+          </button>
+
+          {/* Action 5: Wings Matrix */}
+          <button
+            type="button"
             onClick={() => onRouteChange('platform-modules')}
-            className="h-10 px-4 bg-white hover:bg-purple-50/60 border border-slate-200 text-slate-700 hover:text-purple-700 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs whitespace-nowrap shrink-0"
+            className="h-10 px-3 bg-white hover:bg-purple-50/60 border border-slate-200 text-slate-700 hover:text-purple-700 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs whitespace-nowrap shrink-0"
+            title="Open Educational Wings Matrix"
           >
             <Sliders className="w-4 h-4 text-purple-600 shrink-0" />
-            <span>Wings Matrix</span>
+            <span className="hidden lg:inline">Wings Matrix</span>
           </button>
         </div>
       </div>
@@ -1329,10 +1390,10 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               </span>
               <button
                 type="button"
-                onClick={() => onRouteChange('institutes')}
+                onClick={() => onRouteChange('sa-students-all')}
                 className="w-7 h-7 rounded-full border border-sky-200 bg-white hover:bg-sky-500 hover:text-white text-sky-500 flex items-center justify-center transition-all cursor-pointer shadow-2xs hover:scale-105 active:scale-95 shrink-0"
-                title="View All Wings & Students"
-                aria-label="View All Wings & Students"
+                title="View Students Governance Registry"
+                aria-label="View Students Governance Registry"
               >
                 <Eye className="w-3.5 h-3.5 stroke-[2]" />
               </button>
@@ -1459,8 +1520,8 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 </div>
               </div>
 
-              {/* Metric Switcher Tabs */}
-              <div className="flex items-center p-1 bg-slate-100/90 rounded-2xl text-xs font-bold gap-1 self-start 2xl:self-auto shrink-0 border border-slate-200/60 shadow-2xs">
+              {/* Metric Switcher Tabs - Responsive scrollable bar */}
+              <div className="flex items-center p-1 bg-slate-100/90 rounded-2xl text-xs font-bold gap-1 self-start 2xl:self-auto shrink-0 border border-slate-200/60 shadow-2xs overflow-x-auto min-w-max dark-scroll max-w-full">
                 <button
                   type="button"
                   onClick={() => setExecutiveMetric('saas_revenue')}
@@ -1672,7 +1733,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                             <div className="flex items-center justify-between pb-2 border-b border-slate-800 mb-2.5">
                               <span className="font-extrabold text-xs text-white flex items-center gap-1.5">
                                 <Calendar className="w-3.5 h-3.5 text-purple-400" />
-                                <span>{item.m} 2026 Cycle</span>
+                                <span>{item.m} {new Date().getFullYear()} Cycle</span>
                               </span>
                               <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-500/30">
                                 {item.total}
@@ -1805,7 +1866,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                       strokeWidth="11"
                       strokeDasharray={`${tenantHealthMatrix.monetizedDash} ${238.76 - tenantHealthMatrix.monetizedDash}`}
                       strokeDashoffset={tenantHealthMatrix.monetizedOffset}
-                      strokeLinecap="round"
+                      strokeLinecap="butt"
                       fill="transparent"
                     />
                   )}
@@ -1819,7 +1880,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                       strokeWidth="11"
                       strokeDasharray={`${tenantHealthMatrix.trialDash} ${238.76 - tenantHealthMatrix.trialDash}`}
                       strokeDashoffset={tenantHealthMatrix.trialOffset}
-                      strokeLinecap="round"
+                      strokeLinecap="butt"
                       fill="transparent"
                     />
                   )}
@@ -1833,7 +1894,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                       strokeWidth="11"
                       strokeDasharray={`${tenantHealthMatrix.pendingDash} ${238.76 - tenantHealthMatrix.pendingDash}`}
                       strokeDashoffset={tenantHealthMatrix.pendingOffset}
-                      strokeLinecap="round"
+                      strokeLinecap="butt"
                       fill="transparent"
                     />
                   )}
@@ -1847,7 +1908,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                       strokeWidth="11"
                       strokeDasharray={`${tenantHealthMatrix.atRiskDash} ${238.76 - tenantHealthMatrix.atRiskDash}`}
                       strokeDashoffset={tenantHealthMatrix.atRiskOffset}
-                      strokeLinecap="round"
+                      strokeLinecap="butt"
                       fill="transparent"
                     />
                   )}
@@ -2086,12 +2147,25 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                           {inst.planTier || 'School Plan'}
                         </td>
 
-                        {/* Status */}
+                        {/* Status - Dynamic state */}
                         <td className="py-3.5 px-3 text-right">
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                            Active
-                          </span>
+                          {(() => {
+                            const st = String(inst.status || 'Active').toLowerCase()
+                            const isAct = st === 'active'
+                            const isPend = st === 'pending'
+                            return (
+                              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                                isAct 
+                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                                  : isPend
+                                    ? 'bg-amber-50 text-amber-700 border border-amber-100'
+                                    : 'bg-rose-50 text-rose-700 border border-rose-100'
+                              }`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${isAct ? 'bg-emerald-500' : isPend ? 'bg-amber-500' : 'bg-rose-500'}`}></span>
+                                <span className="capitalize">{inst.status || 'Active'}</span>
+                              </span>
+                            )
+                          })()}
                         </td>
                       </tr>
                     )
@@ -2261,15 +2335,18 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Role</label>
+              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Role Architecture</label>
               <select
                 value={newUserData.role}
                 onChange={(e) => setNewUserData({ ...newUserData, role: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm bg-white"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm bg-white font-medium"
               >
-                <option value="superadmin">Superadmin</option>
-                <option value="institute_admin">Institute Admin</option>
-                <option value="teacher">Teacher</option>
+                <option value="institute_admin">Institute Administrator</option>
+                <option value="teacher">Faculty Member / Teacher</option>
+                <option value="accountant">Accounts & Finance Officer</option>
+                <option value="student">Enrolled Student</option>
+                <option value="parent">Parent / Guardian</option>
+                <option value="superadmin">Super Administrator (Root)</option>
               </select>
             </div>
             <div>
@@ -2282,6 +2359,18 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Initial Password</label>
+            <input
+              type="text"
+              placeholder="Default: Password123!"
+              value={newUserData.password || ''}
+              onChange={(e) => setNewUserData({ ...newUserData, password: e.target.value })}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm font-mono"
+            />
+            <p className="text-[10px] text-slate-400 mt-1">Leaves default 'Password123!' if empty. Automatically hashed with SHA-256 Web Crypto.</p>
           </div>
 
           <div>
@@ -2517,7 +2606,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-500 font-medium">Portal URL:</span>
-                <span className="text-slate-600 font-mono text-[11px]">https://eims-app.vercel.app/</span>
+                <span className="text-slate-600 font-mono text-[11px]">{typeof window !== 'undefined' ? window.location.origin : 'https://eims-app.vercel.app'}/</span>
               </div>
             </div>
 
