@@ -17,6 +17,7 @@ import {
   Save, 
   AlertCircle,
   GraduationCap,
+  ChevronDown,
   CheckCircle2,
   ArrowRight,
   Shield
@@ -407,60 +408,55 @@ export const ModulesControlView = () => {
         </div>
       </div>
 
-      {/* Navigation Tabs & Compact Wing Filter Bar */}
-      <div className="bg-white p-2 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-2.5">
-        {/* Sleek Segmented Control without overflow scrollbar */}
-        <nav className="flex items-center gap-1 p-1 bg-slate-100/90 rounded-xl">
-          <button
-            type="button"
-            onClick={() => setActiveControlTab('wings')}
-            className={`py-1.5 px-3 rounded-lg flex items-center gap-1.5 text-xs font-bold transition-all cursor-pointer ${
-              activeControlTab === 'wings'
-                ? 'bg-white text-purple-700 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-            }`}
-          >
-            <GraduationCap className="w-3.5 h-3.5 text-purple-600" />
-            <span>Educational Wings Matrix</span>
-            <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-purple-50 text-purple-700 border border-purple-200/60 hidden sm:inline-block">
-              Wings
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveControlTab('features')}
-            className={`py-1.5 px-3 rounded-lg flex items-center gap-1.5 text-xs font-bold transition-all cursor-pointer ${
-              activeControlTab === 'features'
-                ? 'bg-white text-purple-700 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-            }`}
-          >
-            <Sliders className="w-3.5 h-3.5 text-purple-600" />
-            <span>Feature Capabilities Matrix</span>
-            <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-purple-50 text-purple-700 border border-purple-200/60">
-              10 Modules
-            </span>
-          </button>
-        </nav>
+      {/* Navigation Matrix Dropdown & Compact Wing Filter Bar */}
+      <div className="bg-white p-2.5 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+        {/* Matrix View Mode Dropdown */}
+        <div className="flex items-center gap-2">
+          <div className="relative inline-flex items-center">
+            <div className="flex items-center gap-2.5 px-3 py-1.5 bg-gradient-to-r from-[#fbf8ff] to-white hover:bg-slate-50 border border-purple-200/90 rounded-xl shadow-2xs transition-all">
+              {activeControlTab === 'wings' ? (
+                <div className="w-7 h-7 rounded-lg bg-[#f5eeff] text-purple-700 flex items-center justify-center shrink-0">
+                  <GraduationCap className="w-4 h-4 text-purple-600" />
+                </div>
+              ) : (
+                <div className="w-7 h-7 rounded-lg bg-[#f5eeff] text-purple-700 flex items-center justify-center shrink-0">
+                  <Sliders className="w-4 h-4 text-purple-600" />
+                </div>
+              )}
+              <div className="flex flex-col text-left">
+                <span className="text-[9px] font-bold text-purple-600 uppercase tracking-wider leading-none">Matrix Control View</span>
+                <select
+                  value={activeControlTab}
+                  onChange={(e) => setActiveControlTab(e.target.value)}
+                  aria-label="Select Matrix Control View"
+                  className="bg-transparent text-xs sm:text-[13px] font-bold text-slate-900 focus:outline-none cursor-pointer pr-6 appearance-none mt-0.5"
+                >
+                  <option value="wings">Educational Wings Matrix (School • College • University)</option>
+                  <option value="features">Feature Capabilities Matrix (10 Core Modules)</option>
+                </select>
+              </div>
+              <ChevronDown className="w-4 h-4 text-purple-600 pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2" />
+            </div>
+          </div>
+        </div>
 
         {/* Compact Wing Filter & Search Controls */}
-        <div className="flex items-center gap-2 self-start md:self-center shrink-0 pr-1">
+        <div className="flex items-center gap-2 self-start md:self-center shrink-0">
           {/* Quick Compact Search Box */}
           <div className="relative">
-            <Search className="w-3 h-3 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search campus..."
-              className="pl-7 pr-6 py-1 bg-slate-50 hover:bg-slate-100/70 focus:bg-white text-xs text-slate-800 placeholder-slate-400 rounded-lg border border-slate-200/90 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all w-32 sm:w-40 font-medium"
+              placeholder="Search campus or code..."
+              className="pl-8 pr-7 py-1.5 bg-slate-50 hover:bg-slate-100/70 focus:bg-white text-xs text-slate-800 placeholder-slate-400 rounded-xl border border-slate-200/90 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all w-36 sm:w-44 font-medium"
             />
             {searchTerm && (
               <button
                 type="button"
                 onClick={() => setSearchTerm('')}
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -468,13 +464,13 @@ export const ModulesControlView = () => {
           </div>
 
           {/* Compact Sized Wing Filter Dropdown */}
-          <div className="flex items-center gap-1 px-2 py-1 bg-slate-50 hover:bg-slate-100/70 border border-slate-200/90 rounded-lg transition-all shadow-2xs">
-            <Filter className="w-3 h-3 text-purple-600 shrink-0" />
+          <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100/70 border border-slate-200/90 rounded-xl transition-all shadow-2xs">
+            <Filter className="w-3.5 h-3.5 text-purple-600 shrink-0" />
             <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
               aria-label="Filter institutes by educational wing"
-              className="bg-transparent text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer pr-1"
+              className="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer pr-1"
             >
               <option value="ALL">All Wings ({institutes.length})</option>
               <option value="school">School ({schoolCount})</option>
@@ -488,7 +484,7 @@ export const ModulesControlView = () => {
             <button
               type="button"
               onClick={() => setTypeFilter('ALL')}
-              className="px-1.5 py-0.5 text-[11px] font-semibold text-purple-700 hover:text-purple-800 hover:bg-purple-50 rounded transition-colors cursor-pointer"
+              className="px-2 py-1 text-[11px] font-semibold text-purple-700 hover:text-purple-800 hover:bg-purple-50 rounded-lg transition-colors cursor-pointer"
               title="Reset Wing Filter"
             >
               Reset

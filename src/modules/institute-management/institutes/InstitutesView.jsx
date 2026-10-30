@@ -22,6 +22,8 @@ LayoutGrid,
   ChevronLeft, 
   ChevronRight,
   ChevronDown,
+  ArrowLeft,
+  ArrowRight,
   ShieldCheck,
   CheckCircle2,
   Layers,
@@ -1080,6 +1082,37 @@ export const InstitutesView = () => {
     await updateItem('institutes', editingInstitute.id, payload)
     toast.success(`Institute "${editFormData.name}" updated successfully.`)
     setEditingInstitute(null)
+  }
+
+  const handleEditNext = (e) => {
+    if (e) e.preventDefault()
+    if (editTab === 'profile') {
+      if (!editFormData.name?.trim()) {
+        toast.error('Institute Official Name is required.')
+        return
+      }
+      if (!editFormData.code?.trim()) {
+        toast.error('Institute Code is required.')
+        return
+      }
+      if (!editFormData.principal?.trim()) {
+        toast.error('Head / Principal Name is required.')
+        return
+      }
+    }
+    const tabSequence = ['profile', 'location', 'contact', 'plan']
+    const idx = tabSequence.indexOf(editTab)
+    if (idx < tabSequence.length - 1) {
+      setEditTab(tabSequence[idx + 1])
+    }
+  }
+
+  const handleEditPrev = () => {
+    const tabSequence = ['profile', 'location', 'contact', 'plan']
+    const idx = tabSequence.indexOf(editTab)
+    if (idx > 0) {
+      setEditTab(tabSequence[idx - 1])
+    }
   }
 
   const handleDelete = async (id, name) => {
@@ -3799,12 +3832,9 @@ export const InstitutesView = () => {
               </div>
             )}
 
-            {/* Modal Footer */}
+            {/* Modal Footer with Save & Continue Step-by-Step Flow */}
             <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-              <span className="text-[11px] text-slate-400 font-medium truncate max-w-[200px] sm:max-w-xs">
-                Editing: <strong className="text-slate-700">{editingInstitute.name}</strong> ({editingInstitute.code})
-              </span>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setEditingInstitute(null)}
@@ -3812,12 +3842,46 @@ export const InstitutesView = () => {
                 >
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow-sm transition-all cursor-pointer"
-                >
-                  Save Changes
-                </button>
+                {editTab !== 'profile' && (
+                  <button
+                    type="button"
+                    onClick={handleEditPrev}
+                    className="px-3.5 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>Back</span>
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                {editTab !== 'plan' ? (
+                  <>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200/80 rounded-lg transition-all cursor-pointer hidden sm:inline-flex"
+                      title="Save changes and close"
+                    >
+                      Save & Close
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleEditNext}
+                      className="px-5 py-2 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <span>Save & Continue</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="submit"
+                    className="px-6 py-2 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Save Changes</span>
+                  </button>
+                )}
               </div>
             </div>
           </form>
