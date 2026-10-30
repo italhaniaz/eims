@@ -35,7 +35,7 @@ import Modal from '../../../components/common/Modal'
 import { SupportService } from '../../../services/supportService'
 
 const SupportApprovalsView = () => {
-  const [activeTab, setActiveTab] = useState('tickets') // 'tickets', 'approvals', 'notifications', 'content'
+  const [activeTab, setActiveTab] = useState('approvals') // 'tickets', 'approvals', 'notifications', 'content'
   const [tickets, setTickets] = useState([])
   const [approvals, setApprovals] = useState([])
   const [loading, setLoading] = useState(true)

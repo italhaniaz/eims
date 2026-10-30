@@ -73,7 +73,7 @@ export const SuperadminSidebar = ({
   const { user, logout } = useAuth()
   const [collapsed, setCollapsed] = useState(false)
   
-  const isPlatformRoute = ['institutes', 'platform-billing', 'platform-modules', 'cross-institute-analytics'].includes(currentRoute)
+  const isPlatformRoute = ['institutes', 'support-approvals', 'platform-billing', 'platform-modules', 'cross-institute-analytics'].includes(currentRoute)
   const isUserRoute = ['users-all', 'users-roles', 'security-center'].includes(currentRoute)
   const isOperationsRoute = ['system-health', 'audit-logs', 'backup-data', 'communication', 'announcements', 'global-templates'].includes(currentRoute)
   const isStudentsRoute = typeof currentRoute === 'string' && currentRoute.startsWith('sa-students-')
@@ -220,32 +220,7 @@ export const SuperadminSidebar = ({
             </button>
           </div>
 
-          {/* 1b. Pending Approvals (badge: count) - Right under Dashboard */}
-          <div className="relative pt-1">
-            {isRouteActive('support-approvals') && (
-              <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-amber-500 rounded-full z-10"></div>
-            )}
-            <button
-              onClick={() => handleNavClick('support-approvals')}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
-                isRouteActive('support-approvals')
-                  ? 'bg-amber-50 text-amber-900 font-semibold shadow-2xs border border-amber-200/60'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50/80'
-              }`}
-            >
-              <div className="flex items-center gap-3 truncate">
-                <CheckSquare className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                  isRouteActive('support-approvals') ? 'text-amber-600' : 'text-amber-500 group-hover:text-amber-600'
-                }`} />
-                {(!collapsed || isMobileOpen) && <span className="truncate">Pending Approvals</span>}
-              </div>
-              {(!collapsed || isMobileOpen) && (
-                <span className="px-2 py-0.5 text-[11px] font-extrabold bg-amber-500 text-white rounded-full shadow-2xs">
-                  12
-                </span>
-              )}
-            </button>
-          </div>
+
 
           {/* 2. Group: Campuses & Wings */}
           <div className="pt-2">
@@ -285,6 +260,28 @@ export const SuperadminSidebar = ({
                   >
                     <Building2 className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('institutes') ? 'text-purple-600' : 'text-slate-400'}`} />
                     <span>All Campuses</span>
+                  </button>
+                </div>
+
+                <div className="relative">
+                  {isRouteActive('support-approvals') && (
+                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                  )}
+                  <button
+                    onClick={() => handleNavClick('support-approvals')}
+                    className={`w-full flex items-center justify-between text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
+                      isRouteActive('support-approvals')
+                        ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 truncate">
+                      <CheckSquare className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('support-approvals') ? 'text-purple-600' : 'text-amber-500'}`} />
+                      <span className="truncate">Pending Approvals</span>
+                    </div>
+                    <span className="px-1.5 py-0.2 text-[10px] font-extrabold bg-amber-500 text-white rounded-full shadow-2xs shrink-0">
+                      12
+                    </span>
                   </button>
                 </div>
 
