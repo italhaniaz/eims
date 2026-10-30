@@ -509,14 +509,17 @@ export const SuperadminSidebar = ({
                   )}
                   <button
                     onClick={() => handleNavClick('security-center')}
-                    className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
+                    className={`w-full flex items-center justify-between py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                       isRouteActive('security-center')
                         ? 'bg-[#f5eeff] text-purple-700 font-semibold'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                     }`}
                   >
-                    <Lock className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('security-center') ? 'text-purple-600' : 'text-slate-400'}`} />
-                    <span>Security & Access</span>
+                    <div className="flex items-center gap-2.5">
+                      <Lock className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('security-center') ? 'text-purple-600' : 'text-slate-400'}`} />
+                      <span>Security & Access</span>
+                    </div>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" title="Live Perimeter & Session Protection Active" />
                   </button>
                 </div>
               </div>

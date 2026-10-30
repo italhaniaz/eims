@@ -79,12 +79,23 @@ export const AuthProvider = ({ children }) => {
     }
   }, [user])
 
-  // Inactivity auto-logout (30 minutes of idle time for institutional security)
+  // Inactivity auto-logout (dynamically synchronized with Security Center policy)
   useEffect(() => {
     if (!user) return
 
     let timeoutId
-    const IDLE_TIMEOUT_MS = 30 * 60 * 1000 // 30 minutes
+    let sessionTimeoutMins = 30
+    try {
+      const stored = localStorage.getItem('edu_sms_data_v2')
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (parsed?.systemPolicy?.sessionTimeoutMinutes) {
+          sessionTimeoutMins = Number(parsed.systemPolicy.sessionTimeoutMinutes) || 30
+        }
+      }
+    } catch (e) {}
+
+    const IDLE_TIMEOUT_MS = Math.max(5, sessionTimeoutMins) * 60 * 1000
 
     const resetTimer = () => {
       clearTimeout(timeoutId)

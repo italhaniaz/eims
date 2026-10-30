@@ -254,6 +254,37 @@ export const SecurityCenterView = () => {
     toast.success(`Exported ${filteredHistory.length} audit trail records to CSV.`)
   }
 
+  // Export active sessions audit trail as CSV
+  const handleExportSessionsCSV = () => {
+    if (!sessions || sessions.length === 0) {
+      toast.info('No active sessions to export.')
+      return
+    }
+
+    const headers = ['User Email', 'User Name', 'Role', 'Campus / Institute', 'IP Address', 'Device / Browser', 'Location', 'Session Start', 'Status']
+    const rows = sessions.map(item => [
+      `"${(item.userEmail || '').replace(/"/g, '""')}"`,
+      `"${(item.userName || '').replace(/"/g, '""')}"`,
+      `"${(item.userRole || '').replace(/"/g, '""')}"`,
+      `"${(item.instituteName || 'Platform Root').replace(/"/g, '""')}"`,
+      `"${(item.ipAddress || '').replace(/"/g, '""')}"`,
+      `"${(item.deviceInfo || '').replace(/"/g, '""')}"`,
+      `"${(item.location || 'Pakistan').replace(/"/g, '""')}"`,
+      `"${(item.startedAt ? new Date(item.startedAt).toISOString() : '').replace(/"/g, '""')}"`,
+      `"${(item.isCurrent ? 'Current User Session' : 'Active Remote').replace(/"/g, '""')}"`
+    ])
+
+    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n')
+    const encodedUri = encodeURI(csvContent)
+    const link = document.createElement('a')
+    link.setAttribute('href', encodedUri)
+    link.setAttribute('download', `platform_active_sessions_${new Date().toISOString().split('T')[0]}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    toast.success(`Exported ${sessions.length} active sessions to CSV.`)
+  }
+
   // Helper: Copy IP to clipboard
   const handleCopyIp = (ipAddress) => {
     if (!ipAddress) return
@@ -478,16 +509,27 @@ export const SecurityCenterView = () => {
                 Inspect live authenticated sessions across Superadmin and all campus administrators with server-enforced force logout.
               </p>
             </div>
-            {sessions.filter(s => !s.isCurrent).length > 0 && (
+            <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => setIsForceLogoutAllOpen(true)}
-                className="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 shadow-2xs"
+                onClick={handleExportSessionsCSV}
+                className="px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 shadow-2xs"
+                title="Export active sessions to CSV"
               >
-                <UserX className="w-3.5 h-3.5 text-rose-600" />
-                <span>Force Logout All Other Sessions</span>
+                <Download className="w-3.5 h-3.5 text-slate-600" />
+                <span>Export Sessions</span>
               </button>
-            )}
+              {sessions.filter(s => !s.isCurrent).length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setIsForceLogoutAllOpen(true)}
+                  className="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 shadow-2xs"
+                >
+                  <UserX className="w-3.5 h-3.5 text-rose-600" />
+                  <span>Force Logout All Other Sessions</span>
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Desktop Table View */}
@@ -510,11 +552,19 @@ export const SecurityCenterView = () => {
                       <tr key={s.id} className="hover:bg-slate-50/50 transition-colors">
                         <td className="py-3.5 px-4">
                           <div className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-xl bg-purple-600 flex items-center justify-center font-bold text-white shrink-0 shadow-2xs">
-                              {s.userRole === 'superadmin' ? 'SA' : 'IA'}
+                            <div className="relative">
+                              <div className="w-8 h-8 rounded-xl bg-purple-600 flex items-center justify-center font-bold text-white shrink-0 shadow-2xs">
+                                {s.userRole === 'superadmin' ? 'SA' : 'IA'}
+                              </div>
+                              <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white ${s.isCurrent ? 'bg-emerald-500 animate-pulse' : 'bg-emerald-400'}`} title={s.isCurrent ? 'Current Session' : 'Active'} />
                             </div>
                             <div>
-                              <span className="font-bold text-slate-900 block">{s.userName || s.userEmail}</span>
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-bold text-slate-900 block">{s.userName || s.userEmail}</span>
+                                {s.isCurrent && (
+                                  <span className="px-1.5 py-0.5 text-[9px] font-bold bg-purple-100 text-purple-700 rounded-md">YOU</span>
+                                )}
+                              </div>
                               <span className="text-[11px] text-slate-400 font-mono block">{s.userEmail}</span>
                               {s.instituteName && (
                                 <span className="text-[10px] text-purple-600 font-medium block">{s.instituteName}</span>
