@@ -289,6 +289,9 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
     password: ''
   })
 
+  // Roles to display in Educational System Roles Directory (excluding superadmin card)
+  const directoryRoles = useMemo(() => SYSTEM_ROLES.filter(r => r.id !== 'superadmin'), [])
+
   // Roles & Permissions matrix state (with local storage persistence)
   const [permissions, setPermissions] = useState(() => {
     try {
@@ -504,7 +507,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
             }`}
           >
             <Shield className="w-4 h-4" />
-            <span>Roles & Permissions ({SYSTEM_ROLES.length})</span>
+            <span>Roles & Permissions ({directoryRoles.length})</span>
           </button>
         </nav>
       </div>
@@ -1168,19 +1171,19 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
                   <span>Educational System Roles Directory</span>
                 </h2>
                 <p className="text-xs text-slate-500">
-                  Comprehensive definition of the 6 core platform roles, their operational scopes, and authority boundaries
+                  Comprehensive definition of the {directoryRoles.length} core platform roles, their operational scopes, and authority boundaries
                 </p>
               </div>
               <div className="flex items-center gap-2.5 shrink-0">
                 <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg">
-                  6 System Roles
+                  {directoryRoles.length} System Roles
                 </span>
               </div>
             </div>
 
             {/* Responsive Self-Contained Role Cards Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4.5 items-start">
-              {SYSTEM_ROLES.map((r) => {
+              {directoryRoles.map((r) => {
                 const isExpanded = !!expandedRoles[r.id]
                 const IconComponent = r.icon
                 const userCount = (users || []).filter(u => u.role === r.id).length
