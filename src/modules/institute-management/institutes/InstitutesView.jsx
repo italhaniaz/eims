@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react'
 import {
   Settings,
+  Edit3,
 LayoutGrid,
   List,
   Building2, 
@@ -2962,8 +2963,8 @@ export const InstitutesView = () => {
           title={`Institute Overview: ${viewingDetails.name}`}
         >
           <div className="space-y-4">
-            {/* Tabs Header */}
-            <div className="flex items-center border-b border-slate-200 pb-2 text-xs">
+            {/* Tabs Header with Direct Edit Action Button */}
+            <div className="flex items-center justify-between border-b border-slate-200 pb-2 text-xs gap-2">
               <div className="flex items-center gap-1 overflow-x-auto">
                 {['overview', 'campuses', 'admins', 'modules', 'plan', 'activity'].map(tab => (
                   <button
@@ -2977,6 +2978,21 @@ export const InstitutesView = () => {
                   </button>
                 ))}
               </div>
+
+              {/* Direct Edit Button (Directly opens full edit modal) */}
+              <button
+                type="button"
+                onClick={() => {
+                  const targetInst = viewingDetails
+                  setViewingDetails(null)
+                  openEditModal(targetInst)
+                }}
+                className="px-3 py-1.5 rounded-lg font-bold text-xs text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200/90 transition-all flex items-center gap-1.5 shrink-0 cursor-pointer shadow-2xs hover:shadow-xs active:scale-95"
+                title="Edit this campus profile, location, contacts and quotas"
+              >
+                <Edit3 className="w-3.5 h-3.5 text-purple-600" />
+                <span>Edit Profile</span>
+              </button>
             </div>
 
             {/* Tab 1: Overview (Read-Only) */}
