@@ -1250,6 +1250,45 @@ export const InstitutesView = () => {
     }
   }
 
+  // Multi-Campus Bulk Selection & Lifecycle Actions
+  const handleSelectAllCampuses = (e) => {
+    const isChecked = e?.target?.checked
+    const currentPageIds = paginatedInstitutes.map(inst => inst.id)
+
+    if (isChecked !== undefined) {
+      if (isChecked) {
+        setSelectedCampusIds(prev => Array.from(new Set([...prev, ...currentPageIds])))
+      } else {
+        setSelectedCampusIds(prev => prev.filter(id => !currentPageIds.includes(id)))
+      }
+    } else {
+      const allSelected = currentPageIds.length > 0 && currentPageIds.every(id => selectedCampusIds.includes(id))
+      if (allSelected) {
+        setSelectedCampusIds(prev => prev.filter(id => !currentPageIds.includes(id)))
+      } else {
+        setSelectedCampusIds(prev => Array.from(new Set([...prev, ...currentPageIds])))
+      }
+    }
+  }
+
+  const handleBulkSetStatus = async (targetStatus) => {
+    if (selectedCampusIds.length === 0) return
+    const action = targetStatus === 'Active' ? 'Activate' : 'Suspend'
+    const verb = targetStatus === 'Active' ? 'activated' : 'suspended'
+
+    try {
+      const count = selectedCampusIds.length
+      for (const id of selectedCampusIds) {
+        await PlatformService.updateInstituteLifecycle(id, action, `Bulk ${verb} by Superadmin`)
+      }
+      refreshData()
+      setSelectedCampusIds([])
+      toast.success(`Successfully ${verb} ${count} selected campuses.`)
+    } catch (err) {
+      toast.error('Bulk update failed: ' + err.message)
+    }
+  }
+
   // Export to CSV
   // ----------------------------------------------------
   // CSV Import & Template Handlers
@@ -2113,7 +2152,7 @@ export const InstitutesView = () => {
                       <th className="py-3.5 px-4 w-10">
                         <input
                           type="checkbox"
-                          checked={selectedCampusIds.length > 0 && selectedCampusIds.length === paginatedInstitutes.length}
+                          checked={paginatedInstitutes.length > 0 && paginatedInstitutes.every(inst => selectedCampusIds.includes(inst.id))}
                           onChange={handleSelectAllCampuses}
                           aria-label="Select all campuses on page"
                           className="w-4 h-4 text-purple-600 rounded border-slate-300 focus:ring-purple-500 cursor-pointer"
