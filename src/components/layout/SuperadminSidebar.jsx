@@ -1421,7 +1421,8 @@ export const SuperadminSidebar = ({
                   { route: 'sa-settings-compliance', label: 'Compliance & Data Retention', icon: ShieldCheck },
                   { route: 'sa-settings-legal', label: 'Legal Documents (Terms, Privacy)', icon: FileText },
                   { route: 'sa-settings-maintenance', label: 'Maintenance Mode & Release Notes', icon: AlertTriangle },
-                  { route: 'sa-settings-impersonate', label: 'Switch to Campus View (Impersonation)', icon: UserCheck }
+                  { route: 'sa-settings-impersonate', label: 'Switch to Campus View (Impersonation)', icon: UserCheck },
+                  { route: 'sa-settings-backups', label: 'System & Session Backups', icon: Database }
                 ].map(item => {
                   const ItemIcon = item.icon
                   const active = isRouteActive(item.route)

@@ -23,8 +23,11 @@ import Modal from '../../../components/common/Modal'
 import { OperationsService } from '../../../services/operationsService'
 import { DataService, getStoredData } from '../../../services/dataService'
 
-const BackupDataView = () => {
-  const [activeTab, setActiveTab] = useState('backups') // 'backups', 'export-isolated', 'bulk-import', 'retention'
+const BackupDataView = ({ initialTab = 'backups' }) => {
+  const [activeTab, setActiveTab] = useState(initialTab)
+  const [sessionBackups, setSessionBackups] = useState(() => {
+    try { return OperationsService.getSessionBackups ? OperationsService.getSessionBackups() : [] } catch { return [] }
+  }) // 'backups', 'export-isolated', 'bulk-import', 'retention'
   const [backups, setBackups] = useState([])
   const [institutes, setInstitutes] = useState([])
   const [loading, setLoading] = useState(true)

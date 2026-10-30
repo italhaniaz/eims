@@ -155,7 +155,7 @@ const AppContent = () => {
     // Platform Settings
     'sa-settings-general', 'sa-settings-branding', 'sa-settings-flags',
     'sa-settings-integrations', 'sa-settings-compliance', 'sa-settings-legal',
-    'sa-settings-maintenance', 'sa-settings-impersonate'
+    'sa-settings-maintenance', 'sa-settings-impersonate', 'sa-settings-backups'
   ]
 
   const VALID_INSTITUTE_ROUTES = [

@@ -254,5 +254,137 @@ export const OperationsService = {
     localStorage.setItem('sms_retention_policy', JSON.stringify(policy))
     DataService.logActivity('Data Retention Updated', 'Modified automated data retention lifecycle thresholds', 'Super Admin')
     return { success: true }
+  },
+  // 6. EMERGENCY SESSION BACKUPS & RESTORE (Force Logout Governance)
+  getSessionBackups() {
+    const local = localStorage.getItem('sms_session_backups')
+    if (local) {
+      try { return JSON.parse(local) } catch {}
+    }
+    const initialSeed = [
+      {
+        id: 'sess-bkp-17300001',
+        sessionId: 'sess-archived-981',
+        userName: 'Beaconhouse Admin',
+        userEmail: 'admin.beacon@sms.edu',
+        userRole: 'institute_admin',
+        campusName: 'Beaconhouse Central High School',
+        ipAddress: '192.168.1.115',
+        deviceInfo: 'Firefox 125 (Windows NT 10.0)',
+        location: 'Lahore, Pakistan',
+        sessionStartedAt: new Date(Date.now() - 3600000 * 3).toISOString(),
+        terminatedAt: new Date(Date.now() - 3600000 * 1.5).toISOString(),
+        reason: 'Administrative Security Revocation & Session Rollover',
+        fileSize: '46.8 KB',
+        status: 'ARCHIVED',
+        snapshotData: {
+          clientIp: '192.168.1.115',
+          userAgent: 'Firefox 125 (Windows NT 10.0)',
+          authMethod: 'Password + 2FA',
+          activeModule: 'Admissions & Fee Management',
+          permissionsCache: ['students:read', 'students:write', 'fees:collect'],
+          terminatedBy: 'Super Administrator'
+        }
+      }
+    ]
+    localStorage.setItem('sms_session_backups', JSON.stringify(initialSeed))
+    return initialSeed
+  },
+
+  saveSessionBackup(session, reason = 'Force Logout by Super Administrator') {
+    const backups = this.getSessionBackups()
+    const timestamp = new Date().toISOString()
+    const backupId = `sess-bkp-${Date.now()}`
+    
+    const newRecord = {
+      id: backupId,
+      sessionId: session.id || `sess-${Date.now()}`,
+      userName: session.userName || session.userEmail || 'Unknown User',
+      userEmail: session.userEmail || 'unknown@schoolms.com',
+      userRole: session.userRole || 'institute_admin',
+      campusName: session.instituteName || session.campusName || (session.userRole === 'superadmin' ? 'Global Platform' : 'Central Campus'),
+      ipAddress: session.ipAddress || '127.0.0.1',
+      deviceInfo: session.deviceInfo || 'Standard Browser',
+      location: session.location || 'Lahore, Pakistan',
+      sessionStartedAt: session.startedAt || timestamp,
+      terminatedAt: timestamp,
+      reason: reason,
+      fileSize: `${(Math.random() * 15 + 38).toFixed(1)} KB`,
+      status: 'ARCHIVED',
+      snapshotData: {
+        sessionMeta: session,
+        terminatedBy: 'Super Administrator',
+        timestamp,
+        securityContext: {
+          ip: session.ipAddress,
+          clientFingerprint: session.deviceInfo,
+          tlsCipher: 'TLS_AES_256_GCM_SHA384',
+          jwtTokenRef: `jwt_sig_${Math.random().toString(36).substring(2, 10)}`
+        },
+        permissionsSnapshot: session.userRole === 'superadmin' 
+          ? ['* (Root Authority)'] 
+          : ['students:*', 'classes:*', 'attendance:*', 'fees:read', 'reports:read']
+      }
+    }
+
+    const updated = [newRecord, ...backups]
+    localStorage.setItem('sms_session_backups', JSON.stringify(updated))
+
+    try {
+      const sysBackups = JSON.parse(localStorage.getItem('sms_system_backups') || '[]')
+      const sysEntry = {
+        id: backupId,
+        filename: `session_backup_${(session.userName || 'user').replace(/[^a-z0-9]/gi, '_')}_${Date.now()}.json`,
+        backupType: 'SESSION_EMERGENCY',
+        sizeBytes: 48128,
+        checksum: `sha256:${Math.random().toString(36).substring(2, 14)}`,
+        createdBy: 'Super Administrator (Force Logout)',
+        status: 'COMPLETED',
+        createdAt: timestamp,
+        sessionRef: backupId
+      }
+      localStorage.setItem('sms_system_backups', JSON.stringify([sysEntry, ...sysBackups]))
+    } catch {}
+
+    return newRecord
+  },
+
+  deleteSessionBackup(backupId) {
+    const backups = this.getSessionBackups()
+    const updated = backups.filter(b => b.id !== backupId)
+    localStorage.setItem('sms_session_backups', JSON.stringify(updated))
+    return updated
+  },
+
+  restoreSessionBackup(backupRecord) {
+    const store = getStoredData()
+    const active = store.activeSessionsList || []
+    const restoredSession = {
+      id: backupRecord.sessionId || `sess-restored-${Date.now()}`,
+      userName: backupRecord.userName,
+      userEmail: backupRecord.userEmail,
+      userRole: backupRecord.userRole,
+      instituteName: backupRecord.campusName,
+      ipAddress: backupRecord.ipAddress,
+      deviceInfo: backupRecord.deviceInfo,
+      location: backupRecord.location,
+      startedAt: new Date().toISOString(),
+      isCurrent: false,
+      restoredFromBackup: true
+    }
+    store.activeSessionsList = [restoredSession, ...active]
+    saveStoredData(store)
+    return restoredSession
+  },
+
+  downloadSessionBackupFile(backup) {
+    const filename = `session_backup_${(backup.userName || 'user').replace(/[^a-z0-9]/gi, '_')}_${new Date(backup.terminatedAt || Date.now()).toISOString().split('T')[0]}.json`
+    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(backup, null, 2))
+    const downloadAnchor = document.createElement('a')
+    downloadAnchor.setAttribute('href', dataStr)
+    downloadAnchor.setAttribute('download', filename)
+    document.body.appendChild(downloadAnchor)
+    downloadAnchor.click()
+    downloadAnchor.remove()
   }
-}
+};
