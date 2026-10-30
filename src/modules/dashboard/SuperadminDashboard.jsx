@@ -17,6 +17,8 @@ import {
   Radio,
   Send,
   Eye,
+  EyeOff,
+  Search,
   X,
   ShieldCheck,
   GraduationCap,
@@ -25,6 +27,7 @@ import {
   CreditCard,
   MoreVertical,
   ChevronRight,
+  ChevronLeft,
   ChevronDown,
   Filter,
   Layers,
@@ -67,25 +70,48 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false)
   const filterDropdownRef = useRef(null)
 
+  // In-card campus table local search & pagination state
+  const [campusSearchQuery, setCampusSearchQuery] = useState('')
+  const [campusTablePage, setCampusTablePage] = useState(1)
+  const campusesPerPage = 5
+
+  // Modal validation and security states
+  const [userFormError, setUserFormError] = useState('')
+  const [instituteFormError, setInstituteFormError] = useState('')
+  const [showCredentialPassword, setShowCredentialPassword] = useState(false)
+
   // Executive Super Admin Monthly Performance Chart State (Metric Switcher & Hover State)
   // Metrics: 'saas_revenue' (SaaS MRR), 'campuses' (Network Onboarding), 'students' (Platform Capacity), 'vouchers' (Digital Gateway)
   const [executiveMetric, setExecutiveMetric] = useState('saas_revenue')
   const [hoveredMonthIdx, setHoveredMonthIdx] = useState(null)
 
+  // Synchronize tier filter when activeWing changes globally
+  useEffect(() => {
+    if (activeWing === 'school') setSelectedTierFilter('school')
+    else if (activeWing === 'college') setSelectedTierFilter('college')
+    else if (activeWing === 'undergraduate') setSelectedTierFilter('university')
+    else if (activeWing === 'all') setSelectedTierFilter('all')
+  }, [activeWing])
 
-
-  // Close filter dropdown on outside click
+  // Close filter dropdown on outside click & Escape key
   useEffect(() => {
     const handleOutsideClick = (e) => {
       if (filterDropdownRef.current && !filterDropdownRef.current.contains(e.target)) {
         setIsFilterDropdownOpen(false)
       }
     }
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setIsFilterDropdownOpen(false)
+      }
+    }
     if (isFilterDropdownOpen) {
       document.addEventListener('mousedown', handleOutsideClick)
+      document.addEventListener('keydown', handleKeyDown)
     }
     return () => {
       document.removeEventListener('mousedown', handleOutsideClick)
+      document.removeEventListener('keydown', handleKeyDown)
     }
   }, [isFilterDropdownOpen])
 
@@ -205,6 +231,30 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
   const filteredInstitutes = useMemo(() => {
     return (institutes || []).filter(inst => matchesTierFilter(inst, selectedTierFilter))
   }, [institutes, selectedTierFilter])
+
+  // Local in-card search for registered campuses table
+  const searchedInstitutes = useMemo(() => {
+    if (!campusSearchQuery.trim()) return filteredInstitutes
+    const q = campusSearchQuery.toLowerCase().trim()
+    return filteredInstitutes.filter(i => 
+      (i.name && i.name.toLowerCase().includes(q)) ||
+      (i.code && i.code.toLowerCase().includes(q)) ||
+      (i.city && i.city.toLowerCase().includes(q)) ||
+      (i.planTier && i.planTier.toLowerCase().includes(q))
+    )
+  }, [filteredInstitutes, campusSearchQuery])
+
+  // Pagination for registered campuses table
+  const totalCampusPages = Math.max(1, Math.ceil(searchedInstitutes.length / campusesPerPage))
+  const paginatedInstitutes = useMemo(() => {
+    const start = (campusTablePage - 1) * campusesPerPage
+    return searchedInstitutes.slice(start, start + campusesPerPage)
+  }, [searchedInstitutes, campusTablePage])
+
+  // Reset page when filter or search changes
+  useEffect(() => {
+    setCampusTablePage(1)
+  }, [selectedTierFilter, campusSearchQuery])
 
   // Handle tier filter selection
   const handleSelectTierFilter = (tierId) => {
@@ -348,9 +398,12 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
     // Count enrolled students belonging to target institutes from live collection
     const liveStudentsCount = (students || []).filter(s => !s.instituteId || targetInstIds.has(String(s.instituteId))).length
     
-    // Sum campus student numbers from institute profiles (supporting totalStudents, studentsCount, students)
+    // Sum campus student numbers from institute profiles with string sanitization
     const instStudentsCount = targetInstList.reduce((acc, i) => {
-      const count = Number(i.totalStudents) || Number(i.studentsCount) || Number(i.students) || 0
+      const rawVal = i.totalStudents ?? i.studentsCount ?? i.students ?? 0
+      const count = typeof rawVal === 'number' 
+        ? rawVal 
+        : Number(String(rawVal).replace(/[^0-9]/g, '')) || 0
       return acc + count
     }, 0)
     
@@ -360,6 +413,16 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
   const formattedStudents = displayTotalStudents >= 1000 
     ? `${(displayTotalStudents / 1000).toFixed(2)}K` 
     : String(displayTotalStudents)
+
+  const displayStudentsBadge = useMemo(() => {
+    if (selectedTierFilter !== 'all') {
+      return `${filteredInstitutes.length} ${currentFilterConfig.badge} Campuses`
+    }
+    if (displayTotalStudents > 0) {
+      return `${displayActiveCampuses} Active Wings`
+    }
+    return '0 Enrolled'
+  }, [selectedTierFilter, currentFilterConfig, filteredInstitutes, displayTotalStudents, displayActiveCampuses])
 
   const displayWingsValue = useMemo(() => {
     if (selectedTierFilter === 'all') {
@@ -984,15 +1047,32 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
 
   const handleCreateUser = async (e) => {
     e.preventDefault()
-    if (!newUserData.name || !newUserData.email) return
+    setUserFormError('')
+    if (!newUserData.name || !newUserData.email) {
+      setUserFormError('Please enter user name and email.')
+      return
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(newUserData.email.trim())) {
+      setUserFormError('Please enter a valid email address.')
+      return
+    }
+
+    // Check for duplicate email in users
+    if ((users || []).some(u => u.email?.toLowerCase().trim() === newUserData.email.toLowerCase().trim())) {
+      setUserFormError('A user account with this email address already exists.')
+      return
+    }
 
     try {
       const rawPassword = newUserData.password || 'Password123!'
       const passwordHash = await hashPassword(rawPassword)
 
       await addItem('users', {
-        name: newUserData.name,
-        email: newUserData.email,
+        name: newUserData.name.trim(),
+        email: newUserData.email.trim().toLowerCase(),
         role: newUserData.role,
         passwordHash,
         institute: newUserData.institute || 'Central Headquarters',
@@ -1002,6 +1082,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
       })
 
       setIsUserModalOpen(false)
+      setUserFormError('')
       setNewUserData({
         name: '',
         email: '',
@@ -1013,13 +1094,17 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
       triggerToast('New user account created and permissions activated!')
     } catch (err) {
       console.error(err)
-      triggerToast('Failed to provision user account.')
+      setUserFormError('Failed to provision user account. Please try again.')
     }
   }
 
   const handleCreateInstitute = async (e) => {
     e.preventDefault()
-    if (!newInstituteData.name || !newInstituteData.code) return
+    setInstituteFormError('')
+    if (!newInstituteData.name || !newInstituteData.code) {
+      setInstituteFormError('Please enter institute name and campus code.')
+      return
+    }
 
     const instCode = newInstituteData.code.toUpperCase().trim()
     const cleanSlug = instCode.toLowerCase().replace(/[^a-z0-9]/g, '')
@@ -1027,64 +1112,82 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
     const adminName = newInstituteData.adminName?.trim() || `${newInstituteData.name} Administrator`
     const adminPassword = newInstituteData.adminPassword || 'Password123!'
 
-    const createdInst = await addItem('institutes', {
-      name: newInstituteData.name,
-      code: instCode,
-      city: newInstituteData.city || 'Central District',
-      address: newInstituteData.address || `${newInstituteData.name} Campus, Central District`,
-      email: newInstituteData.email || adminEmail,
-      phone: newInstituteData.phone || '+92 300 0000000',
-      studentsCount: 0,
-      teachersCount: 0,
-      status: 'Active',
-      planTier: newInstituteData.planTier || 'School Plan',
-      planType: newInstituteData.planType || 'SCHOOL',
-      enabledTiers: newInstituteData.enabledTiers || ['school'],
-      joinedDate: new Date().toISOString().split('T')[0]
-    })
+    // Validate unique campus code
+    if ((institutes || []).some(i => i.code?.toUpperCase().trim() === instCode)) {
+      setInstituteFormError(`Campus code "${instCode}" is already in use. Please enter a unique code.`)
+      return
+    }
 
-    const newInstId = createdInst?.id || `inst-${Date.now()}`
+    // Validate unique admin email
+    if ((users || []).some(u => u.email?.toLowerCase().trim() === adminEmail.toLowerCase().trim())) {
+      setInstituteFormError(`Administrator email "${adminEmail}" is already registered. Please provide a different email.`)
+      return
+    }
 
-    // Provision campus administrator account with secure Web Crypto SHA-256 hash
-    const passwordHash = await hashPassword(adminPassword)
-    await addItem('users', {
-      name: adminName,
-      email: adminEmail,
-      passwordHash,
-      role: 'institute_admin',
-      roleTitle: 'Institute Administrator',
-      instituteId: newInstId,
-      institute: newInstituteData.name,
-      phone: newInstituteData.phone || '+92 300 0000000',
-      status: 'Active',
-      lastLogin: 'Never'
-    })
+    try {
+      const createdInst = await addItem('institutes', {
+        name: newInstituteData.name.trim(),
+        code: instCode,
+        city: newInstituteData.city || 'Central District',
+        address: newInstituteData.address || `${newInstituteData.name} Campus, Central District`,
+        email: newInstituteData.email || adminEmail,
+        phone: newInstituteData.phone || '+92 300 0000000',
+        studentsCount: 0,
+        teachersCount: 0,
+        status: 'Active',
+        planTier: newInstituteData.planTier || 'School Plan',
+        planType: newInstituteData.planType || 'SCHOOL',
+        enabledTiers: newInstituteData.enabledTiers || ['school'],
+        joinedDate: new Date().toISOString().split('T')[0]
+      })
 
-    setIsInstituteModalOpen(false)
-    setNewlyCreatedCreds({
-      name: newInstituteData.name,
-      code: instCode,
-      planTier: newInstituteData.planTier || 'School Plan',
-      adminName: adminName,
-      adminEmail: adminEmail,
-      password: adminPassword
-    })
+      const newInstId = createdInst?.id || `inst-${Date.now()}`
 
-    setNewInstituteData({
-      name: '',
-      code: '',
-      city: '',
-      address: '',
-      email: '',
-      phone: '',
-      adminName: '',
-      adminEmail: '',
-      adminPassword: 'Password123!',
-      planTier: 'School Plan',
-      planType: 'SCHOOL',
-      enabledTiers: ['school']
-    })
-    triggerToast('New institute and administrator credentials created!')
+      // Provision campus administrator account with secure Web Crypto SHA-256 hash
+      const passwordHash = await hashPassword(adminPassword)
+      await addItem('users', {
+        name: adminName,
+        email: adminEmail,
+        passwordHash,
+        role: 'institute_admin',
+        roleTitle: 'Institute Administrator',
+        instituteId: newInstId,
+        institute: newInstituteData.name.trim(),
+        phone: newInstituteData.phone || '+92 300 0000000',
+        status: 'Active',
+        lastLogin: 'Never'
+      })
+
+      setIsInstituteModalOpen(false)
+      setInstituteFormError('')
+      setNewlyCreatedCreds({
+        name: newInstituteData.name.trim(),
+        code: instCode,
+        planTier: newInstituteData.planTier || 'School Plan',
+        adminName: adminName,
+        adminEmail: adminEmail,
+        password: adminPassword
+      })
+
+      setNewInstituteData({
+        name: '',
+        code: '',
+        city: '',
+        address: '',
+        email: '',
+        phone: '',
+        adminName: '',
+        adminEmail: '',
+        adminPassword: 'Password123!',
+        planTier: 'School Plan',
+        planType: 'SCHOOL',
+        enabledTiers: ['school']
+      })
+      triggerToast('New institute and administrator credentials created!')
+    } catch (err) {
+      console.error(err)
+      setInstituteFormError('Failed to create institute campus. Please try again.')
+    }
   }
 
   const handleSendBroadcast = (e) => {
@@ -1309,18 +1412,22 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 items-stretch">
         
         {/* Card 1: Campuses (Lavender) */}
-        <div className="bg-[#f5eeff] border border-purple-100/90 rounded-2xl p-4 sm:p-5 transition-all duration-200 hover:shadow-sm shadow-2xs flex flex-col justify-between h-full min-h-[148px] overflow-hidden">
+        <div 
+          onClick={() => onRouteChange('institutes')}
+          className="bg-[#f5eeff] border border-purple-100/90 rounded-2xl p-4 sm:p-5 transition-all duration-200 hover:shadow-md hover:border-purple-200 shadow-2xs flex flex-col justify-between h-full min-h-[148px] overflow-hidden cursor-pointer group"
+          title="Click to view and manage registered campuses"
+        >
           {/* Top Row: Metric & Decorative Icon */}
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <span className="block text-xs font-semibold text-slate-500 mb-1 truncate">
+              <span className="block text-xs font-semibold text-slate-500 mb-1 truncate group-hover:text-purple-800 transition-colors">
                 {selectedTierFilter === 'all' ? 'Total Campuses' : `${currentFilterConfig.shortLabel} Campuses`}
               </span>
               <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading">
                 {displayTotalCampuses}
               </span>
             </div>
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white/80 text-purple-600 flex items-center justify-center shrink-0 shadow-2xs">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white/80 text-purple-600 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
               <School className="w-5 h-5 stroke-[1.8]" />
             </div>
           </div>
@@ -1334,12 +1441,15 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
             <div className="flex items-center gap-1.5 shrink-0">
               <button
                 type="button"
-                onClick={() => onRouteChange('institutes')}
-                className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-purple-700 cursor-pointer transition-colors group"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onRouteChange('institutes')
+                }}
+                className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-purple-700 cursor-pointer transition-colors group/btn"
                 title="View Campuses Directory"
               >
-                <span className="group-hover:underline">Manage</span>
-                <span className="w-7 h-7 rounded-full border border-purple-200 bg-white group-hover:bg-purple-600 group-hover:text-white text-purple-600 flex items-center justify-center transition-all shadow-2xs group-hover:scale-105">
+                <span className="group-hover/btn:underline">Manage</span>
+                <span className="w-7 h-7 rounded-full border border-purple-200 bg-white group-hover/btn:bg-purple-600 group-hover/btn:text-white text-purple-600 flex items-center justify-center transition-all shadow-2xs group-hover/btn:scale-105">
                   <Eye className="w-3.5 h-3.5 stroke-[2]" />
                 </span>
               </button>
@@ -1347,7 +1457,10 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               {/* Directly Add New Campus (Plus Button) */}
               <button
                 type="button"
-                onClick={handleDirectAddCampus}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleDirectAddCampus()
+                }}
                 className="w-7 h-7 rounded-full bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center transition-all cursor-pointer shadow-xs shadow-purple-600/30 hover:scale-110 active:scale-95 shrink-0 ml-0.5"
                 title="Directly Add / Onboard New Campus"
                 aria-label="Add New Campus"
@@ -1359,18 +1472,22 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
         </div>
 
         {/* Card 2: Students (Sky Blue) */}
-        <div className="bg-[#f0f9ff] border border-sky-100/90 rounded-2xl p-4 sm:p-5 transition-all duration-200 hover:shadow-sm shadow-2xs flex flex-col justify-between h-full min-h-[148px] overflow-hidden">
+        <div 
+          onClick={() => onRouteChange('sa-students-all')}
+          className="bg-[#f0f9ff] border border-sky-100/90 rounded-2xl p-4 sm:p-5 transition-all duration-200 hover:shadow-md hover:border-sky-200 shadow-2xs flex flex-col justify-between h-full min-h-[148px] overflow-hidden cursor-pointer group"
+          title="Click to view students governance registry"
+        >
           {/* Top Row: Metric & Decorative Icon */}
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <span className="block text-xs font-semibold text-slate-500 mb-1 truncate">
+              <span className="block text-xs font-semibold text-slate-500 mb-1 truncate group-hover:text-sky-800 transition-colors">
                 {selectedTierFilter === 'all' ? 'Total Students' : `${currentFilterConfig.shortLabel} Students`}
               </span>
               <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading">
                 {formattedStudents}
               </span>
             </div>
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white/80 text-sky-500 flex items-center justify-center shrink-0 shadow-2xs">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white/80 text-sky-500 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
               <GraduationCap className="w-5 h-5 stroke-[1.8]" />
             </div>
           </div>
@@ -1378,18 +1495,21 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           {/* Bottom Row: Status Badge on Left, Non-clickable All Wings Text + Dedicated Eye Button on Right */}
           <div className="flex items-center justify-between gap-1.5 mt-4 pt-3 border-t border-sky-200/50">
             <span className="text-[11px] font-bold text-sky-700 bg-sky-100/70 px-2 py-0.5 rounded-full whitespace-nowrap">
-              {selectedTierFilter === 'all' ? (displayTotalStudents > 0 ? '+12.4% MoM' : '0 Enrolled') : `${filteredInstitutes.length} Campuses`}
+              {displayStudentsBadge}
             </span>
 
             <div className="flex items-center gap-1.5 shrink-0">
               <button
                 type="button"
-                onClick={() => onRouteChange('sa-students-all')}
-                className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-sky-600 cursor-pointer transition-colors group whitespace-nowrap"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onRouteChange('sa-students-all')
+                }}
+                className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-sky-600 cursor-pointer transition-colors group/btn whitespace-nowrap"
                 title="View Students Governance Registry"
               >
-                <span className="group-hover:underline">{selectedTierFilter === 'all' ? 'All Wings' : currentFilterConfig.badge}</span>
-                <span className="w-7 h-7 rounded-full border border-sky-200 bg-white group-hover:bg-sky-500 group-hover:text-white text-sky-500 flex items-center justify-center transition-all shadow-2xs group-hover:scale-105">
+                <span className="group-hover/btn:underline">{selectedTierFilter === 'all' ? 'All Wings' : currentFilterConfig.badge}</span>
+                <span className="w-7 h-7 rounded-full border border-sky-200 bg-white group-hover/btn:bg-sky-500 group-hover/btn:text-white text-sky-500 flex items-center justify-center transition-all shadow-2xs group-hover/btn:scale-105">
                   <Eye className="w-3.5 h-3.5 stroke-[2]" />
                 </span>
               </button>
@@ -1398,18 +1518,22 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
         </div>
 
         {/* Card 3: Educational Wings (Peach / Amber) */}
-        <div className="bg-[#fff7ed] border border-amber-100/90 rounded-2xl p-4 sm:p-5 transition-all duration-200 hover:shadow-sm shadow-2xs flex flex-col justify-between h-full min-h-[148px] overflow-hidden">
+        <div 
+          onClick={() => onRouteChange('platform-modules')}
+          className="bg-[#fff7ed] border border-amber-100/90 rounded-2xl p-4 sm:p-5 transition-all duration-200 hover:shadow-md hover:border-amber-200 shadow-2xs flex flex-col justify-between h-full min-h-[148px] overflow-hidden cursor-pointer group"
+          title="Click to view wings matrix configuration"
+        >
           {/* Top Row: Metric & Decorative Icon */}
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <span className="block text-xs font-semibold text-slate-500 mb-1 truncate">
-                Educational Wings
+              <span className="block text-xs font-semibold text-slate-500 mb-1 truncate group-hover:text-amber-800 transition-colors">
+                {selectedTierFilter === 'all' ? 'Educational Wings' : `${currentFilterConfig.shortLabel} Structure`}
               </span>
               <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading">
                 {displayWingsValue}
               </span>
             </div>
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white/80 text-amber-500 flex items-center justify-center shrink-0 shadow-2xs">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white/80 text-amber-500 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
               <Sliders className="w-5 h-5 stroke-[1.8]" />
             </div>
           </div>
@@ -1423,12 +1547,15 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
             <div className="flex items-center gap-1.5 shrink-0">
               <button
                 type="button"
-                onClick={() => onRouteChange('platform-modules')}
-                className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-amber-700 cursor-pointer transition-colors group whitespace-nowrap"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onRouteChange('platform-modules')
+                }}
+                className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-amber-700 cursor-pointer transition-colors group/btn whitespace-nowrap"
                 title="View Wings Matrix"
               >
-                <span className="group-hover:underline">Matrix</span>
-                <span className="w-7 h-7 rounded-full border border-amber-200 bg-white group-hover:bg-amber-500 group-hover:text-white text-amber-600 flex items-center justify-center transition-all shadow-2xs group-hover:scale-105">
+                <span className="group-hover/btn:underline">Matrix</span>
+                <span className="w-7 h-7 rounded-full border border-amber-200 bg-white group-hover/btn:bg-amber-500 group-hover/btn:text-white text-amber-600 flex items-center justify-center transition-all shadow-2xs group-hover/btn:scale-105">
                   <Eye className="w-3.5 h-3.5 stroke-[2]" />
                 </span>
               </button>
@@ -1437,18 +1564,22 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
         </div>
 
         {/* Card 4: Platform MRR (Mint Green) */}
-        <div className="bg-[#f0fdf4] border border-emerald-100/90 rounded-2xl p-4 sm:p-5 transition-all duration-200 hover:shadow-sm shadow-2xs flex flex-col justify-between h-full min-h-[148px] overflow-hidden">
+        <div 
+          onClick={() => onRouteChange('platform-billing')}
+          className="bg-[#f0fdf4] border border-emerald-100/90 rounded-2xl p-4 sm:p-5 transition-all duration-200 hover:shadow-md hover:border-emerald-200 shadow-2xs flex flex-col justify-between h-full min-h-[148px] overflow-hidden cursor-pointer group"
+          title="Click to view platform subscriptions and billing"
+        >
           {/* Top Row: Metric & Decorative Icon */}
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <span className="block text-xs font-semibold text-slate-500 mb-1 truncate">
+              <span className="block text-xs font-semibold text-slate-500 mb-1 truncate group-hover:text-emerald-800 transition-colors">
                 {selectedTierFilter === 'all' ? 'Platform MRR' : `${currentFilterConfig.shortLabel} MRR`}
               </span>
               <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading">
                 {displayMRRValue}
               </span>
             </div>
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white/80 text-emerald-500 flex items-center justify-center shrink-0 shadow-2xs">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white/80 text-emerald-500 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
               <CreditCard className="w-5 h-5 stroke-[1.8]" />
             </div>
           </div>
@@ -1462,12 +1593,15 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
             <div className="flex items-center gap-1.5 shrink-0">
               <button
                 type="button"
-                onClick={() => onRouteChange('platform-billing')}
-                className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-emerald-700 cursor-pointer transition-colors group whitespace-nowrap"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onRouteChange('platform-billing')
+                }}
+                className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-emerald-700 cursor-pointer transition-colors group/btn whitespace-nowrap"
                 title="View Subscriptions & Billing"
               >
-                <span className="group-hover:underline">Billing</span>
-                <span className="w-7 h-7 rounded-full border border-emerald-200 bg-white group-hover:bg-emerald-600 group-hover:text-white text-emerald-600 flex items-center justify-center transition-all shadow-2xs group-hover:scale-105">
+                <span className="group-hover/btn:underline">Billing</span>
+                <span className="w-7 h-7 rounded-full border border-emerald-200 bg-white group-hover/btn:bg-emerald-600 group-hover/btn:text-white text-emerald-600 flex items-center justify-center transition-all shadow-2xs group-hover/btn:scale-105">
                   <Eye className="w-3.5 h-3.5 stroke-[2]" />
                 </span>
               </button>
@@ -1667,14 +1801,16 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 <div className="w-full h-full flex items-end justify-between gap-1 sm:gap-2 px-1 relative z-10 pb-1">
                   {executiveChartData.months.map((item, idx) => {
                     const isHovered = hoveredMonthIdx === idx
-                    const h1 = Math.max(6, Math.min(100, Math.round((item.v1 / executiveChartData.maxVal) * 100)))
-                    const h2 = Math.max(6, Math.min(100, Math.round((item.v2 / executiveChartData.maxVal) * 100)))
+                    const safeMaxVal = Math.max(1, executiveChartData.maxVal || 1)
+                    const h1 = Math.max(6, Math.min(100, Math.round((item.v1 / safeMaxVal) * 100)))
+                    const h2 = Math.max(6, Math.min(100, Math.round((item.v2 / safeMaxVal) * 100)))
 
                     return (
                       <div
                         key={idx}
                         onMouseEnter={() => setHoveredMonthIdx(idx)}
                         onMouseLeave={() => setHoveredMonthIdx(null)}
+                        onClick={() => setHoveredMonthIdx(prev => prev === idx ? null : idx)}
                         className={`flex-1 flex flex-col items-center justify-end h-full relative cursor-pointer group transition-all rounded-2xl py-1 px-0.5 ${
                           isHovered ? 'bg-purple-100/50 shadow-2xs' : 'hover:bg-slate-50/80'
                         }`}
@@ -2030,187 +2166,258 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
       {/* 4. Bottom Section: Active Campuses Table & Recent Platform Activities */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         
-        {/* Left Column (7 cols): Campuses Table matching "Star Students" table */}
+        {/* Left Column (7 cols): Campuses Table with In-Card Search & Pagination */}
         <div className="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-7 border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-            <div>
+          <div>
+            <div className="flex items-center justify-between mb-3.5 flex-wrap gap-2.5">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base font-bold text-slate-900 tracking-tight font-heading">
+                    Registered Campuses & Wings
+                  </h2>
+                  {selectedTierFilter !== 'all' && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 border border-purple-200 inline-flex items-center gap-1">
+                      <span>{currentFilterConfig.label}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleSelectTierFilter('all')}
+                        className="hover:text-purple-900 ml-0.5 cursor-pointer"
+                        title="Clear filter"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {selectedTierFilter === 'all' 
+                    ? 'Active educational institutions and enabled tier structures'
+                    : `Showing filtered ${currentFilterConfig.label} institutions`}
+                </p>
+              </div>
+
+              {/* In-Card Quick Search Bar */}
               <div className="flex items-center gap-2">
-                <h2 className="text-base font-bold text-slate-900 tracking-tight font-heading">
-                  Registered Campuses & Wings
-                </h2>
-                                {selectedTierFilter !== 'all' && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 border border-purple-200 inline-flex items-center gap-1">
-                    <span>{currentFilterConfig.label}</span>
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={campusSearchQuery}
+                    onChange={(e) => setCampusSearchQuery(e.target.value)}
+                    placeholder="Search campus or code..."
+                    className="pl-8 pr-7 py-1.5 text-xs bg-slate-50 border border-slate-200/80 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 w-44 sm:w-52 transition-all placeholder:text-slate-400"
+                  />
+                  {campusSearchQuery && (
                     <button
                       type="button"
-                      onClick={() => handleSelectTierFilter('all')}
-                      className="hover:text-purple-900 ml-0.5 cursor-pointer"
-                      title="Clear filter"
+                      onClick={() => setCampusSearchQuery('')}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                      title="Clear search"
                     >
                       <X className="w-3 h-3" />
                     </button>
-                  </span>
-                )}
+                  )}
+                </div>
+
+                <button 
+                  onClick={() => onRouteChange('institutes')}
+                  className="text-xs font-semibold text-purple-600 hover:text-purple-700 hover:underline cursor-pointer shrink-0"
+                >
+                  View All ({filteredInstitutes.length})
+                </button>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
-                {selectedTierFilter === 'all' 
-                  ? 'Active educational institutions and enabled tier structures'
-                  : `Showing filtered ${currentFilterConfig.label} institutions`}
-              </p>
             </div>
-            <button 
-              onClick={() => onRouteChange('institutes')}
-              className="text-xs font-semibold text-purple-600 hover:text-purple-700 cursor-pointer"
-            >
-              View All ({filteredInstitutes.length})
-            </button>
-          </div>
 
-          {/* Clean Data Table matching reference */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-slate-100 text-slate-400 font-semibold text-[11px] uppercase tracking-wider">
-                  <th className="py-3 px-3">Campus Name</th>
-                  <th className="py-3 px-3">Code</th>
-                  <th className="py-3 px-3">Active Wings</th>
-                  <th className="py-3 px-3">Plan Tier</th>
-                  <th className="py-3 px-3 text-right">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {filteredInstitutes && filteredInstitutes.length > 0 ? (
-                  filteredInstitutes.slice(0, 6).map((inst) => {
-                    const wings = inst.enabledTiers || ['school']
-                    return (
-                      <tr 
-                        key={inst.id}
-                        className="hover:bg-slate-50/80 transition-colors group cursor-pointer"
-                        onClick={() => onRouteChange('institutes')}
-                        title={`Manage ${inst.name}`}
-                      >
-                        {/* Campus Avatar + Name */}
-                        <td className="py-3.5 px-3">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-100 to-indigo-100 text-purple-700 font-bold flex items-center justify-center text-xs shrink-0">
-                              {inst.name.charAt(0)}
-                            </div>
-                            <div>
-                              <span className="font-semibold text-slate-900 group-hover:text-purple-700 transition-colors line-clamp-1">
-                                {inst.name}
-                              </span>
-                              <span className="text-[10px] text-slate-400">
-                                {inst.city || 'Central Region'}
-                              </span>
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* Code */}
-                        <td className="py-3.5 px-3 font-mono font-semibold text-slate-600">
-                          {inst.code}
-                        </td>
-
-                        {/* Active Wings Badges */}
-                        <td className="py-3.5 px-3">
-                          <div className="flex items-center gap-1 flex-wrap">
-                            {wings.includes('school') && (
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700">
-                                School
-                              </span>
-                            )}
-                            {wings.includes('college') && (
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700">
-                                College
-                              </span>
-                            )}
-                            {(wings.includes('undergraduate') || wings.includes('university')) && (
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700">
-                                Uni
-                              </span>
-                            )}
-                            {(inst.type === 'Custom' || inst.planType === 'CUSTOM') && (
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700">
-                                Custom
-                              </span>
-                            )}
-                          </div>
-                        </td>
-
-                        {/* Plan */}
-                        <td className="py-3.5 px-3 text-slate-600 font-medium">
-                          {inst.planTier || 'School Plan'}
-                        </td>
-
-                        {/* Status - Dynamic state */}
-                        <td className="py-3.5 px-3 text-right">
-                          {(() => {
-                            const st = String(inst.status || 'Active').toLowerCase()
-                            const isAct = st === 'active'
-                            const isPend = st === 'pending'
-                            return (
-                              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold ${
-                                isAct 
-                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
-                                  : isPend
-                                    ? 'bg-amber-50 text-amber-700 border border-amber-100'
-                                    : 'bg-rose-50 text-rose-700 border border-rose-100'
-                              }`}>
-                                <span className={`w-1.5 h-1.5 rounded-full ${isAct ? 'bg-emerald-500' : isPend ? 'bg-amber-500' : 'bg-rose-500'}`}></span>
-                                <span className="capitalize">{inst.status || 'Active'}</span>
-                              </span>
-                            )
-                          })()}
-                        </td>
-                      </tr>
-                    )
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan={5} className="py-10 text-center text-xs text-slate-400">
-                      <div className="flex flex-col items-center justify-center gap-2">
-                        <School className="w-8 h-8 text-slate-300 stroke-[1.5]" />
-                        <p className="font-semibold text-slate-700">
-                          No {currentFilterConfig.label} campuses found
-                        </p>
-                        <p className="text-[11px] text-slate-400 max-w-sm">
-                          There are currently no registered campuses matching this educational tier.
-                        </p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <button
-                            type="button"
-                            onClick={() => handleSelectTierFilter('all')}
-                            className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg text-xs transition-colors cursor-pointer"
-                          >
-                            Clear Filter
-                          </button>
-                          <button
-                            type="button"
-                            onClick={handleOpenAddCampusModal}
-                            className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg text-xs transition-colors cursor-pointer"
-                          >
-                            + Add {currentFilterConfig.badge} Campus
-                          </button>
-                        </div>
-                      </div>
-                    </td>
+            {/* Clean Data Table matching reference */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-slate-100 text-slate-400 font-semibold text-[11px] uppercase tracking-wider">
+                    <th className="py-3 px-3">Campus Name</th>
+                    <th className="py-3 px-3">Code</th>
+                    <th className="py-3 px-3">Active Wings</th>
+                    <th className="py-3 px-3">Plan Tier</th>
+                    <th className="py-3 px-3 text-right">Status</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {paginatedInstitutes && paginatedInstitutes.length > 0 ? (
+                    paginatedInstitutes.map((inst) => {
+                      const wings = inst.enabledTiers || ['school']
+                      return (
+                        <tr 
+                          key={inst.id}
+                          className="hover:bg-slate-50/80 transition-colors group cursor-pointer"
+                          onClick={() => onRouteChange('institutes')}
+                          title={`Manage ${inst.name}`}
+                        >
+                          {/* Campus Avatar + Name */}
+                          <td className="py-3 px-3">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-100 to-indigo-100 text-purple-700 font-bold flex items-center justify-center text-xs shrink-0">
+                                {inst.name.charAt(0)}
+                              </div>
+                              <div>
+                                <span className="font-semibold text-slate-900 group-hover:text-purple-700 transition-colors line-clamp-1">
+                                  {inst.name}
+                                </span>
+                                <span className="text-[10px] text-slate-400">
+                                  {inst.city || 'Central Region'}
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Code */}
+                          <td className="py-3 px-3 font-mono font-semibold text-slate-600">
+                            {inst.code}
+                          </td>
+
+                          {/* Active Wings Badges */}
+                          <td className="py-3 px-3">
+                            <div className="flex items-center gap-1 flex-wrap">
+                              {wings.includes('school') && (
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700">
+                                  School
+                                </span>
+                              )}
+                              {wings.includes('college') && (
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700">
+                                  College
+                                </span>
+                              )}
+                              {(wings.includes('undergraduate') || wings.includes('university')) && (
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700">
+                                  Uni
+                                </span>
+                              )}
+                              {(inst.type === 'Custom' || inst.planType === 'CUSTOM') && (
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700">
+                                  Custom
+                                </span>
+                              )}
+                            </div>
+                          </td>
+
+                          {/* Plan */}
+                          <td className="py-3 px-3 text-slate-600 font-medium">
+                            {inst.planTier || 'School Plan'}
+                          </td>
+
+                          {/* Status - Dynamic state */}
+                          <td className="py-3 px-3 text-right">
+                            {(() => {
+                              const st = String(inst.status || 'Active').toLowerCase()
+                              const isAct = st === 'active'
+                              const isPend = st === 'pending'
+                              return (
+                                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                                  isAct 
+                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                                    : isPend
+                                      ? 'bg-amber-50 text-amber-700 border border-amber-100'
+                                      : 'bg-rose-50 text-rose-700 border border-rose-100'
+                                }`}>
+                                  <span className={`w-1.5 h-1.5 rounded-full ${isAct ? 'bg-emerald-500' : isPend ? 'bg-amber-500' : 'bg-rose-500'}`}></span>
+                                  <span className="capitalize">{inst.status || 'Active'}</span>
+                                </span>
+                              )
+                            })()}
+                          </td>
+                        </tr>
+                      )
+                    })
+                  ) : (
+                    <tr>
+                      <td colSpan={5} className="py-10 text-center text-xs text-slate-400">
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          <School className="w-8 h-8 text-slate-300 stroke-[1.5]" />
+                          <p className="font-semibold text-slate-700">
+                            {campusSearchQuery ? `No campuses matching "${campusSearchQuery}"` : `No ${currentFilterConfig.label} campuses found`}
+                          </p>
+                          <p className="text-[11px] text-slate-400 max-w-sm">
+                            {campusSearchQuery 
+                              ? 'Try searching with a different campus name or code.' 
+                              : 'There are currently no registered campuses matching this educational tier.'}
+                          </p>
+                          <div className="flex items-center gap-2 mt-1">
+                            {campusSearchQuery ? (
+                              <button
+                                type="button"
+                                onClick={() => setCampusSearchQuery('')}
+                                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg text-xs transition-colors cursor-pointer"
+                              >
+                                Clear Search
+                              </button>
+                            ) : (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => handleSelectTierFilter('all')}
+                                  className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg text-xs transition-colors cursor-pointer"
+                                >
+                                  Clear Filter
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={handleOpenAddCampusModal}
+                                  className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg text-xs transition-colors cursor-pointer"
+                                >
+                                  + Add {currentFilterConfig.badge} Campus
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-          {/* Clean Table Footer matching reference */}
-          <div className="pt-4 mt-auto border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+
+          {/* Clean Table Footer with Pagination Controls */}
+          <div className="pt-3.5 mt-auto border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 flex-wrap gap-2">
             <span>
-              Showing {Math.min(6, filteredInstitutes.length)} of {filteredInstitutes.length} {selectedTierFilter !== 'all' ? currentFilterConfig.label : 'registered'} campuses
+              Showing {searchedInstitutes.length === 0 ? 0 : (campusTablePage - 1) * campusesPerPage + 1} to {Math.min(campusTablePage * campusesPerPage, searchedInstitutes.length)} of {searchedInstitutes.length} campuses
             </span>
-            <button 
-              onClick={() => onRouteChange('institutes')}
-              className="text-purple-600 font-semibold hover:text-purple-700 hover:underline cursor-pointer flex items-center gap-1"
-            >
-              <span>Manage Campuses</span>
-              <span>&rarr;</span>
-            </button>
+
+            <div className="flex items-center gap-2">
+              {totalCampusPages > 1 && (
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setCampusTablePage(p => Math.max(1, p - 1))}
+                    disabled={campusTablePage === 1}
+                    className="p-1 rounded-lg border border-slate-200 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer text-slate-600 transition-colors"
+                    title="Previous page"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                  </button>
+                  <span className="text-[11px] font-medium text-slate-600 px-1">
+                    {campusTablePage} / {totalCampusPages}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setCampusTablePage(p => Math.min(totalCampusPages, p + 1))}
+                    disabled={campusTablePage === totalCampusPages}
+                    className="p-1 rounded-lg border border-slate-200 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer text-slate-600 transition-colors"
+                    title="Next page"
+                  >
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+
+              <button 
+                onClick={() => onRouteChange('institutes')}
+                className="text-purple-600 font-semibold hover:text-purple-700 hover:underline cursor-pointer flex items-center gap-1 ml-1"
+              >
+                <span>Manage All</span>
+                <span>&rarr;</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -2300,10 +2507,20 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
       {/* Quick Modal 1: Create New User */}
       <Modal
         isOpen={isUserModalOpen}
-        onClose={() => setIsUserModalOpen(false)}
+        onClose={() => {
+          setIsUserModalOpen(false)
+          setUserFormError('')
+        }}
         title="Create New System User"
       >
         <form onSubmit={handleCreateUser} className="space-y-4">
+          {userFormError && (
+            <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+              <span>{userFormError}</span>
+            </div>
+          )}
+
           <div>
             <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Full Name</label>
             <input
@@ -2311,7 +2528,10 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               required
               placeholder="e.g. Dr. Salman Qureshi"
               value={newUserData.name}
-              onChange={(e) => setNewUserData({ ...newUserData, name: e.target.value })}
+              onChange={(e) => {
+                setNewUserData({ ...newUserData, name: e.target.value })
+                if (userFormError) setUserFormError('')
+              }}
               className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm"
             />
           </div>
@@ -2323,7 +2543,10 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               required
               placeholder="e.g. salman.q@sms.edu"
               value={newUserData.email}
-              onChange={(e) => setNewUserData({ ...newUserData, email: e.target.value })}
+              onChange={(e) => {
+                setNewUserData({ ...newUserData, email: e.target.value })
+                if (userFormError) setUserFormError('')
+              }}
               className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm"
             />
           </div>
@@ -2341,7 +2564,6 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 <option value="accountant">Accounts & Finance Officer</option>
                 <option value="student">Enrolled Student</option>
                 <option value="parent">Parent / Guardian</option>
-                <option value="superadmin">Super Administrator (Root)</option>
               </select>
             </div>
             <div>
@@ -2395,7 +2617,10 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
             <button
               type="button"
-              onClick={() => setIsUserModalOpen(false)}
+              onClick={() => {
+                setIsUserModalOpen(false)
+                setUserFormError('')
+              }}
               className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
             >
               Cancel
@@ -2413,10 +2638,20 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
       {/* Quick Modal 2: Register New Institute */}
       <Modal
         isOpen={isInstituteModalOpen}
-        onClose={() => setIsInstituteModalOpen(false)}
+        onClose={() => {
+          setIsInstituteModalOpen(false)
+          setInstituteFormError('')
+        }}
         title="Register New Institute Campus"
       >
         <form onSubmit={handleCreateInstitute} className="space-y-4">
+          {instituteFormError && (
+            <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+              <span>{instituteFormError}</span>
+            </div>
+          )}
+
           <div>
             <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Institute / School Name</label>
             <input
@@ -2424,7 +2659,10 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               required
               placeholder="e.g. Oxford Grammar School - Main Campus"
               value={newInstituteData.name}
-              onChange={(e) => setNewInstituteData({ ...newInstituteData, name: e.target.value })}
+              onChange={(e) => {
+                setNewInstituteData({ ...newInstituteData, name: e.target.value })
+                if (instituteFormError) setInstituteFormError('')
+              }}
               className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm"
             />
           </div>
@@ -2437,7 +2675,10 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 required
                 placeholder="e.g. OXF-001"
                 value={newInstituteData.code}
-                onChange={(e) => setNewInstituteData({ ...newInstituteData, code: e.target.value })}
+                onChange={(e) => {
+                  setNewInstituteData({ ...newInstituteData, code: e.target.value })
+                  if (instituteFormError) setInstituteFormError('')
+                }}
                 className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm uppercase"
               />
             </div>
@@ -2597,7 +2838,19 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               </div>
               <div className="flex justify-between items-center pb-2 border-b border-slate-200">
                 <span className="text-slate-500 font-medium">Password:</span>
-                <span className="font-mono font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-200">{newlyCreatedCreds.password}</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-mono font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-200">
+                    {showCredentialPassword ? newlyCreatedCreds.password : '••••••••••••'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowCredentialPassword(prev => !prev)}
+                    className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 cursor-pointer"
+                    title={showCredentialPassword ? "Hide password" : "Show password"}
+                  >
+                    {showCredentialPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-500 font-medium">Portal URL:</span>
@@ -2653,7 +2906,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
             <span>This broadcast message will be dispatched immediately across active user sessions.</span>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Channel</label>
               <select
@@ -2679,13 +2932,31 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 <option value="Teachers & Faculty">Teachers & Faculty</option>
               </select>
             </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Priority</label>
+              <select
+                value={broadcastData.priority || 'Normal'}
+                onChange={(e) => setBroadcastData({ ...broadcastData, priority: e.target.value })}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm bg-white font-medium"
+              >
+                <option value="Normal">Normal Alert</option>
+                <option value="High">High Priority</option>
+                <option value="Urgent">Urgent Maintenance</option>
+              </select>
+            </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Announcement Message</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-semibold text-slate-600 uppercase">Announcement Message</label>
+              <span className={`text-[10px] font-mono ${broadcastData.message.length > 450 ? 'text-rose-600 font-bold' : 'text-slate-400'}`}>
+                {broadcastData.message.length}/500 chars
+              </span>
+            </div>
             <textarea
               required
               rows={4}
+              maxLength={500}
               placeholder="e.g. System notice: Scheduled database optimization will take place tonight at 11:00 PM."
               value={broadcastData.message}
               onChange={(e) => setBroadcastData({ ...broadcastData, message: e.target.value })}
