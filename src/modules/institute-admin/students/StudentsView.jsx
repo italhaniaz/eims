@@ -188,15 +188,9 @@ export const StudentsView = ({ currentInstitute }) => {
     setCurrentPage(1)
   }
 
-  // Purge any legacy dummy/seed data on mount
+  // Legacy seed data guard
   useEffect(() => {
-    const demoNames = ['Hamza Farooq', 'Ayesha Siddiqui', 'Daniyal Tariq', 'Zainab Fatima', 'Bilal Ahmed Khan', 'Ahmed Raza']
-    const demoRolls = ['STD-101', 'COL-201', 'STD-103', 'REG-401', 'STD-105', 'BHS-2024-001', 'BHS-2024-002', 'STD-1001', 'COL-2002', 'REG-3003']
-    students.forEach(s => {
-      if (demoNames.includes(s.name) || demoRolls.includes(s.rollNumber)) {
-        deleteItem('students', s.id)
-      }
-    })
+    // Intentionally non-destructive: preserved real and transferred student records
   }, [])
 
   // Search & Multi-Dimensional Filters
@@ -903,6 +897,7 @@ export const StudentsView = ({ currentInstitute }) => {
       medicalAlert: finalMedicalAlert,
       academicSession: formData.academicSession || academicSession,
       instituteId: currentInstitute?.id || 'inst-1',
+      campus: currentInstitute?.name || 'Main Campus',
       updatedAt: new Date().toISOString()
     }
 

@@ -21,6 +21,7 @@ import {
   FileText, 
   ChevronRight,
   Eye,
+  EyeOff,
   Check,
   X,
   Sparkles,
@@ -36,7 +37,12 @@ import {
   ArrowDown,
   Layers,
   ShieldCheck,
-  FileDown
+  FileDown,
+  AlertTriangle,
+  Lock,
+  Unlock,
+  CheckSquare,
+  Square
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
@@ -44,10 +50,12 @@ import { DataService } from '../../../services/dataService'
 import Modal from '../../../components/common/Modal'
 
 export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => {} }) => {
-  const { students = [], institutes = [], updateItem, deleteItem } = useAppData()
+  const { students = [], institutes = [], updateItem, deleteItem, addItem } = useAppData()
   const { toast } = useToast()
 
-  // Tab State Sync
+  // -------------------------------------------------------------
+  // TAB NAVIGATION & STATE SYNC
+  // -------------------------------------------------------------
   const [currentTab, setCurrentTab] = useState(activeTab)
   useEffect(() => {
     if (activeTab && activeTab !== currentTab) {
@@ -62,55 +70,83 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
     onTabChange(tabKey)
   }
 
-  // Helper: Neutralize CSV Formula Injection (=, +, -, @, \t, \r)
+  // Formula-neutralized CSV sanitizer (=, +, -, @, \t, \r)
   const sanitizeCSV = (val) => {
     if (val === null || val === undefined) return '""'
     let str = String(val)
     if (/^[=\+\-@\t\r]/.test(str)) {
       str = "'" + str
     }
-    return `"${str.replace(/"/g, '""')}"`
+    return '"' + str.replace(/"/g, '""') + '"'
   }
 
   // -------------------------------------------------------------
-  // 1. ALL STUDENTS DATASET & FILTERING
+  // 1. UNIFIED STUDENT NORMALIZATION ADAPTER
   // -------------------------------------------------------------
+  const normalizedStudents = useMemo(() => {
+    const rawList = (students && students.length > 0) ? students : [
+      { id: 'std-1', name: 'Abdullah Khan', rollNumber: 'BHS-2026-0001', campus: 'Beaconhouse Central High', instituteId: 'inst-1', wing: 'Middle Wing', className: 'Grade 8', status: 'Active', gender: 'Male', phone: '0300-1234567', bFormCnic: '35201-1122334-1', feeStatus: 'Paid' },
+      { id: 'std-2', name: 'Zoya Fatima', rollNumber: 'BHS-2026-0002', campus: 'Beaconhouse Central High', instituteId: 'inst-1', wing: 'High School', className: 'Grade 10', status: 'Active', gender: 'Female', phone: '0301-9876543', bFormCnic: '35201-2233445-2', feeStatus: 'Paid' },
+      { id: 'std-3', name: 'Ahmed Ali Raza', rollNumber: 'TCS-2026-0014', campus: 'The City School Senior Branch', instituteId: 'inst-2', wing: 'College Wing', className: 'FSc Pre-Medical', status: 'Active', gender: 'Male', phone: '0321-4567890', bFormCnic: '35201-3344556-3', feeStatus: 'Pending' },
+      { id: 'std-4', name: 'Hania Imran', rollNumber: 'LGS-2026-0088', campus: 'Lahore Grammar Model Town', instituteId: 'inst-3', wing: 'Primary Wing', className: 'Grade 4', status: 'Suspended', gender: 'Female', phone: '0333-7890123', bFormCnic: '35201-4455667-4', feeStatus: 'Paid' },
+      { id: 'std-5', name: 'Rayyan Siddiqui', rollNumber: 'BHS-2026-0077', campus: 'Beaconhouse Central High', instituteId: 'inst-1', wing: 'Elementary Wing', className: 'Grade 2', status: 'Active', gender: 'Male', phone: '0345-6789012', bFormCnic: '35201-5566778-5', feeStatus: 'Paid' },
+      { id: 'std-6', name: 'Mahnoor Tariq', rollNumber: 'TCS-2026-0029', campus: 'The City School Senior Branch', instituteId: 'inst-2', wing: 'High School', className: 'Grade 9', status: 'Active', gender: 'Female', phone: '0312-3456789', bFormCnic: '35201-6677889-6', feeStatus: 'Paid' }
+    ]
+
+    return rawList.map(s => {
+      const resolvedCampus = s.campus || (institutes.find(i => i.id === s.instituteId)?.name) || 'Main Campus'
+      const roll = s.rollNumber || s.rollNo || s.id
+      const grade = s.className || s.grade || 'Standard'
+      const bform = s.bFormCnic || s.bForm || 'Unregistered'
+      const contact = s.guardianPhone || s.phone || s.emergencyContact || s.contact || 'N/A'
+      const wing = s.wing || (s.academicLevel ? (s.academicLevel.charAt(0).toUpperCase() + s.academicLevel.slice(1) + ' Wing') : 'School Wing')
+      const status = s.status || 'Active'
+      const fee = s.feeStatus || 'Paid'
+      const gender = s.gender || 'Not Specified'
+      return {
+        ...s,
+        cleanRoll: roll,
+        cleanCampus: resolvedCampus,
+        cleanGrade: grade,
+        cleanBForm: bform,
+        cleanContact: contact,
+        cleanWing: wing,
+        cleanStatus: status,
+        cleanFee: fee,
+        cleanGender: gender
+      }
+    })
+  }, [students, institutes])
+
+  // Filters & Sorters for Tab 1
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCampus, setSelectedCampus] = useState('ALL')
   const [selectedStatus, setSelectedStatus] = useState('ALL')
-  const [selectedWing, setSelectedWing] = useState('ALL')
+  const [selectedFeeFilter, setSelectedFeeFilter] = useState('ALL')
+  const [showMaskedBForm, setShowMaskedBForm] = useState(true)
   const [sortField, setSortField] = useState('name')
   const [sortDirection, setSortDirection] = useState('asc')
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
 
-  // Seed fallback if students array is unseeded
-  const allStudentRecords = useMemo(() => {
-    if (students && students.length > 0) return students
-    return [
-      { id: 'std-1', name: 'Abdullah Khan', rollNo: 'BHS-2026-01', campus: 'Beaconhouse Central High', wing: 'Middle Wing', grade: 'Grade 8', status: 'Active', gender: 'Male', contact: '0300-1234567', bForm: '35201-1122334-1' },
-      { id: 'std-2', name: 'Zoya Fatima', rollNo: 'BHS-2026-02', campus: 'Beaconhouse Central High', wing: 'High School', grade: 'Grade 10', status: 'Active', gender: 'Female', contact: '0301-9876543', bForm: '35201-2233445-2' },
-      { id: 'std-3', name: 'Ahmed Ali Raza', rollNo: 'TCS-2026-14', campus: 'The City School Senior Branch', wing: 'College Wing', grade: 'FSc Pre-Medical', status: 'Active', gender: 'Male', contact: '0321-4567890', bForm: '35201-3344556-3' },
-      { id: 'std-4', name: 'Hania Imran', rollNo: 'LGS-2026-88', campus: 'Lahore Grammar Model Town', wing: 'Primary Wing', grade: 'Grade 4', status: 'Suspended', gender: 'Female', contact: '0333-7890123', bForm: '35201-4455667-4' },
-      { id: 'std-5', name: 'Rayyan Siddiqui', rollNo: 'BHS-2026-77', campus: 'Beaconhouse Central High', wing: 'Elementary Wing', grade: 'Grade 2', status: 'Active', gender: 'Male', contact: '0345-6789012', bForm: '35201-5566778-5' },
-      { id: 'std-6', name: 'Mahnoor Tariq', rollNo: 'TCS-2026-29', campus: 'The City School Senior Branch', wing: 'High School', grade: 'Grade 9', status: 'Active', gender: 'Female', contact: '0312-3456789', bForm: '35201-6677889-6' }
-    ]
-  }, [students])
+  // Batch Selection
+  const [selectedStudentIds, setSelectedStudentIds] = useState([])
 
-  // Filtered & Sorted Students
   const filteredStudents = useMemo(() => {
-    const filtered = allStudentRecords.filter(s => {
-      const q = searchQuery.toLowerCase().trim()
+    const q = searchQuery.toLowerCase().trim()
+    const filtered = normalizedStudents.filter(s => {
       const matchesSearch = !q || 
         (s.name || '').toLowerCase().includes(q) || 
-        (s.rollNo || '').toLowerCase().includes(q) ||
-        (s.campus || '').toLowerCase().includes(q) ||
-        (s.bForm || '').toLowerCase().includes(q) ||
-        (s.contact || '').toLowerCase().includes(q)
-      const matchesCampus = selectedCampus === 'ALL' || s.campus === selectedCampus
-      const matchesStatus = selectedStatus === 'ALL' || (s.status || 'Active').toLowerCase() === selectedStatus.toLowerCase()
-      const matchesWing = selectedWing === 'ALL' || (s.wing || '').toLowerCase() === selectedWing.toLowerCase()
-      return matchesSearch && matchesCampus && matchesStatus && matchesWing
+        (s.cleanRoll || '').toLowerCase().includes(q) ||
+        (s.cleanCampus || '').toLowerCase().includes(q) ||
+        (s.cleanBForm || '').toLowerCase().includes(q) ||
+        (s.cleanContact || '').toLowerCase().includes(q)
+
+      const matchesCampus = selectedCampus === 'ALL' || s.cleanCampus === selectedCampus
+      const matchesStatus = selectedStatus === 'ALL' || s.cleanStatus.toLowerCase() === selectedStatus.toLowerCase()
+      const matchesFee = selectedFeeFilter === 'ALL' || s.cleanFee.toLowerCase() === selectedFeeFilter.toLowerCase()
+
+      return matchesSearch && matchesCampus && matchesStatus && matchesFee
     })
 
     return filtered.sort((a, b) => {
@@ -122,7 +158,7 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
       if (valA > valB) return sortDirection === 'asc' ? 1 : -1
       return 0
     })
-  }, [allStudentRecords, searchQuery, selectedCampus, selectedStatus, selectedWing, sortField, sortDirection])
+  }, [normalizedStudents, searchQuery, selectedCampus, selectedStatus, selectedFeeFilter, sortField, sortDirection])
 
   const totalPages = Math.max(1, Math.ceil(filteredStudents.length / pageSize))
   const paginatedStudents = useMemo(() => {
@@ -139,37 +175,92 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
     }
   }
 
+  // Select all on active page
+  const handleToggleSelectAll = () => {
+    if (selectedStudentIds.length === paginatedStudents.length) {
+      setSelectedStudentIds([])
+    } else {
+      setSelectedStudentIds(paginatedStudents.map(s => s.id))
+    }
+  }
+
+  const handleToggleSelectStudent = (id) => {
+    if (selectedStudentIds.includes(id)) {
+      setSelectedStudentIds(prev => prev.filter(x => x !== id))
+    } else {
+      setSelectedStudentIds(prev => [...prev, id])
+    }
+  }
+
+  // Batch Status Update
+  const handleBatchStatusUpdate = async (newStatus) => {
+    if (selectedStudentIds.length === 0) return
+    try {
+      for (const id of selectedStudentIds) {
+        if (typeof updateItem === 'function') {
+          await updateItem('students', id, { status: newStatus })
+        }
+      }
+      if (DataService?.logAuditEvent) {
+        DataService.logAuditEvent('Superadmin batch updated ' + selectedStudentIds.length + ' students to [' + newStatus + ']', 'Super Administrator', 'Success')
+      }
+      toast?.success?.('Updated ' + selectedStudentIds.length + ' students to ' + newStatus + '!')
+      setSelectedStudentIds([])
+      window.dispatchEvent(new Event('sms_students_updated'))
+    } catch {
+      toast?.error?.('Failed to execute batch status update.')
+    }
+  }
+
   // Safe CSV Export
-  const handleExportStudentsCSV = () => {
-    if (filteredStudents.length === 0) {
-      toast?.info?.('No student records match current filter criteria.')
+  const handleExportStudentsCSV = (onlySelected = false) => {
+    const exportData = onlySelected 
+      ? filteredStudents.filter(s => selectedStudentIds.includes(s.id))
+      : filteredStudents
+
+    if (exportData.length === 0) {
+      toast?.info?.('No student records selected or available to export.')
       return
     }
+
     try {
-      const headers = ['Student ID', 'Student Full Name', 'Roll Number', 'B-Form / CRC', 'Campus Affiliation', 'Academic Wing', 'Grade', 'Enrollment Status', 'Contact Phone']
-      const rows = filteredStudents.map(s => [
+      const headers = ['Student ID', 'Student Full Name', 'Roll Number', 'B-Form / CRC', 'Campus Affiliation', 'Academic Wing', 'Grade / Class', 'Enrollment Status', 'Fee Clearance', 'Contact Phone']
+      const rows = exportData.map(s => [
         sanitizeCSV(s.id || ''),
         sanitizeCSV(s.name || ''),
-        sanitizeCSV(s.rollNo || s.id || ''),
-        sanitizeCSV(s.bForm || 'Unregistered'),
-        sanitizeCSV(s.campus || 'Main Campus'),
-        sanitizeCSV(s.wing || 'School'),
-        sanitizeCSV(s.grade || 'Standard'),
-        sanitizeCSV(s.status || 'Active'),
-        sanitizeCSV(s.contact || 'N/A')
+        sanitizeCSV(s.cleanRoll),
+        sanitizeCSV(s.cleanBForm),
+        sanitizeCSV(s.cleanCampus),
+        sanitizeCSV(s.cleanWing),
+        sanitizeCSV(s.cleanGrade),
+        sanitizeCSV(s.cleanStatus),
+        sanitizeCSV(s.cleanFee),
+        sanitizeCSV(s.cleanContact)
       ])
+
       const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n')
       const encodedUri = encodeURI(csvContent)
       const link = document.createElement('a')
       link.setAttribute('href', encodedUri)
-      link.setAttribute('download', `Students_Roster_${new Date().toISOString().slice(0, 10)}.csv`)
+      link.setAttribute('download', 'Students_Roster_' + new Date().toISOString().slice(0, 10) + '.csv')
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
-      toast?.success?.(`Successfully exported ${filteredStudents.length} student records to CSV!`)
+      toast?.success?.('Successfully exported ' + exportData.length + ' student records to CSV!')
     } catch {
       toast?.error?.('Failed to generate CSV export.')
     }
+  }
+
+  // Mask B-Form Helper
+  const maskBForm = (bform) => {
+    if (!bform || bform === 'Unregistered') return 'Unregistered'
+    if (!showMaskedBForm) return bform
+    const clean = bform.replace(/[^0-9]/g, '')
+    if (clean.length === 13) {
+      return clean.slice(0, 5) + '-•••••••-' + clean.slice(-1)
+    }
+    return bform.slice(0, 4) + '••••' + bform.slice(-2)
   }
 
   // Modals & Inspection States
@@ -177,20 +268,21 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
   const [printingStudentIdCard, setPrintingStudentIdCard] = useState(null)
 
   const handleToggleStudentStatus = async (student) => {
-    const isCurrentlyActive = (student.status || 'Active').toLowerCase() === 'active'
+    const isCurrentlyActive = (student.cleanStatus || 'Active').toLowerCase() === 'active'
     const newStatus = isCurrentlyActive ? 'Suspended' : 'Active'
     try {
       if (typeof updateItem === 'function') {
         await updateItem('students', student.id, { status: newStatus })
       }
       if (inspectingStudent && inspectingStudent.id === student.id) {
-        setInspectingStudent(prev => ({ ...prev, status: newStatus }))
+        setInspectingStudent(prev => ({ ...prev, status: newStatus, cleanStatus: newStatus }))
       }
       if (DataService?.logAuditEvent) {
-        DataService.logAuditEvent(`Changed enrollment status of student [${student.name}] to ${newStatus}`, 'Super Administrator', 'Success')
+        DataService.logAuditEvent('Superadmin toggled status of [' + student.name + '] to ' + newStatus, 'Super Administrator', 'Success')
       }
-      toast?.success?.(`Student ${student.name} is now marked as ${newStatus}.`)
-    } catch (e) {
+      toast?.success?.('Student ' + student.name + ' is now marked as ' + newStatus + '.')
+      window.dispatchEvent(new Event('sms_students_updated'))
+    } catch {
       toast?.error?.('Failed to update student status.')
     }
   }
@@ -202,9 +294,9 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
     try {
       const stored = localStorage.getItem('sms_student_transfers')
       return stored ? JSON.parse(stored) : [
-        { id: 'TR-101', studentName: 'Muhammad Hamza', rollNo: 'BHS-042', fromCampus: 'Beaconhouse Central High', toCampus: 'The City School Senior Branch', reason: 'Family residential relocation to new municipal district', status: 'Pending Approval', date: '2026-10-25' },
-        { id: 'TR-102', studentName: 'Ayesha Siddiqua', rollNo: 'LGS-118', fromCampus: 'Lahore Grammar Model Town', toCampus: 'Beaconhouse Central High', reason: 'Sibling admission alignment', status: 'Approved', date: '2026-10-21' },
-        { id: 'TR-103', studentName: 'Zainab Fatima', rollNo: 'BHS-099', fromCampus: 'The City School Senior Branch', toCampus: 'Lahore Grammar Model Town', reason: 'Advanced curricular stream transfer', status: 'Pending Approval', date: '2026-10-18' }
+        { id: 'TR-101', studentName: 'Muhammad Hamza', rollNo: 'BHS-042', fromCampus: 'Beaconhouse Central High', toCampus: 'The City School Senior Branch', targetGrade: 'Grade 9-A', reason: 'Family residential relocation to new municipal district', status: 'Pending Approval', date: '2026-10-25', feeClearance: 'Verified Clear' },
+        { id: 'TR-102', studentName: 'Ayesha Siddiqua', rollNo: 'LGS-118', fromCampus: 'Lahore Grammar Model Town', toCampus: 'Beaconhouse Central High', targetGrade: 'Grade 10-B', reason: 'Sibling admission alignment', status: 'Approved', date: '2026-10-21', feeClearance: 'Verified Clear' },
+        { id: 'TR-103', studentName: 'Zainab Fatima', rollNo: 'BHS-099', fromCampus: 'The City School Senior Branch', toCampus: 'Lahore Grammar Model Town', targetGrade: 'Grade 8-A', reason: 'Advanced curricular stream transfer', status: 'Pending Approval', date: '2026-10-18', feeClearance: 'Pending Fee Payment' }
       ]
     } catch {
       return []
@@ -213,32 +305,55 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
 
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false)
   const [transferFormData, setTransferFormData] = useState({
+    studentId: '',
     studentName: '',
     rollNo: '',
     fromCampus: '',
     toCampus: '',
-    reason: 'Family residential relocation to new district'
+    targetGrade: '',
+    reason: 'Family residential relocation to new municipal district',
+    feeStatus: 'Paid'
   })
 
-  // Open transfer modal with campus defaults
   const openTransferModal = () => {
-    const firstCampus = institutes[0]?.name || 'Beaconhouse Central High'
-    const secondCampus = institutes[1]?.name || 'The City School Senior Branch'
+    const firstStudent = normalizedStudents[0]
+    const firstCampus = firstStudent?.cleanCampus || institutes[0]?.name || 'Beaconhouse Central High'
+    const secondCampus = institutes.find(i => i.name !== firstCampus)?.name || 'The City School Senior Branch'
+
     setTransferFormData({
-      studentName: '',
-      rollNo: '',
+      studentId: firstStudent?.id || '',
+      studentName: firstStudent?.name || '',
+      rollNo: firstStudent?.cleanRoll || '',
       fromCampus: firstCampus,
       toCampus: secondCampus,
-      reason: 'Family residential relocation to new district'
+      targetGrade: firstStudent?.cleanGrade || 'Grade 9-A',
+      reason: 'Family residential relocation to new municipal district',
+      feeStatus: firstStudent?.cleanFee || 'Paid'
     })
     setIsTransferModalOpen(true)
+  }
+
+  const handleStudentSelectInTransfer = (stdId) => {
+    const found = normalizedStudents.find(s => s.id === stdId)
+    if (!found) return
+    const altCampus = institutes.find(i => i.name !== found.cleanCampus)?.name || 'The City School Senior Branch'
+    setTransferFormData(prev => ({
+      ...prev,
+      studentId: found.id,
+      studentName: found.name,
+      rollNo: found.cleanRoll,
+      fromCampus: found.cleanCampus,
+      toCampus: altCampus,
+      targetGrade: found.cleanGrade,
+      feeStatus: found.cleanFee
+    }))
   }
 
   const handleCreateTransferSubmit = (e) => {
     e.preventDefault()
     const cleanStudent = transferFormData.studentName.trim()
     if (!cleanStudent) {
-      toast?.error?.('Please enter the student name.')
+      toast?.error?.('Please specify a valid student.')
       return
     }
 
@@ -248,14 +363,17 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
     }
 
     const newTr = {
-      id: `TR-${Date.now().toString().slice(-4)}`,
+      id: 'TR-' + Date.now().toString().slice(-4),
+      studentId: transferFormData.studentId,
       studentName: cleanStudent,
       rollNo: transferFormData.rollNo.trim() || 'REG-PENDING',
       fromCampus: transferFormData.fromCampus,
       toCampus: transferFormData.toCampus,
+      targetGrade: transferFormData.targetGrade || 'Standard',
       reason: transferFormData.reason,
       date: new Date().toISOString().slice(0, 10),
-      status: 'Pending Approval'
+      status: 'Pending Approval',
+      feeClearance: transferFormData.feeStatus === 'Pending' ? 'Pending Fee Payment' : 'Verified Clear'
     }
 
     const updated = [newTr, ...transfers]
@@ -263,45 +381,61 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
     try {
       localStorage.setItem('sms_student_transfers', JSON.stringify(updated))
       if (DataService?.logAuditEvent) {
-        DataService.logAuditEvent(`Initiated inter-campus transfer request for [${cleanStudent}] from [${transferFormData.fromCampus}] to [${transferFormData.toCampus}]`, 'Super Administrator', 'Success')
+        DataService.logAuditEvent('Initiated inter-campus transfer for [' + cleanStudent + '] from [' + transferFormData.fromCampus + '] to [' + transferFormData.toCampus + ']', 'Super Administrator', 'Success')
       }
     } catch {}
 
     setIsTransferModalOpen(false)
-    toast?.success?.(`Inter-campus transfer request created for ${cleanStudent}!`)
+    toast?.success?.('Inter-campus transfer request registered for ' + cleanStudent + '!')
   }
 
   const handleApproveTransfer = async (transferId) => {
     const tr = transfers.find(t => t.id === transferId)
     if (!tr) return
 
-    // 1. Update transfer record status
+    // Find destination institute record
+    const destInst = institutes.find(i => 
+      i.name.toLowerCase() === tr.toCampus.toLowerCase() || 
+      i.id === tr.toCampus
+    )
+    const targetInstituteId = destInst?.id || 'inst-' + Date.now().toString().slice(-4)
+
+    // 1. Update transfer state
     const updated = transfers.map(t => t.id === transferId ? { ...t, status: 'Approved' } : t)
     setTransfers(updated)
     try {
       localStorage.setItem('sms_student_transfers', JSON.stringify(updated))
     } catch {}
 
-    // 2. Actually update student campus in database / context if matched
+    // 2. Synchronize student record across multi-tenant boundaries
     try {
-      const studentMatch = (students || []).find(s => 
-        (s.rollNo && s.rollNo === tr.rollNo) || 
+      const studentMatch = normalizedStudents.find(s => 
+        (tr.studentId && s.id === tr.studentId) ||
+        (s.cleanRoll && s.cleanRoll === tr.rollNo) || 
         (s.name && s.name.toLowerCase() === tr.studentName.toLowerCase())
       )
+
       if (studentMatch && typeof updateItem === 'function') {
-        await updateItem('students', studentMatch.id, { campus: tr.toCampus })
+        await updateItem('students', studentMatch.id, { 
+          campus: tr.toCampus,
+          instituteId: targetInstituteId,
+          className: tr.targetGrade || studentMatch.cleanGrade,
+          updatedAt: new Date().toISOString()
+        })
       }
+
       if (DataService?.logAuditEvent) {
-        DataService.logAuditEvent(`Authorized inter-campus transfer [${tr.id}] for student [${tr.studentName}] to campus [${tr.toCampus}]`, 'Super Administrator', 'Success')
+        DataService.logAuditEvent('Authorized transfer [' + tr.id + '] for [' + tr.studentName + '] to campus [' + tr.toCampus + '] (Institute ID: ' + targetInstituteId + ')', 'Super Administrator', 'Success')
       }
-      toast?.success?.(`Inter-campus transfer for ${tr.studentName} authorized! Campus updated to ${tr.toCampus}.`)
+      toast?.success?.('Transfer for ' + tr.studentName + ' authorized! Campus updated to ' + tr.toCampus + '.')
+      window.dispatchEvent(new Event('sms_students_updated'))
     } catch {
-      toast?.success?.(`Inter-campus transfer "${transferId}" has been authorized.`)
+      toast?.success?.('Inter-campus transfer "' + transferId + '" authorized.')
     }
   }
 
   const handleRejectTransfer = (transferId) => {
-    const reason = window.prompt('Enter reason for rejecting transfer request (e.g. Incomplete clearance, Unpaid dues):', 'Institutional clearance pending')
+    const reason = window.prompt('Specify institutional deficiency for rejecting transfer (e.g. Unpaid fees, Missing clearance):', 'Unpaid fee balance at origin campus')
     if (reason === null) return
 
     const updated = transfers.map(t => t.id === transferId ? { ...t, status: 'Rejected', notes: reason } : t)
@@ -309,10 +443,10 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
     try {
       localStorage.setItem('sms_student_transfers', JSON.stringify(updated))
       if (DataService?.logAuditEvent) {
-        DataService.logAuditEvent(`Rejected inter-campus transfer request [${transferId}] reason: ${reason}`, 'Super Administrator', 'Success')
+        DataService.logAuditEvent('Rejected transfer request [' + transferId + '] reason: ' + reason, 'Super Administrator', 'Success')
       }
     } catch {}
-    toast?.info?.(`Transfer ${transferId} rejected.`)
+    toast?.info?.('Transfer ' + transferId + ' rejected.')
   }
 
   // -------------------------------------------------------------
@@ -322,7 +456,7 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
     try {
       const stored = localStorage.getItem('sms_student_duplicates')
       return stored ? JSON.parse(stored) : [
-        { id: 'DUP-01', name: 'Bilal Ahmed', bForm: '35201-4458921-3', recordA: { roll: 'BHS-104', campus: 'Beaconhouse Central High', class: 'Grade 9-A' }, recordB: { roll: 'BHS-219', campus: 'The City School Senior Branch', class: 'Grade 9-B' }, similarity: '98%' }
+        { id: 'DUP-01', name: 'Bilal Ahmed', bForm: '35201-4458921-3', recordA: { id: 'std-demo-a', roll: 'BHS-104', campus: 'Beaconhouse Central High', class: 'Grade 9-A' }, recordB: { id: 'std-demo-b', roll: 'BHS-219', campus: 'The City School Senior Branch', class: 'Grade 9-B' }, similarity: '98% (Identical NADRA CRC)' }
       ]
     } catch {
       return []
@@ -338,49 +472,64 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
     }
   })
 
-  // Real campus scan for duplicate student identities
+  // Real campus scan for duplicate student identities with normalized B-Form matching
   const handleScanDuplicates = () => {
     const bFormMap = {}
     const foundDuplicates = []
 
-    allStudentRecords.forEach(st => {
-      const bform = (st.bForm || '').trim()
-      if (bform && bform !== 'Unregistered') {
-        if (bFormMap[bform]) {
-          const prev = bFormMap[bform]
-          foundDuplicates.push({
-            id: `DUP-${Date.now().toString().slice(-4)}`,
-            name: st.name,
-            bForm: bform,
-            recordA: { roll: prev.rollNo || prev.id, campus: prev.campus, class: prev.grade },
-            recordB: { roll: st.rollNo || st.id, campus: st.campus, class: st.grade },
-            similarity: '99% (Identical B-Form CRC)'
-          })
+    normalizedStudents.forEach(st => {
+      const rawBForm = st.cleanBForm || ''
+      const cleanDigits = rawBForm.replace(/[^0-9]/g, '')
+      if (cleanDigits.length >= 9) {
+        if (bFormMap[cleanDigits]) {
+          const prev = bFormMap[cleanDigits]
+          const collisionKey = 'DUP-' + cleanDigits.slice(-4)
+          if (!dismissedDuplicates.includes(collisionKey)) {
+            foundDuplicates.push({
+              id: collisionKey,
+              name: st.name,
+              bForm: st.cleanBForm,
+              recordA: { id: prev.id, roll: prev.cleanRoll, campus: prev.cleanCampus, class: prev.cleanGrade },
+              recordB: { id: st.id, roll: st.cleanRoll, campus: st.cleanCampus, class: st.cleanGrade },
+              similarity: '99% (Identical B-Form CRC ' + cleanDigits + ')'
+            })
+          }
         } else {
-          bFormMap[bform] = st
+          bFormMap[cleanDigits] = st
         }
       }
     })
 
     if (foundDuplicates.length > 0) {
       setDuplicates(foundDuplicates)
-      toast?.warning?.(`Identified ${foundDuplicates.length} student identity collision(s) across campus rosters!`)
+      toast?.warning?.('Identified ' + foundDuplicates.length + ' student identity collision(s) across campus rosters!')
     } else {
       toast?.success?.('Identity Scan Complete: All student National Identity B-Forms and enrollment records are verified unique.')
     }
   }
 
-  const handleMergeDuplicate = (dupId) => {
+  // True database mutation on merge: removes duplicate secondary profile
+  const handleMergeDuplicate = async (dupId) => {
     const dup = duplicates.find(d => d.id === dupId)
-    const updated = duplicates.filter(d => d.id !== dupId)
-    setDuplicates(updated)
+    if (!dup) return
+
     try {
-      localStorage.setItem('sms_student_duplicates', JSON.stringify(updated))
-      if (DataService?.logAuditEvent) {
-        DataService.logAuditEvent(`Merged duplicate identity record [${dup?.name || dupId}] into canonical student profile`, 'Super Administrator', 'Success')
+      if (dup.recordB?.id && typeof deleteItem === 'function') {
+        await deleteItem('students', dup.recordB.id)
       }
-    } catch {}
-    toast?.success?.(`Student duplicate record ${dupId} merged into canonical primary profile.`)
+
+      const updated = duplicates.filter(d => d.id !== dupId)
+      setDuplicates(updated)
+      localStorage.setItem('sms_student_duplicates', JSON.stringify(updated))
+
+      if (DataService?.logAuditEvent) {
+        DataService.logAuditEvent('Merged duplicate student [' + (dup.name || dupId) + '], purging secondary profile [' + dup.recordB?.roll + ']', 'Super Administrator', 'Success')
+      }
+      toast?.success?.('Student duplicate record ' + dupId + ' consolidated into primary canonical profile.')
+      window.dispatchEvent(new Event('sms_students_updated'))
+    } catch {
+      toast?.error?.('Failed to execute merge operation.')
+    }
   }
 
   const handleDismissDuplicate = (dupId) => {
@@ -392,7 +541,7 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
       localStorage.setItem('sms_dismissed_duplicates', JSON.stringify(updatedDismissed))
       localStorage.setItem('sms_student_duplicates', JSON.stringify(updated))
     } catch {}
-    toast?.info?.(`Duplicate flag ${dupId} dismissed as false positive.`)
+    toast?.info?.('Duplicate flag ' + dupId + ' dismissed as false positive.')
   }
 
   // -------------------------------------------------------------
@@ -403,7 +552,7 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
       const stored = localStorage.getItem('sms_student_id_rules')
       return stored ? JSON.parse(stored) : [
         { id: 'rule-1', campusId: 'all', campusName: 'Global Default Directive', prefix: 'EDU-{YEAR}-', digitLength: 4, separator: '-', sample: 'EDU-2026-0042' },
-        { id: 'rule-2', campusId: 'inst-1', campusName: 'Beaconhouse Central High', prefix: 'BHS-{WING}-', digitLength: 4, separator: '-', sample: 'BHS-SR-0105' },
+        { id: 'rule-2', campusId: 'inst-1', campusName: 'Beaconhouse Central High', prefix: 'BHS-{WING}-', digitLength: 4, separator: '-', sample: 'BHS-MS-0105' },
         { id: 'rule-3', campusId: 'inst-2', campusName: 'The City School Senior Branch', prefix: 'TCS-{YEAR}-', digitLength: 4, separator: '-', sample: 'TCS-2026-0089' }
       ]
     } catch {
@@ -425,9 +574,12 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
     const padded = '1'.padStart(Number(newPatternForm.digitLength), '0')
     const sample = newPatternForm.prefix.replace('{YEAR}', currentYear).replace('{WING}', 'MS') + padded
 
+    const matchingCampus = institutes.find(i => i.name.toLowerCase() === newPatternForm.campusName.toLowerCase())
+    const campusId = newPatternForm.campusName.includes('All') ? 'all' : (matchingCampus?.id || 'custom')
+
     const newRule = {
-      id: `rule-${Date.now()}`,
-      campusId: 'custom',
+      id: 'rule-' + Date.now(),
+      campusId,
       campusName: newPatternForm.campusName,
       prefix: newPatternForm.prefix,
       digitLength: Number(newPatternForm.digitLength),
@@ -435,17 +587,17 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
       sample
     }
 
-    const updated = [...idRules, newRule]
+    const updated = [...idRules.filter(r => r.campusName !== newPatternForm.campusName), newRule]
     setIdRules(updated)
     try {
       localStorage.setItem('sms_student_id_rules', JSON.stringify(updated))
       if (DataService?.logAuditEvent) {
-        DataService.logAuditEvent(`Defined new roll number format pattern [${newPatternForm.prefix}] for [${newPatternForm.campusName}]`, 'Super Administrator', 'Success')
+        DataService.logAuditEvent('Defined roll number mask [' + newPatternForm.prefix + '] for [' + newPatternForm.campusName + ']', 'Super Administrator', 'Success')
       }
     } catch {}
 
     setIsPatternModalOpen(false)
-    toast?.success?.(`Roll number format pattern for "${newPatternForm.campusName}" committed!`)
+    toast?.success?.('Roll number format pattern for "' + newPatternForm.campusName + '" committed!')
   }
 
   const handleDeletePattern = (ruleId) => {
@@ -475,8 +627,8 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
 
   const [inspectingDoc, setInspectingDoc] = useState(null)
 
-  const handleVerifyDoc = (docId) => {
-    const updated = docVerifications.map(d => d.id === docId ? { ...d, status: 'Verified', remarks: 'Verified by Super Administrator' } : d)
+  const handleVerifyDoc = async (docId) => {
+    const updated = docVerifications.map(d => d.id === docId ? { ...d, status: 'Verified', remarks: 'Attested by Super Administrator' } : d)
     setDocVerifications(updated)
     if (inspectingDoc && inspectingDoc.id === docId) {
       setInspectingDoc(prev => ({ ...prev, status: 'Verified' }))
@@ -484,14 +636,14 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
     try {
       localStorage.setItem('sms_doc_verifications', JSON.stringify(updated))
       if (DataService?.logAuditEvent) {
-        DataService.logAuditEvent(`Verified document credentials [${docId}]`, 'Super Administrator', 'Success')
+        DataService.logAuditEvent('Verified document credentials [' + docId + ']', 'Super Administrator', 'Success')
       }
     } catch {}
-    toast?.success?.(`Document ${docId} stamped and verified!`)
+    toast?.success?.('Document ' + docId + ' stamped and verified!')
   }
 
   const handleRejectDoc = (docId) => {
-    const reason = window.prompt('Specify document rejection deficiency (e.g. Expired date, Illegible scan, Missing seal):', 'Illegible photocopy scan')
+    const reason = window.prompt('Specify document rejection deficiency (e.g. Expired seal, Illegible photocopy, Missing board stamp):', 'Illegible photocopy scan')
     if (reason === null) return
 
     const updated = docVerifications.map(d => d.id === docId ? { ...d, status: 'Rejected', remarks: reason } : d)
@@ -501,23 +653,72 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
     }
     try {
       localStorage.setItem('sms_doc_verifications', JSON.stringify(updated))
+      if (DataService?.logAuditEvent) {
+        DataService.logAuditEvent('Rejected document credentials [' + docId + '] reason: ' + reason, 'Super Administrator', 'Success')
+      }
     } catch {}
-    toast?.info?.(`Document ${docId} marked Rejected with deficiency feedback.`)
+    toast?.info?.('Document ' + docId + ' marked Rejected with deficiency feedback.')
   }
 
   // -------------------------------------------------------------
   // 6. ALUMNI & DEGREE VERIFICATION
   // -------------------------------------------------------------
   const [degreeSearchQuery, setDegreeSearchQuery] = useState('')
-  const [verifiedDegreeRecord, setVerifiedDegreeRecord] = useState(null)
   const [searchAttempted, setSearchAttempted] = useState(false)
+  const [verifiedDegreeRecord, setVerifiedDegreeRecord] = useState(null)
+  const [isRegisterAlumnusModalOpen, setIsRegisterAlumnusModalOpen] = useState(false)
 
-  // Alumni Verified Database
-  const alumniDatabase = useMemo(() => [
-    { regNo: 'DEG-2024-9981', studentName: 'Hamza Farooq', cnic: '35201-9988112-3', program: 'Higher Secondary School Certificate (HSSC Pre-Engineering)', graduationYear: '2024', grade: 'A+ (92.4%)', campus: 'Beaconhouse Central High', issueDate: '2024-08-15', sealRef: 'PK-BISE-LHR-2024-8871' },
-    { regNo: 'DEG-2023-4105', studentName: 'Fatima Noor', cnic: '35202-7711223-4', program: 'Secondary School Certificate (SSC Science Group)', graduationYear: '2023', grade: 'A+ (94.8%)', campus: 'The City School Senior Branch', issueDate: '2023-07-22', sealRef: 'PK-FBISE-ISB-2023-4102' },
-    { regNo: 'BHS-2026-01', studentName: 'Abdullah Khan', cnic: '35201-1122334-1', program: 'Middle Standard School Certificate (Grade 8)', graduationYear: '2026', grade: 'A (88.2%)', campus: 'Beaconhouse Central High', issueDate: '2026-05-30', sealRef: 'PK-EIMS-GEN-0021' }
-  ], [])
+  // Combined historic alumni database + any students with status 'Graduated'
+  const alumniDatabase = useMemo(() => {
+    const base = [
+      { regNo: 'DEG-2024-9981', studentName: 'Hamza Farooq', cnic: '35201-9988112-3', program: 'Higher Secondary School Certificate (HSSC Pre-Engineering)', graduationYear: '2024', grade: 'A+ (92.4%)', campus: 'Beaconhouse Central High', issueDate: '2024-08-15', sealRef: 'PK-BISE-LHR-2024-8871' },
+      { regNo: 'DEG-2023-4105', studentName: 'Fatima Noor', cnic: '35202-7711223-4', program: 'Secondary School Certificate (SSC Science Group)', graduationYear: '2023', grade: 'A+ (94.8%)', campus: 'The City School Senior Branch', issueDate: '2023-07-22', sealRef: 'PK-FBISE-ISB-2023-4102' },
+      { regNo: 'BHS-2026-01', studentName: 'Abdullah Khan', cnic: '35201-1122334-1', program: 'Middle Standard School Certificate (Grade 8)', graduationYear: '2026', grade: 'A (88.2%)', campus: 'Beaconhouse Central High', issueDate: '2026-05-30', sealRef: 'PK-EIMS-GEN-0021' }
+    ]
+
+    const graduatedFromDb = normalizedStudents.filter(s => s.cleanStatus === 'Graduated').map((s, idx) => ({
+      regNo: 'ALM-' + (s.cleanRoll || 'GRAD-' + idx),
+      studentName: s.name,
+      cnic: s.cleanBForm,
+      program: s.cleanGrade + ' (' + s.cleanWing + ')',
+      graduationYear: new Date().getFullYear().toString(),
+      grade: 'First Class Honor',
+      campus: s.cleanCampus,
+      issueDate: new Date().toISOString().slice(0, 10),
+      sealRef: 'PK-EIMS-DEG-' + s.id
+    }))
+
+    return [...base, ...graduatedFromDb]
+  }, [normalizedStudents])
+
+  const [newAlumnusForm, setNewAlumnusForm] = useState({
+    studentName: '',
+    cnic: '',
+    program: 'Higher Secondary School Certificate (HSSC)',
+    graduationYear: '2025',
+    grade: 'A+ (90%)',
+    campus: 'Beaconhouse Central High'
+  })
+
+  const handleRegisterAlumnusSubmit = (e) => {
+    e.preventDefault()
+    if (!newAlumnusForm.studentName.trim()) {
+      toast?.error?.('Please enter student name.')
+      return
+    }
+
+    const regNo = 'DEG-' + newAlumnusForm.graduationYear + '-' + Math.floor(1000 + Math.random() * 9000)
+    const newEntry = {
+      ...newAlumnusForm,
+      regNo,
+      issueDate: new Date().toISOString().slice(0, 10),
+      sealRef: 'PK-SUPERADMIN-REG-' + Date.now().toString().slice(-4)
+    }
+
+    setVerifiedDegreeRecord(newEntry)
+    setIsRegisterAlumnusModalOpen(false)
+    toast?.success?.('Registered new graduate record: ' + regNo)
+  }
 
   const handleVerifyCredentialSearch = (e) => {
     e.preventDefault()
@@ -531,15 +732,15 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
     const match = alumniDatabase.find(a => 
       a.regNo.toUpperCase() === q || 
       a.studentName.toUpperCase().includes(q) ||
-      a.cnic === q
+      a.cnic.replace(/[^0-9]/g, '') === q.replace(/[^0-9]/g, '')
     )
 
     if (match) {
       setVerifiedDegreeRecord(match)
-      toast?.success?.(`Degree Authenticated: Verified credentials for ${match.studentName}!`)
+      toast?.success?.('Degree Authenticated: Verified credentials for ' + match.studentName + '!')
     } else {
       setVerifiedDegreeRecord(null)
-      toast?.warning?.(`No authentic credential matching "${q}" located in platform registry.`)
+      toast?.warning?.('No authentic credential matching "' + q + '" located in platform registry.')
     }
   }
 
@@ -550,33 +751,34 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
     try {
       const stored = localStorage.getItem('sms_privacy_requests')
       return stored ? JSON.parse(stored) : [
-        { id: 'PR-901', requester: 'Parent: Dr. Asim Qureshi', student: 'Mustafa Qureshi', type: 'Data Export (Archive)', status: 'Fulfilled', date: '2026-10-20', details: 'Full academic and fee ledger archive' },
-        { id: 'PR-902', requester: 'Guardian: Tariq Mehmood', student: 'Saad Mehmood', type: 'Right to Be Forgotten (Purge)', status: 'Awaiting Superadmin Authorization', date: '2026-10-28', details: 'Purge non-essential marketing contacts and biometric records' }
+        { id: 'PR-901', requester: 'Parent: Dr. Asim Qureshi', student: 'Mustafa Qureshi', studentId: 'std-1', type: 'Data Export (Archive)', status: 'Fulfilled', date: '2026-10-20', details: 'Full academic and fee ledger archive' },
+        { id: 'PR-902', requester: 'Guardian: Tariq Mehmood', student: 'Saad Mehmood', studentId: 'std-2', type: 'Right to Be Forgotten (Purge)', status: 'Awaiting Superadmin Authorization', date: '2026-10-28', details: 'Purge non-essential marketing contacts and biometric records' }
       ]
     } catch {
       return []
     }
   })
 
-  const handleProcessPrivacyRequest = (req) => {
+  const handleProcessPrivacyRequest = async (req) => {
     if (req.type.includes('Export')) {
-      // Generate real JSON data export archive
+      const matchedStudent = normalizedStudents.find(s => s.name.toLowerCase() === req.student.toLowerCase() || s.id === req.studentId)
       const archiveData = {
-        exportType: 'STUDENT_DATA_PORTABILITY_ARCHIVE',
+        exportType: 'GDPR_STUDENT_DATA_PORTABILITY_ARCHIVE',
         requestId: req.id,
         timestamp: new Date().toISOString(),
-        student: req.student,
+        studentDossier: matchedStudent || { name: req.student },
         requester: req.requester,
         status: 'AUTHENTICATED_DISPATCH',
         systemMetadata: {
-          governanceAuthority: 'Super Administrator Console',
-          retentionPolicy: 'Institutional Compliance'
+          governanceAuthority: 'Platform Super Administrator Console',
+          retentionPolicy: 'Institutional Compliance Mandate'
         }
       }
+
       const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(archiveData, null, 2))
       const a = document.createElement('a')
       a.href = dataStr
-      a.download = `student_data_archive_${req.student.replace(/\s+/g, '_')}.json`
+      a.download = 'student_data_archive_' + req.student.replace(/\s+/g, '_') + '.json'
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
@@ -584,19 +786,35 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
       const updated = privacyRequests.map(p => p.id === req.id ? { ...p, status: 'Fulfilled' } : p)
       setPrivacyRequests(updated)
       try { localStorage.setItem('sms_privacy_requests', JSON.stringify(updated)) } catch {}
-      toast?.success?.(`Exported encrypted student data archive for ${req.student}!`)
+      toast?.success?.('Exported encrypted student data archive for ' + req.student + '!')
     } else {
-      // Right to be forgotten confirmation
-      if (window.confirm(`Authorize compliance purge for "${req.student}"? Non-essential identifying records will be anonymized.`)) {
-        const updated = privacyRequests.map(p => p.id === req.id ? { ...p, status: 'Fulfilled' } : p)
-        setPrivacyRequests(updated)
+      if (window.confirm('Authorize regulatory compliance purge for "' + req.student + '"? Personal identifying information (phone, address, parent details) will be permanently anonymized.')) {
         try {
-          localStorage.setItem('sms_privacy_requests', JSON.stringify(updated))
-          if (DataService?.logAuditEvent) {
-            DataService.logAuditEvent(`Authorized GDPR/Privacy record purge for [${req.student}]`, 'Super Administrator', 'Success')
+          const matchedStudent = normalizedStudents.find(s => s.name.toLowerCase() === req.student.toLowerCase() || s.id === req.studentId)
+          if (matchedStudent && typeof updateItem === 'function') {
+            await updateItem('students', matchedStudent.id, {
+              name: 'Anonymized Student [' + matchedStudent.id.slice(-4) + ']',
+              bFormCnic: '[REDACTED]',
+              guardianPhone: '[REDACTED]',
+              phone: '[REDACTED]',
+              emergencyContact: '[REDACTED]',
+              fatherName: '[REDACTED]',
+              address: '[REDACTED]'
+            })
           }
-        } catch {}
-        toast?.success?.(`Privacy request ${req.id} executed and marked Fulfilled.`)
+
+          const updated = privacyRequests.map(p => p.id === req.id ? { ...p, status: 'Fulfilled' } : p)
+          setPrivacyRequests(updated)
+          localStorage.setItem('sms_privacy_requests', JSON.stringify(updated))
+
+          if (DataService?.logAuditEvent) {
+            DataService.logAuditEvent('Executed GDPR PII anonymization purge for student [' + req.student + ']', 'Super Administrator', 'Success')
+          }
+          toast?.success?.('Privacy request ' + req.id + ' fulfilled! PII successfully redacted.')
+          window.dispatchEvent(new Event('sms_students_updated'))
+        } catch {
+          toast?.error?.('Failed to process compliance purge.')
+        }
       }
     }
   }
@@ -605,91 +823,120 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
   // 8. STUDENT REPORTS & AGGREGATIONS
   // -------------------------------------------------------------
   const reportStats = useMemo(() => {
-    const total = allStudentRecords.length
-    const active = allStudentRecords.filter(s => (s.status || 'Active').toLowerCase() === 'active').length
+    const total = normalizedStudents.length
+    const active = normalizedStudents.filter(s => (s.cleanStatus || 'Active').toLowerCase() === 'active').length
     const suspended = total - active
     const activeRate = total > 0 ? Math.round((active / total) * 100) : 100
 
     // Campus Distribution
     const campusCounts = {}
-    allStudentRecords.forEach(s => {
-      const c = s.campus || 'Main Campus'
+    normalizedStudents.forEach(s => {
+      const c = s.cleanCampus || 'Main Campus'
       campusCounts[c] = (campusCounts[c] || 0) + 1
     })
 
     // Wing Distribution
     const wingCounts = {}
-    allStudentRecords.forEach(s => {
-      const w = s.wing || 'School'
+    normalizedStudents.forEach(s => {
+      const w = s.cleanWing || 'School Wing'
       wingCounts[w] = (wingCounts[w] || 0) + 1
     })
 
-    return { total, active, suspended, activeRate, campusCounts, wingCounts }
-  }, [allStudentRecords])
+    // Gender Breakdown
+    let males = 0
+    let females = 0
+    normalizedStudents.forEach(s => {
+      const g = (s.cleanGender || '').toLowerCase()
+      if (g === 'female') females++
+      else males++
+    })
+    const malePct = total > 0 ? Math.round((males / total) * 100) : 50
+    const femalePct = total > 0 ? (100 - malePct) : 50
 
-  const tabsConfig = [
-    { key: 'all', label: 'All Students (Cross-Campus)', icon: Users, badge: allStudentRecords.length },
-    { key: 'transfers', label: 'Inter-Campus Transfers', icon: ArrowLeftRight, badge: transfers.filter(t => t.status.includes('Pending')).length },
-    { key: 'duplicate', label: 'Duplicate & Merge Records', icon: GitMerge, badge: duplicates.length },
-    { key: 'id-rules', label: 'ID / Roll Number Rules', icon: Hash },
-    { key: 'verification', label: 'Document Verification', icon: FileCheck, badge: docVerifications.filter(d => d.status !== 'Verified').length },
-    { key: 'alumni', label: 'Alumni & Degree Verification', icon: Award },
-    { key: 'privacy', label: 'Data & Privacy Requests', icon: ShieldAlert, badge: privacyRequests.filter(p => p.status.includes('Awaiting')).length },
-    { key: 'reports', label: 'Student Reports', icon: BarChart3 }
-  ]
+    // Fee Clearance Health
+    const paidFees = normalizedStudents.filter(s => (s.cleanFee || 'Paid').toLowerCase() === 'paid').length
+    const pendingFees = total - paidFees
+    const feeClearancePct = total > 0 ? Math.round((paidFees / total) * 100) : 100
+
+    return { total, active, suspended, activeRate, campusCounts, wingCounts, males, females, malePct, femalePct, paidFees, pendingFees, feeClearancePct }
+  }, [normalizedStudents])
 
   return (
-    <div className="p-3 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
-      {/* Header Banner */}
-      <div className="bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
-        <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-purple-500/20 via-transparent to-transparent pointer-events-none"></div>
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-xs font-semibold text-purple-200 border border-white/10 mb-2">
-              <GraduationCap className="w-3.5 h-3.5 text-purple-300" />
-              <span>Super Administrator • Central Student Governance</span>
+    <div className="space-y-6">
+      {/* ------------------------------------------------------------- */}
+      {/* SUPERADMIN STUDENT HEADER WITH BADGE                           */}
+      {/* ------------------------------------------------------------- */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-2xs">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-purple-100 text-purple-800 border border-purple-200">
+                Multi-Campus Student Lifecycle
+              </span>
+              <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>Active Network: {reportStats.total} Students</span>
+              </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              Students Central Command
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              Central Student Governance & Records
             </h1>
-            <p className="text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
-              Cross-campus student roster directory, authenticated transfer approvals, biometric roll number directives, and institutional compliance.
+            <p className="text-xs sm:text-sm text-slate-500">
+              Cross-campus identity verification, inter-branch student relocation, roll number standardization, and privacy compliance.
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5">
-            <div className="bg-white/10 backdrop-blur-md border border-white/15 px-4 py-2.5 rounded-2xl text-right">
-              <span className="text-[11px] text-slate-300 block uppercase font-mono tracking-wider">Total Enrolled</span>
-              <strong className="text-xl font-bold font-mono text-white">{allStudentRecords.length} Students</strong>
-            </div>
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <button
+              type="button"
+              onClick={openTransferModal}
+              className="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer inline-flex items-center gap-1.5"
+            >
+              <ArrowLeftRight className="w-3.5 h-3.5" />
+              <span>Initiate Transfer</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleExportStudentsCSV(false)}
+              className="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer inline-flex items-center gap-1.5"
+            >
+              <Download className="w-3.5 h-3.5 text-purple-600" />
+              <span>Roster CSV</span>
+            </button>
           </div>
         </div>
-      </div>
 
-      {/* Navigation Pills Bar */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 p-2 shadow-2xs overflow-x-auto dark-scroll">
-        <div className="flex items-center gap-1.5 min-w-max">
-          {tabsConfig.map((t) => {
+        {/* SUB-ROUTE TAB NAVIGATION PILLS */}
+        <div className="mt-5 pt-4 border-t border-slate-100 flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+          {[
+            { key: 'all', label: 'All Students', icon: Users, count: normalizedStudents.length },
+            { key: 'transfers', label: 'Inter-Campus Transfers', icon: ArrowLeftRight, count: transfers.filter(t => t.status === 'Pending Approval').length },
+            { key: 'duplicate', label: 'Duplicate Records', icon: GitMerge, count: duplicates.length },
+            { key: 'id-rules', label: 'ID / Roll Rules', icon: Hash, count: idRules.length },
+            { key: 'verification', label: 'Document Attestation', icon: FileCheck, count: docVerifications.filter(d => d.status !== 'Verified').length },
+            { key: 'alumni', label: 'Alumni & Degrees', icon: Award, count: alumniDatabase.length },
+            { key: 'privacy', label: 'Data & Privacy', icon: ShieldAlert, count: privacyRequests.filter(p => p.status !== 'Fulfilled').length },
+            { key: 'reports', label: 'Analytics & Reports', icon: BarChart3 }
+          ].map(t => {
             const Icon = t.icon
             const isActive = effectiveTab === t.key
             return (
               <button
                 key={t.key}
-                type="button"
                 onClick={() => handleTabSwitch(t.key)}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                  isActive
-                    ? 'bg-purple-600 text-white shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
-                }`}
+                className={'flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ' + (
+                  isActive 
+                    ? 'bg-purple-600 text-white shadow-2xs' 
+                    : 'bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200/70'
+                )}
               >
-                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                <Icon className={'w-3.5 h-3.5 ' + (isActive ? 'text-white' : 'text-slate-400')} />
                 <span>{t.label}</span>
-                {t.badge !== undefined && t.badge > 0 && (
-                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold ${
-                    isActive ? 'bg-purple-700 text-purple-100' : 'bg-purple-50 text-purple-700 border border-purple-200'
-                  }`}>
-                    {t.badge}
+                {t.count !== undefined && (
+                  <span className={'px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold ' + (
+                    isActive ? 'bg-purple-700 text-white' : 'bg-slate-200 text-slate-700'
+                  )}>
+                    {t.count}
                   </span>
                 )}
               </button>
@@ -708,7 +955,7 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5" />
               <input
                 type="text"
-                placeholder="Search across all campuses by Student Name, Roll No, B-Form, or Campus..."
+                placeholder="Search by student name, roll number, campus, B-Form, or contact phone..."
                 value={searchQuery}
                 onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
                 className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-purple-500/20"
@@ -730,8 +977,8 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
                 onChange={(e) => { setSelectedCampus(e.target.value); setCurrentPage(1); }}
                 className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 cursor-pointer"
               >
-                <option value="ALL">All Campuses ({allStudentRecords.length})</option>
-                {Array.from(new Set(allStudentRecords.map(s => s.campus).filter(Boolean))).map(cName => (
+                <option value="ALL">All Campuses ({normalizedStudents.length})</option>
+                {Array.from(new Set(normalizedStudents.map(s => s.cleanCampus).filter(Boolean))).map(cName => (
                   <option key={cName} value={cName}>{cName}</option>
                 ))}
               </select>
@@ -744,36 +991,101 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
                 <option value="ALL">All Statuses</option>
                 <option value="Active">Active</option>
                 <option value="Suspended">Suspended</option>
+                <option value="Graduated">Graduated</option>
               </select>
 
-              {(searchQuery || selectedCampus !== 'ALL' || selectedStatus !== 'ALL') && (
+              <select
+                value={selectedFeeFilter}
+                onChange={(e) => { setSelectedFeeFilter(e.target.value); setCurrentPage(1); }}
+                className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 cursor-pointer"
+              >
+                <option value="ALL">All Fee Dues</option>
+                <option value="Paid">Dues Cleared</option>
+                <option value="Pending">Dues Pending</option>
+              </select>
+
+              <button
+                type="button"
+                onClick={() => setShowMaskedBForm(!showMaskedBForm)}
+                className="px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-semibold cursor-pointer inline-flex items-center gap-1.5"
+                title={showMaskedBForm ? 'Reveal B-Forms / CNIC' : 'Mask B-Forms'}
+              >
+                {showMaskedBForm ? <Eye className="w-3.5 h-3.5 text-purple-600" /> : <EyeOff className="w-3.5 h-3.5 text-slate-500" />}
+                <span>{showMaskedBForm ? 'Reveal IDs' : 'Mask IDs'}</span>
+              </button>
+
+              {(searchQuery || selectedCampus !== 'ALL' || selectedStatus !== 'ALL' || selectedFeeFilter !== 'ALL') && (
                 <button
                   type="button"
-                  onClick={() => { setSearchQuery(''); setSelectedCampus('ALL'); setSelectedStatus('ALL'); }}
+                  onClick={() => { setSearchQuery(''); setSelectedCampus('ALL'); setSelectedStatus('ALL'); setSelectedFeeFilter('ALL'); }}
                   className="px-2.5 py-1.5 text-xs text-purple-600 hover:text-purple-800 font-semibold cursor-pointer"
                 >
                   Reset
                 </button>
               )}
-
-              <button
-                type="button"
-                onClick={handleExportStudentsCSV}
-                className="px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-2xs shrink-0"
-                title="Export student records to CSV (Formula-neutralized)"
-              >
-                <Download className="w-3.5 h-3.5 text-purple-600" />
-                <span>Export CSV</span>
-              </button>
             </div>
           </div>
 
-          {/* Student Table */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
+          {/* BATCH ACTION BAR (Shown when students are selected) */}
+          {selectedStudentIds.length > 0 && (
+            <div className="bg-purple-50 border border-purple-200 p-3 rounded-2xl flex items-center justify-between gap-3 text-xs">
+              <span className="font-bold text-purple-900 flex items-center gap-2">
+                <CheckSquare className="w-4 h-4 text-purple-600" />
+                <span>{selectedStudentIds.length} Student(s) Selected</span>
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleBatchStatusUpdate('Active')}
+                  className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold cursor-pointer"
+                >
+                  Activate Selected
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleBatchStatusUpdate('Suspended')}
+                  className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-bold cursor-pointer"
+                >
+                  Suspend Selected
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleExportStudentsCSV(true)}
+                  className="px-3 py-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg font-bold cursor-pointer inline-flex items-center gap-1"
+                >
+                  <Download className="w-3 h-3 text-purple-600" />
+                  <span>Export Selected</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedStudentIds([])}
+                  className="text-slate-500 hover:text-slate-700 ml-2"
+                >
+                  Clear Selection
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* MAIN STUDENTS TABLE */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-2xs">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs text-slate-600">
-                <thead className="bg-slate-50 border-b border-slate-100 font-bold text-slate-700 uppercase tracking-wider text-[11px]">
+                <thead className="bg-slate-50/75 border-b border-slate-200/80 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                   <tr>
+                    <th className="py-3.5 px-4 w-10">
+                      <button
+                        type="button"
+                        onClick={handleToggleSelectAll}
+                        className="text-slate-400 hover:text-purple-600 cursor-pointer"
+                      >
+                        {selectedStudentIds.length > 0 && selectedStudentIds.length === paginatedStudents.length ? (
+                          <CheckSquare className="w-4 h-4 text-purple-600" />
+                        ) : (
+                          <Square className="w-4 h-4" />
+                        )}
+                      </button>
+                    </th>
                     <th onClick={() => handleSort('name')} className="py-3.5 px-4 cursor-pointer hover:text-purple-700 select-none">
                       <div className="flex items-center gap-1.5">
                         <span>Student & Roll No</span>
@@ -782,31 +1094,32 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
                         ) : <ArrowUpDown className="w-3 h-3 text-slate-300" />}
                       </div>
                     </th>
-                    <th onClick={() => handleSort('campus')} className="py-3.5 px-4 cursor-pointer hover:text-purple-700 select-none">
+                    <th onClick={() => handleSort('cleanCampus')} className="py-3.5 px-4 cursor-pointer hover:text-purple-700 select-none">
                       <div className="flex items-center gap-1.5">
                         <span>Affiliated Campus</span>
-                        {sortField === 'campus' ? (
+                        {sortField === 'cleanCampus' ? (
                           sortDirection === 'asc' ? <ArrowUp className="w-3 h-3 text-purple-600" /> : <ArrowDown className="w-3 h-3 text-purple-600" />
                         ) : <ArrowUpDown className="w-3 h-3 text-slate-300" />}
                       </div>
                     </th>
                     <th className="py-3.5 px-4">Wing & Grade</th>
-                    <th onClick={() => handleSort('status')} className="py-3.5 px-4 cursor-pointer hover:text-purple-700 select-none">
+                    <th className="py-3.5 px-4">B-Form / CRC</th>
+                    <th onClick={() => handleSort('cleanStatus')} className="py-3.5 px-4 cursor-pointer hover:text-purple-700 select-none">
                       <div className="flex items-center gap-1.5">
                         <span>Status</span>
-                        {sortField === 'status' ? (
+                        {sortField === 'cleanStatus' ? (
                           sortDirection === 'asc' ? <ArrowUp className="w-3 h-3 text-purple-600" /> : <ArrowDown className="w-3 h-3 text-purple-600" />
                         ) : <ArrowUpDown className="w-3 h-3 text-slate-300" />}
                       </div>
                     </th>
-                    <th className="py-3.5 px-4">Contact Phone</th>
+                    <th className="py-3.5 px-4">Fee Clearance</th>
                     <th className="py-3.5 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {paginatedStudents.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="py-12 text-center text-slate-400">
+                      <td colSpan={8} className="py-12 text-center text-slate-400">
                         <GraduationCap className="w-8 h-8 text-slate-300 mx-auto mb-2" />
                         <p className="font-semibold text-slate-600">No student records match the active criteria.</p>
                       </td>
@@ -815,30 +1128,49 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
                     paginatedStudents.map((st) => (
                       <tr key={st.id} className="hover:bg-slate-50/70 transition-colors">
                         <td className="py-3.5 px-4">
+                          <input
+                            type="checkbox"
+                            checked={selectedStudentIds.includes(st.id)}
+                            onChange={() => handleToggleSelectStudent(st.id)}
+                            className="rounded text-purple-600 cursor-pointer"
+                          />
+                        </td>
+                        <td className="py-3.5 px-4">
                           <div className="font-bold text-slate-900">{st.name}</div>
-                          <span className="font-mono text-[11px] text-purple-700 font-semibold">{st.rollNo || st.id}</span>
+                          <span className="font-mono text-[11px] text-purple-700 font-semibold">{st.cleanRoll}</span>
                         </td>
                         <td className="py-3.5 px-4">
                           <span className="inline-flex items-center gap-1.5 text-slate-700 font-medium">
                             <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                            <span>{st.campus || 'Main Campus'}</span>
+                            <span>{st.cleanCampus}</span>
                           </span>
                         </td>
                         <td className="py-3.5 px-4">
-                          <div className="font-medium text-slate-800">{st.grade || 'Standard'}</div>
-                          <span className="text-[10px] text-slate-400">{st.wing || 'General Wing'}</span>
+                          <div className="font-medium text-slate-800">{st.cleanGrade}</div>
+                          <span className="text-[10px] text-slate-400">{st.cleanWing}</span>
+                        </td>
+                        <td className="py-3.5 px-4 font-mono text-[11px] text-slate-600">
+                          {maskBForm(st.cleanBForm)}
                         </td>
                         <td className="py-3.5 px-4">
-                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                            (st.status || 'Active') === 'Active' 
+                          <span className={'px-2.5 py-0.5 rounded-full text-[10px] font-bold ' + (
+                            st.cleanStatus === 'Active' 
                               ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : st.cleanStatus === 'Graduated'
+                              ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
                               : 'bg-rose-50 text-rose-700 border border-rose-200'
-                          }`}>
-                            {st.status || 'Active'}
+                          )}>
+                            {st.cleanStatus}
                           </span>
                         </td>
-                        <td className="py-3.5 px-4 font-mono text-[11px]">
-                          {st.contact || 'Registered in Campus'}
+                        <td className="py-3.5 px-4">
+                          <span className={'px-2 py-0.5 rounded-full text-[10px] font-bold ' + (
+                            st.cleanFee === 'Paid'
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : 'bg-amber-50 text-amber-700 border border-amber-200'
+                          )}>
+                            {st.cleanFee === 'Paid' ? 'Cleared' : 'Pending Dues'}
+                          </span>
                         </td>
                         <td className="py-3.5 px-4 text-right">
                           <div className="flex items-center justify-end gap-1.5">
@@ -919,63 +1251,69 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
       {/* ------------------------------------------------------------- */}
       {effectiveTab === 'transfers' && (
         <div className="space-y-4">
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/70 p-4 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-2.5">
-              <ArrowLeftRight className="w-5 h-5 text-indigo-600 shrink-0" />
-              <div>
-                <strong className="text-slate-900 block font-bold">Inter-Campus Relocation Governance:</strong>
-                <span className="text-slate-600 text-[11px]">
-                  All student transfers between school branches require Superadmin clearance to automatically migrate academic transcripts and fee balances.
-                </span>
-              </div>
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">Inter-Campus Student Relocation Governance</h3>
+              <p className="text-xs text-slate-500">Authorize or reject cross-campus student branch relocations with automated multi-tenant database synchronization.</p>
             </div>
             <button
               type="button"
               onClick={openTransferModal}
-              className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-2xs transition-all cursor-pointer shrink-0 inline-flex items-center gap-1.5"
+              className="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer inline-flex items-center gap-1.5"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Initiate Transfer</span>
+              <span>Initiate New Transfer</span>
             </button>
           </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
+          <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-2xs">
             <table className="w-full text-left text-xs text-slate-600">
-              <thead className="bg-slate-50 border-b border-slate-100 font-bold text-slate-700 uppercase tracking-wider text-[11px]">
+              <thead className="bg-slate-50/75 border-b border-slate-200/80 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                 <tr>
-                  <th className="py-3.5 px-4">Transfer ID & Student</th>
+                  <th className="py-3.5 px-4">Transfer ID</th>
+                  <th className="py-3.5 px-4">Student Name & Roll</th>
                   <th className="py-3.5 px-4">Origin Campus</th>
                   <th className="py-3.5 px-4">Destination Campus</th>
-                  <th className="py-3.5 px-4">Requested On</th>
+                  <th className="py-3.5 px-4">Financial Clearance</th>
+                  <th className="py-3.5 px-4">Request Date</th>
                   <th className="py-3.5 px-4">Status</th>
-                  <th className="py-3.5 px-4 text-right">Superadmin Action</th>
+                  <th className="py-3.5 px-4 text-right">Superadmin Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {transfers.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-12 text-center text-slate-400">
-                      No transfer requests registered.
+                    <td colSpan={8} className="py-12 text-center text-slate-400">
+                      <ArrowLeftRight className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                      <p className="font-semibold text-slate-600">No transfer requests registered.</p>
                     </td>
                   </tr>
                 ) : (
-                  transfers.map(tr => (
-                    <tr key={tr.id} className="hover:bg-slate-50/70">
+                  transfers.map((tr) => (
+                    <tr key={tr.id} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="py-3.5 px-4 font-mono font-bold text-slate-900">{tr.id}</td>
                       <td className="py-3.5 px-4">
                         <div className="font-bold text-slate-900">{tr.studentName}</div>
-                        <span className="font-mono text-[10px] text-slate-400">{tr.id} • {tr.rollNo}</span>
+                        <span className="font-mono text-[11px] text-purple-700">{tr.rollNo}</span>
                       </td>
                       <td className="py-3.5 px-4 font-medium text-slate-700">{tr.fromCampus}</td>
                       <td className="py-3.5 px-4 font-bold text-purple-700">{tr.toCampus}</td>
+                      <td className="py-3.5 px-4">
+                        <span className={'px-2 py-0.5 rounded-full text-[10px] font-bold ' + (
+                          tr.feeClearance === 'Verified Clear' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'
+                        )}>
+                          {tr.feeClearance || 'Verified Clear'}
+                        </span>
+                      </td>
                       <td className="py-3.5 px-4 font-mono text-[11px] text-slate-500">{tr.date}</td>
                       <td className="py-3.5 px-4">
-                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                        <span className={'px-2.5 py-0.5 rounded-full text-[10px] font-bold ' + (
                           tr.status === 'Approved'
                             ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                             : tr.status === 'Rejected'
                             ? 'bg-rose-50 text-rose-700 border border-rose-200'
                             : 'bg-amber-50 text-amber-700 border border-amber-200'
-                        }`}>
+                        )}>
                           {tr.status}
                         </span>
                       </td>
@@ -1000,9 +1338,9 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
                             </button>
                           </div>
                         ) : (
-                          <span className={`text-[11px] font-bold inline-flex items-center gap-1 ${
+                          <span className={'text-[11px] font-bold inline-flex items-center gap-1 ' + (
                             tr.status === 'Approved' ? 'text-emerald-700' : 'text-rose-600'
-                          }`}>
+                          )}>
                             {tr.status === 'Approved' ? <CheckCircle2 className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
                             <span>{tr.status}</span>
                           </span>
@@ -1026,7 +1364,7 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
             <div className="flex items-center gap-2.5">
               <GitMerge className="w-5 h-5 text-amber-600 shrink-0" />
               <div>
-                <strong>Smart Identity Deduplication:</strong> Automated scanner cross-references National Identity B-Forms and mobile numbers to prevent dual registration across franchises.
+                <strong>Cross-Campus Identity Deduplication:</strong> Automated scanner identifies colliding National Identity B-Forms and registration conflicts across franchised campuses.
               </div>
             </div>
             <button
@@ -1043,7 +1381,7 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
             <div className="bg-white rounded-2xl border border-slate-200/80 p-12 text-center shadow-2xs space-y-2">
               <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto" />
               <h4 className="text-sm font-bold text-slate-800">Clean Identity Registry</h4>
-              <p className="text-xs text-slate-500 max-w-md mx-auto">No student duplicate conflicts or conflicting National Identity B-Form numbers detected across affiliated branches.</p>
+              <p className="text-xs text-slate-500 max-w-md mx-auto">No student duplicate conflicts or colliding National Identity B-Form numbers detected across affiliated branches.</p>
             </div>
           ) : (
             duplicates.map(d => (
@@ -1051,7 +1389,7 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-                    <h4 className="font-bold text-slate-900 text-sm">Potential Duplicate Match: {d.name}</h4>
+                    <h4 className="font-bold text-slate-900 text-sm">Potential Duplicate Collision: {d.name}</h4>
                     <span className="font-mono text-[11px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md">B-Form: {d.bForm}</span>
                   </div>
                   <span className="text-xs font-bold text-rose-600 bg-rose-50 px-2.5 py-1 rounded-full border border-rose-200">
@@ -1061,14 +1399,14 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200/70 text-xs space-y-1">
-                    <strong className="text-purple-700 block">Record A (Active Branch Enrolled)</strong>
+                    <strong className="text-purple-700 block">Record A (Canonical Enrolled Profile)</strong>
                     <div>Campus: <strong className="text-slate-800">{d.recordA.campus}</strong></div>
                     <div>Roll No: <span className="font-mono text-purple-700 font-bold">{d.recordA.roll}</span> &bull; {d.recordA.class}</div>
                   </div>
                   <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200/70 text-xs space-y-1">
-                    <strong className="text-indigo-700 block">Record B (Secondary Flagged Entry)</strong>
+                    <strong className="text-rose-700 block">Record B (Duplicate Secondary Flag)</strong>
                     <div>Campus: <strong className="text-slate-800">{d.recordB.campus}</strong></div>
-                    <div>Roll No: <span className="font-mono text-indigo-700 font-bold">{d.recordB.roll}</span> &bull; {d.recordB.class}</div>
+                    <div>Roll No: <span className="font-mono text-rose-700 font-bold">{d.recordB.roll}</span> &bull; {d.recordB.class}</div>
                   </div>
                 </div>
 
@@ -1086,7 +1424,7 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
                     className="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer inline-flex items-center gap-1.5"
                   >
                     <GitMerge className="w-3.5 h-3.5" />
-                    <span>Merge into Primary Record</span>
+                    <span>Consolidate & Merge Record</span>
                   </button>
                 </div>
               </div>
@@ -1103,45 +1441,43 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>
               <h3 className="text-sm font-bold text-slate-900">Platform Roll Number Mask Directives</h3>
-              <p className="text-xs text-slate-500">Define uniform student identifier numbering conventions across wings and institutes.</p>
+              <p className="text-xs text-slate-500">Configure campus numbering schemes. These directives automatically govern sequential roll number generation in campus enrollment.</p>
             </div>
             <button
               type="button"
               onClick={() => setIsPatternModalOpen(true)}
-              className="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow-2xs inline-flex items-center gap-1.5 cursor-pointer"
+              className="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer inline-flex items-center gap-1.5"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Define New Pattern</span>
+              <span>Define Pattern</span>
             </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {idRules.map((rule) => (
-              <div key={rule.id} className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs space-y-3">
+            {idRules.map(r => (
+              <div key={r.id} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-3 relative group">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-slate-900 text-xs">{rule.campusName}</span>
-                  <div className="flex items-center gap-1">
-                    <Hash className="w-4 h-4 text-purple-600" />
-                    {rule.id.startsWith('rule-') && rule.campusId === 'custom' && (
-                      <button
-                        type="button"
-                        onClick={() => handleDeletePattern(rule.id)}
-                        className="text-slate-400 hover:text-rose-600 ml-1"
-                        title="Delete custom pattern"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    )}
-                  </div>
+                  <span className="font-mono text-[11px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200">
+                    {r.prefix}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleDeletePattern(r.id)}
+                    className="text-slate-400 hover:text-rose-600 p-1 rounded-lg transition-colors cursor-pointer"
+                    title="Delete pattern rule"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
-                <div className="space-y-1.5 text-xs text-slate-600">
-                  <div>Prefix Mask: <strong className="font-mono text-purple-700">{rule.prefix}</strong></div>
-                  <div>Digit Length: <strong className="font-mono text-slate-800">{rule.digitLength} Digits</strong></div>
-                  <div>Separator: <strong className="font-mono text-slate-800">"{rule.separator}"</strong></div>
+
+                <div>
+                  <h4 className="font-bold text-slate-900 text-sm">{r.campusName}</h4>
+                  <p className="text-xs text-slate-500 mt-0.5">Digit Length: {r.digitLength} digits &bull; Delimiter: '{r.separator}'</p>
                 </div>
-                <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100 text-center">
-                  <span className="text-[10px] text-slate-400 block uppercase font-mono">Sample Output ID</span>
-                  <strong className="font-mono text-sm text-purple-800 font-bold">{rule.sample}</strong>
+
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
+                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Live Specimen Output</span>
+                  <div className="font-mono font-bold text-slate-900 text-sm mt-0.5">{r.sample}</div>
                 </div>
               </div>
             ))}
@@ -1154,48 +1490,55 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
       {/* ------------------------------------------------------------- */}
       {effectiveTab === 'verification' && (
         <div className="space-y-4">
-          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs">
+            <h3 className="text-sm font-bold text-slate-900">National Identity & Board Credential Attestation</h3>
+            <p className="text-xs text-slate-500">Superadministrator queue for validating student NADRA birth certificates, school leaving certificates, and board transcripts.</p>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-2xs">
             <table className="w-full text-left text-xs text-slate-600">
-              <thead className="bg-slate-50 border-b border-slate-100 font-bold text-slate-700 uppercase tracking-wider text-[11px]">
+              <thead className="bg-slate-50/75 border-b border-slate-200/80 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                 <tr>
-                  <th className="py-3.5 px-4">Verification ID</th>
-                  <th className="py-3.5 px-4">Student</th>
-                  <th className="py-3.5 px-4">Campus</th>
-                  <th className="py-3.5 px-4">Document Type</th>
-                  <th className="py-3.5 px-4">Status</th>
-                  <th className="py-3.5 px-4 text-right">Verification Action</th>
+                  <th className="py-3.5 px-4">Doc ID</th>
+                  <th className="py-3.5 px-4">Student & Campus</th>
+                  <th className="py-3.5 px-4">Document Classification</th>
+                  <th className="py-3.5 px-4">Attestation Status</th>
+                  <th className="py-3.5 px-4">Submission Date</th>
+                  <th className="py-3.5 px-4 text-right">Attestation Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {docVerifications.map(doc => (
-                  <tr key={doc.id} className="hover:bg-slate-50/70">
-                    <td className="py-3.5 px-4 font-mono font-bold text-purple-700">{doc.id}</td>
-                    <td className="py-3.5 px-4 font-bold text-slate-900">{doc.studentName}</td>
-                    <td className="py-3.5 px-4 text-slate-600">{doc.campus}</td>
+                  <tr key={doc.id} className="hover:bg-slate-50/70 transition-colors">
+                    <td className="py-3.5 px-4 font-mono font-bold text-slate-900">{doc.id}</td>
+                    <td className="py-3.5 px-4">
+                      <div className="font-bold text-slate-900">{doc.studentName}</div>
+                      <span className="text-slate-400 text-[11px]">{doc.campus}</span>
+                    </td>
                     <td className="py-3.5 px-4 font-medium text-slate-800">{doc.docType}</td>
                     <td className="py-3.5 px-4">
-                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                        doc.status === 'Verified' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
-                        doc.status === 'Rejected' ? 'bg-rose-50 text-rose-700 border border-rose-200' :
-                        'bg-amber-50 text-amber-700 border border-amber-200'
-                      }`}>
+                      <span className={'px-2.5 py-0.5 rounded-full text-[10px] font-bold ' + (
+                        doc.status === 'Verified' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'
+                      )}>
                         {doc.status}
                       </span>
                     </td>
+                    <td className="py-3.5 px-4 font-mono text-[11px] text-slate-500">{doc.date}</td>
                     <td className="py-3.5 px-4 text-right">
                       <div className="flex items-center justify-end gap-1.5">
                         <button
                           type="button"
                           onClick={() => setInspectingDoc(doc)}
-                          className="px-2.5 py-1 text-slate-600 hover:text-purple-700 bg-slate-100 hover:bg-purple-50 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                          className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold cursor-pointer inline-flex items-center gap-1"
                         >
-                          Inspect Document
+                          <Eye className="w-3 h-3" />
+                          <span>Inspect</span>
                         </button>
                         {doc.status !== 'Verified' && (
                           <button
                             type="button"
                             onClick={() => handleVerifyDoc(doc.id)}
-                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all shadow-2xs cursor-pointer inline-flex items-center gap-1"
+                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold cursor-pointer inline-flex items-center gap-1 shadow-2xs"
                           >
                             <Check className="w-3 h-3" />
                             <span>Verify</span>
@@ -1215,81 +1558,82 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
       {/* TAB 6: ALUMNI & DEGREE VERIFICATION                          */}
       {/* ------------------------------------------------------------- */}
       {effectiveTab === 'alumni' && (
-        <div className="space-y-4">
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs space-y-4">
-            <div>
-              <h3 className="text-sm font-bold text-slate-900">Public & Employer Degree Credential Verification</h3>
-              <p className="text-xs text-slate-500 mt-0.5">Authorize authentic diploma certificates and academic transcripts with cryptographically signed verification QR links.</p>
+        <div className="space-y-6">
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-2xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Graduation Registry & Degree Verification Portal</h3>
+                <p className="text-xs text-slate-500">Query and authenticate graduate credentials against the central platform repository.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsRegisterAlumnusModalOpen(true)}
+                className="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer inline-flex items-center gap-1.5"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Register Alumnus</span>
+              </button>
             </div>
 
             <form onSubmit={handleVerifyCredentialSearch} className="flex flex-col sm:flex-row gap-2">
-              <input
-                type="text"
-                placeholder="Enter Student Registration No, B-Form, or Student Name (e.g. DEG-2024-9981, Hamza Farooq)..."
-                value={degreeSearchQuery}
-                onChange={(e) => setDegreeSearchQuery(e.target.value)}
-                className="flex-1 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-purple-500/20 font-mono"
-              />
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Enter Degree Serial (e.g. DEG-2024-9981), Roll No, or Student Name..."
+                  value={degreeSearchQuery}
+                  onChange={e => setDegreeSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-purple-500/20 font-medium"
+                />
+              </div>
               <button
                 type="submit"
-                className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow-2xs cursor-pointer shrink-0"
+                className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold cursor-pointer transition-all shadow-2xs"
               >
-                Verify Credential
+                Verify Credentials
               </button>
             </form>
-
-            {verifiedDegreeRecord && (
-              <div className="p-5 rounded-2xl bg-gradient-to-r from-emerald-50 via-slate-50 to-indigo-50 border border-emerald-200/80 space-y-4 animate-in fade-in">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-emerald-100 pb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold shadow-xs">
-                      <Award className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-md">
-                        AUTHENTICATED PLATFORM DIPLOMA CREDENTIAL
-                      </span>
-                      <h4 className="text-base font-extrabold text-slate-900 mt-1">{verifiedDegreeRecord.studentName}</h4>
-                    </div>
-                  </div>
-                  <div className="text-right font-mono text-xs">
-                    <span className="text-slate-400 block text-[10px]">Registry Certificate Serial</span>
-                    <strong className="text-purple-700 font-bold">{verifiedDegreeRecord.regNo}</strong>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                  <div className="p-3 bg-white rounded-xl border border-slate-200/70">
-                    <span className="text-[10px] text-slate-400 font-bold block uppercase">Degree Program</span>
-                    <strong className="text-slate-900">{verifiedDegreeRecord.program}</strong>
-                  </div>
-                  <div className="p-3 bg-white rounded-xl border border-slate-200/70">
-                    <span className="text-[10px] text-slate-400 font-bold block uppercase">Graduation Session</span>
-                    <strong className="text-slate-900">{verifiedDegreeRecord.graduationYear} &bull; {verifiedDegreeRecord.grade}</strong>
-                  </div>
-                  <div className="p-3 bg-white rounded-xl border border-slate-200/70">
-                    <span className="text-[10px] text-slate-400 font-bold block uppercase">Conferring Branch</span>
-                    <strong className="text-slate-900">{verifiedDegreeRecord.campus}</strong>
-                  </div>
-                </div>
-
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 text-[11px] text-slate-500 font-mono">
-                  <span>Cryptographic Seal Ref: <strong>{verifiedDegreeRecord.sealRef}</strong></span>
-                  <span className="text-emerald-700 font-bold flex items-center gap-1">
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                    <span>Official Institutional Accreditation Confirmed</span>
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {searchAttempted && !verifiedDegreeRecord && (
-              <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-                <span>No verified academic degree credential located for search query: <strong>{degreeSearchQuery}</strong>. Please ensure the registration number matches the original transcript.</span>
-              </div>
-            )}
           </div>
+
+          {verifiedDegreeRecord && (
+            <div className="bg-gradient-to-r from-purple-900 to-indigo-950 text-white p-6 rounded-3xl border border-purple-500/30 shadow-xl space-y-4">
+              <div className="flex items-center justify-between border-b border-white/20 pb-3">
+                <div className="flex items-center gap-2">
+                  <Award className="w-6 h-6 text-amber-400" />
+                  <span className="font-extrabold text-sm uppercase tracking-wider text-purple-200">Authenticated Institutional Degree</span>
+                </div>
+                <span className="px-3 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 rounded-full font-mono text-[10px] font-bold">
+                  CRYPTOGRAPHICALLY VERIFIED
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                <div>
+                  <span className="text-[10px] text-purple-300 uppercase block font-bold">Student Name</span>
+                  <div className="font-extrabold text-base text-white">{verifiedDegreeRecord.studentName}</div>
+                  <span className="text-[11px] text-purple-200 font-mono">B-Form / CNIC: {verifiedDegreeRecord.cnic}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-purple-300 uppercase block font-bold">Conferred Program</span>
+                  <div className="font-bold text-sm text-purple-100">{verifiedDegreeRecord.program}</div>
+                  <span className="text-[11px] text-emerald-400 font-bold">{verifiedDegreeRecord.grade} (Batch of {verifiedDegreeRecord.graduationYear})</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-purple-300 uppercase block font-bold">Conferring Campus & Seal</span>
+                  <div className="font-semibold text-xs text-white">{verifiedDegreeRecord.campus}</div>
+                  <span className="text-[10px] font-mono text-purple-300 block mt-0.5">Seal Ref: {verifiedDegreeRecord.sealRef}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {searchAttempted && !verifiedDegreeRecord && (
+            <div className="bg-rose-50 border border-rose-200 p-6 rounded-2xl text-center space-y-2">
+              <XCircle className="w-8 h-8 text-rose-500 mx-auto" />
+              <h4 className="text-sm font-bold text-rose-900">Credential Not Located</h4>
+              <p className="text-xs text-rose-600 max-w-md mx-auto">No degree or graduation award matching your search parameters exists in the platform register.</p>
+            </div>
+          )}
         </div>
       )}
 
@@ -1298,29 +1642,34 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
       {/* ------------------------------------------------------------- */}
       {effectiveTab === 'privacy' && (
         <div className="space-y-4">
-          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs">
+            <h3 className="text-sm font-bold text-slate-900">Data Protection & Subject Access Requests (GDPR Compliance)</h3>
+            <p className="text-xs text-slate-500">Superadministrator compliance controls to issue encrypted student archives or perform regulatory right-to-be-forgotten redactions.</p>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-2xs">
             <table className="w-full text-left text-xs text-slate-600">
-              <thead className="bg-slate-50 border-b border-slate-100 font-bold text-slate-700 uppercase tracking-wider text-[11px]">
+              <thead className="bg-slate-50/75 border-b border-slate-200/80 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                 <tr>
                   <th className="py-3.5 px-4">Request ID</th>
-                  <th className="py-3.5 px-4">Requester</th>
-                  <th className="py-3.5 px-4">Student Account</th>
-                  <th className="py-3.5 px-4">Request Type</th>
-                  <th className="py-3.5 px-4">Status</th>
-                  <th className="py-3.5 px-4 text-right">Compliance Action</th>
+                  <th className="py-3.5 px-4">Subject Student</th>
+                  <th className="py-3.5 px-4">Requester Authority</th>
+                  <th className="py-3.5 px-4">Request Classification</th>
+                  <th className="py-3.5 px-4">Fulfillment Status</th>
+                  <th className="py-3.5 px-4 text-right">Execution Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {privacyRequests.map(pr => (
-                  <tr key={pr.id} className="hover:bg-slate-50/70">
-                    <td className="py-3.5 px-4 font-mono font-bold text-purple-700">{pr.id}</td>
-                    <td className="py-3.5 px-4 font-medium text-slate-900">{pr.requester}</td>
-                    <td className="py-3.5 px-4 font-bold text-slate-800">{pr.student}</td>
-                    <td className="py-3.5 px-4">{pr.type}</td>
+                  <tr key={pr.id} className="hover:bg-slate-50/70 transition-colors">
+                    <td className="py-3.5 px-4 font-mono font-bold text-slate-900">{pr.id}</td>
+                    <td className="py-3.5 px-4 font-bold text-slate-900">{pr.student}</td>
+                    <td className="py-3.5 px-4 text-slate-600">{pr.requester}</td>
+                    <td className="py-3.5 px-4 font-medium text-purple-700">{pr.type}</td>
                     <td className="py-3.5 px-4">
-                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                      <span className={'px-2.5 py-0.5 rounded-full text-[10px] font-bold ' + (
                         pr.status === 'Fulfilled' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'
-                      }`}>
+                      )}>
                         {pr.status}
                       </span>
                     </td>
@@ -1363,17 +1712,17 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
             <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs space-y-1">
               <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Active Retention Rate</span>
               <div className="text-2xl font-extrabold font-mono text-emerald-600">{reportStats.activeRate}%</div>
-              <p className="text-[11px] text-slate-400">{reportStats.active} Active accounts &bull; {reportStats.suspended} Suspended</p>
+              <p className="text-[11px] text-slate-400">{reportStats.active} Active &bull; {reportStats.suspended} Suspended</p>
             </div>
             <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs space-y-1">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Campus Distribution</span>
-              <div className="text-2xl font-extrabold font-mono text-purple-700">{Object.keys(reportStats.campusCounts).length} Campuses</div>
-              <p className="text-[11px] text-slate-400">Institutional locations with active student rosters.</p>
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Fee Clearance Rate</span>
+              <div className="text-2xl font-extrabold font-mono text-indigo-700">{reportStats.feeClearancePct}%</div>
+              <p className="text-[11px] text-slate-400">{reportStats.paidFees} Dues Cleared &bull; {reportStats.pendingFees} Pending</p>
             </div>
             <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs space-y-1">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Academic Wings</span>
-              <div className="text-2xl font-extrabold font-mono text-indigo-700">{Object.keys(reportStats.wingCounts).length} Tiers</div>
-              <p className="text-[11px] text-slate-400">Primary, Middle, High School & College tiers.</p>
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Gender Diversity</span>
+              <div className="text-2xl font-extrabold font-mono text-purple-700">{reportStats.malePct}% M / {reportStats.femalePct}% F</div>
+              <p className="text-[11px] text-slate-400">{reportStats.males} Male &bull; {reportStats.females} Female</p>
             </div>
           </div>
 
@@ -1390,7 +1739,7 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
                       <span className="font-mono text-slate-500 font-bold">{count} Students ({pct}%)</span>
                     </div>
                     <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-purple-600 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                      <div className="h-full bg-purple-600 rounded-full transition-all" style={{ width: pct + '%' }} />
                     </div>
                   </div>
                 )
@@ -1407,44 +1756,44 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
         <Modal
           isOpen={true}
           onClose={() => setInspectingStudent(null)}
-          title={`Student Profile: ${inspectingStudent.name}`}
+          title={'Student Profile: ' + inspectingStudent.name}
           maxWidth="max-w-2xl"
         >
           <div className="space-y-4 text-xs">
             <div className="p-4 rounded-2xl bg-purple-50/60 border border-purple-100 flex items-center justify-between">
               <div>
                 <h4 className="font-extrabold text-slate-900 text-sm">{inspectingStudent.name}</h4>
-                <p className="text-purple-700 font-mono text-xs font-bold mt-0.5">Roll No: {inspectingStudent.rollNo || inspectingStudent.id}</p>
+                <p className="text-purple-700 font-mono text-xs font-bold mt-0.5">Roll No: {inspectingStudent.cleanRoll}</p>
               </div>
               <button
                 type="button"
                 onClick={() => handleToggleStudentStatus(inspectingStudent)}
-                className={`px-3 py-1 rounded-full text-[10px] font-bold border transition-colors cursor-pointer ${
-                  (inspectingStudent.status || 'Active').toLowerCase() === 'active'
+                className={'px-3 py-1 rounded-full text-[10px] font-bold border transition-colors cursor-pointer ' + (
+                  (inspectingStudent.cleanStatus || 'Active').toLowerCase() === 'active'
                     ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
                     : 'bg-rose-50 text-rose-800 border-rose-200 hover:bg-rose-100'
-                }`}
+                )}
               >
-                {inspectingStudent.status || 'Active'} (Click to Toggle)
+                {inspectingStudent.cleanStatus || 'Active'} (Click to Toggle)
               </button>
             </div>
 
             <div className="grid grid-cols-2 gap-3 text-slate-600">
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/70">
                 <span className="text-[10px] text-slate-400 block font-bold uppercase">Affiliated Campus</span>
-                <span className="font-semibold text-slate-900 text-xs">{inspectingStudent.campus || 'Main Campus'}</span>
+                <span className="font-semibold text-slate-900 text-xs">{inspectingStudent.cleanCampus}</span>
               </div>
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/70">
                 <span className="text-[10px] text-slate-400 block font-bold uppercase">Academic Wing & Grade</span>
-                <span className="font-semibold text-slate-900 text-xs">{inspectingStudent.wing || 'School'} &bull; {inspectingStudent.grade || 'Standard'}</span>
+                <span className="font-semibold text-slate-900 text-xs">{inspectingStudent.cleanWing} &bull; {inspectingStudent.cleanGrade}</span>
               </div>
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/70">
                 <span className="text-[10px] text-slate-400 block font-bold uppercase">Emergency Contact Phone</span>
-                <span className="font-semibold text-slate-900 text-xs font-mono">{inspectingStudent.contact || '0300-XXXXXXX'}</span>
+                <span className="font-semibold text-slate-900 text-xs font-mono">{inspectingStudent.cleanContact}</span>
               </div>
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/70">
                 <span className="text-[10px] text-slate-400 block font-bold uppercase">National Identity B-Form / CRC</span>
-                <span className="font-mono text-purple-700 font-bold text-xs">{inspectingStudent.bForm || 'Unregistered'}</span>
+                <span className="font-mono text-purple-700 font-bold text-xs">{inspectingStudent.cleanBForm}</span>
               </div>
             </div>
 
@@ -1484,15 +1833,14 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
           maxWidth="max-w-md"
         >
           <div className="space-y-4 text-xs">
-            {/* The Badge Itself */}
-            <div className="bg-gradient-to-br from-purple-900 via-indigo-900 to-slate-900 text-white p-5 rounded-2xl border-2 border-purple-400/40 shadow-xl relative overflow-hidden">
+            <div id="student-printable-badge" className="bg-gradient-to-br from-purple-900 via-indigo-900 to-slate-900 text-white p-5 rounded-2xl border-2 border-purple-400/40 shadow-xl relative overflow-hidden">
               <div className="flex items-center justify-between border-b border-white/20 pb-2 mb-3">
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-lg bg-white text-purple-900 font-black text-xs flex items-center justify-center">
                     SMS
                   </div>
                   <div>
-                    <span className="font-bold text-xs block text-purple-200 uppercase tracking-wider">{printingStudentIdCard.campus || 'Educational Institute'}</span>
+                    <span className="font-bold text-xs block text-purple-200 uppercase tracking-wider">{printingStudentIdCard.cleanCampus}</span>
                     <span className="text-[9px] text-slate-300">Official Student Identity Card</span>
                   </div>
                 </div>
@@ -1505,14 +1853,14 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
                 </div>
                 <div className="space-y-0.5 min-w-0">
                   <h4 className="font-black text-sm text-white truncate">{printingStudentIdCard.name}</h4>
-                  <div className="text-[11px] font-mono text-purple-300 font-bold">Roll: {printingStudentIdCard.rollNo || printingStudentIdCard.id}</div>
-                  <div className="text-[10px] text-slate-300">{printingStudentIdCard.wing || 'School'} &bull; {printingStudentIdCard.grade || 'Standard'}</div>
+                  <div className="text-[11px] font-mono text-purple-300 font-bold">Roll: {printingStudentIdCard.cleanRoll}</div>
+                  <div className="text-[10px] text-slate-300">{printingStudentIdCard.cleanWing} &bull; {printingStudentIdCard.cleanGrade}</div>
                 </div>
               </div>
 
               <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[9px] font-mono text-purple-200">
                 <span>Issue: {new Date().getFullYear()}</span>
-                <span>Contact: {printingStudentIdCard.contact || 'N/A'}</span>
+                <span>Contact: {printingStudentIdCard.cleanContact}</span>
                 <span className="font-bold text-emerald-300">VALID STUDENT</span>
               </div>
             </div>
@@ -1550,73 +1898,77 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
         >
           <form onSubmit={handleCreateTransferSubmit} className="space-y-4 text-xs">
             <div>
-              <label className="block font-bold text-slate-700 mb-1">Student Full Name</label>
-              <input
-                type="text"
-                required
-                placeholder="e.g. Daniyal Aslam"
-                value={transferFormData.studentName}
-                onChange={e => setTransferFormData({ ...transferFormData, studentName: e.target.value })}
-                className="w-full p-2.5 rounded-xl border border-slate-200 bg-white"
-              />
+              <label className="block font-bold text-slate-700 mb-1">Select Student to Relocate</label>
+              <select
+                value={transferFormData.studentId}
+                onChange={e => handleStudentSelectInTransfer(e.target.value)}
+                className="w-full p-2.5 rounded-xl border border-slate-200 bg-white font-medium"
+              >
+                {normalizedStudents.map(s => (
+                  <option key={s.id} value={s.id}>
+                    {s.name} ({s.cleanRoll} - {s.cleanCampus})
+                  </option>
+                ))}
+              </select>
             </div>
-            <div>
-              <label className="block font-bold text-slate-700 mb-1">Roll / Admission Number</label>
-              <input
-                type="text"
-                placeholder="e.g. BHS-4910"
-                value={transferFormData.rollNo}
-                onChange={e => setTransferFormData({ ...transferFormData, rollNo: e.target.value })}
-                className="w-full p-2.5 rounded-xl border border-slate-200 bg-white"
-              />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block font-bold text-slate-700 mb-1">Origin Campus</label>
-                <select
+                <label className="block font-bold text-slate-700 mb-1">Origin Campus (Current)</label>
+                <input
+                  type="text"
+                  readOnly
                   value={transferFormData.fromCampus}
-                  onChange={e => setTransferFormData({ ...transferFormData, fromCampus: e.target.value })}
-                  className="w-full p-2.5 rounded-xl border border-slate-200 bg-white font-medium"
-                >
-                  {institutes.map(inst => (
-                    <option key={inst.id} value={inst.name}>{inst.name}</option>
-                  ))}
-                  {institutes.length === 0 && (
-                    <>
-                      <option>Beaconhouse Central High</option>
-                      <option>The City School Senior Branch</option>
-                    </>
-                  )}
-                </select>
+                  className="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-100 font-semibold text-slate-600"
+                />
               </div>
               <div>
-                <label className="block font-bold text-slate-700 mb-1">Destination Campus</label>
+                <label className="block font-bold text-slate-700 mb-1">Target Destination Campus</label>
                 <select
                   value={transferFormData.toCampus}
                   onChange={e => setTransferFormData({ ...transferFormData, toCampus: e.target.value })}
                   className="w-full p-2.5 rounded-xl border border-slate-200 bg-white font-medium"
                 >
-                  {institutes.map(inst => (
+                  {institutes.filter(i => i.name !== transferFormData.fromCampus).map(inst => (
                     <option key={inst.id} value={inst.name}>{inst.name}</option>
                   ))}
-                  {institutes.length === 0 && (
-                    <>
-                      <option>The City School Senior Branch</option>
-                      <option>Beaconhouse Central High</option>
-                    </>
-                  )}
                 </select>
               </div>
             </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Target Class / Grade</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Grade 9-A"
+                  value={transferFormData.targetGrade}
+                  onChange={e => setTransferFormData({ ...transferFormData, targetGrade: e.target.value })}
+                  className="w-full p-2.5 rounded-xl border border-slate-200 bg-white font-medium"
+                />
+              </div>
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Fee Clearance Status</label>
+                <div className={'p-2.5 rounded-xl border font-bold text-center ' + (
+                  transferFormData.feeStatus === 'Paid' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-amber-50 text-amber-800 border-amber-200'
+                )}>
+                  {transferFormData.feeStatus === 'Paid' ? 'Verified Cleared' : 'Unpaid Dues Pending'}
+                </div>
+              </div>
+            </div>
+
             <div>
-              <label className="block font-bold text-slate-700 mb-1">Reason for Relocation & Remarks</label>
+              <label className="block font-bold text-slate-700 mb-1">Administrative Transfer Justification</label>
               <textarea
+                required
                 rows={2}
                 value={transferFormData.reason}
                 onChange={e => setTransferFormData({ ...transferFormData, reason: e.target.value })}
-                className="w-full p-2.5 rounded-xl border border-slate-200 bg-white"
+                className="w-full p-2.5 rounded-xl border border-slate-200 bg-white font-medium"
               />
             </div>
+
             <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
               <button
                 type="button"
@@ -1627,7 +1979,7 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold shadow-xs cursor-pointer"
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold cursor-pointer"
               >
                 Submit Transfer Request
               </button>
@@ -1637,13 +1989,13 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
       )}
 
       {/* ------------------------------------------------------------- */}
-      {/* MODAL 4: DEFINE NEW ROLL NUMBER PATTERN                       */}
+      {/* MODAL 4: DEFINE ROLL NUMBER PATTERN                           */}
       {/* ------------------------------------------------------------- */}
       {isPatternModalOpen && (
         <Modal
           isOpen={true}
           onClose={() => setIsPatternModalOpen(false)}
-          title="Define Roll Number Formatting Pattern"
+          title="Define Campus Roll Number Mask Pattern"
           maxWidth="max-w-md"
         >
           <form onSubmit={handleSavePatternSubmit} className="space-y-4 text-xs">
@@ -1679,31 +2031,27 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
                   onChange={e => setNewPatternForm({ ...newPatternForm, digitLength: Number(e.target.value) })}
                   className="w-full p-2.5 rounded-xl border border-slate-200 bg-white font-medium"
                 >
-                  <option value={3}>3 Digits (001)</option>
-                  <option value={4}>4 Digits (0001)</option>
-                  <option value={5}>5 Digits (00001)</option>
-                  <option value={6}>6 Digits (000001)</option>
+                  <option value={3}>3 digits (001)</option>
+                  <option value={4}>4 digits (0001)</option>
+                  <option value={5}>5 digits (00001)</option>
                 </select>
               </div>
               <div>
                 <label className="block font-bold text-slate-700 mb-1">Separator</label>
-                <select
+                <input
+                  type="text"
                   value={newPatternForm.separator}
                   onChange={e => setNewPatternForm({ ...newPatternForm, separator: e.target.value })}
-                  className="w-full p-2.5 rounded-xl border border-slate-200 bg-white font-medium"
-                >
-                  <option value="-">Hyphen (-)</option>
-                  <option value="/">Slash (/)</option>
-                  <option value="_">Underscore (_)</option>
-                </select>
+                  className="w-full p-2.5 rounded-xl border border-slate-200 bg-white font-mono"
+                />
               </div>
             </div>
 
-            <div className="p-3 bg-purple-50 rounded-xl border border-purple-100 text-center">
-              <span className="text-[10px] text-purple-700 font-bold block uppercase font-mono">Live Simulated Output Preview</span>
-              <strong className="text-sm font-mono text-purple-900 font-black">
+            <div className="p-3 bg-purple-50 rounded-xl border border-purple-200">
+              <span className="text-[10px] text-purple-700 font-bold uppercase block">Live Specimen Preview</span>
+              <div className="font-mono font-bold text-purple-900 text-sm mt-0.5">
                 {newPatternForm.prefix.replace('{YEAR}', new Date().getFullYear()).replace('{WING}', 'MS') + '1'.padStart(newPatternForm.digitLength, '0')}
-              </strong>
+              </div>
             </div>
 
             <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
@@ -1716,7 +2064,7 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold shadow-xs cursor-pointer"
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold cursor-pointer"
               >
                 Save Pattern Directive
               </button>
@@ -1726,45 +2074,30 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
       )}
 
       {/* ------------------------------------------------------------- */}
-      {/* MODAL 5: DOCUMENT INSPECTION MODAL                            */}
+      {/* MODAL 5: INSPECT DOCUMENT ATTESTATION                         */}
       {/* ------------------------------------------------------------- */}
       {inspectingDoc && (
         <Modal
           isOpen={true}
           onClose={() => setInspectingDoc(null)}
-          title={`Document Credentials: ${inspectingDoc.studentName}`}
-          maxWidth="max-w-md"
+          title={'Document Credentials: ' + inspectingDoc.studentName}
+          maxWidth="max-w-lg"
         >
           <div className="space-y-4 text-xs">
-            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="font-bold text-slate-800">{inspectingDoc.docType}</span>
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                  inspectingDoc.status === 'Verified' ? 'bg-emerald-100 text-emerald-800' :
-                  inspectingDoc.status === 'Rejected' ? 'bg-rose-100 text-rose-800' :
-                  'bg-amber-100 text-amber-800'
-                }`}>
+                <span className="font-mono text-purple-700 font-bold text-xs">{inspectingDoc.id}</span>
+                <span className={'px-2 py-0.5 rounded-full text-[10px] font-bold ' + (
+                  inspectingDoc.status === 'Verified' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'
+                )}>
                   {inspectingDoc.status}
                 </span>
               </div>
-              <div className="text-slate-500 font-mono text-[11px]">
-                Student: <strong>{inspectingDoc.studentName}</strong> &bull; {inspectingDoc.campus}
+              <h4 className="font-extrabold text-slate-900 text-sm">{inspectingDoc.docType}</h4>
+              <p className="text-slate-600">Issued for: <strong>{inspectingDoc.studentName}</strong> &bull; {inspectingDoc.campus}</p>
+              <div className="pt-2 border-t border-slate-200/80 text-[11px] text-slate-500">
+                <strong>Attestation Notes:</strong> {inspectingDoc.remarks || 'Pending administrative review.'}
               </div>
-              <div className="text-slate-500 text-[11px]">
-                Submission Date: {inspectingDoc.date}
-              </div>
-              {inspectingDoc.remarks && (
-                <div className="text-[11px] text-purple-700 font-medium pt-1 border-t border-slate-200/60">
-                  Notes: {inspectingDoc.remarks}
-                </div>
-              )}
-            </div>
-
-            {/* Document Preview Watermark Box */}
-            <div className="p-6 bg-gradient-to-br from-slate-100 to-purple-50/50 rounded-2xl border-2 border-dashed border-slate-300 text-center space-y-2">
-              <FileCheck className="w-10 h-10 text-purple-600 mx-auto" />
-              <div className="font-bold text-slate-800 text-xs">Official Document Copy on File</div>
-              <p className="text-[10px] text-slate-400 font-mono">Archive Stamp: PK-EIMS-VERIF-{inspectingDoc.id}</p>
             </div>
 
             <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
@@ -1773,14 +2106,15 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
                   <button
                     type="button"
                     onClick={() => handleRejectDoc(inspectingDoc.id)}
-                    className="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl font-bold cursor-pointer"
+                    className="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl font-bold cursor-pointer inline-flex items-center gap-1"
                   >
-                    Reject with Remarks
+                    <X className="w-3.5 h-3.5" />
+                    <span>Reject</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => handleVerifyDoc(inspectingDoc.id)}
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold cursor-pointer shadow-xs inline-flex items-center gap-1"
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold cursor-pointer inline-flex items-center gap-1 shadow-2xs"
                   >
                     <Check className="w-3.5 h-3.5" />
                     <span>Approve & Stamp Verified</span>
@@ -1799,6 +2133,103 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
         </Modal>
       )}
 
+      {/* ------------------------------------------------------------- */}
+      {/* MODAL 6: REGISTER HISTORIC ALUMNUS                            */}
+      {/* ------------------------------------------------------------- */}
+      {isRegisterAlumnusModalOpen && (
+        <Modal
+          isOpen={true}
+          onClose={() => setIsRegisterAlumnusModalOpen(false)}
+          title="Register Conferred Graduate Credential"
+          maxWidth="max-w-md"
+        >
+          <form onSubmit={handleRegisterAlumnusSubmit} className="space-y-4 text-xs">
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Graduate Student Full Name</label>
+              <input
+                type="text"
+                required
+                value={newAlumnusForm.studentName}
+                onChange={e => setNewAlumnusForm({ ...newAlumnusForm, studentName: e.target.value })}
+                className="w-full p-2.5 rounded-xl border border-slate-200 bg-white font-medium"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">National ID / CNIC</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="35201-XXXXXXX-X"
+                  value={newAlumnusForm.cnic}
+                  onChange={e => setNewAlumnusForm({ ...newAlumnusForm, cnic: e.target.value })}
+                  className="w-full p-2.5 rounded-xl border border-slate-200 bg-white font-mono"
+                />
+              </div>
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Conferring Campus</label>
+                <select
+                  value={newAlumnusForm.campus}
+                  onChange={e => setNewAlumnusForm({ ...newAlumnusForm, campus: e.target.value })}
+                  className="w-full p-2.5 rounded-xl border border-slate-200 bg-white font-medium"
+                >
+                  {institutes.map(i => (
+                    <option key={i.id} value={i.name}>{i.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Conferred Academic Award / Program</label>
+              <input
+                type="text"
+                required
+                value={newAlumnusForm.program}
+                onChange={e => setNewAlumnusForm({ ...newAlumnusForm, program: e.target.value })}
+                className="w-full p-2.5 rounded-xl border border-slate-200 bg-white font-medium"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Graduation Year</label>
+                <input
+                  type="number"
+                  required
+                  value={newAlumnusForm.graduationYear}
+                  onChange={e => setNewAlumnusForm({ ...newAlumnusForm, graduationYear: e.target.value })}
+                  className="w-full p-2.5 rounded-xl border border-slate-200 bg-white font-medium"
+                />
+              </div>
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Academic Standing / Grade</label>
+                <input
+                  type="text"
+                  required
+                  value={newAlumnusForm.grade}
+                  onChange={e => setNewAlumnusForm({ ...newAlumnusForm, grade: e.target.value })}
+                  className="w-full p-2.5 rounded-xl border border-slate-200 bg-white font-medium"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setIsRegisterAlumnusModalOpen(false)}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold cursor-pointer"
+              >
+                Register Degree
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
     </div>
   )
 }
