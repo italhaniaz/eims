@@ -40,6 +40,12 @@ const StudySchemesView = lazyWithRetry(() => import('./modules/academics/study-s
 const UsersManagementView = lazyWithRetry(() => import('./modules/users-management/UsersManagementView'), 'users-management')
 const NoticeBroadcasterView = lazyWithRetry(() => import('./modules/announcements/NoticeBroadcasterView'), 'notice-broadcaster')
 
+// Superadmin Cross-Campus Platform Governance Modules (Picks 1 to 4)
+const SuperadminStudentsView = lazyWithRetry(() => import('./modules/platform/students/SuperadminStudentsView'), 'superadmin-students')
+const SuperadminAdmissionsView = lazyWithRetry(() => import('./modules/platform/admissions/SuperadminAdmissionsView'), 'superadmin-admissions')
+const SuperadminStaffFacultyView = lazyWithRetry(() => import('./modules/platform/staff/SuperadminStaffFacultyView'), 'superadmin-staff')
+const SuperadminExaminationsResultsView = lazyWithRetry(() => import('./modules/platform/examinations/SuperadminExaminationsResultsView'), 'superadmin-examinations')
+
 // Institute Admin Views
 const InstituteDashboard = lazyWithRetry(() => import('./modules/dashboard/InstituteDashboard'), 'institute-dashboard')
 const StudentsView = lazyWithRetry(() => import('./modules/institute-admin/students/StudentsView'), 'students-view')
@@ -80,7 +86,21 @@ const AppContent = () => {
     'examination-bodies', 'academic-years', 'program-types', 'programs',
     'subjects', 'study-schemes', 'finance', 'transport', 'library',
     'admissions-pipeline', 'communication', 'audit-logs', 'announcements',
-    'users-all', 'users-roles'
+    'users-all', 'users-roles',
+    // Pick 1: Students
+    'sa-students-all', 'sa-students-transfers', 'sa-students-duplicate',
+    'sa-students-id-rules', 'sa-students-verification', 'sa-students-alumni',
+    'sa-students-privacy', 'sa-students-reports',
+    // Pick 2: Admissions
+    'sa-admissions-cycles', 'sa-admissions-merit', 'sa-admissions-seats',
+    'sa-admissions-fees', 'sa-admissions-overview',
+    // Pick 3: Staff & Faculty
+    'sa-staff-all', 'sa-staff-roles', 'sa-staff-transfers',
+    'sa-staff-payroll', 'sa-staff-reports',
+    // Pick 4: Examinations & Results
+    'sa-exams-policies', 'sa-exams-results-wing', 'sa-exams-publish-freeze',
+    'sa-exams-grade-approvals', 'sa-exams-supplementary', 'sa-exams-transcripts',
+    'sa-exams-reports'
   ]
 
   const VALID_INSTITUTE_ROUTES = [
@@ -368,6 +388,38 @@ const AppContent = () => {
                   )}
                   {superadminRoute === 'users-roles' && (
                     <UsersManagementView defaultTab="roles" />
+                  )}
+
+                  {/* Pick 1: Students Central Governance */}
+                  {superadminRoute.startsWith('sa-students-') && (
+                    <SuperadminStudentsView 
+                      activeTab={superadminRoute.replace('sa-students-', '')} 
+                      onTabChange={(tabKey) => setSuperadminRoute(`sa-students-${tabKey}`)} 
+                    />
+                  )}
+
+                  {/* Pick 2: Admissions Central Architecture */}
+                  {superadminRoute.startsWith('sa-admissions-') && (
+                    <SuperadminAdmissionsView 
+                      activeTab={superadminRoute.replace('sa-admissions-', '')} 
+                      onTabChange={(tabKey) => setSuperadminRoute(`sa-admissions-${tabKey}`)} 
+                    />
+                  )}
+
+                  {/* Pick 3: Staff & Faculty Central Oversight */}
+                  {superadminRoute.startsWith('sa-staff-') && (
+                    <SuperadminStaffFacultyView 
+                      activeTab={superadminRoute.replace('sa-staff-', '')} 
+                      onTabChange={(tabKey) => setSuperadminRoute(`sa-staff-${tabKey}`)} 
+                    />
+                  )}
+
+                  {/* Pick 4: Examinations & Results Central Authority */}
+                  {superadminRoute.startsWith('sa-exams-') && (
+                    <SuperadminExaminationsResultsView 
+                      activeTab={superadminRoute.replace('sa-exams-', '')} 
+                      onTabChange={(tabKey) => setSuperadminRoute(`sa-exams-${tabKey}`)} 
+                    />
                   )}
                 </Suspense>
               </ErrorBoundary>            </main>
