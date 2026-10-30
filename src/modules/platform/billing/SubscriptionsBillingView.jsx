@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import {
   Lock,
-CreditCard,
+  CreditCard,
   DollarSign,
   TrendingUp,
   AlertTriangle,
@@ -27,7 +27,10 @@ CreditCard,
   Building2,
   GraduationCap,
   Download,
-  Sparkles
+  Sparkles,
+  Filter,
+  ChevronDown,
+  X
 } from 'lucide-react'
 import StatCard from '../../../components/common/StatCard'
 import Modal from '../../../components/common/Modal'
@@ -402,15 +405,124 @@ const SubscriptionsBillingView = () => {
     showToast(`Automated payment collection reminder dispatched to institute administrator.`)
   }
 
-  // Filtered Subscriptions
+  // --- Subscriptions Filter Popover State with Checkboxes ---
+  const [showSubFilterPopover, setShowSubFilterPopover] = useState(false)
+  const subFilterPopoverRef = useRef(null)
+  const [selectedSubStatusFilters, setSelectedSubStatusFilters] = useState(['ACTIVE', 'TRIAL', 'OVERDUE'])
+  const [selectedPlanTierFilters, setSelectedPlanTierFilters] = useState(['plan-school', 'plan-college', 'plan-university', 'plan-custom'])
+  const [selectedCycleFilters, setSelectedCycleFilters] = useState(['monthly', 'quarterly', 'yearly', 'annual'])
+
+  // Multi-select Row Checkboxes State for Subscriptions
+  const [selectedSubIds, setSelectedSubIds] = useState([])
+
+  // Close filter popover on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (subFilterPopoverRef.current && !subFilterPopoverRef.current.contains(event.target)) {
+        setShowSubFilterPopover(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  // Filtered Subscriptions with checkbox filters
   const filteredSubscriptions = useMemo(() => {
     return subscriptions.filter(sub => {
-      const matchSearch = sub.instituteName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      const matchSearch = !searchQuery || 
+        sub.instituteName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         sub.planName.toLowerCase().includes(searchQuery.toLowerCase())
-      const matchStatus = statusFilter === 'ALL' || sub.status === statusFilter
-      return matchSearch && matchStatus
+
+      const matchLegacyStatus = statusFilter === 'ALL' || sub.status === statusFilter
+      const matchStatusCheckboxes = selectedSubStatusFilters.includes(sub.status)
+      const matchPlanCheckboxes = selectedPlanTierFilters.includes(sub.planId) || selectedPlanTierFilters.some(t => sub.planName?.toLowerCase().includes(t.replace('plan-', '')))
+      const matchCycleCheckboxes = selectedCycleFilters.includes(sub.billingCycle?.toLowerCase())
+
+      return matchSearch && matchLegacyStatus && matchStatusCheckboxes && matchPlanCheckboxes && matchCycleCheckboxes
     })
-  }, [subscriptions, searchQuery, statusFilter])
+  }, [subscriptions, searchQuery, statusFilter, selectedSubStatusFilters, selectedPlanTierFilters, selectedCycleFilters])
+
+  // Active filter count for badge
+  const activeSubFiltersCount = (3 - selectedSubStatusFilters.length) + (4 - selectedPlanTierFilters.length) + (4 - selectedCycleFilters.length)
+
+  const handleToggleSubStatusFilter = (st) => {
+    setSelectedSubStatusFilters(prev => 
+      prev.includes(st) ? (prev.length > 1 ? prev.filter(s => s !== st) : prev) : [...prev, st]
+    )
+  }
+
+  const handleTogglePlanTierFilter = (tier) => {
+    setSelectedPlanTierFilters(prev => 
+      prev.includes(tier) ? (prev.length > 1 ? prev.filter(t => t !== tier) : prev) : [...prev, tier]
+    )
+  }
+
+  const handleToggleCycleFilter = (cycle) => {
+    setSelectedCycleFilters(prev => 
+      prev.includes(cycle) ? (prev.length > 1 ? prev.filter(c => c !== cycle) : prev) : [...prev, cycle]
+    )
+  }
+
+  const handleResetSubFilters = () => {
+    setSelectedSubStatusFilters(['ACTIVE', 'TRIAL', 'OVERDUE'])
+    setSelectedPlanTierFilters(['plan-school', 'plan-college', 'plan-university', 'plan-custom'])
+    setSelectedCycleFilters(['monthly', 'quarterly', 'yearly', 'annual'])
+    setStatusFilter('ALL')
+    setSearchQuery('')
+  }
+
+  // Row selection helpers
+  const isAllSubsSelected = filteredSubscriptions.length > 0 && filteredSubscriptions.every(s => selectedSubIds.includes(s.id))
+
+  const handleSelectAllSubs = () => {
+    if (isAllSubsSelected) {
+      setSelectedSubIds([])
+    } else {
+      setSelectedSubIds(filteredSubscriptions.map(s => s.id))
+    }
+  }
+
+  const handleToggleSelectSub = (id) => {
+    setSelectedSubIds(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    )
+  }
+
+  // Bulk Status Update (Activate / Suspend)
+  const handleBulkSetSubStatus = async (newStatus) => {
+    if (selectedSubIds.length === 0) {
+      showToast('Please select at least one subscription.')
+      return
+    }
+    setSubscriptions(prev => prev.map(s => selectedSubIds.includes(s.id) ? { ...s, status: newStatus } : s))
+    showToast(`Bulk updated: ${selectedSubIds.length} subscriptions set to ${newStatus}!`)
+    setSelectedSubIds([])
+  }
+
+  // Bulk Extend Grace Period
+  const handleBulkExtendSubs = async (days = 7) => {
+    if (selectedSubIds.length === 0) return
+    const today = new Date()
+    today.setDate(today.getDate() + days)
+    const newDate = today.toISOString().slice(0, 10)
+    for (const subId of selectedSubIds) {
+      await BillingService.extendDeadline(subId, newDate, `Bulk extension of ${days} days`)
+    }
+    fetchBillingData()
+    showToast(`Payment deadline extended by ${days} days for ${selectedSubIds.length} subscriptions!`)
+    setSelectedSubIds([])
+  }
+
+  // Bulk Waive Current Month
+  const handleBulkWaiveSubs = async () => {
+    if (selectedSubIds.length === 0) return
+    for (const subId of selectedSubIds) {
+      await BillingService.waiveCurrentMonth(subId, 'Bulk Superadmin Promotional Courtesy')
+    }
+    fetchBillingData()
+    showToast(`Current monthly fee waived for ${selectedSubIds.length} subscriptions!`)
+    setSelectedSubIds([])
+  }
 
   // Filtered Invoices
   const filteredInvoices = useMemo(() => {
@@ -616,8 +728,8 @@ const SubscriptionsBillingView = () => {
       {/* TAB 1: INSTITUTE SUBSCRIPTIONS */}
       {activeTab === 'subscriptions' && (
         <div className="space-y-4">
-          {/* Filter Bar */}
-          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-3">
+          {/* Filter Bar with Quick Status Buttons, Filters Popover with Checkboxes, and Search */}
+          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2">
               {['ALL', 'ACTIVE', 'TRIAL', 'OVERDUE'].map((status) => (
                 <button
@@ -634,17 +746,237 @@ const SubscriptionsBillingView = () => {
               ))}
             </div>
 
-            <div className="relative w-full md:w-72">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Search institute or plan..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white"
-              />
+            <div className="flex flex-wrap items-center gap-2.5">
+              {/* Interactive Filters Button with Popover */}
+              <div className="relative" ref={subFilterPopoverRef}>
+                <button
+                  type="button"
+                  onClick={() => setShowSubFilterPopover(!showSubFilterPopover)}
+                  className={`flex items-center gap-2 px-3 py-1.5 border rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs ${
+                    activeSubFiltersCount > 0 || showSubFilterPopover
+                      ? 'bg-[#f5eeff] text-purple-700 border-purple-300 ring-2 ring-purple-500/10'
+                      : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  <Filter className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                  <span>Filters</span>
+                  {activeSubFiltersCount > 0 && (
+                    <span className="w-5 h-5 rounded-full bg-purple-600 text-white text-[10px] font-extrabold flex items-center justify-center">
+                      {activeSubFiltersCount}
+                    </span>
+                  )}
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showSubFilterPopover ? 'rotate-180 text-purple-600' : 'text-slate-400'}`} />
+                </button>
+
+                {/* Popover Content */}
+                {showSubFilterPopover && (
+                  <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-200 p-4 z-50 animate-in fade-in slide-in-from-top-2">
+                    <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                      <div className="flex items-center gap-2">
+                        <Sliders className="w-4 h-4 text-purple-600" />
+                        <span className="text-xs font-bold text-slate-900">Subscription Filters</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleResetSubFilters}
+                        className="text-[11px] font-semibold text-purple-600 hover:text-purple-800 transition-colors cursor-pointer"
+                      >
+                        Reset All
+                      </button>
+                    </div>
+
+                    <div className="py-3 space-y-4 max-h-[380px] overflow-y-auto">
+                      {/* Section 1: Subscription Status Checkboxes */}
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
+                          Subscription Status (Enable / Disable)
+                        </label>
+                        <div className="space-y-1.5">
+                          {[
+                            { key: 'ACTIVE', label: 'ACTIVE - Healthy & Paid', color: 'bg-emerald-500' },
+                            { key: 'TRIAL', label: 'TRIAL - Onboarding Period', color: 'bg-purple-500' },
+                            { key: 'OVERDUE', label: 'OVERDUE - Payment Pending', color: 'bg-rose-500' }
+                          ].map(item => {
+                            const checked = selectedSubStatusFilters.includes(item.key)
+                            return (
+                              <label
+                                key={item.key}
+                                className={`flex items-center gap-2.5 p-2 rounded-xl border text-xs cursor-pointer transition-all ${
+                                  checked
+                                    ? 'bg-purple-50/50 border-purple-200 text-slate-900 font-semibold'
+                                    : 'bg-slate-50/50 border-slate-200/60 text-slate-400'
+                                }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  onChange={() => handleToggleSubStatusFilter(item.key)}
+                                  className="w-4 h-4 rounded text-purple-600 border-slate-300 focus:ring-purple-500 cursor-pointer"
+                                />
+                                <span className={`w-2 h-2 rounded-full ${item.color}`}></span>
+                                <span>{item.label}</span>
+                              </label>
+                            )
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Section 2: Plan Tiers Checkboxes */}
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
+                          Plan Tier Filters
+                        </label>
+                        <div className="space-y-1.5">
+                          {[
+                            { key: 'plan-school', label: '🏫 School Plan (K-10 & Matric)' },
+                            { key: 'plan-college', label: '🏛️ College Plan (Inter & HSSC)' },
+                            { key: 'plan-university', label: '🎓 University Plan (BS Degrees)' },
+                            { key: 'plan-custom', label: '✨ Custom Hybrid Multi-Wing' }
+                          ].map(item => {
+                            const checked = selectedPlanTierFilters.includes(item.key)
+                            return (
+                              <label
+                                key={item.key}
+                                className={`flex items-center gap-2.5 p-2 rounded-xl border text-xs cursor-pointer transition-all ${
+                                  checked
+                                    ? 'bg-purple-50/50 border-purple-200 text-slate-900 font-semibold'
+                                    : 'bg-slate-50/50 border-slate-200/60 text-slate-400'
+                                }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  onChange={() => handleTogglePlanTierFilter(item.key)}
+                                  className="w-4 h-4 rounded text-purple-600 border-slate-300 focus:ring-purple-500 cursor-pointer"
+                                />
+                                <span>{item.label}</span>
+                              </label>
+                            )
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Section 3: Billing Cycle */}
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
+                          Billing Cycle
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {[
+                            { key: 'monthly', label: 'Monthly' },
+                            { key: 'quarterly', label: 'Quarterly' },
+                            { key: 'annual', label: 'Annual / Yearly' }
+                          ].map(item => {
+                            const checked = selectedCycleFilters.includes(item.key)
+                            return (
+                              <label
+                                key={item.key}
+                                className={`flex items-center gap-2 p-2 rounded-xl border text-xs cursor-pointer transition-all ${
+                                  checked
+                                    ? 'bg-purple-50/50 border-purple-200 text-slate-900 font-semibold'
+                                    : 'bg-slate-50/50 border-slate-200/60 text-slate-400'
+                                }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  onChange={() => handleToggleCycleFilter(item.key)}
+                                  className="w-4 h-4 rounded text-purple-600 border-slate-300 focus:ring-purple-500 cursor-pointer"
+                                />
+                                <span>{item.label}</span>
+                              </label>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                      <span className="text-[11px] text-slate-500 font-medium">
+                        Showing {filteredSubscriptions.length} of {subscriptions.length}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowSubFilterPopover(false)}
+                        className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow-xs cursor-pointer"
+                      >
+                        Apply Filters
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Search Box */}
+              <div className="relative w-full md:w-64">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Search campus or plan..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-7 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
+
+          {/* Floating Bulk Action Bar for Selected Subscriptions */}
+          {selectedSubIds.length > 0 && (
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900/95 backdrop-blur-md text-white px-5 py-3 rounded-2xl shadow-2xl border border-slate-700/60 flex items-center gap-3 sm:gap-4 animate-in fade-in slide-in-from-bottom-4 max-w-[95vw] overflow-x-auto">
+              <div className="flex items-center gap-2 pr-2 border-r border-slate-700 shrink-0">
+                <CheckCircle2 className="w-4 h-4 text-purple-400" />
+                <span className="text-xs font-bold text-white whitespace-nowrap">
+                  {selectedSubIds.length} Subscriptions Selected
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="text-[11px] font-semibold text-slate-400 hidden xl:inline">Bulk Controls:</span>
+                <button
+                  onClick={() => handleBulkSetSubStatus('ACTIVE')}
+                  className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap shadow-xs"
+                >
+                  Enable (Activate)
+                </button>
+                <button
+                  onClick={() => handleBulkSetSubStatus('OVERDUE')}
+                  className="px-2.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap shadow-xs"
+                >
+                  Disable (Lock/Overdue)
+                </button>
+                <button
+                  onClick={() => handleBulkExtendSubs(7)}
+                  className="px-2.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap shadow-xs"
+                >
+                  +7 Days Grace
+                </button>
+                <button
+                  onClick={handleBulkWaiveSubs}
+                  className="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap shadow-xs"
+                >
+                  Waive Month (PKR 0)
+                </button>
+              </div>
+
+              <button
+                onClick={() => setSelectedSubIds([])}
+                className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors cursor-pointer shrink-0 ml-1"
+                title="Clear selection"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
 
           {/* Subscriptions Table */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -652,6 +984,15 @@ const SubscriptionsBillingView = () => {
               <table className="w-full text-left text-xs sm:text-sm">
                 <thead className="bg-slate-50/80 text-slate-600 font-semibold border-b border-slate-100 uppercase text-[11px] tracking-wider">
                   <tr>
+                    <th className="py-3.5 px-3 w-10 text-center">
+                      <input
+                        type="checkbox"
+                        checked={isAllSubsSelected}
+                        onChange={handleSelectAllSubs}
+                        aria-label="Select all subscriptions"
+                        className="w-4 h-4 rounded text-purple-600 border-slate-300 focus:ring-purple-500 cursor-pointer"
+                      />
+                    </th>
                     <th className="py-3.5 px-4">Institute</th>
                     <th className="py-3.5 px-4">Current Plan</th>
                     <th className="py-3.5 px-4">Cycle & Price</th>
@@ -662,8 +1003,19 @@ const SubscriptionsBillingView = () => {
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-700">
                   {filteredSubscriptions.length > 0 ? (
-                    filteredSubscriptions.map((sub) => (
-                    <tr key={sub.id} className="hover:bg-slate-50/70 transition-colors">
+                    filteredSubscriptions.map((sub) => {
+                      const isSelected = selectedSubIds.includes(sub.id)
+                      return (
+                    <tr key={sub.id} className={`hover:bg-slate-50/70 transition-colors ${isSelected ? 'bg-purple-50/40' : ''}`}>
+                      <td className="py-3.5 px-3 text-center">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => handleToggleSelectSub(sub.id)}
+                          aria-label={`Select ${sub.instituteName}`}
+                          className="w-4 h-4 rounded text-purple-600 border-slate-300 focus:ring-purple-500 cursor-pointer"
+                        />
+                      </td>
                       <td className="py-3.5 px-4">
                         <div className="font-semibold text-slate-900">{sub.instituteName}</div>
                         <div className="text-[11px] text-slate-400">ID: {sub.instituteId.slice(0, 8)}...</div>
@@ -779,10 +1131,11 @@ const SubscriptionsBillingView = () => {
                         </div>
                       </td>
                     </tr>
-                  ))
+                    )
+                  })
                   ) : (
                     <tr>
-                      <td colSpan="5" className="py-12 text-center text-slate-400">
+                      <td colSpan="7" className="py-12 text-center text-slate-400">
                         <CreditCard className="w-10 h-10 text-slate-300 mx-auto mb-2" />
                         <p className="text-sm font-semibold text-slate-600">No active subscriptions found</p>
                         <p className="text-xs text-slate-400 mt-0.5">Campuses onboarded with subscription plans will appear here.</p>

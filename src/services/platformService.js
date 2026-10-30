@@ -1,7 +1,7 @@
 import { supabase, isSupabaseConfigured } from './supabaseClient'
 import { DataService, getStoredData, saveStoredData } from './dataService'
 
-const API_BASE_URL = 'http://localhost:5000'
+import { API_BASE_URL } from './apiConfig'
 
 export const PLATFORM_MODULES = [
   { key: 'students', name: 'Student Information System', category: 'Core Academic', defaultQuota: 1500, description: 'Student profiles, enrollments, documents & identity card generator' },

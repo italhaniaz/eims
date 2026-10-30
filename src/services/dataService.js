@@ -560,7 +560,7 @@ export const DataService = {
   },
 
   async addItem(collectionName, item) {
-    const newItem = {
+    let finalItem = {
       ...item,
       id: item.id || `${collectionName.slice(0, 3)}-${Date.now()}`,
       createdAt: new Date().toISOString()
@@ -568,18 +568,26 @@ export const DataService = {
 
     if (isSupabaseConfigured && supabase) {
       try {
-        const { data, error } = await supabase.from(collectionName).insert([newItem]).select().single()
-        if (!error && data) return data
+        const { data, error } = await supabase.from(collectionName).insert([finalItem]).select().single()
+        if (!error && data) {
+          finalItem = data
+        }
       } catch (err) {
         console.warn(`Supabase insert failed for ${collectionName}:`, err)
       }
     }
 
+    // Always synchronize local store so backups, exports, and offline view are 100% in sync
     const store = getStoredData()
     if (!store[collectionName]) store[collectionName] = []
-    store[collectionName].unshift(newItem)
+    const existingIdx = store[collectionName].findIndex(x => x.id === finalItem.id)
+    if (existingIdx !== -1) {
+      store[collectionName][existingIdx] = finalItem
+    } else {
+      store[collectionName].unshift(finalItem)
+    }
 
-    const itemName = newItem.name || newItem.title || newItem.studentName || newItem.rollNumber || newItem.id
+    const itemName = finalItem.name || finalItem.title || finalItem.studentName || finalItem.rollNumber || finalItem.id
     const userEmail = getActiveUserEmail()
 
     // Activity stream entry
@@ -599,7 +607,7 @@ export const DataService = {
       id: `log-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
       action: `Created ${collectionName}: ${itemName}`,
       user: userEmail,
-      ip: `192.168.1.${Math.floor(100 + Math.random() * 50)}`,
+      ip: typeof window !== 'undefined' && window.__sms_client_ip ? window.__sms_client_ip : '127.0.0.1 (Local Session)',
       timestamp: new Date().toLocaleString(),
       status: 'Success'
     }
@@ -608,14 +616,17 @@ export const DataService = {
     if (store.auditLogs.length > 50) store.auditLogs.pop()
 
     saveStoredData(store)
-    return newItem
+    return finalItem
   },
 
   async updateItem(collectionName, id, updates) {
+    let updatedPayload = updates
     if (isSupabaseConfigured && supabase) {
       try {
         const { data, error } = await supabase.from(collectionName).update(updates).eq('id', id).select().single()
-        if (!error && data) return data
+        if (!error && data) {
+          updatedPayload = data
+        }
       } catch (err) {
         console.warn(`Supabase update failed for ${collectionName}:`, err)
       }
@@ -625,8 +636,8 @@ export const DataService = {
     if (store[collectionName]) {
       const idx = store[collectionName].findIndex(item => item.id === id)
       if (idx !== -1) {
-        store[collectionName][idx] = { ...store[collectionName][idx], ...updates }
-        const itemName = updates.name || store[collectionName][idx].name || store[collectionName][idx].title || store[collectionName][idx].studentName || id
+        store[collectionName][idx] = { ...store[collectionName][idx], ...updatedPayload }
+        const itemName = updatedPayload.name || store[collectionName][idx].name || store[collectionName][idx].title || store[collectionName][idx].studentName || id
         const userEmail = getActiveUserEmail()
 
         const activity = {
@@ -645,7 +656,7 @@ export const DataService = {
           id: `log-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
           action: `Modified ${collectionName}: ${itemName}`,
           user: userEmail,
-          ip: `192.168.1.${Math.floor(100 + Math.random() * 50)}`,
+          ip: typeof window !== 'undefined' && window.__sms_client_ip ? window.__sms_client_ip : '127.0.0.1 (Local Session)',
           timestamp: new Date().toLocaleString(),
           status: 'Success'
         }
@@ -692,7 +703,7 @@ export const DataService = {
         id: `log-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
         action: `Deleted ${collectionName}: ${itemName}`,
         user: userEmail,
-        ip: `192.168.1.${Math.floor(100 + Math.random() * 50)}`,
+        ip: typeof window !== 'undefined' && window.__sms_client_ip ? window.__sms_client_ip : '127.0.0.1 (Local Session)',
         timestamp: new Date().toLocaleString(),
         status: 'Warning'
       }

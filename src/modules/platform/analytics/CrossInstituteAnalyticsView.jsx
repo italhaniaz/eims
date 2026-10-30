@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import {
   BarChart3,
   Users,
@@ -14,12 +14,16 @@ import {
   Award,
   AlertCircle,
   CheckCircle,
+  CheckCircle2,
   Clock,
   Send,
   Building,
   ArrowUpDown,
   FileText,
-  X
+  X,
+  ChevronDown,
+  Sliders,
+  Columns
 } from 'lucide-react'
 import StatCard from '../../../components/common/StatCard'
 import Modal from '../../../components/common/Modal'
@@ -86,15 +90,61 @@ const CrossInstituteAnalyticsView = () => {
     setTimeout(() => setActionToast(null), 4000)
   }
 
+  // --- Analytics Filter Popover State with Checkboxes ---
+  const [showAnalyticsFilterPopover, setShowAnalyticsFilterPopover] = useState(false)
+  const analyticsFilterPopoverRef = useRef(null)
+  const [selectedTypeFilters, setSelectedTypeFilters] = useState(['SCHOOL', 'COLLEGE', 'UNIVERSITY'])
+  const [selectedHealthFilters, setSelectedHealthFilters] = useState(['high', 'standard', 'attention'])
+
+  // Column Visibility Checkboxes (Enable / Disable Columns in Matrix)
+  const [visibleColumns, setVisibleColumns] = useState({
+    students: true,
+    faculty: true,
+    ratio: true,
+    attendance: true,
+    fees: true,
+    collected: true,
+    health: true
+  })
+
+  // Multi-select Row Checkboxes State
+  const [selectedAnalyticsIds, setSelectedAnalyticsIds] = useState([])
+
+  // Close filter popover on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (analyticsFilterPopoverRef.current && !analyticsFilterPopoverRef.current.contains(event.target)) {
+        setShowAnalyticsFilterPopover(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
   const filteredAndSorted = useMemo(() => {
     if (!analyticsData?.comparisonList) return []
 
     let list = analyticsData.comparisonList.filter(inst => {
-      const matchesSearch = inst.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      const matchesSearch = !searchTerm ||
+        inst.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         inst.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
         inst.city.toLowerCase().includes(searchTerm.toLowerCase())
-      const matchesType = typeFilter === 'ALL' || inst.type.toUpperCase() === typeFilter.toUpperCase()
-      return matchesSearch && matchesType
+
+      const matchesLegacyType = typeFilter === 'ALL' || inst.type.toUpperCase() === typeFilter.toUpperCase()
+      const matchesTypeCheckboxes = selectedTypeFilters.includes(inst.type.toUpperCase())
+
+      // Health thresholds: high (>=85%), attention (<70%), standard (in-between)
+      const isHigh = inst.attendanceRate >= 85
+      const isAttention = inst.attendanceRate < 70
+      const isStandard = !isHigh && !isAttention
+
+      const matchesHealth = (
+        (isHigh && selectedHealthFilters.includes('high')) ||
+        (isStandard && selectedHealthFilters.includes('standard')) ||
+        (isAttention && selectedHealthFilters.includes('attention'))
+      )
+
+      return matchesSearch && matchesLegacyType && matchesTypeCheckboxes && matchesHealth
     })
 
     list.sort((a, b) => {
@@ -107,7 +157,78 @@ const CrossInstituteAnalyticsView = () => {
     })
 
     return list
-  }, [analyticsData, searchTerm, typeFilter, sortField, sortAsc])
+  }, [analyticsData, searchTerm, typeFilter, selectedTypeFilters, selectedHealthFilters, sortField, sortAsc])
+
+  // Active filter count for badge
+  const activeAnalyticsFiltersCount = (3 - selectedTypeFilters.length) + (3 - selectedHealthFilters.length)
+
+  const handleToggleTypeFilter = (t) => {
+    setSelectedTypeFilters(prev => 
+      prev.includes(t) ? (prev.length > 1 ? prev.filter(item => item !== t) : prev) : [...prev, t]
+    )
+  }
+
+  const handleToggleHealthFilter = (h) => {
+    setSelectedHealthFilters(prev => 
+      prev.includes(h) ? (prev.length > 1 ? prev.filter(item => item !== h) : prev) : [...prev, h]
+    )
+  }
+
+  const handleToggleColumn = (colKey) => {
+    setVisibleColumns(prev => ({ ...prev, [colKey]: !prev[colKey] }))
+  }
+
+  const handleResetAnalyticsFilters = () => {
+    setSelectedTypeFilters(['SCHOOL', 'COLLEGE', 'UNIVERSITY'])
+    setSelectedHealthFilters(['high', 'standard', 'attention'])
+    setVisibleColumns({
+      students: true,
+      faculty: true,
+      ratio: true,
+      attendance: true,
+      fees: true,
+      collected: true,
+      health: true
+    })
+    setTypeFilter('ALL')
+    setSearchTerm('')
+  }
+
+  // Row selection helpers
+  const isAllAnalyticsSelected = filteredAndSorted.length > 0 && filteredAndSorted.every(i => selectedAnalyticsIds.includes(i.id))
+
+  const handleSelectAllAnalytics = () => {
+    if (isAllAnalyticsSelected) {
+      setSelectedAnalyticsIds([])
+    } else {
+      setSelectedAnalyticsIds(filteredAndSorted.map(i => i.id))
+    }
+  }
+
+  const handleToggleSelectAnalytics = (id) => {
+    setSelectedAnalyticsIds(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    )
+  }
+
+  // Export selected rows to CSV
+  const handleExportSelectedCSV = () => {
+    if (selectedAnalyticsIds.length === 0) return
+    const selectedRows = filteredAndSorted.filter(i => selectedAnalyticsIds.includes(i.id))
+    const headers = ['Institute,Code,City,Type,Students,Faculty,Ratio,AttendanceRate,FeeRecoveryRate,PKRCollected']
+    const rows = selectedRows.map(r => 
+      `"${r.name}","${r.code}","${r.city}","${r.type}",${r.studentCount},${r.teacherCount},"${r.studentTeacherRatio}","${r.attendanceRate}%","${r.feeRecoveryRate}%",${r.feeCollectedPKR || 0}`
+    )
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers, ...rows].join('\n')
+    const encodedUri = encodeURI(csvContent)
+    const link = document.createElement('a')
+    link.setAttribute('href', encodedUri)
+    link.setAttribute('download', `eims_campus_analytics_selected_${new Date().toISOString().slice(0, 10)}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    showToast(`Exported analytics snapshot for ${selectedAnalyticsIds.length} selected campuses!`)
+  }
 
   const handleSort = (field) => {
     if (sortField === field) {
@@ -255,9 +376,9 @@ const CrossInstituteAnalyticsView = () => {
       </div>
 
 
-      {/* Filter & Search Bar */}
-      <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] shadow-sm flex flex-col md:flex-row items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+      {/* Filter & Search Bar with Interactive Checkbox Filters */}
+      <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
           {/* Period Selector */}
           <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl text-xs font-medium text-slate-700">
             <Calendar className="w-3.5 h-3.5 text-slate-500" />
@@ -272,13 +393,13 @@ const CrossInstituteAnalyticsView = () => {
             </select>
           </div>
 
-          {/* Type Filter */}
-          <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs">
+          {/* Quick Type Filter Pills */}
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs">
             {['ALL', 'School', 'College', 'University'].map((t) => (
               <button
                 key={t}
                 onClick={() => setTypeFilter(t)}
-                className={`px-3 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
+                className={`px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
                   typeFilter === t ? 'bg-white text-slate-900 shadow-xs font-semibold' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
@@ -286,20 +407,225 @@ const CrossInstituteAnalyticsView = () => {
               </button>
             ))}
           </div>
+
+          {/* Interactive Filters Button with Popover */}
+          <div className="relative" ref={analyticsFilterPopoverRef}>
+            <button
+              type="button"
+              onClick={() => setShowAnalyticsFilterPopover(!showAnalyticsFilterPopover)}
+              className={`flex items-center gap-2 px-3 py-1.5 border rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs ${
+                activeAnalyticsFiltersCount > 0 || showAnalyticsFilterPopover
+                  ? 'bg-[#f5eeff] text-purple-700 border-purple-300 ring-2 ring-purple-500/10'
+                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              <Filter className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+              <span>Filters</span>
+              {activeAnalyticsFiltersCount > 0 && (
+                <span className="w-5 h-5 rounded-full bg-purple-600 text-white text-[10px] font-extrabold flex items-center justify-center">
+                  {activeAnalyticsFiltersCount}
+                </span>
+              )}
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showAnalyticsFilterPopover ? 'rotate-180 text-purple-600' : 'text-slate-400'}`} />
+            </button>
+
+            {/* Filter Popover Content */}
+            {showAnalyticsFilterPopover && (
+              <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-200 p-4 z-50 animate-in fade-in slide-in-from-top-2">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <Sliders className="w-4 h-4 text-purple-600" />
+                    <span className="text-xs font-bold text-slate-900">Analytics & Matrix Filters</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleResetAnalyticsFilters}
+                    className="text-[11px] font-semibold text-purple-600 hover:text-purple-800 transition-colors cursor-pointer"
+                  >
+                    Reset All
+                  </button>
+                </div>
+
+                <div className="py-3 space-y-4 max-h-[380px] overflow-y-auto">
+                  {/* Section 1: Campus Type Checkboxes */}
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
+                      Campus Types (Enable / Disable)
+                    </label>
+                    <div className="space-y-1.5">
+                      {[
+                        { key: 'SCHOOL', label: '🏫 School Campuses (Primary & Matric)' },
+                        { key: 'COLLEGE', label: '🏛️ College Campuses (Inter & HSSC)' },
+                        { key: 'UNIVERSITY', label: '🎓 University Campuses (BS Degrees)' }
+                      ].map(item => {
+                        const checked = selectedTypeFilters.includes(item.key)
+                        return (
+                          <label
+                            key={item.key}
+                            className={`flex items-center gap-2.5 p-2 rounded-xl border text-xs cursor-pointer transition-all ${
+                              checked
+                                ? 'bg-purple-50/50 border-purple-200 text-slate-900 font-semibold'
+                                : 'bg-slate-50/50 border-slate-200/60 text-slate-400'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => handleToggleTypeFilter(item.key)}
+                              className="w-4 h-4 rounded text-purple-600 border-slate-300 focus:ring-purple-500 cursor-pointer"
+                            />
+                            <span>{item.label}</span>
+                          </label>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Section 2: Health Status Checkboxes */}
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
+                      Performance & Health Thresholds
+                    </label>
+                    <div className="space-y-1.5">
+                      {[
+                        { key: 'high', label: 'High Performing (Attendance ≥85%)', color: 'bg-emerald-500' },
+                        { key: 'standard', label: 'Standard Range (Attendance 70-84%)', color: 'bg-purple-500' },
+                        { key: 'attention', label: 'Needs Attention (Attendance <70%)', color: 'bg-rose-500' }
+                      ].map(item => {
+                        const checked = selectedHealthFilters.includes(item.key)
+                        return (
+                          <label
+                            key={item.key}
+                            className={`flex items-center gap-2.5 p-2 rounded-xl border text-xs cursor-pointer transition-all ${
+                              checked
+                                ? 'bg-purple-50/50 border-purple-200 text-slate-900 font-semibold'
+                                : 'bg-slate-50/50 border-slate-200/60 text-slate-400'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => handleToggleHealthFilter(item.key)}
+                              className="w-4 h-4 rounded text-purple-600 border-slate-300 focus:ring-purple-500 cursor-pointer"
+                            />
+                            <span className={`w-2 h-2 rounded-full ${item.color}`}></span>
+                            <span>{item.label}</span>
+                          </label>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Section 3: Metric Columns Visibility */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                        Visible Columns (Show / Hide)
+                      </label>
+                      <Columns className="w-3.5 h-3.5 text-slate-400" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-1.5 text-[11px]">
+                      {[
+                        { key: 'students', label: 'Students' },
+                        { key: 'faculty', label: 'Faculty' },
+                        { key: 'ratio', label: 'Ratio' },
+                        { key: 'attendance', label: 'Attendance' },
+                        { key: 'fees', label: 'Fee Recovery' },
+                        { key: 'collected', label: 'PKR Collected' },
+                        { key: 'health', label: 'Health' }
+                      ].map(col => (
+                        <label
+                          key={col.key}
+                          className="flex items-center gap-1.5 p-1.5 rounded-lg border border-slate-100 bg-slate-50/50 text-slate-700 cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={visibleColumns[col.key]}
+                            onChange={() => handleToggleColumn(col.key)}
+                            className="w-3.5 h-3.5 rounded text-purple-600 border-slate-300 focus:ring-purple-500 cursor-pointer"
+                          />
+                          <span>{col.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                  <span className="text-[11px] text-slate-500 font-medium">
+                    Showing {filteredAndSorted.length} campuses
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowAnalyticsFilterPopover(false)}
+                    className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow-xs cursor-pointer"
+                  >
+                    Apply Filters
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Search */}
-        <div className="relative w-full md:w-72">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+        <div className="relative w-full md:w-64">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
-            placeholder="Search institute or code..."
+            placeholder="Search campus or code..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white"
+            className="w-full pl-9 pr-7 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white"
           />
+          {searchTerm && (
+            <button
+              type="button"
+              onClick={() => setSearchTerm('')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
       </div>
+
+      {/* Floating Bulk Action Bar for Selected Campuses */}
+      {selectedAnalyticsIds.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900/95 backdrop-blur-md text-white px-5 py-3 rounded-2xl shadow-2xl border border-slate-700/60 flex items-center gap-3 sm:gap-4 animate-in fade-in slide-in-from-bottom-4 max-w-[95vw] overflow-x-auto">
+          <div className="flex items-center gap-2 pr-2 border-r border-slate-700 shrink-0">
+            <CheckCircle2 className="w-4 h-4 text-purple-400" />
+            <span className="text-xs font-bold text-white whitespace-nowrap">
+              {selectedAnalyticsIds.length} Campuses Selected
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={handleExportSelectedCSV}
+              className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap shadow-xs flex items-center gap-1.5"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Export CSV</span>
+            </button>
+            <button
+              onClick={() => setIsPrintModalOpen(true)}
+              className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              <span>Print Dossier</span>
+            </button>
+          </div>
+
+          <button
+            onClick={() => setSelectedAnalyticsIds([])}
+            className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors cursor-pointer shrink-0 ml-1"
+            title="Clear selection"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Comparative Performance Table */}
       <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] shadow-sm overflow-hidden">
@@ -317,6 +643,15 @@ const CrossInstituteAnalyticsView = () => {
           <table className="w-full text-left text-xs sm:text-sm">
             <thead className="bg-slate-50/80 text-slate-600 font-semibold border-b border-slate-100 uppercase text-[11px] tracking-wider">
               <tr>
+                <th className="py-3.5 px-3 w-10 text-center">
+                  <input
+                    type="checkbox"
+                    checked={isAllAnalyticsSelected}
+                    onChange={handleSelectAllAnalytics}
+                    aria-label="Select all campuses"
+                    className="w-4 h-4 rounded text-purple-600 border-slate-300 focus:ring-purple-500 cursor-pointer"
+                  />
+                </th>
                 <th className="py-3.5 px-4 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleSort('name')}>
                   <div className="flex items-center gap-1.5">
                     <span>Institute & Code</span>
@@ -329,39 +664,64 @@ const CrossInstituteAnalyticsView = () => {
                     <ArrowUpDown className="w-3 h-3 text-slate-400" />
                   </div>
                 </th>
-                <th className="py-3.5 px-4 text-right cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleSort('studentCount')}>
-                  <div className="flex items-center justify-end gap-1.5">
-                    <span>Students</span>
-                    <ArrowUpDown className="w-3 h-3 text-slate-400" />
-                  </div>
-                </th>
-                <th className="py-3.5 px-4 text-right cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleSort('teacherCount')}>
-                  <div className="flex items-center justify-end gap-1.5">
-                    <span>Faculty</span>
-                    <ArrowUpDown className="w-3 h-3 text-slate-400" />
-                  </div>
-                </th>
-                <th className="py-3.5 px-4 text-center">Ratio</th>
-                <th className="py-3.5 px-4 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleSort('attendanceRate')}>
-                  <div className="flex items-center gap-1.5">
-                    <span>Attendance Rate</span>
-                    <ArrowUpDown className="w-3 h-3 text-slate-400" />
-                  </div>
-                </th>
-                <th className="py-3.5 px-4 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleSort('feeRecoveryRate')}>
-                  <div className="flex items-center gap-1.5">
-                    <span>Fee Recovery</span>
-                    <ArrowUpDown className="w-3 h-3 text-slate-400" />
-                  </div>
-                </th>
-                <th className="py-3.5 px-4 text-right">Collected (PKR)</th>
-                <th className="py-3.5 px-4 text-center">Health</th>
+                {visibleColumns.students && (
+                  <th className="py-3.5 px-4 text-right cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleSort('studentCount')}>
+                    <div className="flex items-center justify-end gap-1.5">
+                      <span>Students</span>
+                      <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                    </div>
+                  </th>
+                )}
+                {visibleColumns.faculty && (
+                  <th className="py-3.5 px-4 text-right cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleSort('teacherCount')}>
+                    <div className="flex items-center justify-end gap-1.5">
+                      <span>Faculty</span>
+                      <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                    </div>
+                  </th>
+                )}
+                {visibleColumns.ratio && (
+                  <th className="py-3.5 px-4 text-center">Ratio</th>
+                )}
+                {visibleColumns.attendance && (
+                  <th className="py-3.5 px-4 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleSort('attendanceRate')}>
+                    <div className="flex items-center gap-1.5">
+                      <span>Attendance Rate</span>
+                      <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                    </div>
+                  </th>
+                )}
+                {visibleColumns.fees && (
+                  <th className="py-3.5 px-4 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleSort('feeRecoveryRate')}>
+                    <div className="flex items-center gap-1.5">
+                      <span>Fee Recovery</span>
+                      <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                    </div>
+                  </th>
+                )}
+                {visibleColumns.collected && (
+                  <th className="py-3.5 px-4 text-right">Collected (PKR)</th>
+                )}
+                {visibleColumns.health && (
+                  <th className="py-3.5 px-4 text-center">Health</th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700">
               {filteredAndSorted.length > 0 ? (
-                filteredAndSorted.map((inst) => (
-                <tr key={inst.id} className="hover:bg-slate-50/70 transition-colors">
+                filteredAndSorted.map((inst) => {
+                  const isSelected = selectedAnalyticsIds.includes(inst.id)
+                  return (
+                <tr key={inst.id} className={`hover:bg-slate-50/70 transition-colors ${isSelected ? 'bg-purple-50/40' : ''}`}>
+                  <td className="py-3.5 px-3 text-center">
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => handleToggleSelectAnalytics(inst.id)}
+                      aria-label={`Select ${inst.name}`}
+                      className="w-4 h-4 rounded text-purple-600 border-slate-300 focus:ring-purple-500 cursor-pointer"
+                    />
+                  </td>
                   <td className="py-3.5 px-4">
                     <div className="font-semibold text-slate-900">{inst.name}</div>
                     <div className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5">
@@ -375,60 +735,75 @@ const CrossInstituteAnalyticsView = () => {
                       {inst.type}
                     </span>
                   </td>
-                  <td className="py-3.5 px-4 text-right font-medium">{inst.studentCount.toLocaleString()}</td>
-                  <td className="py-3.5 px-4 text-right font-medium">{inst.teacherCount}</td>
-                  <td className="py-3.5 px-4 text-center font-mono text-xs">{inst.studentTeacherRatio}</td>
-                  <td className="py-3.5 px-4">
-                    <div className="w-32">
-                      <div className="flex items-center justify-between text-xs font-semibold mb-1">
-                        <span>{inst.attendanceRate}%</span>
+                  {visibleColumns.students && (
+                    <td className="py-3.5 px-4 text-right font-medium">{inst.studentCount.toLocaleString()}</td>
+                  )}
+                  {visibleColumns.faculty && (
+                    <td className="py-3.5 px-4 text-right font-medium">{inst.teacherCount}</td>
+                  )}
+                  {visibleColumns.ratio && (
+                    <td className="py-3.5 px-4 text-center font-mono text-xs">{inst.studentTeacherRatio}</td>
+                  )}
+                  {visibleColumns.attendance && (
+                    <td className="py-3.5 px-4">
+                      <div className="w-32">
+                        <div className="flex items-center justify-between text-xs font-semibold mb-1">
+                          <span>{inst.attendanceRate}%</span>
+                        </div>
+                        <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${
+                              inst.attendanceRate >= 90 ? 'bg-emerald-500' : inst.attendanceRate >= 80 ? 'bg-[#f5eeff]0' : 'bg-amber-500'
+                            }`}
+                            style={{ width: `${Math.min(100, inst.attendanceRate)}%` }}
+                          />
+                        </div>
                       </div>
-                      <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full ${
-                            inst.attendanceRate >= 90 ? 'bg-emerald-500' : inst.attendanceRate >= 80 ? 'bg-[#f5eeff]0' : 'bg-amber-500'
-                          }`}
-                          style={{ width: `${Math.min(100, inst.attendanceRate)}%` }}
-                        />
+                    </td>
+                  )}
+                  {visibleColumns.fees && (
+                    <td className="py-3.5 px-4">
+                      <div className="w-32">
+                        <div className="flex items-center justify-between text-xs font-semibold mb-1">
+                          <span>{inst.feeRecoveryRate}%</span>
+                        </div>
+                        <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${
+                              inst.feeRecoveryRate >= 90 ? 'bg-emerald-500' : inst.feeRecoveryRate >= 80 ? 'bg-indigo-500' : 'bg-rose-500'
+                            }`}
+                            style={{ width: `${Math.min(100, inst.feeRecoveryRate)}%` }}
+                          />
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="py-3.5 px-4">
-                    <div className="w-32">
-                      <div className="flex items-center justify-between text-xs font-semibold mb-1">
-                        <span>{inst.feeRecoveryRate}%</span>
-                      </div>
-                      <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full ${
-                            inst.feeRecoveryRate >= 90 ? 'bg-emerald-500' : inst.feeRecoveryRate >= 80 ? 'bg-indigo-500' : 'bg-rose-500'
-                          }`}
-                          style={{ width: `${Math.min(100, inst.feeRecoveryRate)}%` }}
-                        />
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-3.5 px-4 text-right font-mono font-medium text-slate-800">
-                    ₨ {inst.totalCollectedPKR.toLocaleString()}
-                  </td>
-                  <td className="py-3.5 px-4 text-center">
-                    <span
-                      className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                        inst.health === 'Excellent'
-                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                          : inst.health === 'Good'
-                          ? 'bg-[#f5eeff] text-purple-700 border border-purple-200'
-                          : 'bg-amber-50 text-amber-700 border border-amber-200'
-                      }`}
-                    >
-                      {inst.health}
-                    </span>
-                  </td>
+                    </td>
+                  )}
+                  {visibleColumns.collected && (
+                    <td className="py-3.5 px-4 text-right font-mono font-medium text-slate-800">
+                      ₨ {inst.totalCollectedPKR.toLocaleString()}
+                    </td>
+                  )}
+                  {visibleColumns.health && (
+                    <td className="py-3.5 px-4 text-center">
+                      <span
+                        className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                          inst.health === 'Excellent'
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            : inst.health === 'Good'
+                            ? 'bg-[#f5eeff] text-purple-700 border border-purple-200'
+                            : 'bg-amber-50 text-amber-700 border border-amber-200'
+                        }`}
+                      >
+                        {inst.health}
+                      </span>
+                    </td>
+                  )}
                 </tr>
-              ))
+                  )
+                })
               ) : (
                 <tr>
-                  <td colSpan="8" className="py-12 text-center text-slate-400">
+                  <td colSpan="11" className="py-12 text-center text-slate-400">
                     <Building className="w-10 h-10 text-slate-300 mx-auto mb-2" />
                     <p className="text-sm font-semibold text-slate-600">No campuses reporting live telemetry</p>
                     <p className="text-xs text-slate-400 mt-0.5">Campuses will appear here once registered on the platform.</p>

@@ -94,6 +94,68 @@ export const InstitutesView = () => {
   const [typeFilter, setTypeFilter] = useState('ALL')
   const [viewMode, setViewMode] = useState('grid') // 'grid' | 'table' // ALL, School, College, University
 
+  // Advanced Campus Filter Popover state with Checkboxes
+  const [showMainFilterPopover, setShowMainFilterPopover] = useState(false)
+  const mainFilterPopoverRef = useRef(null)
+  const [selectedStatusFilters, setSelectedStatusFilters] = useState(['Active', 'Suspended', 'Archived'])
+  const [selectedTypeFilters, setSelectedTypeFilters] = useState(['School', 'College', 'University', 'Custom Group'])
+  const [selectedPlanFilters, setSelectedPlanFilters] = useState(['School Plan', 'College Plan', 'University Plan', 'Custom Hybrid Plan'])
+
+  // Row selection checkboxes for bulk enable/disable
+  const [selectedCampusIds, setSelectedCampusIds] = useState([])
+
+  // Close main filter popover on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (mainFilterPopoverRef.current && !mainFilterPopoverRef.current.contains(event.target)) {
+        setShowMainFilterPopover(false)
+      }
+    }
+    if (showMainFilterPopover) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showMainFilterPopover])
+
+  const toggleStatusCheckbox = (status) => {
+    setSelectedStatusFilters(prev => 
+      prev.includes(status) ? prev.filter(s => s !== status) : [...prev, status]
+    )
+    setCurrentPage(1)
+  }
+
+  const toggleTypeCheckbox = (type) => {
+    setSelectedTypeFilters(prev => 
+      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
+    )
+    setCurrentPage(1)
+  }
+
+  const togglePlanCheckbox = (plan) => {
+    setSelectedPlanFilters(prev => 
+      prev.includes(plan) ? prev.filter(p => p !== plan) : [...prev, plan]
+    )
+    setCurrentPage(1)
+  }
+
+  const resetMainFilters = () => {
+    setSelectedStatusFilters(['Active', 'Suspended', 'Archived'])
+    setSelectedTypeFilters(['School', 'College', 'University', 'Custom Group'])
+    setSelectedPlanFilters(['School Plan', 'College Plan', 'University Plan', 'Custom Hybrid Plan'])
+    setLifecycleFilter('ALL')
+    setTypeFilter('ALL')
+    setSearchTerm('')
+    setCurrentPage(1)
+  }
+
+  const handleToggleSelectCampus = (id) => {
+    setSelectedCampusIds(prev => 
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    )
+  }
+
   // Sorting & Pagination
   const [sortField, setSortField] = useState('name')
   const [sortDirection, setSortDirection] = useState('asc')
@@ -1134,12 +1196,21 @@ export const InstitutesView = () => {
         ((inst.city || inst.address) && (inst.city || inst.address).toLowerCase().includes(searchTerm.toLowerCase()))
 
       const instLifecycle = inst.lifecycleStatus || (inst.status === 'Suspended' ? 'Suspended' : 'Active')
-      const matchesLifecycle = lifecycleFilter === 'ALL' || instLifecycle.toLowerCase() === lifecycleFilter.toLowerCase()
+      const matchesLifecycle = 
+        (lifecycleFilter === 'ALL' || instLifecycle.toLowerCase() === lifecycleFilter.toLowerCase()) &&
+        (selectedStatusFilters.length === 0 || selectedStatusFilters.some(s => s.toLowerCase() === instLifecycle.toLowerCase()))
 
       const instType = inst.type || 'School'
-      const matchesType = typeFilter === 'ALL' || instType.toLowerCase() === typeFilter.toLowerCase()
+      const matchesType = 
+        (typeFilter === 'ALL' || instType.toLowerCase() === typeFilter.toLowerCase()) &&
+        (selectedTypeFilters.length === 0 || selectedTypeFilters.some(t => t.toLowerCase() === instType.toLowerCase()))
 
-      return matchesSearch && matchesLifecycle && matchesType
+      const instPlan = inst.planTier || 'School Plan'
+      const matchesPlan = selectedPlanFilters.length === 0 || selectedPlanFilters.some(p => 
+        p.toLowerCase().includes(instPlan.toLowerCase()) || instPlan.toLowerCase().includes(p.toLowerCase())
+      )
+
+      return matchesSearch && matchesLifecycle && matchesType && matchesPlan
     })
 
     return list.sort((a, b) => {
@@ -1153,7 +1224,7 @@ export const InstitutesView = () => {
       if (valA > valB) return sortDirection === 'asc' ? 1 : -1
       return 0
     })
-  }, [institutes, searchTerm, lifecycleFilter, typeFilter, sortField, sortDirection])
+  }, [institutes, searchTerm, lifecycleFilter, typeFilter, selectedStatusFilters, selectedTypeFilters, selectedPlanFilters, sortField, sortDirection])
 
   const totalInstitutes = filteredAndSorted.length
   const totalPages = Math.max(1, Math.ceil(totalInstitutes / pageSize))
@@ -1314,7 +1385,129 @@ export const InstitutesView = () => {
 
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-2.5">
-          {/* Status Filter */}
+          {/* Dedicated Filter Button with Checkboxes Popover */}
+          <div className="relative" ref={mainFilterPopoverRef}>
+            <button
+              type="button"
+              onClick={() => setShowMainFilterPopover(!showMainFilterPopover)}
+              className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                showMainFilterPopover || (selectedStatusFilters.length < 3 || selectedTypeFilters.length < 4 || selectedPlanFilters.length < 4)
+                  ? 'bg-[#f5eeff] text-purple-700 border-purple-200 shadow-xs'
+                  : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'
+              }`}
+            >
+              <Filter className="w-3.5 h-3.5 text-purple-600" />
+              <span>Filters</span>
+              {(selectedStatusFilters.length < 3 || selectedTypeFilters.length < 4 || selectedPlanFilters.length < 4) && (
+                <span className="w-5 h-5 bg-purple-600 text-white rounded-full text-[10px] flex items-center justify-center font-bold">
+                  {(selectedStatusFilters.length < 3 ? 1 : 0) + (selectedTypeFilters.length < 4 ? 1 : 0) + (selectedPlanFilters.length < 4 ? 1 : 0)}
+                </span>
+              )}
+            </button>
+
+            {showMainFilterPopover && (
+              <div className="absolute right-0 sm:left-0 mt-2 w-80 bg-white rounded-3xl border border-slate-200 shadow-2xl p-5 z-50 space-y-4 animate-in fade-in slide-in-from-top-2">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                  <span className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
+                    <Filter className="w-4 h-4 text-purple-600" /> Filter Criteria
+                  </span>
+                  <button
+                    type="button"
+                    onClick={resetMainFilters}
+                    className="text-xs text-purple-600 hover:text-purple-800 font-semibold cursor-pointer"
+                  >
+                    Reset All
+                  </button>
+                </div>
+
+                {/* Checkbox Group: Status (Able / Disable) */}
+                <div>
+                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
+                    Campus Status (Enable / Disable View)
+                  </label>
+                  <div className="space-y-1.5">
+                    {[
+                      { id: 'Active', label: 'Active (Operational)', color: 'text-emerald-700' },
+                      { id: 'Suspended', label: 'Suspended (Disabled)', color: 'text-rose-600' },
+                      { id: 'Archived', label: 'Archived (Historical)', color: 'text-slate-500' }
+                    ].map(item => (
+                      <label key={item.id} className="flex items-center gap-2.5 text-xs text-slate-700 cursor-pointer select-none py-0.5">
+                        <input
+                          type="checkbox"
+                          checked={selectedStatusFilters.includes(item.id)}
+                          onChange={() => toggleStatusCheckbox(item.id)}
+                          className="w-4 h-4 text-purple-600 rounded border-slate-300 focus:ring-purple-500 cursor-pointer"
+                        />
+                        <span className={`font-medium ${item.color}`}>{item.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Checkbox Group: Educational Wing */}
+                <div>
+                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
+                    Educational Wings & Tier
+                  </label>
+                  <div className="space-y-1.5">
+                    {[
+                      { id: 'School', label: 'School Wing (K-10)' },
+                      { id: 'College', label: 'College Wing (11-12)' },
+                      { id: 'University', label: 'University Wing (HEC BS/MS)' },
+                      { id: 'Custom Group', label: 'Custom / Hybrid Multi-Wing' }
+                    ].map(item => (
+                      <label key={item.id} className="flex items-center gap-2.5 text-xs text-slate-700 cursor-pointer select-none py-0.5">
+                        <input
+                          type="checkbox"
+                          checked={selectedTypeFilters.includes(item.id)}
+                          onChange={() => toggleTypeCheckbox(item.id)}
+                          className="w-4 h-4 text-purple-600 rounded border-slate-300 focus:ring-purple-500 cursor-pointer"
+                        />
+                        <span className="font-medium text-slate-800">{item.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Checkbox Group: Subscription Plans */}
+                <div>
+                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
+                    Subscription Plan Tier
+                  </label>
+                  <div className="space-y-1.5">
+                    {[
+                      { id: 'School Plan', label: 'School Plan' },
+                      { id: 'College Plan', label: 'College Plan' },
+                      { id: 'University Plan', label: 'University Plan' },
+                      { id: 'Custom Hybrid Plan', label: 'Custom Hybrid Plan' }
+                    ].map(item => (
+                      <label key={item.id} className="flex items-center gap-2.5 text-xs text-slate-700 cursor-pointer select-none py-0.5">
+                        <input
+                          type="checkbox"
+                          checked={selectedPlanFilters.includes(item.id)}
+                          onChange={() => togglePlanCheckbox(item.id)}
+                          className="w-4 h-4 text-purple-600 rounded border-slate-300 focus:ring-purple-500 cursor-pointer"
+                        />
+                        <span className="font-medium text-slate-800">{item.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-slate-100 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setShowMainFilterPopover(false)}
+                    className="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer"
+                  >
+                    Apply Filters ({filteredAndSorted.length} matches)
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Quick Status Filter Dropdown */}
           <div className="flex items-center gap-1 text-xs">
             <span className="text-slate-400 font-medium">Status:</span>
             <select
@@ -1332,7 +1525,7 @@ export const InstitutesView = () => {
             </select>
           </div>
 
-          {/* Type Filter */}
+          {/* Quick Type Filter Dropdown */}
           <div className="flex items-center gap-1 text-xs">
             <span className="text-slate-400 font-medium">Type:</span>
             <select
@@ -1384,6 +1577,43 @@ export const InstitutesView = () => {
         </div>
       </div>
 
+      {/* Bulk Action Bar for Selected Campuses (Checkboxes Enable / Disable) */}
+      {selectedCampusIds.length > 0 && (
+        <div className="bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl flex flex-wrap items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2 border border-slate-800">
+          <div className="flex items-center gap-2.5">
+            <span className="font-extrabold text-xs bg-purple-600 text-white px-3 py-1 rounded-full shadow-xs">
+              {selectedCampusIds.length} Campuses Selected
+            </span>
+            <span className="text-xs text-slate-300">Choose bulk lifecycle operation:</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => handleBulkSetStatus('Active')}
+              className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-sm transition-all"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              <span>Enable (Activate)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleBulkSetStatus('Suspended')}
+              className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-sm transition-all"
+            >
+              <AlertTriangle className="w-4 h-4" />
+              <span>Disable (Suspend)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedCampusIds([])}
+              className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold cursor-pointer transition-all ml-1"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Institutes Cards Grid */}
       {paginatedInstitutes.length > 0 ? (
         <div className="space-y-6">
@@ -1406,14 +1636,24 @@ export const InstitutesView = () => {
                 >
                   <div className="p-6">
                     <div className="flex items-start justify-between">
-                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-100 to-indigo-100 text-purple-700 flex items-center justify-center font-bold text-lg shadow-2xs shrink-0">
-                        {inst.type === 'University' ? (
-                          <GraduationCap className="w-6 h-6" />
-                        ) : inst.type === 'College' ? (
-                          <Building2 className="w-6 h-6" />
-                        ) : (
-                          <School className="w-6 h-6" />
-                        )}
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={selectedCampusIds.includes(inst.id)}
+                          onChange={() => handleToggleSelectCampus(inst.id)}
+                          onClick={(e) => e.stopPropagation()}
+                          aria-label={`Select ${inst.name}`}
+                          className="w-4 h-4 text-purple-600 rounded border-slate-300 focus:ring-purple-500 cursor-pointer"
+                        />
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-100 to-indigo-100 text-purple-700 flex items-center justify-center font-bold text-lg shadow-2xs shrink-0">
+                          {inst.type === 'University' ? (
+                            <GraduationCap className="w-6 h-6" />
+                          ) : inst.type === 'College' ? (
+                            <Building2 className="w-6 h-6" />
+                          ) : (
+                            <School className="w-6 h-6" />
+                          )}
+                        </div>
                       </div>
 
                       <div className="flex items-center gap-1.5 flex-wrap justify-end">
@@ -1590,6 +1830,15 @@ export const InstitutesView = () => {
                 <table className="w-full text-left text-xs">
                   <thead>
                     <tr className="border-b border-slate-100 text-slate-400 font-semibold text-[11px] uppercase tracking-wider bg-slate-50/50">
+                      <th className="py-3.5 px-4 w-10">
+                        <input
+                          type="checkbox"
+                          checked={selectedCampusIds.length > 0 && selectedCampusIds.length === paginatedInstitutes.length}
+                          onChange={handleSelectAllCampuses}
+                          aria-label="Select all campuses on page"
+                          className="w-4 h-4 text-purple-600 rounded border-slate-300 focus:ring-purple-500 cursor-pointer"
+                        />
+                      </th>
                       <th className="py-3.5 px-4">Campus & Code</th>
                       <th className="py-3.5 px-4">Tier & Plan</th>
                       <th className="py-3.5 px-4">Principal / Head</th>
@@ -1613,6 +1862,16 @@ export const InstitutesView = () => {
                             setDetailsTab('overview')
                           }}
                         >
+                          {/* Selection Checkbox */}
+                          <td className="py-4 px-4 w-10" onClick={(e) => e.stopPropagation()}>
+                            <input
+                              type="checkbox"
+                              checked={selectedCampusIds.includes(inst.id)}
+                              onChange={() => handleToggleSelectCampus(inst.id)}
+                              aria-label={`Select ${inst.name}`}
+                              className="w-4 h-4 text-purple-600 rounded border-slate-300 focus:ring-purple-500 cursor-pointer"
+                            />
+                          </td>
                           {/* Campus & Code */}
                           <td className="py-4 px-4">
                             <div className="flex items-center gap-3">

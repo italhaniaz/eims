@@ -118,15 +118,19 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
     setIsLoading(true)
 
     setTimeout(() => {
-      // Superadmin authentication check
+      // Role recognition checks
       const isSuperadmin = (id === 'admin' || id === 'superadmin' || id === 'admin@schoolms.com') && 
                            (pass === 'admin123' || pass === 'admin')
 
-      // Institute Admin authentication check
-      const isInstituteAdmin = (id === 'institute' || id === 'institute_admin' || id === 'admin.beacon@sms.edu' || id.includes('institute') || id.includes('beacon') || id.includes('school') || id.includes('trial')) && 
-                              (pass === 'institute123' || pass === 'admin123' || pass === 'admin')
+      const isTeacher = (id === 'teacher' || id === 'faculty' || id.includes('teacher') || id.includes('faculty') || id === 'tariq.faculty@sms.edu')
+      const isAccountant = (id === 'accountant' || id === 'accounts' || id.includes('account') || id === 'accounts.beacon@sms.edu')
+      const isStudent = (id === 'student' || id.includes('student') || id === 'hamza.f@student.sms.edu')
+      const isParent = (id === 'parent' || id.includes('parent') || id === 'farooq.parent@gmail.com')
+      const isInstituteAdmin = (id === 'institute' || id === 'institute_admin' || id === 'admin.beacon@sms.edu' || id.includes('institute') || id.includes('beacon') || id.includes('school') || id.includes('trial'))
 
-      if (isSuperadmin || isInstituteAdmin || pass === 'admin123' || pass === 'admin' || pass === 'institute123') {
+      const isValidPass = pass === 'admin123' || pass === 'admin' || pass === 'institute123' || pass === 'teacher123' || pass === 'student123' || pass === 'parent123' || pass.length >= 5
+
+      if (isSuperadmin || isInstituteAdmin || isTeacher || isAccountant || isStudent || isParent || isValidPass) {
         // Successful login
         sessionStorage.removeItem('sms_auth_failed_attempts')
         sessionStorage.removeItem('sms_auth_lockout_until')
@@ -136,6 +140,14 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
 
         if (authMode === 'superadmin' || isSuperadmin) {
           login('superadmin', id.includes('@') ? id : 'admin@schoolms.com', rememberMe)
+        } else if (isTeacher) {
+          login('teacher', id.includes('@') ? id : 'tariq.faculty@sms.edu', rememberMe)
+        } else if (isAccountant) {
+          login('accountant', id.includes('@') ? id : 'accounts.beacon@sms.edu', rememberMe)
+        } else if (isStudent) {
+          login('student', id.includes('@') ? id : 'hamza.f@student.sms.edu', rememberMe)
+        } else if (isParent) {
+          login('parent', id.includes('@') ? id : 'farooq.parent@gmail.com', rememberMe)
         } else {
           login('institute_admin', id.includes('@') ? id : 'admin.beacon@sms.edu', rememberMe)
         }
@@ -168,14 +180,38 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
 
   // 1-Click Demo Fill & Submit Handlers
   const handleQuickDemo = (role) => {
-    if (role === 'superadmin') {
-      setIdentifier('admin')
-      setPassword('admin123')
-      executeLogin('admin', 'admin123')
-    } else {
-      setIdentifier('institute')
-      setPassword('institute123')
-      executeLogin('institute', 'institute123')
+    switch (role) {
+      case 'superadmin':
+        setIdentifier('admin')
+        setPassword('admin123')
+        executeLogin('admin', 'admin123')
+        break
+      case 'teacher':
+        setIdentifier('tariq.faculty@sms.edu')
+        setPassword('teacher123')
+        executeLogin('tariq.faculty@sms.edu', 'teacher123')
+        break
+      case 'accountant':
+        setIdentifier('accounts.beacon@sms.edu')
+        setPassword('institute123')
+        executeLogin('accounts.beacon@sms.edu', 'institute123')
+        break
+      case 'student':
+        setIdentifier('hamza.f@student.sms.edu')
+        setPassword('student123')
+        executeLogin('hamza.f@student.sms.edu', 'student123')
+        break
+      case 'parent':
+        setIdentifier('farooq.parent@gmail.com')
+        setPassword('parent123')
+        executeLogin('farooq.parent@gmail.com', 'parent123')
+        break
+      case 'institute':
+      default:
+        setIdentifier('admin.beacon@sms.edu')
+        setPassword('institute123')
+        executeLogin('admin.beacon@sms.edu', 'institute123')
+        break
     }
   }
 
@@ -738,22 +774,58 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
               </button>
             </form>
 
-            {/* 1-Click Quick Demo Sign In: ONLY Campus Admin (Super Admin tag removed!) */}
+            {/* 1-Click Quick Demo Sign In: Dedicated Campus Roles */}
             <div className="pt-5 mt-4">
               <div className="text-center mb-2.5">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                  Quick 1-Click Demo Login
+                  Quick 1-Click Role Login
                 </span>
               </div>
-              <div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 <button
                   type="button"
                   onClick={() => handleQuickDemo('institute')}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-emerald-100 bg-emerald-50/50 hover:bg-emerald-50 hover:border-emerald-200 text-slate-700 hover:text-emerald-700 text-xs font-semibold transition-all cursor-pointer group shadow-2xs"
-                  title="Login as Campus Admin"
+                  className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-lg border border-emerald-100 bg-emerald-50/60 hover:bg-emerald-100 text-slate-700 hover:text-emerald-800 text-[11px] font-semibold transition-all cursor-pointer shadow-2xs"
+                  title="Login as Campus Admin (Principal)"
                 >
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 group-hover:scale-125 transition-transform"></span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                   <span>Campus Admin</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleQuickDemo('teacher')}
+                  className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-lg border border-blue-100 bg-blue-50/60 hover:bg-blue-100 text-slate-700 hover:text-blue-800 text-[11px] font-semibold transition-all cursor-pointer shadow-2xs"
+                  title="Login as Faculty Member"
+                >
+                  <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                  <span>Teacher</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleQuickDemo('accountant')}
+                  className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-lg border border-amber-100 bg-amber-50/60 hover:bg-amber-100 text-slate-700 hover:text-amber-800 text-[11px] font-semibold transition-all cursor-pointer shadow-2xs"
+                  title="Login as Finance Officer"
+                >
+                  <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                  <span>Accounts</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleQuickDemo('student')}
+                  className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-lg border border-teal-100 bg-teal-50/60 hover:bg-teal-100 text-slate-700 hover:text-teal-800 text-[11px] font-semibold transition-all cursor-pointer shadow-2xs"
+                  title="Login as Enrolled Student"
+                >
+                  <span className="w-2 h-2 rounded-full bg-teal-500"></span>
+                  <span>Student</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleQuickDemo('parent')}
+                  className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-lg border border-purple-100 bg-purple-50/60 hover:bg-purple-100 text-slate-700 hover:text-purple-800 text-[11px] font-semibold transition-all cursor-pointer col-span-2 sm:col-span-1 shadow-2xs"
+                  title="Login as Parent / Guardian"
+                >
+                  <span className="w-2 h-2 rounded-full bg-purple-500"></span>
+                  <span>Parent</span>
                 </button>
               </div>
             </div>

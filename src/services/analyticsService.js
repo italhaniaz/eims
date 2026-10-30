@@ -1,7 +1,7 @@
 import { supabase, isSupabaseConfigured } from './supabaseClient'
 import { DataService, getStoredData } from './dataService'
 
-const API_BASE_URL = 'http://localhost:5000'
+import { API_BASE_URL } from './apiConfig'
 
 const FALLBACK_SCHEDULED_REPORTS = []
 

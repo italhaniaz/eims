@@ -69,6 +69,7 @@ const AttendanceView = lazyWithRetry(() => import('./modules/institute-admin/att
 const FeesView = lazyWithRetry(() => import('./modules/institute-admin/fees/FeesView'), 'fees-view')
 const ExamsView = lazyWithRetry(() => import('./modules/institute-admin/exams/ExamsView'), 'exams-view')
 const NoticeBoardView = lazyWithRetry(() => import('./modules/institute-admin/notices/NoticeBoardView'), 'notice-board-view')
+const StudentParentPortalView = lazyWithRetry(() => import('./modules/student-portal/StudentParentPortalView'), 'student-portal-view')
 const ProgramLevelsView = lazyWithRetry(() => import('./modules/academics/ProgramLevelsView'), 'program-levels-view')
 
 // High-Demand Modern Operations Modules
@@ -585,7 +586,18 @@ const AppContent = () => {
     )
   }
 
-  // 2. INSTITUTE ADMIN PORTAL (Dedicated Multi-Tenant Scoped Management)
+    // 2. DEDICATED STUDENT & PARENT ACADEMIC PORTAL
+  if (user?.role === 'student' || user?.role === 'parent') {
+    return (
+      <ErrorBoundary onNavigateHome={() => window.location.reload()}>
+        <Suspense fallback={<ModuleLoader />}>
+          <StudentParentPortalView />
+        </Suspense>
+      </ErrorBoundary>
+    )
+  }
+
+  // 3. INSTITUTE ADMIN & FACULTY PORTAL (Dedicated Multi-Tenant Scoped Management)
   const scopedInstitute = user?.instituteId 
     ? institutes.find(i => i.id === user.instituteId) || { id: user.instituteId, name: user.instituteName || 'Designated Campus', code: 'CAMPUS' }
     : null
