@@ -6,7 +6,6 @@ LayoutGrid,
   Building2, 
   Plus, 
   Search, 
-  Edit2, 
   Trash2, 
   ExternalLink, 
   MapPin, 
@@ -140,120 +139,14 @@ export const InstitutesView = () => {
   const [viewingDetails, setViewingDetails] = useState(null)
   const [detailsTab, setDetailsTab] = useState('overview') // overview, campuses, admins, modules, plan, activity
 
-  // Institute Overview Modal Form State & In-Place Editing
-  const [overviewForm, setOverviewForm] = useState({
-    name: '',
-    code: '',
-    address: '',
-    principal: '',
-    phone: '',
-    affiliatedBoard: '',
-    email: '',
-    status: 'Active'
-  })
-  const [isEditingInDetails, setIsEditingInDetails] = useState(false)
-  const [isSavingOverview, setIsSavingOverview] = useState(false)
-  const [overviewErrors, setOverviewErrors] = useState({})
-
   useEffect(() => {
     if (viewingDetails) {
-      setOverviewForm({
-        name: viewingDetails.name || '',
-        code: viewingDetails.code || '',
-        address: viewingDetails.address || viewingDetails.city || '',
-        principal: viewingDetails.principal || '',
-        phone: viewingDetails.phone || '',
-        affiliatedBoard: viewingDetails.affiliatedBoard || 'BISE Gujranwala',
-        email: viewingDetails.email || '',
-        status: viewingDetails.lifecycleStatus || viewingDetails.status || 'Active'
-      })
-      setOverviewErrors({})
-      setIsEditingInDetails(false)
+      setDetailsTab('overview')
     }
   }, [viewingDetails])
 
-  const handleOverviewFieldChange = (field, value) => {
-    setOverviewForm(prev => ({ ...prev, [field]: value }))
-  }
-
   const handleDetailTabChange = (targetTab) => {
     setDetailsTab(targetTab)
-  }
-
-  const handleSaveOverviewDetails = async () => {
-    if (!viewingDetails?.id) return
-    setIsSavingOverview(true)
-    try {
-      const payload = {
-        name: overviewForm.name?.trim() || viewingDetails.name,
-        address: overviewForm.address?.trim() || viewingDetails.address,
-        principal: overviewForm.principal?.trim() || '',
-        phone: overviewForm.phone?.trim() || '',
-        affiliatedBoard: overviewForm.affiliatedBoard?.trim() || 'BISE Gujranwala',
-        email: overviewForm.email?.trim() || '',
-        status: overviewForm.status || viewingDetails.status || 'Active',
-        lifecycleStatus: overviewForm.status || viewingDetails.lifecycleStatus || 'Active'
-      }
-
-      if (updateItem) {
-        await updateItem('institutes', viewingDetails.id, payload)
-      }
-      if (refreshData) {
-        refreshData()
-      }
-
-      setViewingDetails(prev => prev ? ({
-        ...prev,
-        ...payload
-      }) : null)
-
-      setIsEditingInDetails(false)
-      toast.success(`Profile details for "${payload.name}" updated successfully!`)
-    } catch (err) {
-      console.error('Failed to update institute details:', err)
-      toast.error('Failed to update details: ' + (err.message || 'Unknown error'))
-    } finally {
-      setIsSavingOverview(false)
-    }
-  }
-
-  const handleOverviewNext = async () => {
-    try {
-      if (updateItem && viewingDetails?.id) {
-        await updateItem('institutes', viewingDetails.id, {
-          name: overviewForm.name?.trim() || viewingDetails.name,
-          address: overviewForm.address?.trim() || viewingDetails.address,
-          principal: overviewForm.principal?.trim() || '',
-          phone: overviewForm.phone?.trim() || '',
-          affiliatedBoard: overviewForm.affiliatedBoard?.trim() || 'BISE Gujranwala',
-          email: overviewForm.email?.trim() || '',
-          status: overviewForm.status || viewingDetails.status || 'Active',
-          lifecycleStatus: overviewForm.status || viewingDetails.lifecycleStatus || 'Active'
-        })
-      }
-      if (refreshData) {
-        refreshData()
-      }
-      setViewingDetails(prev => prev ? ({
-        ...prev,
-        name: overviewForm.name?.trim() || prev.name,
-        address: overviewForm.address?.trim() || prev.address,
-        principal: overviewForm.principal?.trim() || '',
-        phone: overviewForm.phone?.trim() || '',
-        affiliatedBoard: overviewForm.affiliatedBoard?.trim() || '',
-        email: overviewForm.email?.trim() || '',
-        status: overviewForm.status || prev.status || 'Active',
-        lifecycleStatus: overviewForm.status || prev.lifecycleStatus || 'Active'
-      }) : null)
-    } catch (err) {
-      console.error('Failed to update institute details:', err)
-    }
-
-    const tabs = ['overview', 'campuses', 'admins', 'modules', 'plan', 'activity']
-    const currentIndex = tabs.indexOf(detailsTab)
-    if (currentIndex < tabs.length - 1) {
-      setDetailsTab(tabs[currentIndex + 1])
-    }
   }
 
   // Suspension Modal
@@ -2835,14 +2728,14 @@ export const InstitutesView = () => {
           title={`Institute Overview: ${viewingDetails.name}`}
         >
           <div className="space-y-4">
-            {/* Tabs Header with Edit & Settings Controls */}
-            <div className="flex items-center justify-between border-b border-slate-200 pb-2 text-xs gap-2">
+            {/* Tabs Header */}
+            <div className="flex items-center border-b border-slate-200 pb-2 text-xs">
               <div className="flex items-center gap-1 overflow-x-auto">
                 {['overview', 'campuses', 'admins', 'modules', 'plan', 'activity'].map(tab => (
                   <button
                     key={tab}
                     onClick={() => handleDetailTabChange(tab)}
-                    className={`px-3 py-1.5 rounded-lg font-bold capitalize transition-colors ${
+                    className={`px-3 py-1.5 rounded-lg font-bold capitalize transition-colors cursor-pointer ${
                       detailsTab === tab ? 'bg-[#f5eeff] text-purple-700 border border-purple-200' : 'text-slate-500 hover:text-slate-900'
                     }`}
                   >
@@ -2850,38 +2743,9 @@ export const InstitutesView = () => {
                   </button>
                 ))}
               </div>
-
-              {/* Action Buttons in Header: Edit Mode Toggle & Settings */}
-              <div className="flex items-center gap-1.5 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setIsEditingInDetails(!isEditingInDetails)}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs ${
-                    isEditingInDetails
-                      ? 'bg-purple-600 text-white shadow-purple-600/20 active:scale-95'
-                      : 'bg-[#f5eeff] text-purple-700 hover:bg-[#ede0fe] border border-purple-200'
-                  }`}
-                  title={isEditingInDetails ? 'Exit Edit Mode' : 'Edit details directly in this view'}
-                >
-                  <Edit2 className="w-3.5 h-3.5" />
-                  <span>{isEditingInDetails ? 'Editing Mode' : 'Edit Details'}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const target = viewingDetails
-                    setViewingDetails(null)
-                    openEditModal(target)
-                  }}
-                  className="p-1.5 rounded-lg text-slate-500 hover:text-purple-700 hover:bg-slate-100 transition-colors cursor-pointer border border-slate-200"
-                  title="Open Full Campus Settings"
-                >
-                  <Settings className="w-3.5 h-3.5" />
-                </button>
-              </div>
             </div>
 
-            {/* Tab 1: Overview (View & In-Place Edit Support) */}
+            {/* Tab 1: Overview (Read-Only) */}
             {detailsTab === 'overview' && (
               <div className="space-y-3">
                 {/* Header Card (Name, Address, Code, Status) */}
@@ -2891,169 +2755,63 @@ export const InstitutesView = () => {
                       <span className="font-mono text-xs px-2 py-0.5 bg-purple-100 text-purple-800 rounded font-bold">
                         {viewingDetails.code}
                       </span>
-                      {isEditingInDetails ? (
-                        <select
-                          value={overviewForm.status}
-                          onChange={(e) => handleOverviewFieldChange('status', e.target.value)}
-                          className="text-xs font-bold px-2 py-0.5 rounded-lg border border-purple-200 bg-white text-emerald-800 focus:outline-none"
-                        >
-                          <option value="Active">Active</option>
-                          <option value="Suspended">Suspended</option>
-                          <option value="Pending">Pending</option>
-                        </select>
-                      ) : (
-                        <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
-                          (viewingDetails.lifecycleStatus || viewingDetails.status) === 'Suspended'
-                            ? 'bg-rose-100 text-rose-800'
-                            : 'bg-emerald-100 text-emerald-800'
-                        }`}>
-                          {viewingDetails.lifecycleStatus || viewingDetails.status || 'Active'}
-                        </span>
-                      )}
+                      <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
+                        (viewingDetails.lifecycleStatus || viewingDetails.status) === 'Suspended'
+                          ? 'bg-rose-100 text-rose-800'
+                          : 'bg-emerald-100 text-emerald-800'
+                      }`}>
+                        {viewingDetails.lifecycleStatus || viewingDetails.status || 'Active'}
+                      </span>
                     </div>
 
-                    {isEditingInDetails ? (
-                      <div className="space-y-1.5 mt-2">
-                        <div>
-                          <label className="text-[10px] text-purple-700 font-bold uppercase block">Campus Name</label>
-                          <input
-                            type="text"
-                            value={overviewForm.name}
-                            onChange={(e) => handleOverviewFieldChange('name', e.target.value)}
-                            placeholder="Campus Name"
-                            className="w-full px-2.5 py-1 text-sm font-bold text-slate-900 bg-white border border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-400 focus:outline-none"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[10px] text-purple-700 font-bold uppercase block">Campus Address / Location</label>
-                          <input
-                            type="text"
-                            value={overviewForm.address}
-                            onChange={(e) => handleOverviewFieldChange('address', e.target.value)}
-                            placeholder="Campus Address or City"
-                            className="w-full px-2.5 py-1 text-xs text-slate-700 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-purple-400 focus:outline-none"
-                          />
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        <h4 className="text-base font-extrabold text-slate-900 mt-1">{viewingDetails.name}</h4>
-                        <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-1">
-                          <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                          <span>{viewingDetails.address || viewingDetails.city || 'Campus Address'}</span>
-                        </p>
-                      </>
-                    )}
+                    <h4 className="text-base font-extrabold text-slate-900 mt-1">{viewingDetails.name}</h4>
+                    <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-1">
+                      <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                      <span>{viewingDetails.address || viewingDetails.city || 'Campus Address'}</span>
+                    </p>
                   </div>
-
-                  {!isEditingInDetails && (
-                    <button
-                      type="button"
-                      onClick={() => setIsEditingInDetails(true)}
-                      className="self-start sm:self-auto px-2.5 py-1 rounded-lg text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 transition-colors flex items-center gap-1 cursor-pointer shrink-0"
-                    >
-                      <Edit2 className="w-3 h-3" />
-                      <span>Edit</span>
-                    </button>
-                  )}
                 </div>
 
                 {/* 4 Details Cards Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
                   {/* Principal / Head */}
-                  <div className={`p-3 rounded-xl border transition-all ${
-                    isEditingInDetails 
-                      ? 'bg-purple-50/30 border-purple-200 shadow-2xs' 
-                      : 'bg-white border-slate-200'
-                  }`}>
+                  <div className="p-3 rounded-xl border bg-white border-slate-200">
                     <label className="text-[10px] text-slate-400 uppercase font-bold block mb-1">
                       Principal / Head
                     </label>
-                    {isEditingInDetails ? (
-                      <input 
-                        type="text"
-                        value={overviewForm.principal}
-                        onChange={(e) => handleOverviewFieldChange('principal', e.target.value)}
-                        placeholder="e.g. Talha / In-Charge Principal"
-                        className="w-full px-2.5 py-1.5 font-bold text-slate-800 bg-white border border-purple-200 rounded-lg text-xs focus:ring-2 focus:ring-purple-400 focus:outline-none"
-                      />
-                    ) : (
-                      <span className="font-bold text-slate-800 text-sm block">
-                        {viewingDetails.principal || '—'}
-                      </span>
-                    )}
+                    <span className="font-bold text-slate-800 text-sm block">
+                      {viewingDetails.principal || '—'}
+                    </span>
                   </div>
 
                   {/* Board Affiliation */}
-                  <div className={`p-3 rounded-xl border transition-all ${
-                    isEditingInDetails 
-                      ? 'bg-purple-50/30 border-purple-200 shadow-2xs' 
-                      : 'bg-white border-slate-200'
-                  }`}>
+                  <div className="p-3 rounded-xl border bg-white border-slate-200">
                     <label className="text-[10px] text-slate-400 uppercase font-bold block mb-1">
                       Board Affiliation
                     </label>
-                    {isEditingInDetails ? (
-                      <input 
-                        type="text"
-                        value={overviewForm.affiliatedBoard}
-                        onChange={(e) => handleOverviewFieldChange('affiliatedBoard', e.target.value)}
-                        placeholder="e.g. BISE Gujranwala / BISE Lahore"
-                        className="w-full px-2.5 py-1.5 font-bold text-slate-800 bg-white border border-purple-200 rounded-lg text-xs focus:ring-2 focus:ring-purple-400 focus:outline-none"
-                      />
-                    ) : (
-                      <span className="font-bold text-purple-700 text-sm block">
-                        {viewingDetails.affiliatedBoard || 'BISE Gujranwala'}
-                      </span>
-                    )}
+                    <span className="font-bold text-purple-700 text-sm block">
+                      {viewingDetails.affiliatedBoard || 'BISE Gujranwala'}
+                    </span>
                   </div>
 
                   {/* Official Email */}
-                  <div className={`p-3 rounded-xl border transition-all ${
-                    isEditingInDetails 
-                      ? 'bg-purple-50/30 border-purple-200 shadow-2xs' 
-                      : 'bg-white border-slate-200'
-                  }`}>
+                  <div className="p-3 rounded-xl border bg-white border-slate-200">
                     <label className="text-[10px] text-slate-400 uppercase font-bold block mb-1">
                       Official Email
                     </label>
-                    {isEditingInDetails ? (
-                      <input 
-                        type="email"
-                        value={overviewForm.email}
-                        onChange={(e) => handleOverviewFieldChange('email', e.target.value)}
-                        placeholder="e.g. admin@campus.edu.pk"
-                        className="w-full px-2.5 py-1.5 font-mono text-slate-800 bg-white border border-purple-200 rounded-lg text-xs focus:ring-2 focus:ring-purple-400 focus:outline-none"
-                      />
-                    ) : (
-                      <span className="font-semibold text-purple-600 truncate block font-mono text-xs">
-                        {viewingDetails.email || '—'}
-                      </span>
-                    )}
+                    <span className="font-semibold text-purple-600 truncate block font-mono text-xs">
+                      {viewingDetails.email || '—'}
+                    </span>
                   </div>
 
                   {/* Contact Phone */}
-                  <div className={`p-3 rounded-xl border transition-all ${
-                    isEditingInDetails 
-                      ? 'bg-purple-50/30 border-purple-200 shadow-2xs' 
-                      : 'bg-white border-slate-200'
-                  }`}>
+                  <div className="p-3 rounded-xl border bg-white border-slate-200">
                     <label className="text-[10px] text-slate-400 uppercase font-bold block mb-1">
                       Contact Phone
                     </label>
-                    {isEditingInDetails ? (
-                      <input 
-                        type="text"
-                        value={overviewForm.phone}
-                        onChange={(e) => handleOverviewFieldChange('phone', e.target.value)}
-                        placeholder="e.g. +92 3123456789"
-                        className="w-full px-2.5 py-1.5 font-mono text-slate-800 bg-white border border-purple-200 rounded-lg text-xs focus:ring-2 focus:ring-purple-400 focus:outline-none"
-                      />
-                    ) : (
-                      <span className="font-semibold text-slate-800 block font-mono text-xs">
-                        {viewingDetails.phone || '—'}
-                      </span>
-                    )}
+                    <span className="font-semibold text-slate-800 block font-mono text-xs">
+                      {viewingDetails.phone || '—'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -3196,41 +2954,8 @@ export const InstitutesView = () => {
                   </button>
                 )}
 
-                {/* In Overview tab: Save Changes / Edit Details button */}
-                {detailsTab === 'overview' && (
-                  isEditingInDetails ? (
-                    <button
-                      type="button"
-                      disabled={isSavingOverview}
-                      onClick={handleSaveOverviewDetails}
-                      className="px-5 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
-                    >
-                      <Save className="w-3.5 h-3.5" />
-                      <span>{isSavingOverview ? 'Saving...' : 'Save Changes'}</span>
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setIsEditingInDetails(true)}
-                      className="px-3.5 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
-                    >
-                      <Edit2 className="w-3.5 h-3.5" />
-                      <span>Edit Details</span>
-                    </button>
-                  )
-                )}
-
-                {/* Next button */}
-                {detailsTab === 'overview' ? (
-                  <button
-                    type="button"
-                    onClick={handleOverviewNext}
-                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <span>Next</span>
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
-                ) : detailsTab !== 'activity' ? (
+                {/* Next or Done button */}
+                {detailsTab !== 'activity' ? (
                   <button
                     type="button"
                     onClick={() => {
