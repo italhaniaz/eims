@@ -142,7 +142,15 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
       }
     }
 
-    const handleScrollOrResize = () => {
+    const handleScrollOrResize = (e) => {
+      // Do not close dropdown if scroll event originated inside dropdown menu itself
+      if (
+        e?.type === 'scroll' &&
+        dropdownRef.current &&
+        (dropdownRef.current === e.target || dropdownRef.current.contains(e.target))
+      ) {
+        return
+      }
       setActiveDropdownUserId(null)
       setDropdownCoords(null)
     }
@@ -178,31 +186,34 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
         zIndex: 9999,
         left: '16px',
         right: '16px',
-        bottom: '24px',
-        maxHeight: '80vh',
+        bottom: '20px',
+        maxHeight: '85vh',
         width: 'auto'
       }
     }
 
-    const MENU_WIDTH = 260
-    const ESTIMATED_HEIGHT = 350
-    const spaceBelow = window.innerHeight - dropdownCoords.bottom
-    const spaceAbove = dropdownCoords.top
-    const openUpwards = spaceBelow < ESTIMATED_HEIGHT && spaceAbove > spaceBelow
+    const MENU_WIDTH = 264
+    const FULL_HEIGHT = 450 // Full height accommodating all 8 action items comfortably
+    const windowH = window.innerHeight
+    const spaceBelow = windowH - dropdownCoords.bottom - 16
+    const spaceAbove = dropdownCoords.top - 16
+    const openUpwards = spaceBelow < FULL_HEIGHT && spaceAbove > spaceBelow
+
+    const availableSpace = openUpwards ? spaceAbove : spaceBelow
+    const maxHeight = Math.min(FULL_HEIGHT, Math.max(260, availableSpace))
 
     const style = {
       position: 'fixed',
       zIndex: 9999,
       width: `${MENU_WIDTH}px`,
-      right: `${Math.max(16, window.innerWidth - dropdownCoords.right)}px`
+      right: `${Math.max(16, window.innerWidth - dropdownCoords.right)}px`,
+      maxHeight: `${maxHeight}px`
     }
 
     if (openUpwards) {
-      style.bottom = `${Math.max(12, window.innerHeight - dropdownCoords.top + 6)}px`
-      style.maxHeight = `${Math.min(360, spaceAbove - 20)}px`
+      style.bottom = `${Math.max(12, windowH - dropdownCoords.top + 6)}px`
     } else {
       style.top = `${dropdownCoords.bottom + 6}px`
-      style.maxHeight = `${Math.min(360, spaceBelow - 20)}px`
     }
 
     return style
@@ -951,6 +962,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
             <div
               ref={dropdownRef}
               style={calculateDropdownStyle()}
+              onWheel={(e) => e.stopPropagation()}
               className="bg-white rounded-2xl border border-slate-200/90 shadow-[0_20px_50px_rgba(79,70,229,0.18),0_6px_20px_rgba(15,23,42,0.08)] ring-1 ring-black/5 overflow-hidden flex flex-col text-left animate-in fade-in zoom-in-95 duration-150"
             >
               {/* Pinned User Header */}
@@ -983,8 +995,11 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
                 </div>
               </div>
 
-              {/* Scrollable Action Items List with modern slim scrollbar */}
-              <div className="flex-1 overflow-y-auto overscroll-contain p-1.5 space-y-0.5 [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-purple-200 hover:[&::-webkit-scrollbar-thumb]:bg-purple-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
+              {/* Scrollable Action Items List with modern sleek scrollbar */}
+              <div 
+                className="flex-1 overflow-y-auto overscroll-contain p-1.5 pb-2.5 space-y-0.5 modal-scrollbar"
+                style={{ overscrollBehavior: 'contain' }}
+              >
                 {/* Group 1: Profile & Editing */}
                 <button
                   type="button"
