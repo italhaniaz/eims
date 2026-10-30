@@ -139,14 +139,213 @@ export const InstitutesView = () => {
   const [viewingDetails, setViewingDetails] = useState(null)
   const [detailsTab, setDetailsTab] = useState('overview') // overview, campuses, admins, modules, plan, activity
 
+  // Track last viewed institute ID to prevent resetting tab on module toggle updates
+  const lastViewedInstituteId = useRef(null)
   useEffect(() => {
-    if (viewingDetails) {
+    if (viewingDetails?.id && viewingDetails.id !== lastViewedInstituteId.current) {
+      lastViewedInstituteId.current = viewingDetails.id
       setDetailsTab('overview')
+      setModuleSearchTerm('')
+    } else if (!viewingDetails) {
+      lastViewedInstituteId.current = null
+      setModuleSearchTerm('')
     }
-  }, [viewingDetails])
+  }, [viewingDetails?.id])
 
   const handleDetailTabChange = (targetTab) => {
     setDetailsTab(targetTab)
+  }
+
+  // Modules Tab State in Institute Overview Modal
+  const [moduleSearchTerm, setModuleSearchTerm] = useState('')
+  const [isAddCustomModuleOpen, setIsAddCustomModuleOpen] = useState(false)
+  const [customModuleForm, setCustomModuleForm] = useState({
+    name: '',
+    category: 'General Operations',
+    description: ''
+  })
+
+  // Helper to determine if a module is currently active for viewingDetails
+  const isModuleActiveForCampus = (moduleKey) => {
+    if (!viewingDetails) return true
+    if (Array.isArray(viewingDetails.enabledModules)) {
+      return viewingDetails.enabledModules.includes(moduleKey)
+    }
+    // Default all standard platform modules are active
+    return true
+  }
+
+  // Combined list of standard modules + institute-specific custom modules
+  const allModulesForViewing = useMemo(() => {
+    if (!viewingDetails) return PLATFORM_MODULES
+    const standard = PLATFORM_MODULES.map(m => ({ ...m, isCustom: false }))
+    const custom = (viewingDetails.customModules || []).map(m => ({ ...m, isCustom: true }))
+    return [...standard, ...custom]
+  }, [viewingDetails])
+
+  const filteredModulesForViewing = useMemo(() => {
+    const term = moduleSearchTerm.toLowerCase().trim()
+    if (!term) return allModulesForViewing
+    return allModulesForViewing.filter(m => 
+      m.name.toLowerCase().includes(term) ||
+      (m.category && m.category.toLowerCase().includes(term)) ||
+      (m.description && m.description.toLowerCase().includes(term))
+    )
+  }, [allModulesForViewing, moduleSearchTerm])
+
+  const activeModulesCount = useMemo(() => {
+    return allModulesForViewing.filter(m => isModuleActiveForCampus(m.key)).length
+  }, [allModulesForViewing, viewingDetails?.enabledModules])
+
+  // Toggle single module (enable/add or disable/remove)
+  const handleToggleModuleForCampus = async (moduleKey) => {
+    if (!viewingDetails) return
+    const isCurrentlyActive = isModuleActiveForCampus(moduleKey)
+    const nextState = !isCurrentlyActive
+
+    const standardKeys = PLATFORM_MODULES.map(m => m.key)
+    const customKeys = (viewingDetails.customModules || []).map(m => m.key)
+    const allAvailableKeys = [...standardKeys, ...customKeys]
+
+    let updatedEnabledList
+    if (Array.isArray(viewingDetails.enabledModules)) {
+      if (nextState) {
+        updatedEnabledList = [...viewingDetails.enabledModules, moduleKey]
+      } else {
+        updatedEnabledList = viewingDetails.enabledModules.filter(k => k !== moduleKey)
+      }
+    } else {
+      if (nextState) {
+        updatedEnabledList = allAvailableKeys
+      } else {
+        updatedEnabledList = allAvailableKeys.filter(k => k !== moduleKey)
+      }
+    }
+
+    const updatedInstitute = {
+      ...viewingDetails,
+      enabledModules: updatedEnabledList
+    }
+    setViewingDetails(updatedInstitute)
+
+    try {
+      await PlatformService.toggleInstituteModule(viewingDetails.id, moduleKey, nextState)
+      if (updateItem) {
+        await updateItem('institutes', viewingDetails.id, { enabledModules: updatedEnabledList })
+      }
+      if (refreshData) {
+        refreshData()
+      }
+      const moduleName = PLATFORM_MODULES.find(m => m.key === moduleKey)?.name ||
+        (viewingDetails.customModules || []).find(m => m.key === moduleKey)?.name || moduleKey
+      toast.success(`Module "${moduleName}" ${nextState ? 'ENABLED & ADDED' : 'DISABLED & REMOVED'} for "${viewingDetails.name}"!`)
+    } catch (err) {
+      console.error('Failed to toggle module:', err)
+      toast.error('Failed to update module state')
+    }
+  }
+
+  // Quick Action: Enable All or Reset to Core
+  const handleQuickToggleAllModules = async (enableAll = true) => {
+    if (!viewingDetails) return
+    const standardKeys = PLATFORM_MODULES.map(m => m.key)
+    const customKeys = (viewingDetails.customModules || []).map(m => m.key)
+    const allAvailableKeys = [...standardKeys, ...customKeys]
+
+    const updatedEnabledList = enableAll ? allAvailableKeys : ['students', 'fees', 'exams'] // core academic essentials
+
+    const updatedInstitute = {
+      ...viewingDetails,
+      enabledModules: updatedEnabledList
+    }
+    setViewingDetails(updatedInstitute)
+
+    try {
+      if (updateItem) {
+        await updateItem('institutes', viewingDetails.id, { enabledModules: updatedEnabledList })
+      }
+      if (refreshData) {
+        refreshData()
+      }
+      toast.success(enableAll ? 'All feature modules ENABLED for this campus!' : 'Optional modules REMOVED/DISABLED (Core academic intact)!')
+    } catch (err) {
+      toast.error('Failed to update modules')
+    }
+  }
+
+  // Add a new custom module
+  const handleCreateCustomModule = async (e) => {
+    e.preventDefault()
+    if (!customModuleForm.name.trim() || !viewingDetails) return
+
+    const sanitizedKey = 'custom_' + customModuleForm.name.trim().toLowerCase().replace(/[^a-z0-9]/g, '_') + '_' + Date.now()
+    const newModuleObj = {
+      key: sanitizedKey,
+      name: customModuleForm.name.trim(),
+      category: customModuleForm.category || 'General Operations',
+      description: customModuleForm.description?.trim() || 'Custom administrative feature module',
+      enabled: true,
+      isCustom: true
+    }
+
+    const updatedCustom = [...(viewingDetails.customModules || []), newModuleObj]
+    const existingEnabled = Array.isArray(viewingDetails.enabledModules)
+      ? viewingDetails.enabledModules
+      : PLATFORM_MODULES.map(m => m.key)
+    const updatedEnabled = [...existingEnabled, sanitizedKey]
+
+    const updatedInstitute = {
+      ...viewingDetails,
+      customModules: updatedCustom,
+      enabledModules: updatedEnabled
+    }
+    setViewingDetails(updatedInstitute)
+    setIsAddCustomModuleOpen(false)
+    setCustomModuleForm({ name: '', category: 'General Operations', description: '' })
+
+    try {
+      if (updateItem) {
+        await updateItem('institutes', viewingDetails.id, {
+          customModules: updatedCustom,
+          enabledModules: updatedEnabled
+        })
+      }
+      if (refreshData) {
+        refreshData()
+      }
+      toast.success(`Custom module "${newModuleObj.name}" created and enabled for "${viewingDetails.name}"!`)
+    } catch (err) {
+      toast.error('Failed to create custom module')
+    }
+  }
+
+  // Permanently delete a custom module
+  const handleDeleteCustomModule = async (moduleKey, moduleName) => {
+    if (!viewingDetails) return
+    const updatedCustom = (viewingDetails.customModules || []).filter(m => m.key !== moduleKey)
+    const updatedEnabled = (viewingDetails.enabledModules || []).filter(k => k !== moduleKey)
+
+    const updatedInstitute = {
+      ...viewingDetails,
+      customModules: updatedCustom,
+      enabledModules: updatedEnabled
+    }
+    setViewingDetails(updatedInstitute)
+
+    try {
+      if (updateItem) {
+        await updateItem('institutes', viewingDetails.id, {
+          customModules: updatedCustom,
+          enabledModules: updatedEnabled
+        })
+      }
+      if (refreshData) {
+        refreshData()
+      }
+      toast.success(`Custom module "${moduleName}" permanently removed!`)
+    } catch (err) {
+      toast.error('Failed to delete custom module')
+    }
   }
 
   // Suspension Modal
@@ -762,7 +961,9 @@ export const InstitutesView = () => {
       quotaUsers: inst.quotaUsers || 50,
       quotaCampuses: inst.quotaCampuses || 2,
       quotaStorageMb: inst.quotaStorageMb || 2048,
-      lifecycleStatus: inst.lifecycleStatus || inst.status || 'Active'
+      lifecycleStatus: inst.lifecycleStatus || inst.status || 'Active',
+      enabledModules: Array.isArray(inst.enabledModules) ? inst.enabledModules : PLATFORM_MODULES.map(m => m.key),
+      customModules: inst.customModules || []
     })
     setIsEditCustomCity(Boolean(isCustomCity))
     setEditTab('profile')
@@ -2868,19 +3069,148 @@ export const InstitutesView = () => {
               </div>
             )}
 
-            {/* Tab 4: Modules */}
+            {/* Tab 4: Modules (Super Admin Add / Remove & Feature Governance) */}
             {detailsTab === 'modules' && (
-              <div className="space-y-2">
-                <p className="text-xs text-slate-500">Feature flags & modules enabled for this campus:</p>
-                <div className="grid grid-cols-2 gap-2 max-h-56 overflow-y-auto">
-                  {PLATFORM_MODULES.map(m => (
-                    <div key={m.key} className="p-2.5 bg-white rounded-lg border border-slate-200 flex items-center justify-between text-xs">
-                      <span className="font-medium text-slate-700">{m.name}</span>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        Active
+              <div className="space-y-3">
+                {/* Header Toolbar */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-slate-100">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-slate-800">Campus Capabilities & Feature Flags</span>
+                      <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border ${
+                        activeModulesCount === allModulesForViewing.length
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : 'bg-purple-50 text-purple-700 border-purple-200'
+                      }`}>
+                        {activeModulesCount} of {allModulesForViewing.length} Active
                       </span>
                     </div>
-                  ))}
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      Super Admin can toggle modules to activate or remove capabilities for this campus.
+                    </p>
+                  </div>
+
+                  {/* Quick Action Buttons */}
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handleQuickToggleAllModules(true)}
+                      className="px-2.5 py-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 rounded-lg transition-colors cursor-pointer"
+                      title="Enable all modules for this campus"
+                    >
+                      Enable All
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleQuickToggleAllModules(false)}
+                      className="px-2.5 py-1 text-[11px] font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg transition-colors cursor-pointer"
+                      title="Keep only core academic modules"
+                    >
+                      Disable Optional
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsAddCustomModuleOpen(true)}
+                      className="px-2.5 py-1 text-[11px] font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-all shadow-2xs flex items-center gap-1 cursor-pointer"
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>Add Module</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Search Bar for Modules */}
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Search modules by name, feature or category..."
+                    value={moduleSearchTerm}
+                    onChange={(e) => setModuleSearchTerm(e.target.value)}
+                    className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200/80 rounded-lg focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                  />
+                  {moduleSearchTerm && (
+                    <button
+                      type="button"
+                      onClick={() => setModuleSearchTerm('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Modules Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-60 overflow-y-auto pr-1">
+                  {filteredModulesForViewing.map(m => {
+                    const isEnabled = isModuleActiveForCampus(m.key)
+
+                    return (
+                      <div
+                        key={m.key}
+                        className={`p-3 rounded-xl border transition-all ${
+                          isEnabled
+                            ? 'bg-white border-slate-200/90 shadow-2xs hover:border-purple-200'
+                            : 'bg-slate-50/70 border-dashed border-slate-200 opacity-80'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 mb-1">
+                              <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded border ${
+                                m.isCustom
+                                  ? 'bg-purple-100 text-purple-700 border-purple-200'
+                                  : m.category === 'Finance'
+                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                    : m.category === 'Core Academic'
+                                      ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                                      : 'bg-slate-100 text-slate-600 border-slate-200'
+                              }`}>
+                                {m.category || 'Module'}
+                              </span>
+                              {m.isCustom && (
+                                <span className="text-[9px] font-bold bg-amber-100 text-amber-800 px-1 rounded">Custom</span>
+                              )}
+                            </div>
+                            <h5 className={`font-bold text-xs truncate ${isEnabled ? 'text-slate-900' : 'text-slate-500 line-through'}`}>
+                              {m.name}
+                            </h5>
+                            {m.description && (
+                              <p className="text-[10px] text-slate-400 mt-0.5 line-clamp-1">{m.description}</p>
+                            )}
+                          </div>
+
+                          {/* Toggle & Action Buttons */}
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {m.isCustom && (
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteCustomModule(m.key, m.name)}
+                                className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors cursor-pointer"
+                                title="Delete this custom module"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+
+                            <button
+                              type="button"
+                              onClick={() => handleToggleModuleForCampus(m.key)}
+                              className={`px-2.5 py-1 rounded-full text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs ${
+                                isEnabled
+                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100 hover:shadow-emerald-200/50'
+                                  : 'bg-slate-100 text-slate-500 border border-slate-200 hover:bg-slate-200 hover:text-slate-700'
+                              }`}
+                              title={isEnabled ? 'Click to disable / remove module' : 'Click to enable / add module'}
+                            >
+                              <span className={`w-2 h-2 rounded-full ${isEnabled ? 'bg-emerald-500' : 'bg-slate-400'}`}></span>
+                              <span>{isEnabled ? 'Active' : 'Disabled'}</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             )}
@@ -2980,6 +3310,86 @@ export const InstitutesView = () => {
               </div>
             </div>
           </div>
+        </Modal>
+      )}
+
+      {/* ---------------------------------------------------- */}
+      {/* ADD CUSTOM MODULE MODAL */}
+      {/* ---------------------------------------------------- */}
+      {isAddCustomModuleOpen && viewingDetails && (
+        <Modal
+          isOpen={isAddCustomModuleOpen}
+          onClose={() => setIsAddCustomModuleOpen(false)}
+          title={`Add Custom Feature Module: ${viewingDetails.name}`}
+          maxWidth="max-w-md"
+        >
+          <form onSubmit={handleCreateCustomModule} className="space-y-3.5 text-xs">
+            <p className="text-slate-500 text-[11px]">
+              Create and attach a specialized capability module for this campus. It will instantly activate and show up on the campus ledger.
+            </p>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                Module Name <span className="text-rose-500 font-bold">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. Alumni Network & Mentorship Portal"
+                value={customModuleForm.name}
+                onChange={(e) => setCustomModuleForm({ ...customModuleForm, name: e.target.value })}
+                className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                Module Category
+              </label>
+              <select
+                value={customModuleForm.category}
+                onChange={(e) => setCustomModuleForm({ ...customModuleForm, category: e.target.value })}
+                className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 cursor-pointer"
+              >
+                <option value="Academic Operations">Academic Operations</option>
+                <option value="Finance & Accounts">Finance & Accounts</option>
+                <option value="Security & Access">Security & Access</option>
+                <option value="Student Logistics">Student Logistics</option>
+                <option value="Community & Portal">Community & Portal</option>
+                <option value="Custom Operations">Custom Operations</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                Description / Purpose
+              </label>
+              <textarea
+                rows={2}
+                placeholder="Brief summary of what this module handles for this campus..."
+                value={customModuleForm.description}
+                onChange={(e) => setCustomModuleForm({ ...customModuleForm, description: e.target.value })}
+                className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setIsAddCustomModuleOpen(false)}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add & Enable Module</span>
+              </button>
+            </div>
+          </form>
         </Modal>
       )}
 
