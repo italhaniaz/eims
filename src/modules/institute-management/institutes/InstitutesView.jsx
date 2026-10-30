@@ -437,6 +437,14 @@ export const InstitutesView = () => {
   const [backupInspectionReport, setBackupInspectionReport] = useState(null)
   const [selectedBackupPayload, setSelectedBackupPayload] = useState(null)
 
+  // CSV Import States
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false)
+  const [importFile, setImportFile] = useState(null)
+  const [importParsedRows, setImportParsedRows] = useState([])
+  const [importErrors, setImportErrors] = useState([])
+  const [isImporting, setIsImporting] = useState(false)
+  const csvFileInputRef = useRef(null)
+
   // ----------------------------------------------------
   // Onboarding Wizard Form State (5 Steps)
   // ----------------------------------------------------
@@ -1243,6 +1251,263 @@ export const InstitutesView = () => {
   }
 
   // Export to CSV
+  // ----------------------------------------------------
+  // CSV Import & Template Handlers
+  // ----------------------------------------------------
+  const downloadImportTemplateCSV = () => {
+    const headers = [
+      'Institute Name',
+      'Code',
+      'Type',
+      'City',
+      'Province',
+      'Principal',
+      'Email',
+      'Phone',
+      'Affiliated Board',
+      'Plan Tier'
+    ]
+    const sampleRows = [
+      [
+        '"Army Public School & College"',
+        '"APS-101"',
+        '"School"',
+        '"Lahore"',
+        '"Punjab"',
+        '"Brig. (R) Tariq Saeed"',
+        '"aps.lahore@eims.edu.pk"',
+        '"+92 42 36601234"',
+        '"Federal Board (FBISE)"',
+        '"School Plan"'
+      ],
+      [
+        '"Superior Science College"',
+        '"SSC-202"',
+        '"College"',
+        '"Gujranwala"',
+        '"Punjab"',
+        '"Prof. Muhammad Aslam"',
+        '"info@superiorcollege.edu.pk"',
+        '"+92 55 3841234"',
+        '"BISE Gujranwala"',
+        '"College Plan"'
+      ],
+      [
+        '"National Institute of Engineering & Sciences"',
+        '"NIES-303"',
+        '"University"',
+        '"Islamabad"',
+        '"Federal"',
+        '"Dr. Salman Farooq"',
+        '"registrar@nies.edu.pk"',
+        '"+92 51 9205566"',
+        '"Higher Education Commission (HEC)"',
+        '"University Plan"'
+      ]
+    ]
+
+    const csvContent = [headers.join(','), ...sampleRows.map(r => r.join(','))].join('\n')
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', 'sample_campuses_import_template.csv')
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+    toast.success('Sample CSV template downloaded successfully!')
+  }
+
+  const handleCSVFileChange = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (!file.name.toLowerCase().endsWith('.csv') && file.type !== 'text/csv') {
+      toast.error('Please select a valid .csv file.')
+      if (csvFileInputRef.current) csvFileInputRef.current.value = ''
+      return
+    }
+
+    setImportFile(file)
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      try {
+        const text = event.target?.result
+        if (typeof text !== 'string') return
+
+        const rawLines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean)
+        if (rawLines.length < 2) {
+          toast.error('The selected CSV file has no data rows.')
+          setImportParsedRows([])
+          setImportErrors(['CSV file must have a header row and at least one data row.'])
+          return
+        }
+
+        const parseLine = (line) => {
+          const cells = []
+          let cur = ''
+          let inQuotes = false
+          for (let i = 0; i < line.length; i++) {
+            const ch = line[i]
+            if (ch === '"' || ch === "'") {
+              inQuotes = !inQuotes
+            } else if (ch === ',' && !inQuotes) {
+              cells.push(cur.trim())
+              cur = ''
+            } else {
+              cur += ch
+            }
+          }
+          cells.push(cur.trim())
+          return cells.map(val => val.replace(/^["']|["']$/g, '').trim())
+        }
+
+        const headerCols = parseLine(rawLines[0]).map(h => h.toLowerCase())
+
+        const findColIndex = (keywords) => {
+          return headerCols.findIndex(col => keywords.some(k => col.includes(k)))
+        }
+
+        const nameIdx = findColIndex(['name', 'institute', 'campus'])
+        const codeIdx = findColIndex(['code', 'id'])
+        const typeIdx = findColIndex(['type', 'tier', 'level'])
+        const cityIdx = findColIndex(['city'])
+        const provIdx = findColIndex(['province', 'state'])
+        const principalIdx = findColIndex(['principal', 'head'])
+        const emailIdx = findColIndex(['email', 'mail'])
+        const phoneIdx = findColIndex(['phone', 'contact'])
+        const boardIdx = findColIndex(['board', 'affiliation'])
+        const planIdx = findColIndex(['plan'])
+
+        const validRows = []
+        const errors = []
+        const seenCodes = new Set(institutes.map(i => (i.code || '').toUpperCase().trim()))
+
+        for (let r = 1; r < rawLines.length; r++) {
+          const rowNum = r + 1
+          const rowData = parseLine(rawLines[r])
+          if (rowData.length === 0 || rowData.every(c => !c)) continue
+
+          const name = (nameIdx >= 0 ? rowData[nameIdx] : rowData[0]) || ''
+          let code = (codeIdx >= 0 ? rowData[codeIdx] : rowData[1]) || ''
+          let type = (typeIdx >= 0 ? rowData[typeIdx] : rowData[2]) || 'School'
+          const city = (cityIdx >= 0 ? rowData[cityIdx] : rowData[3]) || 'Lahore'
+          const province = (provIdx >= 0 ? rowData[provIdx] : rowData[4]) || 'Punjab'
+          const principal = (principalIdx >= 0 ? rowData[principalIdx] : rowData[5]) || 'In-Charge Principal'
+          let email = (emailIdx >= 0 ? rowData[emailIdx] : rowData[6]) || ''
+          const phone = (phoneIdx >= 0 ? rowData[phoneIdx] : rowData[7]) || '+92 300 0000000'
+          const affiliatedBoard = (boardIdx >= 0 ? rowData[boardIdx] : rowData[8]) || 'BISE Lahore'
+          const planTier = (planIdx >= 0 ? rowData[planIdx] : rowData[9]) || `${type} Plan`
+
+          if (!name.trim()) {
+            errors.push(`Row #${rowNum}: Skipped because Institute Name is required.`)
+            continue
+          }
+
+          const lowerType = type.toLowerCase()
+          if (lowerType.includes('uni') || lowerType.includes('undergrad')) {
+            type = 'University'
+          } else if (lowerType.includes('col')) {
+            type = 'College'
+          } else if (lowerType.includes('custom') || lowerType.includes('hyb')) {
+            type = 'Custom'
+          } else {
+            type = 'School'
+          }
+
+          if (!code.trim()) {
+            const prefix = type === 'University' ? 'UNI' : type === 'College' ? 'COL' : type === 'Custom' ? 'HYB' : 'SCH'
+            code = `${prefix}-${Math.floor(100 + Math.random() * 900)}`
+          } else {
+            code = code.toUpperCase().trim()
+          }
+
+          if (seenCodes.has(code)) {
+            code = `${code}-${Math.floor(10 + Math.random() * 89)}`
+          }
+          seenCodes.add(code)
+
+          if (!email.trim() || !email.includes('@')) {
+            const slug = name.toLowerCase().replace(/[^a-z0-9]/g, '')
+            email = `admin@${slug || 'campus'}.edu.pk`
+          }
+
+          const enabledTiers = type === 'University' 
+            ? ['undergraduate'] 
+            : type === 'College' 
+            ? ['college'] 
+            : type === 'Custom'
+            ? ['school', 'college']
+            : ['school']
+
+          validRows.push({
+            name: name.trim(),
+            code,
+            type,
+            enabledTiers,
+            city,
+            province,
+            country: 'Pakistan',
+            principal,
+            email,
+            phone,
+            address: `${city}, ${province}, Pakistan`,
+            affiliatedBoard,
+            planTier,
+            planType: type === 'University' ? 'UNIVERSITY' : type === 'College' ? 'COLLEGE' : type === 'Custom' ? 'CUSTOM' : 'SCHOOL',
+            adminName: principal !== 'In-Charge Principal' ? `${principal} (Admin)` : `${name.trim()} Administrator`,
+            adminEmail: email,
+            adminPassword: 'admin' + Math.floor(100 + Math.random() * 900),
+            quotaStudents: type === 'University' ? 5000 : 1500,
+            quotaUsers: type === 'University' ? 100 : 50,
+            quotaCampuses: 1,
+            quotaStorageMb: type === 'University' ? 5120 : 2048,
+            campuses: [{ name: 'Main Campus', city, address: `${city}, ${province}` }]
+          })
+        }
+
+        setImportParsedRows(validRows)
+        setImportErrors(errors)
+      } catch (err) {
+        toast.error('Failed to parse CSV file: ' + err.message)
+      }
+    }
+    reader.readAsText(file)
+  }
+
+  const executeCSVImport = async () => {
+    if (importParsedRows.length === 0) {
+      toast.warning('No valid rows to import.')
+      return
+    }
+
+    setIsImporting(true)
+    try {
+      let importedCount = 0
+      for (const row of importParsedRows) {
+        await PlatformService.onboardInstitute(row)
+        importedCount++
+      }
+
+      refreshData()
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('sms_institutes_updated'))
+        window.dispatchEvent(new Event('storage'))
+      }
+
+      toast.success(`Successfully imported ${importedCount} institutes into campus network!`)
+      setIsImportModalOpen(false)
+      setImportFile(null)
+      setImportParsedRows([])
+      setImportErrors([])
+    } catch (err) {
+      toast.error('Error importing institutes: ' + err.message)
+    } finally {
+      setIsImporting(false)
+    }
+  }
+
   const exportInstitutesCSV = () => {
     if (filteredAndSorted.length === 0) {
       toast.warning('No institutes to export.')
@@ -1346,6 +1611,21 @@ export const InstitutesView = () => {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+          <button
+            type="button"
+            onClick={() => {
+              setIsImportModalOpen(true)
+              setImportFile(null)
+              setImportParsedRows([])
+              setImportErrors([])
+            }}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200/80 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
+            title="Import campuses & institutes from CSV file"
+          >
+            <Upload className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+            <span>Import CSV</span>
+          </button>
+
           <button
             onClick={exportInstitutesCSV}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200/80 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
@@ -4162,6 +4442,197 @@ export const InstitutesView = () => {
           </form>
         </Modal>
       )}
+
+      {/* ---------------------------------------------------- */}
+      {/* CSV IMPORT INSTITUTES MODAL */}
+      {/* ---------------------------------------------------- */}
+      <Modal
+        isOpen={isImportModalOpen}
+        onClose={() => {
+          if (!isImporting) {
+            setIsImportModalOpen(false)
+            setImportFile(null)
+            setImportParsedRows([])
+            setImportErrors([])
+          }
+        }}
+        title="Import Campuses & Institutes via CSV"
+      >
+        <div className="space-y-4 text-xs font-sans">
+          {/* Header Description & Download Template */}
+          <div className="p-3 bg-gradient-to-r from-purple-50 via-slate-50 to-white rounded-xl border border-purple-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <p className="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                <FileCode className="w-4 h-4 text-purple-600" />
+                <span>Bulk Campus Onboarding Spreadsheet</span>
+              </p>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                Upload a UTF-8 CSV spreadsheet with columns for Institute Name, Code, Type, City, Principal, and Contact.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={downloadImportTemplateCSV}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-purple-50 text-purple-700 font-bold rounded-lg border border-purple-200 shadow-2xs transition-all cursor-pointer whitespace-nowrap self-start sm:self-auto"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Download CSV Template</span>
+            </button>
+          </div>
+
+          {/* Upload Zone */}
+          <input
+            type="file"
+            ref={csvFileInputRef}
+            onChange={handleCSVFileChange}
+            accept=".csv"
+            className="hidden"
+          />
+
+          {!importFile ? (
+            <div
+              onClick={() => csvFileInputRef.current?.click()}
+              className="p-8 border-2 border-dashed border-slate-300 hover:border-purple-400 rounded-2xl bg-slate-50/50 hover:bg-purple-50/20 text-center transition-all cursor-pointer space-y-2"
+            >
+              <div className="w-12 h-12 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
+                <Upload className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-slate-800">
+                  Click to select or browse CSV file
+                </p>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Standard comma-separated format (.csv)
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {/* File Info Bar */}
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 bg-purple-100 text-purple-700 rounded-lg flex items-center justify-center font-bold text-xs shrink-0">
+                    CSV
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-bold text-slate-800 text-xs truncate max-w-xs">{importFile.name}</p>
+                    <p className="text-[10px] text-slate-400">{(importFile.size / 1024).toFixed(1)} KB • Ready for preview</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setImportFile(null)
+                    setImportParsedRows([])
+                    setImportErrors([])
+                    if (csvFileInputRef.current) csvFileInputRef.current.value = ''
+                  }}
+                  className="px-2.5 py-1 text-xs text-rose-600 hover:bg-rose-50 rounded-lg font-semibold transition-colors cursor-pointer"
+                >
+                  Change File
+                </button>
+              </div>
+
+              {/* Status summary */}
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800">
+                  <span className="font-extrabold text-lg block">{importParsedRows.length}</span>
+                  <span className="text-[11px] font-semibold">Valid Campuses to Import</span>
+                </div>
+                <div className={`p-2.5 rounded-xl border ${importErrors.length > 0 ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-slate-50 border-slate-200 text-slate-600'}`}>
+                  <span className="font-extrabold text-lg block">{importErrors.length}</span>
+                  <span className="text-[11px] font-semibold">Skipped / Warning Rows</span>
+                </div>
+              </div>
+
+              {/* Warnings if any */}
+              {importErrors.length > 0 && (
+                <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-800 max-h-24 overflow-y-auto space-y-1">
+                  {importErrors.map((err, idx) => (
+                    <div key={idx} className="flex items-start gap-1.5">
+                      <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-amber-600 mt-0.5" />
+                      <span>{err}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Parsed Rows Preview Table */}
+              {importParsedRows.length > 0 && (
+                <div className="border border-slate-200 rounded-xl overflow-hidden">
+                  <div className="px-3 py-2 bg-slate-50 border-b border-slate-200 font-bold text-slate-700 text-xs flex items-center justify-between">
+                    <span>Parsed Campuses Preview (Showing {Math.min(5, importParsedRows.length)} of {importParsedRows.length})</span>
+                    <span className="text-[10px] text-purple-600 font-semibold">Auto-configured wings & admin</span>
+                  </div>
+                  <div className="max-h-48 overflow-y-auto">
+                    <table className="w-full text-left text-[11px]">
+                      <thead className="bg-slate-100/70 text-slate-600 font-semibold border-b border-slate-200">
+                        <tr>
+                          <th className="py-1.5 px-2.5">Campus Name</th>
+                          <th className="py-1.5 px-2">Code</th>
+                          <th className="py-1.5 px-2">Type / Wing</th>
+                          <th className="py-1.5 px-2">City</th>
+                          <th className="py-1.5 px-2">Principal</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {importParsedRows.slice(0, 5).map((row, idx) => (
+                          <tr key={idx} className="hover:bg-slate-50/60">
+                            <td className="py-2 px-2.5 font-bold text-slate-800">{row.name}</td>
+                            <td className="py-2 px-2 font-mono text-purple-700">{row.code}</td>
+                            <td className="py-2 px-2">
+                              <span className="px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 font-semibold text-[10px]">
+                                {row.type}
+                              </span>
+                            </td>
+                            <td className="py-2 px-2 text-slate-600">{row.city}</td>
+                            <td className="py-2 px-2 text-slate-600">{row.principal}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Action buttons */}
+          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+            <button
+              type="button"
+              disabled={isImporting}
+              onClick={() => {
+                setIsImportModalOpen(false)
+                setImportFile(null)
+                setImportParsedRows([])
+                setImportErrors([])
+              }}
+              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={importParsedRows.length === 0 || isImporting}
+              onClick={executeCSVImport}
+              className="px-4 py-2 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+            >
+              {isImporting ? (
+                <>
+                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Importing Campuses...</span>
+                </>
+              ) : (
+                <>
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>Import {importParsedRows.length} Campuses</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       {/* ---------------------------------------------------- */}
       {/* 6. DISASTER RECOVERY MODAL */}

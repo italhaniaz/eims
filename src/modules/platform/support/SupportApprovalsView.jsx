@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import {
   LifeBuoy,
   CheckCircle,
@@ -238,6 +238,23 @@ const SupportApprovalsView = () => {
     showToast('Platform CMS document updated.')
   }
 
+  // Memoized computations & counters (Always call hooks at top-level before early returns)
+  const pendingApprovalsCount = useMemo(() => approvals.filter(a => a.status === 'PENDING').length, [approvals])
+  const approvedApprovalsCount = useMemo(() => approvals.filter(a => a.status === 'APPROVED').length, [approvals])
+  const rejectedApprovalsCount = useMemo(() => approvals.filter(a => a.status === 'REJECTED').length, [approvals])
+  const openTicketsCount = useMemo(() => tickets.filter(t => t.status === 'OPEN' || t.status === 'IN_PROGRESS').length, [tickets])
+
+  const filteredTickets = useMemo(() => {
+    if (ticketStatusFilter === 'ALL') return tickets
+    if (ticketStatusFilter === 'ACTIVE') return tickets.filter(t => t.status === 'OPEN' || t.status === 'IN_PROGRESS')
+    return tickets.filter(t => t.status === ticketStatusFilter)
+  }, [tickets, ticketStatusFilter])
+
+  const filteredApprovals = useMemo(() => {
+    if (approvalFilter === 'ALL') return approvals
+    return approvals.filter(a => a.status === approvalFilter)
+  }, [approvals, approvalFilter])
+
   if (loading) {
     return (
       <div className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto flex items-center justify-center min-h-[400px]">
@@ -248,22 +265,6 @@ const SupportApprovalsView = () => {
       </div>
     )
   }
-
-  const pendingApprovalsCount = approvals.filter(a => a.status === 'PENDING').length
-  const approvedApprovalsCount = approvals.filter(a => a.status === 'APPROVED').length
-  const rejectedApprovalsCount = approvals.filter(a => a.status === 'REJECTED').length
-  const openTicketsCount = tickets.filter(t => t.status === 'OPEN' || t.status === 'IN_PROGRESS').length
-
-  const filteredTickets = React.useMemo(() => {
-    if (ticketStatusFilter === 'ALL') return tickets
-    if (ticketStatusFilter === 'ACTIVE') return tickets.filter(t => t.status === 'OPEN' || t.status === 'IN_PROGRESS')
-    return tickets.filter(t => t.status === ticketStatusFilter)
-  }, [tickets, ticketStatusFilter])
-
-  const filteredApprovals = React.useMemo(() => {
-    if (approvalFilter === 'ALL') return approvals
-    return approvals.filter(a => a.status === approvalFilter)
-  }, [approvals, approvalFilter])
 
   return (
     <div className="p-4 sm:p-6 md:p-8 pb-16 space-y-6 max-w-[1400px] mx-auto">
