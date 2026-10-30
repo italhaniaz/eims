@@ -57,20 +57,6 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
       [roleId]: !prev[roleId]
     }))
   }
-
-  const areAllRolesExpanded = useMemo(() => {
-    return SYSTEM_ROLES.every(r => !!expandedRoles[r.id])
-  }, [expandedRoles])
-
-  const handleToggleAllRoles = () => {
-    if (areAllRolesExpanded) {
-      setExpandedRoles({})
-    } else {
-      const all = {}
-      SYSTEM_ROLES.forEach(r => { all[r.id] = true })
-      setExpandedRoles(all)
-    }
-  }
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingUser, setEditingUser] = useState(null)
   const [viewingUser, setViewingUser] = useState(null)
@@ -1158,19 +1144,6 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
                 <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg">
                   6 System Roles
                 </span>
-                <button
-                  type="button"
-                  onClick={handleToggleAllRoles}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-all inline-flex items-center gap-2 shadow-2xs cursor-pointer ${
-                    areAllRolesExpanded
-                      ? 'bg-purple-600 text-white border-purple-600 hover:bg-purple-700 shadow-sm'
-                      : 'bg-white hover:bg-purple-50 text-purple-700 border-purple-200 hover:border-purple-300'
-                  }`}
-                  title={areAllRolesExpanded ? "Collapse All Role Specifications" : "Expand All Role Specifications"}
-                >
-                  <Eye className="w-3.5 h-3.5" />
-                  <span>{areAllRolesExpanded ? 'Collapse All Specs' : 'Expand All Specs'}</span>
-                </button>
               </div>
             </div>
 
