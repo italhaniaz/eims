@@ -1332,26 +1332,23 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
             </span>
 
             <div className="flex items-center gap-1.5 shrink-0">
-              <span className="text-xs font-medium text-slate-500 select-none">
-                Manage
-              </span>
-
-              {/* View Campuses Directory (Eye Button) */}
               <button
                 type="button"
                 onClick={() => onRouteChange('institutes')}
-                className="w-7 h-7 rounded-full border border-purple-200 bg-white hover:bg-purple-600 hover:text-white text-purple-600 flex items-center justify-center transition-all cursor-pointer shadow-2xs hover:scale-105 active:scale-95 shrink-0"
+                className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-purple-700 cursor-pointer transition-colors group"
                 title="View Campuses Directory"
-                aria-label="View Campuses Directory"
               >
-                <Eye className="w-3.5 h-3.5 stroke-[2]" />
+                <span className="group-hover:underline">Manage</span>
+                <span className="w-7 h-7 rounded-full border border-purple-200 bg-white group-hover:bg-purple-600 group-hover:text-white text-purple-600 flex items-center justify-center transition-all shadow-2xs group-hover:scale-105">
+                  <Eye className="w-3.5 h-3.5 stroke-[2]" />
+                </span>
               </button>
 
               {/* Directly Add New Campus (Plus Button) */}
               <button
                 type="button"
                 onClick={handleDirectAddCampus}
-                className="w-7 h-7 rounded-full bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center transition-all cursor-pointer shadow-xs shadow-purple-600/30 hover:scale-110 active:scale-95 shrink-0"
+                className="w-7 h-7 rounded-full bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center transition-all cursor-pointer shadow-xs shadow-purple-600/30 hover:scale-110 active:scale-95 shrink-0 ml-0.5"
                 title="Directly Add / Onboard New Campus"
                 aria-label="Add New Campus"
               >
@@ -1385,17 +1382,16 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
             </span>
 
             <div className="flex items-center gap-1.5 shrink-0">
-              <span className="text-xs font-medium text-slate-500 select-none whitespace-nowrap">
-                {selectedTierFilter === 'all' ? 'All Wings' : currentFilterConfig.badge}
-              </span>
               <button
                 type="button"
                 onClick={() => onRouteChange('sa-students-all')}
-                className="w-7 h-7 rounded-full border border-sky-200 bg-white hover:bg-sky-500 hover:text-white text-sky-500 flex items-center justify-center transition-all cursor-pointer shadow-2xs hover:scale-105 active:scale-95 shrink-0"
+                className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-sky-600 cursor-pointer transition-colors group whitespace-nowrap"
                 title="View Students Governance Registry"
-                aria-label="View Students Governance Registry"
               >
-                <Eye className="w-3.5 h-3.5 stroke-[2]" />
+                <span className="group-hover:underline">{selectedTierFilter === 'all' ? 'All Wings' : currentFilterConfig.badge}</span>
+                <span className="w-7 h-7 rounded-full border border-sky-200 bg-white group-hover:bg-sky-500 group-hover:text-white text-sky-500 flex items-center justify-center transition-all shadow-2xs group-hover:scale-105">
+                  <Eye className="w-3.5 h-3.5 stroke-[2]" />
+                </span>
               </button>
             </div>
           </div>
@@ -1425,17 +1421,16 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
             </span>
 
             <div className="flex items-center gap-1.5 shrink-0">
-              <span className="text-xs font-medium text-slate-500 select-none whitespace-nowrap">
-                Matrix
-              </span>
               <button
                 type="button"
                 onClick={() => onRouteChange('platform-modules')}
-                className="w-7 h-7 rounded-full border border-amber-200 bg-white hover:bg-amber-500 hover:text-white text-amber-600 flex items-center justify-center transition-all cursor-pointer shadow-2xs hover:scale-105 active:scale-95 shrink-0"
+                className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-amber-700 cursor-pointer transition-colors group whitespace-nowrap"
                 title="View Wings Matrix"
-                aria-label="View Wings Matrix"
               >
-                <Eye className="w-3.5 h-3.5 stroke-[2]" />
+                <span className="group-hover:underline">Matrix</span>
+                <span className="w-7 h-7 rounded-full border border-amber-200 bg-white group-hover:bg-amber-500 group-hover:text-white text-amber-600 flex items-center justify-center transition-all shadow-2xs group-hover:scale-105">
+                  <Eye className="w-3.5 h-3.5 stroke-[2]" />
+                </span>
               </button>
             </div>
           </div>
@@ -1465,17 +1460,16 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
             </span>
 
             <div className="flex items-center gap-1.5 shrink-0">
-              <span className="text-xs font-medium text-slate-500 select-none whitespace-nowrap">
-                Billing
-              </span>
               <button
                 type="button"
                 onClick={() => onRouteChange('platform-billing')}
-                className="w-7 h-7 rounded-full border border-emerald-200 bg-white hover:bg-emerald-600 hover:text-white text-emerald-600 flex items-center justify-center transition-all cursor-pointer shadow-2xs hover:scale-105 active:scale-95 shrink-0"
+                className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-emerald-700 cursor-pointer transition-colors group whitespace-nowrap"
                 title="View Subscriptions & Billing"
-                aria-label="View Subscriptions & Billing"
               >
-                <Eye className="w-3.5 h-3.5 stroke-[2]" />
+                <span className="group-hover:underline">Billing</span>
+                <span className="w-7 h-7 rounded-full border border-emerald-200 bg-white group-hover:bg-emerald-600 group-hover:text-white text-emerald-600 flex items-center justify-center transition-all shadow-2xs group-hover:scale-105">
+                  <Eye className="w-3.5 h-3.5 stroke-[2]" />
+                </span>
               </button>
             </div>
           </div>
@@ -1489,10 +1483,11 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
         {/* Left Card (7 cols): Executive Platform Revenue & Growth Telemetry */}
         <div className="lg:col-span-7 bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/80 shadow-[0_4px_24px_rgba(0,0,0,0.03)] flex flex-col justify-between relative overflow-hidden">
           
-          {/* 1. Header with Title & Metric Switcher Tabs */}
-          <div className="flex flex-col gap-4 pb-4 border-b border-slate-100">
-            <div className="flex flex-col 2xl:flex-row 2xl:items-center justify-between gap-4">
-              <div className="flex items-center gap-3.5">
+          {/* 1. Header with Title & Metric Switcher Tabs - Balanced 2-Row Architecture (No Text Squish) */}
+          <div className="flex flex-col gap-3.5 pb-4 border-b border-slate-100">
+            {/* Row 1: Full-width Icon, Title & Live Indicator */}
+            <div className="flex items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3.5 min-w-0">
                 <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-purple-100 to-indigo-50 border border-purple-200/70 flex items-center justify-center text-purple-700 shrink-0 shadow-2xs">
                   {executiveMetric === 'saas_revenue' ? (
                     <CreditCard className="w-5 h-5 stroke-[2.2]" />
@@ -1504,80 +1499,80 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                     <Activity className="w-5 h-5 stroke-[2.2]" />
                   )}
                 </div>
-                <div>
+                <div className="min-w-0">
                   <div className="flex items-center gap-2.5 flex-wrap">
                     <h2 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight font-heading">
                       {executiveChartData.chartTitle}
                     </h2>
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold shadow-2xs">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold shadow-2xs shrink-0">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                       Live Radar
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
                     {executiveChartData.chartSubtitle}
                   </p>
                 </div>
               </div>
+            </div>
 
-              {/* Metric Switcher Tabs - Responsive scrollable bar */}
-              <div className="flex items-center p-1 bg-slate-100/90 rounded-2xl text-xs font-bold gap-1 self-start 2xl:self-auto shrink-0 border border-slate-200/60 shadow-2xs overflow-x-auto min-w-max dark-scroll max-w-full">
-                <button
-                  type="button"
-                  onClick={() => setExecutiveMetric('saas_revenue')}
-                  className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
-                    executiveMetric === 'saas_revenue'
-                      ? 'bg-white text-purple-900 shadow-xs font-extrabold border border-purple-200/50'
-                      : 'text-slate-600 hover:text-purple-700 hover:bg-white/60'
-                  }`}
-                  title="View Platform SaaS Recurring Cashflow in PKR"
-                >
-                  <CreditCard className={`w-3.5 h-3.5 ${executiveMetric === 'saas_revenue' ? 'text-purple-600' : 'text-slate-400'}`} />
-                  <span>SaaS Cashflow</span>
-                </button>
+            {/* Row 2: Metric Switcher Tabs - Responsive Full Width Bar */}
+            <div className="flex items-center p-1 bg-slate-100/90 rounded-2xl text-xs font-bold gap-1 self-start border border-slate-200/60 shadow-2xs overflow-x-auto min-w-max dark-scroll max-w-full">
+              <button
+                type="button"
+                onClick={() => setExecutiveMetric('saas_revenue')}
+                className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
+                  executiveMetric === 'saas_revenue'
+                    ? 'bg-white text-purple-900 shadow-xs font-extrabold border border-purple-200/50'
+                    : 'text-slate-600 hover:text-purple-700 hover:bg-white/60'
+                }`}
+                title="View Platform SaaS Recurring Cashflow in PKR"
+              >
+                <CreditCard className={`w-3.5 h-3.5 ${executiveMetric === 'saas_revenue' ? 'text-purple-600' : 'text-slate-400'}`} />
+                <span>SaaS Cashflow</span>
+              </button>
 
-                <button
-                  type="button"
-                  onClick={() => setExecutiveMetric('campuses')}
-                  className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
-                    executiveMetric === 'campuses'
-                      ? 'bg-white text-purple-900 shadow-xs font-extrabold border border-purple-200/50'
-                      : 'text-slate-600 hover:text-purple-700 hover:bg-white/60'
-                  }`}
-                  title="View Campus Network Growth"
-                >
-                  <Building2 className={`w-3.5 h-3.5 ${executiveMetric === 'campuses' ? 'text-purple-600' : 'text-slate-400'}`} />
-                  <span>Campuses</span>
-                </button>
+              <button
+                type="button"
+                onClick={() => setExecutiveMetric('campuses')}
+                className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
+                  executiveMetric === 'campuses'
+                    ? 'bg-white text-purple-900 shadow-xs font-extrabold border border-purple-200/50'
+                    : 'text-slate-600 hover:text-purple-700 hover:bg-white/60'
+                }`}
+                title="View Campus Network Growth"
+              >
+                <Building2 className={`w-3.5 h-3.5 ${executiveMetric === 'campuses' ? 'text-purple-600' : 'text-slate-400'}`} />
+                <span>Campuses</span>
+              </button>
 
-                <button
-                  type="button"
-                  onClick={() => setExecutiveMetric('students')}
-                  className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
-                    executiveMetric === 'students'
-                      ? 'bg-white text-purple-900 shadow-xs font-extrabold border border-purple-200/50'
-                      : 'text-slate-600 hover:text-purple-700 hover:bg-white/60'
-                  }`}
-                  title="View Total Student Body Capacity"
-                >
-                  <GraduationCap className={`w-3.5 h-3.5 ${executiveMetric === 'students' ? 'text-purple-600' : 'text-slate-400'}`} />
-                  <span>Students</span>
-                </button>
+              <button
+                type="button"
+                onClick={() => setExecutiveMetric('students')}
+                className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
+                  executiveMetric === 'students'
+                    ? 'bg-white text-purple-900 shadow-xs font-extrabold border border-purple-200/50'
+                    : 'text-slate-600 hover:text-purple-700 hover:bg-white/60'
+                }`}
+                title="View Total Student Body Capacity"
+              >
+                <GraduationCap className={`w-3.5 h-3.5 ${executiveMetric === 'students' ? 'text-purple-600' : 'text-slate-400'}`} />
+                <span>Students</span>
+              </button>
 
-                <button
-                  type="button"
-                  onClick={() => setExecutiveMetric('vouchers')}
-                  className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
-                    executiveMetric === 'vouchers'
-                      ? 'bg-white text-purple-900 shadow-xs font-extrabold border border-purple-200/50'
-                      : 'text-slate-600 hover:text-purple-700 hover:bg-white/60'
-                  }`}
-                  title="View Digital 1Link & Challan Velocity"
-                >
-                  <Activity className={`w-3.5 h-3.5 ${executiveMetric === 'vouchers' ? 'text-purple-600' : 'text-slate-400'}`} />
-                  <span>1Link Gateway</span>
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setExecutiveMetric('vouchers')}
+                className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
+                  executiveMetric === 'vouchers'
+                    ? 'bg-white text-purple-900 shadow-xs font-extrabold border border-purple-200/50'
+                    : 'text-slate-600 hover:text-purple-700 hover:bg-white/60'
+                }`}
+                title="View Digital 1Link & Challan Velocity"
+              >
+                <Activity className={`w-3.5 h-3.5 ${executiveMetric === 'vouchers' ? 'text-purple-600' : 'text-slate-400'}`} />
+                <span>1Link Gateway</span>
+              </button>
             </div>
           </div>
 
