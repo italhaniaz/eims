@@ -37,7 +37,30 @@ import {
   FileText,
   CheckSquare,
   RefreshCw,
-  FileBadge
+  FileBadge,
+  Clock,
+  BookOpen,
+  RotateCcw,
+  Cpu,
+  AlertTriangle,
+  Receipt,
+  Tag,
+  Wallet,
+  QrCode,
+  Truck,
+  UserCheck,
+  Hotel,
+  HeartHandshake,
+  Laptop,
+  Video,
+  BookMarked,
+  Mail,
+  AlertOctagon,
+  History,
+  Share2,
+  Settings,
+  Globe,
+  Key
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
@@ -57,6 +80,17 @@ export const SuperadminSidebar = ({
   const isAdmissionsRoute = typeof currentRoute === 'string' && currentRoute.startsWith('sa-admissions-')
   const isStaffRoute = typeof currentRoute === 'string' && currentRoute.startsWith('sa-staff-')
   const isExamsRoute = typeof currentRoute === 'string' && currentRoute.startsWith('sa-exams-')
+  const isAcademicsRoute = typeof currentRoute === 'string' && currentRoute.startsWith('sa-academics-')
+  const isAttendanceRoute = typeof currentRoute === 'string' && currentRoute.startsWith('sa-attendance-')
+  const isFeesRoute = typeof currentRoute === 'string' && currentRoute.startsWith('sa-fees-')
+  const isAccountsRoute = typeof currentRoute === 'string' && currentRoute.startsWith('sa-accounts-')
+  const isCertificatesRoute = typeof currentRoute === 'string' && currentRoute.startsWith('sa-certificates-')
+  const isServicesRoute = typeof currentRoute === 'string' && currentRoute.startsWith('sa-services-')
+  const isLearningRoute = typeof currentRoute === 'string' && currentRoute.startsWith('sa-learning-')
+  const isCommunicationRoute = typeof currentRoute === 'string' && currentRoute.startsWith('sa-comm-')
+  const isReportsRoute = typeof currentRoute === 'string' && currentRoute.startsWith('sa-reports-')
+  const isPoliciesRoute = typeof currentRoute === 'string' && currentRoute.startsWith('sa-policies-')
+  const isSettingsRoute = typeof currentRoute === 'string' && currentRoute.startsWith('sa-settings-')
 
   // Accordion states with smart auto-open for active routes
   const [platformOpen, setPlatformOpen] = useState(true)
@@ -66,6 +100,17 @@ export const SuperadminSidebar = ({
   const [admissionsOpen, setAdmissionsOpen] = useState(isAdmissionsRoute)
   const [staffFacultyOpen, setStaffFacultyOpen] = useState(isStaffRoute)
   const [examsResultsOpen, setExamsResultsOpen] = useState(isExamsRoute)
+  const [academicsOpen, setAcademicsOpen] = useState(isAcademicsRoute)
+  const [attendanceOpen, setAttendanceOpen] = useState(isAttendanceRoute)
+  const [feesOpen, setFeesOpen] = useState(isFeesRoute)
+  const [accountsOpen, setAccountsOpen] = useState(isAccountsRoute)
+  const [certificatesOpen, setCertificatesOpen] = useState(isCertificatesRoute)
+  const [servicesOpen, setServicesOpen] = useState(isServicesRoute)
+  const [learningOpen, setLearningOpen] = useState(isLearningRoute)
+  const [communicationOpen, setCommunicationOpen] = useState(isCommunicationRoute)
+  const [reportsOpen, setReportsOpen] = useState(isReportsRoute)
+  const [policiesOpen, setPoliciesOpen] = useState(isPoliciesRoute)
+  const [settingsOpen, setSettingsOpen] = useState(isSettingsRoute)
 
   // Auto-expand section when navigated
   useEffect(() => {
@@ -76,6 +121,17 @@ export const SuperadminSidebar = ({
     if (isAdmissionsRoute) setAdmissionsOpen(true)
     if (isStaffRoute) setStaffFacultyOpen(true)
     if (isExamsRoute) setExamsResultsOpen(true)
+    if (isAcademicsRoute) setAcademicsOpen(true)
+    if (isAttendanceRoute) setAttendanceOpen(true)
+    if (isFeesRoute) setFeesOpen(true)
+    if (isAccountsRoute) setAccountsOpen(true)
+    if (isCertificatesRoute) setCertificatesOpen(true)
+    if (isServicesRoute) setServicesOpen(true)
+    if (isLearningRoute) setLearningOpen(true)
+    if (isCommunicationRoute) setCommunicationOpen(true)
+    if (isReportsRoute) setReportsOpen(true)
+    if (isPoliciesRoute) setPoliciesOpen(true)
+    if (isSettingsRoute) setSettingsOpen(true)
   }, [currentRoute])
 
   const isRouteActive = (route) => currentRoute === route
@@ -161,6 +217,33 @@ export const SuperadminSidebar = ({
                 isRouteActive('dashboard') ? 'text-purple-600' : 'text-slate-400 group-hover:text-slate-600'
               }`} />
               {(!collapsed || isMobileOpen) && <span>Dashboard</span>}
+            </button>
+          </div>
+
+          {/* 1b. Pending Approvals (badge: count) - Right under Dashboard */}
+          <div className="relative pt-1">
+            {isRouteActive('support-approvals') && (
+              <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-amber-500 rounded-full z-10"></div>
+            )}
+            <button
+              onClick={() => handleNavClick('support-approvals')}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
+                isRouteActive('support-approvals')
+                  ? 'bg-amber-50 text-amber-900 font-semibold shadow-2xs border border-amber-200/60'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50/80'
+              }`}
+            >
+              <div className="flex items-center gap-3 truncate">
+                <CheckSquare className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                  isRouteActive('support-approvals') ? 'text-amber-600' : 'text-amber-500 group-hover:text-amber-600'
+                }`} />
+                {(!collapsed || isMobileOpen) && <span className="truncate">Pending Approvals</span>}
+              </div>
+              {(!collapsed || isMobileOpen) && (
+                <span className="px-2 py-0.5 text-[11px] font-extrabold bg-amber-500 text-white rounded-full shadow-2xs">
+                  12
+                </span>
+              )}
             </button>
           </div>
 
@@ -466,7 +549,7 @@ export const SuperadminSidebar = ({
             )}
           </div>
 
-          {/* 5. Group: Students (Pick 1) */}
+          {/* 5. Group: Students */}
           <div className="pt-2">
             <button
               onClick={() => {
@@ -525,7 +608,7 @@ export const SuperadminSidebar = ({
             )}
           </div>
 
-          {/* 6. Group: Admissions (Pick 2) */}
+          {/* 6. Group: Admissions */}
           <div className="pt-2">
             <button
               onClick={() => {
@@ -581,7 +664,7 @@ export const SuperadminSidebar = ({
             )}
           </div>
 
-          {/* 7. Group: Staff & Faculty (Pick 3) */}
+          {/* 7. Group: Staff & Faculty */}
           <div className="pt-2">
             <button
               onClick={() => {
@@ -637,7 +720,7 @@ export const SuperadminSidebar = ({
             )}
           </div>
 
-          {/* 8. Group: Examinations & Results (Pick 4) */}
+          {/* 8. Group: Examinations & Results */}
           <div className="pt-2">
             <button
               onClick={() => {
@@ -669,6 +752,645 @@ export const SuperadminSidebar = ({
                   { route: 'sa-exams-supplementary', label: 'Supplementary Exams', icon: RefreshCw },
                   { route: 'sa-exams-transcripts', label: 'DMC / Transcript Templates', icon: FileBadge },
                   { route: 'sa-exams-reports', label: 'Examination Reports', icon: FileSpreadsheet }
+                ].map(item => {
+                  const ItemIcon = item.icon
+                  const active = isRouteActive(item.route)
+                  return (
+                    <div key={item.route} className="relative">
+                      {active && (
+                        <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                      )}
+                      <button
+                        onClick={() => handleNavClick(item.route)}
+                        className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
+                          active
+                            ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                            : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                        }`}
+                      >
+                        <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-purple-600' : 'text-slate-400'}`} />
+                        <span className="truncate">{item.label}</span>
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* 9. Group: Academics */}
+          <div className="pt-2">
+            <button
+              onClick={() => {
+                if (collapsed) setCollapsed(false)
+                setAcademicsOpen(!academicsOpen)
+              }}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-50/80 transition-colors cursor-pointer group"
+            >
+              <div className="flex items-center gap-3">
+                <BookOpen className="w-[18px] h-[18px] text-slate-400 group-hover:text-purple-600 transition-colors shrink-0" />
+                {(!collapsed || isMobileOpen) && (
+                  <span className="font-medium text-slate-600 group-hover:text-slate-900">
+                    Academics
+                  </span>
+                )}
+              </div>
+              {(!collapsed || isMobileOpen) && (
+                academicsOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+              )}
+            </button>
+
+            {(!collapsed || isMobileOpen) && academicsOpen && (
+              <div className="mt-1 pl-3.5 space-y-1 border-l-2 border-slate-100 ml-5">
+                {[
+                  { route: 'sa-academics-sessions', label: 'Sessions & Calendars', icon: Calendar },
+                  { route: 'sa-academics-school-struct', label: 'School Structure (Class, Section, Grade)', icon: School },
+                  { route: 'sa-academics-college-struct', label: 'College Structure (Program, Year, Group)', icon: Layers },
+                  { route: 'sa-academics-university-struct', label: 'University Structure (Faculty, Dept, Semester)', icon: Building2 },
+                  { route: 'sa-academics-curriculum', label: 'Subjects & Curriculum Templates', icon: BookOpen },
+                  { route: 'sa-academics-grading', label: 'Grading Schemes', icon: Award },
+                  { route: 'sa-academics-timetable', label: 'Timetable Rules & Room Allocation', icon: Clock },
+                  { route: 'sa-academics-rollover', label: 'Academic Year Rollover', icon: RotateCcw }
+                ].map(item => {
+                  const ItemIcon = item.icon
+                  const active = isRouteActive(item.route)
+                  return (
+                    <div key={item.route} className="relative">
+                      {active && (
+                        <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                      )}
+                      <button
+                        onClick={() => handleNavClick(item.route)}
+                        className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
+                          active
+                            ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                            : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                        }`}
+                      >
+                        <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-purple-600' : 'text-slate-400'}`} />
+                        <span className="truncate">{item.label}</span>
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* 10. Group: Attendance */}
+          <div className="pt-2">
+            <button
+              onClick={() => {
+                if (collapsed) setCollapsed(false)
+                setAttendanceOpen(!attendanceOpen)
+              }}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-50/80 transition-colors cursor-pointer group"
+            >
+              <div className="flex items-center gap-3">
+                <Clock className="w-[18px] h-[18px] text-slate-400 group-hover:text-purple-600 transition-colors shrink-0" />
+                {(!collapsed || isMobileOpen) && (
+                  <span className="font-medium text-slate-600 group-hover:text-slate-900">
+                    Attendance
+                  </span>
+                )}
+              </div>
+              {(!collapsed || isMobileOpen) && (
+                attendanceOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+              )}
+            </button>
+
+            {(!collapsed || isMobileOpen) && attendanceOpen && (
+              <div className="mt-1 pl-3.5 space-y-1 border-l-2 border-slate-100 ml-5">
+                {[
+                  { route: 'sa-attendance-overview', label: 'Attendance Overview (Campus / Wing-wise)', icon: Clock },
+                  { route: 'sa-attendance-rules', label: 'Attendance Rules (Minimum %, Shortage Alerts)', icon: ShieldCheck },
+                  { route: 'sa-attendance-defaulters', label: 'Shortage & Defaulters List', icon: AlertTriangle },
+                  { route: 'sa-attendance-leave', label: 'Leave Policies & Approvals', icon: Calendar },
+                  { route: 'sa-attendance-corrections', label: 'Attendance Correction Approvals', icon: FileCheck },
+                  { route: 'sa-attendance-staff', label: 'Staff Attendance Overview', icon: Users },
+                  { route: 'sa-attendance-biometric', label: 'Biometric / RFID Device Integrations', icon: Cpu },
+                  { route: 'sa-attendance-reports', label: 'Attendance Reports', icon: BarChart3 }
+                ].map(item => {
+                  const ItemIcon = item.icon
+                  const active = isRouteActive(item.route)
+                  return (
+                    <div key={item.route} className="relative">
+                      {active && (
+                        <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                      )}
+                      <button
+                        onClick={() => handleNavClick(item.route)}
+                        className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
+                          active
+                            ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                            : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                        }`}
+                      >
+                        <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-purple-600' : 'text-slate-400'}`} />
+                        <span className="truncate">{item.label}</span>
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* 11. Group: Fees & Finance */}
+          <div className="pt-2">
+            <button
+              onClick={() => {
+                if (collapsed) setCollapsed(false)
+                setFeesOpen(!feesOpen)
+              }}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-50/80 transition-colors cursor-pointer group"
+            >
+              <div className="flex items-center gap-3">
+                <DollarSign className="w-[18px] h-[18px] text-slate-400 group-hover:text-purple-600 transition-colors shrink-0" />
+                {(!collapsed || isMobileOpen) && (
+                  <span className="font-medium text-slate-600 group-hover:text-slate-900">
+                    Fees & Finance
+                  </span>
+                )}
+              </div>
+              {(!collapsed || isMobileOpen) && (
+                feesOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+              )}
+            </button>
+
+            {(!collapsed || isMobileOpen) && feesOpen && (
+              <div className="mt-1 pl-3.5 space-y-1 border-l-2 border-slate-100 ml-5">
+                {[
+                  { route: 'sa-fees-structure', label: 'Fee Structure Templates', icon: DollarSign },
+                  { route: 'sa-fees-late-rules', label: 'Late Fee & Installment Rules', icon: Calendar },
+                  { route: 'sa-fees-installments', label: 'Installment Plans', icon: Layers },
+                  { route: 'sa-fees-challans', label: 'Fee Challan Templates', icon: Receipt },
+                  { route: 'sa-fees-scholarships', label: 'Scholarships & Discount Policies', icon: Award },
+                  { route: 'sa-fees-vouchers', label: 'Vouchers & Promotions', icon: Tag },
+                  { route: 'sa-fees-collection', label: 'Collection Overview (Campus-wise)', icon: BarChart3 },
+                  { route: 'sa-fees-defaulters', label: 'Defaulters & Outstanding', icon: AlertCircle },
+                  { route: 'sa-fees-gateways', label: 'Payment Gateways', icon: CreditCard },
+                  { route: 'sa-fees-refunds', label: 'Refund & Waiver Approvals', icon: CheckSquare },
+                  { route: 'sa-fees-reports', label: 'Finance Reports', icon: FileSpreadsheet }
+                ].map(item => {
+                  const ItemIcon = item.icon
+                  const active = isRouteActive(item.route)
+                  return (
+                    <div key={item.route} className="relative">
+                      {active && (
+                        <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                      )}
+                      <button
+                        onClick={() => handleNavClick(item.route)}
+                        className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
+                          active
+                            ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                            : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                        }`}
+                      >
+                        <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-purple-600' : 'text-slate-400'}`} />
+                        <span className="truncate">{item.label}</span>
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* 12. Group: Accounts & Finance */}
+          <div className="pt-2">
+            <button
+              onClick={() => {
+                if (collapsed) setCollapsed(false)
+                setAccountsOpen(!accountsOpen)
+              }}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-50/80 transition-colors cursor-pointer group"
+            >
+              <div className="flex items-center gap-3">
+                <Receipt className="w-[18px] h-[18px] text-slate-400 group-hover:text-purple-600 transition-colors shrink-0" />
+                {(!collapsed || isMobileOpen) && (
+                  <span className="font-medium text-slate-600 group-hover:text-slate-900">
+                    Accounts & Finance
+                  </span>
+                )}
+              </div>
+              {(!collapsed || isMobileOpen) && (
+                accountsOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+              )}
+            </button>
+
+            {(!collapsed || isMobileOpen) && accountsOpen && (
+              <div className="mt-1 pl-3.5 space-y-1 border-l-2 border-slate-100 ml-5">
+                {[
+                  { route: 'sa-accounts-chart', label: 'Chart of Accounts & Ledger', icon: FileSpreadsheet },
+                  { route: 'sa-accounts-overview', label: 'Income & Expense Overview (Campus-wise)', icon: BarChart3 },
+                  { route: 'sa-accounts-budgets', label: 'Budgets & Expense Approvals', icon: CheckSquare },
+                  { route: 'sa-accounts-reconciliation', label: 'Bank & Payment Reconciliation', icon: RefreshCw },
+                  { route: 'sa-accounts-payroll', label: 'Payroll Summary', icon: DollarSign },
+                  { route: 'sa-accounts-tax', label: 'Tax & Receipt Settings', icon: Receipt },
+                  { route: 'sa-accounts-statements', label: 'Financial Statements', icon: TrendingUp }
+                ].map(item => {
+                  const ItemIcon = item.icon
+                  const active = isRouteActive(item.route)
+                  return (
+                    <div key={item.route} className="relative">
+                      {active && (
+                        <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                      )}
+                      <button
+                        onClick={() => handleNavClick(item.route)}
+                        className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
+                          active
+                            ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                            : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                        }`}
+                      >
+                        <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-purple-600' : 'text-slate-400'}`} />
+                        <span className="truncate">{item.label}</span>
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* 13. Group: Certificates */}
+          <div className="pt-2">
+            <button
+              onClick={() => {
+                if (collapsed) setCollapsed(false)
+                setCertificatesOpen(!certificatesOpen)
+              }}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-50/80 transition-colors cursor-pointer group"
+            >
+              <div className="flex items-center gap-3">
+                <Award className="w-[18px] h-[18px] text-slate-400 group-hover:text-purple-600 transition-colors shrink-0" />
+                {(!collapsed || isMobileOpen) && (
+                  <span className="font-medium text-slate-600 group-hover:text-slate-900">
+                    Certificates
+                  </span>
+                )}
+              </div>
+              {(!collapsed || isMobileOpen) && (
+                certificatesOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+              )}
+            </button>
+
+            {(!collapsed || isMobileOpen) && certificatesOpen && (
+              <div className="mt-1 pl-3.5 space-y-1 border-l-2 border-slate-100 ml-5">
+                {[
+                  { route: 'sa-certificates-templates', label: 'Certificate Templates', icon: FileText },
+                  { route: 'sa-certificates-dmc', label: 'DMC / Transcript Templates ↗', icon: FileBadge },
+                  { route: 'sa-certificates-approvals', label: 'Issuance Approvals', icon: CheckSquare },
+                  { route: 'sa-certificates-numbering', label: 'Numbering & QR Verification Rules', icon: QrCode },
+                  { route: 'sa-certificates-register', label: 'Issued Certificates Register', icon: FileCheck },
+                  { route: 'sa-certificates-portal', label: 'Public Verification Portal Settings', icon: ShieldCheck }
+                ].map(item => {
+                  const ItemIcon = item.icon
+                  const active = isRouteActive(item.route)
+                  return (
+                    <div key={item.route} className="relative">
+                      {active && (
+                        <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                      )}
+                      <button
+                        onClick={() => handleNavClick(item.route)}
+                        className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
+                          active
+                            ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                            : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                        }`}
+                      >
+                        <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-purple-600' : 'text-slate-400'}`} />
+                        <span className="truncate">{item.label}</span>
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* 14. Group: Campus Services */}
+          <div className="pt-2">
+            <button
+              onClick={() => {
+                if (collapsed) setCollapsed(false)
+                setServicesOpen(!servicesOpen)
+              }}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-50/80 transition-colors cursor-pointer group"
+            >
+              <div className="flex items-center gap-3">
+                <Truck className="w-[18px] h-[18px] text-slate-400 group-hover:text-purple-600 transition-colors shrink-0" />
+                {(!collapsed || isMobileOpen) && (
+                  <span className="font-medium text-slate-600 group-hover:text-slate-900">
+                    Campus Services
+                  </span>
+                )}
+              </div>
+              {(!collapsed || isMobileOpen) && (
+                servicesOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+              )}
+            </button>
+
+            {(!collapsed || isMobileOpen) && servicesOpen && (
+              <div className="mt-1 pl-3.5 space-y-1 border-l-2 border-slate-100 ml-5">
+                {[
+                  { route: 'sa-services-transport', label: 'Transport Routes & Fee Policies', icon: Truck },
+                  { route: 'sa-services-drivers', label: 'Driver & Vehicle Compliance', icon: UserCheck },
+                  { route: 'sa-services-hostel', label: 'Hostel Capacity & Rules', icon: Hotel },
+                  { route: 'sa-services-reports', label: 'Transport & Hostel Reports', icon: BarChart3 },
+                  { route: 'sa-services-discipline', label: 'Discipline Records Overview', icon: AlertTriangle },
+                  { route: 'sa-services-health', label: 'Health & Welfare Policies', icon: HeartHandshake },
+                  { route: 'sa-services-complaints', label: 'Complaint & Grievance Escalations', icon: MessageSquare }
+                ].map(item => {
+                  const ItemIcon = item.icon
+                  const active = isRouteActive(item.route)
+                  return (
+                    <div key={item.route} className="relative">
+                      {active && (
+                        <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                      )}
+                      <button
+                        onClick={() => handleNavClick(item.route)}
+                        className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
+                          active
+                            ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                            : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                        }`}
+                      >
+                        <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-purple-600' : 'text-slate-400'}`} />
+                        <span className="truncate">{item.label}</span>
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* 15. Group: Learning & Resources */}
+          <div className="pt-2">
+            <button
+              onClick={() => {
+                if (collapsed) setCollapsed(false)
+                setLearningOpen(!learningOpen)
+              }}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-50/80 transition-colors cursor-pointer group"
+            >
+              <div className="flex items-center gap-3">
+                <Laptop className="w-[18px] h-[18px] text-slate-400 group-hover:text-purple-600 transition-colors shrink-0" />
+                {(!collapsed || isMobileOpen) && (
+                  <span className="font-medium text-slate-600 group-hover:text-slate-900">
+                    Learning & Resources
+                  </span>
+                )}
+              </div>
+              {(!collapsed || isMobileOpen) && (
+                learningOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+              )}
+            </button>
+
+            {(!collapsed || isMobileOpen) && learningOpen && (
+              <div className="mt-1 pl-3.5 space-y-1 border-l-2 border-slate-100 ml-5">
+                {[
+                  { route: 'sa-learning-lms', label: 'LMS Policies (Content, Uploads, Quizzes)', icon: Laptop },
+                  { route: 'sa-learning-classes', label: 'Online Class Integrations', icon: Video },
+                  { route: 'sa-learning-library', label: 'Library Policies & Central Catalog', icon: BookMarked },
+                  { route: 'sa-learning-digital', label: 'Digital Resources', icon: Database }
+                ].map(item => {
+                  const ItemIcon = item.icon
+                  const active = isRouteActive(item.route)
+                  return (
+                    <div key={item.route} className="relative">
+                      {active && (
+                        <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                      )}
+                      <button
+                        onClick={() => handleNavClick(item.route)}
+                        className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
+                          active
+                            ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                            : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                        }`}
+                      >
+                        <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-purple-600' : 'text-slate-400'}`} />
+                        <span className="truncate">{item.label}</span>
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* 16. Group: Communication */}
+          <div className="pt-2">
+            <button
+              onClick={() => {
+                if (collapsed) setCollapsed(false)
+                setCommunicationOpen(!communicationOpen)
+              }}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-50/80 transition-colors cursor-pointer group"
+            >
+              <div className="flex items-center gap-3">
+                <Megaphone className="w-[18px] h-[18px] text-slate-400 group-hover:text-purple-600 transition-colors shrink-0" />
+                {(!collapsed || isMobileOpen) && (
+                  <span className="font-medium text-slate-600 group-hover:text-slate-900">
+                    Communication
+                  </span>
+                )}
+              </div>
+              {(!collapsed || isMobileOpen) && (
+                communicationOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+              )}
+            </button>
+
+            {(!collapsed || isMobileOpen) && communicationOpen && (
+              <div className="mt-1 pl-3.5 space-y-1 border-l-2 border-slate-100 ml-5">
+                {[
+                  { route: 'sa-comm-announcements', label: 'Platform Announcements', icon: Megaphone },
+                  { route: 'sa-comm-templates', label: 'Notification Templates (Email/SMS/WhatsApp)', icon: Mail },
+                  { route: 'sa-comm-circulars', label: 'Circulars & Event Calendar', icon: Calendar },
+                  { route: 'sa-comm-broadcast', label: 'Emergency Broadcast', icon: AlertOctagon },
+                  { route: 'sa-comm-logs', label: 'Communication Logs', icon: History }
+                ].map(item => {
+                  const ItemIcon = item.icon
+                  const active = isRouteActive(item.route)
+                  return (
+                    <div key={item.route} className="relative">
+                      {active && (
+                        <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                      )}
+                      <button
+                        onClick={() => handleNavClick(item.route)}
+                        className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
+                          active
+                            ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                            : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                        }`}
+                      >
+                        <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-purple-600' : 'text-slate-400'}`} />
+                        <span className="truncate">{item.label}</span>
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* 17. Group: Reports & Analytics */}
+          <div className="pt-2">
+            <button
+              onClick={() => {
+                if (collapsed) setCollapsed(false)
+                setReportsOpen(!reportsOpen)
+              }}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-50/80 transition-colors cursor-pointer group"
+            >
+              <div className="flex items-center gap-3">
+                <BarChart3 className="w-[18px] h-[18px] text-slate-400 group-hover:text-purple-600 transition-colors shrink-0" />
+                {(!collapsed || isMobileOpen) && (
+                  <span className="font-medium text-slate-600 group-hover:text-slate-900">
+                    Reports & Analytics
+                  </span>
+                )}
+              </div>
+              {(!collapsed || isMobileOpen) && (
+                reportsOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+              )}
+            </button>
+
+            {(!collapsed || isMobileOpen) && reportsOpen && (
+              <div className="mt-1 pl-3.5 space-y-1 border-l-2 border-slate-100 ml-5">
+                {[
+                  { route: 'sa-reports-trends', label: 'Enrollment & Dropout Trends', icon: TrendingUp },
+                  { route: 'sa-reports-performance', label: 'Performance Analysis', icon: BarChart3 },
+                  { route: 'sa-reports-collection', label: 'Fee Collection vs Outstanding', icon: DollarSign },
+                  { route: 'sa-reports-comparison', label: 'Campus Comparison', icon: Building2 },
+                  { route: 'sa-reports-builder', label: 'Custom Report Builder', icon: Sliders },
+                  { route: 'sa-reports-scheduled', label: 'Scheduled Reports', icon: Calendar },
+                  { route: 'sa-reports-export', label: 'Export Center (PDF / Excel / CSV)', icon: Download }
+                ].map(item => {
+                  const ItemIcon = item.icon
+                  const active = isRouteActive(item.route)
+                  return (
+                    <div key={item.route} className="relative">
+                      {active && (
+                        <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                      )}
+                      <button
+                        onClick={() => handleNavClick(item.route)}
+                        className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
+                          active
+                            ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                            : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                        }`}
+                      >
+                        <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-purple-600' : 'text-slate-400'}`} />
+                        <span className="truncate">{item.label}</span>
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* 18. Group: Policies & Guidelines */}
+          <div className="pt-2">
+            <button
+              onClick={() => {
+                if (collapsed) setCollapsed(false)
+                setPoliciesOpen(!policiesOpen)
+              }}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-50/80 transition-colors cursor-pointer group"
+            >
+              <div className="flex items-center gap-3">
+                <ShieldCheck className="w-[18px] h-[18px] text-slate-400 group-hover:text-purple-600 transition-colors shrink-0" />
+                {(!collapsed || isMobileOpen) && (
+                  <span className="font-medium text-slate-600 group-hover:text-slate-900">
+                    Policies & Guidelines
+                  </span>
+                )}
+              </div>
+              {(!collapsed || isMobileOpen) && (
+                policiesOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+              )}
+            </button>
+
+            {(!collapsed || isMobileOpen) && policiesOpen && (
+              <div className="mt-1 pl-3.5 space-y-1 border-l-2 border-slate-100 ml-5">
+                {[
+                  { route: 'sa-policies-academic', label: 'Academic Policies', icon: FileText },
+                  { route: 'sa-policies-fees', label: 'Fee & Refund Policies', icon: DollarSign },
+                  { route: 'sa-policies-attendance', label: 'Attendance & Leave Policies', icon: Clock },
+                  { route: 'sa-policies-discipline', label: 'Discipline & Code of Conduct', icon: AlertTriangle },
+                  { route: 'sa-policies-privacy', label: 'Data Privacy & Child Safety', icon: Lock },
+                  { route: 'sa-policies-publish', label: 'Policy Versions & Publish (Campus / Wing-wise)', icon: Share2 },
+                  { route: 'sa-policies-acknowledgment', label: 'Staff / Student Acknowledgment Tracking', icon: Users }
+                ].map(item => {
+                  const ItemIcon = item.icon
+                  const active = isRouteActive(item.route)
+                  return (
+                    <div key={item.route} className="relative">
+                      {active && (
+                        <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                      )}
+                      <button
+                        onClick={() => handleNavClick(item.route)}
+                        className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
+                          active
+                            ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                            : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                        }`}
+                      >
+                        <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-purple-600' : 'text-slate-400'}`} />
+                        <span className="truncate">{item.label}</span>
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* 19. Group: Platform Settings */}
+          <div className="pt-2">
+            <button
+              onClick={() => {
+                if (collapsed) setCollapsed(false)
+                setSettingsOpen(!settingsOpen)
+              }}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-50/80 transition-colors cursor-pointer group"
+            >
+              <div className="flex items-center gap-3">
+                <Settings className="w-[18px] h-[18px] text-slate-400 group-hover:text-purple-600 transition-colors shrink-0" />
+                {(!collapsed || isMobileOpen) && (
+                  <span className="font-medium text-slate-600 group-hover:text-slate-900">
+                    Platform Settings
+                  </span>
+                )}
+              </div>
+              {(!collapsed || isMobileOpen) && (
+                settingsOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+              )}
+            </button>
+
+            {(!collapsed || isMobileOpen) && settingsOpen && (
+              <div className="mt-1 pl-3.5 space-y-1 border-l-2 border-slate-100 ml-5">
+                {[
+                  { route: 'sa-settings-general', label: 'General (Language, PKR, Time Zone)', icon: Settings },
+                  { route: 'sa-settings-branding', label: 'Branding & Custom Domains', icon: Globe },
+                  { route: 'sa-settings-flags', label: 'Feature Flags (Tier-wise)', icon: Sliders },
+                  { route: 'sa-settings-integrations', label: 'Integrations & Webhooks (SSO, SMS, API)', icon: Key },
+                  { route: 'sa-settings-compliance', label: 'Compliance & Data Retention', icon: ShieldCheck },
+                  { route: 'sa-settings-legal', label: 'Legal Documents (Terms, Privacy)', icon: FileText },
+                  { route: 'sa-settings-maintenance', label: 'Maintenance Mode & Release Notes', icon: AlertTriangle },
+                  { route: 'sa-settings-impersonate', label: 'Switch to Campus View (Impersonation)', icon: UserCheck }
                 ].map(item => {
                   const ItemIcon = item.icon
                   const active = isRouteActive(item.route)

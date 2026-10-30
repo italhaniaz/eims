@@ -46,6 +46,19 @@ const SuperadminAdmissionsView = lazyWithRetry(() => import('./modules/platform/
 const SuperadminStaffFacultyView = lazyWithRetry(() => import('./modules/platform/staff/SuperadminStaffFacultyView'), 'superadmin-staff')
 const SuperadminExaminationsResultsView = lazyWithRetry(() => import('./modules/platform/examinations/SuperadminExaminationsResultsView'), 'superadmin-examinations')
 
+// Superadmin Expanded Governance Modules
+const SuperadminAcademicsView = lazyWithRetry(() => import('./modules/platform/academics/SuperadminAcademicsView'), 'superadmin-academics')
+const SuperadminAttendanceView = lazyWithRetry(() => import('./modules/platform/attendance/SuperadminAttendanceView'), 'superadmin-attendance')
+const SuperadminFeesView = lazyWithRetry(() => import('./modules/platform/fees/SuperadminFeesView'), 'superadmin-fees')
+const SuperadminAccountsView = lazyWithRetry(() => import('./modules/platform/accounts/SuperadminAccountsView'), 'superadmin-accounts')
+const SuperadminCertificatesView = lazyWithRetry(() => import('./modules/platform/certificates/SuperadminCertificatesView'), 'superadmin-certificates')
+const SuperadminCampusServicesView = lazyWithRetry(() => import('./modules/platform/services/SuperadminCampusServicesView'), 'superadmin-services')
+const SuperadminLearningView = lazyWithRetry(() => import('./modules/platform/learning/SuperadminLearningView'), 'superadmin-learning')
+const SuperadminCommunicationView = lazyWithRetry(() => import('./modules/platform/communication/SuperadminCommunicationView'), 'superadmin-communication')
+const SuperadminReportsAnalyticsView = lazyWithRetry(() => import('./modules/platform/reports/SuperadminReportsAnalyticsView'), 'superadmin-reports')
+const SuperadminPoliciesView = lazyWithRetry(() => import('./modules/platform/policies/SuperadminPoliciesView'), 'superadmin-policies')
+const SuperadminPlatformSettingsView = lazyWithRetry(() => import('./modules/platform/settings/SuperadminPlatformSettingsView'), 'superadmin-settings')
+
 // Institute Admin Views
 const InstituteDashboard = lazyWithRetry(() => import('./modules/dashboard/InstituteDashboard'), 'institute-dashboard')
 const StudentsView = lazyWithRetry(() => import('./modules/institute-admin/students/StudentsView'), 'students-view')
@@ -100,7 +113,49 @@ const AppContent = () => {
     // Pick 4: Examinations & Results
     'sa-exams-policies', 'sa-exams-results-wing', 'sa-exams-publish-freeze',
     'sa-exams-grade-approvals', 'sa-exams-supplementary', 'sa-exams-transcripts',
-    'sa-exams-reports'
+    'sa-exams-reports',
+    // Academics
+    'sa-academics-sessions', 'sa-academics-school-struct', 'sa-academics-college-struct',
+    'sa-academics-university-struct', 'sa-academics-curriculum', 'sa-academics-grading',
+    'sa-academics-timetable', 'sa-academics-rollover',
+    // Attendance
+    'sa-attendance-overview', 'sa-attendance-rules', 'sa-attendance-defaulters',
+    'sa-attendance-leave', 'sa-attendance-corrections', 'sa-attendance-staff',
+    'sa-attendance-biometric', 'sa-attendance-reports',
+    // Fees & Finance
+    'sa-fees-structure', 'sa-fees-late-rules', 'sa-fees-installments',
+    'sa-fees-challans', 'sa-fees-scholarships', 'sa-fees-vouchers',
+    'sa-fees-collection', 'sa-fees-defaulters', 'sa-fees-gateways',
+    'sa-fees-refunds', 'sa-fees-reports',
+    // Accounts & Finance
+    'sa-accounts-chart', 'sa-accounts-overview', 'sa-accounts-budgets',
+    'sa-accounts-reconciliation', 'sa-accounts-payroll', 'sa-accounts-tax',
+    'sa-accounts-statements',
+    // Certificates
+    'sa-certificates-templates', 'sa-certificates-dmc', 'sa-certificates-approvals',
+    'sa-certificates-numbering', 'sa-certificates-register', 'sa-certificates-portal',
+    // Campus Services
+    'sa-services-transport', 'sa-services-drivers', 'sa-services-hostel',
+    'sa-services-reports', 'sa-services-discipline', 'sa-services-health',
+    'sa-services-complaints',
+    // Learning & Resources
+    'sa-learning-lms', 'sa-learning-classes', 'sa-learning-library',
+    'sa-learning-digital',
+    // Communication
+    'sa-comm-announcements', 'sa-comm-templates', 'sa-comm-circulars',
+    'sa-comm-broadcast', 'sa-comm-logs',
+    // Reports & Analytics
+    'sa-reports-trends', 'sa-reports-performance', 'sa-reports-collection',
+    'sa-reports-comparison', 'sa-reports-builder', 'sa-reports-scheduled',
+    'sa-reports-export',
+    // Policies & Guidelines
+    'sa-policies-academic', 'sa-policies-fees', 'sa-policies-attendance',
+    'sa-policies-discipline', 'sa-policies-privacy', 'sa-policies-publish',
+    'sa-policies-acknowledgment',
+    // Platform Settings
+    'sa-settings-general', 'sa-settings-branding', 'sa-settings-flags',
+    'sa-settings-integrations', 'sa-settings-compliance', 'sa-settings-legal',
+    'sa-settings-maintenance', 'sa-settings-impersonate'
   ]
 
   const VALID_INSTITUTE_ROUTES = [
@@ -419,6 +474,94 @@ const AppContent = () => {
                     <SuperadminExaminationsResultsView 
                       activeTab={superadminRoute.replace('sa-exams-', '')} 
                       onTabChange={(tabKey) => setSuperadminRoute(`sa-exams-${tabKey}`)} 
+                    />
+                  )}
+
+                  {/* Academics Governance */}
+                  {superadminRoute.startsWith('sa-academics-') && (
+                    <SuperadminAcademicsView 
+                      activeTab={superadminRoute.replace('sa-academics-', '')} 
+                      onTabChange={(tabKey) => setSuperadminRoute(`sa-academics-${tabKey}`)} 
+                    />
+                  )}
+
+                  {/* Attendance Governance */}
+                  {superadminRoute.startsWith('sa-attendance-') && (
+                    <SuperadminAttendanceView 
+                      activeTab={superadminRoute.replace('sa-attendance-', '')} 
+                      onTabChange={(tabKey) => setSuperadminRoute(`sa-attendance-${tabKey}`)} 
+                    />
+                  )}
+
+                  {/* Fees & Finance Governance */}
+                  {superadminRoute.startsWith('sa-fees-') && (
+                    <SuperadminFeesView 
+                      activeTab={superadminRoute.replace('sa-fees-', '')} 
+                      onTabChange={(tabKey) => setSuperadminRoute(`sa-fees-${tabKey}`)} 
+                    />
+                  )}
+
+                  {/* Accounts & Finance Governance */}
+                  {superadminRoute.startsWith('sa-accounts-') && (
+                    <SuperadminAccountsView 
+                      activeTab={superadminRoute.replace('sa-accounts-', '')} 
+                      onTabChange={(tabKey) => setSuperadminRoute(`sa-accounts-${tabKey}`)} 
+                    />
+                  )}
+
+                  {/* Certificates Governance */}
+                  {superadminRoute.startsWith('sa-certificates-') && (
+                    <SuperadminCertificatesView 
+                      activeTab={superadminRoute.replace('sa-certificates-', '')} 
+                      onTabChange={(tabKey) => setSuperadminRoute(`sa-certificates-${tabKey}`)} 
+                    />
+                  )}
+
+                  {/* Campus Services Governance */}
+                  {superadminRoute.startsWith('sa-services-') && (
+                    <SuperadminCampusServicesView 
+                      activeTab={superadminRoute.replace('sa-services-', '')} 
+                      onTabChange={(tabKey) => setSuperadminRoute(`sa-services-${tabKey}`)} 
+                    />
+                  )}
+
+                  {/* Learning & Resources Governance */}
+                  {superadminRoute.startsWith('sa-learning-') && (
+                    <SuperadminLearningView 
+                      activeTab={superadminRoute.replace('sa-learning-', '')} 
+                      onTabChange={(tabKey) => setSuperadminRoute(`sa-learning-${tabKey}`)} 
+                    />
+                  )}
+
+                  {/* Communication Hub */}
+                  {superadminRoute.startsWith('sa-comm-') && (
+                    <SuperadminCommunicationView 
+                      activeTab={superadminRoute.replace('sa-comm-', '')} 
+                      onTabChange={(tabKey) => setSuperadminRoute(`sa-comm-${tabKey}`)} 
+                    />
+                  )}
+
+                  {/* Reports & Analytics */}
+                  {superadminRoute.startsWith('sa-reports-') && (
+                    <SuperadminReportsAnalyticsView 
+                      activeTab={superadminRoute.replace('sa-reports-', '')} 
+                      onTabChange={(tabKey) => setSuperadminRoute(`sa-reports-${tabKey}`)} 
+                    />
+                  )}
+
+                  {/* Policies & Guidelines */}
+                  {superadminRoute.startsWith('sa-policies-') && (
+                    <SuperadminPoliciesView 
+                      activeTab={superadminRoute.replace('sa-policies-', '')} 
+                      onTabChange={(tabKey) => setSuperadminRoute(`sa-policies-${tabKey}`)} 
+                    />
+                  )}
+
+                  {/* Platform Settings */}
+                  {superadminRoute.startsWith('sa-settings-') && (
+                    <SuperadminPlatformSettingsView 
+                      activeTab={superadminRoute.replace('sa-settings-', '')} 
+                      onTabChange={(tabKey) => setSuperadminRoute(`sa-settings-${tabKey}`)} 
                     />
                   )}
                 </Suspense>
