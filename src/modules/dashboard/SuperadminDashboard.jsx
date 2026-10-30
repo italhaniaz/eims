@@ -30,7 +30,8 @@ import {
   Layers,
   Activity,
   Award,
-  Landmark
+  Landmark,
+  Calendar
 } from 'lucide-react'
 import Modal from '../../components/common/Modal'
 import { useAppData } from '../../context/AppDataContext'
@@ -501,11 +502,11 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
 
     let insightText = ''
     if (atRiskCount > 0) {
-      insightText = `Attention: ${atRiskCount} campus requires immediate intervention due to suspended status or overdue license.`
+      insightText = `Attention: ${atRiskCount} campus${atRiskCount === 1 ? '' : 'es'} require${atRiskCount === 1 ? 's' : ''} immediate intervention due to suspended status or overdue license.`
     } else if (trialCount > 0) {
-      insightText = `${trialCount} campus evaluating 14-day free tier. Converting adds +${formatPKR(trialPotentialMRR)}/mo recurring ARR.`
+      insightText = `${trialCount} campus${trialCount === 1 ? '' : 'es'} evaluating 14-day free tier. Converting adds +${formatPKR(trialPotentialMRR)}/mo recurring ARR.`
     } else if (pendingCount > 0) {
-      insightText = `${pendingCount} campus awaiting setup verification. Review credentials to activate telemetry.`
+      insightText = `${pendingCount} campus${pendingCount === 1 ? '' : 'es'} awaiting setup verification. Review credentials to activate telemetry.`
     } else {
       insightText = `100% of campus network is monetized & active. Recurring ARR is secure at ${formatPKR(monetizedMRR * 12)}/yr.`
     }
@@ -578,7 +579,8 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
             label2: 'Rs. 0',
             total: 'Rs. 0',
             note: 'No active paid subscriptions',
-            isPeak: idx === 4 || idx === 8
+            isPeak: idx === 4 || idx === 8,
+            isCurrent: idx === currentMonthIdx
           }))
         }
       }
@@ -609,7 +611,8 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           label2: `+${formatPKR(v2 * 1000)}`,
           total: formatPKR(totalVal),
           note: mIdx === 4 ? 'Annual Admission Surge (Peak Intake)' : mIdx === 8 ? 'Fall Semester Enterprise Influx' : mIdx === currentMonthIdx ? 'Current Live Billing Cycle' : `${m} subscription cycle`,
-          isPeak: mIdx === 4 || mIdx === 8
+          isPeak: mIdx === 4 || mIdx === 8,
+          isCurrent: mIdx === currentMonthIdx
         }
       })
 
@@ -677,7 +680,8 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           label2: `${v2} Higher Ed`,
           total: `${v1 + v2} Campuses`,
           note: mIdx === 4 ? 'Admission Peak Registrations' : mIdx === 8 ? 'Semester Affiliation Influx' : `${m} registered network`,
-          isPeak: mIdx === 4 || mIdx === 8
+          isPeak: mIdx === 4 || mIdx === 8,
+          isCurrent: mIdx === currentMonthIdx
         }
       })
 
@@ -692,12 +696,12 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
         avgLabel: 'Operational Rate',
         avgValue: `${displayActiveCampuses} of ${displayTotalCampuses} Active`,
         badgeLabel: 'Network Diversity',
-        growthBadge: `${tierCounts.school} Schools ? ${tierCounts.college + tierCounts.university} Higher Ed`,
+        growthBadge: `${tierCounts.school} Schools • ${tierCounts.college + tierCounts.university} Higher Ed`,
         primaryLegend: `School Campuses (${tierCounts.school})`,
         secondaryLegend: `College & University (${tierCounts.college + tierCounts.university})`,
         tipLabel1: 'Schools:',
         tipLabel2: 'Higher Ed:',
-        executiveInsight: `Multi-campus directory is operating at ${Math.round((displayActiveCampuses / Math.max(1, displayTotalCampuses)) * 100)}% activation. ${displayTotalCampuses - displayActiveCampuses} campus pending initial onboarding.`,
+        executiveInsight: `Multi-campus directory is operating at ${Math.round((displayActiveCampuses / Math.max(1, displayTotalCampuses)) * 100)}% activation. ${displayTotalCampuses - displayActiveCampuses} campus${(displayTotalCampuses - displayActiveCampuses) === 1 ? '' : 'es'} pending initial onboarding.`,
         months
       }
     } else if (executiveMetric === 'students') {
@@ -727,7 +731,8 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
             label2: '0 Enrolled',
             total: '0 Students',
             note: 'No student admissions enrolled yet',
-            isPeak: mIdx === 4 || mIdx === 8
+            isPeak: mIdx === 4 || mIdx === 8,
+            isCurrent: mIdx === currentMonthIdx
           }))
         }
       }
@@ -763,7 +768,8 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           label2: v2.toLocaleString(),
           total: `${(v1 + v2).toLocaleString()} Students`,
           note: mIdx === 4 ? 'Spring Admission Onboarding' : mIdx === 8 ? 'Fall Semester Intake' : `${m} active roster`,
-          isPeak: mIdx === 4 || mIdx === 8
+          isPeak: mIdx === 4 || mIdx === 8,
+          isCurrent: mIdx === currentMonthIdx
         }
       })
 
@@ -818,7 +824,8 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
             label2: '0 Pending',
             total: '0 Vouchers',
             note: '1Link & JazzCash Gateway Active',
-            isPeak: mIdx === 4 || mIdx === 8
+            isPeak: mIdx === 4 || mIdx === 8,
+            isCurrent: mIdx === currentMonthIdx
           }))
         }
       }
@@ -848,7 +855,8 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           label2: `${v2} Pending`,
           total: `${v1 + v2} Vouchers`,
           note: mIdx === 4 ? 'Mid-term fee clearance' : mIdx === 8 ? 'Annual admission fees' : `${m} voucher cycle`,
-          isPeak: mIdx === 4 || mIdx === 8
+          isPeak: mIdx === 4 || mIdx === 8,
+          isCurrent: mIdx === currentMonthIdx
         }
       })
 
@@ -1414,105 +1422,146 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         
         {/* Left Card (7 cols): Executive Platform Revenue & Growth Telemetry */}
-        <div className="lg:col-span-7 bg-white rounded-3xl p-5 sm:p-7 border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] flex flex-col justify-between relative overflow-hidden">
+        <div className="lg:col-span-7 bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/80 shadow-[0_4px_24px_rgba(0,0,0,0.03)] flex flex-col justify-between relative overflow-hidden">
           
           {/* 1. Header with Title & Metric Switcher Tabs */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-purple-600 animate-pulse"></span>
-                <h2 className="text-base font-extrabold text-slate-900 tracking-tight font-heading">
-                  {executiveChartData.chartTitle}
-                </h2>
+          <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-100 to-indigo-50 border border-purple-200/70 flex items-center justify-center text-purple-700 shrink-0 shadow-2xs">
+                {executiveMetric === 'saas_revenue' ? (
+                  <CreditCard className="w-5 h-5 stroke-[2.2]" />
+                ) : executiveMetric === 'campuses' ? (
+                  <Building2 className="w-5 h-5 stroke-[2.2]" />
+                ) : executiveMetric === 'students' ? (
+                  <GraduationCap className="w-5 h-5 stroke-[2.2]" />
+                ) : (
+                  <Activity className="w-5 h-5 stroke-[2.2]" />
+                )}
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">
-                {executiveChartData.chartSubtitle}
-              </p>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight font-heading">
+                    {executiveChartData.chartTitle}
+                  </h2>
+                  <span className="w-2 h-2 rounded-full bg-purple-600 animate-pulse shrink-0"></span>
+                </div>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {executiveChartData.chartSubtitle}
+                </p>
+              </div>
             </div>
 
             {/* Metric Switcher Tabs */}
-            <div className="flex items-center p-1 bg-slate-100/80 rounded-xl text-xs font-bold gap-1 self-start sm:self-auto shrink-0">
+            <div className="flex items-center p-1 bg-slate-100/90 rounded-2xl text-xs font-bold gap-1 self-start xl:self-auto shrink-0 border border-slate-200/60 shadow-2xs">
               <button
                 type="button"
                 onClick={() => setExecutiveMetric('saas_revenue')}
-                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
                   executiveMetric === 'saas_revenue'
-                    ? 'bg-white text-purple-700 shadow-2xs font-extrabold'
-                    : 'text-slate-600 hover:text-purple-700'
+                    ? 'bg-white text-purple-900 shadow-xs font-extrabold border border-purple-200/50'
+                    : 'text-slate-600 hover:text-purple-700 hover:bg-white/60'
                 }`}
                 title="View Platform SaaS Recurring Cashflow in PKR"
               >
-                <span>?? SaaS Cashflow</span>
+                <CreditCard className={`w-3.5 h-3.5 ${executiveMetric === 'saas_revenue' ? 'text-purple-600' : 'text-slate-400'}`} />
+                <span>SaaS Cashflow</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setExecutiveMetric('campuses')}
-                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
                   executiveMetric === 'campuses'
-                    ? 'bg-white text-purple-700 shadow-2xs font-extrabold'
-                    : 'text-slate-600 hover:text-purple-700'
+                    ? 'bg-white text-purple-900 shadow-xs font-extrabold border border-purple-200/50'
+                    : 'text-slate-600 hover:text-purple-700 hover:bg-white/60'
                 }`}
                 title="View Campus Network Growth"
               >
-                <span>?? Campuses</span>
+                <Building2 className={`w-3.5 h-3.5 ${executiveMetric === 'campuses' ? 'text-purple-600' : 'text-slate-400'}`} />
+                <span>Campuses</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setExecutiveMetric('students')}
-                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
                   executiveMetric === 'students'
-                    ? 'bg-white text-purple-700 shadow-2xs font-extrabold'
-                    : 'text-slate-600 hover:text-purple-700'
+                    ? 'bg-white text-purple-900 shadow-xs font-extrabold border border-purple-200/50'
+                    : 'text-slate-600 hover:text-purple-700 hover:bg-white/60'
                 }`}
                 title="View Total Student Body Capacity"
               >
-                <span>?? Students</span>
+                <GraduationCap className={`w-3.5 h-3.5 ${executiveMetric === 'students' ? 'text-purple-600' : 'text-slate-400'}`} />
+                <span>Students</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setExecutiveMetric('vouchers')}
-                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
                   executiveMetric === 'vouchers'
-                    ? 'bg-white text-purple-700 shadow-2xs font-extrabold'
-                    : 'text-slate-600 hover:text-purple-700'
+                    ? 'bg-white text-purple-900 shadow-xs font-extrabold border border-purple-200/50'
+                    : 'text-slate-600 hover:text-purple-700 hover:bg-white/60'
                 }`}
                 title="View Digital 1Link & Challan Velocity"
               >
-                <span>? 1Link Gateway</span>
+                <Activity className={`w-3.5 h-3.5 ${executiveMetric === 'vouchers' ? 'text-purple-600' : 'text-slate-400'}`} />
+                <span>1Link Gateway</span>
               </button>
             </div>
           </div>
 
           {/* 2. Executive Quick Stats Summary Bar */}
-          <div className="grid grid-cols-3 gap-2 py-3">
-            <div className="px-3 py-2 rounded-xl bg-purple-50/50 border border-purple-100/60">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                {executiveChartData.summaryLabel}
-              </span>
-              <span className="text-sm sm:text-base font-extrabold text-purple-900 font-heading tracking-tight block mt-0.5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 py-3.5">
+            <div className="px-4 py-3 rounded-2xl bg-gradient-to-br from-purple-50/80 via-white to-purple-50/30 border border-purple-100/90 shadow-2xs hover:border-purple-200 transition-all">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-purple-600 block">
+                  {executiveChartData.summaryLabel}
+                </span>
+                <span className="w-6 h-6 rounded-lg bg-purple-100/80 text-purple-700 flex items-center justify-center text-xs shrink-0">
+                  <TrendingUp className="w-3.5 h-3.5" />
+                </span>
+              </div>
+              <span className="text-base sm:text-lg font-black text-purple-950 font-heading tracking-tight block mt-1">
                 {executiveChartData.summaryValue}
               </span>
+              <span className="text-[10px] font-medium text-slate-400 block mt-0.5">
+                Contracted 12-mo run-rate
+              </span>
             </div>
 
-            <div className="px-3 py-2 rounded-xl bg-slate-50 border border-slate-100">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                {executiveChartData.avgLabel}
-              </span>
-              <span className="text-sm sm:text-base font-bold text-slate-800 font-heading tracking-tight block mt-0.5">
+            <div className="px-4 py-3 rounded-2xl bg-gradient-to-br from-slate-50 via-white to-slate-50/60 border border-slate-200/80 shadow-2xs hover:border-slate-300 transition-all">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 block">
+                  {executiveChartData.avgLabel}
+                </span>
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-100/80 border border-emerald-200/70 px-1.5 py-0.5 rounded-full">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  Live
+                </span>
+              </div>
+              <span className="text-base sm:text-lg font-black text-slate-900 font-heading tracking-tight block mt-1">
                 {executiveChartData.avgValue}
               </span>
+              <span className="text-[10px] font-medium text-slate-400 block mt-0.5">
+                Active monthly billing stream
+              </span>
             </div>
 
-            <div className="px-3 py-2 rounded-xl bg-emerald-50/50 border border-emerald-100/60 flex flex-col justify-center">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 block">
-                {executiveChartData.badgeLabel || 'Decision Vector'}
+            <div className="px-4 py-3 rounded-2xl bg-gradient-to-br from-emerald-50/80 via-white to-teal-50/40 border border-emerald-200/70 shadow-2xs hover:border-emerald-300 transition-all">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 block">
+                  {executiveChartData.badgeLabel || 'Decision Vector'}
+                </span>
+                <span className="w-6 h-6 rounded-lg bg-emerald-100/80 text-emerald-700 flex items-center justify-center text-xs shrink-0">
+                  <Sparkles className="w-3.5 h-3.5" />
+                </span>
+              </div>
+              <span className="text-sm sm:text-base font-black text-emerald-800 font-heading tracking-tight block mt-1 truncate">
+                {executiveChartData.growthBadge}
               </span>
-              <span className="text-xs sm:text-xs font-extrabold text-emerald-700 flex items-center gap-1 mt-0.5">
-                <TrendingUp className="w-3.5 h-3.5 stroke-[2.5]" />
-                <span className="truncate">{executiveChartData.growthBadge}</span>
+              <span className="text-[10px] font-medium text-emerald-600/80 block mt-0.5 truncate">
+                Trial conversion pipeline
               </span>
             </div>
           </div>
@@ -1524,19 +1573,19 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
             <div className="flex items-stretch gap-2 sm:gap-3">
               
               {/* Y-Axis Scale Marks */}
-              <div className="flex flex-col justify-between text-right text-[10px] font-mono font-medium text-slate-400 w-12 sm:w-14 shrink-0 h-44 sm:h-48 py-1 select-none">
+              <div className="flex flex-col justify-between text-right text-[11px] font-mono font-bold text-slate-400 w-14 sm:w-16 shrink-0 h-48 sm:h-52 py-1 select-none pr-1">
                 {executiveChartData.yAxisLabels.map((lbl, i) => (
                   <span key={i} className="leading-none">{lbl}</span>
                 ))}
               </div>
 
               {/* Chart Grid & 12 Month Bar Columns */}
-              <div className="flex-1 relative h-44 sm:h-48 flex items-end">
+              <div className="flex-1 relative h-48 sm:h-52 flex items-end">
                 
                 {/* 5 Horizontal Dashed Benchmark Gridlines */}
                 <div className="absolute inset-0 flex flex-col justify-between pointer-events-none py-1">
                   {[0, 1, 2, 3, 4].map(idx => (
-                    <div key={idx} className="w-full border-b border-dashed border-slate-200/60 h-0" />
+                    <div key={idx} className="w-full border-b border-dashed border-slate-200/70 h-0" />
                   ))}
                 </div>
 
@@ -1552,38 +1601,43 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                         key={idx}
                         onMouseEnter={() => setHoveredMonthIdx(idx)}
                         onMouseLeave={() => setHoveredMonthIdx(null)}
-                        className={`flex-1 flex flex-col items-center justify-end h-full relative cursor-pointer group transition-all rounded-xl py-0.5 ${
-                          isHovered ? 'bg-purple-100/40' : ''
+                        className={`flex-1 flex flex-col items-center justify-end h-full relative cursor-pointer group transition-all rounded-2xl py-1 px-0.5 ${
+                          isHovered ? 'bg-purple-100/50 shadow-2xs' : 'hover:bg-slate-50/80'
                         }`}
                       >
                         {/* Peak indicator badge on top of May & Sep */}
                         {item.isPeak && (
-                          <span className="absolute -top-2.5 text-[9px] font-extrabold text-amber-500 bg-amber-50 px-1 py-0.2 rounded border border-amber-200 shadow-2xs hidden sm:block pointer-events-none">
-                            Peak
+                          <span className="absolute -top-3.5 text-[9px] font-black text-amber-700 bg-amber-100 border border-amber-300/80 px-1.5 py-0.5 rounded-full shadow-2xs hidden sm:flex items-center gap-0.5 pointer-events-none tracking-tight">
+                            <span>★</span>
+                            <span>Peak</span>
                           </span>
                         )}
 
                         {/* Dual Bar Graphic */}
-                        <div className="w-full flex items-end justify-center gap-0.5 sm:gap-1 h-full pb-1">
+                        <div className="w-full flex items-end justify-center gap-1 sm:gap-1.5 h-full pb-1.5">
                           {/* Purple Bar: Primary Metric */}
                           <div
                             style={{ height: `${h1}%` }}
-                            className={`w-1.5 sm:w-2.5 rounded-t-md bg-gradient-to-t from-purple-700 via-purple-600 to-indigo-500 transition-all duration-300 shadow-2xs ${
-                              isHovered ? 'brightness-110 scale-y-105' : ''
+                            className={`w-2.5 sm:w-3.5 md:w-4 rounded-t-md sm:rounded-t-lg bg-gradient-to-t from-purple-700 via-purple-600 to-indigo-500 transition-all duration-300 shadow-2xs ${
+                              isHovered ? 'brightness-110 scale-y-105 shadow-purple-500/20' : ''
                             }`}
                           />
                           {/* Secondary Bar: Expansion or Secondary Tier */}
                           <div
                             style={{ height: `${h2}%` }}
-                            className={`w-1.5 sm:w-2.5 rounded-t-md bg-gradient-to-t from-emerald-600 via-emerald-500 to-teal-400 transition-all duration-300 shadow-2xs ${
-                              isHovered ? 'brightness-110 scale-y-105' : ''
+                            className={`w-2.5 sm:w-3.5 md:w-4 rounded-t-md sm:rounded-t-lg bg-gradient-to-t from-emerald-600 via-emerald-500 to-teal-400 transition-all duration-300 shadow-2xs ${
+                              isHovered ? 'brightness-110 scale-y-105 shadow-emerald-500/20' : ''
                             }`}
                           />
                         </div>
 
                         {/* Month Label */}
-                        <span className={`text-[10px] sm:text-[11px] font-bold transition-colors select-none ${
-                          isHovered ? 'text-purple-700 font-extrabold' : 'text-slate-500'
+                        <span className={`text-[10px] sm:text-xs font-bold transition-all select-none px-1.5 py-0.5 rounded-md ${
+                          isHovered 
+                            ? 'text-purple-700 font-black bg-purple-100/90 shadow-2xs scale-105' 
+                            : item.isCurrent
+                              ? 'text-purple-800 font-black bg-purple-50 border border-purple-200'
+                              : 'text-slate-500'
                         }`}>
                           {item.m}
                         </span>
@@ -1591,23 +1645,24 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                         {/* Floating Tooltip Card */}
                         {isHovered && (
                           <div 
-                            className={`absolute z-30 bottom-full mb-3 w-48 sm:w-56 bg-slate-900/95 backdrop-blur-md text-white p-3 rounded-2xl shadow-xl shadow-purple-950/20 text-left pointer-events-none animate-in fade-in zoom-in-95 duration-150 ${
+                            className={`absolute z-30 bottom-full mb-3.5 w-52 sm:w-60 bg-slate-950/95 backdrop-blur-md text-white p-3.5 rounded-2xl shadow-2xl border border-slate-800 text-left pointer-events-none animate-in fade-in zoom-in-95 duration-150 ${
                               idx > 8 ? 'right-0' : idx < 3 ? 'left-0' : 'left-1/2 -translate-x-1/2'
                             }`}
                           >
-                            <div className="flex items-center justify-between pb-1.5 border-b border-slate-700/80 mb-2">
-                              <span className="font-extrabold text-xs text-white">
-                                {item.m} 2026 Cycle
+                            <div className="flex items-center justify-between pb-2 border-b border-slate-800 mb-2.5">
+                              <span className="font-extrabold text-xs text-white flex items-center gap-1.5">
+                                <Calendar className="w-3.5 h-3.5 text-purple-400" />
+                                <span>{item.m} 2026 Cycle</span>
                               </span>
-                              <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/80 px-1.5 py-0.2 rounded border border-emerald-500/30">
+                              <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-500/30">
                                 {item.total}
                               </span>
                             </div>
 
-                            <div className="space-y-1.5 text-[11px]">
+                            <div className="space-y-1.5 text-xs">
                               <div className="flex items-center justify-between">
                                 <span className="flex items-center gap-1.5 text-slate-300">
-                                  <span className="w-2 h-2 rounded-full bg-purple-400 shrink-0"></span>
+                                  <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-purple-500 to-indigo-400 shrink-0"></span>
                                   <span>{executiveChartData.tipLabel1 || 'Contracted:'}</span>
                                 </span>
                                 <span className="font-bold text-white font-mono">{item.label1}</span>
@@ -1615,16 +1670,16 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
 
                               <div className="flex items-center justify-between">
                                 <span className="flex items-center gap-1.5 text-slate-300">
-                                  <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
+                                  <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 shrink-0"></span>
                                   <span>{executiveChartData.tipLabel2 || 'Pipeline:'}</span>
                                 </span>
-                                <span className="font-bold text-white font-mono">{item.label2}</span>
+                                <span className="font-bold text-emerald-300 font-mono">{item.label2}</span>
                               </div>
                             </div>
 
-                            <div className="mt-2 pt-1.5 border-t border-slate-800 text-[10px] text-slate-400 flex items-center justify-between">
-                              <span>Note:</span>
-                              <span className="text-purple-300 font-medium truncate">{item.note}</span>
+                            <div className="mt-2.5 pt-2 border-t border-slate-800/80 text-[10px] text-slate-400 flex items-center justify-between">
+                              <span className="text-slate-500 font-semibold">Seasonal Factor:</span>
+                              <span className="text-purple-300 font-medium truncate max-w-[140px]">{item.note}</span>
                             </div>
                           </div>
                         )}
@@ -1637,39 +1692,39 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           </div>
 
           {/* 4. Bottom Legend & Real-Time SaaS Telemetry Indicator */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-3 mt-1 border-t border-slate-100 text-xs">
-            <div className="flex flex-wrap items-center gap-4 text-xs font-semibold">
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-purple-700 to-purple-500 shadow-2xs"></span>
-                <span className="text-slate-700 font-bold">{executiveChartData.primaryLegend}</span>
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-3.5 mt-1 border-t border-slate-100/90 text-xs">
+            <div className="flex flex-wrap items-center gap-3 sm:gap-5 text-xs font-semibold">
+              <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200/60">
+                <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-purple-700 to-indigo-500 shadow-2xs ring-2 ring-purple-200"></span>
+                <span className="text-slate-800 font-extrabold">{executiveChartData.primaryLegend}</span>
               </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-emerald-600 to-teal-400 shadow-2xs"></span>
-                <span className="text-slate-700 font-bold">{executiveChartData.secondaryLegend}</span>
+              <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200/60">
+                <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-emerald-600 to-teal-400 shadow-2xs ring-2 ring-emerald-200"></span>
+                <span className="text-slate-800 font-extrabold">{executiveChartData.secondaryLegend}</span>
               </div>
             </div>
 
-            <div className="text-[11px] text-slate-400 font-medium hidden sm:flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-              <span>Real-time platform ledger feed</span>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-50 border border-slate-200/80 text-[11px] font-semibold text-slate-600">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>Real-time Ledger Feed</span>
             </div>
           </div>
 
           {/* 5. Executive Decision Banner (Actionable Insight Bar) */}
-          <div className="mt-3 p-2.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
-                <Sparkles className="w-3.5 h-3.5" />
+          <div className="mt-3.5 p-3 rounded-2xl bg-gradient-to-r from-purple-50/90 via-indigo-50/40 to-slate-50 border border-purple-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                <Sparkles className="w-4 h-4" />
               </div>
-              <p className="text-xs text-slate-700">
-                <span className="font-extrabold text-slate-900">Executive Insight:</span>{' '}
-                <span>{executiveChartData.executiveInsight || tenantHealthMatrix.insightText}</span>
+              <p className="text-xs text-slate-700 leading-relaxed">
+                <span className="font-black text-purple-950 uppercase tracking-wide mr-1.5 text-[11px] bg-purple-200/60 px-1.5 py-0.5 rounded">Executive AI Insight</span>
+                <span className="font-medium text-slate-800">{executiveChartData.executiveInsight || tenantHealthMatrix.insightText}</span>
               </p>
             </div>
             <button
               type="button"
               onClick={() => onRouteChange('platform-billing')}
-              className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer shadow-xs self-start sm:self-auto"
+              className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer shadow-sm hover:shadow hover:scale-[1.02] active:scale-[0.98] self-start sm:self-auto"
             >
               <span>Manage Subscriptions</span>
               <ChevronRight className="w-3.5 h-3.5" />
