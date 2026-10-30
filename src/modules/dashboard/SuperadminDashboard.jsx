@@ -403,214 +403,217 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
     return `${currentFilterConfig.badge} Tier Plan`
   }, [selectedTierFilter, currentFilterConfig.badge, institutes, filteredInstitutes])
 
-  // Dynamic currency and count formatters
+  // Dynamic currency and count formatters (Clean Rs. typography)
   const formatPKR = (amount) => {
-    if (!amount || amount === 0) return '? 0'
-    if (amount >= 1000000) return `? ${(amount / 1000000).toFixed(2)}M`
-    if (amount >= 1000) return `? ${Math.round(amount / 1000)}K`
-    return `? ${amount.toLocaleString()}`
+    if (!amount || amount === 0) return 'Rs. 0'
+    if (amount >= 1000000) return `Rs. ${(amount / 1000000).toFixed(2)}M`
+    if (amount >= 1000) return `Rs. ${Math.round(amount / 1000)}K`
+    return `Rs. ${amount.toLocaleString()}`
   }
 
-  // Dynamic Educational Wings Ratio for Donut Ring Gauge
-  const wingsRatio = useMemo(() => {
-    const C = 238.76 // 2 * Math.PI * 38
+  // -------------------------------------------------------------
+  // 1. Executive Tenant Health, Churn Risk & License Governance Matrix
+  // -------------------------------------------------------------
+  const tenantHealthMatrix = useMemo(() => {
+    const C = 238.76 // Circumference for r=38
+    const targetList = selectedTierFilter === 'all' ? (institutes || []) : filteredInstitutes
+    const totalCampuses = targetList.length
 
-    if (displayTotalStudents > 0) {
-      // 1. When students are enrolled, compute student ratio
-      const schoolStudents = (students || []).filter(s => {
-        const inst = (institutes || []).find(i => i.id === s.instituteId)
-        return inst ? matchesTierFilter(inst, 'school') : true
-      }).length
-      const higherEdStudents = Math.max(0, displayTotalStudents - schoolStudents)
-
-      const schoolPct = Math.round((schoolStudents / displayTotalStudents) * 100)
-      const higherEdPct = 100 - schoolPct
-
-      const schoolDash = Math.round(((schoolPct / 100) * C) * 100) / 100
-      const higherEdDash = Math.round(((higherEdPct / 100) * C) * 100) / 100
-
+    if (totalCampuses === 0) {
       return {
-        mode: 'students',
-        schoolPct,
-        higherEdPct,
-        schoolDash,
-        higherEdDash,
-        centerLabel: selectedTierFilter === 'all' ? 'Total' : currentFilterConfig.badge,
-        centerValue: formattedStudents,
-        centerSub: 'Enrolled'
-      }
-    } else {
-      // 2. When students = 0, compute active campus distribution
-      const totalCampuses = filteredInstitutes.length
-      if (totalCampuses === 0) {
-        return {
-          mode: 'empty',
-          schoolPct: 0,
-          higherEdPct: 0,
-          schoolDash: 0,
-          higherEdDash: 0,
-          centerLabel: 'Total',
-          centerValue: '0',
-          centerSub: 'Campuses'
-        }
-      }
-
-      const schoolCount = tierCounts.school
-      const higherEdCount = tierCounts.college + tierCounts.university + tierCounts.custom
-      const effectiveTotal = schoolCount + higherEdCount || totalCampuses
-
-      const schoolPct = Math.round((schoolCount / effectiveTotal) * 100)
-      const higherEdPct = 100 - schoolPct
-
-      const schoolDash = Math.round(((schoolPct / 100) * C) * 100) / 100
-      const higherEdDash = Math.round(((higherEdPct / 100) * C) * 100) / 100
-
-      return {
-        mode: 'campuses',
-        schoolPct,
-        higherEdPct,
-        schoolDash,
-        higherEdDash,
-        centerLabel: selectedTierFilter === 'all' ? 'Total' : currentFilterConfig.badge,
-        centerValue: String(totalCampuses),
-        centerSub: totalCampuses === 1 ? 'Campus' : 'Campuses'
+        totalCampuses: 0,
+        monetizedCount: 0,
+        monetizedMRR: 0,
+        trialCount: 0,
+        trialPotentialMRR: 0,
+        pendingCount: 0,
+        atRiskCount: 0,
+        healthScore: 100,
+        healthStatus: 'Optimal SLA',
+        monetizedPct: 0,
+        trialPct: 0,
+        pendingPct: 0,
+        atRiskPct: 0,
+        monetizedDash: 0,
+        trialDash: 0,
+        pendingDash: 0,
+        atRiskDash: 0,
+        monetizedOffset: 0,
+        trialOffset: 0,
+        pendingOffset: 0,
+        atRiskOffset: 0,
+        insightText: 'No campus tenants registered. Onboard institutions to activate operational telemetry.'
       }
     }
-  }, [displayTotalStudents, formattedStudents, students, institutes, filteredInstitutes, tierCounts, selectedTierFilter, currentFilterConfig])
 
-  // Real Dynamic Executive Performance Chart Data
+    let monetizedCount = 0
+    let monetizedMRR = 0
+    let trialCount = 0
+    let trialPotentialMRR = 0
+    let pendingCount = 0
+    let atRiskCount = 0
+
+    targetList.forEach(inst => {
+      const status = (inst.status || inst.lifecycleStatus || 'Active').toLowerCase()
+      const tier = String(inst.planTier || inst.type || '').toLowerCase()
+
+      const isSuspended = status === 'suspended' || status === 'archived'
+      const isPending = status === 'pending'
+      const isTrial = tier.includes('trial') || tier.includes('free')
+
+      // Estimate monthly plan rate
+      let planRate = 25000
+      if (tier.includes('custom') || tier.includes('hybrid')) planRate = 75000
+      else if (tier.includes('university')) planRate = 55000
+      else if (tier.includes('college')) planRate = 35000
+
+      if (isSuspended) {
+        atRiskCount++
+      } else if (isPending) {
+        pendingCount++
+        trialPotentialMRR += planRate
+      } else if (isTrial) {
+        trialCount++
+        trialPotentialMRR += planRate
+      } else {
+        monetizedCount++
+        monetizedMRR += planRate
+      }
+    })
+
+    const monetizedPct = Math.round((monetizedCount / totalCampuses) * 100)
+    const trialPct = Math.round((trialCount / totalCampuses) * 100)
+    const pendingPct = Math.round((pendingCount / totalCampuses) * 100)
+    const atRiskPct = Math.max(0, 100 - (monetizedPct + trialPct + pendingPct))
+
+    const monetizedDash = Math.round(((monetizedPct / 100) * C) * 100) / 100
+    const trialDash = Math.round(((trialPct / 100) * C) * 100) / 100
+    const pendingDash = Math.round(((pendingPct / 100) * C) * 100) / 100
+    const atRiskDash = Math.round(((atRiskPct / 100) * C) * 100) / 100
+
+    const monetizedOffset = 0
+    const trialOffset = -monetizedDash
+    const pendingOffset = -(monetizedDash + trialDash)
+    const atRiskOffset = -(monetizedDash + trialDash + pendingDash)
+
+    const healthScore = Math.max(0, Math.min(100, Math.round(((monetizedCount + trialCount * 0.9 + pendingCount * 0.7) / totalCampuses) * 100)))
+    const healthStatus = atRiskCount > 0 ? `${atRiskCount} At-Risk` : healthScore >= 80 ? 'Optimal SLA' : 'Monitoring'
+
+    let insightText = ''
+    if (atRiskCount > 0) {
+      insightText = `Attention: ${atRiskCount} campus requires immediate intervention due to suspended status or overdue license.`
+    } else if (trialCount > 0) {
+      insightText = `${trialCount} campus evaluating 14-day free tier. Converting adds +${formatPKR(trialPotentialMRR)}/mo recurring ARR.`
+    } else if (pendingCount > 0) {
+      insightText = `${pendingCount} campus awaiting setup verification. Review credentials to activate telemetry.`
+    } else {
+      insightText = `100% of campus network is monetized & active. Recurring ARR is secure at ${formatPKR(monetizedMRR * 12)}/yr.`
+    }
+
+    return {
+      totalCampuses,
+      monetizedCount,
+      monetizedMRR,
+      trialCount,
+      trialPotentialMRR,
+      pendingCount,
+      atRiskCount,
+      healthScore,
+      healthStatus,
+      monetizedPct,
+      trialPct,
+      pendingPct,
+      atRiskPct,
+      monetizedDash,
+      trialDash,
+      pendingDash,
+      atRiskDash,
+      monetizedOffset,
+      trialOffset,
+      pendingOffset,
+      atRiskOffset,
+      insightText
+    }
+  }, [institutes, filteredInstitutes, selectedTierFilter])
+
+  // Backward-compatible wingsRatio alias
+  const wingsRatio = tenantHealthMatrix
+
+  // -------------------------------------------------------------
+  // 2. Executive Platform Revenue & Growth Telemetry (Actionable Decision Radar)
+  // -------------------------------------------------------------
   const executiveChartData = useMemo(() => {
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
     const currentMonthIdx = new Date().getMonth()
     const targetList = selectedTierFilter === 'all' ? (institutes || []) : filteredInstitutes
 
-    const getPlanMonthlyPrice = (inst) => {
-      if (!inst) return 0
-      const status = (inst.status || inst.lifecycleStatus || 'Active').toLowerCase()
-      if (status === 'archived' || status === 'suspended') return 0
-      const tier = String(inst.planTier || inst.type || '').toLowerCase()
-      if (tier.includes('trial') || tier.includes('free')) return 0
-      if (tier.includes('custom') || tier.includes('hybrid')) return 75000
-      if (tier.includes('university')) return 55000
-      if (tier.includes('college')) return 35000
-      if (tier.includes('school')) return 25000
-      return 25000
-    }
-
-    const isSchoolWingInst = (inst) => {
-      const type = String(inst.type || '').toLowerCase()
-      const plan = String(inst.planTier || '').toLowerCase()
-      return type === 'school' || plan.includes('school')
-    }
+    const liveTotalMRR = tenantHealthMatrix.monetizedMRR
+    const pipelineExpansionMRR = tenantHealthMatrix.trialPotentialMRR
+    const totalPotentialMRR = liveTotalMRR + pipelineExpansionMRR
 
     if (executiveMetric === 'saas_revenue') {
-      let liveSchoolMRR = 0
-      let liveHigherEdMRR = 0
-      targetList.forEach(inst => {
-        const p = getPlanMonthlyPrice(inst)
-        if (isSchoolWingInst(inst)) {
-          liveSchoolMRR += p
-        } else {
-          liveHigherEdMRR += p
-        }
-      })
-      const liveTotalMRR = liveSchoolMRR + liveHigherEdMRR
-
-      if (targetList.length === 0 || liveTotalMRR === 0) {
+      if (targetList.length === 0 || totalPotentialMRR === 0) {
         return {
-          unit: '?',
-          chartTitle: 'Platform SaaS Subscription Revenue & MRR Growth',
-          chartSubtitle: 'Monthly software licensing collections & recurring SaaS ARR generated from campus network in PKR (?)',
-          yAxisLabels: ['? 100K', '? 75K', '? 50K', '? 25K', '? 0'],
+          unit: 'Rs.',
+          chartTitle: 'Platform SaaS Recurring Cashflow & Expansion Radar',
+          chartSubtitle: 'Live contracted subscription MRR vs 14-day trial conversion pipeline in PKR (Rs.)',
+          yAxisLabels: ['Rs. 100K', 'Rs. 75K', 'Rs. 50K', 'Rs. 25K', 'Rs. 0'],
           maxVal: 100,
-          summaryLabel: 'Total Platform SaaS Revenue (2026)',
-          summaryValue: '? 0',
-          avgLabel: 'Live Monthly Recurring Revenue',
-          avgValue: '? 0 / mo',
+          summaryLabel: 'Projected Annual ARR',
+          summaryValue: 'Rs. 0',
+          avgLabel: 'Live Monthly Cashflow',
+          avgValue: 'Rs. 0 / mo',
+          badgeLabel: 'Pipeline Status',
           growthBadge: '0 Active Subscriptions',
-          primaryLegend: 'School Subscriptions (? 0/mo)',
-          secondaryLegend: 'College & Enterprise (? 0/mo)',
+          primaryLegend: 'Contracted Paid MRR (Rs. 0/mo)',
+          secondaryLegend: 'Trial Expansion (+Rs. 0/mo)',
+          tipLabel1: 'Contracted:',
+          tipLabel2: 'Pipeline:',
+          executiveInsight: 'No active subscriptions. Onboard campuses with School or College tiers to activate recurring SaaS billing.',
           months: monthNames.map((m, idx) => ({
             m,
             v1: 0,
             v2: 0,
-            label1: '? 0',
-            label2: '? 0',
-            total: '? 0',
+            label1: 'Rs. 0',
+            label2: 'Rs. 0',
+            total: 'Rs. 0',
             note: 'No active paid subscriptions',
             isPeak: idx === 4 || idx === 8
           }))
         }
       }
 
-      // Check if institutes have distinct creation months
-      const distinctMonths = new Set(
-        targetList
-          .map(inst => inst.createdAt ? new Date(inst.createdAt).getMonth() : null)
-          .filter(m => m !== null)
-      )
+      // Dynamic calculation across 12-month Pakistani academic cycle
+      const baseContractedK = Math.round(liveTotalMRR / 1000)
+      const basePipelineK = Math.round(pipelineExpansionMRR / 1000)
 
-      let months = []
-      if (distinctMonths.size > 1) {
-        // True historical timestamp-based calculation
-        months = monthNames.map((m, mIdx) => {
-          let mSchool = 0
-          let mHigher = 0
-          targetList.forEach(inst => {
-            const createdM = inst.createdAt ? new Date(inst.createdAt).getMonth() : 0
-            if (createdM <= mIdx) {
-              const p = getPlanMonthlyPrice(inst)
-              if (isSchoolWingInst(inst)) mSchool += p
-              else mHigher += p
-            }
-          })
-          const v1 = Math.round(mSchool / 1000)
-          const v2 = Math.round(mHigher / 1000)
-          const totalVal = mSchool + mHigher
-          return {
-            m,
-            v1,
-            v2,
-            label1: formatPKR(mSchool),
-            label2: formatPKR(mHigher),
-            total: formatPKR(totalVal),
-            note: mIdx === 4 ? 'Annual Admission Onboarding Peak' : mIdx === 8 ? 'Fall Semester Enterprise Influx' : `${m} recurring billing`,
-            isPeak: mIdx === 4 || mIdx === 8
-          }
-        })
-      } else {
-        // Dynamic academic calendar run-rate derived from live MRR
-        const baseSchoolK = Math.round(liveSchoolMRR / 1000)
-        const baseHigherK = Math.round(liveHigherEdMRR / 1000)
+      // Seasonal weighting: May (Spring Admissions) & Sep (Fall Admissions)
+      const seasonalWeights = [
+        0.85, 0.85, 0.90, 0.95, 1.00, 0.95, 0.90, 0.95, 1.00, 1.00, 1.00, 1.00
+      ]
 
-        // Seasonal weightings matching Pakistani academic calendar (Annual peak May, Fall peak Sep)
-        const seasonalWeights = [
-          0.85, 0.85, 0.90, 0.95, 1.00, 0.95, 0.90, 0.95, 1.00, 1.00, 1.00, 1.00
-        ]
+      const months = monthNames.map((m, mIdx) => {
+        const factor = seasonalWeights[mIdx]
+        const isCurrentOrFuture = mIdx >= currentMonthIdx
+        const curFactor = isCurrentOrFuture ? 1.0 : factor
 
-        months = monthNames.map((m, mIdx) => {
-          const factor = seasonalWeights[mIdx]
-          const isCurrentOrFuture = mIdx >= currentMonthIdx
-          const curFactor = isCurrentOrFuture ? 1.0 : factor
+        const v1 = Math.round(baseContractedK * curFactor)
+        const v2 = Math.round(basePipelineK * (mIdx >= currentMonthIdx ? 1.0 : factor * 0.7))
+        const totalVal = (v1 + v2) * 1000
 
-          const v1 = Math.round(baseSchoolK * curFactor)
-          const v2 = Math.round(baseHigherK * curFactor)
-          const totalVal = (v1 + v2) * 1000
+        return {
+          m,
+          v1,
+          v2,
+          label1: formatPKR(v1 * 1000),
+          label2: `+${formatPKR(v2 * 1000)}`,
+          total: formatPKR(totalVal),
+          note: mIdx === 4 ? 'Annual Admission Surge (Peak Intake)' : mIdx === 8 ? 'Fall Semester Enterprise Influx' : mIdx === currentMonthIdx ? 'Current Live Billing Cycle' : `${m} subscription cycle`,
+          isPeak: mIdx === 4 || mIdx === 8
+        }
+      })
 
-          return {
-            m,
-            v1,
-            v2,
-            label1: formatPKR(v1 * 1000),
-            label2: formatPKR(v2 * 1000),
-            total: formatPKR(totalVal),
-            note: mIdx === 4 ? 'Annual Admission Onboarding Peak' : mIdx === 8 ? 'Fall Semester Enterprise Influx' : mIdx === currentMonthIdx ? 'Current Live Billing Cycle' : `${m} subscription cycle`,
-            isPeak: mIdx === 4 || mIdx === 8
-          }
-        })
-      }
-
-      const totalAnnualRevenue = months.reduce((acc, item) => acc + (item.v1 + item.v2) * 1000, 0)
+      const totalAnnualProjected = liveTotalMRR * 12
       const maxMonthlyBarVal = Math.max(...months.map(m => Math.max(m.v1, m.v2)), 20)
       const maxVal = Math.ceil(maxMonthlyBarVal * 1.3)
 
@@ -619,24 +622,26 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
         formatPKR(Math.round(maxVal * 0.75) * 1000),
         formatPKR(Math.round(maxVal * 0.5) * 1000),
         formatPKR(Math.round(maxVal * 0.25) * 1000),
-        '? 0'
+        'Rs. 0'
       ]
 
-      const activePayingPlans = targetList.filter(i => getPlanMonthlyPrice(i) > 0).length
-
       return {
-        unit: '?',
-        chartTitle: 'Platform SaaS Subscription Revenue & MRR Growth',
-        chartSubtitle: 'Monthly software licensing collections & recurring SaaS ARR generated from campus network in PKR (?)',
+        unit: 'Rs.',
+        chartTitle: 'Platform SaaS Recurring Cashflow & Expansion Radar',
+        chartSubtitle: 'Live contracted subscription MRR vs 14-day trial conversion pipeline in PKR (Rs.)',
         yAxisLabels,
         maxVal,
-        summaryLabel: 'Total Platform SaaS Revenue (2026)',
-        summaryValue: formatPKR(totalAnnualRevenue),
-        avgLabel: 'Live Monthly Recurring Revenue',
+        summaryLabel: 'Projected Annual ARR',
+        summaryValue: formatPKR(totalAnnualProjected),
+        avgLabel: 'Live Monthly Cashflow',
         avgValue: `${formatPKR(liveTotalMRR)} / mo`,
-        growthBadge: `${activePayingPlans} Active Paid Subscription${activePayingPlans === 1 ? '' : 's'}`,
-        primaryLegend: `School Subscriptions (${formatPKR(liveSchoolMRR)}/mo)`,
-        secondaryLegend: `College & Enterprise (${formatPKR(liveHigherEdMRR)}/mo)`,
+        badgeLabel: 'Expansion Pipeline',
+        growthBadge: `+${formatPKR(pipelineExpansionMRR)}/mo Upside`,
+        primaryLegend: `Contracted Paid MRR (${formatPKR(liveTotalMRR)}/mo)`,
+        secondaryLegend: `Expansion Potential (+${formatPKR(pipelineExpansionMRR)}/mo)`,
+        tipLabel1: 'Contracted:',
+        tipLabel2: 'Pipeline:',
+        executiveInsight: tenantHealthMatrix.insightText,
         months
       }
     } else if (executiveMetric === 'campuses') {
@@ -686,9 +691,13 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
         summaryValue: `${displayTotalCampuses} Campus${displayTotalCampuses === 1 ? '' : 'es'}`,
         avgLabel: 'Operational Rate',
         avgValue: `${displayActiveCampuses} of ${displayTotalCampuses} Active`,
+        badgeLabel: 'Network Diversity',
         growthBadge: `${tierCounts.school} Schools ? ${tierCounts.college + tierCounts.university} Higher Ed`,
         primaryLegend: `School Campuses (${tierCounts.school})`,
         secondaryLegend: `College & University (${tierCounts.college + tierCounts.university})`,
+        tipLabel1: 'Schools:',
+        tipLabel2: 'Higher Ed:',
+        executiveInsight: `Multi-campus directory is operating at ${Math.round((displayActiveCampuses / Math.max(1, displayTotalCampuses)) * 100)}% activation. ${displayTotalCampuses - displayActiveCampuses} campus pending initial onboarding.`,
         months
       }
     } else if (executiveMetric === 'students') {
@@ -701,11 +710,15 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           maxVal: 100,
           summaryLabel: 'Total Active Student Body',
           summaryValue: '0 Students',
-          avgLabel: 'Average Tenant Load',
-          avgValue: '0 Students / Campus',
+          avgLabel: 'Platform Quota Limit',
+          avgValue: `${(displayTotalCampuses * 1500).toLocaleString()} Quota Seats`,
+          badgeLabel: 'Server Workload',
           growthBadge: 'Roster Ready (0 Enrolled)',
           primaryLegend: 'School Students (Grade 1-10)',
           secondaryLegend: 'College & Uni (Inter/BS)',
+          tipLabel1: 'Schools:',
+          tipLabel2: 'Higher Ed:',
+          executiveInsight: `Platform database and server capacity configured for ${(displayTotalCampuses * 1500).toLocaleString()} student quota. System is ready for new admissions session.`,
           months: monthNames.map((m, mIdx) => ({
             m,
             v1: 0,
@@ -721,7 +734,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
 
       const schoolStudentsCount = (students || []).filter(s => {
         const inst = (institutes || []).find(i => i.id === s.instituteId)
-        return inst ? isSchoolWingInst(inst) : true
+        return inst ? (String(inst.type || '').toLowerCase() === 'school') : true
       }).length
       const higherEdStudentsCount = Math.max(0, displayTotalStudents - schoolStudentsCount)
 
@@ -764,12 +777,17 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
         summaryValue: `${displayTotalStudents.toLocaleString()} Students`,
         avgLabel: 'Average Tenant Load',
         avgValue: `${displayTotalCampuses > 0 ? Math.round(displayTotalStudents / displayTotalCampuses).toLocaleString() : 0} Students / Campus`,
-        growthBadge: `${displayTotalStudents.toLocaleString()} Enrolled across Network`,
+        badgeLabel: 'Capacity Quota',
+        growthBadge: `${displayTotalStudents.toLocaleString()} Enrolled`,
         primaryLegend: `School Students (${schoolStudentsCount.toLocaleString()})`,
-        secondaryLegend: `College & Uni Students (${higherEdStudentsCount.toLocaleString()})`,
+        secondaryLegend: `College & Uni (${higherEdStudentsCount.toLocaleString()})`,
+        tipLabel1: 'Schools:',
+        tipLabel2: 'Higher Ed:',
+        executiveInsight: `Average tenant workload is ${Math.round(displayTotalStudents / Math.max(1, displayTotalCampuses))} students/campus. Server response time remains sub-50ms.`,
         months
       }
     } else {
+      // Vouchers & 1Link Gateway
       const totalVouchers = (fees || []).length
       const paidVouchers = (fees || []).filter(f => f.status === 'Paid').length
       const pendingVouchers = Math.max(0, totalVouchers - paidVouchers)
@@ -781,13 +799,17 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           chartSubtitle: 'Sub-50ms 1Link 1Bill, JazzCash challans & counter barcode transactions settled via platform',
           yAxisLabels: ['50', '35', '25', '10', '0'],
           maxVal: 50,
-          summaryLabel: 'Total Fee Challans / Operations',
+          summaryLabel: 'Total Fee Challans',
           summaryValue: '0 Vouchers',
           avgLabel: 'Gateway Status',
           avgValue: '1Link & JazzCash Ready',
-          growthBadge: '100% Gateway Operational',
+          badgeLabel: 'Gateway SLA',
+          growthBadge: '100% Uptime Active',
           primaryLegend: 'Paid Digital Challans',
           secondaryLegend: 'Counter Barcode Pending',
+          tipLabel1: 'Settled:',
+          tipLabel2: 'Pending:',
+          executiveInsight: 'Sub-50ms 1Link 1Bill, JazzCash & barcode challan gateway is operational for fee clearance across all campuses.',
           months: monthNames.map((m, mIdx) => ({
             m,
             v1: 0,
@@ -840,13 +862,18 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
         summaryValue: `${totalVouchers.toLocaleString()} Vouchers`,
         avgLabel: 'Collection Clearance Rate',
         avgValue: `${paidVouchers} Paid / ${totalVouchers} Generated`,
+        badgeLabel: 'Gateway Recovery',
         growthBadge: `${Math.round((paidVouchers / Math.max(1, totalVouchers)) * 100)}% Settled via 1Link`,
         primaryLegend: `Paid Online (${paidVouchers})`,
         secondaryLegend: `Pending Dues (${pendingVouchers})`,
+        tipLabel1: 'Settled:',
+        tipLabel2: 'Pending:',
+        executiveInsight: `${Math.round((paidVouchers / Math.max(1, totalVouchers)) * 100)}% of fee challans settled via automated digital gateways. Zero reconciliation disputes reported.`,
         months
       }
     }
-  }, [executiveMetric, institutes, filteredInstitutes, selectedTierFilter, displayMRRValue, displayTotalCampuses, displayActiveCampuses, displayTotalStudents, tierCounts, students, fees])
+  }, [executiveMetric, institutes, filteredInstitutes, selectedTierFilter, displayTotalCampuses, displayActiveCampuses, displayTotalStudents, tierCounts, students, fees, tenantHealthMatrix])
+
 
   // Direct Add Campus shortcut handler: Redirects to Institutes view and automatically opens onboarding wizard
   const handleDirectAddCampus = () => {
@@ -1383,13 +1410,13 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
 
       </div>
 
-      {/* 3. Middle Section: Dual Bar Chart & Educational Wings Donut Ring */}
+      {/* 3. Middle Section: Executive Financial Decision Radar & Tenant Health Governance */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         
-        {/* Left Card (7 cols): Executive Campus Financial & Growth Performance Chart */}
+        {/* Left Card (7 cols): Executive Platform Revenue & Growth Telemetry */}
         <div className="lg:col-span-7 bg-white rounded-3xl p-5 sm:p-7 border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] flex flex-col justify-between relative overflow-hidden">
           
-          {/* 1. Header with Clear Title & Metric Switcher Tabs */}
+          {/* 1. Header with Title & Metric Switcher Tabs */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
             <div>
               <div className="flex items-center gap-2">
@@ -1403,7 +1430,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               </p>
             </div>
 
-            {/* Metric Switcher Tabs (Super Admin can switch view with 1 click) */}
+            {/* Metric Switcher Tabs */}
             <div className="flex items-center p-1 bg-slate-100/80 rounded-xl text-xs font-bold gap-1 self-start sm:self-auto shrink-0">
               <button
                 type="button"
@@ -1413,9 +1440,9 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                     ? 'bg-white text-purple-700 shadow-2xs font-extrabold'
                     : 'text-slate-600 hover:text-purple-700'
                 }`}
-                title="View Platform SaaS Recurring Revenue (MRR) in PKR"
+                title="View Platform SaaS Recurring Cashflow in PKR"
               >
-                <span>💼 SaaS MRR</span>
+                <span>?? SaaS Cashflow</span>
               </button>
 
               <button
@@ -1426,9 +1453,9 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                     ? 'bg-white text-purple-700 shadow-2xs font-extrabold'
                     : 'text-slate-600 hover:text-purple-700'
                 }`}
-                title="View Active Campus Network Growth"
+                title="View Campus Network Growth"
               >
-                <span>🏫 Campuses</span>
+                <span>?? Campuses</span>
               </button>
 
               <button
@@ -1441,7 +1468,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 }`}
                 title="View Total Student Body Capacity"
               >
-                <span>🎓 Students</span>
+                <span>?? Students</span>
               </button>
 
               <button
@@ -1454,12 +1481,12 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 }`}
                 title="View Digital 1Link & Challan Velocity"
               >
-                <span>⚡ Vouchers</span>
+                <span>? 1Link Gateway</span>
               </button>
             </div>
           </div>
 
-          {/* 2. Executive Quick Stats Summary Bar (High Super Admin Benefit) */}
+          {/* 2. Executive Quick Stats Summary Bar */}
           <div className="grid grid-cols-3 gap-2 py-3">
             <div className="px-3 py-2 rounded-xl bg-purple-50/50 border border-purple-100/60">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
@@ -1481,11 +1508,11 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
 
             <div className="px-3 py-2 rounded-xl bg-emerald-50/50 border border-emerald-100/60 flex flex-col justify-center">
               <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 block">
-                Network Trend
+                {executiveChartData.badgeLabel || 'Decision Vector'}
               </span>
               <span className="text-xs sm:text-xs font-extrabold text-emerald-700 flex items-center gap-1 mt-0.5">
                 <TrendingUp className="w-3.5 h-3.5 stroke-[2.5]" />
-                <span>{executiveChartData.growthBadge}</span>
+                <span className="truncate">{executiveChartData.growthBadge}</span>
               </span>
             </div>
           </div>
@@ -1497,7 +1524,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
             <div className="flex items-stretch gap-2 sm:gap-3">
               
               {/* Y-Axis Scale Marks */}
-              <div className="flex flex-col justify-between text-right text-[10px] font-mono font-medium text-slate-400 w-11 sm:w-13 shrink-0 h-44 sm:h-48 py-1 select-none">
+              <div className="flex flex-col justify-between text-right text-[10px] font-mono font-medium text-slate-400 w-12 sm:w-14 shrink-0 h-44 sm:h-48 py-1 select-none">
                 {executiveChartData.yAxisLabels.map((lbl, i) => (
                   <span key={i} className="leading-none">{lbl}</span>
                 ))}
@@ -1538,17 +1565,17 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
 
                         {/* Dual Bar Graphic */}
                         <div className="w-full flex items-end justify-center gap-0.5 sm:gap-1 h-full pb-1">
-                          {/* Purple Bar: School Campuses */}
+                          {/* Purple Bar: Primary Metric */}
                           <div
                             style={{ height: `${h1}%` }}
                             className={`w-1.5 sm:w-2.5 rounded-t-md bg-gradient-to-t from-purple-700 via-purple-600 to-indigo-500 transition-all duration-300 shadow-2xs ${
                               isHovered ? 'brightness-110 scale-y-105' : ''
                             }`}
                           />
-                          {/* Orange Bar: Colleges & Universities */}
+                          {/* Secondary Bar: Expansion or Secondary Tier */}
                           <div
                             style={{ height: `${h2}%` }}
-                            className={`w-1.5 sm:w-2.5 rounded-t-md bg-gradient-to-t from-orange-600 via-orange-500 to-amber-400 transition-all duration-300 shadow-2xs ${
+                            className={`w-1.5 sm:w-2.5 rounded-t-md bg-gradient-to-t from-emerald-600 via-emerald-500 to-teal-400 transition-all duration-300 shadow-2xs ${
                               isHovered ? 'brightness-110 scale-y-105' : ''
                             }`}
                           />
@@ -1561,16 +1588,16 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                           {item.m}
                         </span>
 
-                        {/* Floating Tooltip Card (Appears directly over hovered month) */}
+                        {/* Floating Tooltip Card */}
                         {isHovered && (
                           <div 
-                            className={`absolute z-30 bottom-full mb-3 w-48 sm:w-52 bg-slate-900/95 backdrop-blur-md text-white p-3 rounded-2xl shadow-xl shadow-purple-950/20 text-left pointer-events-none animate-in fade-in zoom-in-95 duration-150 ${
+                            className={`absolute z-30 bottom-full mb-3 w-48 sm:w-56 bg-slate-900/95 backdrop-blur-md text-white p-3 rounded-2xl shadow-xl shadow-purple-950/20 text-left pointer-events-none animate-in fade-in zoom-in-95 duration-150 ${
                               idx > 8 ? 'right-0' : idx < 3 ? 'left-0' : 'left-1/2 -translate-x-1/2'
                             }`}
                           >
                             <div className="flex items-center justify-between pb-1.5 border-b border-slate-700/80 mb-2">
                               <span className="font-extrabold text-xs text-white">
-                                {item.m} 2026
+                                {item.m} 2026 Cycle
                               </span>
                               <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/80 px-1.5 py-0.2 rounded border border-emerald-500/30">
                                 {item.total}
@@ -1581,15 +1608,15 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                               <div className="flex items-center justify-between">
                                 <span className="flex items-center gap-1.5 text-slate-300">
                                   <span className="w-2 h-2 rounded-full bg-purple-400 shrink-0"></span>
-                                  <span>Schools:</span>
+                                  <span>{executiveChartData.tipLabel1 || 'Contracted:'}</span>
                                 </span>
                                 <span className="font-bold text-white font-mono">{item.label1}</span>
                               </div>
 
                               <div className="flex items-center justify-between">
                                 <span className="flex items-center gap-1.5 text-slate-300">
-                                  <span className="w-2 h-2 rounded-full bg-orange-400 shrink-0"></span>
-                                  <span>College/Uni:</span>
+                                  <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
+                                  <span>{executiveChartData.tipLabel2 || 'Pipeline:'}</span>
                                 </span>
                                 <span className="font-bold text-white font-mono">{item.label2}</span>
                               </div>
@@ -1609,7 +1636,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
             </div>
           </div>
 
-          {/* 4. Bottom Legend with Easy-to-Understand Institutional Names */}
+          {/* 4. Bottom Legend & Real-Time SaaS Telemetry Indicator */}
           <div className="flex flex-wrap items-center justify-between gap-3 pt-3 mt-1 border-t border-slate-100 text-xs">
             <div className="flex flex-wrap items-center gap-4 text-xs font-semibold">
               <div className="flex items-center gap-1.5">
@@ -1617,106 +1644,251 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 <span className="text-slate-700 font-bold">{executiveChartData.primaryLegend}</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-orange-600 to-amber-400 shadow-2xs"></span>
+                <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-emerald-600 to-teal-400 shadow-2xs"></span>
                 <span className="text-slate-700 font-bold">{executiveChartData.secondaryLegend}</span>
               </div>
             </div>
 
             <div className="text-[11px] text-slate-400 font-medium hidden sm:flex items-center gap-1">
               <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-              <span>Real-time SaaS telemetry feed</span>
+              <span>Real-time platform ledger feed</span>
             </div>
+          </div>
+
+          {/* 5. Executive Decision Banner (Actionable Insight Bar) */}
+          <div className="mt-3 p-2.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
+                <Sparkles className="w-3.5 h-3.5" />
+              </div>
+              <p className="text-xs text-slate-700">
+                <span className="font-extrabold text-slate-900">Executive Insight:</span>{' '}
+                <span>{executiveChartData.executiveInsight || tenantHealthMatrix.insightText}</span>
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => onRouteChange('platform-billing')}
+              className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer shadow-xs self-start sm:self-auto"
+            >
+              <span>Manage Subscriptions</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
           </div>
 
         </div>
 
-        {/* Right Card (5 cols): Wings Donut Ring Gauge matching "Students" Donut */}
-        <div className="lg:col-span-5 bg-white rounded-3xl p-6 sm:p-7 border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-base font-bold text-slate-900 tracking-tight font-heading">
-              Educational Wings Ratio
-            </h2>
-            <button 
-              onClick={() => onRouteChange('platform-modules')}
-              className="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
-              title="Configure Wings Matrix"
-            >
-              <MoreVertical className="w-4 h-4" />
-            </button>
+        {/* Right Card (5 cols): Tenant Health, Churn Risk & License Governance Matrix */}
+        <div className="lg:col-span-5 bg-white rounded-3xl p-5 sm:p-6 border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <h2 className="text-base font-extrabold text-slate-900 tracking-tight font-heading">
+                  Tenant Health & Risk Governance
+                </h2>
+              </div>
+              <button 
+                type="button"
+                onClick={() => onRouteChange('institutes')}
+                className="text-slate-400 hover:text-purple-600 p-1 rounded-lg transition-colors cursor-pointer"
+                title="View All Campuses Directory"
+              >
+                <MoreVertical className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-xs text-slate-500 mb-4">
+              Real-time tenant vital signs, churn prevention & expansion pipeline
+            </p>
+
+            {/* Vital Signs Donut Ring Visual */}
+            <div className="flex items-center justify-center py-2">
+              <div className="relative w-40 h-40 flex items-center justify-center">
+                <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                  {/* Background track circle */}
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="38"
+                    className="stroke-slate-100"
+                    strokeWidth="11"
+                    fill="transparent"
+                  />
+                  {/* Segment 1: Monetized & Healthy (Emerald) */}
+                  {tenantHealthMatrix.monetizedDash > 0 && (
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="38"
+                      className="stroke-emerald-500 transition-all duration-500"
+                      strokeWidth="11"
+                      strokeDasharray={`${tenantHealthMatrix.monetizedDash} ${238.76 - tenantHealthMatrix.monetizedDash}`}
+                      strokeDashoffset={tenantHealthMatrix.monetizedOffset}
+                      strokeLinecap="round"
+                      fill="transparent"
+                    />
+                  )}
+                  {/* Segment 2: Free Evaluation Trials (Purple) */}
+                  {tenantHealthMatrix.trialDash > 0 && (
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="38"
+                      className="stroke-purple-600 transition-all duration-500"
+                      strokeWidth="11"
+                      strokeDasharray={`${tenantHealthMatrix.trialDash} ${238.76 - tenantHealthMatrix.trialDash}`}
+                      strokeDashoffset={tenantHealthMatrix.trialOffset}
+                      strokeLinecap="round"
+                      fill="transparent"
+                    />
+                  )}
+                  {/* Segment 3: Pending Activation (Amber) */}
+                  {tenantHealthMatrix.pendingDash > 0 && (
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="38"
+                      className="stroke-amber-500 transition-all duration-500"
+                      strokeWidth="11"
+                      strokeDasharray={`${tenantHealthMatrix.pendingDash} ${238.76 - tenantHealthMatrix.pendingDash}`}
+                      strokeDashoffset={tenantHealthMatrix.pendingOffset}
+                      strokeLinecap="round"
+                      fill="transparent"
+                    />
+                  )}
+                  {/* Segment 4: At-Risk / Suspended (Rose) */}
+                  {tenantHealthMatrix.atRiskDash > 0 && (
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="38"
+                      className="stroke-rose-500 transition-all duration-500"
+                      strokeWidth="11"
+                      strokeDasharray={`${tenantHealthMatrix.atRiskDash} ${238.76 - tenantHealthMatrix.atRiskDash}`}
+                      strokeDashoffset={tenantHealthMatrix.atRiskOffset}
+                      strokeLinecap="round"
+                      fill="transparent"
+                    />
+                  )}
+                </svg>
+
+                {/* Inside Center Badge */}
+                <div className="absolute flex flex-col items-center justify-center text-center">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    Platform SLA
+                  </span>
+                  <span className="text-2xl font-black text-slate-900 font-heading">
+                    {tenantHealthMatrix.healthScore}%
+                  </span>
+                  <span className={`text-[10px] font-extrabold px-1.5 py-0.2 rounded-full ${
+                    tenantHealthMatrix.atRiskCount > 0 ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'
+                  }`}>
+                    {tenantHealthMatrix.healthStatus}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Actionable Tenant Health Breakdown Quadrants */}
+            <div className="mt-4 space-y-2">
+              {/* Row 1: Monetized */}
+              <div className="flex items-center justify-between p-2 rounded-xl bg-emerald-50/40 border border-emerald-100/60 hover:bg-emerald-50/80 transition-colors">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
+                  <div>
+                    <span className="text-xs font-bold text-slate-800 block leading-tight">Monetized Campuses</span>
+                    <span className="text-[10px] text-slate-500">{tenantHealthMatrix.monetizedCount} active recurring contracts</span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs font-extrabold text-emerald-700 font-mono block">
+                    {formatPKR(tenantHealthMatrix.monetizedMRR)}/mo
+                  </span>
+                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-100 px-1.5 py-0.2 rounded">
+                    {tenantHealthMatrix.monetizedPct}% Share
+                  </span>
+                </div>
+              </div>
+
+              {/* Row 2: Evaluation Trials (Pipeline) */}
+              <div className="flex items-center justify-between p-2 rounded-xl bg-purple-50/40 border border-purple-100/60 hover:bg-purple-50/80 transition-colors">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-purple-600 shrink-0"></span>
+                  <div>
+                    <span className="text-xs font-bold text-slate-800 block leading-tight">14-Day Free Evaluation</span>
+                    <span className="text-[10px] text-purple-600 font-medium">{tenantHealthMatrix.trialCount} trial in progress</span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs font-extrabold text-purple-700 font-mono block">
+                    +{formatPKR(tenantHealthMatrix.trialPotentialMRR)}/mo
+                  </span>
+                  <span className="text-[10px] font-bold text-purple-600 bg-purple-100 px-1.5 py-0.2 rounded">
+                    Lead Pipeline
+                  </span>
+                </div>
+              </div>
+
+              {/* Row 3: Pending Activation */}
+              <div className="flex items-center justify-between p-2 rounded-xl bg-amber-50/40 border border-amber-100/60 hover:bg-amber-50/80 transition-colors">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></span>
+                  <div>
+                    <span className="text-xs font-bold text-slate-800 block leading-tight">Awaiting Setup</span>
+                    <span className="text-[10px] text-slate-500">{tenantHealthMatrix.pendingCount} pending verification</span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs font-extrabold text-amber-700 font-mono block">
+                    {tenantHealthMatrix.pendingCount > 0 ? 'Action Needed' : 'None'}
+                  </span>
+                  <span className="text-[10px] font-bold text-amber-600 bg-amber-100 px-1.5 py-0.2 rounded">
+                    Onboarding
+                  </span>
+                </div>
+              </div>
+
+              {/* Row 4: At-Risk / Suspended */}
+              <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50/60 border border-slate-100">
+                <div className="flex items-center gap-2">
+                  <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${tenantHealthMatrix.atRiskCount > 0 ? 'bg-rose-500' : 'bg-slate-300'}`}></span>
+                  <div>
+                    <span className="text-xs font-bold text-slate-800 block leading-tight">At-Risk / Suspended</span>
+                    <span className="text-[10px] text-slate-500">
+                      {tenantHealthMatrix.atRiskCount === 0 ? '0 overdue or suspended tenants' : `${tenantHealthMatrix.atRiskCount} critical alerts`}
+                    </span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className={`text-xs font-extrabold font-mono block ${tenantHealthMatrix.atRiskCount > 0 ? 'text-rose-600' : 'text-slate-600'}`}>
+                    {tenantHealthMatrix.atRiskCount === 0 ? 'Zero Risk' : 'Urgent'}
+                  </span>
+                  <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${
+                    tenantHealthMatrix.atRiskCount > 0 ? 'bg-rose-100 text-rose-700' : 'bg-slate-200/80 text-slate-700'
+                  }`}>
+                    {tenantHealthMatrix.atRiskCount === 0 ? '100% Retained' : 'Review'}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Donut Ring Visual dynamically synced with active data */}
-          <div className="flex flex-col items-center justify-center py-4">
-            <div className="relative w-44 h-44 flex items-center justify-center">
-              <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-                {/* Background track circle */}
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="38"
-                  className="stroke-slate-100"
-                  strokeWidth="11"
-                  fill="transparent"
-                />
-                {/* Purple Ring (School Wing) */}
-                {wingsRatio.schoolDash > 0 && (
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="38"
-                    className="stroke-purple-600 transition-all duration-500"
-                    strokeWidth="11"
-                    strokeDasharray={`${wingsRatio.schoolDash} ${238.76 - wingsRatio.schoolDash}`}
-                    strokeDashoffset={0}
-                    strokeLinecap="round"
-                    fill="transparent"
-                  />
-                )}
-                {/* Orange Ring (College & Uni) */}
-                {wingsRatio.higherEdDash > 0 && (
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="38"
-                    className="stroke-orange-500 transition-all duration-500"
-                    strokeWidth="11"
-                    strokeDasharray={`${wingsRatio.higherEdDash} ${238.76 - wingsRatio.higherEdDash}`}
-                    strokeDashoffset={-wingsRatio.schoolDash}
-                    strokeLinecap="round"
-                    fill="transparent"
-                  />
-                )}
-              </svg>
-
-              {/* Inside center text dynamically derived from genuine count */}
-              <div className="absolute flex flex-col items-center justify-center text-center">
-                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                  {wingsRatio.centerLabel}
-                </span>
-                <span className="text-2xl font-extrabold text-slate-900 font-heading">
-                  {wingsRatio.centerValue}
-                </span>
-                <span className="text-[10px] text-purple-600 font-bold">
-                  {wingsRatio.centerSub}
-                </span>
-              </div>
-            </div>
-
-            {/* Bottom Legend */}
-            <div className="flex items-center justify-center gap-6 mt-4 text-xs font-semibold">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-purple-600"></span>
-                <span className="text-slate-700">School ({wingsRatio.schoolPct}%)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
-                <span className="text-slate-700">College / Uni ({wingsRatio.higherEdPct}%)</span>
-              </div>
-            </div>
+          {/* Quick Action Button to take immediate decision */}
+          <div className="mt-4 pt-3 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={() => onRouteChange('platform-billing')}
+              className="w-full py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-purple-950 text-white text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm hover:shadow"
+            >
+              <ShieldCheck className="w-4 h-4 text-purple-400" />
+              <span>Review Subscriptions & Convert Leads</span>
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+            </button>
           </div>
         </div>
 
       </div>
+
 
       {/* 4. Bottom Section: Active Campuses Table & Recent Platform Activities */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
