@@ -75,7 +75,7 @@ const CrossInstituteAnalyticsView = () => {
   }
 
   const handleExportCSV = () => {
-    AnalyticsService.exportExecutiveReportCSV()
+    AnalyticsService.exportExecutiveReportCSV({ institutes, students, teachers, fees })
     showToast('Executive audit CSV report downloaded successfully.')
   }
 
@@ -219,7 +219,7 @@ const CrossInstituteAnalyticsView = () => {
     const selectedRows = filteredAndSorted.filter(i => selectedAnalyticsIds.includes(i.id))
     const headers = ['Institute,Code,City,Type,Students,Faculty,Ratio,AttendanceRate,FeeRecoveryRate,PKRCollected']
     const rows = selectedRows.map(r => 
-      `"${r.name}","${r.code}","${r.city}","${r.type}",${r.studentCount},${r.teacherCount},"${r.studentTeacherRatio}","${r.attendanceRate}%","${r.feeRecoveryRate}%",${r.feeCollectedPKR || 0}`
+      `"${r.name}","${r.code}","${r.city}","${r.type}",${r.studentCount},${r.teacherCount},"${r.studentTeacherRatio}","${r.attendanceRate}%","${r.feeRecoveryRate}%",${r.totalCollectedPKR || 0}`
     )
     const csvContent = 'data:text/csv;charset=utf-8,' + [headers, ...rows].join('\n')
     const encodedUri = encodeURI(csvContent)
@@ -782,7 +782,7 @@ const CrossInstituteAnalyticsView = () => {
                   )}
                   {visibleColumns.collected && (
                     <td className="py-3.5 px-4 text-right font-mono font-medium text-slate-800">
-                      Rs. {inst.totalCollectedPKR.toLocaleString()}
+                      Rs. {(inst.totalCollectedPKR || 0).toLocaleString()}
                     </td>
                   )}
                   {visibleColumns.health && (

@@ -1201,6 +1201,27 @@ export const InstitutesView = () => {
   const handleDelete = async (id, name) => {
     if (window.confirm(`Are you sure you want to permanently delete "${name}"? This action cannot be undone.`)) {
       await deleteItem('institutes', id)
+      // Cascade cleanup: remove subscription and module records
+      try {
+        const subsRaw = localStorage.getItem('sms_institute_subscriptions')
+        if (subsRaw) {
+          const subs = JSON.parse(subsRaw)
+          if (Array.isArray(subs)) {
+            const updatedSubs = subs.filter(s => s && s.instituteId !== id && s.instituteName !== name)
+            localStorage.setItem('sms_institute_subscriptions', JSON.stringify(updatedSubs))
+          }
+        }
+        const modsRaw = localStorage.getItem('sms_institute_modules')
+        if (modsRaw) {
+          const mods = JSON.parse(modsRaw)
+          if (Array.isArray(mods)) {
+            const updatedMods = mods.filter(m => m && m.instituteId !== id && m.institute_id !== id)
+            localStorage.setItem('sms_institute_modules', JSON.stringify(updatedMods))
+          }
+        }
+        window.dispatchEvent(new Event('sms_billing_updated'))
+        window.dispatchEvent(new Event('sms_institutes_updated'))
+      } catch {}
       toast.success(`Institute removed from directory.`)
     }
   }
@@ -1210,10 +1231,13 @@ export const InstitutesView = () => {
   // ----------------------------------------------------
   const filteredAndSorted = useMemo(() => {
     const list = institutes.filter(inst => {
-      const matchesSearch = 
-        inst.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        inst.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ((inst.city || inst.address) && (inst.city || inst.address).toLowerCase().includes(searchTerm.toLowerCase()))
+      if (!inst) return false
+      const sTerm = (searchTerm || '').toLowerCase().trim()
+      const name = (inst.name || '').toLowerCase()
+      const code = (inst.code || '').toLowerCase()
+      const location = ((inst.city || inst.address || '')).toLowerCase()
+
+      const matchesSearch = !sTerm || name.includes(sTerm) || code.includes(sTerm) || location.includes(sTerm)
 
       const instLifecycle = inst.lifecycleStatus || (inst.status === 'Suspended' ? 'Suspended' : 'Active')
       const matchesLifecycle = 

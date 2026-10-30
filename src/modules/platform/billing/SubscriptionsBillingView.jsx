@@ -186,22 +186,36 @@ const SubscriptionsBillingView = () => {
   // Handle Manual Invoice Generation
   const handleCreateInvoice = async (e) => {
     e.preventDefault()
+    if (!createInvoiceForm.instituteId) {
+      showToast('Please select a target campus to generate the invoice.')
+      return
+    }
+
     try {
-      const targetSub = subscriptions.find(s => s.instituteId === createInvoiceForm.instituteId) || subscriptions[0]
+      const targetSub = subscriptions.find(s => s.instituteId === createInvoiceForm.instituteId)
+      if (!targetSub) {
+        showToast('Selected campus subscription record not found.')
+        return
+      }
+
       const newInv = {
         id: `INV-${Date.now().toString().slice(-6)}`,
         invoiceNumber: `INV-${Date.now().toString().slice(-6)}`,
-        instituteId: targetSub?.instituteId || 'inst-1',
-        instituteName: targetSub?.instituteName || 'Designated Campus',
+        instituteId: targetSub.instituteId,
+        instituteName: targetSub.instituteName,
         amountPKR: Number(createInvoiceForm.amountPKR) || 25000,
         issueDate: new Date().toISOString().split('T')[0],
         dueDate: createInvoiceForm.dueDate || new Date(Date.now() + 15 * 86400000).toISOString().split('T')[0],
         status: 'PENDING',
-        notes: createInvoiceForm.notes || 'Manual recurring subscription fee'
+        notes: createInvoiceForm.notes || 'Manual recurring subscription fee',
+        paymentMethod: 'Bank Transfer'
       }
-      setInvoices(prev => [newInv, ...prev])
+
+      await BillingService.createInvoice(newInv)
+      await fetchBillingData()
       setIsCreateInvoiceModalOpen(false)
-      showToast(`Manual invoice ${newInv.invoiceNumber} created successfully!`)
+      setCreateInvoiceForm({ instituteId: '', amountPKR: 25000, dueDate: '', notes: '' })
+      showToast(`Manual invoice ${newInv.invoiceNumber} created and saved successfully!`)
     } catch (err) {
       showToast('Failed to create invoice: ' + err.message)
     }

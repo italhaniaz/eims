@@ -129,8 +129,8 @@ export const AnalyticsService = {
   },
 
   // 2. EXPORT ENHANCED MULTI-SHEET CSV REPORT
-  exportExecutiveReportCSV() {
-    const data = this.getCrossInstituteData()
+  exportExecutiveReportCSV(liveData = null) {
+    const data = this.getCrossInstituteData('last30', liveData)
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
 
     const lines = [

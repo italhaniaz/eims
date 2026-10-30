@@ -247,7 +247,27 @@ export const ModulesControlView = () => {
       m => (m.instituteId === instituteId || m.institute_id === instituteId) &&
            (m.moduleKey === moduleKey || m.module_key === moduleKey)
     )
-    return entry ? Boolean(entry.enabled) : true
+    if (entry !== undefined && entry.enabled !== undefined) {
+      return Boolean(entry.enabled)
+    }
+
+    // Tier-aware fallback if no explicit entry provisioned
+    const inst = institutes.find(i => i.id === instituteId)
+    const currentTiers = inst?.enabledTiers || (
+      inst?.type === 'School' ? ['school'] :
+      inst?.type === 'College' ? ['college'] :
+      inst?.type === 'University' ? ['undergraduate'] : ['school']
+    )
+    const isUni = currentTiers.includes('undergraduate') || inst?.type === 'University'
+    const isCollege = currentTiers.includes('college') || inst?.type === 'College'
+
+    if (['cgpa_grading', 'credit_hours', 'departments'].includes(moduleKey)) {
+      return isUni
+    }
+    if (['programs', 'curriculum', 'timetable'].includes(moduleKey)) {
+      return isUni || isCollege
+    }
+    return ['students', 'fees', 'exams', 'library', 'admissions'].includes(moduleKey)
   }
 
   // Toggle single module flag

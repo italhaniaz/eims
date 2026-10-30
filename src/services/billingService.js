@@ -527,6 +527,34 @@ export const BillingService = {
     return FALLBACK_INVOICES
   },
 
+  async createInvoice(invoiceData) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/billing/invoices`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(invoiceData)
+      })
+      if (res.ok) return await res.json()
+    } catch {}
+
+    const invoices = await this.getInvoices()
+    const newInv = {
+      ...invoiceData,
+      id: invoiceData.id || `inv-${Date.now()}`,
+      invoiceNumber: invoiceData.invoiceNumber || `INV-${Date.now().toString().slice(-6)}`,
+      status: invoiceData.status || 'PENDING',
+      issueDate: invoiceData.issueDate || new Date().toISOString().slice(0, 10)
+    }
+
+    invoices.unshift(newInv)
+    localStorage.setItem('sms_platform_invoices', JSON.stringify(invoices))
+    DataService.logActivity('Invoice Created', `Issued invoice ${newInv.invoiceNumber} for ${newInv.instituteName}`, 'Super Admin')
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('sms_billing_updated'))
+    }
+    return { success: true, invoice: newInv }
+  },
+
   async markInvoicePaid(id) {
     try {
       const res = await fetch(`${API_BASE_URL}/api/billing/invoices/${id}/pay`, { method: 'POST' })

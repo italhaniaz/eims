@@ -275,6 +275,10 @@ export const PlatformService = {
           updatedTiers.includes('college') ? 'plan-college' : 'plan-university'
         localStorage.setItem('sms_institute_subscriptions', JSON.stringify(subs))
       }
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('sms_billing_updated'))
+        window.dispatchEvent(new Event('sms_institutes_updated'))
+      }
     } catch {}
 
     DataService.logAuditEvent(
