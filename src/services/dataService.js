@@ -1,5 +1,15 @@
 import { supabase, isSupabaseConfigured } from './supabaseClient.js'
 
+export const defaultInitialStudents = [
+  { id: 'std-1', name: 'Abdullah Khan', rollNumber: 'BHS-2026-0001', campus: 'Beaconhouse Central High', instituteId: 'inst-1', wing: 'Middle Wing', className: 'Grade 8', section: 'A', status: 'Active', gender: 'Male', phone: '0300-1234567', bFormCnic: '35201-1122334-1', feeStatus: 'Paid', fatherName: 'Farooq Khan' },
+  { id: 'std-2', name: 'Zoya Fatima', rollNumber: 'BHS-2026-0002', campus: 'Beaconhouse Central High', instituteId: 'inst-1', wing: 'High School', className: 'Grade 10', section: 'B', status: 'Active', gender: 'Female', phone: '0301-9876543', bFormCnic: '35201-2233445-2', feeStatus: 'Paid', fatherName: 'Tariq Mehmood' },
+  { id: 'std-3', name: 'Ahmed Ali Raza', rollNumber: 'TCS-2026-0014', campus: 'The City School Senior Branch', instituteId: 'inst-2', wing: 'College Wing', className: 'FSc Pre-Medical', section: 'A', status: 'Active', gender: 'Male', phone: '0321-4567890', bFormCnic: '35201-3344556-3', feeStatus: 'Pending', fatherName: 'Ali Raza' },
+  { id: 'std-4', name: 'Hania Imran', rollNumber: 'LGS-2026-0088', campus: 'Lahore Grammar Model Town', instituteId: 'inst-3', wing: 'Primary Wing', className: 'Grade 4', section: 'A', status: 'Suspended', gender: 'Female', phone: '0333-7890123', bFormCnic: '35201-4455667-4', feeStatus: 'Paid', fatherName: 'Imran Bashir' },
+  { id: 'std-5', name: 'Rayyan Siddiqui', rollNumber: 'BHS-2026-0077', campus: 'Beaconhouse Central High', instituteId: 'inst-1', wing: 'Elementary Wing', className: 'Grade 2', section: 'A', status: 'Active', gender: 'Male', phone: '0345-6789012', bFormCnic: '35201-5566778-5', feeStatus: 'Paid', fatherName: 'Siddiqui Akhtar' },
+  { id: 'std-6', name: 'Mahnoor Tariq', rollNumber: 'TCS-2026-0029', campus: 'The City School Senior Branch', instituteId: 'inst-2', wing: 'High School', className: 'Grade 9', section: 'C', status: 'Active', gender: 'Female', phone: '0312-3456789', bFormCnic: '35201-6677889-6', feeStatus: 'Paid', fatherName: 'Tariq Javed' }
+]
+
+
 // Initial clean state with ZERO entries so user can enter all records themselves:
 const cleanZeroData = {
   stats: {
@@ -18,7 +28,7 @@ const cleanZeroData = {
   studySchemes: [],
   recentActivity: [],
   users: [],
-  students: [],
+  students: defaultInitialStudents,
   teachers: [],
   classes: [],
   fees: [],
@@ -357,14 +367,9 @@ export const getStoredData = () => {
         }
       }
 
-      if (Array.isArray(parsed.students)) {
-        const filtered = parsed.students.filter(s => 
-          !demoNames.includes(s.name) && !demoRolls.includes(s.rollNumber)
-        )
-        if (filtered.length !== parsed.students.length) {
-          parsed.students = filtered
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed))
-        }
+      if (!Array.isArray(parsed.students) || parsed.students.length === 0) {
+        parsed.students = defaultInitialStudents
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed)) } catch {}
       }
       if (Array.isArray(parsed.admissionsPipeline)) {
         const demoPipelineIds = ['adm-1', 'adm-2']
@@ -587,6 +592,15 @@ export const DataService = {
       store[collectionName].unshift(finalItem)
     }
 
+    if (collectionName === 'students' && finalItem.instituteId && Array.isArray(store.institutes)) {
+      const inst = store.institutes.find(i => i.id === finalItem.instituteId)
+      if (inst) {
+        inst.totalStudents = (Number(inst.totalStudents) || 0) + 1
+        inst.studentsCount = inst.totalStudents
+      }
+      try { window.dispatchEvent(new Event('sms_students_updated')) } catch {}
+    }
+
     const itemName = finalItem.name || finalItem.title || finalItem.studentName || finalItem.rollNumber || finalItem.id
     const userEmail = getActiveUserEmail()
 
@@ -636,7 +650,22 @@ export const DataService = {
     if (store[collectionName]) {
       const idx = store[collectionName].findIndex(item => item.id === id)
       if (idx !== -1) {
+        const previousItem = { ...store[collectionName][idx] }
         store[collectionName][idx] = { ...store[collectionName][idx], ...updatedPayload }
+
+        if (collectionName === 'students' && updatedPayload.instituteId && updatedPayload.instituteId !== previousItem.instituteId && Array.isArray(store.institutes)) {
+          const oldInst = store.institutes.find(i => i.id === previousItem.instituteId)
+          const newInst = store.institutes.find(i => i.id === updatedPayload.instituteId)
+          if (oldInst) {
+            oldInst.totalStudents = Math.max(0, (Number(oldInst.totalStudents) || 0) - 1)
+            oldInst.studentsCount = oldInst.totalStudents
+          }
+          if (newInst) {
+            newInst.totalStudents = (Number(newInst.totalStudents) || 0) + 1
+            newInst.studentsCount = newInst.totalStudents
+          }
+          try { window.dispatchEvent(new Event('sms_students_updated')) } catch {}
+        }
         const itemName = updatedPayload.name || store[collectionName][idx].name || store[collectionName][idx].title || store[collectionName][idx].studentName || id
         const userEmail = getActiveUserEmail()
 

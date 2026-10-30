@@ -618,6 +618,7 @@ export const AdmissionsPipelineView = ({ currentInstitute }) => {
       feeStatus: enrollData.feeStatus || 'Pending',
       academicSession: enrollData.academicSession || selectedSession,
       instituteId: currentInstitute?.id || 'inst-1',
+      campus: currentInstitute?.name || 'Main Campus',
       admittedFromPipelineId: lead.id,
       admissionDate: new Date().toISOString().split('T')[0]
     })
@@ -637,6 +638,25 @@ export const AdmissionsPipelineView = ({ currentInstitute }) => {
       academicSession: enrollData.academicSession || selectedSession,
       paymentDate: enrollData.feeStatus === 'Paid' ? new Date().toISOString().split('T')[0] : null
     })
+
+    // 3. Auto-provision portal login account for student / guardian
+    try {
+      const studentUsername = enrollData.rollNumber.toLowerCase().replace(/[^a-z0-9]/g, '')
+      await addItem('users', {
+        name: enrollData.name,
+        email: enrollData.email || (studentUsername + '@student.sms.edu'),
+        role: 'student',
+        status: 'Active',
+        instituteId: currentInstitute?.id || 'inst-1',
+        studentId: createdStudent?.id || ('std-' + Date.now()),
+        wardRollNo: enrollData.rollNumber,
+        wardName: enrollData.name,
+        wardClass: enrollData.className,
+        section: enrollData.section
+      })
+    } catch (uErr) {
+      console.warn('Could not auto-provision student portal user:', uErr)
+    }
 
     // 3. Mark Lead as Enrolled
     await updateItem('admissionsPipeline', lead.id, {

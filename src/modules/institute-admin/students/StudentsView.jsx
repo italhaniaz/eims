@@ -199,7 +199,8 @@ export const StudentsView = ({ currentInstitute }) => {
   const [selectedSectionFilter, setSelectedSectionFilter] = useState('ALL')
   const [selectedStatusFilter, setSelectedStatusFilter] = useState('ALL') // 'Active' | 'Withdrawn' | 'Transferred' | 'Graduated' | 'Suspended'
   const [selectedGenderFilter, setSelectedGenderFilter] = useState('ALL') // 'Male' | 'Female'
-  const [selectedFeeFilter, setSelectedFeeFilter] = useState('ALL') // 'Paid' | 'Pending'
+  const [selectedFeeFilter, setSelectedFeeFilter] = useState('ALL')
+  const [showMaskedBForm, setShowMaskedBForm] = useState(true) // 'Paid' | 'Pending'
   const [selectedMedicalFilter, setSelectedMedicalFilter] = useState('ALL') // 'ALL' | 'Alerts'
 
   // Sorting state
@@ -1545,6 +1546,21 @@ export const StudentsView = ({ currentInstitute }) => {
                 <option value="Female">Female</option>
               </select>
 
+              {/* B-Form / CNIC Privacy Masking Toggle */}
+              <button
+                type="button"
+                onClick={() => setShowMaskedBForm(prev => !prev)}
+                className={`px-3 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
+                  showMaskedBForm
+                    ? 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                    : 'bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-100'
+                }`}
+                title={showMaskedBForm ? 'Click to reveal student B-Form / National CNIC numbers' : 'Click to mask student B-Form / National CNIC numbers'}
+              >
+                {showMaskedBForm ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                <span>{showMaskedBForm ? 'Masked PII' : 'Plain PII'}</span>
+              </button>
+
               {/* Fee Status Filter */}
               <select
                 value={selectedFeeFilter}
@@ -1838,6 +1854,16 @@ export const StudentsView = ({ currentInstitute }) => {
                             <div className="text-[11px] text-slate-400 whitespace-nowrap">
                               {s.email || (s.gender ? `${s.gender} Student` : 'Registered Admission')}
                             </div>
+                            {s.bFormCnic && (
+                              <div className="text-[10px] font-mono text-slate-400 flex items-center gap-1 mt-0.5" title="Student NADRA B-Form / CNIC">
+                                <ShieldCheck className="w-2.5 h-2.5 text-slate-400" />
+                                <span>
+                                  {showMaskedBForm
+                                    ? s.bFormCnic.replace(/^(\d{5})-?(\d{7})-?(\d)$/, '$1-*******-$3')
+                                    : s.bFormCnic}
+                                </span>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </td>
@@ -4170,14 +4196,33 @@ export const StudentsView = ({ currentInstitute }) => {
               </button>
               <button
                 type="button"
-                onClick={() => {
+                onClick={async () => {
                   window.print()
-                  toast.success('SLC Certificate printed.')
+                  if (selectedSLC?.id && selectedSLC.status !== 'Withdrawn') {
+                    try {
+                      await updateItem('students', selectedSLC.id, { 
+                        status: 'Withdrawn',
+                        slcIssuedAt: new Date().toISOString(),
+                        slcIssuedDate: new Date().toLocaleDateString()
+                      })
+                      if (DataService && DataService.logAuditEvent) {
+                        DataService.logAuditEvent({
+                          action: `Issued SLC Certificate and marked status Withdrawn for ${selectedSLC.name} (${selectedSLC.rollNumber})`,
+                          category: 'Students'
+                        })
+                      }
+                      toast.success('SLC Certificate printed. Student marked as Withdrawn.')
+                    } catch (err) {
+                      console.error('Failed to update student status on SLC:', err)
+                    }
+                  } else {
+                    toast.success('SLC Certificate printed.')
+                  }
                 }}
                 className="px-4 py-2 text-xs font-bold text-white bg-amber-700 hover:bg-amber-800 rounded-lg cursor-pointer flex items-center gap-1.5"
               >
                 <Printer className="w-3.5 h-3.5" />
-                <span>Print SLC Certificate</span>
+                <span>Print SLC & Mark Withdrawn</span>
               </button>
             </div>
           </div>

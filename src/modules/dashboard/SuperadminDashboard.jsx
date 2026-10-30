@@ -396,7 +396,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
     const targetInstIds = new Set(targetInstList.map(i => String(i.id)))
     
     // Count enrolled students belonging to target institutes from live collection
-    const liveStudentsCount = (students || []).filter(s => !s.instituteId || targetInstIds.has(String(s.instituteId))).length
+    const liveStudentsCount = selectedTierFilter === 'all' ? (students || []).length : (students || []).filter(s => !s.instituteId || targetInstIds.has(String(s.instituteId))).length
     
     // Sum campus student numbers from institute profiles with string sanitization
     const instStudentsCount = targetInstList.reduce((acc, i) => {
@@ -419,10 +419,10 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
       return `${filteredInstitutes.length} ${currentFilterConfig.badge} Campuses`
     }
     if (displayTotalStudents > 0) {
-      return `${displayActiveCampuses} Active Wings`
+      return `${displayTotalStudents.toLocaleString()} Enrolled`
     }
     return '0 Enrolled'
-  }, [selectedTierFilter, currentFilterConfig, filteredInstitutes, displayTotalStudents, displayActiveCampuses])
+  }, [selectedTierFilter, currentFilterConfig, filteredInstitutes, displayTotalStudents])
 
   const displayWingsValue = useMemo(() => {
     if (selectedTierFilter === 'all') {
