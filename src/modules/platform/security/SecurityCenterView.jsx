@@ -219,7 +219,40 @@ export const SecurityCenterView = () => {
 
   useEffect(() => {
     loadSecurityData()
+    // Periodic telemetry refresh every 30 seconds
+    const telemetryInterval = setInterval(() => {
+      loadSecurityData()
+    }, 30000)
+    return () => clearInterval(telemetryInterval)
   }, [loadSecurityData])
+
+  // Export login history audit trail as CSV
+  const handleExportHistoryCSV = () => {
+    if (!filteredHistory || filteredHistory.length === 0) {
+      toast.info('No login history records to export.')
+      return
+    }
+
+    const headers = ['Timestamp', 'User Email', 'IP Address', 'Device/Client', 'Location', 'Status']
+    const rows = filteredHistory.map(item => [
+      `"${(item.timestamp ? new Date(item.timestamp).toISOString() : '').replace(/"/g, '""')}"`,
+      `"${(item.email || '').replace(/"/g, '""')}"`,
+      `"${(item.ip || '').replace(/"/g, '""')}"`,
+      `"${(item.device || '').replace(/"/g, '""')}"`,
+      `"${(item.location || 'Pakistan').replace(/"/g, '""')}"`,
+      `"${(item.status || 'SUCCESS').replace(/"/g, '""')}"`
+    ])
+
+    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n')
+    const encodedUri = encodeURI(csvContent)
+    const link = document.createElement('a')
+    link.setAttribute('href', encodedUri)
+    link.setAttribute('download', `security_login_history_${new Date().toISOString().split('T')[0]}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    toast.success(`Exported ${filteredHistory.length} audit trail records to CSV.`)
+  }
 
   // Helper: Copy IP to clipboard
   const handleCopyIp = (ipAddress) => {
@@ -276,6 +309,15 @@ export const SecurityCenterView = () => {
   // Save Security Policies
   const handleSavePolicy = async (e) => {
     e.preventDefault()
+    if (activeTab === 'allowlist' && policy?.ipAllowlist) {
+      const items = policy.ipAllowlist.split(',').map(s => s.trim()).filter(Boolean)
+      const ipPattern = /^(\d{1,3}\.){3}\d{1,3}(\/([0-9]|[1-2][0-9]|3[0-2]))?$/
+      const ipv6Pattern = /^([0-9a-fA-F]{0,4}:){1,7}[0-9a-fA-F]{0,4}(\/\d{1,3})?$/
+      const invalid = items.filter(ip => ip !== 'localhost' && !ipPattern.test(ip) && !ipv6Pattern.test(ip))
+      if (invalid.length > 0) {
+        toast.warning(`Notice: "${invalid.join(', ')}" does not match standard IPv4/IPv6/CIDR syntax. Please verify to prevent administrative lockout.`)
+      }
+    }
     try {
       if (SecurityService?.saveSecurityPolicy) {
         await SecurityService.saveSecurityPolicy(policy)
@@ -687,6 +729,15 @@ export const SecurityCenterView = () => {
                 <option value="SUCCESS">Success Only</option>
                 <option value="FAILED">Failed / Blocked Only</option>
               </select>
+              <button
+                type="button"
+                onClick={handleExportHistoryCSV}
+                className="px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-semibold shadow-2xs transition-colors flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                title="Export Login History to CSV"
+              >
+                <Download className="w-3.5 h-3.5 text-purple-600" />
+                <span>Export CSV</span>
+              </button>
             </div>
           </div>
 

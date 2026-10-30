@@ -440,10 +440,10 @@ const AppContent = () => {
                   {superadminRoute === 'audit-logs' && <AuditLogsView />}
                   {superadminRoute === 'announcements' && <NoticeBroadcasterView />}
                   {superadminRoute === 'users-all' && (
-                    <UsersManagementView defaultTab="all" />
+                    <UsersManagementView defaultTab="all" onRouteChange={setSuperadminRoute} />
                   )}
                   {superadminRoute === 'users-roles' && (
-                    <UsersManagementView defaultTab="roles" />
+                    <UsersManagementView defaultTab="roles" onRouteChange={setSuperadminRoute} />
                   )}
 
                   {/* Pick 1: Students Central Governance */}

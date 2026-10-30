@@ -21,6 +21,7 @@ import {
   GraduationCap, 
   HeartHandshake, 
   ChevronRight, 
+  ChevronLeft,
   ChevronDown, 
   ChevronUp, 
   Info, 
@@ -29,25 +30,90 @@ import {
   AlertCircle, 
   Settings, 
   Eye, 
+  EyeOff,
   MessageCircle, 
   ExternalLink,
   Download,
   X,
   Building2,
   Sparkles,
-  Copy
+  Copy,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Filter,
+  Lock
 } from 'lucide-react'
 import { useAppData } from '../../context/AppDataContext'
+import { hashPassword } from '../../context/AuthContext'
 import { SYSTEM_ROLES, DEFAULT_RBAC_PERMISSIONS, getRoleMeta } from '../../constants/systemRoles'
 import Modal from '../../components/common/Modal'
 
-export const UsersManagementView = ({ defaultTab = 'all' }) => {
+// Export helper for external modules to check active permissions
+export const hasPermission = (permId, role) => {
+  if (role === 'superadmin') return true
+  try {
+    const saved = localStorage.getItem('edu_sms_rbac_permissions')
+    if (saved) {
+      const perms = JSON.parse(saved)
+      const target = perms.find(p => p.id === permId)
+      if (target && typeof target[role] === 'boolean') {
+        return target[role]
+      }
+    }
+  } catch (e) {}
+  const fallback = DEFAULT_RBAC_PERMISSIONS.find(p => p.id === permId)
+  return fallback ? !!fallback[role] : false
+}
+
+export const UsersManagementView = ({ defaultTab = 'all', onRouteChange }) => {
   const { users = [], stats, addItem, updateItem, deleteItem, institutes = [] } = useAppData()
   const [activeTab, setActiveTab] = useState(defaultTab) // 'all' | 'roles'
   const [searchTerm, setSearchTerm] = useState('')
   const [roleFilter, setRoleFilter] = useState('ALL')
   const [statusFilter, setStatusFilter] = useState('ACTIVE') // Default to active users only
   
+  // Table sorting & pagination states
+  const [sortField, setSortField] = useState('name')
+  const [sortDirection, setSortDirection] = useState('asc')
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
+
+  // RBAC search & filter states
+  const [rbacSearchQuery, setRbacSearchQuery] = useState('')
+  const [rbacCategoryFilter, setRbacCategoryFilter] = useState('ALL')
+
+  // Password visibility toggle in user modal
+  const [showModalPassword, setShowModalPassword] = useState(false)
+
+  // Sync activeTab with defaultTab prop from parent router
+  useEffect(() => {
+    if (defaultTab && defaultTab !== activeTab) {
+      setActiveTab(defaultTab)
+    }
+  }, [defaultTab])
+
+  // Reset pagination when search or filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, roleFilter, statusFilter])
+
+  const handleTabChange = (tabKey) => {
+    setActiveTab(tabKey)
+    if (typeof onRouteChange === 'function') {
+      onRouteChange(tabKey === 'roles' ? 'users-roles' : 'users-all')
+    }
+  }
+
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortDirection(prev => (prev === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortField(field)
+      setSortDirection('asc')
+    }
+  }
+
   // Expanded role specifications state (embedded directly inside each individual role card)
   const [expandedRoles, setExpandedRoles] = useState({})
 
@@ -65,7 +131,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
   const [dropdownCoords, setDropdownCoords] = useState(null)
   const dropdownRef = useRef(null)
 
-  // 1. User filtering logic (declared BEFORE activeUser to prevent TDZ error)
+  // 1. User filtering logic
   const filtered = useMemo(() => {
     return (users || []).filter(u => {
       const q = searchTerm.toLowerCase().trim()
@@ -88,7 +154,35 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
     })
   }, [users, searchTerm, roleFilter, statusFilter])
 
-  // 2. Active user for floating actions portal (completely safe from TDZ)
+  // 2. Sorting logic
+  const sortedUsers = useMemo(() => {
+    const list = [...filtered]
+    list.sort((a, b) => {
+      let valA = (a[sortField] || '').toString().toLowerCase()
+      let valB = (b[sortField] || '').toString().toLowerCase()
+
+      if (sortField === 'role') {
+        const metaA = getRoleMeta(a.role)?.shortName || a.role || ''
+        const metaB = getRoleMeta(b.role)?.shortName || b.role || ''
+        valA = metaA.toLowerCase()
+        valB = metaB.toLowerCase()
+      }
+
+      if (valA < valB) return sortDirection === 'asc' ? -1 : 1
+      if (valA > valB) return sortDirection === 'asc' ? 1 : -1
+      return 0
+    })
+    return list
+  }, [filtered, sortField, sortDirection])
+
+  // 3. Pagination calculation
+  const totalPages = Math.max(1, Math.ceil(sortedUsers.length / itemsPerPage))
+  const paginatedUsers = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage
+    return sortedUsers.slice(start, start + itemsPerPage)
+  }, [sortedUsers, currentPage, itemsPerPage])
+
+  // 4. Active user for floating actions portal
   const activeUser = useMemo(() => {
     if (!activeDropdownUserId) return null
     return (users || []).find(u => u.id === activeDropdownUserId) || (filtered || []).find(u => u.id === activeDropdownUserId) || null
@@ -143,7 +237,6 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
     }
 
     const handleScrollOrResize = (e) => {
-      // Do not close dropdown if scroll event originated inside dropdown menu itself
       if (
         e?.type === 'scroll' &&
         dropdownRef.current &&
@@ -179,7 +272,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
   const calculateDropdownStyle = () => {
     if (!dropdownCoords || typeof window === 'undefined') return {}
 
-    const isMobile = window.innerWidth < 640
+    const isMobile = window.innerWidth < 768
     if (isMobile) {
       return {
         position: 'fixed',
@@ -193,7 +286,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
     }
 
     const MENU_WIDTH = 264
-    const FULL_HEIGHT = 450 // Full height accommodating all 8 action items comfortably
+    const FULL_HEIGHT = 450
     const windowH = window.innerHeight
     const spaceBelow = windowH - dropdownCoords.bottom - 16
     const spaceAbove = dropdownCoords.top - 16
@@ -249,6 +342,16 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
     setActiveDropdownUserId(null)
   }
 
+  // Neutralize CSV Formula Injection (=, +, -, @, \t, \r)
+  const sanitizeCSV = (val) => {
+    if (val === null || val === undefined) return '""'
+    let str = String(val)
+    if (/^[=\+\-@\t\r]/.test(str)) {
+      str = "'" + str
+    }
+    return `"${str.replace(/"/g, '""')}"`
+  }
+
   // CSV Export Handler
   const handleExportUsersCSV = () => {
     if (!users || users.length === 0) {
@@ -257,15 +360,15 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
     }
 
     const headers = ['User ID', 'Full Name', 'Email', 'Role', 'Campus Affiliation', 'Phone Contact', 'Status', 'Last Login']
-    const rows = filtered.map(u => [
-      `"${u.id || ''}"`,
-      `"${(u.name || '').replace(/"/g, '""')}"`,
-      `"${(u.email || '').replace(/"/g, '""')}"`,
-      `"${(u.role || '').replace(/"/g, '""')}"`,
-      `"${(u.institute || 'Global HQ').replace(/"/g, '""')}"`,
-      `"${(u.phone || '').replace(/"/g, '""')}"`,
-      `"${u.status || 'Active'}"`,
-      `"${u.lastLogin || 'Never'}"`
+    const rows = sortedUsers.map(u => [
+      sanitizeCSV(u.id || ''),
+      sanitizeCSV(u.name || ''),
+      sanitizeCSV(u.email || ''),
+      sanitizeCSV(u.role || ''),
+      sanitizeCSV(u.institute || 'Global HQ'),
+      sanitizeCSV(u.phone || ''),
+      sanitizeCSV(u.status || 'Active'),
+      sanitizeCSV(u.lastLogin || 'Never')
     ])
 
     const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n')
@@ -276,7 +379,38 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
-    triggerToast(`Exported ${filtered.length} users to CSV.`)
+    triggerToast(`Exported ${sortedUsers.length} users to CSV.`)
+  }
+
+  // Export RBAC Matrix to CSV
+  const handleExportRBACCSV = () => {
+    if (!permissions || permissions.length === 0) {
+      triggerToast('No permission records available to export.')
+      return
+    }
+
+    const headers = ['Permission ID', 'Category', 'Permission Label', 'Superadmin', 'Institute Admin', 'Teacher', 'Accountant', 'Student', 'Parent']
+    const rows = filteredPermissions.map(p => [
+      sanitizeCSV(p.id),
+      sanitizeCSV(p.category),
+      sanitizeCSV(p.label),
+      'TRUE',
+      p.institute_admin ? 'TRUE' : 'FALSE',
+      p.teacher ? 'TRUE' : 'FALSE',
+      p.accountant ? 'TRUE' : 'FALSE',
+      p.student ? 'TRUE' : 'FALSE',
+      p.parent ? 'TRUE' : 'FALSE'
+    ])
+
+    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n')
+    const encodedUri = encodeURI(csvContent)
+    const link = document.createElement('a')
+    link.setAttribute('href', encodedUri)
+    link.setAttribute('download', `rbac_permissions_matrix_${new Date().toISOString().split('T')[0]}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    triggerToast(`Exported ${filteredPermissions.length} RBAC permissions to CSV.`)
   }
 
   const [formData, setFormData] = useState({
@@ -292,7 +426,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
   // Roles to display in Educational System Roles Directory (excluding superadmin card)
   const directoryRoles = useMemo(() => SYSTEM_ROLES.filter(r => r.id !== 'superadmin'), [])
 
-  // Roles & Permissions matrix state (with local storage persistence)
+  // Roles & Permissions matrix state (with local storage persistence & custom event broadcast)
   const [permissions, setPermissions] = useState(() => {
     try {
       const saved = localStorage.getItem('edu_sms_rbac_permissions')
@@ -303,14 +437,27 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
     return DEFAULT_RBAC_PERMISSIONS
   })
 
+  // Unique categories in RBAC matrix
+  const rbacCategories = useMemo(() => {
+    return Array.from(new Set(permissions.map(p => p.category))).filter(Boolean)
+  }, [permissions])
+
+  // Filtered RBAC permissions
+  const filteredPermissions = useMemo(() => {
+    return permissions.filter(p => {
+      const q = (rbacSearchQuery || '').toLowerCase().trim()
+      const matchesSearch = !q || p.label.toLowerCase().includes(q) || (p.category || '').toLowerCase().includes(q)
+      const matchesCategory = rbacCategoryFilter === 'ALL' || p.category === rbacCategoryFilter
+      return matchesSearch && matchesCategory
+    })
+  }, [permissions, rbacSearchQuery, rbacCategoryFilter])
+
   const togglePermission = (permId, role) => {
-    // 1. Superadmin permissions remain active by default for platform governance
     if (role === 'superadmin') {
       triggerToast('Superadmin root privileges remain active by default for platform governance.')
       return
     }
 
-    // 2. Superadmin has full authority to modify permissions for all roles
     setPermissions(prev => {
       const next = prev.map(p => {
         if (p.id === permId) {
@@ -324,6 +471,9 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
       })
       try {
         localStorage.setItem('edu_sms_rbac_permissions', JSON.stringify(next))
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('edu_sms_permissions_updated', { detail: next }))
+        }
       } catch (e) {}
       return next
     })
@@ -334,6 +484,9 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
       setPermissions(DEFAULT_RBAC_PERMISSIONS)
       try {
         localStorage.removeItem('edu_sms_rbac_permissions')
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('edu_sms_permissions_updated', { detail: DEFAULT_RBAC_PERMISSIONS }))
+        }
       } catch (e) {}
       triggerToast('Permissions successfully restored to system defaults.')
     }
@@ -341,6 +494,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
 
   const openAddModal = () => {
     setEditingUser(null)
+    setShowModalPassword(false)
     setFormData({
       name: '',
       email: '',
@@ -355,6 +509,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
 
   const openEditModal = (u) => {
     setEditingUser(u)
+    setShowModalPassword(false)
     setFormData({
       name: u.name,
       email: u.email,
@@ -369,10 +524,38 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!formData.name || !formData.email) return
+    const cleanName = (formData.name || '').trim()
+    const cleanEmail = (formData.email || '').trim().toLowerCase()
+
+    if (!cleanName || !cleanEmail) {
+      triggerToast('Please provide both full name and email address.')
+      return
+    }
+
+    // Strict RFC email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(cleanEmail)) {
+      triggerToast('Please enter a valid RFC-compliant email address (e.g. user@school.edu).')
+      return
+    }
+
+    // Check for duplicate email collision
+    const emailExists = (users || []).some(u => 
+      (u.email || '').trim().toLowerCase() === cleanEmail && 
+      (!editingUser || u.id !== editingUser.id)
+    )
+    if (emailExists) {
+      triggerToast(`Error: An account with email "${cleanEmail}" already exists. Please use a distinct email.`)
+      return
+    }
 
     try {
-      const payload = { ...formData }
+      const payload = { 
+        ...formData,
+        name: cleanName,
+        email: cleanEmail
+      }
+
       if (payload.password) {
         payload.passwordHash = await hashPassword(payload.password)
       } else if (!editingUser) {
@@ -385,10 +568,10 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
           delete payload.password
         }
         await updateItem('users', editingUser.id, payload)
-        triggerToast(`User "${formData.name}" profile updated successfully.`)
+        triggerToast(`User "${cleanName}" profile updated successfully.`)
       } else {
         await addItem('users', payload)
-        triggerToast(`User "${formData.name}" registered with secure SHA-256 credentials.`)
+        triggerToast(`User "${cleanName}" registered with secure SHA-256 credentials.`)
       }
       setIsModalOpen(false)
     } catch (err) {
@@ -432,8 +615,6 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
         return 'bg-slate-50 text-slate-700 border-slate-200'
     }
   }
-
-
 
   return (
     <div className="p-3 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
@@ -482,7 +663,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
       <div className="bg-white p-1.5 rounded-2xl border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
         <nav className="flex space-x-2 overflow-x-auto text-xs sm:text-sm font-medium [scrollbar-width:none]">
           <button
-            onClick={() => setActiveTab('all')}
+            onClick={() => handleTabChange('all')}
             className={`py-2 px-4 rounded-xl flex items-center gap-2 transition-all cursor-pointer shrink-0 ${
               activeTab === 'all'
                 ? 'bg-[#f5eeff] text-purple-700 font-bold shadow-2xs'
@@ -499,7 +680,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
             </span>
           </button>
           <button
-            onClick={() => setActiveTab('roles')}
+            onClick={() => handleTabChange('roles')}
             className={`py-2 px-4 rounded-xl flex items-center gap-2 transition-all cursor-pointer shrink-0 ${
               activeTab === 'roles'
                 ? 'bg-[#f5eeff] text-purple-700 font-bold shadow-2xs'
@@ -704,17 +885,77 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-semibold border-b border-slate-200">
                 <tr>
-                  <th className="px-6 py-4 whitespace-nowrap min-w-[220px]">User Details</th>
-                  <th className="px-6 py-4 whitespace-nowrap min-w-[150px]">System Role</th>
-                  <th className="px-6 py-4 whitespace-nowrap min-w-[180px]">Institute Affiliation</th>
-                  <th className="px-6 py-4 whitespace-nowrap min-w-[150px]">Phone Contact</th>
-                  <th className="px-6 py-4 text-center whitespace-nowrap min-w-[110px]">Status</th>
+                  <th 
+                    onClick={() => handleSort('name')} 
+                    className="px-6 py-4 whitespace-nowrap min-w-[220px] cursor-pointer hover:text-purple-700 select-none transition-colors"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span>User Details</span>
+                      {sortField === 'name' ? (
+                        sortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-purple-600" /> : <ArrowDown className="w-3.5 h-3.5 text-purple-600" />
+                      ) : (
+                        <ArrowUpDown className="w-3 h-3 text-slate-300" />
+                      )}
+                    </div>
+                  </th>
+                  <th 
+                    onClick={() => handleSort('role')} 
+                    className="px-6 py-4 whitespace-nowrap min-w-[150px] cursor-pointer hover:text-purple-700 select-none transition-colors"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span>System Role</span>
+                      {sortField === 'role' ? (
+                        sortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-purple-600" /> : <ArrowDown className="w-3.5 h-3.5 text-purple-600" />
+                      ) : (
+                        <ArrowUpDown className="w-3 h-3 text-slate-300" />
+                      )}
+                    </div>
+                  </th>
+                  <th 
+                    onClick={() => handleSort('institute')} 
+                    className="px-6 py-4 whitespace-nowrap min-w-[180px] cursor-pointer hover:text-purple-700 select-none transition-colors"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span>Institute Affiliation</span>
+                      {sortField === 'institute' ? (
+                        sortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-purple-600" /> : <ArrowDown className="w-3.5 h-3.5 text-purple-600" />
+                      ) : (
+                        <ArrowUpDown className="w-3 h-3 text-slate-300" />
+                      )}
+                    </div>
+                  </th>
+                  <th 
+                    onClick={() => handleSort('phone')} 
+                    className="px-6 py-4 whitespace-nowrap min-w-[150px] cursor-pointer hover:text-purple-700 select-none transition-colors"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span>Phone Contact</span>
+                      {sortField === 'phone' ? (
+                        sortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-purple-600" /> : <ArrowDown className="w-3.5 h-3.5 text-purple-600" />
+                      ) : (
+                        <ArrowUpDown className="w-3 h-3 text-slate-300" />
+                      )}
+                    </div>
+                  </th>
+                  <th 
+                    onClick={() => handleSort('status')} 
+                    className="px-6 py-4 text-center whitespace-nowrap min-w-[110px] cursor-pointer hover:text-purple-700 select-none transition-colors"
+                  >
+                    <div className="flex items-center justify-center gap-1.5">
+                      <span>Status</span>
+                      {sortField === 'status' ? (
+                        sortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-purple-600" /> : <ArrowDown className="w-3.5 h-3.5 text-purple-600" />
+                      ) : (
+                        <ArrowUpDown className="w-3 h-3 text-slate-300" />
+                      )}
+                    </div>
+                  </th>
                   <th className="px-6 py-4 text-right whitespace-nowrap min-w-[100px]">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filtered.length > 0 ? (
-                  filtered.map((u) => {
+                {paginatedUsers.length > 0 ? (
+                  paginatedUsers.map((u) => {
                     const roleMeta = getRoleMeta(u.role)
                     return (
                       <tr key={u.id} className={`hover:bg-slate-50/70 transition-colors ${activeDropdownUserId === u.id ? "relative z-30" : ""}`}>
@@ -834,8 +1075,8 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
 
           {/* Mobile Users Cards View (Visible on screens < md) */}
           <div className="block md:hidden space-y-3">
-            {filtered.length > 0 ? (
-              filtered.map((u) => {
+            {paginatedUsers.length > 0 ? (
+              paginatedUsers.map((u) => {
                 const roleMeta = getRoleMeta(u.role)
                 const isActive = (u.status || 'Active').toLowerCase() === 'active'
 
@@ -939,10 +1180,64 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
             )}
           </div>
 
+          {/* Pagination Controls */}
+          {sortedUsers.length > 0 && (
+            <div className="bg-white px-4 py-3 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="text-xs text-slate-500 font-medium">
+                Showing <strong className="text-slate-800">{(currentPage - 1) * itemsPerPage + 1}</strong> to <strong className="text-slate-800">{Math.min(currentPage * itemsPerPage, sortedUsers.length)}</strong> of <strong className="text-slate-800">{sortedUsers.length}</strong> users
+              </div>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Previous</span>
+                </button>
+
+                <div className="flex items-center gap-1 px-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                    .map((pageNum, idx, arr) => {
+                      const showEllipsisBefore = idx > 0 && pageNum - arr[idx - 1] > 1
+                      return (
+                        <React.Fragment key={pageNum}>
+                          {showEllipsisBefore && <span className="px-1 text-slate-400 text-xs">...</span>}
+                          <button
+                            type="button"
+                            onClick={() => setCurrentPage(pageNum)}
+                            className={`w-7 h-7 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                              currentPage === pageNum
+                                ? 'bg-purple-600 text-white shadow-xs'
+                                : 'text-slate-600 hover:bg-slate-100'
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        </React.Fragment>
+                      )
+                    })}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
+                >
+                  <span>Next</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Clean Directory Footer Summary */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-400 pt-1 px-1">
             <span>
-              Showing {filtered.length} of {users.length} registered platform users
+              Showing {sortedUsers.length} of {users.length} registered platform users
             </span>
             <span className="text-[11px] text-slate-400">
               Role-Based Access Control Active · Multi-Campus Directory
@@ -960,7 +1255,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
             />
           )}
 
-          {/* Floating Portal Action Dropdown Menu (Mounted to document.body to eliminate table clipping) */}
+          {/* Floating Portal Action Dropdown Menu */}
           {activeDropdownUserId && activeUser && dropdownCoords && typeof document !== 'undefined' && createPortal(
             <div
               ref={dropdownRef}
@@ -998,7 +1293,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
                 </div>
               </div>
 
-              {/* Scrollable Action Items List with modern sleek scrollbar */}
+              {/* Scrollable Action Items List */}
               <div 
                 className="flex-1 overflow-y-auto overscroll-contain p-1.5 pb-2.5 space-y-0.5 modal-scrollbar"
                 style={{ overscrollBehavior: 'contain' }}
@@ -1162,7 +1457,7 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
       ) : (
         /* Roles & Permissions Matrix Tab */
         <div className="space-y-6">
-          {/* Role Architecture Directory (6 Standard Roles - Self-Contained Specifications Inside Each Role) */}
+          {/* Role Architecture Directory */}
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
@@ -1197,7 +1492,6 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
                         : 'border-slate-200/80 hover:border-purple-200 shadow-2xs hover:shadow-xs'
                     }`}
                   >
-                    {/* Role Header Strip */}
                     <div
                       className={`p-4 sm:p-5 flex items-start sm:items-center justify-between gap-3 transition-colors ${
                         isExpanded ? 'bg-slate-50/60' : 'bg-white'
@@ -1228,7 +1522,6 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
                         </div>
                       </div>
 
-                      {/* Prominent Eye Action (Sole Inspection Trigger) */}
                       <div className="flex items-center shrink-0">
                         <button
                           type="button"
@@ -1247,10 +1540,8 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
                       </div>
                     </div>
 
-                    {/* Role Specifications Embedded Directly INSIDE This Exact Card */}
                     {isExpanded && (
                       <div className="px-4 pb-5 sm:px-5 sm:pb-5 pt-0 border-t border-slate-100 space-y-4 animate-in fade-in duration-200">
-                        {/* Scope of Authority Banner */}
                         <div className="mt-4 p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
                           <div>
                             <span className="font-bold text-slate-700">Scope of Authority: </span>
@@ -1261,14 +1552,11 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
                           </div>
                         </div>
 
-                        {/* Summary */}
                         <p className="text-xs text-slate-600 leading-relaxed">
                           {r.summary}
                         </p>
 
-                        {/* Two Columns: Responsibilities & Boundaries */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
-                          {/* Authorized Responsibilities & Privileges */}
                           <div className="bg-emerald-50/50 p-3.5 rounded-xl border border-emerald-100/80 space-y-2">
                             <h4 className="text-[11px] font-bold text-emerald-900 uppercase tracking-wider flex items-center gap-1.5">
                               <CheckCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
@@ -1284,7 +1572,6 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
                             </ul>
                           </div>
 
-                          {/* Access Boundaries & Governance Safeguards */}
                           <div className="bg-amber-50/50 p-3.5 rounded-xl border border-amber-100/80 space-y-2">
                             <h4 className="text-[11px] font-bold text-amber-900 uppercase tracking-wider flex items-center gap-1.5">
                               <ShieldCheck className="w-3.5 h-3.5 text-amber-600 shrink-0" />
@@ -1301,7 +1588,6 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
                           </div>
                         </div>
 
-                        {/* Bottom Collapse Strip */}
                         <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-[11px]">
                           <span className="text-slate-400">
                             Official platform governance specifications for {r.name}
@@ -1354,9 +1640,9 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
             </div>
           </div>
 
-          {/* Role-Based Access Control (RBAC) Interactive Matrix */}
+          {/* Granular RBAC Matrix */}
           <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
-            <div className="p-5 border-b border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="p-5 border-b border-slate-100 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
               <div>
                 <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
                   <Sliders className="w-4 h-4 text-purple-600" />
@@ -1366,17 +1652,55 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
                   Configure feature privileges across all system roles. Superadmin holds root privileges by default.
                 </p>
               </div>
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
-                <Check className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Live Dynamic Enforcement</span>
-              </span>
+
+              {/* RBAC Search & Filter Toolbar */}
+              <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
+                <div className="relative flex-1 sm:w-56">
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Search permissions..."
+                    value={rbacSearchQuery}
+                    onChange={(e) => setRbacSearchQuery(e.target.value)}
+                    className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 bg-slate-50/60"
+                  />
+                  {rbacSearchQuery && (
+                    <button onClick={() => setRbacSearchQuery('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer">
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+
+                <select
+                  value={rbacCategoryFilter}
+                  onChange={(e) => setRbacCategoryFilter(e.target.value)}
+                  className="px-2.5 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                >
+                  <option value="ALL">All Categories</option>
+                  {rbacCategories.map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+
+                <button
+                  type="button"
+                  onClick={handleExportRBACCSV}
+                  className="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-semibold shadow-2xs transition-colors flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                  title="Export RBAC Matrix to CSV"
+                >
+                  <Download className="w-3.5 h-3.5 text-purple-600" />
+                  <span>Export Matrix</span>
+                </button>
+              </div>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto relative">
               <table className="w-full text-left text-xs min-w-[850px]">
                 <thead className="bg-slate-50 text-slate-600 uppercase font-bold border-b border-slate-200">
                   <tr>
-                    <th className="px-6 py-4 w-72">Permission Policy</th>
+                    <th className="px-6 py-4 w-72 sticky left-0 bg-slate-50 z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)]">
+                      Permission Policy
+                    </th>
                     <th className="px-4 py-4 text-center">
                       <div className="flex flex-col items-center">
                         <span className="text-purple-700 font-bold">Superadmin</span>
@@ -1391,108 +1715,118 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {permissions.map((p) => (
-                    <tr key={p.id} className="hover:bg-slate-50/70 transition-colors">
-                      <td className="px-6 py-3.5">
-                        <div className="font-bold text-slate-800">{p.label}</div>
-                        <div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold flex items-center gap-1.5 mt-0.5">
-                          <span>{p.category}</span>
-                        </div>
-                      </td>
-                      
-                      {/* Superadmin: Active by Default */}
-                      <td className="px-4 py-3.5 text-center">
-                        <button
-                          type="button"
-                          onClick={() => togglePermission(p.id, 'superadmin')}
-                          className="w-7 h-7 rounded-lg inline-flex items-center justify-center bg-purple-600 text-white shadow-xs hover:bg-purple-700 transition-all border border-purple-700 cursor-default"
-                          title="Superadmin Root Access (Active by Default)"
-                        >
-                          <Check className="w-4 h-4 stroke-[3]" />
-                        </button>
-                      </td>
+                  {filteredPermissions.length > 0 ? (
+                    filteredPermissions.map((p) => (
+                      <tr key={p.id} className="hover:bg-slate-50/70 transition-colors">
+                        <td className="px-6 py-3.5 sticky left-0 bg-white z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)]">
+                          <div className="font-bold text-slate-800">{p.label}</div>
+                          <div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold flex items-center gap-1.5 mt-0.5">
+                            <span>{p.category}</span>
+                          </div>
+                        </td>
+                        
+                        {/* Superadmin: Active by Default */}
+                        <td className="px-4 py-3.5 text-center">
+                          <button
+                            type="button"
+                            onClick={() => togglePermission(p.id, 'superadmin')}
+                            className="w-7 h-7 rounded-lg inline-flex items-center justify-center bg-purple-600 text-white shadow-xs hover:bg-purple-700 transition-all border border-purple-700 cursor-default"
+                            title="Superadmin Root Access (Active by Default)"
+                          >
+                            <Check className="w-4 h-4 stroke-[3]" />
+                          </button>
+                        </td>
 
-                      {/* Institute Admin */}
-                      <td className="px-4 py-3.5 text-center">
-                        <button
-                          type="button"
-                          onClick={() => togglePermission(p.id, 'institute_admin')}
-                          className={`w-7 h-7 rounded-lg inline-flex items-center justify-center transition-all cursor-pointer ${
-                            p.institute_admin 
-                              ? 'bg-purple-600 text-white shadow-xs hover:bg-purple-700' 
-                              : 'bg-slate-100 text-slate-300 hover:bg-slate-200 hover:text-slate-500'
-                          }`}
-                          title={`Institute Admin: ${p.institute_admin ? 'Granted' : 'Revoked'}`}
-                        >
-                          <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-                        </button>
-                      </td>
+                        {/* Institute Admin */}
+                        <td className="px-4 py-3.5 text-center">
+                          <button
+                            type="button"
+                            onClick={() => togglePermission(p.id, 'institute_admin')}
+                            className={`w-7 h-7 rounded-lg inline-flex items-center justify-center transition-all cursor-pointer ${
+                              p.institute_admin 
+                                ? 'bg-purple-600 text-white shadow-xs hover:bg-purple-700' 
+                                : 'bg-slate-100 text-slate-300 hover:bg-slate-200 hover:text-slate-500'
+                            }`}
+                            title={`Institute Admin: ${p.institute_admin ? 'Granted' : 'Revoked'}`}
+                          >
+                            <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                          </button>
+                        </td>
 
-                      {/* Teacher */}
-                      <td className="px-4 py-3.5 text-center">
-                        <button
-                          type="button"
-                          onClick={() => togglePermission(p.id, 'teacher')}
-                          className={`w-7 h-7 rounded-lg inline-flex items-center justify-center transition-all cursor-pointer ${
-                            p.teacher 
-                              ? 'bg-emerald-600 text-white shadow-xs hover:bg-emerald-700' 
-                              : 'bg-slate-100 text-slate-300 hover:bg-slate-200 hover:text-slate-500'
-                          }`}
-                          title={`Teacher: ${p.teacher ? 'Granted' : 'Revoked'}`}
-                        >
-                          <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-                        </button>
-                      </td>
+                        {/* Teacher */}
+                        <td className="px-4 py-3.5 text-center">
+                          <button
+                            type="button"
+                            onClick={() => togglePermission(p.id, 'teacher')}
+                            className={`w-7 h-7 rounded-lg inline-flex items-center justify-center transition-all cursor-pointer ${
+                              p.teacher 
+                                ? 'bg-emerald-600 text-white shadow-xs hover:bg-emerald-700' 
+                                : 'bg-slate-100 text-slate-300 hover:bg-slate-200 hover:text-slate-500'
+                            }`}
+                            title={`Teacher: ${p.teacher ? 'Granted' : 'Revoked'}`}
+                          >
+                            <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                          </button>
+                        </td>
 
-                      {/* Accountant */}
-                      <td className="px-4 py-3.5 text-center">
-                        <button
-                          type="button"
-                          onClick={() => togglePermission(p.id, 'accountant')}
-                          className={`w-7 h-7 rounded-lg inline-flex items-center justify-center transition-all cursor-pointer ${
-                            p.accountant 
-                              ? 'bg-amber-600 text-white shadow-xs hover:bg-amber-700' 
-                              : 'bg-slate-100 text-slate-300 hover:bg-slate-200 hover:text-slate-500'
-                          }`}
-                          title={`Accountant: ${p.accountant ? 'Granted' : 'Revoked'}`}
-                        >
-                          <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-                        </button>
-                      </td>
+                        {/* Accountant */}
+                        <td className="px-4 py-3.5 text-center">
+                          <button
+                            type="button"
+                            onClick={() => togglePermission(p.id, 'accountant')}
+                            className={`w-7 h-7 rounded-lg inline-flex items-center justify-center transition-all cursor-pointer ${
+                              p.accountant 
+                                ? 'bg-amber-600 text-white shadow-xs hover:bg-amber-700' 
+                                : 'bg-slate-100 text-slate-300 hover:bg-slate-200 hover:text-slate-500'
+                            }`}
+                            title={`Accountant: ${p.accountant ? 'Granted' : 'Revoked'}`}
+                          >
+                            <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                          </button>
+                        </td>
 
-                      {/* Student */}
-                      <td className="px-4 py-3.5 text-center">
-                        <button
-                          type="button"
-                          onClick={() => togglePermission(p.id, 'student')}
-                          className={`w-7 h-7 rounded-lg inline-flex items-center justify-center transition-all cursor-pointer ${
-                            p.student 
-                              ? 'bg-indigo-600 text-white shadow-xs hover:bg-indigo-700' 
-                              : 'bg-slate-100 text-slate-300 hover:bg-slate-200 hover:text-slate-500'
-                          }`}
-                          title={`Student: ${p.student ? 'Granted' : 'Revoked'}`}
-                        >
-                          <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-                        </button>
-                      </td>
+                        {/* Student */}
+                        <td className="px-4 py-3.5 text-center">
+                          <button
+                            type="button"
+                            onClick={() => togglePermission(p.id, 'student')}
+                            className={`w-7 h-7 rounded-lg inline-flex items-center justify-center transition-all cursor-pointer ${
+                              p.student 
+                                ? 'bg-indigo-600 text-white shadow-xs hover:bg-indigo-700' 
+                                : 'bg-slate-100 text-slate-300 hover:bg-slate-200 hover:text-slate-500'
+                            }`}
+                            title={`Student: ${p.student ? 'Granted' : 'Revoked'}`}
+                          >
+                            <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                          </button>
+                        </td>
 
-                      {/* Parent */}
-                      <td className="px-4 py-3.5 text-center">
-                        <button
-                          type="button"
-                          onClick={() => togglePermission(p.id, 'parent')}
-                          className={`w-7 h-7 rounded-lg inline-flex items-center justify-center transition-all cursor-pointer ${
-                            p.parent 
-                              ? 'bg-cyan-600 text-white shadow-xs hover:bg-cyan-700' 
-                              : 'bg-slate-100 text-slate-300 hover:bg-slate-200 hover:text-slate-500'
-                          }`}
-                          title={`Parent: ${p.parent ? 'Granted' : 'Revoked'}`}
-                        >
-                          <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-                        </button>
+                        {/* Parent */}
+                        <td className="px-4 py-3.5 text-center">
+                          <button
+                            type="button"
+                            onClick={() => togglePermission(p.id, 'parent')}
+                            className={`w-7 h-7 rounded-lg inline-flex items-center justify-center transition-all cursor-pointer ${
+                              p.parent 
+                                ? 'bg-cyan-600 text-white shadow-xs hover:bg-cyan-700' 
+                                : 'bg-slate-100 text-slate-300 hover:bg-slate-200 hover:text-slate-500'
+                            }`}
+                            title={`Parent: ${p.parent ? 'Granted' : 'Revoked'}`}
+                          >
+                            <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={7} className="px-6 py-12 text-center text-slate-400">
+                        <Sliders className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                        <p className="text-sm font-semibold text-slate-700">No permissions match your search or filter</p>
+                        <p className="text-xs text-slate-400 mt-1">Try resetting the keyword or selecting "All Categories".</p>
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
@@ -1799,13 +2133,23 @@ export const UsersManagementView = ({ defaultTab = 'all' }) => {
           {!editingUser && (
             <div>
               <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Initial Password</label>
-              <input
-                type="text"
-                value={formData.password || 'Password123!'}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm font-mono"
-                placeholder="Initial temporary password"
-              />
+              <div className="relative">
+                <input
+                  type={showModalPassword ? 'text' : 'password'}
+                  value={formData.password || 'Password123!'}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="w-full px-3.5 py-2.5 pr-10 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm font-mono"
+                  placeholder="Initial temporary password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowModalPassword(!showModalPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 cursor-pointer"
+                  title={showModalPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showModalPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
               <p className="text-[11px] text-slate-400 mt-1">User will be prompted to reset password on first login.</p>
             </div>
           )}

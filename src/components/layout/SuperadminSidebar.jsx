@@ -448,12 +448,16 @@ export const SuperadminSidebar = ({
                 if (collapsed) setCollapsed(false)
                 setUsersOpen(!usersOpen)
               }}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-50/80 transition-colors cursor-pointer group"
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors cursor-pointer group ${
+                isUserRoute 
+                  ? 'bg-purple-50/70 text-purple-900 font-semibold shadow-2xs' 
+                  : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/80'
+              }`}
             >
               <div className="flex items-center gap-3">
-                <Users className="w-[18px] h-[18px] text-slate-400 group-hover:text-purple-600 transition-colors shrink-0" />
+                <Users className={`w-[18px] h-[18px] transition-colors shrink-0 ${isUserRoute ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'}`} />
                 {(!collapsed || isMobileOpen) && (
-                  <span className="font-medium text-slate-600 group-hover:text-slate-900">
+                  <span className={`font-medium ${isUserRoute ? 'text-purple-900 font-bold' : 'text-slate-600 group-hover:text-slate-900'}`}>
                     Users & Roles
                   </span>
                 )}

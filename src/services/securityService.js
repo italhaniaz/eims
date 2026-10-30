@@ -176,7 +176,10 @@ export const SecurityService = {
       return store.activeSessionsList
     }
 
-    // Default sessions representing active entities
+    // Build authentic initial sessions list based on real registered accounts
+    const realUsers = store.users || []
+    const iaUsers = realUsers.filter(u => u.role === 'institute_admin')
+    
     const defaultList = [
       {
         id: 'sess-superadmin-1',
@@ -188,32 +191,53 @@ export const SecurityService = {
         location: 'Lahore, Pakistan',
         startedAt: new Date(Date.now() - 3600000 * 1.5).toISOString(),
         isCurrent: true
-      },
-      {
-        id: 'sess-ia-1',
-        userEmail: 'admin.beacon@sms.edu',
-        userName: 'Beaconhouse Admin',
-        userRole: 'institute_admin',
-        instituteName: 'Beaconhouse Central High School',
-        ipAddress: '192.168.1.115',
-        deviceInfo: 'Firefox 125 (Windows NT 10.0)',
-        location: 'Lahore, Pakistan',
-        startedAt: new Date(Date.now() - 3600000 * 1.2).toISOString(),
-        isCurrent: false
-      },
-      {
-        id: 'sess-ia-2',
-        userEmail: 'city.model@sms.edu',
-        userName: 'City College Admin',
-        userRole: 'institute_admin',
-        instituteName: 'City School Model Town Campus',
-        ipAddress: '192.168.1.120',
-        deviceInfo: 'Edge 123 (Windows NT 10.0)',
-        location: 'Lahore, Pakistan',
-        startedAt: new Date(Date.now() - 3600000 * 0.5).toISOString(),
-        isCurrent: false
       }
     ]
+
+    iaUsers.slice(0, 3).forEach((ia, idx) => {
+      defaultList.push({
+        id: `sess-ia-${ia.id || idx + 1}`,
+        userEmail: ia.email || `admin.${idx}@sms.edu`,
+        userName: ia.name || 'Campus Principal',
+        userRole: 'institute_admin',
+        instituteName: ia.institute || 'Affiliated Campus',
+        ipAddress: `192.168.1.${110 + idx * 5}`,
+        deviceInfo: idx % 2 === 0 ? 'Firefox 125 (Windows NT 10.0)' : 'Edge 123 (Windows NT 10.0)',
+        location: 'Lahore, Pakistan',
+        startedAt: new Date(Date.now() - 3600000 * (0.5 + idx * 0.4)).toISOString(),
+        isCurrent: false
+      })
+    })
+
+    if (defaultList.length === 1) {
+      defaultList.push(
+        {
+          id: 'sess-ia-1',
+          userEmail: 'admin.beacon@sms.edu',
+          userName: 'Beaconhouse Admin',
+          userRole: 'institute_admin',
+          instituteName: 'Beaconhouse Central High School',
+          ipAddress: '192.168.1.115',
+          deviceInfo: 'Firefox 125 (Windows NT 10.0)',
+          location: 'Lahore, Pakistan',
+          startedAt: new Date(Date.now() - 3600000 * 1.2).toISOString(),
+          isCurrent: false
+        },
+        {
+          id: 'sess-ia-2',
+          userEmail: 'city.model@sms.edu',
+          userName: 'City College Admin',
+          userRole: 'institute_admin',
+          instituteName: 'City School Model Town Campus',
+          ipAddress: '192.168.1.120',
+          deviceInfo: 'Edge 123 (Windows NT 10.0)',
+          location: 'Lahore, Pakistan',
+          startedAt: new Date(Date.now() - 3600000 * 0.5).toISOString(),
+          isCurrent: false
+        }
+      )
+    }
+
     store.activeSessionsList = defaultList
     saveStoredData(store)
     return defaultList
@@ -231,6 +255,17 @@ export const SecurityService = {
     const store = getStoredData()
     store.activeSessionsList = (store.activeSessionsList || []).filter(s => s.id !== sessionId)
     saveStoredData(store)
+
+    if (typeof window !== 'undefined') {
+      try {
+        window.localStorage.setItem('edu_sms_session_revoked', JSON.stringify({
+          sessionId,
+          userEmail,
+          timestamp: Date.now()
+        }))
+        window.dispatchEvent(new CustomEvent('edu_sms_session_terminated', { detail: { sessionId, userEmail } }))
+      } catch (e) {}
+    }
 
     DataService.logAuditEvent(
       `Enforced remote session revocation and force-logout for ${userEmail || sessionId}`,
