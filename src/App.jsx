@@ -60,6 +60,10 @@ const LibraryView = lazyWithRetry(() => import('./modules/library/LibraryView'),
 const CertificatesView = lazyWithRetry(() => import('./modules/institute-admin/certificates/CertificatesView'), 'certificates-view')
 const LearningResourcesView = lazyWithRetry(() => import('./modules/institute-admin/learning/LearningResourcesView'), 'learning-resources-view')
 const StudentParentPortalView = lazyWithRetry(() => import('./modules/student-portal/StudentParentPortalView'), 'student-portal-view')
+const CampusInventoryView = lazyWithRetry(() => import('./modules/institute-admin/inventory/CampusInventoryView'), 'campus-inventory-view')
+const CampusEventsCalendarView = lazyWithRetry(() => import('./modules/institute-admin/events/CampusEventsCalendarView'), 'campus-events-view')
+const CampusReportsAnalyticsView = lazyWithRetry(() => import('./modules/institute-admin/reports/CampusReportsAnalyticsView'), 'campus-reports-view')
+const CampusAccountsView = lazyWithRetry(() => import('./modules/institute-admin/accounts/CampusAccountsView'), 'campus-accounts-view')
 
 // Executive Minimal Loading Fallback
 const ModuleLoader = () => (
@@ -98,10 +102,11 @@ const AppContent = () => {
   ]
 
   const VALID_INSTITUTE_ROUTES = [
-    'inst-dashboard', 'inst-students', 'inst-teachers', 'inst-classes',
-    'inst-timetable', 'inst-attendance', 'inst-fees', 'inst-exams',
-    'inst-subjects', 'inst-program-levels', 'inst-notices', 'inst-admissions',
-    'inst-transport', 'inst-library', 'inst-certificates', 'inst-learning'
+    'inst-dashboard', 'inst-admissions', 'inst-students', 'inst-teachers', 'inst-payroll',
+    'inst-classes', 'inst-subjects', 'inst-timetable', 'inst-program-levels', 'inst-attendance', 'inst-exams',
+    'inst-fees', 'inst-accounts', 'inst-notices', 'inst-learning', 'inst-transport',
+    'inst-library', 'inst-inventory', 'inst-certificates', 'inst-events', 'inst-reports',
+    'inst-users', 'inst-settings'
   ]
 
   // Helpers to safely extract valid initial routes per portal role
@@ -508,14 +513,17 @@ const AppContent = () => {
                     onRouteChange={setInstituteRoute}
                   />
                 )}
-                {instituteRoute === 'inst-students' && (
-                  <StudentsView currentInstitute={activeCampus} />
-                )}
                 {instituteRoute === 'inst-admissions' && (
                   <AdmissionsPipelineView currentInstitute={activeCampus} />
                 )}
-                {instituteRoute === 'inst-teachers' && (
-                  <TeachersView currentInstitute={activeCampus} />
+                {instituteRoute === 'inst-students' && (
+                  <StudentsView currentInstitute={activeCampus} />
+                )}
+                {(instituteRoute === 'inst-teachers' || instituteRoute === 'inst-payroll') && (
+                  <TeachersView 
+                    currentInstitute={activeCampus} 
+                    initialTab={instituteRoute === 'inst-payroll' ? 'payroll' : 'directory'}
+                  />
                 )}
                 {instituteRoute === 'inst-classes' && (
                   <ClassesView currentInstitute={activeCampus} />
@@ -532,20 +540,23 @@ const AppContent = () => {
                     onRouteChange={setInstituteRoute}
                   />
                 )}
+                {instituteRoute === 'inst-exams' && (
+                  <ExamsView currentInstitute={activeCampus} />
+                )}
                 {instituteRoute === 'inst-fees' && (
                   <FeesView currentInstitute={activeCampus} />
                 )}
-                {instituteRoute === 'inst-exams' && (
-                  <ExamsView currentInstitute={activeCampus} />
+                {instituteRoute === 'inst-accounts' && (
+                  <CampusAccountsView currentInstitute={activeCampus} />
                 )}
                 {instituteRoute === 'inst-subjects' && (
                   <SubjectsView currentInstitute={activeCampus} />
                 )}
-                {instituteRoute === 'inst-program-levels' && (
-                  <ProgramLevelsView currentInstitute={activeCampus} />
-                )}
                 {instituteRoute === 'inst-notices' && (
                   <NoticeBoardView currentInstitute={activeCampus} />
+                )}
+                {instituteRoute === 'inst-learning' && (
+                  <LearningResourcesView currentInstitute={activeCampus} />
                 )}
                 {instituteRoute === 'inst-transport' && (
                   <TransportView currentInstitute={activeCampus} />
@@ -553,11 +564,34 @@ const AppContent = () => {
                 {instituteRoute === 'inst-library' && (
                   <LibraryView currentInstitute={activeCampus} />
                 )}
+                {instituteRoute === 'inst-inventory' && (
+                  <CampusInventoryView currentInstitute={activeCampus} />
+                )}
                 {instituteRoute === 'inst-certificates' && (
                   <CertificatesView currentInstitute={activeCampus} />
                 )}
-                {instituteRoute === 'inst-learning' && (
-                  <LearningResourcesView currentInstitute={activeCampus} />
+                {instituteRoute === 'inst-events' && (
+                  <CampusEventsCalendarView currentInstitute={activeCampus} />
+                )}
+                {instituteRoute === 'inst-reports' && (
+                  <CampusReportsAnalyticsView currentInstitute={activeCampus} />
+                )}
+                {instituteRoute === 'inst-users' && (
+                  <UsersManagementView 
+                    defaultTab="all" 
+                    currentInstitute={activeCampus} 
+                    onRouteChange={setInstituteRoute} 
+                  />
+                )}
+                {instituteRoute === 'inst-settings' && (
+                  <UsersManagementView 
+                    defaultTab="roles" 
+                    currentInstitute={activeCampus} 
+                    onRouteChange={setInstituteRoute} 
+                  />
+                )}
+                {instituteRoute === 'inst-program-levels' && (
+                  <ProgramLevelsView currentInstitute={activeCampus} />
                 )}
               </Suspense>
             </ErrorBoundary>

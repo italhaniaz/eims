@@ -65,23 +65,30 @@ export const InstituteAdminNavbar = ({
 
   const getRouteTitle = () => {
     switch (currentRoute) {
-      case 'inst-dashboard': return 'Campus Overview'
-      case 'inst-students': return tierConfig.isUniversityOnly ? 'Enrolled Students' : tierConfig.isCollegeOnly ? 'College Students' : 'Students & Admissions'
-      case 'inst-teachers': return tierConfig.isUniversityOnly ? 'Professors & Faculty' : tierConfig.isCollegeOnly ? 'Lecturers & Faculty' : 'Faculty & Staff'
-      case 'inst-classes': return tierConfig.terminology.classes
-      case 'inst-timetable': return tierConfig.isUniversityOnly ? 'Lecture Timetable' : tierConfig.isCollegeOnly ? 'College Timetable' : 'Class Timetable Schedule'
-      case 'inst-attendance': return tierConfig.isUniversityOnly ? 'Course Attendance' : 'Daily Attendance'
-      case 'inst-fees': return 'Fee Invoices & Payments'
-      case 'inst-exams': return tierConfig.terminology.exams
-      case 'inst-subjects': return tierConfig.terminology.curriculum
-      case 'inst-notices': return 'Campus Notice Board'
-      case 'inst-admissions': return 'Inquiries & Leads'
-      case 'inst-transport': return 'Campus Transport & Vans'
+      case 'inst-dashboard': return 'Campus Dashboard'
+      case 'inst-admissions': return 'Admissions & Leads'
+      case 'inst-students': return tierConfig?.isUniversityOnly ? 'Enrolled Students' : tierConfig?.isCollegeOnly ? 'College Students' : 'Students Directory'
+      case 'inst-teachers': return tierConfig?.isUniversityOnly ? 'Professors & Faculty' : tierConfig?.isCollegeOnly ? 'Lecturers & Faculty' : 'Staff & Faculty'
+      case 'inst-payroll': return 'Staff Payroll & Compensation'
+      case 'inst-classes': return tierConfig?.terminology?.classes || 'Classes & Sections'
+      case 'inst-subjects': return tierConfig?.terminology?.curriculum || 'Academic Curriculum & Subjects'
+      case 'inst-timetable': return tierConfig?.isUniversityOnly ? 'Lecture Timetable' : tierConfig?.isCollegeOnly ? 'College Timetable' : 'Class Timetable Schedule'
+      case 'inst-attendance': return tierConfig?.isUniversityOnly ? 'Course Attendance' : 'Attendance Register'
+      case 'inst-exams': return tierConfig?.terminology?.exams || 'Term Examinations & Marks'
+      case 'inst-fees': return 'Fees & Finance'
+      case 'inst-accounts': return 'Campus Accounts & Financial Ledger'
+      case 'inst-notices': return 'Communication & Notices'
+      case 'inst-learning': return 'Homework & Learning Resources'
+      case 'inst-transport': return 'Campus Transport & Fleet'
       case 'inst-library': return 'Campus Library & Book Issues'
-      case 'inst-certificates': return tierConfig.terminology.certificates
-      case 'inst-learning': return 'Study Notes & LMS'
-      case 'inst-program-levels': return tierConfig.isUniversityOnly ? 'Degree Matrix' : 'Academic Program Levels'
-      default: return tierConfig.portalTitle
+      case 'inst-inventory': return 'Campus Inventory & Asset Management'
+      case 'inst-certificates': return tierConfig?.terminology?.certificates || 'School Leaving (SLC) & Certificates'
+      case 'inst-events': return 'Events & Academic Calendar'
+      case 'inst-reports': return 'Reports & Executive Analytics'
+      case 'inst-users': return 'Users, Roles & Access'
+      case 'inst-settings': return 'Campus System Settings'
+      case 'inst-program-levels': return tierConfig?.isUniversityOnly ? 'Degree Matrix' : 'Academic Program Levels'
+      default: return tierConfig?.portalTitle || 'Campus Portal'
     }
   }
 

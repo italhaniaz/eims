@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { 
   Users, 
   Plus, 
@@ -56,14 +56,17 @@ import { StaffIdCardModal } from './StaffIdCardModal'
 import { StaffPaySlipModal } from './StaffPaySlipModal'
 import { AppointmentLetterModal } from './AppointmentLetterModal'
 
-export const TeachersView = ({ currentInstitute }) => {
+export const TeachersView = ({ currentInstitute, initialTab = "directory" }) => {
   const tierConfig = getInstituteTierConfig(currentInstitute)
   const { teachers = [], classes = [], institutes = [], users = [], addItem, updateItem, deleteItem } = useAppData()
   const { toast } = useToast()
 
   // Active Main Tab
   const [maskCnic, setMaskCnic] = useState(true)
-  const [activeTab, setActiveTab] = useState('directory') // 'directory' | 'workload' | 'leaves' | 'payroll'
+  const [activeTab, setActiveTab] = useState(initialTab)
+  useEffect(() => {
+    if (initialTab) setActiveTab(initialTab)
+  }, [initialTab])
 
   // View Layout
   const [viewMode, setViewMode] = useState('table') // 'table' | 'cards'
