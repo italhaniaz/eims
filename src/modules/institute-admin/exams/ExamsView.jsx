@@ -332,6 +332,26 @@ export const ExamsView = ({ currentInstitute }) => {
       instituteId: currentInstitute?.id || 'inst-1'
     }
 
+    // Cross-module Superadmin Result Freeze Enforcement
+    try {
+      const freezeData = localStorage.getItem('edu_sms_exams_freeze_statuses');
+      if (freezeData) {
+        const list = JSON.parse(freezeData);
+        const isFrozen = list.some(f => 
+          f.isFrozen && 
+          (f.examTerm?.toLowerCase() === (newRecord.term || '').toLowerCase() || 
+           (newRecord.term || '').toLowerCase().includes(f.examTerm?.toLowerCase() || '___')) &&
+          (!currentInstitute?.name || f.campus?.toLowerCase() === currentInstitute.name.toLowerCase() || f.campus?.includes(currentInstitute.name))
+        );
+        if (isFrozen) {
+          toast.error(`Cannot edit or record marks. Results for "${newRecord.term}" are FROZEN & LOCKED by Superadmin platform governance.`);
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn('Freeze check notice:', e);
+    }
+
     // Check if marksheet already exists for this student & term
     const existingIndex = instExams.findIndex(m => 
       (m.studentId === newRecord.studentId || m.rollNumber === newRecord.rollNumber) && 

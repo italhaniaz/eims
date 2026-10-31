@@ -26,7 +26,17 @@ import {
   UserCheck,
   Sliders,
   Filter,
-  CheckCircle
+  CheckCircle,
+  Trash2,
+  Send,
+  History,
+  Layers,
+  ChevronRight,
+  Maximize2,
+  ZoomIn,
+  Building,
+  School,
+  Share2
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
@@ -34,6 +44,7 @@ import {
   DEFAULT_PERCENTAGE_BANDS, 
   DEFAULT_GPA_BANDS, 
   DEFAULT_CAMBRIDGE_BANDS,
+  STORAGE_KEYS as EXAM_STORAGE_KEYS,
   calculateGrade 
 } from '../../institute-admin/exams/examService'
 
@@ -41,13 +52,14 @@ import {
 const STORAGE_KEYS = {
   POLICIES: 'edu_sms_platform_exam_policies',
   FREEZE: 'edu_sms_exams_freeze_statuses',
+  FREEZE_LOGS: 'edu_sms_exams_freeze_history_logs',
   GRADE_APPROVALS: 'edu_sms_exams_grade_approvals',
   SUPPLEMENTARY: 'edu_sms_exams_supplementary_registry',
   TRANSCRIPTS: 'edu_sms_exams_transcript_settings'
 }
 
 export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTabChange = () => {} }) => {
-  const { exams = [], institutes = [], students = [], logAuditEvent } = useAppData()
+  const { exams = [], institutes = [], students = [], logAuditEvent, sendCommunicationBlast } = useAppData()
   const { toast } = useToast()
 
   // 1. Navigation State Sync (Fixed desync bug)
@@ -121,25 +133,69 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
     toast?.info?.('Grading scale thresholds restored to system enterprise defaults.')
   }
 
+  const handleDeleteBand = (indexToDelete) => {
+    if (policies.bands.length <= 2) {
+      toast?.error?.('Grading schema must maintain at least two boundary tiers.')
+      return
+    }
+    const updatedBands = policies.bands.filter((_, idx) => idx !== indexToDelete)
+    const updated = { ...policies, bands: updatedBands }
+    setPolicies(updated)
+    localStorage.setItem(STORAGE_KEYS.POLICIES, JSON.stringify(updated))
+    toast?.success?.('Grade boundary tier deleted.')
+  }
+
   const handleSaveCustomBand = () => {
-    if (!bandFormData.grade) {
+    if (!bandFormData.grade.trim()) {
       toast?.error?.('Grade label is required (e.g. A*, A+, B).')
       return
     }
+
+    const min = Number(bandFormData.min)
+    const max = Number(bandFormData.max)
+
+    if (isNaN(min) || isNaN(max) || min < 0 || max > 100) {
+      toast?.error?.('Percentage thresholds must be numerical values between 0% and 100%.')
+      return
+    }
+
+    if (min >= max) {
+      toast?.error?.('Minimum percentage threshold must be strictly less than Maximum percentage.')
+      return
+    }
+
     const updatedBands = [...policies.bands]
     if (editingBandIndex !== null) {
-      updatedBands[editingBandIndex] = { ...bandFormData }
+      updatedBands[editingBandIndex] = { ...bandFormData, min, max, gpa: Number(bandFormData.gpa) || 0 }
     } else {
-      updatedBands.unshift({ ...bandFormData })
-      updatedBands.sort((a, b) => b.min - a.min)
+      updatedBands.unshift({ ...bandFormData, min, max, gpa: Number(bandFormData.gpa) || 0 })
     }
+
+    updatedBands.sort((a, b) => b.min - a.min)
 
     const updated = { ...policies, bands: updatedBands }
     setPolicies(updated)
     localStorage.setItem(STORAGE_KEYS.POLICIES, JSON.stringify(updated))
     setEditingBandIndex(null)
     setShowAddBandModal(false)
-    toast?.success?.('Grading threshold boundaries updated.')
+    toast?.success?.('Grading threshold boundaries updated with validation.')
+  }
+
+  const handleBroadcastDirectives = () => {
+    try {
+      logAuditEvent?.(
+        'EXAM_DIRECTIVES_BROADCAST', 
+        `Central directives broadcasted to all campuses: Min Attendance ${policies.minAttendancePct}%, Secrecy Seal ${policies.paperSecrecyHours}h.`
+      )
+      sendCommunicationBlast?.({
+        recipientType: 'campuses',
+        title: 'Urgent: Central Platform Examination Directives Issued',
+        message: `Platform Superadmin has broadcasted standardized grading (${policies.activeScale.toUpperCase()}) and mandatory attendance threshold (${policies.minAttendancePct}%).`
+      })
+    } catch {
+      // safe fallback
+    }
+    toast?.success?.('Examination Directives & Attendance policy broadcasted to all campus principals.')
   }
 
   // =========================================================================
@@ -147,18 +203,28 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
   // =========================================================================
   const [selectedWingCampus, setSelectedWingCampus] = useState('all')
   const [selectedWingTerm, setSelectedWingTerm] = useState('all')
+  const [selectedClassDrilldown, setSelectedClassDrilldown] = useState(null)
 
-  const wingBaseMetrics = useMemo(() => {
+  // Dynamic wing metrics calculation adjusted by campus
+  const dynamicWingMetrics = useMemo(() => {
+    const campusMultiplier = selectedWingCampus === 'all' ? 1.0 :
+      selectedWingCampus.includes('Beaconhouse') ? 1.05 :
+      selectedWingCampus.includes('City') ? 0.98 :
+      selectedWingCampus.includes('Lahore Grammar') ? 1.02 : 0.95
+
     return [
       { 
         wing: 'Elementary & Primary Wing', 
-        totalExaminees: 450, 
-        passed: 442, 
-        failed: 8, 
-        passPercentage: 98.2, 
+        totalExaminees: Math.round(selectedWingCampus === 'all' ? 450 : 120 * campusMultiplier), 
+        passPercentage: Math.min(100, Math.round(98.2 * campusMultiplier * 10) / 10), 
         topGpa: '4.00 (A+)', 
-        distinctions: 184, 
+        distinctions: Math.round(selectedWingCampus === 'all' ? 184 : 48 * campusMultiplier), 
         status: 'Outstanding',
+        classes: [
+          { name: 'Class 5-A', students: 32, passRate: 100, topScore: 98 },
+          { name: 'Class 5-B', students: 30, passRate: 96.6, topScore: 95 },
+          { name: 'Class 4-A', students: 28, passRate: 98.2, topScore: 99 }
+        ],
         subjects: [
           { name: 'English Literacy', passRate: 99.1, avgScore: 84 },
           { name: 'Mathematics Fundamentals', passRate: 97.4, avgScore: 79 },
@@ -167,13 +233,16 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
       },
       { 
         wing: 'Middle School Wing', 
-        totalExaminees: 380, 
-        passed: 360, 
-        failed: 20, 
-        passPercentage: 94.7, 
+        totalExaminees: Math.round(selectedWingCampus === 'all' ? 380 : 105 * campusMultiplier), 
+        passPercentage: Math.min(100, Math.round(94.7 * campusMultiplier * 10) / 10), 
         topGpa: '3.95 (A+)', 
-        distinctions: 122, 
+        distinctions: Math.round(selectedWingCampus === 'all' ? 122 : 34 * campusMultiplier), 
         status: 'High',
+        classes: [
+          { name: 'Class 8-A', students: 35, passRate: 94.2, topScore: 96 },
+          { name: 'Class 8-B', students: 34, passRate: 91.1, topScore: 93 },
+          { name: 'Class 7-A', students: 36, passRate: 97.2, topScore: 97 }
+        ],
         subjects: [
           { name: 'Mathematics (Algebra & Geom)', passRate: 91.5, avgScore: 72 },
           { name: 'General Science', passRate: 95.2, avgScore: 78 },
@@ -183,13 +252,16 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
       },
       { 
         wing: 'Secondary / High School Wing', 
-        totalExaminees: 320, 
-        passed: 294, 
-        failed: 26, 
-        passPercentage: 91.8, 
+        totalExaminees: Math.round(selectedWingCampus === 'all' ? 320 : 90 * campusMultiplier), 
+        passPercentage: Math.min(100, Math.round(91.8 * campusMultiplier * 10) / 10), 
         topGpa: '3.92 (A+)', 
-        distinctions: 94, 
+        distinctions: Math.round(selectedWingCampus === 'all' ? 94 : 26 * campusMultiplier), 
         status: 'Standard',
+        classes: [
+          { name: 'Class 10-A (Science)', students: 30, passRate: 93.3, topScore: 96 },
+          { name: 'Class 10-B (Computer)', students: 30, passRate: 90.0, topScore: 94 },
+          { name: 'Class 9-A', students: 30, passRate: 92.1, topScore: 95 }
+        ],
         subjects: [
           { name: 'Advanced Mathematics', passRate: 87.5, avgScore: 68 },
           { name: 'Physics Theory & Lab', passRate: 90.2, avgScore: 71 },
@@ -199,13 +271,16 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
       },
       { 
         wing: 'College & Higher Secondary Wing', 
-        totalExaminees: 240, 
-        passed: 215, 
-        failed: 25, 
-        passPercentage: 89.5, 
+        totalExaminees: Math.round(selectedWingCampus === 'all' ? 240 : 65 * campusMultiplier), 
+        passPercentage: Math.min(100, Math.round(89.5 * campusMultiplier * 10) / 10), 
         topGpa: '3.88 (A+)', 
-        distinctions: 62, 
+        distinctions: Math.round(selectedWingCampus === 'all' ? 62 : 18 * campusMultiplier), 
         status: 'Moderate',
+        classes: [
+          { name: 'FSc Pre-Medical 2nd Year', students: 25, passRate: 92.0, topScore: 95 },
+          { name: 'FSc Pre-Engineering 2nd Year', students: 22, passRate: 86.4, topScore: 93 },
+          { name: 'ICS Computer Studies', students: 18, passRate: 90.1, topScore: 94 }
+        ],
         subjects: [
           { name: 'Calculus & Analytical Geometry', passRate: 84.1, avgScore: 64 },
           { name: 'Physics Mechanics & Electro', passRate: 88.3, avgScore: 69 },
@@ -214,7 +289,7 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
         ]
       }
     ]
-  }, [])
+  }, [selectedWingCampus])
 
   // =========================================================================
   // SUB-TAB 3: RESULT PUBLISH / FREEZE
@@ -236,7 +311,20 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
     }
   })
 
-  // Confirmation Modal state for Freeze/Unlock
+  // Lock history logs
+  const [freezeLogs, setFreezeLogs] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.FREEZE_LOGS)
+      return saved ? JSON.parse(saved) : [
+        { id: 'LOG-01', campus: 'Beaconhouse Central High', wing: 'High School Wing', action: 'LOCKED', author: 'Superadmin', timestamp: '2026-10-15 09:30 AM', note: 'Regular post-exam freeze lockout.' },
+        { id: 'LOG-02', campus: 'City School Senior Branch', wing: 'College Wing', action: 'LOCKED', author: 'Superadmin', timestamp: '2026-10-18 11:15 AM', note: 'Pre-board results locked.' }
+      ]
+    } catch {
+      return []
+    }
+  })
+
+  const [showFreezeHistoryModal, setShowFreezeHistoryModal] = useState(false)
   const [freezeModalTarget, setFreezeModalTarget] = useState(null)
   const [freezeReason, setFreezeReason] = useState('')
   const [freezeFilterCampus, setFreezeFilterCampus] = useState('all')
@@ -273,6 +361,20 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
     setFreezeStatuses(updated)
     localStorage.setItem(STORAGE_KEYS.FREEZE, JSON.stringify(updated))
 
+    // Record in history log
+    const newLog = {
+      id: `LOG-0${freezeLogs.length + 1}`,
+      campus: freezeModalTarget.campus,
+      wing: freezeModalTarget.wing,
+      action: willBeFrozen ? 'LOCKED' : 'UNLOCKED',
+      author: 'Super Administrator',
+      timestamp: new Date().toLocaleString(),
+      note: freezeReason || (willBeFrozen ? 'Exam term closed & locked.' : 'Temporary unlock for clerical audit.')
+    }
+    const updatedLogs = [newLog, ...freezeLogs]
+    setFreezeLogs(updatedLogs)
+    localStorage.setItem(STORAGE_KEYS.FREEZE_LOGS, JSON.stringify(updatedLogs))
+
     try {
       logAuditEvent?.(
         willBeFrozen ? 'RESULT_FROZEN' : 'RESULT_UNFROZEN',
@@ -285,6 +387,29 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
     toast?.success?.(`${freezeModalTarget.campus} (${freezeModalTarget.wing}) results ${willBeFrozen ? 'FROZEN & LOCKED' : 'UNFROZEN for modifications'}.`)
     setFreezeModalTarget(null)
     setFreezeReason('')
+  }
+
+  // Bulk actions for Result Freeze
+  const handleBulkFreezeAll = (targetFrozen) => {
+    const updated = freezeStatuses.map(f => ({
+      ...f,
+      isFrozen: targetFrozen,
+      approvedBy: targetFrozen ? 'Super Administrator (Bulk Lock)' : 'Unlocked by Superadmin (Bulk)',
+      frozenAt: targetFrozen ? new Date().toLocaleString() : null
+    }))
+    setFreezeStatuses(updated)
+    localStorage.setItem(STORAGE_KEYS.FREEZE, JSON.stringify(updated))
+    toast?.success?.(`All network campus examination results ${targetFrozen ? 'FROZEN & LOCKED' : 'UNLOCKED for corrections'}.`)
+  }
+
+  const handleBulkPublishAll = (targetPublish) => {
+    const updated = freezeStatuses.map(f => ({
+      ...f,
+      published: targetPublish
+    }))
+    setFreezeStatuses(updated)
+    localStorage.setItem(STORAGE_KEYS.FREEZE, JSON.stringify(updated))
+    toast?.success?.(`All network campus examination results ${targetPublish ? 'PUBLISHED LIVE to Student & Parent Portals' : 'SET TO DRAFT ONLY'}.`)
   }
 
   const handleTogglePortalPublish = (id) => {
@@ -403,11 +528,43 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
   const [superadminRemarks, setSuperadminRemarks] = useState('')
   const [gradeSearchQuery, setGradeSearchQuery] = useState('')
   const [gradeStatusFilter, setGradeStatusFilter] = useState('all')
+  const [selectedApprovalIds, setSelectedApprovalIds] = useState([])
+
+  // Helper to synchronize write-back to marksheets
+  const syncGradeToMarksheetStore = (approval) => {
+    try {
+      const raw = localStorage.getItem(EXAM_STORAGE_KEYS.MARKSHEETS)
+      if (raw) {
+        const marksheets = JSON.parse(raw)
+        let changed = false
+        const updated = marksheets.map(m => {
+          if (m.studentName === approval.student || m.rollNumber === approval.roll) {
+            if (Array.isArray(m.subjects)) {
+              m.subjects = m.subjects.map(s => {
+                if (s.name.toLowerCase().includes(approval.subject.toLowerCase()) || approval.subject.toLowerCase().includes(s.name.toLowerCase())) {
+                  changed = true
+                  return { ...s, obtained: approval.requestedMarks, theoryMarks: approval.requestedMarks }
+                }
+                return s
+              })
+            }
+          }
+          return m
+        })
+        if (changed) {
+          localStorage.setItem(EXAM_STORAGE_KEYS.MARKSHEETS, JSON.stringify(updated))
+        }
+      }
+    } catch (e) {
+      console.warn('Marksheet writeback sync notice:', e)
+    }
+  }
 
   const handleApproveGradeAction = () => {
     if (!selectedGradeItem) return
     const updated = gradeApprovals.map(g => {
       if (g.id === selectedGradeItem.id) {
+        syncGradeToMarksheetStore(selectedGradeItem)
         return { 
           ...g, 
           status: 'Approved', 
@@ -426,10 +583,30 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
       // safe fallback
     }
 
-    toast?.success?.(`Grade change request ${selectedGradeItem.id} authorized. Marks updated in master gazette.`)
+    toast?.success?.(`Grade change request ${selectedGradeItem.id} authorized. Marks updated in master gazette & marksheets.`)
     setShowApprovalRemarksModal(false)
     setSelectedGradeItem(null)
     setSuperadminRemarks('')
+  }
+
+  const handleBatchApprove = () => {
+    if (selectedApprovalIds.length === 0) return
+    const updated = gradeApprovals.map(g => {
+      if (selectedApprovalIds.includes(g.id) && g.status === 'Pending Approval') {
+        syncGradeToMarksheetStore(g)
+        return {
+          ...g,
+          status: 'Approved',
+          superadminRemarks: 'Batch authorized by Superadmin.',
+          approvedAt: new Date().toLocaleString()
+        }
+      }
+      return g
+    })
+    setGradeApprovals(updated)
+    localStorage.setItem(STORAGE_KEYS.GRADE_APPROVALS, JSON.stringify(updated))
+    toast?.success?.(`${selectedApprovalIds.length} grade requests batch approved and synchronized to marksheets.`)
+    setSelectedApprovalIds([])
   }
 
   const handleRejectGradeAction = () => {
@@ -547,7 +724,7 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
     examDate: '2026-11-28',
     feeAmount: 'PKR 1,500',
     feeStatus: 'Unpaid',
-    center: 'Central Exam Hall 1'
+    center: 'Beaconhouse Central Exam Hall A'
   })
 
   const handleRegisterSupplementary = () => {
@@ -595,6 +772,16 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
     toast?.success?.('Candidate compartment fee status and admit card issuance updated.')
   }
 
+  const handleBatchPrintPaidAdmitCards = () => {
+    const paidCandidates = supplementaryRegistry.filter(s => s.feeStatus === 'Paid')
+    if (paidCandidates.length === 0) {
+      toast?.error?.('No candidates with Paid fee status available for batch admit cards.')
+      return
+    }
+    toast?.info?.(`Dispatching print queue for ${paidCandidates.length} Supplementary Admit Cards...`)
+    window.print()
+  }
+
   const filteredSupplementaryRegistry = useMemo(() => {
     return supplementaryRegistry.filter(s => {
       const matchSearch = !supplementarySearchQuery 
@@ -630,6 +817,57 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
     }
   })
 
+  // Dynamic preview candidate selector
+  const previewCandidates = [
+    { 
+      roll: 'BHS-042', 
+      name: 'Mustafa Kamal', 
+      campus: 'Beaconhouse Central High', 
+      wing: 'Secondary / High School',
+      subjects: [
+        { sub: 'English Language & Comp', max: 100, obt: 92, grade: 'A+', gpa: '4.00', rem: 'Exceptional' },
+        { sub: 'Mathematics (Advanced)', max: 100, obt: 94, grade: 'A+', gpa: '4.00', rem: 'Outstanding' },
+        { sub: 'Physics Theory & Practical', max: 100, obt: 88, grade: 'A', gpa: '3.70', rem: 'Distinction' },
+        { sub: 'Chemistry Theory & Practical', max: 100, obt: 91, grade: 'A+', gpa: '4.00', rem: 'Outstanding' },
+        { sub: 'Computer Science (Programming)', max: 100, obt: 96, grade: 'A+', gpa: '4.00', rem: 'Exemplary' }
+      ],
+      total: 461, max: 500, grade: 'A+', gpa: '3.94', status: 'PASSED WITH HIGH MERIT'
+    },
+    { 
+      roll: 'TCS-112', 
+      name: 'Sarah Tariq', 
+      campus: 'City School Senior Branch', 
+      wing: 'College & Higher Secondary',
+      subjects: [
+        { sub: 'Functional English', max: 100, obt: 89, grade: 'A', gpa: '3.70', rem: 'Distinction' },
+        { sub: 'Calculus & Analytical Geometry', max: 100, obt: 95, grade: 'A+', gpa: '4.00', rem: 'Exceptional' },
+        { sub: 'Physics Mechanics & Electro', max: 100, obt: 91, grade: 'A+', gpa: '4.00', rem: 'Outstanding' },
+        { sub: 'Organic Chemistry', max: 100, obt: 90, grade: 'A+', gpa: '4.00', rem: 'Outstanding' },
+        { sub: 'Pakistan Studies', max: 50, obt: 47, grade: 'A+', gpa: '4.00', rem: 'Exemplary' }
+      ],
+      total: 412, max: 450, grade: 'A+', gpa: '3.94', status: 'PASSED WITH MERIT'
+    },
+    { 
+      roll: 'LGS-088', 
+      name: 'Zainab Fatima', 
+      campus: 'Lahore Grammar Model Town', 
+      wing: 'Middle School Wing',
+      subjects: [
+        { sub: 'English Literature', max: 100, obt: 86, grade: 'A', gpa: '3.70', rem: 'Distinction' },
+        { sub: 'Mathematics Fundamentals', max: 100, obt: 88, grade: 'A', gpa: '3.70', rem: 'Distinction' },
+        { sub: 'General Science', max: 100, obt: 92, grade: 'A+', gpa: '4.00', rem: 'Outstanding' },
+        { sub: 'Urdu Literature', max: 100, obt: 90, grade: 'A+', gpa: '4.00', rem: 'Outstanding' },
+        { sub: 'Islamiat / Ethics', max: 50, obt: 45, grade: 'A+', gpa: '4.00', rem: 'Exceptional' }
+      ],
+      total: 401, max: 450, grade: 'A', gpa: '3.82', status: 'PASSED WITH DISTINCTION'
+    }
+  ]
+
+  const [selectedPreviewRoll, setSelectedPreviewRoll] = useState('BHS-042')
+  const activePreviewCandidate = useMemo(() => {
+    return previewCandidates.find(c => c.roll === selectedPreviewRoll) || previewCandidates[0]
+  }, [selectedPreviewRoll])
+
   const handleUpdateTranscriptSettings = (partial) => {
     const updated = { ...transcriptSettings, ...partial }
     setTranscriptSettings(updated)
@@ -658,6 +896,7 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
 
   const [tabulationCampusFilter, setTabulationCampusFilter] = useState('all')
   const [tabulationSearchQuery, setTabulationSearchQuery] = useState('')
+  const [showTabulationRegisterModal, setShowTabulationRegisterModal] = useState(false)
 
   const filteredTabulationRecords = useMemo(() => {
     return masterTabulationRecords.filter(r => {
@@ -669,16 +908,35 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
     })
   }, [masterTabulationRecords, tabulationCampusFilter, tabulationSearchQuery])
 
+  // Dynamic KPI stats recalculated based on campus filter
+  const dynamicReportStats = useMemo(() => {
+    const list = filteredTabulationRecords
+    if (list.length === 0) {
+      return { passRate: '0.0%', totalExaminees: 0, avgGpa: '0.00', positions: 0 }
+    }
+    const passed = list.filter(r => r.status === 'Pass').length
+    const passRate = ((passed / list.length) * 100).toFixed(1) + '%'
+    const totalGpa = list.reduce((acc, r) => acc + r.gpa, 0)
+    const avgGpa = (totalGpa / list.length).toFixed(2)
+    const positions = list.filter(r => r.position && r.position <= 3).length
+    return {
+      passRate,
+      totalExaminees: tabulationCampusFilter === 'all' ? 1480 : list.length * 35,
+      avgGpa,
+      positions: tabulationCampusFilter === 'all' ? 18 : positions
+    }
+  }, [filteredTabulationRecords, tabulationCampusFilter])
+
   // Top Position Holders
   const positionHolders = useMemo(() => {
-    return masterTabulationRecords.filter(r => r.position && r.position <= 3).sort((a, b) => a.position - b.position)
-  }, [masterTabulationRecords])
+    return filteredTabulationRecords.filter(r => r.position && r.position <= 3).sort((a, b) => a.position - b.position)
+  }, [filteredTabulationRecords])
 
   // Master Gazette CSV Export
   const handleExportMasterGazette = () => {
     try {
       const headers = ['Roll_No', 'Student_Name', 'Campus', 'Wing', 'Exam_Term', 'Total_Marks', 'Max_Marks', 'Percentage', 'GPA', 'Grade', 'Position', 'Status']
-      const rows = masterTabulationRecords.map(r => [
+      const rows = filteredTabulationRecords.map(r => [
         `"${r.roll}"`,
         `"${r.name}"`,
         `"${r.campus}"`,
@@ -709,6 +967,10 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
     }
   }
 
+  const handleIssueAdvisory = (subjectName) => {
+    toast?.success?.(`Academic review advisory dispatched to Head of ${subjectName} Department across sister campuses.`)
+  }
+
   // Tabs Configuration
   const tabsConfig = [
     { key: 'policies', label: 'Exam Policies & Datesheet Rules', icon: FileText },
@@ -721,9 +983,34 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
   ]
 
   return (
-    <div className="p-3 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
+    <div className="p-3 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto printable-content-root">
+      {/* Print isolation style */}
+      <style>{`
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          .printable-certificate-container, .printable-certificate-container * {
+            visibility: visible;
+          }
+          .printable-certificate-container {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            margin: 0;
+            padding: 20px;
+            box-shadow: none;
+            border: none;
+          }
+          .no-print {
+            display: none !important;
+          }
+        }
+      `}</style>
+
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+      <div className="bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden no-print">
         <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-purple-500/10 blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
@@ -761,7 +1048,7 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
       </div>
 
       {/* Sub-Tabs Navigation Bar */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 p-2 shadow-2xs overflow-x-auto dark-scroll">
+      <div className="bg-white rounded-2xl border border-slate-200/80 p-2 shadow-2xs overflow-x-auto dark-scroll no-print">
         <div className="flex items-center gap-1.5 min-w-max">
           {tabsConfig.map((t) => {
             const Icon = t.icon
@@ -795,7 +1082,7 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
       {/* 1. EXAM POLICIES & DATESHEET RULES                                    */}
       {/* ==================================================================== */}
       {currentTab === 'policies' && (
-        <div className="space-y-6">
+        <div className="space-y-6 no-print">
           {/* Schema Selector & Controls */}
           <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
@@ -835,7 +1122,7 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
                     <th className="py-2.5 px-4">Max Score %</th>
                     <th className="py-2.5 px-4">GPA Equivalent</th>
                     <th className="py-2.5 px-4">Description</th>
-                    <th className="py-2.5 px-4 text-right">Action</th>
+                    <th className="py-2.5 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -852,7 +1139,7 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
                         {band.gpa !== undefined ? band.gpa.toFixed(2) : 'N/A'}
                       </td>
                       <td className="py-2.5 px-4 text-slate-600">{band.description || 'Standard'}</td>
-                      <td className="py-2.5 px-4 text-right">
+                      <td className="py-2.5 px-4 text-right space-x-2">
                         <button
                           type="button"
                           onClick={() => {
@@ -870,6 +1157,14 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
                         >
                           <Sliders className="w-3 h-3" />
                           <span>Edit</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteBand(idx)}
+                          className="text-rose-500 hover:text-rose-700 font-bold text-xs cursor-pointer inline-flex items-center gap-1"
+                          title="Delete boundary tier"
+                        >
+                          <Trash2 className="w-3 h-3" />
                         </button>
                       </td>
                     </tr>
@@ -905,9 +1200,19 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
           {/* Central Directives & Eligibility Rules Form */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs space-y-4">
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-900 border-b border-slate-100 pb-2">
-                <ShieldCheck className="w-4 h-4 text-purple-600" />
-                <span>Central Examination Directives</span>
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
+                  <ShieldCheck className="w-4 h-4 text-purple-600" />
+                  <span>Central Examination Directives</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleBroadcastDirectives}
+                  className="px-2.5 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg text-xs font-bold cursor-pointer inline-flex items-center gap-1"
+                >
+                  <Send className="w-3 h-3" />
+                  <span>Broadcast Directives</span>
+                </button>
               </div>
               
               <div className="space-y-3 text-xs">
@@ -996,7 +1301,7 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
       {/* 2. RESULTS OVERVIEW (WING-WISE)                                       */}
       {/* ==================================================================== */}
       {currentTab === 'results-wing' && (
-        <div className="space-y-6">
+        <div className="space-y-6 no-print">
           {/* Filters Bar */}
           <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-2xs flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
@@ -1036,7 +1341,7 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
 
           {/* Wing Metric Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {wingBaseMetrics.map((w, idx) => (
+            {dynamicWingMetrics.map((w, idx) => (
               <div key={idx} className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs space-y-3 relative overflow-hidden">
                 <div className="flex justify-between items-start">
                   <span className="font-bold text-xs text-slate-900 block max-w-[170px] truncate" title={w.wing}>
@@ -1065,9 +1370,16 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
 
                 <div className="pt-2 border-t border-slate-100 grid grid-cols-2 gap-2 text-[11px] text-slate-500">
                   <div>Examinees: <strong className="text-slate-800 font-mono">{w.totalExaminees}</strong></div>
-                  <div>Passed: <strong className="text-emerald-700 font-mono">{w.passed}</strong></div>
                   <div>Distinctions: <strong className="text-purple-700 font-mono">{w.distinctions}</strong></div>
                   <div>Top GPA: <strong className="text-slate-800 font-mono">{w.topGpa}</strong></div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedClassDrilldown(w)}
+                    className="text-purple-600 hover:text-purple-800 font-bold cursor-pointer text-left inline-flex items-center gap-0.5"
+                  >
+                    <span>Class Drilldown</span>
+                    <ChevronRight className="w-3 h-3" />
+                  </button>
                 </div>
               </div>
             ))}
@@ -1077,7 +1389,7 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
           <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs space-y-4">
             <h3 className="text-sm font-bold text-slate-900">Wing Subject-Wise Pass & Performance Matrix</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {wingBaseMetrics.map((w, idx) => (
+              {dynamicWingMetrics.map((w, idx) => (
                 <div key={idx} className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 space-y-3">
                   <div className="font-bold text-xs text-purple-900 flex items-center justify-between">
                     <span>{w.wing}</span>
@@ -1110,7 +1422,7 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
       {/* 3. RESULT PUBLISH / FREEZE                                            */}
       {/* ==================================================================== */}
       {currentTab === 'publish-freeze' && (
-        <div className="space-y-4">
+        <div className="space-y-4 no-print">
           <div className="bg-purple-50 border border-purple-200/80 p-4 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-purple-900">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-xl bg-purple-100 text-purple-700 shrink-0">
@@ -1120,20 +1432,57 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
                 <strong>Central Result Freeze Safeguard:</strong> Once a campus result is frozen by Superadmin, school teachers and institute admins cannot alter student marks without formal re-checking approval.
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => setShowAddLockoutModal(true)}
-              className="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold text-xs cursor-pointer inline-flex items-center gap-1.5 shrink-0 shadow-2xs"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Add Exam Term Lockout</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowFreezeHistoryModal(true)}
+                className="px-3 py-2 bg-white hover:bg-slate-100 text-purple-900 border border-purple-200 rounded-xl font-bold text-xs cursor-pointer inline-flex items-center gap-1.5 shrink-0 shadow-2xs"
+              >
+                <History className="w-3.5 h-3.5" />
+                <span>Audit Logs</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowAddLockoutModal(true)}
+                className="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold text-xs cursor-pointer inline-flex items-center gap-1.5 shrink-0 shadow-2xs"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Term Lockout</span>
+              </button>
+            </div>
           </div>
 
-          {/* Filters Bar */}
+          {/* Bulk Action Controls */}
           <div className="bg-white rounded-2xl border border-slate-200/80 p-3.5 shadow-2xs flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-500 font-bold uppercase">Bulk Governance:</span>
+              <button
+                type="button"
+                onClick={() => handleBulkFreezeAll(true)}
+                className="px-3 py-1.5 bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 rounded-xl text-xs font-bold cursor-pointer inline-flex items-center gap-1"
+              >
+                <Lock className="w-3 h-3" />
+                <span>Freeze All Campuses</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleBulkFreezeAll(false)}
+                className="px-3 py-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl text-xs font-bold cursor-pointer inline-flex items-center gap-1"
+              >
+                <Unlock className="w-3 h-3" />
+                <span>Unlock All for Revisions</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleBulkPublishAll(true)}
+                className="px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 rounded-xl text-xs font-bold cursor-pointer inline-flex items-center gap-1"
+              >
+                <Eye className="w-3 h-3" />
+                <span>Publish All to Parents</span>
+              </button>
+            </div>
+
             <div className="flex items-center gap-3">
-              <span className="text-xs text-slate-500 font-medium">Campus:</span>
               <select
                 value={freezeFilterCampus}
                 onChange={(e) => setFreezeFilterCampus(e.target.value)}
@@ -1145,7 +1494,6 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
                 ))}
               </select>
 
-              <span className="text-xs text-slate-500 font-medium ml-2">Lock Status:</span>
               <select
                 value={freezeFilterStatus}
                 onChange={(e) => setFreezeFilterStatus(e.target.value)}
@@ -1155,10 +1503,6 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
                 <option value="frozen">Frozen & Locked</option>
                 <option value="unfrozen">Unlocked / Editable</option>
               </select>
-            </div>
-
-            <div className="text-xs text-slate-500 font-mono">
-              Showing {filteredFreezeStatuses.length} of {freezeStatuses.length} Lockouts
             </div>
           </div>
 
@@ -1229,8 +1573,8 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
       {/* 4. GRADE CHANGE & RE-CHECKING APPROVALS                               */}
       {/* ==================================================================== */}
       {currentTab === 'grade-approvals' && (
-        <div className="space-y-4">
-          {/* Search & Filter Bar */}
+        <div className="space-y-4 no-print">
+          {/* Search, Filter & Batch Bar */}
           <div className="bg-white rounded-2xl border border-slate-200/80 p-3.5 shadow-2xs flex flex-wrap items-center justify-between gap-3">
             <div className="relative flex-1 min-w-[240px]">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
@@ -1243,8 +1587,18 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
               />
             </div>
 
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-500 font-medium">Status:</span>
+            <div className="flex items-center gap-3">
+              {selectedApprovalIds.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleBatchApprove}
+                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold cursor-pointer inline-flex items-center gap-1 shadow-2xs"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Approve Selected ({selectedApprovalIds.length})</span>
+                </button>
+              )}
+
               <select
                 value={gradeStatusFilter}
                 onChange={(e) => setGradeStatusFilter(e.target.value)}
@@ -1263,6 +1617,19 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
             <table className="w-full text-left text-xs text-slate-600">
               <thead className="bg-slate-50 border-b border-slate-100 font-bold text-slate-700 uppercase tracking-wider text-[11px]">
                 <tr>
+                  <th className="py-3.5 px-4 w-8">
+                    <input
+                      type="checkbox"
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedApprovalIds(filteredGradeApprovals.filter(g => g.status === 'Pending Approval').map(g => g.id))
+                        } else {
+                          setSelectedApprovalIds([])
+                        }
+                      }}
+                      className="w-4 h-4 accent-purple-600 rounded"
+                    />
+                  </th>
                   <th className="py-3.5 px-4">Approval ID & Student</th>
                   <th className="py-3.5 px-4">Subject & Campus</th>
                   <th className="py-3.5 px-4 text-center">Marks Change</th>
@@ -1274,6 +1641,24 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
               <tbody className="divide-y divide-slate-100">
                 {filteredGradeApprovals.map(grd => (
                   <tr key={grd.id} className="hover:bg-slate-50/70">
+                    <td className="py-3.5 px-4">
+                      {grd.status === 'Pending Approval' ? (
+                        <input
+                          type="checkbox"
+                          checked={selectedApprovalIds.includes(grd.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedApprovalIds([...selectedApprovalIds, grd.id])
+                            } else {
+                              setSelectedApprovalIds(selectedApprovalIds.filter(id => id !== grd.id))
+                            }
+                          }}
+                          className="w-4 h-4 accent-purple-600 rounded"
+                        />
+                      ) : (
+                        <span className="text-slate-300">-</span>
+                      )}
+                    </td>
                     <td className="py-3.5 px-4">
                       <div className="font-bold text-slate-900">{grd.student}</div>
                       <span className="font-mono text-[10px] text-slate-400">{grd.id} • {grd.roll}</span>
@@ -1356,7 +1741,7 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
       {/* 5. SUPPLEMENTARY EXAMS                                                 */}
       {/* ==================================================================== */}
       {currentTab === 'supplementary' && (
-        <div className="space-y-6">
+        <div className="space-y-6 no-print">
           {/* Policy Directives Card */}
           <div className="bg-gradient-to-r from-purple-50 via-indigo-50 to-white rounded-2xl border border-purple-200/80 p-5 shadow-2xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="space-y-1">
@@ -1368,14 +1753,24 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
                 Students failing in maximum <strong>2 subjects</strong> are eligible for compartment examinations scheduled <strong>45 days</strong> post regular result declaration. Retake score retains original credits.
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => setShowAddSupplementaryModal(true)}
-              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow-2xs cursor-pointer inline-flex items-center gap-1.5 shrink-0"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Register Candidate</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleBatchPrintPaidAdmitCards}
+                className="px-3.5 py-2 bg-white hover:bg-slate-100 text-purple-700 border border-purple-200 rounded-xl text-xs font-bold shadow-2xs cursor-pointer inline-flex items-center gap-1.5 shrink-0"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Batch Print Paid Cards</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowAddSupplementaryModal(true)}
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow-2xs cursor-pointer inline-flex items-center gap-1.5 shrink-0"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Register Candidate</span>
+              </button>
+            </div>
           </div>
 
           {/* Search & Filters */}
@@ -1501,24 +1896,39 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
       {currentTab === 'transcripts' && (
         <div className="space-y-6">
           {/* Template Configuration Toolbar */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs space-y-4">
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs space-y-4 no-print">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
               <div>
                 <h3 className="text-sm font-bold text-slate-900">Official DMC & Transcript Template Engine</h3>
                 <p className="text-xs text-slate-500 mt-0.5">Customize watermark text, QR verification signatures, and layout scheme for student certificates.</p>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-slate-600">Active Template:</span>
-                <select
-                  value={transcriptSettings.selectedTemplate}
-                  onChange={(e) => handleUpdateTranscriptSettings({ selectedTemplate: e.target.value })}
-                  className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-purple-700 font-bold focus:outline-purple-500"
-                >
-                  <option value="ssc">Standard SSC / Matriculation DMC</option>
-                  <option value="cambridge">Cambridge O / A-Level Statement</option>
-                  <option value="hssc">Higher Secondary (HSSC/College)</option>
-                  <option value="primary">Primary Wing Narrative Progress Report</option>
-                </select>
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-slate-600">Sample Candidate:</span>
+                  <select
+                    value={selectedPreviewRoll}
+                    onChange={(e) => setSelectedPreviewRoll(e.target.value)}
+                    className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 font-bold focus:outline-purple-500"
+                  >
+                    {previewCandidates.map(c => (
+                      <option key={c.roll} value={c.roll}>{c.name} ({c.roll})</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-slate-600">Active Template:</span>
+                  <select
+                    value={transcriptSettings.selectedTemplate}
+                    onChange={(e) => handleUpdateTranscriptSettings({ selectedTemplate: e.target.value })}
+                    className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-purple-700 font-bold focus:outline-purple-500"
+                  >
+                    <option value="ssc">Standard SSC / Matriculation DMC</option>
+                    <option value="cambridge">Cambridge O / A-Level Statement</option>
+                    <option value="hssc">Higher Secondary (HSSC/College)</option>
+                    <option value="primary">Primary Wing Narrative Progress Report</option>
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -1579,7 +1989,7 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
           </div>
 
           {/* Interactive Live Sample Transcript Preview */}
-          <div className="bg-white rounded-3xl border-2 border-purple-200 p-8 shadow-md relative overflow-hidden max-w-4xl mx-auto">
+          <div className="bg-white rounded-3xl border-2 border-purple-200 p-8 shadow-md relative overflow-hidden max-w-4xl mx-auto printable-certificate-container">
             {transcriptSettings.showWatermark && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none opacity-5 rotate-[-25deg]">
                 <span className="text-5xl md:text-7xl font-extrabold font-mono text-purple-900 tracking-widest text-center">
@@ -1608,19 +2018,19 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-5 text-xs border-b border-slate-200 relative z-10">
               <div>
                 <span className="text-slate-400 block text-[10px] uppercase font-bold">Candidate Name</span>
-                <strong className="text-slate-900 text-sm">Mustafa Kamal</strong>
+                <strong className="text-slate-900 text-sm">{activePreviewCandidate.name}</strong>
               </div>
               <div>
                 <span className="text-slate-400 block text-[10px] uppercase font-bold">Roll Number</span>
-                <strong className="text-purple-700 font-mono text-sm">BHS-042</strong>
+                <strong className="text-purple-700 font-mono text-sm">{activePreviewCandidate.roll}</strong>
               </div>
               <div>
                 <span className="text-slate-400 block text-[10px] uppercase font-bold">Institution / Campus</span>
-                <strong className="text-slate-900">Beaconhouse Central High</strong>
+                <strong className="text-slate-900">{activePreviewCandidate.campus}</strong>
               </div>
               <div>
                 <span className="text-slate-400 block text-[10px] uppercase font-bold">Academic Wing</span>
-                <strong className="text-slate-900">Secondary / High School</strong>
+                <strong className="text-slate-900">{activePreviewCandidate.wing}</strong>
               </div>
             </div>
 
@@ -1638,13 +2048,7 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
-                  {[
-                    { sub: 'English Language & Comp', max: 100, obt: 92, grade: 'A+', gpa: '4.00', rem: 'Exceptional' },
-                    { sub: 'Mathematics (Advanced)', max: 100, obt: 94, grade: 'A+', gpa: '4.00', rem: 'Outstanding' },
-                    { sub: 'Physics Theory & Practical', max: 100, obt: 88, grade: 'A', gpa: '3.70', rem: 'Distinction' },
-                    { sub: 'Chemistry Theory & Practical', max: 100, obt: 91, grade: 'A+', gpa: '4.00', rem: 'Outstanding' },
-                    { sub: 'Computer Science (Programming)', max: 100, obt: 96, grade: 'A+', gpa: '4.00', rem: 'Exemplary' }
-                  ].map((row, rIdx) => (
+                  {activePreviewCandidate.subjects.map((row, rIdx) => (
                     <tr key={rIdx} className="hover:bg-slate-50/50">
                       <td className="py-2.5 px-3 font-semibold text-slate-900">{row.sub}</td>
                       <td className="py-2.5 px-3 text-center font-mono">{row.max}</td>
@@ -1658,24 +2062,25 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
                 <tfoot className="border-t-2 border-slate-800 bg-slate-50 font-bold">
                   <tr>
                     <td className="py-2.5 px-3 uppercase text-slate-900">Grand Aggregate</td>
-                    <td className="py-2.5 px-3 text-center font-mono">500</td>
-                    <td className="py-2.5 px-3 text-center font-mono text-purple-700 text-sm">461</td>
-                    <td className="py-2.5 px-3 text-center font-mono text-emerald-700 text-sm">A+</td>
-                    <td className="py-2.5 px-3 text-center font-mono text-emerald-700 text-sm">3.94</td>
-                    <td className="py-2.5 px-3 text-right text-emerald-700 font-bold">PASSED WITH MERIT</td>
+                    <td className="py-2.5 px-3 text-center font-mono">{activePreviewCandidate.max}</td>
+                    <td className="py-2.5 px-3 text-center font-mono text-purple-700 text-sm">{activePreviewCandidate.total}</td>
+                    <td className="py-2.5 px-3 text-center font-mono text-emerald-700 text-sm">{activePreviewCandidate.grade}</td>
+                    <td className="py-2.5 px-3 text-center font-mono text-emerald-700 text-sm">{activePreviewCandidate.gpa}</td>
+                    <td className="py-2.5 px-3 text-right text-emerald-700 font-bold">{activePreviewCandidate.status}</td>
                   </tr>
                 </tfoot>
               </table>
             </div>
 
-            {/* Grading Legend if enabled */}
+            {/* Dynamic Grading Legend bound to Sub-Tab 1 active schema */}
             {transcriptSettings.showGradingLegend && (
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-[10px] text-slate-600 flex flex-wrap justify-between gap-2 relative z-10">
-                <span><strong>A+:</strong> 90-100% (4.00)</span>
-                <span><strong>A:</strong> 80-89% (3.70)</span>
-                <span><strong>B:</strong> 70-79% (3.00)</span>
-                <span><strong>C:</strong> 50-69% (2.00)</span>
-                <span><strong>F:</strong> Below 50% (0.00)</span>
+                <span className="font-bold text-slate-700">Grading Scale Legend ({policies.activeScale.toUpperCase()}):</span>
+                {policies.bands.slice(0, 5).map((b, idx) => (
+                  <span key={idx}>
+                    <strong>{b.grade}:</strong> {b.min}-{b.max || 100}% ({b.gpa?.toFixed(2) || 'N/A'})
+                  </span>
+                ))}
               </div>
             )}
 
@@ -1717,28 +2122,66 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
       {/* 7. EXAMINATION REPORTS & MASTER TABULATION SHEET                      */}
       {/* ==================================================================== */}
       {currentTab === 'reports' && (
-        <div className="space-y-6">
-          {/* Top KPI Cards */}
+        <div className="space-y-6 no-print">
+          {/* Top KPI Cards (Dynamically Recalculated by Campus Filter) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs space-y-2">
-              <span className="text-xs font-bold text-slate-500 uppercase">Overall Platform Pass Rate</span>
-              <div className="text-3xl font-extrabold font-mono text-emerald-700">93.8%</div>
-              <p className="text-[11px] text-slate-400">1,480 students examined across network.</p>
+              <span className="text-xs font-bold text-slate-500 uppercase">Filtered Pass Rate</span>
+              <div className="text-3xl font-extrabold font-mono text-emerald-700">{dynamicReportStats.passRate}</div>
+              <p className="text-[11px] text-slate-400">
+                {tabulationCampusFilter === 'all' ? 'Network aggregate' : `Scoped to ${tabulationCampusFilter}`}
+              </p>
             </div>
             <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs space-y-2">
               <span className="text-xs font-bold text-slate-500 uppercase">Board Merit Positions</span>
-              <div className="text-3xl font-extrabold font-mono text-purple-700">18 Positions</div>
+              <div className="text-3xl font-extrabold font-mono text-purple-700">{dynamicReportStats.positions} Positions</div>
               <p className="text-[11px] text-slate-400">Achieved in Matriculation and Intermediate.</p>
             </div>
             <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs space-y-2">
-              <span className="text-xs font-bold text-slate-500 uppercase">Re-checking Accuracy</span>
-              <div className="text-3xl font-extrabold font-mono text-indigo-700">99.8%</div>
-              <p className="text-[11px] text-slate-400">Minimal grade adjustments post central paper re-totaling.</p>
+              <span className="text-xs font-bold text-slate-500 uppercase">Examinees Count</span>
+              <div className="text-3xl font-extrabold font-mono text-indigo-700">{dynamicReportStats.totalExaminees}</div>
+              <p className="text-[11px] text-slate-400">Active students appeared in examination.</p>
             </div>
             <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs space-y-2">
-              <span className="text-xs font-bold text-slate-500 uppercase">Average Network GPA</span>
-              <div className="text-3xl font-extrabold font-mono text-blue-700">3.64 / 4.0</div>
-              <p className="text-[11px] text-slate-400">Across all 4 academic wings.</p>
+              <span className="text-xs font-bold text-slate-500 uppercase">Average Scoped GPA</span>
+              <div className="text-3xl font-extrabold font-mono text-blue-700">{dynamicReportStats.avgGpa} / 4.0</div>
+              <p className="text-[11px] text-slate-400">Calculated across selected candidates.</p>
+            </div>
+          </div>
+
+          {/* Subject Deficiency Advisory Trigger Section */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-600" />
+                <h3 className="text-sm font-bold text-slate-900">Academic Deficiency & Failure Risk Hotspots</h3>
+              </div>
+              <span className="text-xs text-slate-400">Network pedagogical audit</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {[
+                { name: 'Advanced Mathematics (Class 9-10)', failRate: '12.5%', affected: 40, status: 'High Alert' },
+                { name: 'Calculus & Analytical Geometry (College)', failRate: '15.9%', affected: 38, status: 'High Alert' },
+                { name: 'Physics Theory (Pre-Board)', failRate: '9.8%', affected: 24, status: 'Moderate Concern' }
+              ].map((def, dIdx) => (
+                <div key={dIdx} className="p-3.5 rounded-xl border border-amber-200 bg-amber-50/50 space-y-2">
+                  <div className="flex justify-between items-start">
+                    <span className="font-bold text-xs text-slate-900">{def.name}</span>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">
+                      {def.failRate} Fail
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-slate-600">Affected Candidates: <strong>{def.affected}</strong></div>
+                  <button
+                    type="button"
+                    onClick={() => handleIssueAdvisory(def.name)}
+                    className="w-full py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold cursor-pointer transition-colors"
+                  >
+                    Issue Academic Review Advisory
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -1801,6 +2244,15 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
                     <option key={i} value={c}>{c}</option>
                   ))}
                 </select>
+
+                <button
+                  type="button"
+                  onClick={() => setShowTabulationRegisterModal(true)}
+                  className="px-3 py-1.5 bg-white hover:bg-slate-100 text-purple-700 border border-purple-200 rounded-xl text-xs font-bold shadow-2xs cursor-pointer inline-flex items-center gap-1.5"
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5" />
+                  <span>Official Tabulation Register</span>
+                </button>
 
                 <button
                   type="button"
@@ -1871,7 +2323,7 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
       {/* MODAL 1: ADD/EDIT GRADE BOUNDARY MODAL                                */}
       {/* ==================================================================== */}
       {showAddBandModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs no-print">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 border border-slate-200">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="text-base font-bold text-slate-900">
@@ -1972,7 +2424,7 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
       {/* MODAL 2: CONFIRM RESULT FREEZE / UNLOCK MODAL                         */}
       {/* ==================================================================== */}
       {freezeModalTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs no-print">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 border border-slate-200">
             <div className="flex items-center gap-3">
               <div className={`p-3 rounded-2xl ${freezeModalTarget.isFrozen ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700'}`}>
@@ -2031,7 +2483,7 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
       {/* MODAL 3: ADD NEW EXAM TERM LOCKOUT                                   */}
       {/* ==================================================================== */}
       {showAddLockoutModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs no-print">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 border border-slate-200">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="text-base font-bold text-slate-900">Add Exam Term Lockout Session</h3>
@@ -2080,8 +2532,7 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
                   value={newLockoutForm.examTerm}
                   onChange={(e) => setNewLockoutForm({ ...newLockoutForm, examTerm: e.target.value })}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-purple-500"
-                >
-                </input>
+                />
               </div>
 
               <div className="flex items-center gap-3 pt-2">
@@ -2118,10 +2569,10 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
       )}
 
       {/* ==================================================================== */}
-      {/* MODAL 4: VIEW GRADE EVIDENCE & SCRIPT MODAL                          */}
+      {/* MODAL 4: VIEW GRADE EVIDENCE & SCRIPT MODAL (WITH LIGHTBOX)          */}
       {/* ==================================================================== */}
       {showEvidenceModal && selectedGradeItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs no-print">
           <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4 border border-slate-200">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
@@ -2157,17 +2608,26 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
                 </div>
               </div>
 
+              {/* Simulated Scanned Paper Inspection Box */}
+              <div className="p-3 rounded-xl border border-slate-200 bg-slate-900 text-white space-y-2">
+                <div className="flex items-center justify-between text-[11px] text-slate-400 border-b border-slate-800 pb-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <ZoomIn className="w-3.5 h-3.5 text-purple-400" />
+                    <span>Scanned Manuscript Lightbox View</span>
+                  </div>
+                  <span className="font-mono text-emerald-400">RESOLUTION: 300 DPI OPTICAL</span>
+                </div>
+                <div className="p-3 rounded bg-slate-800/80 font-mono text-[10px] text-slate-300 leading-relaxed space-y-1">
+                  <div>[EXAM_PAPER_HEADER: {selectedGradeItem.paperCode}]</div>
+                  <div>PAGE 5: Q4 Totaling verification stamp: Verified +8 marks clerical miscount.</div>
+                  <div className="text-emerald-400 font-bold">STAMP: [OFFICIALLY RE-TOTALED & INITIALED BY HEAD EXAMINER]</div>
+                </div>
+              </div>
+
               <div className="space-y-1">
                 <span className="font-bold text-slate-700 block">Teacher / HoD Justification Note:</span>
                 <p className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 leading-relaxed">
                   {selectedGradeItem.reason}
-                </p>
-              </div>
-
-              <div className="space-y-1">
-                <span className="font-bold text-slate-700 block">Scanned Script Re-totaling Audit Proof:</span>
-                <p className="p-2.5 rounded-xl bg-emerald-50/50 border border-emerald-200 text-emerald-900 leading-relaxed font-mono text-[11px]">
-                  {selectedGradeItem.evidence}
                 </p>
               </div>
 
@@ -2193,7 +2653,7 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
       {/* MODAL 5: AUTHORIZE GRADE CHANGE MODAL                                 */}
       {/* ==================================================================== */}
       {showApprovalRemarksModal && selectedGradeItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs no-print">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 border border-slate-200">
             <div className="flex items-center gap-3">
               <div className="p-3 rounded-2xl bg-emerald-100 text-emerald-700">
@@ -2206,7 +2666,7 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
             </div>
 
             <p className="text-xs text-slate-600 leading-relaxed">
-              Confirming this will amend the official student score from <strong>{selectedGradeItem.originalMarks}</strong> to <strong>{selectedGradeItem.requestedMarks}</strong> in the Central Master Gazette.
+              Confirming this will amend the official student score from <strong>{selectedGradeItem.originalMarks}</strong> to <strong>{selectedGradeItem.requestedMarks}</strong> in the Central Master Gazette and synchronize with student marksheets.
             </p>
 
             <div>
@@ -2244,7 +2704,7 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
       {/* MODAL 6: REJECT GRADE CHANGE MODAL                                   */}
       {/* ==================================================================== */}
       {showRejectionModal && selectedGradeItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs no-print">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 border border-slate-200">
             <div className="flex items-center gap-3">
               <div className="p-3 rounded-2xl bg-rose-100 text-rose-700">
@@ -2297,7 +2757,7 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
       {/* MODAL 7: REGISTER SUPPLEMENTARY CANDIDATE                             */}
       {/* ==================================================================== */}
       {showAddSupplementaryModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs no-print">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 border border-slate-200">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="text-base font-bold text-slate-900">Enroll Supplementary Candidate</h3>
@@ -2420,7 +2880,7 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
       {/* MODAL 8: SUPPLEMENTARY ADMIT CARD MODAL                               */}
       {/* ==================================================================== */}
       {selectedSuppAdmitCard && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs no-print">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 border border-slate-200">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
@@ -2490,6 +2950,182 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
                 <Printer className="w-3.5 h-3.5" />
                 <span>Print Admit Card</span>
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==================================================================== */}
+      {/* MODAL 9: AUDIT LOGS FOR FREEZE / UNLOCK HISTORY                       */}
+      {/* ==================================================================== */}
+      {showFreezeHistoryModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs no-print">
+          <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4 border border-slate-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <History className="w-5 h-5 text-purple-600" />
+                <h3 className="text-base font-bold text-slate-900">Result Lockout Security Audit Logs</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowFreezeHistoryModal(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-2 max-h-80 overflow-y-auto dark-scroll text-xs">
+              {freezeLogs.map((log, idx) => (
+                <div key={idx} className="p-3 rounded-xl border border-slate-200 bg-slate-50 space-y-1">
+                  <div className="flex justify-between items-center">
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                      log.action === 'LOCKED' ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'
+                    }`}>
+                      {log.action}
+                    </span>
+                    <span className="font-mono text-slate-400 text-[10px]">{log.timestamp}</span>
+                  </div>
+                  <div className="font-bold text-slate-800">{log.campus} ({log.wing})</div>
+                  <div className="text-slate-600 text-[11px]">{log.note}</div>
+                  <div className="text-[10px] text-slate-400">Authorized by: <strong>{log.author}</strong></div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-end pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setShowFreezeHistoryModal(false)}
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white cursor-pointer"
+              >
+                Close Audit Logs
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==================================================================== */}
+      {/* MODAL 10: CLASS / SECTION DRILLDOWN MODAL                            */}
+      {/* ==================================================================== */}
+      {selectedClassDrilldown && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs no-print">
+          <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4 border border-slate-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="text-base font-bold text-slate-900">{selectedClassDrilldown.wing}</h3>
+                <span className="text-xs text-slate-400">Class & Section Comparative Breakdown</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedClassDrilldown(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              {selectedClassDrilldown.classes.map((cls, idx) => (
+                <div key={idx} className="p-3 rounded-xl border border-slate-200 bg-slate-50 space-y-1.5">
+                  <div className="flex justify-between items-center font-bold text-slate-800">
+                    <span>{cls.name}</span>
+                    <span className="text-purple-700 font-mono">{cls.passRate}% Pass</span>
+                  </div>
+                  <div className="flex justify-between text-slate-500 text-[11px]">
+                    <span>Enrolled: {cls.students} Candidates</span>
+                    <span>Top Class Score: {cls.topScore}%</span>
+                  </div>
+                  <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                    <div className="bg-purple-600 h-1.5 rounded-full" style={{ width: `${cls.passRate}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-end pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setSelectedClassDrilldown(null)}
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white cursor-pointer"
+              >
+                Close Drilldown
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==================================================================== */}
+      {/* MODAL 11: FORMAL TABULATION REGISTER (TR) SHEET MODAL                */}
+      {/* ==================================================================== */}
+      {showTabulationRegisterModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs no-print">
+          <div className="bg-white rounded-3xl p-6 max-w-4xl w-full shadow-2xl space-y-4 border border-slate-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <FileSpreadsheet className="w-5 h-5 text-purple-600" />
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Official Master Tabulation Register (TR)</h3>
+                  <span className="text-xs text-slate-400">Board Compliant Tabulated Gazette</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold cursor-pointer inline-flex items-center gap-1 shadow-2xs"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span>Print TR</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowTabulationRegisterModal(false)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto max-h-96 dark-scroll">
+              <table className="w-full text-left text-xs text-slate-700 border border-slate-200">
+                <thead className="bg-slate-100 border-b border-slate-300 font-bold uppercase tracking-wider text-[10px] text-slate-800">
+                  <tr>
+                    <th className="py-2.5 px-3 border-r border-slate-200">Roll No</th>
+                    <th className="py-2.5 px-3 border-r border-slate-200">Student Name</th>
+                    <th className="py-2.5 px-3 border-r border-slate-200">Campus</th>
+                    <th className="py-2.5 px-3 border-r border-slate-200">Wing</th>
+                    <th className="py-2.5 px-3 text-center border-r border-slate-200">Total</th>
+                    <th className="py-2.5 px-3 text-center border-r border-slate-200">%</th>
+                    <th className="py-2.5 px-3 text-center border-r border-slate-200">GPA</th>
+                    <th className="py-2.5 px-3 text-center border-r border-slate-200">Grade</th>
+                    <th className="py-2.5 px-3 text-right">Result</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {filteredTabulationRecords.map((r, i) => (
+                    <tr key={i} className="hover:bg-slate-50">
+                      <td className="py-2 px-3 font-mono font-bold border-r border-slate-200 text-purple-700">{r.roll}</td>
+                      <td className="py-2 px-3 font-semibold border-r border-slate-200 text-slate-900">{r.name}</td>
+                      <td className="py-2 px-3 border-r border-slate-200 text-slate-600">{r.campus}</td>
+                      <td className="py-2 px-3 border-r border-slate-200 text-slate-600">{r.wing}</td>
+                      <td className="py-2 px-3 text-center font-mono border-r border-slate-200">{r.total}/{r.max}</td>
+                      <td className="py-2 px-3 text-center font-mono font-bold border-r border-slate-200">{r.pct}%</td>
+                      <td className="py-2 px-3 text-center font-mono text-emerald-700 border-r border-slate-200">{r.gpa.toFixed(2)}</td>
+                      <td className="py-2 px-3 text-center font-bold text-purple-700 border-r border-slate-200">{r.grade}</td>
+                      <td className="py-2 px-3 text-right font-bold text-emerald-700">{r.status}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex justify-between items-center text-xs text-slate-400 pt-2 border-t border-slate-100">
+              <span>Official University & Board Accreditation Register</span>
+              <span>Total Tabulated Records: {filteredTabulationRecords.length}</span>
             </div>
           </div>
         </div>
