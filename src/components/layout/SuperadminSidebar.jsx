@@ -778,6 +778,7 @@ export const SuperadminSidebar = ({
                       )}
                       <button
                         onClick={() => handleNavClick(item.route)}
+                        title={item.label}
                         className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                           active
                             ? 'bg-[#f5eeff] text-purple-700 font-semibold'
@@ -834,6 +835,7 @@ export const SuperadminSidebar = ({
                       )}
                       <button
                         onClick={() => handleNavClick(item.route)}
+                        title={item.label}
                         className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                           active
                             ? 'bg-[#f5eeff] text-purple-700 font-semibold'
@@ -890,6 +892,7 @@ export const SuperadminSidebar = ({
                       )}
                       <button
                         onClick={() => handleNavClick(item.route)}
+                        title={item.label}
                         className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                           active
                             ? 'bg-[#f5eeff] text-purple-700 font-semibold'
@@ -948,6 +951,7 @@ export const SuperadminSidebar = ({
                       )}
                       <button
                         onClick={() => handleNavClick(item.route)}
+                        title={item.label}
                         className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                           active
                             ? 'bg-[#f5eeff] text-purple-700 font-semibold'
@@ -1007,6 +1011,7 @@ export const SuperadminSidebar = ({
                       )}
                       <button
                         onClick={() => handleNavClick(item.route)}
+                        title={item.label}
                         className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                           active
                             ? 'bg-[#f5eeff] text-purple-700 font-semibold'
@@ -1066,6 +1071,7 @@ export const SuperadminSidebar = ({
                       )}
                       <button
                         onClick={() => handleNavClick(item.route)}
+                        title={item.label}
                         className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                           active
                             ? 'bg-[#f5eeff] text-purple-700 font-semibold'
@@ -1128,6 +1134,7 @@ export const SuperadminSidebar = ({
                       )}
                       <button
                         onClick={() => handleNavClick(item.route)}
+                        title={item.label}
                         className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                           active
                             ? 'bg-[#f5eeff] text-purple-700 font-semibold'
@@ -1186,6 +1193,7 @@ export const SuperadminSidebar = ({
                       )}
                       <button
                         onClick={() => handleNavClick(item.route)}
+                        title={item.label}
                         className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                           active
                             ? 'bg-[#f5eeff] text-purple-700 font-semibold'
@@ -1243,6 +1251,7 @@ export const SuperadminSidebar = ({
                       )}
                       <button
                         onClick={() => handleNavClick(item.route)}
+                        title={item.label}
                         className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                           active
                             ? 'bg-[#f5eeff] text-purple-700 font-semibold'
@@ -1301,6 +1310,7 @@ export const SuperadminSidebar = ({
                       )}
                       <button
                         onClick={() => handleNavClick(item.route)}
+                        title={item.label}
                         className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                           active
                             ? 'bg-[#f5eeff] text-purple-700 font-semibold'
@@ -1356,6 +1366,7 @@ export const SuperadminSidebar = ({
                       )}
                       <button
                         onClick={() => handleNavClick(item.route)}
+                        title={item.label}
                         className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                           active
                             ? 'bg-[#f5eeff] text-purple-700 font-semibold'
@@ -1412,6 +1423,7 @@ export const SuperadminSidebar = ({
                       )}
                       <button
                         onClick={() => handleNavClick(item.route)}
+                        title={item.label}
                         className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                           active
                             ? 'bg-[#f5eeff] text-purple-700 font-semibold'
@@ -1470,6 +1482,7 @@ export const SuperadminSidebar = ({
                       )}
                       <button
                         onClick={() => handleNavClick(item.route)}
+                        title={item.label}
                         className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                           active
                             ? 'bg-[#f5eeff] text-purple-700 font-semibold'
@@ -1528,6 +1541,7 @@ export const SuperadminSidebar = ({
                       )}
                       <button
                         onClick={() => handleNavClick(item.route)}
+                        title={item.label}
                         className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                           active
                             ? 'bg-[#f5eeff] text-purple-700 font-semibold'
@@ -1588,6 +1602,7 @@ export const SuperadminSidebar = ({
                       )}
                       <button
                         onClick={() => handleNavClick(item.route)}
+                        title={item.label}
                         className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                           active
                             ? 'bg-[#f5eeff] text-purple-700 font-semibold'

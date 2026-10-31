@@ -52,8 +52,10 @@ import {
   FileUp,
   MapPin,
   CreditCard,
-  Briefcase
+  Briefcase,
+  EyeOff
 } from 'lucide-react'
+import { DataService } from '../../../services/dataService'
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
 import { detectProgramLevel, normalizeClassSections } from '../../../constants/academicLevels'
