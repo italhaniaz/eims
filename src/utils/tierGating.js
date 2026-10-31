@@ -27,6 +27,12 @@ export const getInstituteTierConfig = (institute) => {
       isCollege: false,
       isUniversity: false,
       isMultiTier: false,
+      hasSchool: true,
+      hasCollege: false,
+      hasUniversity: false,
+      isSchoolOnly: true,
+      isCollegeOnly: false,
+      isUniversityOnly: false,
       isLevelAllowed: (id) => id === 'all' || ['preschool', 'elementary', 'secondary'].includes(id),
       isWingAllowed: (wingId) => wingId === 'school',
       terminology: {
@@ -35,14 +41,33 @@ export const getInstituteTierConfig = (institute) => {
         sectionUnit: 'Section',
         teacherUnit: 'Class Teacher',
         exams: 'Examinations & Marks',
-        certificates: 'Certificates (SLC/Conduct)',
+        certificates: 'School Leaving (SLC) & Character',
         curriculum: 'Curriculum & Subjects',
         idLabel: 'Student Roll No'
       }
     }
   }
 
-  const rawType = (institute.type || 'School').trim()
+  // Deduce type accurately even if partial institute object is passed
+  const idStr = String(institute.id || '').toLowerCase()
+  const nameStr = String(institute.name || institute.instituteName || '').toLowerCase()
+  const scopeStr = String(institute.scope || institute.roleTitle || '').toLowerCase()
+
+  let rawType = (institute.type || institute.planType || institute.instituteType || '').trim()
+  
+  if (!rawType) {
+    if (idStr === 'inst-3' || nameStr.includes('college') || nameStr.includes('roots') || scopeStr.includes('college')) {
+      rawType = 'College'
+    } else if (idStr === 'inst-4' || nameStr.includes('university') || nameStr.includes('applied sciences') || scopeStr.includes('university') || scopeStr.includes('dean') || scopeStr.includes('registrar')) {
+      rawType = 'University'
+    } else if (idStr === 'inst-1' || nameStr.includes('beaconhouse') || nameStr.includes('composite') || scopeStr.includes('composite')) {
+      rawType = 'Custom'
+    } else if (idStr === 'inst-2' || nameStr.includes('city school') || nameStr.includes('school')) {
+      rawType = 'School'
+    } else {
+      rawType = 'School'
+    }
+  }
   
   // Normalize enabledTiers
   let enabledTiers = []
@@ -50,10 +75,15 @@ export const getInstituteTierConfig = (institute) => {
     enabledTiers = institute.enabledTiers.map(t => t.toLowerCase())
   } else {
     const lType = rawType.toLowerCase()
-    if (lType === 'school') enabledTiers = ['school']
-    else if (lType === 'college') enabledTiers = ['college']
-    else if (lType === 'university' || lType === 'undergraduate') enabledTiers = ['undergraduate']
-    else enabledTiers = ['school', 'college'] // Default hybrid
+    if (idStr === 'inst-3' || lType === 'college' || nameStr.includes('college')) {
+      enabledTiers = ['college']
+    } else if (idStr === 'inst-4' || lType === 'university' || lType === 'undergraduate' || nameStr.includes('university')) {
+      enabledTiers = ['undergraduate']
+    } else if (idStr === 'inst-1' || lType === 'custom' || lType === 'hybrid') {
+      enabledTiers = ['school', 'college']
+    } else {
+      enabledTiers = ['school']
+    }
   }
 
   // Calculate set of allowed academic program level IDs
@@ -99,27 +129,25 @@ export const getInstituteTierConfig = (institute) => {
   // Dynamic Contextual Terminology for UI
   const terminology = {
     classes: isUniversityOnly ? 'Degree Programs & Semesters' : isCollegeOnly ? 'Disciplines & Batches' : 'Classes & Sections',
-    classUnit: isUniversityOnly ? 'Degree Program' : isCollegeOnly ? 'Academic Discipline' : 'Class',
-    sectionUnit: isUniversityOnly ? 'Semester Batch' : isCollegeOnly ? 'Section / Stream' : 'Section',
-    teacherUnit: isUniversityOnly ? 'Faculty / Professor' : isCollegeOnly ? 'Lecturer / Professor' : 'Class Teacher',
-    exams: isUniversityOnly ? 'Semester Examinations & GPA' : isCollegeOnly ? 'Board & Send-up Exams' : 'Term Examinations & Marks',
+    classUnit: isUniversityOnly ? 'Degree Program' : isCollegeOnly ? 'Discipline' : 'Class',
+    sectionUnit: isUniversityOnly ? 'Cohort / Batch' : isCollegeOnly ? 'Section / Group' : 'Section',
+    teacherUnit: isUniversityOnly ? 'Professor' : isCollegeOnly ? 'Lecturer' : 'Class Teacher',
+    exams: isUniversityOnly ? 'Semester Final Exams & GPA' : isCollegeOnly ? 'Board & College Annual Exams' : 'Term Examinations & Marks',
     certificates: isUniversityOnly ? 'Transcripts & Degree Attestation' : isCollegeOnly ? 'College Leaving (CLC) & Character' : 'School Leaving (SLC) & Character',
-    curriculum: isUniversityOnly ? 'Course Syllabus & Modules' : isCollegeOnly ? 'Intermediate Syllabus' : 'Curriculum & Subjects',
-    idLabel: isUniversityOnly ? 'University Reg. No' : isCollegeOnly ? 'College / Board Roll No' : 'Student Roll No'
+    curriculum: isUniversityOnly ? 'Degree Schemes & Courses' : isCollegeOnly ? 'Subject Streams & Syllabi' : 'Curriculum & Subjects',
+    idLabel: isUniversityOnly ? 'Student Enrollment / Registration No' : isCollegeOnly ? 'College Roll Number' : 'Student Roll Number'
   }
 
   return {
-    rawType,
+    type: rawType,
     enabledTiers,
     allowedLevelIds: Array.from(allowedLevelsSet),
-    isLevelAllowed: (levelId) => {
-      if (!levelId || levelId === 'all') return true
-      return allowedLevelsSet.has(levelId)
-    },
-    isWingAllowed: (wingId) => {
-      if (wingId === 'all') return isMultiTier
-      return enabledTiers.includes(wingId)
-    },
+    portalTitle,
+    roleBadge,
+    portalTypeLabel,
+    isSchool: hasSchool,
+    isCollege: hasCollege,
+    isUniversity: hasUniversity,
     isSchoolOnly,
     isCollegeOnly,
     isUniversityOnly,
@@ -127,10 +155,17 @@ export const getInstituteTierConfig = (institute) => {
     hasSchool,
     hasCollege,
     hasUniversity,
-    portalTitle,
-    roleBadge,
-    portalTypeLabel,
-    terminology,
-    defaultLevel: isSchoolOnly ? 'elementary' : isCollegeOnly ? 'higher-secondary' : isUniversityOnly ? 'university' : 'all'
+    isLevelAllowed: (levelId) => {
+      if (levelId === 'all') return true
+      return allowedLevelsSet.has(levelId)
+    },
+    isWingAllowed: (wingId) => {
+      if (wingId === 'all') return true
+      if (wingId === 'school') return hasSchool
+      if (wingId === 'college') return hasCollege
+      if (wingId === 'undergraduate') return hasUniversity
+      return false
+    },
+    terminology
   }
 }

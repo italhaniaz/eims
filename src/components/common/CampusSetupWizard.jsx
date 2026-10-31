@@ -4,7 +4,8 @@ import {
   Circle, 
   ArrowRight, 
   Sparkles, 
-  School, 
+  School,
+  Building2, 
   Layers, 
   Users, 
   GraduationCap, 
@@ -56,7 +57,7 @@ export const CampusSetupWizard = ({ currentInstitute, onRouteChange }) => {
   const steps = [
     {
       id: 'step-inst',
-      title: 'Campus Profile & Registration',
+      title: tierConfig.isUniversityOnly ? 'University Campus Profile' : tierConfig.isCollegeOnly ? 'College Campus Profile' : 'Campus Profile & Registration',
       subTitle: 'Profile, Code & Affiliation',
       description: currentInstitute?.name 
         ? `Registered: ${currentInstitute.name} (${currentInstitute.code || 'Main'})`
@@ -64,7 +65,7 @@ export const CampusSetupWizard = ({ currentInstitute, onRouteChange }) => {
       isCompleted: Boolean(currentInstitute?.name),
       actionLabel: 'View Campus',
       action: () => onRouteChange('inst-program-levels'),
-      icon: School,
+      icon: tierConfig.isUniversityOnly ? GraduationCap : tierConfig.isCollegeOnly ? Building2 : School,
       color: 'emerald'
     },
     {
@@ -81,44 +82,44 @@ export const CampusSetupWizard = ({ currentInstitute, onRouteChange }) => {
       isCompleted: instClasses.length > 0,
       actionLabel: instClasses.length > 0 ? `Manage ${tierConfig.terminology.classUnit}s` : `Setup ${tierConfig.terminology.classUnit}s`,
       action: () => onRouteChange('inst-classes'),
-      icon: Layers,
+      icon: tierConfig.isUniversityOnly ? Award : tierConfig.isCollegeOnly ? Building2 : Layers,
       color: 'blue'
     },
     {
       id: 'step-faculty',
-      title: 'Faculty & Teachers Roster',
+      title: tierConfig.isUniversityOnly ? 'Professors & Faculty Roster' : tierConfig.isCollegeOnly ? 'Lecturers & College Faculty' : 'Faculty & Teachers Roster',
       subTitle: 'Faculty & Department Staff',
       description: instTeachers.length > 0
         ? `${instTeachers.length} Teaching faculty members assigned`
         : 'Register teaching faculty, subject specializations & phone contacts',
       isCompleted: instTeachers.length > 0,
-      actionLabel: instTeachers.length > 0 ? 'Faculty Directory' : 'Add Teachers',
+      actionLabel: instTeachers.length > 0 ? 'Faculty Directory' : (tierConfig.isUniversityOnly ? 'Add Professors' : tierConfig.isCollegeOnly ? 'Add Lecturers' : 'Add Teachers'),
       action: () => onRouteChange('inst-teachers'),
       icon: Users,
       color: 'indigo'
     },
     {
       id: 'step-students',
-      title: 'Student Admissions & Enrollment',
+      title: tierConfig.isUniversityOnly ? 'Undergraduate Admissions & Intake' : tierConfig.isCollegeOnly ? 'College Admissions & Merit Lists' : 'Student Admissions & Enrollment',
       subTitle: 'Enrollment & Student Records',
       description: instStudents.length > 0
         ? `${instStudents.length} Students enrolled with official dossiers and ID records`
         : 'Admit students into classes & sections with full dossiers and ID cards',
       isCompleted: instStudents.length > 0,
-      actionLabel: instStudents.length > 0 ? 'Student Roster' : 'Admit Students',
+      actionLabel: instStudents.length > 0 ? 'Student Roster' : (tierConfig.isUniversityOnly ? 'Intake Students' : tierConfig.isCollegeOnly ? 'Admit Students' : 'Admit Students'),
       action: () => onRouteChange('inst-students'),
       icon: GraduationCap,
       color: 'purple'
     },
     {
       id: 'step-fees',
-      title: 'Fee Structure & Monthly Challans',
+      title: tierConfig.isUniversityOnly ? 'Tuition Dues & Semester Invoices' : 'Fee Structure & Monthly Challans',
       subTitle: 'Fee Structure & Challans',
       description: instFees.length > 0
         ? `${instFees.length} Fee challan records active with collection status`
         : 'Generate monthly bank challans, concessions & collect payments',
       isCompleted: instFees.length > 0,
-      actionLabel: instFees.length > 0 ? 'Fee Counter' : 'Issue Challans',
+      actionLabel: instFees.length > 0 ? 'Fee Counter' : (tierConfig.isUniversityOnly ? 'Issue Invoices' : 'Issue Challans'),
       action: () => onRouteChange('inst-fees'),
       icon: Receipt,
       color: 'amber'

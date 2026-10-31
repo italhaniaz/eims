@@ -24,8 +24,10 @@ import { BillingService } from '../../services/billingService'
 import { CampusSetupWizard } from '../../components/common/CampusSetupWizard'
 import { useAppData } from '../../context/AppDataContext'
 import { normalizeClassSections, detectProgramLevel } from '../../constants/academicLevels'
+import { getInstituteTierConfig } from '../../utils/tierGating'
 
 export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
+  const tierConfig = getInstituteTierConfig(currentInstitute)
   const { 
     institutes = [],
     students = [], 
@@ -120,12 +122,16 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
         }
       default:
         return {
-          icon: School,
-          iconColor: 'text-emerald-400',
-          sectionTag: 'Campus Administrative Center',
+          icon: tierConfig.isUniversityOnly ? GraduationCap : tierConfig.isCollegeOnly ? Building2 : School,
+          iconColor: tierConfig.isUniversityOnly ? 'text-purple-300' : tierConfig.isCollegeOnly ? 'text-amber-300' : 'text-emerald-400',
+          sectionTag: tierConfig.isUniversityOnly 
+            ? 'University Academic Center' 
+            : tierConfig.isCollegeOnly 
+            ? 'College Administrative Center' 
+            : 'Campus Administrative Center',
           mainTitle: campusName,
-          description: `Registration Code: ${campusCode} • ${campusAddress} • Comprehensive K-16 Scope`,
-          badgeText: 'All Program Levels',
+          description: `Registration Code: ${campusCode} • ${campusAddress} • ${tierConfig.portalTypeLabel}`,
+          badgeText: tierConfig.portalTypeLabel,
           badgeColor: 'bg-white/10 text-slate-300 border-white/20'
         }
     }
@@ -275,7 +281,7 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
       {/* KPI Cards - Real dynamic calculations with Show all + Eye + Add actions */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <StatCard
-          title="Total Students"
+          title={tierConfig.isUniversityOnly ? "Enrolled Students" : tierConfig.isCollegeOnly ? "College Students" : "Total Students"}
           value={instStudents.length}
           color="purple"
           badge={activeProgramLevel !== 'all' ? `${activeLevelObj?.shortTitle}` : (instStudents.length > 0 ? `+${instStudents.length} active` : '0 active')}
@@ -285,27 +291,27 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
           showAllText="Show all"
           onShowAll={() => onRouteChange('inst-students')}
           onView={() => onRouteChange('inst-students')}
-          viewTooltip="View All Campus Students"
+          viewTooltip={tierConfig.isUniversityOnly ? "View Enrolled Students" : tierConfig.isCollegeOnly ? "View College Students" : "View All Campus Students"}
           onAdd={() => onRouteChange('inst-students')}
-          addTooltip="Enroll New Student"
+          addTooltip={tierConfig.isUniversityOnly ? "Intake New Student" : tierConfig.isCollegeOnly ? "Admit Student" : "Enroll New Student"}
         />
         <StatCard
-          title="Faculty & Teachers"
+          title={tierConfig.isUniversityOnly ? "Professors & Faculty" : tierConfig.isCollegeOnly ? "Lecturers & Faculty" : "Faculty & Staff"}
           value={instTeachers.length}
           color="blue"
           badge={activeProgramLevel !== 'all' ? `${activeLevelObj?.code} Staff` : (instTeachers.length > 0 ? 'Staff Assigned' : '0 registered')}
           badgePositive={instTeachers.length > 0}
-          icon={Users}
+          icon={tierConfig.isUniversityOnly ? Award : tierConfig.isCollegeOnly ? Building2 : Users}
           showActions={true}
           showAllText="Show all"
           onShowAll={() => onRouteChange('inst-teachers')}
           onView={() => onRouteChange('inst-teachers')}
           viewTooltip="View Campus Faculty Directory"
           onAdd={() => onRouteChange('inst-teachers')}
-          addTooltip="Add Teacher"
+          addTooltip={tierConfig.isUniversityOnly ? "Add Faculty" : tierConfig.isCollegeOnly ? "Add Lecturer" : "Add Teacher"}
         />
         <StatCard
-          title="Fee Collection Rate"
+          title={tierConfig.isUniversityOnly ? "Tuition Fee Realization" : "Fee Collection Rate"}
           value={instFees.length > 0 ? `${feeRate}%` : '0.0%'}
           color="indigo"
           badge={activeProgramLevel !== 'all' ? `${activeLevelObj?.code} Fees` : (instFees.length > 0 ? `${paidFeesCount}/${instFees.length} Paid` : '0%')}
@@ -317,10 +323,10 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
           onView={() => onRouteChange('inst-fees')}
           viewTooltip="View Fee Records"
           onAdd={() => onRouteChange('inst-fees')}
-          addTooltip="Generate Fee Challan"
+          addTooltip={tierConfig.isUniversityOnly ? "Generate Semester Invoice" : "Generate Fee Challan"}
         />
         <StatCard
-          title="Daily Attendance"
+          title={tierConfig.isUniversityOnly ? "Course Attendance" : "Daily Attendance"}
           value={instStudents.length > 0 ? '96.4%' : '0.0%'}
           color="amber"
           badge={activeProgramLevel !== 'all' ? `${activeLevelObj?.code} Log` : (instStudents.length > 0 ? 'Good' : '0%')}

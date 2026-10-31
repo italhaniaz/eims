@@ -214,6 +214,8 @@ export const AuthProvider = ({ children }) => {
           avatar: null,
           instituteId: 'inst-2',
           instituteName: 'City School Model Town Campus',
+          instituteType: 'School',
+          enabledTiers: ['school'],
           scope: 'School Administration (K-10)',
           isExplicitLogin: true,
           loginTimestamp: new Date().toISOString()
@@ -230,6 +232,8 @@ export const AuthProvider = ({ children }) => {
           avatar: null,
           instituteId: 'inst-3',
           instituteName: 'Roots International College & Academy',
+          instituteType: 'College',
+          enabledTiers: ['college'],
           scope: 'Degree College Administration (11-12 & ADP)',
           isExplicitLogin: true,
           loginTimestamp: new Date().toISOString()
@@ -246,6 +250,8 @@ export const AuthProvider = ({ children }) => {
           avatar: null,
           instituteId: 'inst-4',
           instituteName: 'Institute of Applied Sciences & Undergraduates',
+          instituteType: 'University',
+          enabledTiers: ['undergraduate'],
           scope: 'University Administration (BS Honors)',
           isExplicitLogin: true,
           loginTimestamp: new Date().toISOString()
@@ -265,6 +271,8 @@ export const AuthProvider = ({ children }) => {
             avatar: null,
             instituteId: 'inst-2',
             instituteName: 'City School Model Town Campus',
+            instituteType: 'School',
+            enabledTiers: ['school'],
             scope: 'School Administration (K-10)',
             isExplicitLogin: true,
             loginTimestamp: new Date().toISOString()
@@ -279,6 +287,8 @@ export const AuthProvider = ({ children }) => {
             avatar: null,
             instituteId: 'inst-3',
             instituteName: 'Roots International College & Academy',
+            instituteType: 'College',
+            enabledTiers: ['college'],
             scope: 'Degree College Administration (11-12 & ADP)',
             isExplicitLogin: true,
             loginTimestamp: new Date().toISOString()
@@ -293,6 +303,8 @@ export const AuthProvider = ({ children }) => {
             avatar: null,
             instituteId: 'inst-4',
             instituteName: 'Institute of Applied Sciences & Undergraduates',
+            instituteType: 'University',
+            enabledTiers: ['undergraduate'],
             scope: 'University Administration (BS Honors)',
             isExplicitLogin: true,
             loginTimestamp: new Date().toISOString()
@@ -307,6 +319,8 @@ export const AuthProvider = ({ children }) => {
             avatar: null,
             instituteId: 'inst-1',
             instituteName: 'Beaconhouse Central High School',
+            instituteType: 'Custom',
+            enabledTiers: ['school', 'college'],
             scope: 'Multi-Tier Campus Administration',
             isExplicitLogin: true,
             loginTimestamp: new Date().toISOString()

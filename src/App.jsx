@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import { AppDataProvider, useAppData } from './context/AppDataContext'
 import { ToastProvider, useToast } from './context/ToastContext'
 import { lazyWithRetry } from './utils/lazyWithRetry'
+import { sampleTemplateData } from './services/dataService'
 
 // Layout components
 import SuperadminSidebar from './components/layout/SuperadminSidebar'
@@ -437,16 +438,36 @@ const AppContent = () => {
   }
 
   // 3. INSTITUTE ADMIN & FACULTY PORTAL (Dedicated Multi-Tenant Scoped Management)
-  const scopedInstitute = user?.instituteId 
-    ? institutes.find(i => i.id === user.instituteId) || { id: user.instituteId, name: user.instituteName || 'Designated Campus', code: 'CAMPUS' }
-    : null
+  const allKnownInstitutes = [...(institutes || []), ...(sampleTemplateData?.institutes || [])]
+  const matchedInst = allKnownInstitutes.find(i => i.id === user?.instituteId)
+
+  const scopedInstitute = matchedInst
+    ? {
+        ...matchedInst,
+        type: matchedInst.type || user?.instituteType || (matchedInst.id === 'inst-3' ? 'College' : matchedInst.id === 'inst-4' ? 'University' : matchedInst.id === 'inst-2' ? 'School' : 'Custom'),
+        enabledTiers: matchedInst.enabledTiers || user?.enabledTiers || (matchedInst.id === 'inst-3' ? ['college'] : matchedInst.id === 'inst-4' ? ['undergraduate'] : matchedInst.id === 'inst-2' ? ['school'] : ['school', 'college'])
+      }
+    : (user?.instituteId ? {
+        id: user.instituteId,
+        name: user.instituteName || 'Designated Campus',
+        code: user.instituteId === 'inst-3' ? 'RIA-003' : user.instituteId === 'inst-2' ? 'CSM-002' : user.instituteId === 'inst-4' ? 'IAS-004' : 'CAMPUS',
+        type: user.instituteType || (user.instituteId === 'inst-3' || user.instituteName?.toLowerCase().includes('college') ? 'College' : user.instituteId === 'inst-4' || user.instituteName?.toLowerCase().includes('uni') ? 'University' : user.instituteId === 'inst-1' ? 'Custom' : 'School'),
+        enabledTiers: user.enabledTiers || (
+          user.instituteId === 'inst-3' || user.instituteName?.toLowerCase().includes('college') ? ['college'] :
+          user.instituteId === 'inst-4' || user.instituteName?.toLowerCase().includes('uni') ? ['undergraduate'] :
+          user.instituteId === 'inst-1' ? ['school', 'college'] : ['school']
+        ),
+        address: 'Designated Campus'
+      } : null)
 
   const activeCampus = (user?.role === 'institute_admin' && scopedInstitute)
     ? scopedInstitute
-    : (selectedInstitute || institutes[0] || {
+    : (selectedInstitute || matchedInst || allKnownInstitutes[0] || {
         id: user?.instituteId || 'inst-1',
         name: user?.instituteName || 'Main Campus',
         code: 'SCH-001',
+        type: user?.instituteType || 'Custom',
+        enabledTiers: user?.enabledTiers || ['school', 'college'],
         address: 'Central Campus'
       })
 
