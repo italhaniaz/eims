@@ -11,7 +11,11 @@ export const COMMON_PERMISSIONS = {
   CAN_MANAGE_FEES: 'CAN_MANAGE_FEES',
   CAN_MANAGE_EXAMS: 'CAN_MANAGE_EXAMS',
   CAN_VIEW_NOTICES: 'CAN_VIEW_NOTICES',
-  CAN_MANAGE_ACADEMICS: 'CAN_MANAGE_ACADEMICS'
+  CAN_MANAGE_ACADEMICS: 'CAN_MANAGE_ACADEMICS',
+  CAN_MANAGE_INVENTORY: 'CAN_MANAGE_INVENTORY',
+  CAN_MANAGE_EVENTS: 'CAN_MANAGE_EVENTS',
+  CAN_VIEW_REPORTS: 'CAN_VIEW_REPORTS',
+  CAN_MANAGE_SETTINGS: 'CAN_MANAGE_SETTINGS'
 }
 
 export const COMMON_TERMINOLOGY = {
@@ -28,19 +32,37 @@ export const COMMON_TERMINOLOGY = {
   teacherUnit: 'Teacher',
   certificates: 'Certificates',
   curriculum: 'Curriculum & Subjects',
-  idLabel: 'Student ID'
+  idLabel: 'Student ID',
+  inventory: 'Campus Inventory & Assets',
+  events: 'Events & Academic Calendar',
+  reports: 'Reports & Analytics',
+  users: 'Users, Roles & Settings'
 }
 
 export const COMMON_ROUTES = [
   'inst-dashboard',
+  'inst-admissions',
   'inst-students',
   'inst-teachers',
+  'inst-payroll',
+  'inst-classes',
+  'inst-subjects',
+  'inst-timetable',
+  'inst-program-levels',
   'inst-attendance',
-  'inst-fees',
   'inst-exams',
-  'inst-notices',
+  'inst-fees',
+  'inst-accounts',
+  'inst-inventory',
+  'inst-events',
+  'inst-transport',
+  'inst-library',
+  'inst-certificates',
   'inst-learning',
-  'inst-certificates'
+  'inst-notices',
+  'inst-reports',
+  'inst-users',
+  'inst-settings'
 ]
 
 export const COMMON_DASHBOARD_SHORTCUTS = [

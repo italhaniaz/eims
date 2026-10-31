@@ -213,7 +213,7 @@ export const InstituteAdminSidebar = ({
                 <GraduationCap className={`w-[18px] h-[18px] shrink-0 transition-colors ${
                   isRouteActive('inst-students') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
                 }`} />
-                {(!collapsed || isMobileOpen) && <span>Students Directory</span>}
+                {(!collapsed || isMobileOpen) && <span>{tierConfig.terminology.students}</span>}
               </button>
             </div>
           )}
@@ -358,7 +358,7 @@ export const InstituteAdminSidebar = ({
                 <CalendarCheck className={`w-[18px] h-[18px] shrink-0 transition-colors ${
                   isRouteActive('inst-attendance') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
                 }`} />
-                {(!collapsed || isMobileOpen) && <span>Attendance Register</span>}
+                {(!collapsed || isMobileOpen) && <span>{tierConfig.terminology.attendance}</span>}
               </button>
             </div>
           )}
@@ -380,7 +380,7 @@ export const InstituteAdminSidebar = ({
                 <Award className={`w-[18px] h-[18px] shrink-0 transition-colors ${
                   isRouteActive('inst-exams') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
                 }`} />
-                {(!collapsed || isMobileOpen) && <span>Term Examinations & Marks</span>}
+                {(!collapsed || isMobileOpen) && <span>{tierConfig.terminology.exams}</span>}
               </button>
             </div>
           )}
@@ -564,7 +564,7 @@ export const InstituteAdminSidebar = ({
                 <FileBadge className={`w-[18px] h-[18px] shrink-0 transition-colors ${
                   isRouteActive('inst-certificates') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
                 }`} />
-                {(!collapsed || isMobileOpen) && <span>School Leaving (SLC) & Certificates</span>}
+                {(!collapsed || isMobileOpen) && <span>{tierConfig.terminology.certificates}</span>}
               </button>
             </div>
           )}
