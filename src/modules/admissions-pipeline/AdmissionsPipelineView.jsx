@@ -114,6 +114,29 @@ export const AdmissionsPipelineView = ({ currentInstitute }) => {
 
   const isAdmin = user?.role === 'superadmin' || user?.role === 'institute_admin' || user?.role === 'admin'
 
+  // Central Emergency Admissions Freeze State
+  const [isAdmissionsFrozen, setIsAdmissionsFrozen] = useState(() => {
+    try {
+      return localStorage.getItem('edu_sms_admissions_freeze') === 'true'
+    } catch {
+      return false
+    }
+  })
+
+  useEffect(() => {
+    const handleFreezeEvent = () => {
+      try {
+        setIsAdmissionsFrozen(localStorage.getItem('edu_sms_admissions_freeze') === 'true')
+      } catch {}
+    }
+    window.addEventListener('storage', handleFreezeEvent)
+    window.addEventListener('admissions_freeze_changed', handleFreezeEvent)
+    return () => {
+      window.removeEventListener('storage', handleFreezeEvent)
+      window.removeEventListener('admissions_freeze_changed', handleFreezeEvent)
+    }
+  }, [])
+
   // Loading state
   const [isLoading, setIsLoading] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -675,6 +698,11 @@ export const AdmissionsPipelineView = ({ currentInstitute }) => {
   // Filter & Search Pipeline Leads
   const filteredLeads = useMemo(() => {
     return admissionsPipeline.filter(lead => {
+      // Tenant Isolation Guard: enforce currentInstitute filter
+      if (currentInstitute?.id && lead.instituteId && lead.instituteId !== currentInstitute.id) {
+        return false
+      }
+
       // Session filter
       if (lead.academicSession && lead.academicSession !== selectedSession) {
         return false

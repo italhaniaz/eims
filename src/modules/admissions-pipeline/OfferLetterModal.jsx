@@ -27,7 +27,28 @@ export const OfferLetterModal = ({
   const { toast } = useToast()
 
   // Offer fields (customizable before printing)
-  const [feeAmount, setFeeAmount] = useState(() => applicant?.admissionFeeAmount || 25000)
+  const [feeAmount, setFeeAmount] = useState(() => {
+    if (applicant?.admissionFeeAmount) return Number(applicant.admissionFeeAmount)
+    try {
+      const storedTariffs = localStorage.getItem('edu_sms_application_fee_tariffs')
+      if (storedTariffs) {
+        const tariffs = JSON.parse(storedTariffs)
+        const grade = (applicant?.gradeApplied || '').toLowerCase()
+        const matched = tariffs.find(t => {
+          const tier = (t.tier || '').toLowerCase()
+          if (grade.includes('grade') || grade.includes('primary') || grade.includes('class')) return tier.includes('primary') || tier.includes('middle') || tier.includes('school')
+          if (grade.includes('fsc') || grade.includes('ics') || grade.includes('college')) return tier.includes('college') || tier.includes('pre-')
+          if (grade.includes('bs') || grade.includes('bba')) return tier.includes('undergraduate')
+          return false
+        })
+        if (matched) {
+          const total = (Number(matched.prospectusFee) || 2000) + (Number(matched.processingFee) || 1500) + (Number(matched.testFee) || 1000) + 20000
+          return total
+        }
+      }
+    } catch {}
+    return 25000
+  })
   
   // Expiry date (default 7 days from offer date or applicant.offerExpiryDate)
   const [expiryDate, setExpiryDate] = useState(() => {

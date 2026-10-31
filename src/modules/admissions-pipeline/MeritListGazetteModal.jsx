@@ -17,6 +17,7 @@ import {
   ArrowUpDown
 } from 'lucide-react'
 import Modal from '../../components/common/Modal'
+import { detectProgramLevel } from '../../constants/academicLevels'
 import { useToast } from '../../context/ToastContext'
 
 export const MeritListGazetteModal = ({
@@ -44,6 +45,33 @@ export const MeritListGazetteModal = ({
   // Configurable Seat Limit per Class (Default 20 seats)
   const [seatLimit, setSeatLimit] = useState(20)
   const [passThreshold, setPassThreshold] = useState(50)
+
+  // Auto-inherit Central Merit Policy from Platform Governance
+  useEffect(() => {
+    try {
+      const storedPolicies = localStorage.getItem('edu_sms_merit_policies')
+      if (storedPolicies) {
+        const parsed = JSON.parse(storedPolicies)
+        const level = targetClass !== 'ALL' ? detectProgramLevel(targetClass) : 'school'
+        const matched = parsed.find(p => {
+          const w = (p.wing || '').toLowerCase()
+          if (level === 'college' && (w.includes('college') || w.includes('higher'))) return true
+          if (level === 'university' && (w.includes('university') || w.includes('undergraduate'))) return true
+          if (level === 'school' && (w.includes('school') || w.includes('primary') || w.includes('middle'))) return true
+          return false
+        }) || parsed[0]
+
+        if (matched) {
+          if (matched.testWeight) setWeightTest(Number(matched.testWeight))
+          if (matched.interviewWeight) setWeightInterview(Number(matched.interviewWeight))
+          if (matched.pastAcademicWeight) setWeightAcademic(Number(matched.pastAcademicWeight))
+          if (matched.minPercentage) setPassThreshold(Number(matched.minPercentage))
+        }
+      }
+    } catch (e) {
+      console.warn('Could not load central merit policies', e)
+    }
+  }, [targetClass])
 
   // Gazette Publication Lock State (stored in localStorage per class & session)
   const lockStorageKey = `merit_locked_${currentInstitute?.id || 'inst'}_${selectedSession}_${targetClass}`

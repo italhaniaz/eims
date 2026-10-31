@@ -197,6 +197,123 @@ export const defaultInitialTeachers = [
   }
 ]
 
+export const defaultInitialAdmissionsPipeline = [
+  {
+    id: 'lead-1',
+    studentName: 'Muhammad Hamza',
+    parentName: 'Farooq Ahmed',
+    parentPhone: '0300-1234567',
+    parentWhatsapp: '0300-1234567',
+    email: 'hamza.admissions@gmail.com',
+    gender: 'Male',
+    dob: '2012-05-14',
+    bFormCnic: '35201-7890123-1',
+    address: '14-B Model Town, Lahore',
+    city: 'Lahore',
+    gradeApplied: 'Grade 8',
+    wing: 'Middle Wing',
+    previousSchool: 'Lahore Grammar School',
+    previousClassMarks: '84%',
+    stage: 'Inquiry Received',
+    status: 'Inquiry Logged',
+    priority: 'High',
+    source: 'Campus Visit',
+    assignedCounselor: 'Ms. Ayesha Siddiqui',
+    instituteId: 'inst-1',
+    campus: 'Beaconhouse Central High School',
+    academicSession: '2026-2027',
+    inquiryDate: '2026-10-25',
+    createdAt: '2026-10-25T10:00:00.000Z'
+  },
+  {
+    id: 'lead-2',
+    studentName: 'Zainab Binte Tariq',
+    parentName: 'Dr. Tariq Mehmood',
+    parentPhone: '0301-9876543',
+    parentWhatsapp: '0301-9876543',
+    email: 'tariq.mehmood@clinic.pk',
+    gender: 'Female',
+    dob: '2010-09-20',
+    bFormCnic: '35201-8901234-2',
+    address: 'Model Town C Block, Lahore',
+    city: 'Lahore',
+    gradeApplied: 'Grade 10',
+    wing: 'High School',
+    previousSchool: 'Beaconhouse Central High',
+    previousClassMarks: '88%',
+    stage: 'Test Done',
+    status: 'Entrance Test Evaluated',
+    scorecard: { testMarks: 82, totalMarks: 100, percentage: 82 },
+    testDate: '2026-10-28',
+    priority: 'High',
+    source: 'Website Online Form',
+    assignedCounselor: 'Mr. Salman Bashir',
+    instituteId: 'inst-2',
+    campus: 'City School Model Town Campus',
+    academicSession: '2026-2027',
+    inquiryDate: '2026-10-22',
+    createdAt: '2026-10-22T09:30:00.000Z'
+  },
+  {
+    id: 'lead-3',
+    studentName: 'Bilal Ahmed Raza',
+    parentName: 'Syed Ali Raza',
+    parentPhone: '0321-4567890',
+    parentWhatsapp: '0321-4567890',
+    email: 'ali.raza.engr@gmail.com',
+    gender: 'Male',
+    dob: '2008-11-05',
+    bFormCnic: '35201-9012345-3',
+    address: 'Harley Street, Rawalpindi Cantt',
+    city: 'Rawalpindi',
+    gradeApplied: 'FSc Pre-Engineering',
+    wing: 'College Wing',
+    previousSchool: 'Army Public School (APS)',
+    previousClassMarks: '91%',
+    stage: 'Offer Issued',
+    status: 'Offer Issued',
+    admissionFeeAmount: 28000,
+    offerDate: '2026-10-29',
+    offerExpiryDate: '2026-11-06',
+    priority: 'Urgent',
+    source: 'Referral',
+    assignedCounselor: 'Prof. Tariq Jamil',
+    instituteId: 'inst-3',
+    campus: 'Roots International College & Academy',
+    academicSession: '2026-2027',
+    inquiryDate: '2026-10-18',
+    createdAt: '2026-10-18T11:15:00.000Z'
+  },
+  {
+    id: 'lead-4',
+    studentName: 'Ayla Fatima',
+    parentName: 'Muhammad Farhan',
+    parentPhone: '0333-7890123',
+    parentWhatsapp: '0333-7890123',
+    email: 'farhan.finance@bank.com.pk',
+    gender: 'Female',
+    dob: '2006-03-12',
+    bFormCnic: '35201-0123456-4',
+    address: 'Sector H-12, Islamabad',
+    city: 'Islamabad',
+    gradeApplied: 'BS Computer Science',
+    wing: 'Undergraduate Wing',
+    previousSchool: 'Punjab College of Commerce',
+    previousClassMarks: '86%',
+    stage: 'Waitlisted',
+    status: 'In Waitlist Queue',
+    scorecard: { testMarks: 74, totalMarks: 100, percentage: 74 },
+    priority: 'Medium',
+    source: 'Social Media Campaign',
+    assignedCounselor: 'Engr. Bilal Zubair',
+    instituteId: 'inst-4',
+    campus: 'Institute of Applied Sciences & Undergraduates',
+    academicSession: '2026-2027',
+    inquiryDate: '2026-10-15',
+    createdAt: '2026-10-15T14:20:00.000Z'
+  }
+]
+
 export const defaultInitialStudents = [
   { id: 'std-1', name: 'Abdullah Khan', rollNumber: 'BHS-2026-0001', campus: 'Beaconhouse Central High', instituteId: 'inst-1', wing: 'Middle Wing', className: 'Grade 8', section: 'A', status: 'Active', gender: 'Male', phone: '0300-1234567', bFormCnic: '35201-1122334-1', feeStatus: 'Paid', fatherName: 'Farooq Khan' },
   { id: 'std-2', name: 'Zoya Fatima', rollNumber: 'BHS-2026-0002', campus: 'Beaconhouse Central High', instituteId: 'inst-1', wing: 'High School', className: 'Grade 10', section: 'B', status: 'Active', gender: 'Female', phone: '0301-9876543', bFormCnic: '35201-2233445-2', feeStatus: 'Paid', fatherName: 'Tariq Mehmood' },
@@ -236,7 +353,7 @@ const cleanZeroData = {
   transport: [],
   library: [],
   bookIssues: [],
-  admissionsPipeline: [],
+  admissionsPipeline: defaultInitialAdmissionsPipeline,
   auditLogs: [],
   communicationLogs: []
 }
@@ -568,16 +685,9 @@ export const getStoredData = () => {
         parsed.students = defaultInitialStudents
         try { localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed)) } catch {}
       }
-      if (Array.isArray(parsed.admissionsPipeline)) {
-        const demoPipelineIds = ['adm-1', 'adm-2']
-        const demoPipelineNames = ['Daniyal Tariq', 'Ayla Fatima']
-        const filteredPipeline = parsed.admissionsPipeline.filter(a =>
-          !demoPipelineIds.includes(a.id) && !demoPipelineNames.includes(a.studentName)
-        )
-        if (filteredPipeline.length !== parsed.admissionsPipeline.length) {
-          parsed.admissionsPipeline = filteredPipeline
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed))
-        }
+      if (!Array.isArray(parsed.admissionsPipeline) || parsed.admissionsPipeline.length === 0) {
+        parsed.admissionsPipeline = defaultInitialAdmissionsPipeline
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed)) } catch {}
       }
       if (!Array.isArray(parsed.teachers) || parsed.teachers.length === 0) {
         parsed.teachers = defaultInitialTeachers

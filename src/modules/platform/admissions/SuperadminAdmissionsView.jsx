@@ -91,10 +91,11 @@ const DEFAULT_MERIT_POLICIES = [
 ]
 
 const DEFAULT_SEAT_MATRIX = [
-  { id: 'SM-01', campus: 'Beaconhouse Central High', wing: 'Primary Wing', totalCapacity: 250, filledSeats: 210, waitlist: 15 },
-  { id: 'SM-02', campus: 'Beaconhouse Central High', wing: 'High School', totalCapacity: 300, filledSeats: 285, waitlist: 28 },
-  { id: 'SM-03', campus: 'City School Senior Branch', wing: 'Middle Wing', totalCapacity: 200, filledSeats: 160, waitlist: 8 },
-  { id: 'SM-04', campus: 'Lahore Grammar Model Town', wing: 'College Wing', totalCapacity: 180, filledSeats: 175, waitlist: 42 }
+  { id: 'SM-01', campus: 'Beaconhouse Central High School', instituteId: 'inst-1', wing: 'Primary Wing', totalCapacity: 250, filledSeats: 210, waitlist: 15 },
+  { id: 'SM-02', campus: 'Beaconhouse Central High School', instituteId: 'inst-1', wing: 'High School', totalCapacity: 300, filledSeats: 285, waitlist: 28 },
+  { id: 'SM-03', campus: 'City School Model Town Campus', instituteId: 'inst-2', wing: 'Middle Wing', totalCapacity: 200, filledSeats: 160, waitlist: 8 },
+  { id: 'SM-04', campus: 'Roots International College & Academy', instituteId: 'inst-3', wing: 'College Wing', totalCapacity: 180, filledSeats: 175, waitlist: 42 },
+  { id: 'SM-05', campus: 'Institute of Applied Sciences & Undergraduates', instituteId: 'inst-4', wing: 'Undergraduate Wing', totalCapacity: 150, filledSeats: 130, waitlist: 22 }
 ]
 
 const DEFAULT_FEE_SETTINGS = [
@@ -132,6 +133,16 @@ const DEFAULT_FEE_SETTINGS = [
     siblingDiscount: 20
   }
 ]
+
+// Formula-neutralized CSV sanitizer (=, +, -, @, \t, \r)
+const sanitizeCSV = (val) => {
+  if (val === null || val === undefined) return '""'
+  let str = String(val)
+  if (/^[=\+\-@\t\r]/.test(str)) {
+    str = "'" + str
+  }
+  return '"' + str.replace(/"/g, '""') + '"'
+}
 
 export const SuperadminAdmissionsView = ({ activeTab = 'overview', onTabChange = () => {} }) => {
   const { institutes = [], admissionsPipeline = [], logAuditEvent } = useAppData()
@@ -288,42 +299,63 @@ export const SuperadminAdmissionsView = ({ activeTab = 'overview', onTabChange =
   // Dynamic Overview Calculations
   // ----------------------------------------------------
   const overviewMetrics = useMemo(() => {
-    if (admissionsPipeline && admissionsPipeline.length > 0) {
-      const totalLeads = admissionsPipeline.length
-      const testsTaken = admissionsPipeline.filter(p => 
+    // Filter pipeline by selectedCampusFilter and activeSession
+    const filteredPipeline = (admissionsPipeline || []).filter(p => {
+      if (selectedCampusFilter !== 'all') {
+        if (p.instituteId && p.instituteId !== selectedCampusFilter) return false
+        const selectedInst = institutes.find(i => i.id === selectedCampusFilter)
+        if (selectedInst && p.campus && p.campus !== selectedInst.name) return false
+      }
+      if (activeSession && p.academicSession && p.academicSession !== activeSession) {
+        return false
+      }
+      return true
+    })
+
+    if (filteredPipeline.length > 0) {
+      const totalLeads = filteredPipeline.length
+      const testsTaken = filteredPipeline.filter(p => 
         ['Test Done', 'Interview Done', 'Offer Issued', 'Fee Paid', 'Enrolled'].includes(p.stage)
       ).length
-      const offersIssued = admissionsPipeline.filter(p => 
+      const interviewsConducted = filteredPipeline.filter(p =>
+        ['Interview Done', 'Offer Issued', 'Fee Paid', 'Enrolled'].includes(p.stage)
+      ).length
+      const offersIssued = filteredPipeline.filter(p => 
         ['Offer Issued', 'Fee Paid', 'Enrolled'].includes(p.stage)
       ).length
-      const enrolled = admissionsPipeline.filter(p => p.stage === 'Enrolled').length
+      const enrolled = filteredPipeline.filter(p => p.stage === 'Enrolled').length
 
       const testRate = totalLeads > 0 ? ((testsTaken / totalLeads) * 100).toFixed(1) : '0.0'
-      const offerRate = testsTaken > 0 ? ((offersIssued / testsTaken) * 100).toFixed(1) : '0.0'
+      const interviewRate = testsTaken > 0 ? ((interviewsConducted / testsTaken) * 100).toFixed(1) : '0.0'
+      const offerRate = interviewsConducted > 0 ? ((offersIssued / interviewsConducted) * 100).toFixed(1) : '0.0'
       const yieldRate = offersIssued > 0 ? ((enrolled / offersIssued) * 100).toFixed(1) : '0.0'
 
       return {
         totalLeads,
         testsTaken,
+        interviewsConducted,
         offersIssued,
         enrolled,
         testRate,
+        interviewRate,
         offerRate,
         yieldRate
       }
     }
 
-    // Default Baseline when pipeline is fresh
+    // Default Baseline when no leads match current filter
     return {
-      totalLeads: 1248,
-      testsTaken: 892,
-      offersIssued: 540,
-      enrolled: 429,
-      testRate: '71.4',
-      offerRate: '60.5',
-      yieldRate: '79.4'
+      totalLeads: 0,
+      testsTaken: 0,
+      interviewsConducted: 0,
+      offersIssued: 0,
+      enrolled: 0,
+      testRate: '0.0',
+      interviewRate: '0.0',
+      offerRate: '0.0',
+      yieldRate: '0.0'
     }
-  }, [admissionsPipeline])
+  }, [admissionsPipeline, selectedCampusFilter, activeSession, institutes])
 
   // ----------------------------------------------------
   // Handlers: Cycle CRUD
@@ -445,8 +477,8 @@ export const SuperadminAdmissionsView = ({ activeTab = 'overview', onTabChange =
     const headers = ['Cycle ID', 'Cycle Name', 'Campus Scope', 'Start Date', 'End Date', 'Status', 'Capacity', 'Applications']
     const rows = cycles.map(c => [
       c.id,
-      `"${c.name.replace(/"/g, '""')}"`,
-      `"${c.campusScope.replace(/"/g, '""')}"`,
+      sanitizeCSV(c.name),
+      sanitizeCSV(c.campusScope),
       c.startDate,
       c.endDate,
       c.status,
@@ -578,10 +610,29 @@ export const SuperadminAdmissionsView = ({ activeTab = 'overview', onTabChange =
     setIsManageQuotaModalOpen(false)
   }
 
-  const handlePromoteFromWaitlist = (seatRow) => {
+  const handlePromoteFromWaitlist = async (seatRow) => {
     if (!seatRow || seatRow.waitlist <= 0) {
       toast?.error?.('No waitlisted candidates available in queue.')
       return
+    }
+
+    // Identify top waitlisted candidate in admissionsPipeline
+    const targetCandidate = (admissionsPipeline || []).find(p => 
+      p.stage === 'Waitlisted' && 
+      (p.campus === seatRow.campus || p.instituteId === seatRow.instituteId || !p.instituteId)
+    )
+
+    if (targetCandidate && updateItem) {
+      await updateItem('admissionsPipeline', targetCandidate.id, {
+        stage: 'Offer Issued',
+        status: 'Offer Issued (Waitlist Promoted)',
+        offerDate: new Date().toISOString().split('T')[0],
+        offerExpiryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        updatedAt: new Date().toISOString()
+      })
+      toast?.success?.(`Promoted candidate "${targetCandidate.studentName}" from waitlist! Official admission offer issued.`)
+    } else {
+      toast?.success?.(`Promoted top candidate from waitlist for ${seatRow.campus}! Seat capacity adjusted.`)
     }
 
     setSeatMatrix(prev => prev.map(s => {
@@ -595,7 +646,6 @@ export const SuperadminAdmissionsView = ({ activeTab = 'overview', onTabChange =
       return s
     }))
 
-    toast?.success?.(`Promoted top candidate from waitlist for ${seatRow.campus}! Admission offer generated.`)
     if (logAuditEvent) {
       logAuditEvent({
         action: 'WAITLIST_PROMOTION',
@@ -640,8 +690,8 @@ export const SuperadminAdmissionsView = ({ activeTab = 'overview', onTabChange =
       const avail = Math.max(0, s.totalCapacity - s.filledSeats)
       const util = s.totalCapacity > 0 ? ((s.filledSeats / s.totalCapacity) * 100).toFixed(1) : 0
       return [
-        `"${s.campus.replace(/"/g, '""')}"`,
-        `"${s.wing.replace(/"/g, '""')}"`,
+        sanitizeCSV(s.campus),
+        sanitizeCSV(s.wing),
         s.totalCapacity,
         s.filledSeats,
         avail,
@@ -714,6 +764,7 @@ export const SuperadminAdmissionsView = ({ activeTab = 'overview', onTabChange =
   const handleToggleFreeze = () => {
     const nextState = !isIntakeFrozen
     setIsIntakeFrozen(nextState)
+    try { window.dispatchEvent(new Event('admissions_freeze_changed')) } catch {}
     if (nextState) {
       toast?.error?.('Central Admissions Intake FROZEN. Public applications temporarily locked.')
     } else {
@@ -730,11 +781,11 @@ export const SuperadminAdmissionsView = ({ activeTab = 'overview', onTabChange =
 
   // Tabs Configuration
   const tabsConfig = [
-    { key: 'overview', label: 'Admissions Overview', icon: LayoutDashboard },
     { key: 'cycles', label: 'Admission Cycles', icon: Calendar, badge: cycles.length },
     { key: 'merit', label: 'Entry Test & Merit Policies', icon: Award, badge: meritPolicies.length },
     { key: 'seats', label: 'Seat Matrix & Waitlist', icon: Layers, badge: seatMatrix.length },
-    { key: 'fees', label: 'Application Fee Settings', icon: DollarSign, badge: feeSettings.length }
+    { key: 'fees', label: 'Application Fee Settings', icon: DollarSign, badge: feeSettings.length },
+    { key: 'overview', label: 'Admissions Overview & Funnel', icon: LayoutDashboard }
   ]
 
   // Filtered lists

@@ -29,13 +29,13 @@ export const ConvertStudentModal = ({
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Determine Next Sequential Roll Number starting from 1
+  // Determine Next Sequential Roll Number with Institute Campus Code Prefix
   const autoRollNumber = useMemo(() => {
-    const isCollege = lead?.gradeApplied?.includes('Year') || lead?.gradeApplied?.includes('FSc') || lead?.gradeApplied?.includes('ICS')
-    const isUniv = lead?.gradeApplied?.includes('BS') || lead?.gradeApplied?.includes('BBA') || lead?.gradeApplied?.includes('MS')
-    const prefix = isUniv ? 'REG' : isCollege ? 'COL' : 'STD'
+    const campusCode = currentInstitute?.code || (currentInstitute?.name ? currentInstitute.name.replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase() : 'BHS')
+    const year = new Date().getFullYear()
 
     const existingNums = (students || [])
+      .filter(s => !s.instituteId || s.instituteId === currentInstitute?.id)
       .map(s => {
         const match = String(s.rollNumber || '').match(/([0-9]+)$/)
         return match ? parseInt(match[1], 10) : 0
@@ -44,8 +44,8 @@ export const ConvertStudentModal = ({
 
     const maxNum = existingNums.length > 0 ? Math.max(...existingNums) : 0
     const nextVal = maxNum + 1
-    return `${prefix}-${String(nextVal).padStart(3, '0')}`
-  }, [students, lead?.gradeApplied])
+    return `${campusCode}-${year}-${String(nextVal).padStart(4, '0')}`
+  }, [students, currentInstitute, lead?.gradeApplied])
 
   // Dynamic sections available for the lead's class
   const dynamicSections = useMemo(() => {
