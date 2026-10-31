@@ -1,0 +1,543 @@
+import React, { useState, useMemo } from 'react'
+import { 
+  Boxes, 
+  Plus, 
+  Search, 
+  Filter, 
+  Download, 
+  CheckCircle2, 
+  AlertTriangle, 
+  Wrench, 
+  Archive, 
+  Building2, 
+  Tag, 
+  Edit2, 
+  Trash2, 
+  X, 
+  DollarSign,
+  PackageCheck,
+  RotateCcw,
+  Printer
+} from 'lucide-react'
+import { useToast } from '../../../context/ToastContext'
+
+const INITIAL_INVENTORY = [
+  { id: 'INV-101', name: 'Dell Core i7 Computer Terminals', category: 'IT & Lab Equipment', room: 'Computer Lab 1', quantity: 24, unitCost: 85000, condition: 'Good', status: 'In Service', purchaseDate: '2025-08-15', custodian: 'Mr. Asim Riaz' },
+  { id: 'INV-102', name: 'Compound Optical Microscopes (1000x)', category: 'Science & Biology Labs', room: 'Biology Lab 2', quantity: 18, unitCost: 42000, condition: 'Good', status: 'In Service', purchaseDate: '2025-09-02', custodian: 'Dr. Nadia Hashmi' },
+  { id: 'INV-103', name: 'Epson Interactive Multimedia Projectors', category: 'IT & Lab Equipment', room: 'Auditorium Hall', quantity: 4, unitCost: 145000, condition: 'Needs Repair', status: 'Maintenance', purchaseDate: '2024-11-20', custodian: 'Campus Admin' },
+  { id: 'INV-104', name: 'Student Dual Wooden Desks & Chairs', category: 'Classroom Furniture', room: 'Classrooms Block B', quantity: 120, unitCost: 14500, condition: 'Good', status: 'In Service', purchaseDate: '2025-01-10', custodian: 'Estate Officer' },
+  { id: 'INV-105', name: 'Chemistry Reagent Glassware Set', category: 'Science & Biology Labs', room: 'Chemistry Lab', quantity: 35, unitCost: 8500, condition: 'Good', status: 'In Service', purchaseDate: '2025-09-12', custodian: 'Ms. Ayesha Siddiqa' },
+  { id: 'INV-106', name: 'Heavy Duty Photocopier & Network Scanner', category: 'Office Equipment', room: 'Campus Exam Cell', quantity: 2, unitCost: 280000, condition: 'Fair', status: 'In Service', purchaseDate: '2024-03-14', custodian: 'Exam Incharge' },
+  { id: 'INV-107', name: 'Cricket & Football Sports Gear Kits', category: 'Sports & Physical', room: 'Sports Complex', quantity: 15, unitCost: 22000, condition: 'Good', status: 'In Service', purchaseDate: '2025-10-01', custodian: 'Coach Rashid' },
+  { id: 'INV-108', name: 'A4 Printing Paper & Examination Answer Sheets', category: 'Consumables & Stationery', room: 'Central Store', quantity: 250, unitCost: 1800, condition: 'New', status: 'In Stock', purchaseDate: '2026-02-10', custodian: 'Store Keeper' }
+]
+
+export const CampusInventoryView = ({ currentInstitute }) => {
+  const { toast } = useToast()
+  const instituteId = currentInstitute?.id || 'inst-1'
+  const storageKey = `sms_campus_inventory_${instituteId}`
+
+  const [items, setItems] = useState(() => {
+    try {
+      const saved = localStorage.getItem(storageKey)
+      return saved ? JSON.parse(saved) : INITIAL_INVENTORY
+    } catch {
+      return INITIAL_INVENTORY
+    }
+  })
+
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState('All')
+  const [selectedCondition, setSelectedCondition] = useState('All')
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingItem, setEditingItem] = useState(null)
+
+  const [formData, setFormData] = useState({
+    name: '',
+    category: 'IT & Lab Equipment',
+    room: '',
+    quantity: 1,
+    unitCost: '',
+    condition: 'Good',
+    status: 'In Service',
+    custodian: '',
+    purchaseDate: new Date().toISOString().split('T')[0]
+  })
+
+  const saveItems = (newItems) => {
+    setItems(newItems)
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(newItems))
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  const categories = ['All', 'IT & Lab Equipment', 'Science & Biology Labs', 'Classroom Furniture', 'Office Equipment', 'Sports & Physical', 'Consumables & Stationery']
+
+  const filteredItems = useMemo(() => {
+    return items.filter(item => {
+      const matchesSearch = 
+        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.room.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (item.custodian && item.custodian.toLowerCase().includes(searchQuery.toLowerCase()))
+
+      const matchesCat = selectedCategory === 'All' || item.category === selectedCategory
+      const matchesCond = selectedCondition === 'All' || item.condition === selectedCondition
+      return matchesSearch && matchesCat && matchesCond
+    })
+  }, [items, searchQuery, selectedCategory, selectedCondition])
+
+  // Summary Metrics
+  const totalQuantity = useMemo(() => items.reduce((acc, curr) => acc + Number(curr.quantity || 0), 0), [items])
+  const totalValuation = useMemo(() => items.reduce((acc, curr) => acc + (Number(curr.quantity || 0) * Number(curr.unitCost || 0)), 0), [items])
+  const maintenanceCount = useMemo(() => items.filter(i => i.status === 'Maintenance' || i.condition === 'Needs Repair').length, [items])
+  const inServiceRate = useMemo(() => items.length ? Math.round(((items.length - maintenanceCount) / items.length) * 100) : 100, [items, maintenanceCount])
+
+  const handleOpenAdd = () => {
+    setEditingItem(null)
+    setFormData({
+      name: '',
+      category: 'IT & Lab Equipment',
+      room: '',
+      quantity: 1,
+      unitCost: '',
+      condition: 'Good',
+      status: 'In Service',
+      custodian: '',
+      purchaseDate: new Date().toISOString().split('T')[0]
+    })
+    setIsModalOpen(true)
+  }
+
+  const handleOpenEdit = (item) => {
+    setEditingItem(item)
+    setFormData({
+      name: item.name,
+      category: item.category,
+      room: item.room,
+      quantity: item.quantity,
+      unitCost: item.unitCost,
+      condition: item.condition,
+      status: item.status,
+      custodian: item.custodian || '',
+      purchaseDate: item.purchaseDate || new Date().toISOString().split('T')[0]
+    })
+    setIsModalOpen(true)
+  }
+
+  const handleDelete = (id) => {
+    if (window.confirm('Are you sure you want to remove this item from the inventory registry?')) {
+      const updated = items.filter(i => i.id !== id)
+      saveItems(updated)
+      toast?.success?.('Inventory asset item removed successfully.')
+    }
+  }
+
+  const handleFormSubmit = (e) => {
+    e.preventDefault()
+    if (!formData.name.trim() || !formData.room.trim()) {
+      toast?.error?.('Please provide an asset item name and assigned location/room.')
+      return
+    }
+
+    if (editingItem) {
+      const updated = items.map(i => i.id === editingItem.id ? { ...i, ...formData } : i)
+      saveItems(updated)
+      toast?.success?.(`Asset "${formData.name}" updated successfully.`)
+    } else {
+      const newItem = {
+        id: `INV-${Math.floor(100 + Math.random() * 900)}`,
+        ...formData
+      }
+      saveItems([newItem, ...items])
+      toast?.success?.(`New asset "${formData.name}" recorded in campus inventory.`)
+    }
+    setIsModalOpen(false)
+  }
+
+  const handleExportCSV = () => {
+    const header = 'Asset ID,Item Name,Category,Room/Location,Quantity,Unit Cost (PKR),Total Value (PKR),Condition,Status,Custodian\n'
+    const rows = filteredItems.map(i => 
+      `"${i.id}","${i.name}","${i.category}","${i.room}",${i.quantity},${i.unitCost},${i.quantity * i.unitCost},"${i.condition}","${i.status}","${i.custodian || ''}"`
+    ).join('\n')
+    const blob = new Blob([header + rows], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `Campus_Inventory_Report_${new Date().toISOString().split('T')[0]}.csv`
+    a.click()
+    toast?.success?.('Campus inventory CSV report downloaded.')
+  }
+
+  return (
+    <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
+      {/* Header Banner */}
+      <div className="bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-xs font-semibold text-purple-200 border border-white/10 mb-2">
+              <Boxes className="w-3.5 h-3.5 text-purple-300" />
+              <span>Campus Services • Asset & Equipment Governance</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+              Campus Inventory & Asset Management
+            </h1>
+            <p className="text-sm text-purple-100 mt-1 max-w-2xl leading-relaxed">
+              Real-time audit registry for computer labs, scientific apparatus, classroom furniture, sports kits, and consumable stores.
+            </p>
+          </div>
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <button
+              onClick={handleExportCSV}
+              className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-xs flex items-center gap-1.5 border border-white/20 transition-all cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Export Sheet</span>
+            </button>
+            <button
+              onClick={handleOpenAdd}
+              className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-purple-600/30 transition-all cursor-pointer active:scale-95"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Stock / Asset</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
+          <div>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Inventory Items</p>
+            <h3 className="text-2xl font-black text-slate-900 mt-1">{totalQuantity}</h3>
+            <span className="text-[11px] text-purple-600 font-medium">{items.length} distinct asset codes</span>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+            <PackageCheck className="w-6 h-6" />
+          </div>
+        </div>
+
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
+          <div>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Asset Valuation</p>
+            <h3 className="text-2xl font-black text-slate-900 mt-1">PKR {(totalValuation / 1000000).toFixed(2)}M</h3>
+            <span className="text-[11px] text-emerald-600 font-medium">Capital asset book value</span>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <DollarSign className="w-6 h-6" />
+          </div>
+        </div>
+
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
+          <div>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Operational Health</p>
+            <h3 className="text-2xl font-black text-slate-900 mt-1">{inServiceRate}%</h3>
+            <span className="text-[11px] text-emerald-600 font-medium">Fully deployed in rooms</span>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+            <CheckCircle2 className="w-6 h-6" />
+          </div>
+        </div>
+
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
+          <div>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Maintenance / Issues</p>
+            <h3 className="text-2xl font-black text-slate-900 mt-1">{maintenanceCount}</h3>
+            <span className="text-[11px] text-amber-600 font-medium">Under repair / overhaul</span>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+            <Wrench className="w-6 h-6" />
+          </div>
+        </div>
+      </div>
+
+      {/* Filter and Search Bar */}
+      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
+        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+          <div className="relative flex-1 max-w-md">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search by asset code, name, room, or custodian..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+            />
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            <select
+              value={selectedCondition}
+              onChange={(e) => setSelectedCondition(e.target.value)}
+              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+            >
+              <option value="All">All Conditions</option>
+              <option value="New">Brand New</option>
+              <option value="Good">Good Condition</option>
+              <option value="Fair">Fair / Minor Wear</option>
+              <option value="Needs Repair">Needs Repair</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Category Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none pt-1">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
+                selectedCategory === cat 
+                  ? 'bg-purple-600 text-white shadow-2xs' 
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Inventory Table */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-slate-50 text-slate-600 border-b border-slate-200/80 font-bold uppercase tracking-wider text-[11px]">
+              <tr>
+                <th className="py-3.5 px-4">Asset ID & Item Name</th>
+                <th className="py-3.5 px-4">Category</th>
+                <th className="py-3.5 px-4">Room / Department</th>
+                <th className="py-3.5 px-4">Qty & Cost</th>
+                <th className="py-3.5 px-4">Total Value</th>
+                <th className="py-3.5 px-4">Condition</th>
+                <th className="py-3.5 px-4">Status</th>
+                <th className="py-3.5 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-slate-700">
+              {filteredItems.length === 0 ? (
+                <tr>
+                  <td colSpan="8" className="text-center py-12 text-slate-400">
+                    <Boxes className="w-10 h-10 mx-auto text-slate-300 mb-2" />
+                    <p className="font-semibold text-slate-600">No inventory assets match your search</p>
+                    <p className="text-[11px] mt-0.5">Try adjusting your filters or click "Add Stock / Asset".</p>
+                  </td>
+                </tr>
+              ) : (
+                filteredItems.map((item) => (
+                  <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="py-3 px-4 font-semibold text-slate-900">
+                      <div className="font-bold">{item.name}</div>
+                      <div className="font-mono text-[10px] text-purple-600 mt-0.5">{item.id}</div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-medium text-[10px] border border-slate-200">
+                        {item.category}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="font-medium text-slate-800">{item.room}</div>
+                      <div className="text-[10px] text-slate-400">{item.custodian || 'Unassigned'}</div>
+                    </td>
+                    <td className="py-3 px-4 font-mono">
+                      <div><span className="font-bold text-slate-900">{item.quantity}</span> units</div>
+                      <div className="text-[10px] text-slate-400">@ PKR {Number(item.unitCost).toLocaleString()}</div>
+                    </td>
+                    <td className="py-3 px-4 font-mono font-bold text-slate-900">
+                      PKR {(Number(item.quantity) * Number(item.unitCost)).toLocaleString()}
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                        item.condition === 'New' || item.condition === 'Good' 
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                          : item.condition === 'Fair' 
+                          ? 'bg-amber-50 text-amber-700 border-amber-200' 
+                          : 'bg-rose-50 text-rose-700 border-rose-200'
+                      }`}>
+                        {item.condition}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className={`inline-flex items-center gap-1 text-[11px] font-semibold ${
+                        item.status === 'In Service' ? 'text-emerald-600' :
+                        item.status === 'Maintenance' ? 'text-amber-600' : 'text-blue-600'
+                      }`}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
+                        {item.status}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => handleOpenEdit(item)}
+                          className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors cursor-pointer"
+                          title="Edit Asset Details"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(item.id)}
+                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                          title="Delete from Registry"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Modal: Add / Edit Asset */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-xl w-full p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center">
+                  <Boxes className="w-4 h-4" />
+                </div>
+                <h3 className="font-bold text-slate-900 text-base">
+                  {editingItem ? 'Edit Asset Record' : 'Record New Campus Asset'}
+                </h3>
+              </div>
+              <button 
+                onClick={() => setIsModalOpen(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleFormSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Asset / Item Name *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Dell Core i7 Desktop Computer"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Asset Category</label>
+                  <select
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-purple-500/20 focus:outline-none"
+                  >
+                    {categories.filter(c => c !== 'All').map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Assigned Room / Lab *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Computer Lab 2, Hall A"
+                    value={formData.room}
+                    onChange={(e) => setFormData({ ...formData, room: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Quantity</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={formData.quantity}
+                    onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Unit Cost (PKR)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="e.g. 85000"
+                    value={formData.unitCost}
+                    onChange={(e) => setFormData({ ...formData, unitCost: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Physical Condition</label>
+                  <select
+                    value={formData.condition}
+                    onChange={(e) => setFormData({ ...formData, condition: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-purple-500/20 focus:outline-none"
+                  >
+                    <option value="New">Brand New</option>
+                    <option value="Good">Good Condition</option>
+                    <option value="Fair">Fair / Minor Wear</option>
+                    <option value="Needs Repair">Needs Repair</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Deployment Status</label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-purple-500/20 focus:outline-none"
+                  >
+                    <option value="In Service">In Service / Active</option>
+                    <option value="In Stock">In Storage Stock</option>
+                    <option value="Maintenance">Under Maintenance</option>
+                  </select>
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Custodian / Responsible Staff</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Lab Assistant Tariq / Head of Science"
+                    value={formData.custodian}
+                    onChange={(e) => setFormData({ ...formData, custodian: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white shadow-sm"
+                >
+                  {editingItem ? 'Save Changes' : 'Record Asset'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default CampusInventoryView
