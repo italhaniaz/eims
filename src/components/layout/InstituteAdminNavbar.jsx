@@ -1,8 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { 
-  Bell, 
-  Settings, 
-  User, 
   School, 
   ChevronRight, 
   ChevronDown, 
@@ -12,11 +9,14 @@ import {
   GraduationCap, 
   Building2, 
   Layers, 
+  Settings, 
+  User,
   Key
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useAppData } from '../../context/AppDataContext'
 import ChangePasswordModal from '../common/ChangePasswordModal'
+import { getInstituteTierConfig } from '../../utils/tierGating'
 
 export const InstituteAdminNavbar = ({ 
   currentRoute, 
@@ -54,43 +54,40 @@ export const InstituteAdminNavbar = ({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const enabledTiers = selectedInstitute?.enabledTiers || (
-    selectedInstitute?.type === 'School' ? ['school'] :
-    selectedInstitute?.type === 'College' ? ['college'] :
-    selectedInstitute?.type === 'University' ? ['undergraduate'] :
-    ['school', 'college']
-  )
+  const tierConfig = getInstituteTierConfig(selectedInstitute)
 
   const availableWings = [
-    { id: 'all', label: 'All Wings', icon: Layers, badge: 'Overview' },
-    ...(enabledTiers.includes('school') ? [{ id: 'school', label: 'School Wing', icon: School, badge: 'K-10' }] : []),
-    ...(enabledTiers.includes('college') ? [{ id: 'college', label: 'College Wing', icon: Building2, badge: '11-12' }] : []),
-    ...(enabledTiers.includes('undergraduate') ? [{ id: 'undergraduate', label: 'Undergraduates', icon: GraduationCap, badge: 'BS' }] : [])
+    ...(tierConfig.isMultiTier ? [{ id: 'all', label: 'All Wings', icon: Layers, badge: 'Overview' }] : []),
+    ...(tierConfig.hasSchool ? [{ id: 'school', label: 'School Wing', icon: School, badge: 'K-10' }] : []),
+    ...(tierConfig.hasCollege ? [{ id: 'college', label: 'College Wing', icon: Building2, badge: '11-12' }] : []),
+    ...(tierConfig.hasUniversity ? [{ id: 'undergraduate', label: 'Undergraduates', icon: GraduationCap, badge: 'BS' }] : [])
   ]
 
   const getRouteTitle = () => {
     switch (currentRoute) {
       case 'inst-dashboard': return 'Campus Overview'
-      case 'inst-students': return 'Students & Admissions'
-      case 'inst-teachers': return 'Faculty & Staff'
-      case 'inst-classes': return 'Classes & Sections'
-      case 'inst-timetable': return 'Class Timetable Schedule'
-      case 'inst-attendance': return 'Daily Attendance'
+      case 'inst-students': return tierConfig.isUniversityOnly ? 'Enrolled Students' : tierConfig.isCollegeOnly ? 'College Students' : 'Students & Admissions'
+      case 'inst-teachers': return tierConfig.isUniversityOnly ? 'Professors & Faculty' : tierConfig.isCollegeOnly ? 'Lecturers & Faculty' : 'Faculty & Staff'
+      case 'inst-classes': return tierConfig.terminology.classes
+      case 'inst-timetable': return tierConfig.isUniversityOnly ? 'Lecture Timetable' : tierConfig.isCollegeOnly ? 'College Timetable' : 'Class Timetable Schedule'
+      case 'inst-attendance': return tierConfig.isUniversityOnly ? 'Course Attendance' : 'Daily Attendance'
       case 'inst-fees': return 'Fee Invoices & Payments'
-      case 'inst-exams': return 'Examinations & Marks'
-      case 'inst-subjects': return 'Academic Curriculum & Subjects'
+      case 'inst-exams': return tierConfig.terminology.exams
+      case 'inst-subjects': return tierConfig.terminology.curriculum
       case 'inst-notices': return 'Campus Notice Board'
       case 'inst-admissions': return 'Inquiries & Leads'
       case 'inst-transport': return 'Campus Transport & Vans'
       case 'inst-library': return 'Campus Library & Book Issues'
-      case 'inst-program-levels': return 'Academic Program Levels'
-      default: return 'Campus Portal'
+      case 'inst-certificates': return tierConfig.terminology.certificates
+      case 'inst-learning': return 'Study Notes & LMS'
+      case 'inst-program-levels': return tierConfig.isUniversityOnly ? 'Degree Matrix' : 'Academic Program Levels'
+      default: return tierConfig.portalTitle
     }
   }
 
   return (
     <header className="h-16 sm:h-20 min-h-[64px] sm:min-h-[80px] bg-white border-b border-slate-100 px-3.5 sm:px-6 md:px-8 flex items-center justify-between sticky top-0 z-30 shrink-0 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
-      {/* Left: Mobile Hamburger, Campus Switcher, & Route Title */}
+      {/* Left: Mobile Hamburger, Campus Switcher, & Route Breadcrumb */}
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         {/* Mobile Hamburger */}
         <button
@@ -146,13 +143,14 @@ export const InstituteAdminNavbar = ({
           </>
         )}
 
-        <h1 className="text-sm sm:text-base font-bold text-slate-800 truncate max-w-[220px] sm:max-w-none">
+        <ChevronRight className="hidden sm:inline-block w-3.5 h-3.5 text-slate-300 shrink-0" />
+        <h1 className="text-sm font-semibold text-slate-800 truncate max-w-[220px] sm:max-w-none">
           {getRouteTitle()}
         </h1>
       </div>
 
       {/* Center: Academic Wing Switcher (Multi-Tier Option A Architecture) */}
-      {availableWings.length > 2 && (
+      {tierConfig.isMultiTier && availableWings.length > 2 && (
         <div className="hidden lg:flex items-center bg-slate-100/90 p-1 rounded-xl border border-slate-200/80 shadow-2xs gap-1">
           {availableWings.map(wing => {
             const Icon = wing.icon
@@ -185,12 +183,12 @@ export const InstituteAdminNavbar = ({
       )}
 
       {/* Single Tier Campus Badge (when institute only has 1 tier enabled) */}
-      {availableWings.length <= 2 && (
-        <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-700 text-xs font-semibold">
-          {enabledTiers[0] === 'school' && <School className="w-4 h-4 text-purple-600" />}
-          {enabledTiers[0] === 'college' && <Building2 className="w-4 h-4 text-purple-600" />}
-          {enabledTiers[0] === 'undergraduate' && <GraduationCap className="w-4 h-4 text-purple-600" />}
-          <span>{enabledTiers[0] === 'undergraduate' ? 'Undergraduates / University' : (enabledTiers[0] || 'Campus').toUpperCase()} Portal</span>
+      {!tierConfig.isMultiTier && (
+        <div className="hidden md:flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#f5eeff] border border-purple-200/80 text-purple-900 text-xs font-bold shadow-2xs">
+          {tierConfig.isSchoolOnly && <School className="w-4 h-4 text-purple-600" />}
+          {tierConfig.isCollegeOnly && <Building2 className="w-4 h-4 text-purple-600" />}
+          {tierConfig.isUniversityOnly && <GraduationCap className="w-4 h-4 text-purple-600" />}
+          <span>{tierConfig.portalTypeLabel}</span>
         </div>
       )}
 
@@ -217,11 +215,11 @@ export const InstituteAdminNavbar = ({
           {showProfileMenu && (
             <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-slate-100 py-2 z-50 animate-in fade-in zoom-in-95">
               <div className="px-4 py-3 border-b border-slate-100">
-                <p className="text-xs font-bold text-slate-800">{user?.name || 'Campus Administrator'}</p>
+                <p className="text-xs font-bold text-slate-800">{user?.name || tierConfig.roleBadge}</p>
                 <p className="text-[11px] text-slate-400 mt-0.5 truncate">{user?.email || 'admin@campus.edu'}</p>
                 <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#f5eeff] text-purple-700 border border-purple-200">
                   <ShieldCheck className="w-3 h-3 text-purple-600" />
-                  <span>Campus Administrator</span>
+                  <span>{user?.roleTitle || tierConfig.roleBadge}</span>
                 </div>
               </div>
 

@@ -15,7 +15,8 @@ import {
   ChevronDown, 
   ChevronUp, 
   LogOut, 
-  School, 
+  School,
+  Building2, 
   X, 
   UserCheck, 
   Bus, 
@@ -24,10 +25,12 @@ import {
   Laptop
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { getInstituteTierConfig } from '../../utils/tierGating'
 
 export const InstituteAdminSidebar = ({ 
   currentRoute, 
   onRouteChange, 
+  currentInstitute,
   instituteName,
   isMobileOpen = false,
   onCloseMobile = () => {}
@@ -35,7 +38,8 @@ export const InstituteAdminSidebar = ({
   const { user, logout } = useAuth()
   const [collapsed, setCollapsed] = useState(false)
 
-  // Granular Role-Based Access Scopes
+  // Granular Role-Based Access Scopes & Tier Gating
+  const tierConfig = getInstituteTierConfig(currentInstitute)
   const userRole = user?.role || 'institute_admin'
   const isTeacher = userRole === 'teacher'
   const isAccountant = userRole === 'accountant'
@@ -88,14 +92,20 @@ export const InstituteAdminSidebar = ({
           {(!collapsed || isMobileOpen) && (
             <div className="flex items-center gap-2.5 overflow-hidden">
               <div className="w-9 h-9 rounded-xl bg-[#f5eeff] text-purple-700 border border-purple-100 flex items-center justify-center shrink-0 font-bold text-xs shadow-2xs">
-                <School className="w-4 h-4 text-purple-600" />
+                {tierConfig.isUniversityOnly ? (
+                  <GraduationCap className="w-4 h-4 text-purple-600" />
+                ) : tierConfig.isCollegeOnly ? (
+                  <Building2 className="w-4 h-4 text-purple-600" />
+                ) : (
+                  <School className="w-4 h-4 text-purple-600" />
+                )}
               </div>
               <div className="flex flex-col truncate">
                 <span className="text-sm font-extrabold text-slate-900 tracking-tight font-heading truncate">
                   {instituteName || 'Campus Administration'}
                 </span>
                 <span className="text-[10px] text-purple-600 font-bold uppercase tracking-wider">
-                  {user?.roleTitle || (isTeacher ? 'Faculty Portal' : isAccountant ? 'Accounts Officer' : 'Campus Admin')}
+                  {user?.roleTitle || (isTeacher ? 'Faculty Portal' : isAccountant ? 'Accounts Officer' : tierConfig.roleBadge)}
                 </span>
               </div>
             </div>
@@ -165,7 +175,7 @@ export const InstituteAdminSidebar = ({
                 <GraduationCap className={`w-[18px] h-[18px] shrink-0 transition-colors ${
                   isRouteActive('inst-students') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
                 }`} />
-                {(!collapsed || isMobileOpen) && <span>Students Directory</span>}
+                {(!collapsed || isMobileOpen) && <span>{tierConfig.isUniversityOnly ? 'Enrolled Students' : tierConfig.isCollegeOnly ? 'College Students' : 'Students Directory'}</span>}
               </button>
             </div>
           )}
@@ -187,7 +197,7 @@ export const InstituteAdminSidebar = ({
                 <UserCheck className={`w-[18px] h-[18px] shrink-0 transition-colors ${
                   isRouteActive('inst-admissions') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
                 }`} />
-                {(!collapsed || isMobileOpen) && <span>Admissions & Leads</span>}
+                {(!collapsed || isMobileOpen) && <span>{tierConfig.isUniversityOnly ? 'Admissions & Intake' : tierConfig.isCollegeOnly ? 'Admissions & Merit Lists' : 'Admissions & Leads'}</span>}
               </button>
             </div>
           )}
@@ -209,7 +219,7 @@ export const InstituteAdminSidebar = ({
                 <Users className={`w-[18px] h-[18px] shrink-0 transition-colors ${
                   isRouteActive('inst-teachers') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
                 }`} />
-                {(!collapsed || isMobileOpen) && <span>Staff & Faculty</span>}
+                {(!collapsed || isMobileOpen) && <span>{tierConfig.isUniversityOnly ? 'Professors & Faculty' : tierConfig.isCollegeOnly ? 'Lecturers & Faculty' : 'Staff & Faculty'}</span>}
               </button>
             </div>
           )}
@@ -231,7 +241,7 @@ export const InstituteAdminSidebar = ({
                 <Award className={`w-[18px] h-[18px] shrink-0 transition-colors ${
                   isRouteActive('inst-exams') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
                 }`} />
-                {(!collapsed || isMobileOpen) && <span>Examinations & Results</span>}
+                {(!collapsed || isMobileOpen) && <span>{tierConfig.terminology.exams}</span>}
               </button>
             </div>
           )}
@@ -264,10 +274,10 @@ export const InstituteAdminSidebar = ({
               {(!collapsed || isMobileOpen) && academicsOpen && (
                 <div className="mt-1 pl-3.5 space-y-1 border-l-2 border-slate-100 ml-5">
                   {[
-                    { route: 'inst-classes', label: 'Classes & Sections', icon: BookOpen },
-                    { route: 'inst-subjects', label: 'Curriculum & Subjects', icon: Bookmark },
-                    { route: 'inst-timetable', label: 'Class Timetable', icon: Clock },
-                    { route: 'inst-program-levels', label: 'Program Levels', icon: GraduationCap }
+                    { route: 'inst-classes', label: tierConfig.terminology.classes, icon: BookOpen },
+                    { route: 'inst-subjects', label: tierConfig.terminology.curriculum, icon: Bookmark },
+                    { route: 'inst-timetable', label: tierConfig.isUniversityOnly ? 'Lecture Timetable' : tierConfig.isCollegeOnly ? 'College Timetable' : 'Class Timetable', icon: Clock },
+                    { route: 'inst-program-levels', label: tierConfig.isUniversityOnly ? 'Degree Matrix' : tierConfig.isCollegeOnly ? 'Program Streams' : 'Program Levels', icon: GraduationCap }
                   ].map(item => {
                     const ItemIcon = item.icon
                     const active = isRouteActive(item.route)
@@ -312,7 +322,7 @@ export const InstituteAdminSidebar = ({
                 <CalendarCheck className={`w-[18px] h-[18px] shrink-0 transition-colors ${
                   isRouteActive('inst-attendance') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
                 }`} />
-                {(!collapsed || isMobileOpen) && <span>Attendance Register</span>}
+                {(!collapsed || isMobileOpen) && <span>{tierConfig.isUniversityOnly ? 'Course Attendance' : 'Attendance Register'}</span>}
               </button>
             </div>
           )}
@@ -334,7 +344,7 @@ export const InstituteAdminSidebar = ({
                 <Receipt className={`w-[18px] h-[18px] shrink-0 transition-colors ${
                   isRouteActive('inst-fees') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
                 }`} />
-                {(!collapsed || isMobileOpen) && <span>Fees & Finance</span>}
+                {(!collapsed || isMobileOpen) && <span>{tierConfig.isUniversityOnly ? 'Tuition Fees & Dues' : 'Fees & Finance'}</span>}
               </button>
             </div>
           )}
@@ -355,7 +365,7 @@ export const InstituteAdminSidebar = ({
               <FileBadge className={`w-[18px] h-[18px] shrink-0 transition-colors ${
                 isRouteActive('inst-certificates') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
               }`} />
-              {(!collapsed || isMobileOpen) && <span>Certificates (SLC/Conduct)</span>}
+              {(!collapsed || isMobileOpen) && <span>{tierConfig.terminology.certificates}</span>}
             </button>
           </div>
 

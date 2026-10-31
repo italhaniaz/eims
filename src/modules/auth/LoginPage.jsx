@@ -126,7 +126,10 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
       const isAccountant = (id === 'accountant' || id === 'accounts' || id.includes('account') || id === 'accounts.beacon@sms.edu')
       const isStudent = (id === 'student' || id.includes('student') || id === 'hamza.f@student.sms.edu')
       const isParent = (id === 'parent' || id.includes('parent') || id === 'farooq.parent@gmail.com')
-      const isInstituteAdmin = (id === 'institute' || id === 'institute_admin' || id === 'admin.beacon@sms.edu' || id.includes('institute') || id.includes('beacon') || id.includes('school') || id.includes('trial'))
+      const isSchoolAdmin = (id === 'school' || id === 'school_admin' || id.includes('cityschool') || id === 'admin.school@cityschool.edu')
+      const isCollegeAdmin = (id === 'college' || id === 'college_admin' || id.includes('roots') || id === 'admin.college@roots.edu')
+      const isUniAdmin = (id === 'university' || id === 'uni' || id === 'university_admin' || id.includes('ias') || id === 'admin.uni@ias.edu.pk')
+      const isInstituteAdmin = isSchoolAdmin || isCollegeAdmin || isUniAdmin || (id === 'institute' || id === 'institute_admin' || id === 'admin.beacon@sms.edu' || id.includes('institute') || id.includes('beacon') || id.includes('trial'))
 
       const isValidPass = pass === 'admin123' || pass === 'admin' || pass === 'institute123' || pass === 'teacher123' || pass === 'student123' || pass === 'parent123' || pass.length >= 5
 
@@ -148,6 +151,12 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
           login('student', id.includes('@') ? id : 'hamza.f@student.sms.edu', rememberMe)
         } else if (isParent) {
           login('parent', id.includes('@') ? id : 'farooq.parent@gmail.com', rememberMe)
+        } else if (isSchoolAdmin) {
+          login('school_admin', id.includes('@') ? id : 'admin.school@cityschool.edu', rememberMe)
+        } else if (isCollegeAdmin) {
+          login('college_admin', id.includes('@') ? id : 'admin.college@roots.edu', rememberMe)
+        } else if (isUniAdmin) {
+          login('university_admin', id.includes('@') ? id : 'admin.uni@ias.edu.pk', rememberMe)
         } else {
           login('institute_admin', id.includes('@') ? id : 'admin.beacon@sms.edu', rememberMe)
         }
@@ -205,6 +214,21 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
         setIdentifier('farooq.parent@gmail.com')
         setPassword('parent123')
         executeLogin('farooq.parent@gmail.com', 'parent123')
+        break
+      case 'school_admin':
+        setIdentifier('admin.school@cityschool.edu')
+        setPassword('institute123')
+        executeLogin('admin.school@cityschool.edu', 'institute123')
+        break
+      case 'college_admin':
+        setIdentifier('admin.college@roots.edu')
+        setPassword('institute123')
+        executeLogin('admin.college@roots.edu', 'institute123')
+        break
+      case 'university_admin':
+        setIdentifier('admin.uni@ias.edu.pk')
+        setPassword('institute123')
+        executeLogin('admin.uni@ias.edu.pk', 'institute123')
         break
       case 'institute':
       default:
@@ -781,52 +805,82 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
                   Quick 1-Click Role Login
                 </span>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleQuickDemo('institute')}
-                  className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-lg border border-emerald-100 bg-emerald-50/60 hover:bg-emerald-100 text-slate-700 hover:text-emerald-800 text-[11px] font-semibold transition-all cursor-pointer shadow-2xs"
-                  title="Login as Campus Admin (Principal)"
-                >
-                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                  <span>Campus Admin</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleQuickDemo('teacher')}
-                  className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-lg border border-blue-100 bg-blue-50/60 hover:bg-blue-100 text-slate-700 hover:text-blue-800 text-[11px] font-semibold transition-all cursor-pointer shadow-2xs"
-                  title="Login as Faculty Member"
-                >
-                  <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                  <span>Teacher</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleQuickDemo('accountant')}
-                  className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-lg border border-amber-100 bg-amber-50/60 hover:bg-amber-100 text-slate-700 hover:text-amber-800 text-[11px] font-semibold transition-all cursor-pointer shadow-2xs"
-                  title="Login as Finance Officer"
-                >
-                  <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                  <span>Accounts</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleQuickDemo('student')}
-                  className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-lg border border-teal-100 bg-teal-50/60 hover:bg-teal-100 text-slate-700 hover:text-teal-800 text-[11px] font-semibold transition-all cursor-pointer shadow-2xs"
-                  title="Login as Enrolled Student"
-                >
-                  <span className="w-2 h-2 rounded-full bg-teal-500"></span>
-                  <span>Student</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleQuickDemo('parent')}
-                  className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-lg border border-purple-100 bg-purple-50/60 hover:bg-purple-100 text-slate-700 hover:text-purple-800 text-[11px] font-semibold transition-all cursor-pointer col-span-2 sm:col-span-1 shadow-2xs"
-                  title="Login as Parent / Guardian"
-                >
-                  <span className="w-2 h-2 rounded-full bg-purple-500"></span>
-                  <span>Parent</span>
-                </button>
+              <div className="space-y-2">
+                <div className="text-[10px] font-extrabold uppercase tracking-wider text-purple-700 text-left px-0.5">
+                  Institutional Tier Logins
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleQuickDemo('school_admin')}
+                    className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg border border-emerald-200 bg-emerald-50/70 hover:bg-emerald-100 text-emerald-900 text-[11px] font-bold transition-all cursor-pointer shadow-2xs"
+                    title="Login as School Admin (City School - K-10 Scope Only)"
+                  >
+                    <span>🏫 School Admin</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickDemo('college_admin')}
+                    className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg border border-indigo-200 bg-indigo-50/70 hover:bg-indigo-100 text-indigo-900 text-[11px] font-bold transition-all cursor-pointer shadow-2xs"
+                    title="Login as College Admin (Roots College - HSSC & ADP Only)"
+                  >
+                    <span>🏛️ College Admin</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickDemo('university_admin')}
+                    className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg border border-purple-200 bg-[#f5eeff] hover:bg-purple-100 text-purple-900 text-[11px] font-bold transition-all cursor-pointer shadow-2xs"
+                    title="Login as University Admin (IAS University - BS Degrees Only)"
+                  >
+                    <span>🎓 Uni Admin</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickDemo('institute')}
+                    className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 text-[11px] font-bold transition-all cursor-pointer shadow-2xs"
+                    title="Login as Multi-Tier Campus Director (Beaconhouse School + College)"
+                  >
+                    <span>🏢 Multi-Tier</span>
+                  </button>
+                </div>
+
+                <div className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 text-left px-0.5 pt-1">
+                  Individual Campus Roles
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleQuickDemo('teacher')}
+                    className="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg border border-slate-200 hover:border-slate-300 bg-white text-slate-700 text-[11px] font-semibold transition-all cursor-pointer shadow-2xs"
+                    title="Login as Faculty Member"
+                  >
+                    <span>Teacher</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickDemo('accountant')}
+                    className="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg border border-slate-200 hover:border-slate-300 bg-white text-slate-700 text-[11px] font-semibold transition-all cursor-pointer shadow-2xs"
+                    title="Login as Finance Officer"
+                  >
+                    <span>Accounts</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickDemo('student')}
+                    className="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg border border-slate-200 hover:border-slate-300 bg-white text-slate-700 text-[11px] font-semibold transition-all cursor-pointer shadow-2xs"
+                    title="Login as Enrolled Student"
+                  >
+                    <span>Student</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickDemo('parent')}
+                    className="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg border border-slate-200 hover:border-slate-300 bg-white text-slate-700 text-[11px] font-semibold transition-all cursor-pointer shadow-2xs"
+                    title="Login as Parent / Guardian"
+                  >
+                    <span>Parent</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>

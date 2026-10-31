@@ -16,8 +16,10 @@ import {
   Zap
 } from 'lucide-react'
 import { useAppData } from '../../context/AppDataContext'
+import { getInstituteTierConfig } from '../../utils/tierGating'
 
 export const CampusSetupWizard = ({ currentInstitute, onRouteChange }) => {
+  const tierConfig = getInstituteTierConfig(currentInstitute)
   const { 
     classes = [], 
     teachers = [], 
@@ -67,13 +69,17 @@ export const CampusSetupWizard = ({ currentInstitute, onRouteChange }) => {
     },
     {
       id: 'step-classes',
-      title: 'Classes & Custom Multi-Sections',
-      subTitle: 'Grades, Streams & Sections',
+      title: tierConfig.terminology.classes,
+      subTitle: tierConfig.isUniversityOnly ? 'Programs & Semester Batches' : tierConfig.isCollegeOnly ? 'Disciplines & Study Streams' : 'Grades, Streams & Sections',
       description: instClasses.length > 0 
-        ? `${instClasses.length} Classes configured with custom sections (Super Section, etc.)`
-        : 'Set up classes from Primary to BS with Super Sections and room numbers',
+        ? `${instClasses.length} ${tierConfig.terminology.classes} configured with active rosters`
+        : (tierConfig.isUniversityOnly 
+            ? 'Set up 4-Year BS degree programs (BSCS, BSSE, BBA) with semester batches'
+            : tierConfig.isCollegeOnly 
+            ? 'Set up intermediate disciplines (FSc Pre-Med, Pre-Eng, ICS) with lab batches' 
+            : 'Set up classes from Primary to Matric with Super Sections and room numbers'),
       isCompleted: instClasses.length > 0,
-      actionLabel: instClasses.length > 0 ? 'Manage Classes' : 'Setup Classes',
+      actionLabel: instClasses.length > 0 ? `Manage ${tierConfig.terminology.classUnit}s` : `Setup ${tierConfig.terminology.classUnit}s`,
       action: () => onRouteChange('inst-classes'),
       icon: Layers,
       color: 'blue'

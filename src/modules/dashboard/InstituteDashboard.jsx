@@ -343,7 +343,7 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
             <div className="flex items-center gap-2 flex-wrap">
               <BookOpen className="w-5 h-5 text-purple-600" />
               <h2 className="text-base font-bold text-slate-900 tracking-tight">
-                Classes & Custom Sections Directory
+                {tierConfig.terminology.classes} Directory
               </h2>
               {activeProgramLevel !== 'all' && (
                 <span className="text-[11px] font-semibold text-purple-700 bg-[#f5eeff] px-2 py-0.5 rounded-full border border-purple-200">
@@ -352,7 +352,11 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
               )}
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
-              School-customized sections (e.g. Super Section, Section A, B, Star Section, Morning/Evening batches)
+              {tierConfig.isUniversityOnly 
+                ? 'University degree programs, semester cohorts and credit batches'
+                : tierConfig.isCollegeOnly
+                ? 'College intermediate streams (FSc Pre-Med, Pre-Engg, ICS, I.Com) and study batches'
+                : 'School-customized sections (e.g. Super Section, Section A, B, Star Section, Morning/Evening batches)'}
             </p>
           </div>
 
@@ -361,7 +365,7 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
             className="px-3.5 py-1.5 bg-[#f5eeff] hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 shrink-0"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>Manage All Classes & Sections</span>
+            <span>Manage All {tierConfig.terminology.classes}</span>
           </button>
         </div>
 
@@ -374,8 +378,9 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
              (currentInstitute.id === 'inst-1' || currentInstitute.id === 'inst-default')) ||
             (institutes || []).length <= 1
           if (!matchesCampus) return false
-          if (activeProgramLevel === 'all') return true
           const cLevel = c.programLevel || detectProgramLevel(c.name)
+          if (!tierConfig.isLevelAllowed(cLevel)) return false
+          if (activeProgramLevel === 'all') return true
           return cLevel === activeProgramLevel || detectProgramLevel(c.name) === activeProgramLevel
         }).length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -458,7 +463,7 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
               className="mt-1 px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-semibold shadow-xs transition-all flex items-center gap-1"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Configure Classes & Custom Sections</span>
+              <span>Configure {tierConfig.terminology.classes}</span>
             </button>
           </div>
         )}

@@ -204,22 +204,116 @@ export const AuthProvider = ({ children }) => {
         }
         break
 
-      case 'institute_admin':
-      default:
+      case 'school_admin':
         userPayload = {
-          id: 'usr-2',
-          name: 'Beaconhouse Admin',
-          roleTitle: 'Institute Admin (Principal)',
+          id: 'usr-school',
+          name: 'Mrs. Samina Khurram',
+          roleTitle: 'School Principal',
           role: 'institute_admin',
-          email: customEmail || 'admin.beacon@sms.edu',
+          email: customEmail || 'admin.school@cityschool.edu',
           avatar: null,
-          instituteId: 'inst-1',
-          instituteName: 'Beaconhouse Central High School',
-          scope: 'Campus Administration',
+          instituteId: 'inst-2',
+          instituteName: 'City School Model Town Campus',
+          scope: 'School Administration (K-10)',
           isExplicitLogin: true,
           loginTimestamp: new Date().toISOString()
         }
         break
+
+      case 'college_admin':
+        userPayload = {
+          id: 'usr-college',
+          name: 'Engr. Kamran Raza',
+          roleTitle: 'College Principal',
+          role: 'institute_admin',
+          email: customEmail || 'admin.college@roots.edu',
+          avatar: null,
+          instituteId: 'inst-3',
+          instituteName: 'Roots International College & Academy',
+          scope: 'Degree College Administration (11-12 & ADP)',
+          isExplicitLogin: true,
+          loginTimestamp: new Date().toISOString()
+        }
+        break
+
+      case 'university_admin':
+        userPayload = {
+          id: 'usr-uni',
+          name: 'Prof. Dr. Rizwan Riaz',
+          roleTitle: 'Dean / Registrar',
+          role: 'institute_admin',
+          email: customEmail || 'admin.uni@ias.edu.pk',
+          avatar: null,
+          instituteId: 'inst-4',
+          instituteName: 'Institute of Applied Sciences & Undergraduates',
+          scope: 'University Administration (BS Honors)',
+          isExplicitLogin: true,
+          loginTimestamp: new Date().toISOString()
+        }
+        break
+
+      case 'institute_admin':
+      default: {
+        const mail = (customEmail || '').toLowerCase()
+        if (mail.includes('cityschool') || mail.includes('school')) {
+          userPayload = {
+            id: 'usr-school',
+            name: 'Mrs. Samina Khurram',
+            roleTitle: 'School Principal',
+            role: 'institute_admin',
+            email: customEmail || 'admin.school@cityschool.edu',
+            avatar: null,
+            instituteId: 'inst-2',
+            instituteName: 'City School Model Town Campus',
+            scope: 'School Administration (K-10)',
+            isExplicitLogin: true,
+            loginTimestamp: new Date().toISOString()
+          }
+        } else if (mail.includes('roots') || mail.includes('college')) {
+          userPayload = {
+            id: 'usr-college',
+            name: 'Engr. Kamran Raza',
+            roleTitle: 'College Principal',
+            role: 'institute_admin',
+            email: customEmail || 'admin.college@roots.edu',
+            avatar: null,
+            instituteId: 'inst-3',
+            instituteName: 'Roots International College & Academy',
+            scope: 'Degree College Administration (11-12 & ADP)',
+            isExplicitLogin: true,
+            loginTimestamp: new Date().toISOString()
+          }
+        } else if (mail.includes('ias') || mail.includes('uni') || mail.includes('undergrad')) {
+          userPayload = {
+            id: 'usr-uni',
+            name: 'Prof. Dr. Rizwan Riaz',
+            roleTitle: 'Dean / Registrar',
+            role: 'institute_admin',
+            email: customEmail || 'admin.uni@ias.edu.pk',
+            avatar: null,
+            instituteId: 'inst-4',
+            instituteName: 'Institute of Applied Sciences & Undergraduates',
+            scope: 'University Administration (BS Honors)',
+            isExplicitLogin: true,
+            loginTimestamp: new Date().toISOString()
+          }
+        } else {
+          userPayload = {
+            id: 'usr-2',
+            name: 'Beaconhouse Admin',
+            roleTitle: 'Campus Director',
+            role: 'institute_admin',
+            email: customEmail || 'admin.beacon@sms.edu',
+            avatar: null,
+            instituteId: 'inst-1',
+            instituteName: 'Beaconhouse Central High School',
+            scope: 'Multi-Tier Campus Administration',
+            isExplicitLogin: true,
+            loginTimestamp: new Date().toISOString()
+          }
+        }
+        break
+      }
     }
 
     setUser(userPayload)

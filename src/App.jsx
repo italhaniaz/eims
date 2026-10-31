@@ -460,6 +460,7 @@ const AppContent = () => {
         <InstituteAdminSidebar
           currentRoute={instituteRoute}
           onRouteChange={setInstituteRoute}
+          currentInstitute={activeCampus}
           instituteName={activeCampus?.name}
           isMobileOpen={instMobileOpen}
           onCloseMobile={() => setInstMobileOpen(false)}
