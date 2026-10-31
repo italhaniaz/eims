@@ -48,6 +48,7 @@ import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
 import { hashPassword } from '../../../context/AuthContext'
 import Modal from '../../../components/common/Modal'
+import { getInstituteTierConfig } from '../../../utils/tierGating'
 import { AddStaffModal } from './AddStaffModal'
 import { StaffProfileDrawer } from './StaffProfileDrawer'
 import { getAllTimetables } from '../timetable/timetableService'
@@ -56,6 +57,7 @@ import { StaffPaySlipModal } from './StaffPaySlipModal'
 import { AppointmentLetterModal } from './AppointmentLetterModal'
 
 export const TeachersView = ({ currentInstitute }) => {
+  const tierConfig = getInstituteTierConfig(currentInstitute)
   const { teachers = [], classes = [], institutes = [], users = [], addItem, updateItem, deleteItem } = useAppData()
   const { toast } = useToast()
 
@@ -922,14 +924,14 @@ export const TeachersView = ({ currentInstitute }) => {
               className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white font-medium text-slate-700"
             >
               <option value="All Levels">All Academic Levels</option>
-              {(currentInstitute?.enabledTiers || ['school']).includes('school') && (
+              {tierConfig.hasSchool && (
                 <option value="school">Primary / Secondary School</option>
               )}
-              {(currentInstitute?.enabledTiers || ['school']).includes('college') && (
-                <option value="college">Higher Secondary / College</option>
+              {tierConfig.hasCollege && (
+                <option value="college">Higher Secondary / College Faculty</option>
               )}
-              {(currentInstitute?.enabledTiers || ['school']).includes('undergraduate') && (
-                <option value="university">University / Higher Ed</option>
+              {tierConfig.hasUniversity && (
+                <option value="university">University Faculty & Professors</option>
               )}
             </select>
           </div>

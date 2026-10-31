@@ -55,8 +55,10 @@ import TabulationSheetModal from './TabulationSheetModal'
 import ResultGazetteModal from './ResultGazetteModal'
 import ExamGradingSettingsModal from './ExamGradingSettingsModal'
 import ExamResultNotificationModal from './ExamResultNotificationModal'
+import { getInstituteTierConfig } from '../../../utils/tierGating'
 
 export const ExamsView = ({ currentInstitute }) => {
+  const tierConfig = getInstituteTierConfig(currentInstitute)
   const { 
     exams = [], 
     students = [], 
@@ -552,10 +554,14 @@ export const ExamsView = ({ currentInstitute }) => {
             </div>
             <div>
               <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
-                Examinations & Marksheets
+                {tierConfig.terminology.exams}
               </h1>
               <p className="text-xs text-slate-500 mt-0.5">
-                Conduct term assessments, manage date sheets, generate admit slips, and publish verified DMCs
+                {tierConfig.isUniversityOnly 
+                  ? 'Manage 8-semester course examinations, GPA/CGPA tabulations, date sheets, and official transcripts'
+                  : tierConfig.isCollegeOnly 
+                  ? 'Manage intermediate board & send-up exams, college date sheets, and FBISE/BISE DMC verification'
+                  : 'Conduct term assessments, manage date sheets, generate admit slips, and publish verified DMCs'}
               </p>
             </div>
           </div>

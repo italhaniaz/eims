@@ -52,8 +52,10 @@ import { ClassProfileModal } from './ClassProfileModal'
 import { RoomsRegisterModal } from './RoomsRegisterModal'
 import { ClassCsvImportModal } from './ClassCsvImportModal'
 import { getAllTimetables } from '../timetable/timetableService'
+import { getInstituteTierConfig } from '../../../utils/tierGating'
 
 export const ClassesView = ({ currentInstitute }) => {
+  const tierConfig = getInstituteTierConfig(currentInstitute)
   const { 
     classes = [], 
     students = [],
@@ -93,29 +95,26 @@ export const ClassesView = ({ currentInstitute }) => {
   const [isAddSessionModalOpen, setIsAddSessionModalOpen] = useState(false)
   const [newSessionInput, setNewSessionInput] = useState('')
 
-  // Level Tabs state (Two-way linked with global navbar & institute enabled tiers)
-  const instEnabledTiers = currentInstitute?.enabledTiers || (
-    currentInstitute?.type === 'School' ? ['school'] :
-    currentInstitute?.type === 'College' ? ['college'] :
-    currentInstitute?.type === 'University' ? ['undergraduate'] :
-    ['school']
-  )
-
+  // Level Tabs state (Scoped dynamically to current institute permitted tier)
   const availableTabs = useMemo(() => {
-    const tabs = [{ id: 'all', label: 'All Levels' }]
-    if (instEnabledTiers.includes('school')) {
+    const tabs = []
+    if (tierConfig.isMultiTier) {
+      tabs.push({ id: 'all', label: 'All Levels' })
+    }
+    if (tierConfig.hasSchool) {
       tabs.push({ id: 'preschool', label: 'Pre-School' })
       tabs.push({ id: 'elementary', label: 'Elementary (1-8)' })
       tabs.push({ id: 'secondary', label: 'Secondary (9-10)' })
     }
-    if (instEnabledTiers.includes('college')) {
-      tabs.push({ id: 'higher-secondary', label: 'HSSC (11-12)' })
+    if (tierConfig.hasCollege) {
+      tabs.push({ id: 'higher-secondary', label: 'HSSC / Intermediate (11-12)' })
+      tabs.push({ id: 'college', label: 'College Disciplines (ADP)' })
     }
-    if (instEnabledTiers.includes('undergraduate')) {
-      tabs.push({ id: 'university', label: 'Undergraduates' })
+    if (tierConfig.hasUniversity) {
+      tabs.push({ id: 'university', label: 'Degree Programs (BS)' })
     }
-    return tabs
-  }, [instEnabledTiers])
+    return tabs.length > 0 ? tabs : [{ id: 'all', label: 'All Levels' }]
+  }, [tierConfig])
 
   const [selectedLevelTab, setSelectedLevelTab] = useState(activeProgramLevel || 'all')
 
@@ -176,6 +175,10 @@ export const ClassesView = ({ currentInstitute }) => {
     return classes.filter(c => {
       const matchInst = !c.instituteId || c.instituteId === currentInstitute?.id
       if (!matchInst) return false
+
+      const cLevel = c.programLevel || detectProgramLevel(c.name)
+      if (!tierConfig.isLevelAllowed(cLevel)) return false
+
       // Filter by session if specified on class
       if (c.academicSession && selectedSession) {
         if (c.academicSession !== selectedSession) return false
@@ -710,7 +713,7 @@ export const ClassesView = ({ currentInstitute }) => {
             className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all flex items-center gap-1.5 active:scale-95"
           >
             <Plus className="w-4 h-4" />
-            <span>+ Create New Class</span>
+            <span>+ Create New {tierConfig.terminology.classUnit}</span>
           </button>
         </div>
       </div>

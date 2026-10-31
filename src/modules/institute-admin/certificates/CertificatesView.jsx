@@ -27,8 +27,10 @@ import {
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
+import { getInstituteTierConfig } from '../../../utils/tierGating'
 
 export const CertificatesView = ({ currentInstitute }) => {
+  const tierConfig = getInstituteTierConfig(currentInstitute)
   const { students = [] } = useAppData()
   const { toast } = useToast()
 
@@ -37,18 +39,26 @@ export const CertificatesView = ({ currentInstitute }) => {
   const storageKey = `sms_campus_certificates_${currentInstitute?.id || 'default'}`
 
   // Default initial certificate records
+  const primaryCertName = tierConfig.isUniversityOnly 
+    ? 'Official Academic Transcript & Degree Attestation'
+    : tierConfig.isCollegeOnly 
+    ? 'College Leaving Certificate (CLC)'
+    : 'School Leaving Certificate (SLC)'
+
+  const primaryCertPrefix = tierConfig.isUniversityOnly ? 'TRN' : tierConfig.isCollegeOnly ? 'CLC' : 'SLC'
+
   const initialCertificates = [
     {
       id: 'CRT-2026-001',
-      serialNumber: `${campusCode}-SLC-2026-001`,
+      serialNumber: `${campusCode}-${primaryCertPrefix}-2026-001`,
       studentId: 'std-1',
       studentName: 'Ammar Sheikh',
       fatherName: 'Tariq Sheikh',
       rollNumber: 'BHS-104',
-      className: 'Grade 10 - Section A',
-      certType: 'School Leaving Certificate (SLC)',
+      className: tierConfig.isUniversityOnly ? 'BS Computer Science - Semester 8' : tierConfig.isCollegeOnly ? 'F.Sc Pre-Medical (Part II)' : 'Grade 10 - Section A',
+      certType: primaryCertName,
       issueDate: '2026-10-25',
-      purpose: 'Transfer to Lahore College',
+      purpose: tierConfig.isUniversityOnly ? 'HEC Attestation & Employment' : tierConfig.isCollegeOnly ? 'University Admission Intake' : 'Transfer to Lahore College',
       conduct: 'Exemplary',
       duesCleared: true,
       libraryCleared: true,
@@ -121,7 +131,11 @@ export const CertificatesView = ({ currentInstitute }) => {
   // Form state for issuing new certificate
   const [formData, setFormData] = useState({
     studentId: '',
-    certType: 'School Leaving Certificate (SLC)',
+    certType: tierConfig.isUniversityOnly 
+      ? 'Official Academic Transcript & Degree Attestation'
+      : tierConfig.isCollegeOnly 
+      ? 'College Leaving Certificate (CLC)'
+      : 'School Leaving Certificate (SLC)',
     purpose: '',
     conduct: 'Good',
     duesCleared: true,
@@ -172,7 +186,9 @@ export const CertificatesView = ({ currentInstitute }) => {
       return
     }
 
-    const prefix = formData.certType.includes('Leaving') ? 'SLC' : 
+    const prefix = formData.certType.includes('Transcript') || formData.certType.includes('Degree') ? 'TRN' :
+                   formData.certType.includes('College Leaving') || formData.certType.includes('CLC') ? 'CLC' :
+                   formData.certType.includes('School Leaving') || formData.certType.includes('SLC') ? 'SLC' : 
                    formData.certType.includes('Character') ? 'CHR' : 
                    formData.certType.includes('Bonafide') ? 'BON' : 'AWARD'
     const seq = String(certificates.length + 1).padStart(3, '0')
@@ -203,7 +219,7 @@ export const CertificatesView = ({ currentInstitute }) => {
     setIsIssueModalOpen(false)
     setFormData({
       studentId: '',
-      certType: 'School Leaving Certificate (SLC)',
+      certType: primaryCertName,
       purpose: '',
       conduct: 'Good',
       duesCleared: true,
@@ -520,10 +536,29 @@ export const CertificatesView = ({ currentInstitute }) => {
                   onChange={(e) => setFormData({ ...formData, certType: e.target.value })}
                   className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                 >
-                  <option value="School Leaving Certificate (SLC)">School Leaving Certificate (SLC)</option>
-                  <option value="Character & Conduct Certificate">Character & Conduct Certificate</option>
-                  <option value="Bonafide Student Certificate">Bonafide Student Certificate</option>
-                  <option value="Academic Achievement & Merit Award">Academic Achievement & Merit Award</option>
+                  {tierConfig.isUniversityOnly ? (
+                    <>
+                      <option value="Official Academic Transcript & Degree Attestation">Official Academic Transcript & Degree Attestation</option>
+                      <option value="Provisional Degree Certificate">Provisional Degree Certificate</option>
+                      <option value="Degree Clearance & No Objection Certificate (HEC)">Degree Clearance & No Objection Certificate (HEC)</option>
+                      <option value="Academic Distinction & Honor Roll Certificate">Academic Distinction & Honor Roll Certificate</option>
+                    </>
+                  ) : tierConfig.isCollegeOnly ? (
+                    <>
+                      <option value="College Leaving Certificate (CLC)">College Leaving Certificate (CLC)</option>
+                      <option value="Character & Good Conduct Certificate">Character & Good Conduct Certificate</option>
+                      <option value="Bonafide College Student Certificate">Bonafide College Student Certificate</option>
+                      <option value="FBISE / BISE Inter-Board Clearance & Migration Certificate">FBISE / BISE Inter-Board Clearance & Migration Certificate</option>
+                      <option value="Academic Merit & College Honors Award">Academic Merit & College Honors Award</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="School Leaving Certificate (SLC)">School Leaving Certificate (SLC)</option>
+                      <option value="Character & Conduct Certificate">Character & Conduct Certificate</option>
+                      <option value="Bonafide Student Certificate">Bonafide Student Certificate</option>
+                      <option value="Academic Achievement & Merit Award">Academic Achievement & Merit Award</option>
+                    </>
+                  )}
                 </select>
               </div>
 

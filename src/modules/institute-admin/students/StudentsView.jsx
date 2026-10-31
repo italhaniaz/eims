@@ -60,10 +60,12 @@ import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
 import { detectProgramLevel, normalizeClassSections } from '../../../constants/academicLevels'
 import Modal from '../../../components/common/Modal'
+import { getInstituteTierConfig } from '../../../utils/tierGating'
 import PrintableStudentIdCardModal from '../../../components/common/PrintableStudentIdCardModal'
 import PrintableExamAdmitCardModal from '../../../components/common/PrintableExamAdmitCardModal'
 
 export const StudentsView = ({ currentInstitute }) => {
+  const tierConfig = getInstituteTierConfig(currentInstitute)
   const { 
     students = [], 
     classes = [], 
@@ -331,16 +333,18 @@ export const StudentsView = ({ currentInstitute }) => {
     })
   }, [students, currentInstitute?.id])
 
-  // Dynamic Level Determination & Adaptive Tier Vocabulary
+  // Dynamic Level Determination & Adaptive Tier Vocabulary (Respects current institute authority)
   const currentLevelKey = useMemo(() => {
     if (selectedLevelFilter !== 'all') return selectedLevelFilter
     if (activeProgramLevel && activeProgramLevel !== 'all') {
-      if (['elementary', 'secondary', 'higher-secondary', 'school'].includes(activeProgramLevel)) return 'school'
-      if (activeProgramLevel === 'college') return 'college'
+      if (['elementary', 'secondary', 'school', 'preschool'].includes(activeProgramLevel)) return 'school'
+      if (['college', 'higher-secondary'].includes(activeProgramLevel)) return 'college'
       if (activeProgramLevel === 'university') return 'university'
     }
+    if (tierConfig.isUniversityOnly) return 'university'
+    if (tierConfig.isCollegeOnly) return 'college'
     return 'school'
-  }, [selectedLevelFilter, activeProgramLevel])
+  }, [selectedLevelFilter, activeProgramLevel, tierConfig])
 
   const tierVocabulary = useMemo(() => {
     switch (currentLevelKey) {
@@ -1463,10 +1467,10 @@ export const StudentsView = ({ currentInstitute }) => {
             {/* Level Switcher Tabs - Synced with Global activeProgramLevel & enabledTiers */}
             <div className="flex items-center gap-1 p-1 bg-slate-200/70 rounded-lg text-xs font-semibold text-slate-600">
               {[
-                { key: 'all', label: 'All Levels' },
-                ...((currentInstitute?.enabledTiers || ['school']).includes('school') ? [{ key: 'school', label: 'School' }] : []),
-                ...((currentInstitute?.enabledTiers || ['school']).includes('college') ? [{ key: 'college', label: 'College' }] : []),
-                ...((currentInstitute?.enabledTiers || ['school']).includes('undergraduate') ? [{ key: 'university', label: 'University' }] : [])
+                ...(tierConfig.isMultiTier ? [{ key: 'all', label: 'All Levels' }] : []),
+                ...(tierConfig.hasSchool ? [{ key: 'school', label: 'School' }] : []),
+                ...(tierConfig.hasCollege ? [{ key: 'college', label: 'College' }] : []),
+                ...(tierConfig.hasUniversity ? [{ key: 'university', label: 'University' }] : [])
               ].map(lvl => (
                 <button
                   key={lvl.key}

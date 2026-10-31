@@ -25,6 +25,7 @@ import {
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
 import Modal from '../../../components/common/Modal'
+import { getInstituteTierConfig } from '../../../utils/tierGating'
 import {
   ACADEMIC_TIERS,
   SUBJECT_TYPES,
@@ -34,6 +35,7 @@ import {
 import PrintableSyllabusModal from './PrintableSyllabusModal'
 
 export const SubjectsView = ({ currentInstitute = null }) => {
+  const tierConfig = getInstituteTierConfig(currentInstitute)
   const { 
     subjects = [], 
     programs = [], 
@@ -45,8 +47,19 @@ export const SubjectsView = ({ currentInstitute = null }) => {
   } = useAppData()
 
   // State Management
+  const defaultTier = tierConfig.isSchoolOnly ? 'school' : tierConfig.isCollegeOnly ? 'college' : tierConfig.isUniversityOnly ? 'university' : 'all'
   const [searchTerm, setSearchTerm] = useState('')
-  const [activeTier, setActiveTier] = useState('all')
+  const [activeTier, setActiveTier] = useState(defaultTier)
+
+  const allowedAcademicTiers = useMemo(() => {
+    return ACADEMIC_TIERS.filter(tier => {
+      if (tier.id === 'all') return tierConfig.isMultiTier
+      if (tier.id === 'school') return tierConfig.hasSchool
+      if (tier.id === 'college') return tierConfig.hasCollege
+      if (tier.id === 'university') return tierConfig.hasUniversity
+      return false
+    })
+  }, [tierConfig])
   const [selectedProgram, setSelectedProgram] = useState('all')
   const [selectedType, setSelectedType] = useState('all')
   const [viewMode, setViewMode] = useState('table') // 'table' | 'cards'
@@ -360,7 +373,7 @@ export const SubjectsView = ({ currentInstitute = null }) => {
 
       {/* Tier Switcher Tabs */}
       <div className="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto scrollbar-none">
-        {ACADEMIC_TIERS.map(tier => {
+        {allowedAcademicTiers.map(tier => {
           const isActive = activeTier === tier.id
           const count = tierCounts[tier.id] ?? 0
           return (

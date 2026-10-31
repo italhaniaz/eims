@@ -23,8 +23,10 @@ import {
 } from 'lucide-react'
 import { useAppData } from '../../context/AppDataContext'
 import Modal from '../../components/common/Modal'
+import { getInstituteTierConfig } from '../../utils/tierGating'
 
 export const ProgramLevelsView = ({ currentInstitute }) => {
+  const tierConfig = getInstituteTierConfig(currentInstitute)
   const { 
     programLevels = [], 
     activeProgramLevel, 
@@ -206,6 +208,9 @@ export const ProgramLevelsView = ({ currentInstitute }) => {
   const visibleLevels = programLevels.filter(lvl => {
     if (lvl.id === 'all') return false
 
+    // Tier Gating: Hide tiers outside of current institute authority
+    if (!tierConfig.isLevelAllowed(lvl.id)) return false
+
     // Tab filter
     if (activeTab === 'school' && !['preschool', 'elementary', 'secondary'].includes(lvl.id)) return false
     if (activeTab === 'higher-secondary' && lvl.id !== 'higher-secondary') return false
@@ -260,10 +265,18 @@ export const ProgramLevelsView = ({ currentInstitute }) => {
             <span>Academic Architecture & Levels</span>
           </div>
           <h1 className="text-2xl font-bold text-slate-900 mt-1 tracking-tight">
-            Academic Program Levels & Curriculum Streams
+            {tierConfig.isUniversityOnly 
+              ? 'University Faculties & Degree Programs Matrix' 
+              : tierConfig.isCollegeOnly 
+              ? 'College Academic Streams & Intermediate Disciplines' 
+              : 'Academic Program Levels & Curriculum Streams'}
           </h1>
           <p className="text-xs text-slate-500 mt-1 max-w-2xl">
-            Modular multi-tier educational framework spanning from Elementary Education (Grades 1 to 8) to University Undergraduate & Postgraduate degree programs.
+            {tierConfig.isUniversityOnly 
+              ? 'Higher Education Framework spanning 4-Year BS Honors programs, 8 Academic Semesters, credit hours & HEC guidelines.'
+              : tierConfig.isCollegeOnly 
+              ? 'Intermediate framework spanning Higher Secondary (HSSC: FSc Pre-Med, Pre-Engg, ICS, I.Com) & Associate Degrees (ADP).'
+              : 'Modular educational framework spanning from Pre-School & Elementary Education (Grades 1-8) to Secondary High School (Grades 9-10).'}
           </p>
         </div>
 
@@ -332,10 +345,10 @@ export const ProgramLevelsView = ({ currentInstitute }) => {
         {/* Tier Tabs */}
         <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl w-full sm:w-auto overflow-x-auto">
           {[
-            { id: 'all', label: 'All Tiers' },
-            { id: 'school', label: 'School (Grades 1-10)' },
-            { id: 'higher-secondary', label: 'Higher Secondary (11-12)' },
-            { id: 'university', label: 'Undergraduates (BS)' }
+            ...(tierConfig.isMultiTier ? [{ id: 'all', label: 'All Tiers' }] : []),
+            ...(tierConfig.hasSchool ? [{ id: 'school', label: 'School (Grades 1-10)' }] : []),
+            ...(tierConfig.hasCollege ? [{ id: 'higher-secondary', label: 'Higher Secondary / College (11-12)' }] : []),
+            ...(tierConfig.hasUniversity ? [{ id: 'university', label: 'Undergraduates (BS)' }] : [])
           ].map((tab) => (
             <button
               key={tab.id}
