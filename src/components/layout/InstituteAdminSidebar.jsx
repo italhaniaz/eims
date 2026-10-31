@@ -175,7 +175,7 @@ export const InstituteAdminSidebar = ({
                 <GraduationCap className={`w-[18px] h-[18px] shrink-0 transition-colors ${
                   isRouteActive('inst-students') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
                 }`} />
-                {(!collapsed || isMobileOpen) && <span>{tierConfig.isUniversityOnly ? 'Enrolled Students' : tierConfig.isCollegeOnly ? 'College Students' : 'Students Directory'}</span>}
+                {(!collapsed || isMobileOpen) && <span>{tierConfig.terminology.students}</span>}
               </button>
             </div>
           )}
@@ -197,7 +197,7 @@ export const InstituteAdminSidebar = ({
                 <UserCheck className={`w-[18px] h-[18px] shrink-0 transition-colors ${
                   isRouteActive('inst-admissions') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
                 }`} />
-                {(!collapsed || isMobileOpen) && <span>{tierConfig.isUniversityOnly ? 'Admissions & Intake' : tierConfig.isCollegeOnly ? 'Admissions & Merit Lists' : 'Admissions & Leads'}</span>}
+                {(!collapsed || isMobileOpen) && <span>{tierConfig.terminology.admissions || 'Admissions & Leads'}</span>}
               </button>
             </div>
           )}
@@ -219,7 +219,7 @@ export const InstituteAdminSidebar = ({
                 <Users className={`w-[18px] h-[18px] shrink-0 transition-colors ${
                   isRouteActive('inst-teachers') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
                 }`} />
-                {(!collapsed || isMobileOpen) && <span>{tierConfig.isUniversityOnly ? 'Professors & Faculty' : tierConfig.isCollegeOnly ? 'Lecturers & Faculty' : 'Staff & Faculty'}</span>}
+                {(!collapsed || isMobileOpen) && <span>{tierConfig.terminology.faculty}</span>}
               </button>
             </div>
           )}
@@ -276,8 +276,8 @@ export const InstituteAdminSidebar = ({
                   {[
                     { route: 'inst-classes', label: tierConfig.terminology.classes, icon: BookOpen },
                     { route: 'inst-subjects', label: tierConfig.terminology.curriculum, icon: Bookmark },
-                    { route: 'inst-timetable', label: tierConfig.isUniversityOnly ? 'Lecture Timetable' : tierConfig.isCollegeOnly ? 'College Timetable' : 'Class Timetable', icon: Clock },
-                    { route: 'inst-program-levels', label: tierConfig.isUniversityOnly ? 'Degree Matrix' : tierConfig.isCollegeOnly ? 'Program Streams' : 'Program Levels', icon: GraduationCap }
+                    { route: 'inst-timetable', label: tierConfig.terminology.timetable || 'Timetable Matrix', icon: Clock },
+                    { route: 'inst-program-levels', label: tierConfig.terminology.levels || 'Program Levels', icon: GraduationCap }
                   ].map(item => {
                     const ItemIcon = item.icon
                     const active = isRouteActive(item.route)
@@ -322,7 +322,7 @@ export const InstituteAdminSidebar = ({
                 <CalendarCheck className={`w-[18px] h-[18px] shrink-0 transition-colors ${
                   isRouteActive('inst-attendance') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
                 }`} />
-                {(!collapsed || isMobileOpen) && <span>{tierConfig.isUniversityOnly ? 'Course Attendance' : 'Attendance Register'}</span>}
+                {(!collapsed || isMobileOpen) && <span>{tierConfig.terminology.attendance}</span>}
               </button>
             </div>
           )}
@@ -344,7 +344,7 @@ export const InstituteAdminSidebar = ({
                 <Receipt className={`w-[18px] h-[18px] shrink-0 transition-colors ${
                   isRouteActive('inst-fees') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
                 }`} />
-                {(!collapsed || isMobileOpen) && <span>{tierConfig.isUniversityOnly ? 'Tuition Fees & Dues' : 'Fees & Finance'}</span>}
+                {(!collapsed || isMobileOpen) && <span>{tierConfig.terminology.fees}</span>}
               </button>
             </div>
           )}
@@ -396,7 +396,7 @@ export const InstituteAdminSidebar = ({
             {(!collapsed || isMobileOpen) && servicesOpen && (
               <div className="mt-1 pl-3.5 space-y-1 border-l-2 border-slate-100 ml-5">
                 {[
-                  { route: 'inst-transport', label: 'Transport & Vans', icon: Bus },
+                  ...(tierConfig.navStructure?.hasTransport !== false ? [{ route: 'inst-transport', label: 'Transport & Vans', icon: Bus }] : []),
                   { route: 'inst-library', label: 'Library & Books', icon: BookMarked }
                 ].map(item => {
                   const ItemIcon = item.icon
