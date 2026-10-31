@@ -30,6 +30,7 @@ import {
   CreditCard,
   Layers,
   Eye,
+  EyeOff,
   Filter,
   RotateCcw,
   FileSpreadsheet,
@@ -45,6 +46,7 @@ import {
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
+import { hashPassword } from '../../../context/AuthContext'
 import Modal from '../../../components/common/Modal'
 import { AddStaffModal } from './AddStaffModal'
 import { StaffProfileDrawer } from './StaffProfileDrawer'
@@ -54,10 +56,11 @@ import { StaffPaySlipModal } from './StaffPaySlipModal'
 import { AppointmentLetterModal } from './AppointmentLetterModal'
 
 export const TeachersView = ({ currentInstitute }) => {
-  const { teachers = [], classes = [], institutes = [], addItem, updateItem, deleteItem } = useAppData()
+  const { teachers = [], classes = [], institutes = [], users = [], addItem, updateItem, deleteItem } = useAppData()
   const { toast } = useToast()
 
   // Active Main Tab
+  const [maskCnic, setMaskCnic] = useState(true)
   const [activeTab, setActiveTab] = useState('directory') // 'directory' | 'workload' | 'leaves' | 'payroll'
 
   // View Layout
@@ -98,6 +101,16 @@ export const TeachersView = ({ currentInstitute }) => {
   const [csvParseErrors, setCsvParseErrors] = useState([])
   const [csvParsedRows, setCsvParsedRows] = useState([])
   const fileInputRef = useRef(null)
+
+  const formatCnic = (cnic) => {
+    if (!cnic) return 'CNIC pending'
+    if (!maskCnic) return cnic
+    const cleaned = cnic.replace(/[^0-9]/g, '')
+    if (cleaned.length === 13) {
+      return `${cleaned.slice(0, 5)}-*******-${cleaned.slice(12)}`
+    }
+    return cnic.slice(0, 5) + '******' + cnic.slice(-2)
+  }
 
   // Filter Bar States
   const [searchTerm, setSearchTerm] = useState('')
@@ -304,9 +317,11 @@ export const TeachersView = ({ currentInstitute }) => {
   // Save / Update Staff (from AddStaffModal)
   const handleSaveStaff = async (staffData) => {
     try {
+      const instituteName = currentInstitute?.name || (institutes.find(i => i.id === (currentInstitute?.id || staffData.instituteId))?.name) || 'Beaconhouse Central High School'
       const payload = {
         ...staffData,
-        instituteId: currentInstitute?.id || 'inst-1',
+        instituteId: currentInstitute?.id || staffData.instituteId || 'inst-1',
+        campus: staffData.campus || instituteName,
         updatedAt: new Date().toISOString()
       }
 
@@ -321,6 +336,35 @@ export const TeachersView = ({ currentInstitute }) => {
           ...payload,
           createdAt: new Date().toISOString()
         })
+
+        // Auto-provision user account for teacher portal login if not exists
+        try {
+          const teacherEmail = staffData.email?.toLowerCase().trim()
+          const teacherUsername = staffData.empId?.toLowerCase().replace(/[^a-z0-9]/g, '') || `teacher_${Date.now().toString(36)}`
+          const existingUser = users.find(u => 
+            (teacherEmail && u.email?.toLowerCase() === teacherEmail) ||
+            (u.username && u.username.toLowerCase() === teacherUsername)
+          )
+
+          if (!existingUser) {
+            await addItem('users', {
+              name: staffData.name,
+              email: teacherEmail || `${teacherUsername}@campus.edu.pk`,
+              username: teacherUsername,
+              passwordHash: hashPassword('Teacher@123'),
+              role: 'teacher',
+              roleTitle: staffData.designation || 'Faculty Member',
+              instituteId: payload.instituteId,
+              campus: payload.campus,
+              department: staffData.department || 'General',
+              status: 'active',
+              createdAt: new Date().toISOString()
+            })
+          }
+        } catch (authErr) {
+          console.warn('Auto user provisioning for teacher skipped:', authErr)
+        }
+
         toast.success(`Staff member "${staffData.name}" (${staffData.empId}) registered successfully!`)
       }
       setIsAddModalOpen(false)
@@ -964,16 +1008,27 @@ export const TeachersView = ({ currentInstitute }) => {
             </select>
           </div>
 
-          {/* Clear Filters Button */}
-          {isAnyFilterActive && (
+          {/* CNIC Privacy Toggle & Clear Filters */}
+          <div className="flex items-center gap-2 ml-auto">
             <button
-              onClick={handleClearFilters}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50 border border-rose-200 transition-colors ml-auto"
+              type="button"
+              onClick={() => setMaskCnic(!maskCnic)}
+              title={maskCnic ? "Reveal CNIC Numbers" : "Mask CNIC Numbers"}
+              className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100 border border-slate-200 transition-colors"
             >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>Clear Filters</span>
+              {maskCnic ? <EyeOff className="w-3.5 h-3.5 text-slate-500" /> : <Eye className="w-3.5 h-3.5 text-emerald-600" />}
+              <span>{maskCnic ? 'Masked CNIC' : 'Full CNIC'}</span>
             </button>
-          )}
+            {isAnyFilterActive && (
+              <button
+                onClick={handleClearFilters}
+                className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50 border border-rose-200 transition-colors"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Clear Filters</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -1117,7 +1172,7 @@ export const TeachersView = ({ currentInstitute }) => {
                                   <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mt-0.5">
                                     <span className="capitalize">{staff.gender || 'Not specified'}</span>
                                     <span>•</span>
-                                    <span className="font-mono">{staff.cnic || 'CNIC pending'}</span>
+                                    <span className="font-mono">{formatCnic(staff.cnic)}</span>
                                   </div>
                                 </div>
                               </div>

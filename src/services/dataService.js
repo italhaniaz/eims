@@ -1,5 +1,202 @@
 import { supabase, isSupabaseConfigured } from './supabaseClient.js'
 
+export const defaultInitialTeachers = [
+  {
+    id: 'tch-1',
+    empId: 'STF-001',
+    name: 'Prof. Tariq Jamil',
+    fatherHusbandName: 'Muhammad Jamil',
+    gender: 'Male',
+    cnic: '35201-1456789-1',
+    phone: '0300-1122334',
+    email: 'tariq.jamil@bhs.edu.pk',
+    address: 'Gulberg III, Lahore',
+    city: 'Lahore',
+    category: 'Teaching',
+    level: 'school',
+    department: 'Mathematics',
+    designation: 'Head of Mathematics Department',
+    role: 'HOD / Senior Lecturer',
+    isHod: true,
+    campus: 'Beaconhouse Central High School',
+    instituteId: 'inst-1',
+    status: 'Active',
+    employmentType: 'Permanent',
+    highestQualification: 'M.Phil Mathematics',
+    qualification: 'M.Phil Mathematics',
+    specialization: 'Applied Mathematics & Calculus',
+    experienceYears: '12',
+    salaryType: 'Monthly Fixed',
+    basicSalary: 110000,
+    grossSalary: 145000,
+    netSalary: 135000,
+    salary: 'PKR 145,000',
+    joiningDate: '2021-08-15'
+  },
+  {
+    id: 'tch-2',
+    empId: 'STF-002',
+    name: 'Dr. Nadia Hashmi',
+    fatherHusbandName: 'Dr. Hashmi Raza',
+    gender: 'Female',
+    cnic: '35201-2567890-2',
+    phone: '0301-2233445',
+    email: 'nadia.hashmi@cityschool.edu.pk',
+    address: 'Model Town, Lahore',
+    city: 'Lahore',
+    category: 'Teaching',
+    level: 'college',
+    department: 'Chemistry',
+    designation: 'Associate Professor of Chemistry',
+    role: 'Faculty Specialist',
+    isHod: false,
+    campus: 'City School Model Town Campus',
+    instituteId: 'inst-2',
+    status: 'Active',
+    employmentType: 'Permanent',
+    highestQualification: 'Ph.D. Organic Chemistry',
+    qualification: 'Ph.D. Organic Chemistry',
+    specialization: 'Bio-Organic Synthesis',
+    experienceYears: '9',
+    salaryType: 'Monthly Fixed',
+    basicSalary: 125000,
+    grossSalary: 165000,
+    netSalary: 152000,
+    salary: 'PKR 165,000',
+    joiningDate: '2022-01-10'
+  },
+  {
+    id: 'tch-3',
+    empId: 'STF-003',
+    name: 'Syed Ali Raza',
+    fatherHusbandName: 'Syed Baqir Raza',
+    gender: 'Male',
+    cnic: '35201-3678901-3',
+    phone: '0321-3344556',
+    email: 'ali.raza@bhs.edu.pk',
+    address: 'DHA Phase 5, Lahore',
+    city: 'Lahore',
+    category: 'Teaching',
+    level: 'school',
+    department: 'Physics',
+    designation: 'Senior Physics Instructor',
+    role: 'Section Coordinator',
+    isHod: false,
+    campus: 'Beaconhouse Central High School',
+    instituteId: 'inst-1',
+    status: 'Active',
+    employmentType: 'Permanent',
+    highestQualification: 'M.Sc Physics',
+    qualification: 'M.Sc Physics',
+    specialization: 'Modern Electromagnetism',
+    experienceYears: '7',
+    salaryType: 'Monthly Fixed',
+    basicSalary: 95000,
+    grossSalary: 125000,
+    netSalary: 118000,
+    salary: 'PKR 125,000',
+    joiningDate: '2023-02-01'
+  },
+  {
+    id: 'tch-4',
+    empId: 'STF-004',
+    name: 'Amina Batool',
+    fatherHusbandName: 'Muhammad Akram',
+    gender: 'Female',
+    cnic: '35201-4789012-4',
+    phone: '0333-4455667',
+    email: 'amina.batool@roots.edu.pk',
+    address: 'F-8/3, Islamabad',
+    city: 'Islamabad',
+    category: 'Teaching',
+    level: 'school',
+    department: 'English Literature',
+    designation: 'English Literature Lecturer',
+    role: 'Class Teacher',
+    isClassTeacher: true,
+    classTeacherClass: 'Grade 9',
+    classTeacherSection: 'A',
+    campus: 'Roots International College & Academy',
+    instituteId: 'inst-3',
+    status: 'On Leave',
+    employmentType: 'Permanent',
+    highestQualification: 'MA English',
+    qualification: 'MA English',
+    specialization: 'Post-Colonial British Literature',
+    experienceYears: '5',
+    salaryType: 'Monthly Fixed',
+    basicSalary: 75000,
+    grossSalary: 98000,
+    netSalary: 92000,
+    salary: 'PKR 98,000',
+    joiningDate: '2023-08-15'
+  },
+  {
+    id: 'tch-5',
+    empId: 'STF-005',
+    name: 'Muhammad Waqas',
+    fatherHusbandName: 'Hafiz Farooq',
+    gender: 'Male',
+    cnic: '35201-5890123-5',
+    phone: '0345-5566778',
+    email: 'waqas.finance@bhs.edu.pk',
+    address: 'Johar Town, Lahore',
+    city: 'Lahore',
+    category: 'Non-Teaching',
+    level: 'school',
+    department: 'Accounts & Finance',
+    designation: 'Chief Campus Bursar & Accountant',
+    role: 'Senior Accountant',
+    isHod: false,
+    campus: 'Beaconhouse Central High School',
+    instituteId: 'inst-1',
+    status: 'Active',
+    employmentType: 'Permanent',
+    highestQualification: 'ACCA Finalist',
+    qualification: 'ACCA Finalist',
+    specialization: 'Corporate Audit & Educational Taxation',
+    experienceYears: '8',
+    salaryType: 'Monthly Fixed',
+    basicSalary: 85000,
+    grossSalary: 110000,
+    netSalary: 104000,
+    salary: 'PKR 110,000',
+    joiningDate: '2022-06-01'
+  },
+  {
+    id: 'tch-6',
+    empId: 'STF-006',
+    name: 'Engr. Bilal Zubair',
+    fatherHusbandName: 'Zubair Akhtar',
+    gender: 'Male',
+    cnic: '35201-6901234-6',
+    phone: '0312-6677889',
+    email: 'bilal.zubair@cias.edu.pk',
+    address: 'Sector H-12, Islamabad',
+    city: 'Islamabad',
+    category: 'Teaching',
+    level: 'university',
+    department: 'Computer Science & AI',
+    designation: 'Assistant Professor of Computing',
+    role: 'Lead Instructor',
+    isHod: false,
+    campus: 'Institute of Applied Sciences & Undergraduates',
+    instituteId: 'inst-4',
+    status: 'Active',
+    employmentType: 'Permanent',
+    highestQualification: 'MS Computer Science',
+    qualification: 'MS Computer Science',
+    specialization: 'Deep Learning & Distributed Systems',
+    experienceYears: '6',
+    salaryType: 'Monthly Fixed',
+    basicSalary: 130000,
+    grossSalary: 175000,
+    netSalary: 160000,
+    salary: 'PKR 175,000',
+    joiningDate: '2022-09-01'
+  }
+]
+
 export const defaultInitialStudents = [
   { id: 'std-1', name: 'Abdullah Khan', rollNumber: 'BHS-2026-0001', campus: 'Beaconhouse Central High', instituteId: 'inst-1', wing: 'Middle Wing', className: 'Grade 8', section: 'A', status: 'Active', gender: 'Male', phone: '0300-1234567', bFormCnic: '35201-1122334-1', feeStatus: 'Paid', fatherName: 'Farooq Khan' },
   { id: 'std-2', name: 'Zoya Fatima', rollNumber: 'BHS-2026-0002', campus: 'Beaconhouse Central High', instituteId: 'inst-1', wing: 'High School', className: 'Grade 10', section: 'B', status: 'Active', gender: 'Female', phone: '0301-9876543', bFormCnic: '35201-2233445-2', feeStatus: 'Paid', fatherName: 'Tariq Mehmood' },
@@ -29,7 +226,7 @@ const cleanZeroData = {
   recentActivity: [],
   users: [],
   students: defaultInitialStudents,
-  teachers: [],
+  teachers: defaultInitialTeachers,
   classes: [],
   fees: [],
   exams: [],
@@ -382,16 +579,9 @@ export const getStoredData = () => {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed))
         }
       }
-      if (Array.isArray(parsed.teachers)) {
-        const demoTeacherIds = ['tch-1']
-        const demoTeacherNames = ['Dr. Shahida Parveen']
-        const filteredTeachers = parsed.teachers.filter(t =>
-          !demoTeacherIds.includes(t.id) && !demoTeacherNames.includes(t.name)
-        )
-        if (filteredTeachers.length !== parsed.teachers.length) {
-          parsed.teachers = filteredTeachers
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed))
-        }
+      if (!Array.isArray(parsed.teachers) || parsed.teachers.length === 0) {
+        parsed.teachers = defaultInitialTeachers
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed)) } catch {}
       }
       if (Array.isArray(parsed.classes)) {
         const demoClassIds = ['cls-1', 'cls-demo']
@@ -601,6 +791,15 @@ export const DataService = {
       try { window.dispatchEvent(new Event('sms_students_updated')) } catch {}
     }
 
+    if (collectionName === 'teachers' && finalItem.instituteId && Array.isArray(store.institutes)) {
+      const inst = store.institutes.find(i => i.id === finalItem.instituteId)
+      if (inst) {
+        inst.totalTeachers = (Number(inst.totalTeachers) || 0) + 1
+        inst.teachersCount = inst.totalTeachers
+      }
+      try { window.dispatchEvent(new Event('sms_teachers_updated')) } catch {}
+    }
+
     const itemName = finalItem.name || finalItem.title || finalItem.studentName || finalItem.rollNumber || finalItem.id
     const userEmail = getActiveUserEmail()
 
@@ -666,6 +865,20 @@ export const DataService = {
           }
           try { window.dispatchEvent(new Event('sms_students_updated')) } catch {}
         }
+
+        if (collectionName === 'teachers' && updatedPayload.instituteId && updatedPayload.instituteId !== previousItem.instituteId && Array.isArray(store.institutes)) {
+          const oldInst = store.institutes.find(i => i.id === previousItem.instituteId)
+          const newInst = store.institutes.find(i => i.id === updatedPayload.instituteId)
+          if (oldInst) {
+            oldInst.totalTeachers = Math.max(0, (Number(oldInst.totalTeachers) || 0) - 1)
+            oldInst.teachersCount = oldInst.totalTeachers
+          }
+          if (newInst) {
+            newInst.totalTeachers = (Number(newInst.totalTeachers) || 0) + 1
+            newInst.teachersCount = newInst.totalTeachers
+          }
+          try { window.dispatchEvent(new Event('sms_teachers_updated')) } catch {}
+        }
         const itemName = updatedPayload.name || store[collectionName][idx].name || store[collectionName][idx].title || store[collectionName][idx].studentName || id
         const userEmail = getActiveUserEmail()
 
@@ -713,6 +926,24 @@ export const DataService = {
     if (store[collectionName]) {
       const deletedItem = store[collectionName].find(item => item.id === id)
       store[collectionName] = store[collectionName].filter(item => item.id !== id)
+
+      if (collectionName === 'students' && deletedItem?.instituteId && Array.isArray(store.institutes)) {
+        const inst = store.institutes.find(i => i.id === deletedItem.instituteId)
+        if (inst) {
+          inst.totalStudents = Math.max(0, (Number(inst.totalStudents) || 0) - 1)
+          inst.studentsCount = inst.totalStudents
+        }
+        try { window.dispatchEvent(new Event('sms_students_updated')) } catch {}
+      }
+
+      if (collectionName === 'teachers' && deletedItem?.instituteId && Array.isArray(store.institutes)) {
+        const inst = store.institutes.find(i => i.id === deletedItem.instituteId)
+        if (inst) {
+          inst.totalTeachers = Math.max(0, (Number(inst.totalTeachers) || 0) - 1)
+          inst.teachersCount = inst.totalTeachers
+        }
+        try { window.dispatchEvent(new Event('sms_teachers_updated')) } catch {}
+      }
       const itemName = deletedItem?.name || deletedItem?.title || deletedItem?.studentName || id
       const userEmail = getActiveUserEmail()
 
