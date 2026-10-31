@@ -100,6 +100,7 @@ export const SuperadminSidebar = ({
   const [usersCount, setUsersCount] = useState(0)
   const [studentsCount, setStudentsCount] = useState(0)
   const [admissionsCount, setAdmissionsCount] = useState(0)
+  const [academicsCount, setAcademicsCount] = useState(3)
 
   useEffect(() => {
     const updateCount = () => {
@@ -186,11 +187,6 @@ export const SuperadminSidebar = ({
       }
     }
 
-    updateCount()
-    updateCampusCount()
-    updateUserCount()
-    updateStudentCount()
-    updateAdmissionsCount()
     const updateAdmissionsCount = () => {
       try {
         const dbRaw = localStorage.getItem('sms_database_v3_enterprise')
@@ -206,11 +202,36 @@ export const SuperadminSidebar = ({
         setAdmissionsCount(0)
       }
     }
+
+    const updateAcademicsCount = () => {
+      try {
+        const raw = localStorage.getItem('edu_sms_academic_sessions')
+        if (raw) {
+          const parsed = JSON.parse(raw)
+          if (Array.isArray(parsed)) {
+            setAcademicsCount(parsed.length)
+            return
+          }
+        }
+        setAcademicsCount(3)
+      } catch {
+        setAcademicsCount(3)
+      }
+    }
+
+    updateCount()
+    updateCampusCount()
+    updateUserCount()
+    updateStudentCount()
+    updateAdmissionsCount()
+    updateAcademicsCount()
     window.addEventListener('sms_approval_created', updateCount)
     window.addEventListener('sms_approvals_updated', updateCount)
     window.addEventListener('sms_institutes_updated', updateCampusCount)
     window.addEventListener('sms_users_updated', updateUserCount)
     window.addEventListener('sms_students_updated', updateStudentCount)
+    window.addEventListener('sms_admissions_updated', updateAdmissionsCount)
+    window.addEventListener('sms_academics_updated', updateAcademicsCount)
     window.addEventListener('storage', updateCount)
     window.addEventListener('storage', updateCampusCount)
     window.addEventListener('storage', updateUserCount)
@@ -221,6 +242,8 @@ export const SuperadminSidebar = ({
       window.removeEventListener('sms_institutes_updated', updateCampusCount)
       window.removeEventListener('sms_users_updated', updateUserCount)
       window.removeEventListener('sms_students_updated', updateStudentCount)
+      window.removeEventListener('sms_admissions_updated', updateAdmissionsCount)
+      window.removeEventListener('sms_academics_updated', updateAcademicsCount)
       window.removeEventListener('storage', updateAdmissionsCount)
       window.removeEventListener('storage', updateCount)
       window.removeEventListener('storage', updateCampusCount)
@@ -890,12 +913,18 @@ export const SuperadminSidebar = ({
                 if (collapsed) setCollapsed(false)
                 setStaffFacultyOpen(!staffFacultyOpen)
               }}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-50/80 transition-colors cursor-pointer group"
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors cursor-pointer group ${
+                isStaffRoute
+                  ? 'bg-purple-50/70 text-purple-900 font-semibold'
+                  : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/80'
+              }`}
             >
               <div className="flex items-center gap-3">
-                <Briefcase className="w-[18px] h-[18px] text-slate-400 group-hover:text-purple-600 transition-colors shrink-0" />
+                <Briefcase className={`w-[18px] h-[18px] transition-colors shrink-0 ${
+                  isStaffRoute ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                }`} />
                 {(!collapsed || isMobileOpen) && (
-                  <span className="font-medium text-slate-600 group-hover:text-slate-900">
+                  <span className={`font-medium ${isStaffRoute ? 'text-purple-950 font-bold' : 'text-slate-600 group-hover:text-slate-900'}`}>
                     Staff & Faculty
                   </span>
                 )}
@@ -947,12 +976,18 @@ export const SuperadminSidebar = ({
                 if (collapsed) setCollapsed(false)
                 setExamsResultsOpen(!examsResultsOpen)
               }}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-50/80 transition-colors cursor-pointer group"
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors cursor-pointer group ${
+                isExamsRoute
+                  ? 'bg-purple-50/70 text-purple-900 font-semibold'
+                  : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/80'
+              }`}
             >
               <div className="flex items-center gap-3">
-                <FileSpreadsheet className="w-[18px] h-[18px] text-slate-400 group-hover:text-purple-600 transition-colors shrink-0" />
+                <FileSpreadsheet className={`w-[18px] h-[18px] transition-colors shrink-0 ${
+                  isExamsRoute ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                }`} />
                 {(!collapsed || isMobileOpen) && (
-                  <span className="font-medium text-slate-600 group-hover:text-slate-900">
+                  <span className={`font-medium ${isExamsRoute ? 'text-purple-950 font-bold' : 'text-slate-600 group-hover:text-slate-900'}`}>
                     Examinations & Results
                   </span>
                 )}
@@ -1006,18 +1041,31 @@ export const SuperadminSidebar = ({
                 if (collapsed) setCollapsed(false)
                 setAcademicsOpen(!academicsOpen)
               }}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-50/80 transition-colors cursor-pointer group"
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors cursor-pointer group ${
+                isAcademicsRoute
+                  ? 'bg-purple-50/70 text-purple-900 font-semibold'
+                  : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/80'
+              }`}
             >
               <div className="flex items-center gap-3">
-                <BookOpen className="w-[18px] h-[18px] text-slate-400 group-hover:text-purple-600 transition-colors shrink-0" />
+                <BookOpen className={`w-[18px] h-[18px] transition-colors shrink-0 ${
+                  isAcademicsRoute ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                }`} />
                 {(!collapsed || isMobileOpen) && (
-                  <span className="font-medium text-slate-600 group-hover:text-slate-900">
+                  <span className={`font-medium ${isAcademicsRoute ? 'text-purple-950 font-bold' : 'text-slate-600 group-hover:text-slate-900'}`}>
                     Academics
                   </span>
                 )}
               </div>
               {(!collapsed || isMobileOpen) && (
-                academicsOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                <div className="flex items-center gap-2">
+                  {academicsCount > 0 && (
+                    <span className="px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-purple-100 text-purple-700">
+                      {academicsCount}
+                    </span>
+                  )}
+                  {academicsOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
+                </div>
               )}
             </button>
 
