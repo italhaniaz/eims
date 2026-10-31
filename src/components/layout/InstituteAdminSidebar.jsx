@@ -33,7 +33,10 @@ import {
   Calculator,
   Sparkles,
   FileCheck,
-  FlaskConical
+  FlaskConical,
+  Briefcase,
+  ClipboardList,
+  Server
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { getInstituteTierConfig } from '../../utils/tierGating'
@@ -52,6 +55,7 @@ export const InstituteAdminSidebar = ({
   // Granular Role-Based Scopes & Tier Gating
   const tierConfig = getInstituteTierConfig(currentInstitute)
   const isCollege = tierConfig.isCollegeOnly
+  const isUniversity = tierConfig.isUniversityOnly
   const userRole = user?.role || 'institute_admin'
   const isTeacher = userRole === 'teacher'
   const isAccountant = userRole === 'accountant'
@@ -64,7 +68,9 @@ export const InstituteAdminSidebar = ({
   const isFacultyRoute = ['inst-teachers', 'inst-payroll'].includes(currentRoute)
   const isAcademicsRoute = ['inst-classes', 'inst-subjects', 'inst-timetable', 'inst-program-levels'].includes(currentRoute)
   const isFinanceRoute = ['inst-fees', 'inst-accounts'].includes(currentRoute)
-  const isServicesRoute = isCollege 
+  const isServicesRoute = isUniversity
+    ? ['inst-hostel', 'inst-transport', 'inst-library', 'inst-labs', 'inst-campus-it'].includes(currentRoute)
+    : isCollege 
     ? ['inst-hostel', 'inst-transport', 'inst-library', 'inst-labs'].includes(currentRoute)
     : ['inst-transport', 'inst-library', 'inst-inventory'].includes(currentRoute)
   const isUsersRoute = ['inst-users', 'inst-settings'].includes(currentRoute)
@@ -127,7 +133,7 @@ export const InstituteAdminSidebar = ({
                   {instituteName || (isCollege ? 'College Administration' : 'Campus Administration')}
                 </span>
                 <span className="text-[10px] text-purple-600 font-bold uppercase tracking-wider">
-                  {user?.roleTitle || (isTeacher ? 'Faculty Portal' : isAccountant ? 'Accounts Officer' : isCollege ? 'College Principal' : 'School Principal')}
+                  {user?.roleTitle || (isTeacher ? 'Faculty Portal' : isAccountant ? 'Accounts Officer' : isUniversity ? 'DEAN / REGISTRAR' : isCollege ? 'College Principal' : 'School Principal')}
                 </span>
               </div>
             </div>
@@ -171,21 +177,592 @@ export const InstituteAdminSidebar = ({
               <LayoutDashboard className={`w-[18px] h-[18px] shrink-0 transition-colors ${
                 isRouteActive('inst-dashboard') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
               }`} />
-              {(!collapsed || isMobileOpen) && <span>Campus Dashboard</span>}
+              {(!collapsed || isMobileOpen) && <span>{isUniversity ? 'Executive Dashboard' : 'Campus Dashboard'}</span>}
             </button>
           </div>
 
           {/* Section Divider */}
           {(!collapsed || isMobileOpen) && (
             <div className="pt-2.5 pb-1 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              <span>{isCollege ? 'College Operational Modules' : 'Operational Modules'}</span>
+              <span>{isUniversity ? 'University Operational Modules' : isCollege ? 'College Operational Modules' : 'Operational Modules'}</span>
             </div>
           )}
 
           {/* ========================================================= */}
-          {/* ================= COLLEGE ADMIN: 18 MODULES ============= */}
+          {/* ================ UNIVERSITY ADMIN: 22 MODULES =========== */}
           {/* ========================================================= */}
-          {isCollege ? (
+          {isUniversity ? (
+            <>
+              {/* 2. Admissions & Merit */}
+              {isCampusAdmin && (
+                <div className="relative">
+                  {isRouteActive('inst-admissions') && (
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                  )}
+                  <button
+                    onClick={() => handleNavClick('inst-admissions')}
+                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
+                      isRouteActive('inst-admissions')
+                        ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
+                    }`}
+                  >
+                    <UserCheck className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                      isRouteActive('inst-admissions') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                    }`} />
+                    {(!collapsed || isMobileOpen) && <span>Admissions & Merit</span>}
+                  </button>
+                </div>
+              )}
+
+              {/* 3. Students Directory */}
+              {(!isAccountant || isCampusAdmin) && (
+                <div className="relative">
+                  {isRouteActive('inst-students') && (
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                  )}
+                  <button
+                    onClick={() => handleNavClick('inst-students')}
+                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
+                      isRouteActive('inst-students')
+                        ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
+                    }`}
+                  >
+                    <GraduationCap className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                      isRouteActive('inst-students') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                    }`} />
+                    {(!collapsed || isMobileOpen) && <span>Students Directory</span>}
+                  </button>
+                </div>
+              )}
+
+              {/* 4. Course Registration & Enrollment */}
+              {(!isAccountant || isCampusAdmin) && (
+                <div className="relative">
+                  {isRouteActive('inst-course-registration') && (
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                  )}
+                  <button
+                    onClick={() => handleNavClick('inst-course-registration')}
+                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
+                      isRouteActive('inst-course-registration')
+                        ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
+                    }`}
+                  >
+                    <ClipboardList className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                      isRouteActive('inst-course-registration') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                    }`} />
+                    {(!collapsed || isMobileOpen) && <span>Course Registration & Enrollment</span>}
+                  </button>
+                </div>
+              )}
+
+              {/* 5. Academics (Programs, Courses, Timetable) */}
+              {!isAccountant && (
+                <div>
+                  <button
+                    onClick={() => {
+                      if (collapsed) setCollapsed(false)
+                      setAcademicsOpen(!academicsOpen)
+                    }}
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-colors cursor-pointer group ${
+                      isAcademicsRoute 
+                        ? 'text-purple-700 bg-[#f5eeff]/50 font-semibold' 
+                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/80'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <BookOpen className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                        isAcademicsRoute ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                      }`} />
+                      {(!collapsed || isMobileOpen) && <span>Academics</span>}
+                    </div>
+                    {(!collapsed || isMobileOpen) && (
+                      academicsOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                    )}
+                  </button>
+
+                  {(!collapsed || isMobileOpen) && academicsOpen && (
+                    <div className="mt-1 pl-3.5 space-y-1 border-l-2 border-slate-100 ml-5">
+                      {[
+                        { route: 'inst-program-levels', label: 'Programs & Disciplines', icon: GraduationCap },
+                        { route: 'inst-classes', label: 'Degree Programs & Semesters', icon: BookOpen },
+                        { route: 'inst-subjects', label: 'Course Catalog & Credit Hours', icon: BookMarked },
+                        { route: 'inst-timetable', label: 'Lecture & Lab Timetable', icon: Clock }
+                      ].map(item => {
+                        const ItemIcon = item.icon
+                        const active = isRouteActive(item.route)
+                        return (
+                          <div key={item.route} className="relative">
+                            {active && (
+                              <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                            )}
+                            <button
+                              onClick={() => handleNavClick(item.route)}
+                              className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
+                                active
+                                  ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                              }`}
+                            >
+                              <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-purple-600' : 'text-slate-400'}`} />
+                              <span className="truncate">{item.label}</span>
+                            </button>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 6. Attendance */}
+              {!isAccountant && (
+                <div className="relative">
+                  {isRouteActive('inst-attendance') && (
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                  )}
+                  <button
+                    onClick={() => handleNavClick('inst-attendance')}
+                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
+                      isRouteActive('inst-attendance')
+                        ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
+                    }`}
+                  >
+                    <CalendarCheck className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                      isRouteActive('inst-attendance') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                    }`} />
+                    {(!collapsed || isMobileOpen) && <span>Attendance</span>}
+                  </button>
+                </div>
+              )}
+
+              {/* 7. Examinations & Results (GPA / CGPA) */}
+              {!isAccountant && (
+                <div className="relative">
+                  {isRouteActive('inst-exams') && (
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                  )}
+                  <button
+                    onClick={() => handleNavClick('inst-exams')}
+                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
+                      isRouteActive('inst-exams')
+                        ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
+                    }`}
+                  >
+                    <Award className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                      isRouteActive('inst-exams') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                    }`} />
+                    {(!collapsed || isMobileOpen) && <span>Examinations & Results (GPA / CGPA)</span>}
+                  </button>
+                </div>
+              )}
+
+              {/* 8. Transcripts, Degrees & Certificates */}
+              {!isAccountant && (
+                <div className="relative">
+                  {isRouteActive('inst-certificates') && (
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                  )}
+                  <button
+                    onClick={() => handleNavClick('inst-certificates')}
+                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
+                      isRouteActive('inst-certificates')
+                        ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
+                    }`}
+                  >
+                    <FileBadge className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                      isRouteActive('inst-certificates') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                    }`} />
+                    {(!collapsed || isMobileOpen) && <span>Transcripts, Degrees & Certificates</span>}
+                  </button>
+                </div>
+              )}
+
+              {/* 9. Faculty & HR (Payroll) */}
+              {isCampusAdmin && (
+                <div>
+                  <button
+                    onClick={() => {
+                      if (collapsed) setCollapsed(false)
+                      setFacultyOpen(!facultyOpen)
+                    }}
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-colors cursor-pointer group ${
+                      isFacultyRoute 
+                        ? 'text-purple-700 bg-[#f5eeff]/50 font-semibold' 
+                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/80'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Users className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                        isFacultyRoute ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                      }`} />
+                      {(!collapsed || isMobileOpen) && (
+                        <div className="flex items-center gap-1.5">
+                          <span>Faculty & HR</span>
+                          <span className="text-[10px] bg-purple-100 text-purple-700 font-bold px-1.5 py-0.2 rounded-md">
+                            Payroll
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    {(!collapsed || isMobileOpen) && (
+                      facultyOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                    )}
+                  </button>
+
+                  {(!collapsed || isMobileOpen) && facultyOpen && (
+                    <div className="mt-1 pl-3.5 space-y-1 border-l-2 border-slate-100 ml-5">
+                      {[
+                        { route: 'inst-teachers', label: 'Faculty & Professors Roster', icon: Users },
+                        { route: 'inst-payroll', label: 'HR Payroll & Compensation', icon: CreditCard }
+                      ].map(item => {
+                        const ItemIcon = item.icon
+                        const active = isRouteActive(item.route)
+                        return (
+                          <div key={item.route} className="relative">
+                            {active && (
+                              <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                            )}
+                            <button
+                              onClick={() => handleNavClick(item.route)}
+                              className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
+                                active
+                                  ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                              }`}
+                            >
+                              <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-purple-600' : 'text-slate-400'}`} />
+                              <span className="truncate">{item.label}</span>
+                            </button>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 10. Fees & Finance */}
+              {!isTeacher && (
+                <div className="relative">
+                  {isRouteActive('inst-fees') && (
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                  )}
+                  <button
+                    onClick={() => handleNavClick('inst-fees')}
+                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
+                      isRouteActive('inst-fees')
+                        ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
+                    }`}
+                  >
+                    <Receipt className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                      isRouteActive('inst-fees') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                    }`} />
+                    {(!collapsed || isMobileOpen) && <span>Fees & Finance</span>}
+                  </button>
+                </div>
+              )}
+
+              {/* 11. Accounts, Budget & Procurement */}
+              {!isTeacher && (
+                <div className="relative">
+                  {isRouteActive('inst-accounts') && (
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                  )}
+                  <button
+                    onClick={() => handleNavClick('inst-accounts')}
+                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
+                      isRouteActive('inst-accounts')
+                        ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
+                    }`}
+                  >
+                    <Calculator className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                      isRouteActive('inst-accounts') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                    }`} />
+                    {(!collapsed || isMobileOpen) && <span>Accounts, Budget & Procurement</span>}
+                  </button>
+                </div>
+              )}
+
+              {/* 12. Scholarships & Financial Aid */}
+              {!isTeacher && (
+                <div className="relative">
+                  {isRouteActive('inst-scholarships') && (
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                  )}
+                  <button
+                    onClick={() => handleNavClick('inst-scholarships')}
+                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
+                      isRouteActive('inst-scholarships')
+                        ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
+                    }`}
+                  >
+                    <Sparkles className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                      isRouteActive('inst-scholarships') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                    }`} />
+                    {(!collapsed || isMobileOpen) && <span>Scholarships & Financial Aid</span>}
+                  </button>
+                </div>
+              )}
+
+              {/* 13. Research, FYP & Thesis (MS / PhD) */}
+              {!isAccountant && (
+                <div className="relative">
+                  {isRouteActive('inst-research-fyp') && (
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                  )}
+                  <button
+                    onClick={() => handleNavClick('inst-research-fyp')}
+                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
+                      isRouteActive('inst-research-fyp')
+                        ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
+                    }`}
+                  >
+                    <FlaskConical className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                      isRouteActive('inst-research-fyp') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                    }`} />
+                    {(!collapsed || isMobileOpen) && <span>Research, FYP & Thesis (MS / PhD)</span>}
+                  </button>
+                </div>
+              )}
+
+              {/* 14. Student Affairs & Discipline */}
+              {!isAccountant && (
+                <div className="relative">
+                  {isRouteActive('inst-discipline') && (
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                  )}
+                  <button
+                    onClick={() => handleNavClick('inst-discipline')}
+                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
+                      isRouteActive('inst-discipline')
+                        ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
+                    }`}
+                  >
+                    <ShieldAlert className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                      isRouteActive('inst-discipline') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                    }`} />
+                    {(!collapsed || isMobileOpen) && <span>Student Affairs & Discipline</span>}
+                  </button>
+                </div>
+              )}
+
+              {/* 15. Campus Services (Hostel, Transport, Library, Labs, IT) */}
+              {!isAccountant && (
+                <div>
+                  <button
+                    onClick={() => {
+                      if (collapsed) setCollapsed(false)
+                      setServicesOpen(!servicesOpen)
+                    }}
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-colors cursor-pointer group ${
+                      isServicesRoute 
+                        ? 'text-purple-700 bg-[#f5eeff]/50 font-semibold' 
+                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/80'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Building2 className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                        isServicesRoute ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                      }`} />
+                      {(!collapsed || isMobileOpen) && <span>Campus Services</span>}
+                    </div>
+                    {(!collapsed || isMobileOpen) && (
+                      servicesOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                    )}
+                  </button>
+
+                  {(!collapsed || isMobileOpen) && servicesOpen && (
+                    <div className="mt-1 pl-3.5 space-y-1 border-l-2 border-slate-100 ml-5">
+                      {[
+                        { route: 'inst-hostel', label: 'Hostel & Residence', icon: Building },
+                        { route: 'inst-transport', label: 'Campus Transport', icon: Bus },
+                        { route: 'inst-library', label: 'Central University Library', icon: BookMarked },
+                        { route: 'inst-labs', label: 'Computing & Research Labs', icon: FlaskConical },
+                        { route: 'inst-campus-it', label: 'IT Infrastructure & Networking', icon: Server }
+                      ].map(item => {
+                        const ItemIcon = item.icon
+                        const active = isRouteActive(item.route)
+                        return (
+                          <div key={item.route} className="relative">
+                            {active && (
+                              <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                            )}
+                            <button
+                              onClick={() => handleNavClick(item.route)}
+                              className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
+                                active
+                                  ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                              }`}
+                            >
+                              <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-purple-600' : 'text-slate-400'}`} />
+                              <span className="truncate">{item.label}</span>
+                            </button>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 16. Learning Management (LMS) */}
+              <div className="relative">
+                {isRouteActive('inst-learning') && (
+                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                )}
+                <button
+                  onClick={() => handleNavClick('inst-learning')}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
+                    isRouteActive('inst-learning')
+                      ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                      : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
+                  }`}
+                >
+                  <Laptop className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                    isRouteActive('inst-learning') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                  }`} />
+                  {(!collapsed || isMobileOpen) && <span>Learning Management (LMS)</span>}
+                </button>
+              </div>
+
+              {/* 17. Career, Placement & Alumni */}
+              <div className="relative">
+                {isRouteActive('inst-career-alumni') && (
+                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                )}
+                <button
+                  onClick={() => handleNavClick('inst-career-alumni')}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
+                    isRouteActive('inst-career-alumni')
+                      ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                      : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
+                  }`}
+                >
+                  <Briefcase className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                    isRouteActive('inst-career-alumni') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                  }`} />
+                  {(!collapsed || isMobileOpen) && <span>Career, Placement & Alumni</span>}
+                </button>
+              </div>
+
+              {/* 18. Communication & Notices */}
+              <div className="relative">
+                {isRouteActive('inst-notices') && (
+                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                )}
+                <button
+                  onClick={() => handleNavClick('inst-notices')}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
+                    isRouteActive('inst-notices')
+                      ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                      : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
+                  }`}
+                >
+                  <Megaphone className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                    isRouteActive('inst-notices') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                  }`} />
+                  {(!collapsed || isMobileOpen) && <span>Communication & Notices</span>}
+                </button>
+              </div>
+
+              {/* 19. Events & Convocation */}
+              <div className="relative">
+                {isRouteActive('inst-events') && (
+                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                )}
+                <button
+                  onClick={() => handleNavClick('inst-events')}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
+                    isRouteActive('inst-events')
+                      ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                      : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
+                  }`}
+                >
+                  <Calendar className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                    isRouteActive('inst-events') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                  }`} />
+                  {(!collapsed || isMobileOpen) && <span>Events & Convocation</span>}
+                </button>
+              </div>
+
+              {/* 20. Reports & HEC / QEC Compliance */}
+              <div className="relative">
+                {isRouteActive('inst-reports') && (
+                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                )}
+                <button
+                  onClick={() => handleNavClick('inst-reports')}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
+                    isRouteActive('inst-reports')
+                      ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                      : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
+                    }`}
+                >
+                  <BarChart3 className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                    isRouteActive('inst-reports') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                  }`} />
+                  {(!collapsed || isMobileOpen) && <span>Reports & HEC / QEC Compliance</span>}
+                </button>
+              </div>
+
+              {/* 21. Users, Roles & Workflow Approvals */}
+              {isCampusAdmin && (
+                <div className="relative">
+                  {isRouteActive('inst-users') && (
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                  )}
+                  <button
+                    onClick={() => handleNavClick('inst-users')}
+                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
+                      isRouteActive('inst-users')
+                        ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
+                    }`}
+                  >
+                    <ShieldCheck className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                      isRouteActive('inst-users') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                    }`} />
+                    {(!collapsed || isMobileOpen) && <span>Users, Roles & Workflow Approvals</span>}
+                  </button>
+                </div>
+              )}
+
+              {/* 22. Settings & Security */}
+              {isCampusAdmin && (
+                <div className="relative">
+                  {isRouteActive('inst-settings') && (
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                  )}
+                  <button
+                    onClick={() => handleNavClick('inst-settings')}
+                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
+                      isRouteActive('inst-settings')
+                        ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
+                    }`}
+                  >
+                    <Settings className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                      isRouteActive('inst-settings') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                    }`} />
+                    {(!collapsed || isMobileOpen) && <span>Settings & Security</span>}
+                  </button>
+                </div>
+              )}
+            </>
+          ) : isCollege ? (
             <>
               {/* 2. Admissions & Merit */}
               {isCampusAdmin && (

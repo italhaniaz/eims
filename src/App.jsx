@@ -68,6 +68,10 @@ const CollegeScholarshipsView = lazyWithRetry(() => import('./modules/institute-
 const CollegeDisciplineView = lazyWithRetry(() => import('./modules/institute-admin/college/CollegeDisciplineView'), 'college-discipline-view')
 const CollegeHostelView = lazyWithRetry(() => import('./modules/institute-admin/college/CollegeHostelView'), 'college-hostel-view')
 const CollegeLabsView = lazyWithRetry(() => import('./modules/institute-admin/college/CollegeLabsView'), 'college-labs-view')
+const UniversityCourseRegistrationView = lazyWithRetry(() => import('./modules/institute-admin/university/UniversityCourseRegistrationView'), 'university-course-registration-view')
+const UniversityResearchFypView = lazyWithRetry(() => import('./modules/institute-admin/university/UniversityResearchFypView'), 'university-research-fyp-view')
+const UniversityCareerAlumniView = lazyWithRetry(() => import('./modules/institute-admin/university/UniversityCareerAlumniView'), 'university-career-alumni-view')
+const UniversityCampusItView = lazyWithRetry(() => import('./modules/institute-admin/university/UniversityCampusItView'), 'university-campus-it-view')
 
 const CampusAccountsView = lazyWithRetry(() => import('./modules/institute-admin/accounts/CampusAccountsView'), 'campus-accounts-view')
 
@@ -112,7 +116,7 @@ const AppContent = () => {
     'inst-classes', 'inst-subjects', 'inst-timetable', 'inst-program-levels', 'inst-attendance', 'inst-exams',
     'inst-board-exams', 'inst-fees', 'inst-accounts', 'inst-scholarships', 'inst-notices', 'inst-discipline',
     'inst-learning', 'inst-transport', 'inst-library', 'inst-inventory', 'inst-hostel', 'inst-labs',
-    'inst-certificates', 'inst-events', 'inst-reports', 'inst-users', 'inst-settings'
+    'inst-certificates', 'inst-events', 'inst-reports', 'inst-users', 'inst-settings', 'inst-course-registration', 'inst-research-fyp', 'inst-career-alumni', 'inst-campus-it'
   ]
 
   // Helpers to safely extract valid initial routes per portal role
@@ -613,6 +617,18 @@ const AppContent = () => {
                 )}
                 {instituteRoute === 'inst-labs' && (
                   <CollegeLabsView currentInstitute={activeCampus} />
+                )}
+                {instituteRoute === 'inst-course-registration' && (
+                  <UniversityCourseRegistrationView currentInstitute={activeCampus} />
+                )}
+                {instituteRoute === 'inst-research-fyp' && (
+                  <UniversityResearchFypView currentInstitute={activeCampus} />
+                )}
+                {instituteRoute === 'inst-career-alumni' && (
+                  <UniversityCareerAlumniView currentInstitute={activeCampus} />
+                )}
+                {instituteRoute === 'inst-campus-it' && (
+                  <UniversityCampusItView currentInstitute={activeCampus} />
                 )}
               </Suspense>
             </ErrorBoundary>
