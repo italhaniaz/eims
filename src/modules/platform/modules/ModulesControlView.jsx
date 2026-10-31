@@ -184,7 +184,16 @@ export const ModulesControlView = () => {
 
   useEffect(() => {
     loadMatrix()
-  }, [institutes.length])
+    const handleSync = () => loadMatrix()
+    window.addEventListener('sms_institutes_updated', handleSync)
+    window.addEventListener('sms_modules_updated', handleSync)
+    window.addEventListener('storage', handleSync)
+    return () => {
+      window.removeEventListener('sms_institutes_updated', handleSync)
+      window.removeEventListener('sms_modules_updated', handleSync)
+      window.removeEventListener('storage', handleSync)
+    }
+  }, [institutes])
 
   // Dynamic counts for wing filter badges
   const { schoolCount, collegeCount, uniCount, hybridCount } = useMemo(() => {
@@ -304,7 +313,11 @@ export const ModulesControlView = () => {
     }
 
     const actionText = bulkActionState ? 'ENABLE' : 'DISABLE'
-    if (!window.confirm(`Are you sure you want to ${actionText} module "${moduleObj?.name || bulkModuleKey}" across ${instituteIds.length} institute(s)?`)) {
+    if (!bulkActionState && ['students', 'fees', 'exams', 'classes', 'academics'].includes(bulkModuleKey)) {
+      if (!window.confirm(`CRITICAL SAFETY ALERT: "${moduleObj?.name || bulkModuleKey}" is a core academic module.\n\nDisabling it will hide primary student & operational features across ${instituteIds.length} campus branches.\n\nAre you sure you want to proceed?`)) {
+        return
+      }
+    } else if (!window.confirm(`Are you sure you want to ${actionText} module "${moduleObj?.name || bulkModuleKey}" across ${instituteIds.length} institute(s)?`)) {
       return
     }
 

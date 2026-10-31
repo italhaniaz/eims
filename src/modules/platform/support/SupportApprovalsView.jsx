@@ -33,8 +33,12 @@ import {
 import StatCard from '../../../components/common/StatCard'
 import Modal from '../../../components/common/Modal'
 import { SupportService } from '../../../services/supportService'
+import { useToast } from '../../../context/ToastContext'
+import { useAppData } from '../../../context/AppDataContext'
 
 const SupportApprovalsView = () => {
+  const { toast } = useToast()
+  const { logAuditEvent } = useAppData()
   const [activeTab, setActiveTab] = useState('approvals') // 'tickets', 'approvals', 'notifications', 'content'
   const [tickets, setTickets] = useState([])
   const [approvals, setApprovals] = useState([])
@@ -83,30 +87,51 @@ const SupportApprovalsView = () => {
     try {
       await SupportService.approveRequest(appr.id, 'Authorized & approved by Super Administrator')
       await loadAll()
-      setActionToast(`Successfully approved ${appr.instituteName}! Campus is now Active.`)
-      setTimeout(() => setActionToast(null), 3000)
+      toast?.success?.(`Successfully approved ${appr.instituteName}! Campus is now Active.`)
+      if (logAuditEvent) {
+        logAuditEvent({
+          action: 'APPROVAL_GRANT',
+          details: `Authorized onboarding approval for ${appr.instituteName} (${appr.id})`,
+          target: appr.instituteName
+        })
+      }
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new Event('sms_approvals_updated'))
       }
     } catch (err) {
-      setActionToast('Error approving request: ' + err.message)
+      toast?.error?.('Error approving request: ' + err.message)
     } finally {
       setIsProcessingApproval(false)
     }
   }
 
-  const handleQuickReject = async (id) => {
+  const handleQuickReject = async (apprOrId) => {
+    const isObj = typeof apprOrId === 'object' && apprOrId !== null
+    const id = isObj ? apprOrId.id : apprOrId
+    const name = isObj ? apprOrId.instituteName : 'the applicant institution'
+
+    const defaultReason = 'Documentation Verification Pending / Missing Board Affiliation NOC'
+    const promptReason = window.prompt(`Please enter the official decision note for declining "${name}":`, defaultReason)
+    if (promptReason === null) return // User cancelled
+
     setIsProcessingApproval(true)
     try {
-      await SupportService.rejectRequest(id, 'Declined by Super Administrator')
+      const finalNotes = promptReason.trim() || defaultReason
+      await SupportService.rejectRequest(id, finalNotes)
       await loadAll()
-      setActionToast('Petition declined.')
-      setTimeout(() => setActionToast(null), 3000)
+      toast?.info?.(`Petition for "${name}" declined. Reason recorded.`)
+      if (logAuditEvent) {
+        logAuditEvent({
+          action: 'APPROVAL_REJECT',
+          details: `Declined petition for ${name} (${id}). Notes: ${finalNotes}`,
+          target: name
+        })
+      }
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new Event('sms_approvals_updated'))
       }
     } catch (err) {
-      setActionToast('Error rejecting request: ' + err.message)
+      toast?.error?.('Error rejecting request: ' + err.message)
     } finally {
       setIsProcessingApproval(false)
     }
@@ -955,7 +980,7 @@ const SupportApprovalsView = () => {
                       </button>
 
                       <button
-                        onClick={() => handleQuickReject(appr.id)}
+                        onClick={() => handleQuickReject(appr)}
                         disabled={isProcessingApproval}
                         className="px-3.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold text-xs transition-colors cursor-pointer"
                       >

@@ -35,8 +35,12 @@ import {
 import StatCard from '../../../components/common/StatCard'
 import Modal from '../../../components/common/Modal'
 import { BillingService, FALLBACK_PLANS, FALLBACK_SUBSCRIPTIONS, FALLBACK_INVOICES } from '../../../services/billingService'
+import { useToast } from '../../../context/ToastContext'
+import { useAppData } from '../../../context/AppDataContext'
 
 const SubscriptionsBillingView = () => {
+  const { toast } = useToast()
+  const { logAuditEvent } = useAppData()
   const [activeTab, setActiveTab] = useState('plans')
   const [billingCycle, setBillingCycle] = useState('monthly') // 'plans', 'subscriptions', 'invoices'
   const [overview, setOverview] = useState(null)
@@ -148,7 +152,9 @@ const SubscriptionsBillingView = () => {
     }
   }
 
-  const showToast = (msg) => {
+  const showToast = (msg, isErr = false) => {
+    if (isErr) toast?.error?.(msg)
+    else toast?.success?.(msg)
     setActionToast(msg)
     setTimeout(() => setActionToast(null), 3500)
   }
@@ -426,9 +432,20 @@ const SubscriptionsBillingView = () => {
 
   // --- Invoice Actions ---
   const handleMarkPaid = async (id) => {
+    const inv = invoices.find(i => i.id === id)
+    const promptRef = window.prompt(`Enter Bank Deposit Slip # or 1Link Transaction Ref for invoice ${inv?.invoiceNumber || id}:`, `1LINK-TXN-${Date.now().toString().slice(-6)}`)
+    if (promptRef === null) return // cancelled
+
     await BillingService.markInvoicePaid(id)
     fetchBillingData()
-    showToast(`Invoice recorded as PAID in PKR ledger.`)
+    showToast(`Invoice ${inv?.invoiceNumber || id} recorded as PAID in PKR ledger. Ref: ${promptRef}`)
+    if (logAuditEvent) {
+      logAuditEvent({
+        action: 'INVOICE_PAID',
+        details: `Recorded invoice ${inv?.invoiceNumber || id} as PAID for ${inv?.instituteName || 'Campus'} (PKR ${inv?.amountPKR || 0}). Payment Ref: ${promptRef}`,
+        target: inv?.instituteName || 'Billing'
+      })
+    }
   }
 
   const handleSendReminder = async (id) => {

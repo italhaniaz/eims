@@ -43,6 +43,7 @@ LayoutGrid,
   Globe,
   Sliders,
   Filter,
+  CreditCard,
   Calendar,
   X,
   Lock,
@@ -72,6 +73,7 @@ export const InstitutesView = () => {
     districts = [], 
     examinationBodies = [], 
     users = [],
+    instituteCampuses = [],
     students = [],
     teachers = [],
     auditLogs = [],
@@ -1199,7 +1201,15 @@ export const InstitutesView = () => {
   }
 
   const handleDelete = async (id, name) => {
-    if (window.confirm(`Are you sure you want to permanently delete "${name}"? This action cannot be undone.`)) {
+    const activeStudentsCount = (students || []).filter(s => s && (s.instituteId === id || s.institute === name) && (s.status || 'Active').toLowerCase() === 'active').length
+    const activeTeachersCount = (teachers || []).filter(t => t && (t.instituteId === id || t.institute === name) && (t.status || 'Active').toLowerCase() === 'active').length
+
+    let confirmMsg = `Are you sure you want to permanently delete "${name}"? This action cannot be undone.`
+    if (activeStudentsCount > 0 || activeTeachersCount > 0) {
+      confirmMsg = `WARNING: "${name}" currently has ${activeStudentsCount} active student(s) and ${activeTeachersCount} teacher(s) mapped to it.\n\nDeleting this campus will permanently revoke portal access and cascade-clean subscription/module records.\n\nAre you sure you want to proceed with permanent deletion?`
+    }
+
+    if (window.confirm(confirmMsg)) {
       await deleteItem('institutes', id)
       // Cascade cleanup: remove subscription and module records
       try {
@@ -1222,7 +1232,15 @@ export const InstitutesView = () => {
         window.dispatchEvent(new Event('sms_billing_updated'))
         window.dispatchEvent(new Event('sms_institutes_updated'))
       } catch {}
-      toast.success(`Institute removed from directory.`)
+
+      if (logAuditEvent) {
+        logAuditEvent({
+          action: 'INSTITUTE_DELETE',
+          details: `Permanently deleted institute "${name}" (${id}) with ${activeStudentsCount} active students and ${activeTeachersCount} teachers`,
+          target: name
+        })
+      }
+      toast.success(`Institute "${name}" removed from directory.`)
     }
   }
 
@@ -3699,8 +3717,24 @@ export const InstitutesView = () => {
                       </div>
                       <p className="text-slate-500 text-[11px] mt-0.5">{viewingDetails.address || `${viewingDetails.city}, Pakistan`}</p>
                     </div>
-                    <span className="text-[11px] font-mono text-slate-400">{viewingDetails.code}-MAIN</span>
+                    <span className="text-[11px] font-mono text-slate-400 font-bold">{viewingDetails.code}-MAIN</span>
                   </div>
+
+                  {/* Registered Sub-Campuses / Branches */}
+                  {(instituteCampuses || [])
+                    .filter(c => c && (c.instituteId === viewingDetails.id || c.instituteName === viewingDetails.name))
+                    .map(sub => (
+                      <div key={sub.id} className="p-3 bg-white rounded-xl border border-slate-200 flex items-center justify-between text-xs">
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-slate-800">{sub.name || sub.campusName}</span>
+                            <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">Branch</span>
+                          </div>
+                          <p className="text-slate-500 text-[11px] mt-0.5">{sub.address || sub.city || 'Campus Branch Location'}</p>
+                        </div>
+                        <span className="text-[11px] font-mono text-slate-400 font-bold">{sub.code || `${viewingDetails.code}-B`}</span>
+                      </div>
+                    ))}
                 </div>
               </div>
             )}
@@ -3903,6 +3937,23 @@ export const InstitutesView = () => {
                     <span className="text-slate-400 block text-[10px] uppercase font-bold">Max User Accounts</span>
                     <span className="font-bold text-slate-800 text-sm">{viewingDetails.quotaUsers || 50}</span>
                   </div>
+                </div>
+
+                <div className="pt-2 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const target = viewingDetails
+                      setViewingDetails(null)
+                      openEditModal(target)
+                      setEditTab('quotas')
+                    }}
+                    className="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer active:scale-95"
+                    title="Open Edit Quotas & Subscription Tier"
+                  >
+                    <CreditCard className="w-3.5 h-3.5" />
+                    <span>Modify Plan & Quotas</span>
+                  </button>
                 </div>
               </div>
             )}

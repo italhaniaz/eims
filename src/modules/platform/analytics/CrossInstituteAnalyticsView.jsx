@@ -23,7 +23,8 @@ import {
   X,
   ChevronDown,
   Sliders,
-  Columns
+  Columns,
+  HelpCircle
 } from 'lucide-react'
 import StatCard from '../../../components/common/StatCard'
 import Modal from '../../../components/common/Modal'
@@ -66,12 +67,14 @@ const CrossInstituteAnalyticsView = () => {
   }, [period, institutes, students, teachers, fees])
 
   const loadData = () => {
-    setLoading(true)
-    setTimeout(() => {
+    try {
       const data = AnalyticsService.getCrossInstituteData(period, { institutes, students, teachers, fees })
       setAnalyticsData(data)
+    } catch (e) {
+      console.error('Failed to load cross-institute analytics:', e)
+    } finally {
       setLoading(false)
-    }, 150)
+    }
   }
 
   const handleExportCSV = () => {
@@ -705,7 +708,15 @@ const CrossInstituteAnalyticsView = () => {
                   <th className="py-3.5 px-4 text-right">Collected (PKR)</th>
                 )}
                 {visibleColumns.health && (
-                  <th className="py-3.5 px-4 text-center">Health</th>
+                  <th 
+                    className="py-3.5 px-4 text-center cursor-help"
+                    title="Campus Health Rating Formula: 40% Fee Collection Parity + 30% Verified Attendance + 30% Student-Teacher Ratio"
+                  >
+                    <div className="flex items-center justify-center gap-1">
+                      <span>Health</span>
+                      <HelpCircle className="w-3 h-3 text-slate-400" />
+                    </div>
+                  </th>
                 )}
               </tr>
             </thead>
