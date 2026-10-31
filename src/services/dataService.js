@@ -314,6 +314,98 @@ export const defaultInitialAdmissionsPipeline = [
   }
 ]
 
+
+export const defaultInitialAdmissionCycles = [
+  { id: 'CYC-2026-F', name: 'Fall 2026 Admissions Intake', campusScope: 'All Campuses (Central)', startDate: '2026-06-01', endDate: '2026-08-31', status: 'Active (Open)', capacity: 500, applications: 384 },
+  { id: 'CYC-2027-S', name: 'Spring 2027 Lateral Entry', campusScope: 'High School & College Wings', startDate: '2026-11-15', endDate: '2027-01-10', status: 'Scheduled', capacity: 250, applications: 45 }
+]
+
+export const defaultInitialMeritPolicies = [
+  { 
+    id: 'MER-01',
+    wing: 'Kindergarten & Primary Wing', 
+    minPercentage: 50, 
+    testWeight: 40, 
+    interviewWeight: 60, 
+    pastAcademicWeight: 0, 
+    status: 'Published',
+    openMeritQuota: 80,
+    siblingQuota: 10,
+    sportsQuota: 5,
+    staffQuota: 5
+  },
+  { 
+    id: 'MER-02',
+    wing: 'Middle & High School', 
+    minPercentage: 60, 
+    testWeight: 50, 
+    interviewWeight: 20, 
+    pastAcademicWeight: 30, 
+    status: 'Published',
+    openMeritQuota: 75,
+    siblingQuota: 10,
+    sportsQuota: 10,
+    staffQuota: 5
+  },
+  { 
+    id: 'MER-03',
+    wing: 'College & Higher Secondary', 
+    minPercentage: 70, 
+    testWeight: 60, 
+    interviewWeight: 15, 
+    pastAcademicWeight: 25, 
+    status: 'Published',
+    openMeritQuota: 70,
+    siblingQuota: 10,
+    sportsQuota: 10,
+    staffQuota: 10
+  }
+]
+
+export const defaultInitialSeatMatrix = [
+  { id: 'SM-01', campus: 'Beaconhouse Central High School', instituteId: 'inst-1', wing: 'Primary Wing', totalCapacity: 250, filledSeats: 210, waitlist: 15 },
+  { id: 'SM-02', campus: 'Beaconhouse Central High School', instituteId: 'inst-1', wing: 'High School', totalCapacity: 300, filledSeats: 285, waitlist: 28 },
+  { id: 'SM-03', campus: 'City School Model Town Campus', instituteId: 'inst-2', wing: 'Middle Wing', totalCapacity: 200, filledSeats: 160, waitlist: 8 },
+  { id: 'SM-04', campus: 'Roots International College & Academy', instituteId: 'inst-3', wing: 'College Wing', totalCapacity: 180, filledSeats: 175, waitlist: 42 },
+  { id: 'SM-05', campus: 'Institute of Applied Sciences & Undergraduates', instituteId: 'inst-4', wing: 'Undergraduate Wing', totalCapacity: 150, filledSeats: 130, waitlist: 22 }
+]
+
+export const defaultInitialFeeSettings = [
+  { 
+    id: 'FEE-01',
+    tier: 'Primary Wing', 
+    prospectusFee: 1500, 
+    processingFee: 1000, 
+    testFee: 500, 
+    lateSurcharge: 500,
+    status: 'Standard',
+    gateways: ['Bank Challan', '1Link 1Bill', 'JazzCash'],
+    siblingDiscount: 25
+  },
+  { 
+    id: 'FEE-02',
+    tier: 'Middle & High School', 
+    prospectusFee: 2000, 
+    processingFee: 1500, 
+    testFee: 1000, 
+    lateSurcharge: 750,
+    status: 'Standard',
+    gateways: ['Bank Challan', '1Link 1Bill', 'Kuickpay'],
+    siblingDiscount: 25
+  },
+  { 
+    id: 'FEE-03',
+    tier: 'College / Pre-Medical / Pre-Eng', 
+    prospectusFee: 3000, 
+    processingFee: 2000, 
+    testFee: 1500, 
+    lateSurcharge: 1000,
+    status: 'Standard',
+    gateways: ['Bank Challan', '1Link 1Bill', 'Kuickpay', 'EasyPaisa'],
+    siblingDiscount: 20
+  }
+]
+
 export const defaultInitialStudents = [
   { id: 'std-1', name: 'Abdullah Khan', rollNumber: 'BHS-2026-0001', campus: 'Beaconhouse Central High', instituteId: 'inst-1', wing: 'Middle Wing', className: 'Grade 8', section: 'A', status: 'Active', gender: 'Male', phone: '0300-1234567', bFormCnic: '35201-1122334-1', feeStatus: 'Paid', fatherName: 'Farooq Khan' },
   { id: 'std-2', name: 'Zoya Fatima', rollNumber: 'BHS-2026-0002', campus: 'Beaconhouse Central High', instituteId: 'inst-1', wing: 'High School', className: 'Grade 10', section: 'B', status: 'Active', gender: 'Female', phone: '0301-9876543', bFormCnic: '35201-2233445-2', feeStatus: 'Paid', fatherName: 'Tariq Mehmood' },
@@ -354,6 +446,11 @@ const cleanZeroData = {
   library: [],
   bookIssues: [],
   admissionsPipeline: defaultInitialAdmissionsPipeline,
+  admissionCycles: defaultInitialAdmissionCycles,
+  meritPolicies: defaultInitialMeritPolicies,
+  seatMatrix: defaultInitialSeatMatrix,
+  feeSettings: defaultInitialFeeSettings,
+  admissionsFreeze: false,
   auditLogs: [],
   communicationLogs: []
 }
@@ -562,7 +659,12 @@ export const sampleTemplateData = {
       status: 'Issued'
     }
   ],
-  admissionsPipeline: [],
+  admissionsPipeline: defaultInitialAdmissionsPipeline,
+  admissionCycles: defaultInitialAdmissionCycles,
+  meritPolicies: defaultInitialMeritPolicies,
+  seatMatrix: defaultInitialSeatMatrix,
+  feeSettings: defaultInitialFeeSettings,
+  admissionsFreeze: false,
   auditLogs: [
     { id: 'log-1', action: 'User Sign In', user: 'admin@schoolms.com', ip: '192.168.1.102', timestamp: '2026-10-19 18:20', status: 'Success' },
     { id: 'log-2', action: 'Challan Voucher Generated', user: 'Beaconhouse Admin', ip: '192.168.1.115', timestamp: '2026-10-19 17:45', status: 'Success' }

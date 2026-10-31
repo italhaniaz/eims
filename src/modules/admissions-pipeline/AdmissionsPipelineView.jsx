@@ -335,6 +335,10 @@ export const AdmissionsPipelineView = ({ currentInstitute }) => {
 
   // Open Add Inquiry Modal
   const handleOpenAddModal = () => {
+    if (isAdmissionsFrozen) {
+      toast.error('Admissions intake is currently frozen platform-wide by the Super Administrator.')
+      return
+    }
     setEditingInquiry(null)
     setFormData({
       ...initialFormState,
@@ -469,6 +473,11 @@ export const AdmissionsPipelineView = ({ currentInstitute }) => {
 
   // Stage Advancement & Transition Safety Rules
   const handleStageTransition = (lead, targetStage) => {
+    if (isAdmissionsFrozen) {
+      toast.error('Admissions intake is currently frozen platform-wide. Pipeline stage transitions are temporarily locked.')
+      return
+    }
+
     // Stage safety rule 1: Enrolled only allowed after Offer Issued or Fee Paid
     if (targetStage === 'Enrolled' && lead.stage !== 'Offer Issued' && lead.stage !== 'Fee Paid') {
       toast.error('Candidate can only be enrolled after an Admission Offer is issued or Fee is paid.')
@@ -1100,7 +1109,13 @@ export const AdmissionsPipelineView = ({ currentInstitute }) => {
           <button
             type="button"
             onClick={handleOpenAddModal}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-bold shadow transition-all cursor-pointer"
+            disabled={isAdmissionsFrozen}
+            title={isAdmissionsFrozen ? 'Admissions intake is currently frozen platform-wide' : 'Log new candidate inquiry'}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold shadow transition-all ${
+              isAdmissionsFrozen 
+                ? 'bg-slate-300 text-slate-500 cursor-not-allowed opacity-70' 
+                : 'bg-teal-600 hover:bg-teal-700 text-white cursor-pointer'
+            }`}
           >
             <Plus className="w-4 h-4" />
             <span>New Admission Inquiry</span>

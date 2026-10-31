@@ -145,7 +145,7 @@ const sanitizeCSV = (val) => {
 }
 
 export const SuperadminAdmissionsView = ({ activeTab = 'overview', onTabChange = () => {} }) => {
-  const { institutes = [], admissionsPipeline = [], logAuditEvent } = useAppData()
+  const { institutes = [], admissionsPipeline = [], updateItem, logAuditEvent } = useAppData()
   const { toast } = useToast()
 
   // 1. Reactive Tab Synchronization with Sidebar Route
@@ -315,6 +315,7 @@ export const SuperadminAdmissionsView = ({ activeTab = 'overview', onTabChange =
     if (filteredPipeline.length > 0) {
       const totalLeads = filteredPipeline.length
       const testsTaken = filteredPipeline.filter(p => 
+        p.scorecard?.testMarks != null ||
         ['Test Done', 'Interview Done', 'Offer Issued', 'Fee Paid', 'Enrolled'].includes(p.stage)
       ).length
       const interviewsConducted = filteredPipeline.filter(p =>
@@ -550,6 +551,15 @@ export const SuperadminAdmissionsView = ({ activeTab = 'overview', onTabChange =
       return
     }
 
+    const quotaSum = (Number(editingMerit.openMeritQuota) || 0) + 
+                     (Number(editingMerit.siblingQuota) || 0) + 
+                     (Number(editingMerit.sportsQuota) || 0) + 
+                     (Number(editingMerit.staffQuota) || 0)
+    if (quotaSum !== 100) {
+      toast?.error?.(`Reserved Quotas must sum up to exactly 100%. Current total: ${quotaSum}%`)
+      return
+    }
+
     if (editingMerit.isNew) {
       const newPolicy = {
         ...editingMerit,
@@ -588,7 +598,12 @@ export const SuperadminAdmissionsView = ({ activeTab = 'overview', onTabChange =
     e.preventDefault()
     if (!selectedSeatRow) return
 
-    const newCap = Math.max(selectedSeatRow.filledSeats, Number(seatCapacityInput) || 1)
+    if (Number(seatCapacityInput) < selectedSeatRow.filledSeats) {
+      toast?.error?.(`Total capacity cannot be less than currently occupied seats (${selectedSeatRow.filledSeats}).`)
+      return
+    }
+
+    const newCap = Number(seatCapacityInput) || selectedSeatRow.filledSeats
     setSeatMatrix(prev => prev.map(s => {
       if (s.id === selectedSeatRow.id) {
         return {
@@ -663,9 +678,11 @@ export const SuperadminAdmissionsView = ({ activeTab = 'overview', onTabChange =
       return
     }
 
+    const matchedInst = institutes.find(i => i.name === newSeatAllocation.campus.trim())
     const newItem = {
       id: `SM-${Date.now().toString().slice(-4)}`,
       campus: newSeatAllocation.campus.trim(),
+      instituteId: matchedInst?.id || (institutes[0]?.id || 'inst-1'),
       wing: newSeatAllocation.wing,
       totalCapacity: Number(newSeatAllocation.totalCapacity) || 50,
       filledSeats: Number(newSeatAllocation.filledSeats) || 0,
@@ -756,6 +773,49 @@ export const SuperadminAdmissionsView = ({ activeTab = 'overview', onTabChange =
     }
     setIsTariffModalOpen(false)
     setEditingTariff(null)
+  }
+
+
+  const handleDeleteMerit = (policyId, wingName) => {
+    if (window.confirm(`Are you sure you want to delete merit formula for "${wingName}"? This action cannot be undone.`)) {
+      setMeritPolicies(prev => prev.filter(m => m.id !== policyId))
+      toast?.success?.(`Merit formula for ${wingName} deleted.`)
+      if (logAuditEvent) {
+        logAuditEvent({
+          action: 'MERIT_POLICY_DELETE',
+          details: `Deleted merit formula ${policyId} for ${wingName}`,
+          target: wingName
+        })
+      }
+    }
+  }
+
+  const handleDeleteTariff = (tariffId, tierName) => {
+    if (window.confirm(`Are you sure you want to delete fee tariff schedule for "${tierName}"? This action cannot be undone.`)) {
+      setFeeSettings(prev => prev.filter(f => f.id !== tariffId))
+      toast?.success?.(`Fee tariff schedule for ${tierName} deleted.`)
+      if (logAuditEvent) {
+        logAuditEvent({
+          action: 'TARIFF_DELETE',
+          details: `Deleted fee tariff ${tariffId} for ${tierName}`,
+          target: tierName
+        })
+      }
+    }
+  }
+
+  const handleDeleteSeatAllocation = (seatId, campusName, wingName) => {
+    if (window.confirm(`Are you sure you want to remove seat allocation for ${campusName} (${wingName})?`)) {
+      setSeatMatrix(prev => prev.filter(s => s.id !== seatId))
+      toast?.success?.(`Seat allocation for ${campusName} (${wingName}) deleted.`)
+      if (logAuditEvent) {
+        logAuditEvent({
+          action: 'SEAT_ALLOCATION_DELETE',
+          details: `Deleted seat allocation ${seatId} for ${campusName}`,
+          target: campusName
+        })
+      }
+    }
   }
 
   // ----------------------------------------------------
@@ -1165,7 +1225,11 @@ export const SuperadminAdmissionsView = ({ activeTab = 'overview', onTabChange =
                   ) : (
                     filteredCycles.map(c => {
                       const capacity = c.capacity || 100
-                      const apps = c.applications || 0
+                      const dynamicApps = (admissionsPipeline || []).filter(p => {
+                        if (c.campusScope && !c.campusScope.includes('All Campuses') && p.campus && !c.campusScope.includes(p.campus)) return false
+                        return true
+                      }).length
+                      const apps = dynamicApps > 0 ? dynamicApps : (c.applications || 0)
                       const fillPct = Math.min(100, Math.round((apps / Math.max(1, capacity)) * 100))
                       const isActive = c.status === 'Active (Open)'
 
@@ -1315,14 +1379,24 @@ export const SuperadminAdmissionsView = ({ activeTab = 'overview', onTabChange =
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => handleOpenMeritModal(m)}
-                  className="w-full py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                >
-                  <Sliders className="w-3.5 h-3.5" />
-                  <span>Configure Weightage & Quotas</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleOpenMeritModal(m)}
+                    className="flex-1 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <Sliders className="w-3.5 h-3.5" />
+                    <span>Configure Weightage & Quotas</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteMerit(m.id, m.wing)}
+                    className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 rounded-xl transition-colors cursor-pointer shrink-0"
+                    title="Delete merit formula"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -1428,13 +1502,23 @@ export const SuperadminAdmissionsView = ({ activeTab = 'overview', onTabChange =
                             </div>
                           </td>
                           <td className="py-3.5 px-4 text-right">
-                            <button
-                              type="button"
-                              onClick={() => handleOpenManageQuota(s)}
-                              className="px-2.5 py-1 text-purple-700 hover:bg-purple-50 rounded-lg font-bold text-xs cursor-pointer border border-purple-200/70 transition-all shadow-2xs"
-                            >
-                              Manage Quotas
-                            </button>
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => handleOpenManageQuota(s)}
+                                className="px-2.5 py-1 text-purple-700 hover:bg-purple-50 rounded-lg font-bold text-xs cursor-pointer border border-purple-200/70 transition-all shadow-2xs"
+                              >
+                                Manage Quotas
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteSeatAllocation(s.id, s.campus, s.wing)}
+                                className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                                title="Delete seat allocation"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       )
@@ -1518,14 +1602,24 @@ export const SuperadminAdmissionsView = ({ activeTab = 'overview', onTabChange =
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => handleOpenTariffModal(f)}
-                  className="w-full py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-xl text-xs font-bold transition-all cursor-pointer border border-purple-200 flex items-center justify-center gap-1.5"
-                >
-                  <DollarSign className="w-3.5 h-3.5" />
-                  <span>Adjust Tariff Rates</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleOpenTariffModal(f)}
+                    className="flex-1 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-xl text-xs font-bold transition-all cursor-pointer border border-purple-200 flex items-center justify-center gap-1.5"
+                  >
+                    <DollarSign className="w-3.5 h-3.5" />
+                    <span>Adjust Tariff Rates</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteTariff(f.id, f.tier)}
+                    className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 rounded-xl transition-colors cursor-pointer shrink-0"
+                    title="Delete fee tariff"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -2132,6 +2226,36 @@ export const SuperadminAdmissionsView = ({ activeTab = 'overview', onTabChange =
                   onChange={(e) => setEditingTariff({ ...editingTariff, siblingDiscount: Number(e.target.value) })}
                   className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800"
                 />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Accepted Payment Channels</label>
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {['Bank Challan', '1Link 1Bill', 'Kuickpay', 'JazzCash', 'EasyPaisa'].map(gw => {
+                    const isSelected = (editingTariff.gateways || []).includes(gw)
+                    return (
+                      <button
+                        key={gw}
+                        type="button"
+                        onClick={() => {
+                          const currentGws = editingTariff.gateways || ['Bank Challan', '1Link 1Bill']
+                          const nextGws = isSelected 
+                            ? currentGws.filter(g => g !== gw)
+                            : [...currentGws, gw]
+                          if (nextGws.length === 0) return
+                          setEditingTariff({ ...editingTariff, gateways: nextGws })
+                        }}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-purple-100 text-purple-800 border-purple-300 font-bold'
+                            : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        {gw} {isSelected ? '✓' : '+'}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
 
               <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100">

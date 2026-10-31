@@ -99,6 +99,7 @@ export const SuperadminSidebar = ({
   const [campusesCount, setCampusesCount] = useState(0)
   const [usersCount, setUsersCount] = useState(0)
   const [studentsCount, setStudentsCount] = useState(0)
+  const [admissionsCount, setAdmissionsCount] = useState(0)
 
   useEffect(() => {
     const updateCount = () => {
@@ -189,6 +190,22 @@ export const SuperadminSidebar = ({
     updateCampusCount()
     updateUserCount()
     updateStudentCount()
+    updateAdmissionsCount()
+    const updateAdmissionsCount = () => {
+      try {
+        const dbRaw = localStorage.getItem('sms_database_v3_enterprise')
+        if (dbRaw) {
+          const parsed = JSON.parse(dbRaw)
+          if (Array.isArray(parsed?.admissionsPipeline)) {
+            setAdmissionsCount(parsed.admissionsPipeline.length)
+            return
+          }
+        }
+        setAdmissionsCount(0)
+      } catch {
+        setAdmissionsCount(0)
+      }
+    }
     window.addEventListener('sms_approval_created', updateCount)
     window.addEventListener('sms_approvals_updated', updateCount)
     window.addEventListener('sms_institutes_updated', updateCampusCount)
@@ -204,6 +221,7 @@ export const SuperadminSidebar = ({
       window.removeEventListener('sms_institutes_updated', updateCampusCount)
       window.removeEventListener('sms_users_updated', updateUserCount)
       window.removeEventListener('sms_students_updated', updateStudentCount)
+      window.removeEventListener('storage', updateAdmissionsCount)
       window.removeEventListener('storage', updateCount)
       window.removeEventListener('storage', updateCampusCount)
       window.removeEventListener('storage', updateUserCount)
@@ -802,18 +820,31 @@ export const SuperadminSidebar = ({
                 if (collapsed) setCollapsed(false)
                 setAdmissionsOpen(!admissionsOpen)
               }}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-50/80 transition-colors cursor-pointer group"
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors cursor-pointer group ${
+                isAdmissionsRoute
+                  ? 'bg-purple-50/70 text-purple-900 font-semibold shadow-2xs'
+                  : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/80'
+              }`}
             >
               <div className="flex items-center gap-3">
-                <UserPlus className="w-[18px] h-[18px] text-slate-400 group-hover:text-purple-600 transition-colors shrink-0" />
+                <UserPlus className={`w-[18px] h-[18px] transition-colors shrink-0 ${
+                  isAdmissionsRoute ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                }`} />
                 {(!collapsed || isMobileOpen) && (
-                  <span className="font-medium text-slate-600 group-hover:text-slate-900">
+                  <span className={`font-medium ${isAdmissionsRoute ? 'text-purple-950 font-bold' : 'text-slate-600 group-hover:text-slate-900'}`}>
                     Admissions
                   </span>
                 )}
               </div>
               {(!collapsed || isMobileOpen) && (
-                admissionsOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                <div className="flex items-center gap-2">
+                  {admissionsCount > 0 && (
+                    <span className="px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-purple-100 text-purple-700">
+                      {admissionsCount}
+                    </span>
+                  )}
+                  {admissionsOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
+                </div>
               )}
             </button>
 
