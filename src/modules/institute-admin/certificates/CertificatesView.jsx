@@ -545,7 +545,10 @@ export const CertificatesView = ({ currentInstitute }) => {
                     </>
                   ) : tierConfig.isCollegeOnly ? (
                     <>
+                      <option value="Provisional Certificate (Higher Secondary)">Provisional Certificate (Higher Secondary)</option>
+                      <option value="Inter-Board Migration Certificate (NOC)">Inter-Board Migration Certificate (NOC)</option>
                       <option value="College Leaving Certificate (CLC)">College Leaving Certificate (CLC)</option>
+                      <option value="Detailed Marks Certificate (DMC)">Detailed Marks Certificate (DMC)</option>
                       <option value="Character & Good Conduct Certificate">Character & Good Conduct Certificate</option>
                       <option value="Bonafide College Student Certificate">Bonafide College Student Certificate</option>
                       <option value="FBISE / BISE Inter-Board Clearance & Migration Certificate">FBISE / BISE Inter-Board Clearance & Migration Certificate</option>

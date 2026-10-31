@@ -63,6 +63,12 @@ const StudentParentPortalView = lazyWithRetry(() => import('./modules/student-po
 const CampusInventoryView = lazyWithRetry(() => import('./modules/institute-admin/inventory/CampusInventoryView'), 'campus-inventory-view')
 const CampusEventsCalendarView = lazyWithRetry(() => import('./modules/institute-admin/events/CampusEventsCalendarView'), 'campus-events-view')
 const CampusReportsAnalyticsView = lazyWithRetry(() => import('./modules/institute-admin/reports/CampusReportsAnalyticsView'), 'campus-reports-view')
+const CollegeBoardExamsView = lazyWithRetry(() => import('./modules/institute-admin/college/CollegeBoardExamsView'), 'college-board-exams-view')
+const CollegeScholarshipsView = lazyWithRetry(() => import('./modules/institute-admin/college/CollegeScholarshipsView'), 'college-scholarships-view')
+const CollegeDisciplineView = lazyWithRetry(() => import('./modules/institute-admin/college/CollegeDisciplineView'), 'college-discipline-view')
+const CollegeHostelView = lazyWithRetry(() => import('./modules/institute-admin/college/CollegeHostelView'), 'college-hostel-view')
+const CollegeLabsView = lazyWithRetry(() => import('./modules/institute-admin/college/CollegeLabsView'), 'college-labs-view')
+
 const CampusAccountsView = lazyWithRetry(() => import('./modules/institute-admin/accounts/CampusAccountsView'), 'campus-accounts-view')
 
 // Executive Minimal Loading Fallback
@@ -104,9 +110,9 @@ const AppContent = () => {
   const VALID_INSTITUTE_ROUTES = [
     'inst-dashboard', 'inst-admissions', 'inst-students', 'inst-teachers', 'inst-payroll',
     'inst-classes', 'inst-subjects', 'inst-timetable', 'inst-program-levels', 'inst-attendance', 'inst-exams',
-    'inst-fees', 'inst-accounts', 'inst-notices', 'inst-learning', 'inst-transport',
-    'inst-library', 'inst-inventory', 'inst-certificates', 'inst-events', 'inst-reports',
-    'inst-users', 'inst-settings'
+    'inst-board-exams', 'inst-fees', 'inst-accounts', 'inst-scholarships', 'inst-notices', 'inst-discipline',
+    'inst-learning', 'inst-transport', 'inst-library', 'inst-inventory', 'inst-hostel', 'inst-labs',
+    'inst-certificates', 'inst-events', 'inst-reports', 'inst-users', 'inst-settings'
   ]
 
   // Helpers to safely extract valid initial routes per portal role
@@ -592,6 +598,21 @@ const AppContent = () => {
                 )}
                 {instituteRoute === 'inst-program-levels' && (
                   <ProgramLevelsView currentInstitute={activeCampus} />
+                )}
+                {instituteRoute === 'inst-board-exams' && (
+                  <CollegeBoardExamsView currentInstitute={activeCampus} />
+                )}
+                {instituteRoute === 'inst-scholarships' && (
+                  <CollegeScholarshipsView currentInstitute={activeCampus} />
+                )}
+                {instituteRoute === 'inst-discipline' && (
+                  <CollegeDisciplineView currentInstitute={activeCampus} />
+                )}
+                {instituteRoute === 'inst-hostel' && (
+                  <CollegeHostelView currentInstitute={activeCampus} />
+                )}
+                {instituteRoute === 'inst-labs' && (
+                  <CollegeLabsView currentInstitute={activeCampus} />
                 )}
               </Suspense>
             </ErrorBoundary>
