@@ -19,7 +19,8 @@ import {
   Filter,
   Check,
   X,
-  FileText
+  FileText,
+  Trash2
 } from 'lucide-react'
 import StatCard from '../../../components/common/StatCard'
 import Modal from '../../../components/common/Modal'

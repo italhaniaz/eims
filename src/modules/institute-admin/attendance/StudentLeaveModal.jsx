@@ -16,8 +16,6 @@ export const StudentLeaveModal = ({
   currentSection,
   onLeavesUpdated
 }) => {
-  if (!isOpen) return null
-
   const [leavesList, setLeavesList] = useState(() => getStudentLeaveApplications())
 
   // New leave form state
@@ -28,6 +26,8 @@ export const StudentLeaveModal = ({
   const [customReason, setCustomReason] = useState('')
   const [status, setStatus] = useState('Approved') // Default approved
   const [remarks, setRemarks] = useState('')
+
+  if (!isOpen) return null
 
   const handleAddLeave = (e) => {
     e.preventDefault()

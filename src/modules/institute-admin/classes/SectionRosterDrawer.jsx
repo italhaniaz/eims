@@ -39,18 +39,17 @@ export const SectionRosterDrawer = ({
   const [isBulkMoveOpen, setIsBulkMoveOpen] = useState(false)
   const [bulkDestSectionName, setBulkDestSectionName] = useState('')
 
-  if (!isOpen || !targetClass || !targetSection) return null
-
   // Enrolled students in this specific class & section
   const sectionStudents = useMemo(() => {
+    if (!targetClass || !targetSection) return []
     return students.filter(s => {
       const matchInst = !s.instituteId || s.instituteId === currentInstitute?.id
       if (!matchInst) return false
-      const matchClass = (s.className || '').toLowerCase().trim() === targetClass.name.toLowerCase().trim()
-      const matchSec = (s.section || '').toLowerCase().trim() === targetSection.name.toLowerCase().trim()
+      const matchClass = (s.className || '').toLowerCase().trim() === (targetClass?.name || '').toLowerCase().trim()
+      const matchSec = (s.section || '').toLowerCase().trim() === (targetSection?.name || '').toLowerCase().trim()
       return matchClass && matchSec
     })
-  }, [students, targetClass.name, targetSection.name, currentInstitute?.id])
+  }, [students, targetClass?.name, targetSection?.name, currentInstitute?.id])
 
   // Filtered students by search
   const filteredStudents = useMemo(() => {
@@ -63,6 +62,8 @@ export const SectionRosterDrawer = ({
       s.phone?.toLowerCase().includes(term)
     )
   }, [sectionStudents, searchTerm])
+
+  if (!isOpen || !targetClass || !targetSection) return null
 
   const enrolledCount = sectionStudents.length
   const capacity = Number(targetSection.capacity || 40)

@@ -34,7 +34,8 @@ import {
   Trash2,
   RotateCcw,
   Sliders,
-  Shield
+  Shield,
+  AlertCircle
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
@@ -202,6 +203,68 @@ export const SecurityCenterView = () => {
       return matchesSearch && matchesFilter
     })
   }, [loginHistory, historySearch, historyFilter])
+
+  const totalHistoryPages = Math.max(1, Math.ceil(filteredHistory.length / historyPageSize))
+  const paginatedHistory = useMemo(() => {
+    const start = (historyPage - 1) * historyPageSize
+    return filteredHistory.slice(start, start + historyPageSize)
+  }, [filteredHistory, historyPage, historyPageSize])
+
+  // Filter active sessions
+  const filteredSessions = useMemo(() => {
+    const list = Array.isArray(sessions) ? sessions : []
+    const q = (sessionSearch || '').toLowerCase().trim()
+    return list.filter(s => {
+      if (!s) return false
+      const matchesSearch = !q ||
+        (s.userName || s.name || '').toLowerCase().includes(q) ||
+        (s.userEmail || s.email || '').toLowerCase().includes(q) ||
+        (s.ip || '').toLowerCase().includes(q) ||
+        (s.location || '').toLowerCase().includes(q) ||
+        (s.campus || s.institute || '').toLowerCase().includes(q)
+
+      const matchesCampus = sessionCampusFilter === 'ALL' ||
+        (s.campus === sessionCampusFilter || s.institute === sessionCampusFilter)
+
+      return matchesSearch && matchesCampus
+    })
+  }, [sessions, sessionSearch, sessionCampusFilter])
+
+  // Test IP ingress evaluation handler
+  const handleEvaluateTestIp = () => {
+    const ip = (testIpInput || '').trim()
+    if (!ip) {
+      toast.error('Please enter an IP address to evaluate.')
+      return
+    }
+    const allowlist = Array.isArray(policy?.ipAllowlist) ? policy.ipAllowlist : []
+    const isEnforced = Boolean(policy?.enforceIpAllowlist)
+
+    if (!isEnforced) {
+      setTestIpResult({
+        allowed: true,
+        reason: 'IP allowlist enforcement is currently disabled globally. Ingress permitted.'
+      })
+      return
+    }
+
+    const matched = allowlist.some(entry => {
+      const allowedIp = (typeof entry === 'string' ? entry : entry.ip || '').trim()
+      return allowedIp === ip || allowedIp === '*'
+    })
+
+    if (matched) {
+      setTestIpResult({
+        allowed: true,
+        reason: `IP ${ip} is explicitly allowlisted in platform security policy.`
+      })
+    } else {
+      setTestIpResult({
+        allowed: false,
+        reason: `IP ${ip} is NOT in the allowlist and will be dropped under strict firewall policy.`
+      })
+    }
+  }
 
   // 3. Telemetry loader
   const loadSecurityData = useCallback(async () => {

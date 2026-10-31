@@ -14,7 +14,8 @@ import {
   Download,
   PieChart,
   TrendingUp,
-  CreditCard
+  CreditCard,
+  CheckCircle
 } from 'lucide-react'
 import { useToast } from '../../../context/ToastContext'
 

@@ -28,9 +28,10 @@ import { normalizeClassSections, detectProgramLevel } from '../../constants/acad
 
 export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
   const { 
-    students, 
-    teachers, 
-    fees, 
+    institutes = [],
+    students = [], 
+    teachers = [], 
+    fees = [], 
     notices = [],
     classes = [],
     activeProgramLevel, 

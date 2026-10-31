@@ -10,8 +10,6 @@ import {
 } from './attendanceService'
 
 export const AttendanceSettingsModal = ({ isOpen, onClose, onSettingsUpdated }) => {
-  if (!isOpen) return null
-
   const [settings, setSettings] = useState(() => getAttendanceSettings())
   const [holidays, setHolidays] = useState(() => getAcademicHolidays())
   const [activeSubTab, setActiveSubTab] = useState('general') // 'general' | 'holidays'
@@ -22,6 +20,8 @@ export const AttendanceSettingsModal = ({ isOpen, onClose, onSettingsUpdated }) 
   const [newHolidayEndDate, setNewHolidayEndDate] = useState('')
   const [newHolidayType, setNewHolidayType] = useState('Gazetted')
   const [isRange, setIsRange] = useState(false)
+
+  if (!isOpen) return null
 
   const allWeekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 

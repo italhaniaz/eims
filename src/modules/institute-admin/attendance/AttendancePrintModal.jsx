@@ -20,10 +20,10 @@ export const AttendancePrintModal = ({
   attendanceRecords = {},
   monthlyData
 }) => {
-  if (!isOpen) return null
-
   const [printTab, setPrintTab] = useState('daily') // 'daily' | 'monthly' | 'certificate'
   const [selectedStudentForCert, setSelectedStudentForCert] = useState(students[0]?.id || '')
+
+  if (!isOpen) return null
 
   const instName = currentInstitute?.name || 'Academic Campus'
   const instCampus = currentInstitute?.city || currentInstitute?.address || 'Main Campus'

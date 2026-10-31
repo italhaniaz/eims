@@ -11,7 +11,9 @@ import {
   Sparkles,
   PieChart,
   ArrowUpRight,
-  Filter
+  Filter,
+  Play,
+  Plus
 } from 'lucide-react'
 import { useToast } from '../../../context/ToastContext'
 

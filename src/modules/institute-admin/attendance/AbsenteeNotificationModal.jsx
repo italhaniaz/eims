@@ -22,8 +22,6 @@ export const AbsenteeNotificationModal = ({
   consecutiveThreshold = 3,
   onNotificationSent
 }) => {
-  if (!isOpen) return null
-
   // Filter students who are absent, leave, or late
   const unpresentStudents = students.filter(s => {
     const item = attendanceRecords[s.id]
@@ -40,6 +38,8 @@ export const AbsenteeNotificationModal = ({
 
   // Tracking sent status per student
   const [dispatchLogs, setDispatchLogs] = useState(() => getAlertDispatchesForDate(date))
+
+  if (!isOpen) return null
 
   const activeStudent = unpresentStudents.find(s => s.id === selectedStudentId) || unpresentStudents[0]
   const activeRecord = activeStudent ? attendanceRecords[activeStudent.id] : null

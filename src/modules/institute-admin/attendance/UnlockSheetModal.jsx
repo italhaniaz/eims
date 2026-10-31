@@ -9,10 +9,10 @@ export const UnlockSheetModal = ({
   date,
   onConfirmUnlock
 }) => {
-  if (!isOpen) return null
-
   const [reason, setReason] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
+
+  if (!isOpen) return null
 
   const handleSubmit = (e) => {
     e.preventDefault()

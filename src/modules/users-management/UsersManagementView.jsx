@@ -132,6 +132,45 @@ export const UsersManagementView = ({ defaultTab = 'all', onRouteChange }) => {
   // Expanded role specifications state in directory
   const [expandedRoles, setExpandedRoles] = useState({})
 
+  // Dynamic Custom Operational Roles State
+  const [customRoles, setCustomRoles] = useState(() => {
+    try {
+      const saved = localStorage.getItem('edu_sms_custom_roles')
+      if (saved) return JSON.parse(saved)
+    } catch (e) {
+      console.error(e)
+    }
+    return []
+  })
+
+  // Combined roles list (System roles + dynamic custom roles)
+  const allRoles = useMemo(() => {
+    return [...SYSTEM_ROLES, ...(Array.isArray(customRoles) ? customRoles : [])]
+  }, [customRoles])
+
+  // Custom Role Modal state
+  const [isCreateRoleModalOpen, setIsCreateRoleModalOpen] = useState(false)
+  const [newRoleForm, setNewRoleForm] = useState({
+    name: '',
+    category: 'Academic Support',
+    scope: '',
+    summary: '',
+    responsibilities: '',
+    cloneFrom: 'teacher'
+  })
+
+  // Password Reset Modal State
+  const [resetPasswordModalOpen, setResetPasswordModalOpen] = useState(false)
+  const [resetPasswordUser, setResetPasswordUser] = useState(null)
+  const [newResetPassword, setNewResetPassword] = useState('')
+  const [showResetPasswordText, setShowResetPasswordText] = useState(false)
+  const [copiedResetPassword, setCopiedResetPassword] = useState(false)
+
+  // CSV Import Modal State
+  const [importModalOpen, setImportModalOpen] = useState(false)
+  const [csvPreviewData, setCsvPreviewData] = useState([])
+  const [csvErrors, setCsvErrors] = useState([])
+
   const handleToggleRoleExpand = (roleId) => {
     setExpandedRoles(prev => ({
       ...prev,

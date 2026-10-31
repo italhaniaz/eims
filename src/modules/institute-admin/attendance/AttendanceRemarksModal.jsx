@@ -12,13 +12,22 @@ export const AttendanceRemarksModal = ({
   currentArrivalTime = '',
   onSave
 }) => {
-  if (!isOpen || !student) return null
-
   const statusConfig = ATTENDANCE_STATUSES[currentStatus] || ATTENDANCE_STATUSES.present
   const [reason, setReason] = useState(currentReason || (currentStatus === 'leave' ? 'Medical / Sick Leave' : 'Without Prior Information (Unexcused)'))
   const [customReason, setCustomReason] = useState('')
   const [remarks, setRemarks] = useState(currentRemarks || '')
   const [arrivalTime, setArrivalTime] = useState(currentArrivalTime || (currentStatus === 'late' ? '08:30' : ''))
+
+  useEffect(() => {
+    if (isOpen && student) {
+      setReason(currentReason || (currentStatus === 'leave' ? 'Medical / Sick Leave' : 'Without Prior Information (Unexcused)'))
+      setCustomReason('')
+      setRemarks(currentRemarks || '')
+      setArrivalTime(currentArrivalTime || (currentStatus === 'late' ? '08:30' : ''))
+    }
+  }, [isOpen, student, currentStatus, currentReason, currentRemarks, currentArrivalTime])
+
+  if (!isOpen || !student) return null
 
   const handleSave = (e) => {
     e.preventDefault()

@@ -60,7 +60,9 @@ import {
   Share2,
   Settings,
   Globe,
-  Key
+  Key,
+  AlertCircle,
+  Download
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 

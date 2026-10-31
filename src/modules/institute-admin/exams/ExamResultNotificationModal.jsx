@@ -1,5 +1,5 @@
 // src/modules/institute-admin/exams/ExamResultNotificationModal.jsx
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { 
   MessageSquare, 
   Copy, 
@@ -21,11 +21,18 @@ export const ExamResultNotificationModal = ({
   currentInstitute,
   rank = null
 }) => {
-  if (!marksheet) return null
-
-  const [phone, setPhone] = useState(marksheet.phone || marksheet.parentPhone || marksheet.guardianPhone || '')
+  const [phone, setPhone] = useState(marksheet?.phone || marksheet?.parentPhone || marksheet?.guardianPhone || '')
   const [copied, setCopied] = useState(false)
   const [langMode, setLangMode] = useState('bilingual') // 'bilingual' | 'english' | 'urdu'
+
+  useEffect(() => {
+    if (marksheet) {
+      setPhone(marksheet.phone || marksheet.parentPhone || marksheet.guardianPhone || '')
+      setCopied(false)
+    }
+  }, [marksheet])
+
+  if (!marksheet) return null
 
   const instituteName = currentInstitute?.name || 'Beaconhouse Central High School'
   const rankText = rank ? `Position #${rank}` : ''

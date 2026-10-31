@@ -30,8 +30,6 @@ export const TimetablePrintModal = ({
   const [printTarget, setPrintTarget] = useState('class') // 'class' | 'teacher' | 'school'
   const [selectedTeacherId, setSelectedTeacherId] = useState(teachers[0]?.id || '')
 
-  if (!isOpen) return null
-
   const allTimetables = useMemo(() => getAllTimetables(), [])
 
   // Teacher Schedule computation
@@ -54,6 +52,8 @@ export const TimetablePrintModal = ({
     })
     return map
   }, [allTimetables, selectedTeacher, session])
+
+  if (!isOpen) return null
 
   // Trigger browser print
   const handlePrint = () => {
