@@ -165,8 +165,8 @@ const SupportApprovalsView = () => {
         SupportService.getTickets(),
         SupportService.getApprovals()
       ])
-      setTickets(t)
-      setApprovals(a)
+      setTickets(Array.isArray(t) ? t : [])
+      setApprovals(Array.isArray(a) ? a : [])
     } catch (e) {
       console.error(e)
     } finally {
@@ -279,27 +279,31 @@ const SupportApprovalsView = () => {
   }
 
   // Memoized computations & counters (Always call hooks at top-level before early returns)
-  const pendingApprovalsCount = useMemo(() => approvals.filter(a => a.status === 'PENDING').length, [approvals])
-  const approvedApprovalsCount = useMemo(() => approvals.filter(a => a.status === 'APPROVED').length, [approvals])
-  const rejectedApprovalsCount = useMemo(() => approvals.filter(a => a.status === 'REJECTED').length, [approvals])
-  const openTicketsCount = useMemo(() => tickets.filter(t => t.status === 'OPEN' || t.status === 'IN_PROGRESS').length, [tickets])
+  const safeApprovalsList = Array.isArray(approvals) ? approvals : []
+  const safeTicketsList = Array.isArray(tickets) ? tickets : []
+
+  const pendingApprovalsCount = useMemo(() => safeApprovalsList.filter(a => a && a.status === 'PENDING').length, [safeApprovalsList])
+  const approvedApprovalsCount = useMemo(() => safeApprovalsList.filter(a => a && a.status === 'APPROVED').length, [safeApprovalsList])
+  const rejectedApprovalsCount = useMemo(() => safeApprovalsList.filter(a => a && a.status === 'REJECTED').length, [safeApprovalsList])
+  const openTicketsCount = useMemo(() => safeTicketsList.filter(t => t && (t.status === 'OPEN' || t.status === 'IN_PROGRESS')).length, [safeTicketsList])
 
   const filteredTickets = useMemo(() => {
-    if (ticketStatusFilter === 'ALL') return tickets
-    if (ticketStatusFilter === 'ACTIVE') return tickets.filter(t => t.status === 'OPEN' || t.status === 'IN_PROGRESS')
-    return tickets.filter(t => t.status === ticketStatusFilter)
-  }, [tickets, ticketStatusFilter])
+    if (ticketStatusFilter === 'ALL') return safeTicketsList
+    if (ticketStatusFilter === 'ACTIVE') return safeTicketsList.filter(t => t && (t.status === 'OPEN' || t.status === 'IN_PROGRESS'))
+    return safeTicketsList.filter(t => t && t.status === ticketStatusFilter)
+  }, [safeTicketsList, ticketStatusFilter])
 
   const filteredApprovals = useMemo(() => {
-    if (approvalFilter === 'ALL') return approvals
-    return approvals.filter(a => a.status === approvalFilter)
-  }, [approvals, approvalFilter])
+    if (approvalFilter === 'ALL') return safeApprovalsList
+    return safeApprovalsList.filter(a => a && a.status === approvalFilter)
+  }, [safeApprovalsList, approvalFilter])
 
   const dynamicNotifications = useMemo(() => {
     const list = []
 
     // 1. Pending approvals as notifications
-    (approvals || []).forEach(a => {
+    const safeApprovals = Array.isArray(approvals) ? approvals : []
+    safeApprovals.forEach(a => {
       if (!a) return
       const nid = `appr-${a.id}`
       if (clearedNotifications.includes(nid)) return
@@ -318,7 +322,8 @@ const SupportApprovalsView = () => {
     })
 
     // 2. Open / in-progress tickets
-    (tickets || []).forEach(t => {
+    const safeTickets = Array.isArray(tickets) ? tickets : []
+    safeTickets.forEach(t => {
       if (!t) return
       const nid = `tkt-${t.id}`
       if (clearedNotifications.includes(nid)) return

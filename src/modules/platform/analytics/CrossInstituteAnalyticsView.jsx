@@ -72,6 +72,26 @@ const CrossInstituteAnalyticsView = () => {
       setAnalyticsData(data)
     } catch (e) {
       console.error('Failed to load cross-institute analytics:', e)
+      setAnalyticsData({
+        period,
+        summary: {
+          totalInstitutes: Array.isArray(institutes) ? institutes.length : 0,
+          totalStudents: Array.isArray(students) ? students.length : 0,
+          totalTeachers: Array.isArray(teachers) ? teachers.length : 0,
+          avgAttendance: 0,
+          avgFeeRecovery: 0,
+          totalBilledPKR: 0,
+          totalCollectedPKR: 0
+        },
+        comparisonList: [],
+        topPerformers: {
+          topAttendance: null,
+          lowestAttendance: null,
+          topFeeRecovery: null,
+          lowestFeeRecovery: null,
+          largestEnrollment: null
+        }
+      })
     } finally {
       setLoading(false)
     }
@@ -255,7 +275,22 @@ const CrossInstituteAnalyticsView = () => {
     )
   }
 
-  const { summary, topPerformers } = analyticsData
+  const summary = analyticsData?.summary || {
+    totalInstitutes: 0,
+    totalStudents: 0,
+    totalTeachers: 0,
+    avgAttendance: 0,
+    avgFeeRecovery: 0,
+    totalBilledPKR: 0,
+    totalCollectedPKR: 0
+  }
+  const topPerformers = analyticsData?.topPerformers || {
+    topAttendance: null,
+    lowestAttendance: null,
+    topFeeRecovery: null,
+    lowestFeeRecovery: null,
+    largestEnrollment: null
+  }
 
   return (
     <div className="p-4 sm:p-6 md:p-8 pb-16 space-y-6 max-w-[1400px] mx-auto">
