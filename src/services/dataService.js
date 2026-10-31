@@ -363,7 +363,7 @@ export const sampleTemplateData = {
     { id: 'usr-1', name: 'Super Administrator', email: 'admin@schoolms.com', role: 'superadmin', institute: 'All Institutes (Global)', phone: '+92 300 1234567', status: 'Active', lastLogin: 'Just now' }
   ],
   students: [],
-  teachers: [],
+  teachers: defaultInitialTeachers,
   classes: [],
   fees: [
     { id: 'fee-1', instituteId: 'inst-1', studentName: 'Hamza Farooq', rollNumber: 'BHS-2024-001', className: '10th Grade', amount: 15000, dueDate: '2026-10-25', status: 'Paid', paymentDate: '2026-10-18' }

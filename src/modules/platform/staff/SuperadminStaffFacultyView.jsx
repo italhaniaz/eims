@@ -75,8 +75,11 @@ export const SuperadminStaffFacultyView = ({ activeTab = 'all', onTabChange = ()
     const rawList = (teachers && teachers.length > 0) ? teachers : defaultInitialTeachers
 
     return rawList.map(st => {
-      const resolvedCampus = st.campus || (institutes.find(i => i.id === st.instituteId)?.name) || 'Beaconhouse Central High School'
-      const resolvedInstId = st.instituteId || (institutes.find(i => i.name === resolvedCampus)?.id) || 'inst-1'
+      // Find campus matching by ID or fuzzy name match
+      const matchingInstitute = institutes.find(i => i.id === st.instituteId) || 
+        institutes.find(i => (st.campus && (i.name?.toLowerCase().includes(st.campus.toLowerCase()) || st.campus.toLowerCase().includes(i.name?.toLowerCase()))))
+      const resolvedCampus = matchingInstitute ? matchingInstitute.name : (st.campus || 'Beaconhouse Central High School')
+      const resolvedInstId = matchingInstitute ? matchingInstitute.id : (st.instituteId || 'inst-1')
       const empId = st.empId || st.id
       const dept = st.department || 'Academics'
       const role = st.role || (st.isHod ? 'HOD / Senior Lecturer' : st.category === 'Non-Teaching' ? 'Administrative Staff' : 'Faculty Instructor')
@@ -683,18 +686,46 @@ export const SuperadminStaffFacultyView = ({ activeTab = 'all', onTabChange = ()
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="bg-white/10 backdrop-blur-md border border-white/15 px-4 py-2.5 rounded-2xl text-right">
-              <span className="text-[11px] text-slate-300 block uppercase font-mono tracking-wider">Total Faculty</span>
-              <strong className="text-xl font-bold font-mono text-white">{normalizedStaff.length} Members</strong>
-            </div>
             <button
               type="button"
               onClick={() => setIsOnboardModalOpen(true)}
               className="px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl text-xs font-bold transition-all shadow-md cursor-pointer flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
-              <span>Onboard Staff</span>
+              <span>+ Onboard Staff Member</span>
             </button>
+          </div>
+        </div>
+
+        {/* 4-Metric Executive Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6 border-t border-white/10 relative z-10">
+          <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-3.5">
+            <span className="text-[11px] text-purple-200 block uppercase font-mono tracking-wider">Total Staff</span>
+            <strong className="text-xl font-bold font-mono text-white mt-0.5 block">{normalizedStaff.length} Members</strong>
+            <span className="text-[10px] text-slate-300">Across 4 Campuses</span>
+          </div>
+          <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-3.5">
+            <span className="text-[11px] text-purple-200 block uppercase font-mono tracking-wider">Teaching Faculty</span>
+            <strong className="text-xl font-bold font-mono text-white mt-0.5 block">
+              {normalizedStaff.filter(s => (s.category || 'Teaching') === 'Teaching').length} Instructors
+            </strong>
+            <span className="text-[10px] text-emerald-300">Academic Cadre</span>
+          </div>
+          <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-3.5">
+            <span className="text-[11px] text-purple-200 block uppercase font-mono tracking-wider">Non-Teaching Staff</span>
+            <strong className="text-xl font-bold font-mono text-white mt-0.5 block">
+              {normalizedStaff.filter(s => s.category === 'Non-Teaching').length} Personnel
+            </strong>
+            <span className="text-[10px] text-slate-300">Admin & Bursars</span>
+          </div>
+          <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-3.5">
+            <span className="text-[11px] text-purple-200 block uppercase font-mono tracking-wider">Active On Duty</span>
+            <strong className="text-xl font-bold font-mono text-white mt-0.5 block">
+              {normalizedStaff.filter(s => (s.cleanStatus || 'Active') === 'Active').length} Present
+            </strong>
+            <span className="text-[10px] text-purple-200">
+              {normalizedStaff.filter(s => s.cleanStatus === 'On Leave').length} on Leave
+            </span>
           </div>
         </div>
       </div>
