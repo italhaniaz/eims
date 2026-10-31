@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { 
   LayoutDashboard, 
   GraduationCap, 
@@ -20,7 +20,8 @@ import {
   UserCheck, 
   Bus, 
   BookMarked,
-  ShieldCheck
+  FileBadge,
+  Laptop
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
@@ -40,19 +41,19 @@ export const InstituteAdminSidebar = ({
   const isAccountant = userRole === 'accountant'
   const isCampusAdmin = !isTeacher && !isAccountant
 
-  const isStudentRoute = ['inst-students', 'inst-admissions', 'inst-teachers', 'inst-classes'].includes(currentRoute)
-  const isAcademicRoute = ['inst-timetable', 'inst-attendance', 'inst-exams', 'inst-subjects', 'inst-notices', 'inst-program-levels'].includes(currentRoute)
-  const isServicesRoute = ['inst-fees', 'inst-transport', 'inst-library'].includes(currentRoute)
+  const isAcademicsRoute = ['inst-classes', 'inst-subjects', 'inst-timetable', 'inst-program-levels'].includes(currentRoute)
+  const isServicesRoute = ['inst-transport', 'inst-library'].includes(currentRoute)
+  const isLearningRoute = ['inst-learning', 'inst-notices'].includes(currentRoute)
 
-  const [studentOpen, setStudentOpen] = useState(isStudentRoute)
-  const [academicOpen, setAcademicOpen] = useState(isAcademicRoute)
+  const [academicsOpen, setAcademicsOpen] = useState(isAcademicsRoute)
   const [servicesOpen, setServicesOpen] = useState(isServicesRoute)
+  const [learningOpen, setLearningOpen] = useState(isLearningRoute)
 
-  React.useEffect(() => {
-    if (isStudentRoute) setStudentOpen(true)
-    if (isAcademicRoute) setAcademicOpen(true)
+  useEffect(() => {
+    if (isAcademicsRoute) setAcademicsOpen(true)
     if (isServicesRoute) setServicesOpen(true)
-  }, [currentRoute])
+    if (isLearningRoute) setLearningOpen(true)
+  }, [currentRoute, isAcademicsRoute, isServicesRoute, isLearningRoute])
 
   const isRouteActive = (route) => currentRoute === route
 
@@ -94,7 +95,7 @@ export const InstituteAdminSidebar = ({
                   {instituteName || 'Campus Administration'}
                 </span>
                 <span className="text-[10px] text-emerald-400 font-semibold uppercase tracking-wider">
-                  {user?.roleTitle || (isTeacher ? 'Faculty Portal' : isAccountant ? 'Accounts Officer' : 'Institute Admin')}
+                  {user?.roleTitle || (isTeacher ? 'Faculty Portal' : isAccountant ? 'Accounts Officer' : 'Campus Admin')}
                 </span>
               </div>
             </div>
@@ -120,7 +121,7 @@ export const InstituteAdminSidebar = ({
 
         {/* Navigation Menu */}
         <div className="flex-1 py-4 px-3 space-y-1 overflow-y-auto dark-scroll text-[13.5px]">
-          {/* Dashboard */}
+          {/* Campus Dashboard */}
           <button
             onClick={() => handleNavClick('inst-dashboard')}
             className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg transition-all text-left cursor-pointer ${
@@ -133,65 +134,98 @@ export const InstituteAdminSidebar = ({
             {(!collapsed || isMobileOpen) && <span>Campus Dashboard</span>}
           </button>
 
-          {/* Group 1: Students & Faculty (Filtered by Role) */}
+          {/* Section Divider */}
+          {(!collapsed || isMobileOpen) && (
+            <div className="pt-3 pb-1 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              <span>Operational Modules</span>
+            </div>
+          )}
+
+          {/* Module 1: Students */}
           {(!isAccountant || isCampusAdmin) && (
+            <button
+              onClick={() => handleNavClick('inst-students')}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg transition-all text-left cursor-pointer ${
+                isRouteActive('inst-students')
+                  ? 'bg-emerald-600 text-white font-semibold shadow-md'
+                  : 'text-slate-300 hover:text-white hover:bg-[#1a2744]'
+              }`}
+            >
+              <GraduationCap className={`w-[18px] h-[18px] shrink-0 ${isRouteActive('inst-students') ? 'text-white' : 'text-emerald-400'}`} />
+              {(!collapsed || isMobileOpen) && <span>Students Directory</span>}
+            </button>
+          )}
+
+          {/* Module 2: Admissions */}
+          {isCampusAdmin && (
+            <button
+              onClick={() => handleNavClick('inst-admissions')}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg transition-all text-left cursor-pointer ${
+                isRouteActive('inst-admissions')
+                  ? 'bg-emerald-600 text-white font-semibold shadow-md'
+                  : 'text-slate-300 hover:text-white hover:bg-[#1a2744]'
+              }`}
+            >
+              <UserCheck className={`w-[18px] h-[18px] shrink-0 ${isRouteActive('inst-admissions') ? 'text-white' : 'text-teal-400'}`} />
+              {(!collapsed || isMobileOpen) && <span>Admissions & Leads</span>}
+            </button>
+          )}
+
+          {/* Module 3: Staff & Faculty */}
+          {isCampusAdmin && (
+            <button
+              onClick={() => handleNavClick('inst-teachers')}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg transition-all text-left cursor-pointer ${
+                isRouteActive('inst-teachers')
+                  ? 'bg-emerald-600 text-white font-semibold shadow-md'
+                  : 'text-slate-300 hover:text-white hover:bg-[#1a2744]'
+              }`}
+            >
+              <Users className={`w-[18px] h-[18px] shrink-0 ${isRouteActive('inst-teachers') ? 'text-white' : 'text-blue-400'}`} />
+              {(!collapsed || isMobileOpen) && <span>Staff & Faculty</span>}
+            </button>
+          )}
+
+          {/* Module 4: Examinations & Results */}
+          {!isAccountant && (
+            <button
+              onClick={() => handleNavClick('inst-exams')}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg transition-all text-left cursor-pointer ${
+                isRouteActive('inst-exams')
+                  ? 'bg-emerald-600 text-white font-semibold shadow-md'
+                  : 'text-slate-300 hover:text-white hover:bg-[#1a2744]'
+              }`}
+            >
+              <Award className={`w-[18px] h-[18px] shrink-0 ${isRouteActive('inst-exams') ? 'text-white' : 'text-rose-400'}`} />
+              {(!collapsed || isMobileOpen) && <span>Examinations & Results</span>}
+            </button>
+          )}
+
+          {/* Module 5: Academics (Expandable) */}
+          {!isAccountant && (
             <div>
               <button
                 onClick={() => {
                   if (collapsed) setCollapsed(false)
-                  setStudentOpen(!studentOpen)
+                  setAcademicsOpen(!academicsOpen)
                 }}
                 className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg transition-colors cursor-pointer ${
-                  isStudentRoute 
+                  isAcademicsRoute 
                     ? 'text-white bg-[#1a2744]/70 font-medium' 
                     : 'text-slate-300 hover:text-white hover:bg-[#1a2744]'
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <GraduationCap className={`w-[18px] h-[18px] shrink-0 ${isStudentRoute ? 'text-emerald-400' : 'text-slate-400'}`} />
-                  {(!collapsed || isMobileOpen) && <span>{isTeacher ? 'Students & Classes' : 'Students & Faculty'}</span>}
+                  <BookOpen className={`w-[18px] h-[18px] shrink-0 ${isAcademicsRoute ? 'text-emerald-400' : 'text-indigo-400'}`} />
+                  {(!collapsed || isMobileOpen) && <span>Academics</span>}
                 </div>
                 {(!collapsed || isMobileOpen) && (
-                  studentOpen ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />
+                  academicsOpen ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />
                 )}
               </button>
 
-              {(!collapsed || isMobileOpen) && studentOpen && (
+              {(!collapsed || isMobileOpen) && academicsOpen && (
                 <div className="mt-1 pl-4 pr-1 space-y-0.5 border-l border-[#24365c] ml-5">
-                  <button
-                    onClick={() => handleNavClick('inst-students')}
-                    className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
-                      isRouteActive('inst-students') ? 'text-white font-medium bg-[#1e2f54]' : 'text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    <GraduationCap className="w-3.5 h-3.5 opacity-80 text-emerald-400 shrink-0" />
-                    <span className="truncate">{isTeacher ? 'Student Directory' : 'Student Admissions'}</span>
-                  </button>
-
-                  {/* Campus Admin Only: Admissions Leads & Staff Management */}
-                  {isCampusAdmin && (
-                    <>
-                      <button
-                        onClick={() => handleNavClick('inst-admissions')}
-                        className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
-                          isRouteActive('inst-admissions') ? 'text-white font-medium bg-[#1e2f54]' : 'text-slate-400 hover:text-slate-200'
-                        }`}
-                      >
-                        <UserCheck className="w-3.5 h-3.5 opacity-80 text-teal-400 shrink-0" />
-                        <span className="truncate">Inquiries & Leads</span>
-                      </button>
-                      <button
-                        onClick={() => handleNavClick('inst-teachers')}
-                        className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
-                          isRouteActive('inst-teachers') ? 'text-white font-medium bg-[#1e2f54]' : 'text-slate-400 hover:text-slate-200'
-                        }`}
-                      >
-                        <Users className="w-3.5 h-3.5 opacity-80 text-blue-400 shrink-0" />
-                        <span className="truncate">Faculty & Staff</span>
-                      </button>
-                    </>
-                  )}
-
                   <button
                     onClick={() => handleNavClick('inst-classes')}
                     className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
@@ -200,63 +234,6 @@ export const InstituteAdminSidebar = ({
                   >
                     <BookOpen className="w-3.5 h-3.5 opacity-80 text-indigo-400 shrink-0" />
                     <span className="truncate">Classes & Sections</span>
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Group 2: Academics & Schedule (Available to Teachers & Campus Admin) */}
-          {!isAccountant && (
-            <div>
-              <button
-                onClick={() => {
-                  if (collapsed) setCollapsed(false)
-                  setAcademicOpen(!academicOpen)
-                }}
-                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg transition-colors cursor-pointer ${
-                  isAcademicRoute 
-                    ? 'text-white bg-[#1a2744]/70 font-medium' 
-                    : 'text-slate-300 hover:text-white hover:bg-[#1a2744]'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <CalendarCheck className={`w-[18px] h-[18px] shrink-0 ${isAcademicRoute ? 'text-emerald-400' : 'text-slate-400'}`} />
-                  {(!collapsed || isMobileOpen) && <span>Academics & Schedule</span>}
-                </div>
-                {(!collapsed || isMobileOpen) && (
-                  academicOpen ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />
-                )}
-              </button>
-
-              {(!collapsed || isMobileOpen) && academicOpen && (
-                <div className="mt-1 pl-4 pr-1 space-y-0.5 border-l border-[#24365c] ml-5">
-                  <button
-                    onClick={() => handleNavClick('inst-timetable')}
-                    className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
-                      isRouteActive('inst-timetable') ? 'text-white font-medium bg-[#1e2f54]' : 'text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    <Clock className="w-3.5 h-3.5 opacity-80 text-amber-400 shrink-0" />
-                    <span className="truncate">Class Timetable</span>
-                  </button>
-                  <button
-                    onClick={() => handleNavClick('inst-attendance')}
-                    className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
-                      isRouteActive('inst-attendance') ? 'text-white font-medium bg-[#1e2f54]' : 'text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    <CalendarCheck className="w-3.5 h-3.5 opacity-80 text-emerald-400 shrink-0" />
-                    <span className="truncate">Daily Attendance</span>
-                  </button>
-                  <button
-                    onClick={() => handleNavClick('inst-exams')}
-                    className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
-                      isRouteActive('inst-exams') ? 'text-white font-medium bg-[#1e2f54]' : 'text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    <Award className="w-3.5 h-3.5 opacity-80 text-rose-400 shrink-0" />
-                    <span className="truncate">Examinations & Marks</span>
                   </button>
                   <button
                     onClick={() => handleNavClick('inst-subjects')}
@@ -268,13 +245,13 @@ export const InstituteAdminSidebar = ({
                     <span className="truncate">Curriculum & Subjects</span>
                   </button>
                   <button
-                    onClick={() => handleNavClick('inst-notices')}
+                    onClick={() => handleNavClick('inst-timetable')}
                     className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
-                      isRouteActive('inst-notices') ? 'text-white font-medium bg-[#1e2f54]' : 'text-slate-400 hover:text-slate-200'
+                      isRouteActive('inst-timetable') ? 'text-white font-medium bg-[#1e2f54]' : 'text-slate-400 hover:text-slate-200'
                     }`}
                   >
-                    <Megaphone className="w-3.5 h-3.5 opacity-80 text-purple-400 shrink-0" />
-                    <span className="truncate">Campus Notice Board</span>
+                    <Clock className="w-3.5 h-3.5 opacity-80 text-amber-400 shrink-0" />
+                    <span className="truncate">Class Timetable</span>
                   </button>
                   <button
                     onClick={() => handleNavClick('inst-program-levels')}
@@ -283,30 +260,58 @@ export const InstituteAdminSidebar = ({
                       isRouteActive('inst-program-levels') ? 'text-white font-medium bg-[#1e2f54]' : 'text-slate-400 hover:text-slate-200'
                     }`}
                   >
-                    <GraduationCap className="w-3.5 h-3.5 opacity-80 text-blue-400 shrink-0" />
-                    <span className="truncate" title="Academic Program Levels">Program Levels</span>
+                    <GraduationCap className="w-3.5 h-3.5 opacity-80 text-teal-400 shrink-0" />
+                    <span className="truncate">Program Levels</span>
                   </button>
                 </div>
               )}
             </div>
           )}
 
-          {/* Notice Board for Accountant (if group 2 hidden) */}
-          {isAccountant && (
+          {/* Module 6: Attendance */}
+          {!isAccountant && (
             <button
-              onClick={() => handleNavClick('inst-notices')}
+              onClick={() => handleNavClick('inst-attendance')}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg transition-all text-left cursor-pointer ${
-                isRouteActive('inst-notices')
+                isRouteActive('inst-attendance')
                   ? 'bg-emerald-600 text-white font-semibold shadow-md'
                   : 'text-slate-300 hover:text-white hover:bg-[#1a2744]'
               }`}
             >
-              <Megaphone className={`w-[18px] h-[18px] shrink-0 ${isRouteActive('inst-notices') ? 'text-white' : 'text-purple-400'}`} />
-              {(!collapsed || isMobileOpen) && <span>Campus Notices</span>}
+              <CalendarCheck className={`w-[18px] h-[18px] shrink-0 ${isRouteActive('inst-attendance') ? 'text-white' : 'text-emerald-400'}`} />
+              {(!collapsed || isMobileOpen) && <span>Attendance Register</span>}
             </button>
           )}
 
-          {/* Group 3: Services & Finance */}
+          {/* Module 7: Fees & Finance */}
+          {!isTeacher && (
+            <button
+              onClick={() => handleNavClick('inst-fees')}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg transition-all text-left cursor-pointer ${
+                isRouteActive('inst-fees')
+                  ? 'bg-emerald-600 text-white font-semibold shadow-md'
+                  : 'text-slate-300 hover:text-white hover:bg-[#1a2744]'
+              }`}
+            >
+              <Receipt className={`w-[18px] h-[18px] shrink-0 ${isRouteActive('inst-fees') ? 'text-white' : 'text-emerald-400'}`} />
+              {(!collapsed || isMobileOpen) && <span>Fees & Finance</span>}
+            </button>
+          )}
+
+          {/* Module 8: Certificates */}
+          <button
+            onClick={() => handleNavClick('inst-certificates')}
+            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg transition-all text-left cursor-pointer ${
+              isRouteActive('inst-certificates')
+                ? 'bg-emerald-600 text-white font-semibold shadow-md'
+                : 'text-slate-300 hover:text-white hover:bg-[#1a2744]'
+            }`}
+          >
+            <FileBadge className={`w-[18px] h-[18px] shrink-0 ${isRouteActive('inst-certificates') ? 'text-white' : 'text-amber-400'}`} />
+            {(!collapsed || isMobileOpen) && <span>Certificates (SLC/Conduct)</span>}
+          </button>
+
+          {/* Module 9: Campus Services (Expandable) */}
           <div>
             <button
               onClick={() => {
@@ -316,12 +321,12 @@ export const InstituteAdminSidebar = ({
               className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg transition-colors cursor-pointer ${
                 isServicesRoute 
                   ? 'text-white bg-[#1a2744]/70 font-medium' 
-                    : 'text-slate-300 hover:text-white hover:bg-[#1a2744]'
+                  : 'text-slate-300 hover:text-white hover:bg-[#1a2744]'
               }`}
             >
               <div className="flex items-center gap-3">
-                <Receipt className={`w-[18px] h-[18px] shrink-0 ${isServicesRoute ? 'text-emerald-400' : 'text-slate-400'}`} />
-                {(!collapsed || isMobileOpen) && <span>{isTeacher ? 'Campus Services' : 'Services & Accounts'}</span>}
+                <Bus className={`w-[18px] h-[18px] shrink-0 ${isServicesRoute ? 'text-emerald-400' : 'text-amber-400'}`} />
+                {(!collapsed || isMobileOpen) && <span>Campus Services</span>}
               </div>
               {(!collapsed || isMobileOpen) && (
                 servicesOpen ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />
@@ -330,18 +335,6 @@ export const InstituteAdminSidebar = ({
 
             {(!collapsed || isMobileOpen) && servicesOpen && (
               <div className="mt-1 pl-4 pr-1 space-y-0.5 border-l border-[#24365c] ml-5">
-                {/* Fees only shown to Accountants & Campus Admin */}
-                {!isTeacher && (
-                  <button
-                    onClick={() => handleNavClick('inst-fees')}
-                    className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
-                      isRouteActive('inst-fees') ? 'text-white font-medium bg-[#1e2f54]' : 'text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    <Receipt className="w-3.5 h-3.5 opacity-80 text-emerald-400 shrink-0" />
-                    <span className="truncate">Fee Management</span>
-                  </button>
-                )}
                 <button
                   onClick={() => handleNavClick('inst-transport')}
                   className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
@@ -359,6 +352,52 @@ export const InstituteAdminSidebar = ({
                 >
                   <BookMarked className="w-3.5 h-3.5 opacity-80 text-indigo-400 shrink-0" />
                   <span className="truncate">Library & Books</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Module 10: Learning & Resources (Expandable) */}
+          <div>
+            <button
+              onClick={() => {
+                if (collapsed) setCollapsed(false)
+                setLearningOpen(!learningOpen)
+              }}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg transition-colors cursor-pointer ${
+                isLearningRoute 
+                  ? 'text-white bg-[#1a2744]/70 font-medium' 
+                  : 'text-slate-300 hover:text-white hover:bg-[#1a2744]'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Laptop className={`w-[18px] h-[18px] shrink-0 ${isLearningRoute ? 'text-emerald-400' : 'text-cyan-400'}`} />
+                {(!collapsed || isMobileOpen) && <span>Learning & Resources</span>}
+              </div>
+              {(!collapsed || isMobileOpen) && (
+                learningOpen ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />
+              )}
+            </button>
+
+            {(!collapsed || isMobileOpen) && learningOpen && (
+              <div className="mt-1 pl-4 pr-1 space-y-0.5 border-l border-[#24365c] ml-5">
+                <button
+                  onClick={() => handleNavClick('inst-learning')}
+                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
+                    isRouteActive('inst-learning') ? 'text-white font-medium bg-[#1e2f54]' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <Laptop className="w-3.5 h-3.5 opacity-80 text-cyan-400 shrink-0" />
+                  <span className="truncate">Study Notes & LMS</span>
+                </button>
+                <button
+                  onClick={() => handleNavClick('inst-notices')}
+                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
+                    isRouteActive('inst-notices') ? 'text-white font-medium bg-[#1e2f54]' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <Megaphone className="w-3.5 h-3.5 opacity-80 text-purple-400 shrink-0" />
+                  <span className="truncate">Campus Notices</span>
                 </button>
               </div>
             )}

@@ -1473,9 +1473,9 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
 
         {/* Card 2: Students (Sky Blue) */}
         <div 
-          onClick={() => onRouteChange('sa-students-all')}
+          onClick={() => onRouteChange('cross-institute-analytics')}
           className="bg-[#f0f9ff] border border-sky-100/90 rounded-2xl p-4 sm:p-5 transition-all duration-200 hover:shadow-md hover:border-sky-200 shadow-2xs flex flex-col justify-between h-full min-h-[148px] overflow-hidden cursor-pointer group"
-          title="Click to view students governance registry"
+          title="Click to view cross-campus analytics"
         >
           {/* Top Row: Metric & Decorative Icon */}
           <div className="flex items-start justify-between gap-2">
@@ -1503,10 +1503,10 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation()
-                  onRouteChange('sa-students-all')
+                  onRouteChange('cross-institute-analytics')
                 }}
                 className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-sky-600 cursor-pointer transition-colors group/btn whitespace-nowrap"
-                title="View Students Governance Registry"
+                title="View Cross-Campus Analytics"
               >
                 <span className="group-hover/btn:underline">{selectedTierFilter === 'all' ? 'All Wings' : currentFilterConfig.badge}</span>
                 <span className="w-7 h-7 rounded-full border border-sky-200 bg-white group-hover/btn:bg-sky-500 group-hover/btn:text-white text-sky-500 flex items-center justify-center transition-all shadow-2xs group-hover/btn:scale-105">

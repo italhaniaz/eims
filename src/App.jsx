@@ -30,36 +30,18 @@ const GlobalTemplatesView = lazyWithRetry(() => import('./modules/platform/templ
 const BackupDataView = lazyWithRetry(() => import('./modules/platform/backup/BackupDataView'), 'backup-data')
 const SystemHealthView = lazyWithRetry(() => import('./modules/platform/health/SystemHealthView'), 'system-health')
 const SupportApprovalsView = lazyWithRetry(() => import('./modules/platform/support/SupportApprovalsView'), 'support-approvals')
-const DepartmentsView = lazyWithRetry(() => import('./modules/institute-management/departments/DepartmentsView'), 'departments-view')
-const ExaminationBodiesView = lazyWithRetry(() => import('./modules/institute-management/examination-bodies/ExaminationBodiesView'), 'examination-bodies')
-const AcademicYearsView = lazyWithRetry(() => import('./modules/academics/academic-years/AcademicYearsView'), 'academic-years')
-const ProgramTypesView = lazyWithRetry(() => import('./modules/academics/program-types/ProgramTypesView'), 'program-types')
-const ProgramsView = lazyWithRetry(() => import('./modules/academics/programs/ProgramsView'), 'programs-view')
-const SubjectsView = lazyWithRetry(() => import('./modules/institute-admin/subjects/SubjectsView'), 'subjects-view')
-const StudySchemesView = lazyWithRetry(() => import('./modules/academics/study-schemes/StudySchemesView'), 'study-schemes')
 const UsersManagementView = lazyWithRetry(() => import('./modules/users-management/UsersManagementView'), 'users-management')
 const NoticeBroadcasterView = lazyWithRetry(() => import('./modules/announcements/NoticeBroadcasterView'), 'notice-broadcaster')
+const CommunicationGatewayView = lazyWithRetry(() => import('./modules/communication/CommunicationGatewayView'), 'communication-gateway')
+const AuditLogsView = lazyWithRetry(() => import('./modules/audit-logs/AuditLogsView'), 'audit-logs')
 
-// Superadmin Cross-Campus Platform Governance Modules (Picks 1 to 4)
-const SuperadminStudentsView = lazyWithRetry(() => import('./modules/platform/students/SuperadminStudentsView'), 'superadmin-students')
-const SuperadminAdmissionsView = lazyWithRetry(() => import('./modules/platform/admissions/SuperadminAdmissionsView'), 'superadmin-admissions')
-const SuperadminStaffFacultyView = lazyWithRetry(() => import('./modules/platform/staff/SuperadminStaffFacultyView'), 'superadmin-staff')
-const SuperadminExaminationsResultsView = lazyWithRetry(() => import('./modules/platform/examinations/SuperadminExaminationsResultsView'), 'superadmin-examinations')
-
-// Superadmin Expanded Governance Modules
-const SuperadminAcademicsView = lazyWithRetry(() => import('./modules/platform/academics/SuperadminAcademicsView'), 'superadmin-academics')
-const SuperadminAttendanceView = lazyWithRetry(() => import('./modules/platform/attendance/SuperadminAttendanceView'), 'superadmin-attendance')
-const SuperadminFeesView = lazyWithRetry(() => import('./modules/platform/fees/SuperadminFeesView'), 'superadmin-fees')
-const SuperadminAccountsView = lazyWithRetry(() => import('./modules/platform/accounts/SuperadminAccountsView'), 'superadmin-accounts')
-const SuperadminCertificatesView = lazyWithRetry(() => import('./modules/platform/certificates/SuperadminCertificatesView'), 'superadmin-certificates')
-const SuperadminCampusServicesView = lazyWithRetry(() => import('./modules/platform/services/SuperadminCampusServicesView'), 'superadmin-services')
-const SuperadminLearningView = lazyWithRetry(() => import('./modules/platform/learning/SuperadminLearningView'), 'superadmin-learning')
+// Superadmin Cross-Campus Platform Governance Modules
 const SuperadminCommunicationView = lazyWithRetry(() => import('./modules/platform/communication/SuperadminCommunicationView'), 'superadmin-communication')
 const SuperadminReportsAnalyticsView = lazyWithRetry(() => import('./modules/platform/reports/SuperadminReportsAnalyticsView'), 'superadmin-reports')
 const SuperadminPoliciesView = lazyWithRetry(() => import('./modules/platform/policies/SuperadminPoliciesView'), 'superadmin-policies')
 const SuperadminPlatformSettingsView = lazyWithRetry(() => import('./modules/platform/settings/SuperadminPlatformSettingsView'), 'superadmin-settings')
 
-// Institute Admin Views
+// Institute Admin Operational Modules
 const InstituteDashboard = lazyWithRetry(() => import('./modules/dashboard/InstituteDashboard'), 'institute-dashboard')
 const StudentsView = lazyWithRetry(() => import('./modules/institute-admin/students/StudentsView'), 'students-view')
 const TeachersView = lazyWithRetry(() => import('./modules/institute-admin/teachers/TeachersView'), 'teachers-view')
@@ -68,17 +50,15 @@ const TimetableView = lazyWithRetry(() => import('./modules/institute-admin/time
 const AttendanceView = lazyWithRetry(() => import('./modules/institute-admin/attendance/AttendanceView'), 'attendance-view')
 const FeesView = lazyWithRetry(() => import('./modules/institute-admin/fees/FeesView'), 'fees-view')
 const ExamsView = lazyWithRetry(() => import('./modules/institute-admin/exams/ExamsView'), 'exams-view')
-const NoticeBoardView = lazyWithRetry(() => import('./modules/institute-admin/notices/NoticeBoardView'), 'notice-board-view')
-const StudentParentPortalView = lazyWithRetry(() => import('./modules/student-portal/StudentParentPortalView'), 'student-portal-view')
+const SubjectsView = lazyWithRetry(() => import('./modules/institute-admin/subjects/SubjectsView'), 'subjects-view')
 const ProgramLevelsView = lazyWithRetry(() => import('./modules/academics/ProgramLevelsView'), 'program-levels-view')
-
-// High-Demand Modern Operations Modules
-const FinancialAnalyticsView = lazyWithRetry(() => import('./modules/finance/FinancialAnalyticsView'), 'finance-view')
+const NoticeBoardView = lazyWithRetry(() => import('./modules/institute-admin/notices/NoticeBoardView'), 'notice-board-view')
+const AdmissionsPipelineView = lazyWithRetry(() => import('./modules/admissions-pipeline/AdmissionsPipelineView'), 'admissions-pipeline')
 const TransportView = lazyWithRetry(() => import('./modules/transport/TransportView'), 'transport-view')
 const LibraryView = lazyWithRetry(() => import('./modules/library/LibraryView'), 'library-view')
-const AdmissionsPipelineView = lazyWithRetry(() => import('./modules/admissions-pipeline/AdmissionsPipelineView'), 'admissions-pipeline')
-const CommunicationGatewayView = lazyWithRetry(() => import('./modules/communication/CommunicationGatewayView'), 'communication-gateway')
-const AuditLogsView = lazyWithRetry(() => import('./modules/audit-logs/AuditLogsView'), 'audit-logs')
+const CertificatesView = lazyWithRetry(() => import('./modules/institute-admin/certificates/CertificatesView'), 'certificates-view')
+const LearningResourcesView = lazyWithRetry(() => import('./modules/institute-admin/learning/LearningResourcesView'), 'learning-resources-view')
+const StudentParentPortalView = lazyWithRetry(() => import('./modules/student-portal/StudentParentPortalView'), 'student-portal-view')
 
 // Executive Minimal Loading Fallback
 const ModuleLoader = () => (
@@ -96,53 +76,10 @@ const AppContent = () => {
   const VALID_SUPERADMIN_ROUTES = [
     'dashboard', 'institutes', 'platform-modules', 'security-center',
     'cross-institute-analytics', 'platform-billing', 'global-templates',
-    'backup-data', 'system-health', 'support-approvals', 'departments',
-    'examination-bodies', 'academic-years', 'program-types', 'programs',
-    'subjects', 'study-schemes', 'finance', 'transport', 'library',
-    'admissions-pipeline', 'communication', 'audit-logs', 'announcements',
+    'backup-data', 'system-health', 'support-approvals',
+    'communication', 'audit-logs', 'announcements',
     'users-all', 'users-roles',
-    // Pick 1: Students
-    'sa-students-all', 'sa-students-transfers', 'sa-students-duplicate',
-    'sa-students-id-rules', 'sa-students-verification', 'sa-students-alumni',
-    'sa-students-privacy', 'sa-students-reports',
-    // Pick 2: Admissions
-    'sa-admissions-cycles', 'sa-admissions-merit', 'sa-admissions-seats',
-    'sa-admissions-fees', 'sa-admissions-overview',
-    // Pick 3: Staff & Faculty
-    'sa-staff-all', 'sa-staff-roles', 'sa-staff-transfers',
-    'sa-staff-payroll', 'sa-staff-reports',
-    // Pick 4: Examinations & Results
-    'sa-exams-policies', 'sa-exams-results-wing', 'sa-exams-publish-freeze',
-    'sa-exams-grade-approvals', 'sa-exams-supplementary', 'sa-exams-transcripts',
-    'sa-exams-reports',
-    // Academics
-    'sa-academics-sessions', 'sa-academics-school-struct', 'sa-academics-college-struct',
-    'sa-academics-university-struct', 'sa-academics-curriculum', 'sa-academics-grading',
-    'sa-academics-timetable', 'sa-academics-rollover',
-    // Attendance
-    'sa-attendance-overview', 'sa-attendance-rules', 'sa-attendance-defaulters',
-    'sa-attendance-leave', 'sa-attendance-corrections', 'sa-attendance-staff',
-    'sa-attendance-biometric', 'sa-attendance-reports',
-    // Fees & Finance
-    'sa-fees-structure', 'sa-fees-late-rules', 'sa-fees-installments',
-    'sa-fees-challans', 'sa-fees-scholarships', 'sa-fees-vouchers',
-    'sa-fees-collection', 'sa-fees-defaulters', 'sa-fees-gateways',
-    'sa-fees-refunds', 'sa-fees-reports',
-    // Accounts & Finance
-    'sa-accounts-chart', 'sa-accounts-overview', 'sa-accounts-budgets',
-    'sa-accounts-reconciliation', 'sa-accounts-payroll', 'sa-accounts-tax',
-    'sa-accounts-statements',
-    // Certificates
-    'sa-certificates-templates', 'sa-certificates-dmc', 'sa-certificates-approvals',
-    'sa-certificates-numbering', 'sa-certificates-register', 'sa-certificates-portal',
-    // Campus Services
-    'sa-services-transport', 'sa-services-drivers', 'sa-services-hostel',
-    'sa-services-reports', 'sa-services-discipline', 'sa-services-health',
-    'sa-services-complaints',
-    // Learning & Resources
-    'sa-learning-lms', 'sa-learning-classes', 'sa-learning-library',
-    'sa-learning-digital',
-    // Communication
+    // Communication Hub
     'sa-comm-announcements', 'sa-comm-templates', 'sa-comm-circulars',
     'sa-comm-broadcast', 'sa-comm-logs',
     // Reports & Analytics
@@ -163,7 +100,7 @@ const AppContent = () => {
     'inst-dashboard', 'inst-students', 'inst-teachers', 'inst-classes',
     'inst-timetable', 'inst-attendance', 'inst-fees', 'inst-exams',
     'inst-subjects', 'inst-program-levels', 'inst-notices', 'inst-admissions',
-    'inst-transport', 'inst-library'
+    'inst-transport', 'inst-library', 'inst-certificates', 'inst-learning'
   ]
 
   // Helpers to safely extract valid initial routes per portal role
@@ -189,7 +126,7 @@ const AppContent = () => {
 
   // Public visitor routing (Landing Page vs Login Page)
   const [publicView, setPublicView] = useState(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && window.location.hash) {
       const hash = window.location.hash.replace(/^#\/?/, '')
       if (hash === 'login' || hash === 'signin' || hash === 'superadmin' || hash === 'superadmin-login') return 'login'
       if (hash === 'demo' || hash === 'live-demo') return 'demo'
@@ -347,7 +284,7 @@ const AppContent = () => {
     }
     return (
       <LandingPage
-        onNavigateToLogin={(mode) => {
+        onNavigateToLogin={() => {
           setPublicView('login')
           if (typeof window !== 'undefined') {
             window.location.hash = '#login'
@@ -425,17 +362,6 @@ const AppContent = () => {
                   {superadminRoute === 'support-approvals' && (
                     <SupportApprovalsView />
                   )}
-                  {superadminRoute === 'departments' && <DepartmentsView />}
-                  {superadminRoute === 'examination-bodies' && <ExaminationBodiesView />}
-                  {superadminRoute === 'academic-years' && <AcademicYearsView />}
-                  {superadminRoute === 'program-types' && <ProgramTypesView />}
-                  {superadminRoute === 'programs' && <ProgramsView />}
-                  {superadminRoute === 'subjects' && <SubjectsView />}
-                  {superadminRoute === 'study-schemes' && <StudySchemesView />}
-                  {superadminRoute === 'finance' && <FinancialAnalyticsView />}
-                  {superadminRoute === 'transport' && <TransportView />}
-                  {superadminRoute === 'library' && <LibraryView />}
-                  {superadminRoute === 'admissions-pipeline' && <AdmissionsPipelineView />}
                   {superadminRoute === 'communication' && <CommunicationGatewayView />}
                   {superadminRoute === 'audit-logs' && <AuditLogsView />}
                   {superadminRoute === 'announcements' && <NoticeBroadcasterView />}
@@ -444,94 +370,6 @@ const AppContent = () => {
                   )}
                   {superadminRoute === 'users-roles' && (
                     <UsersManagementView defaultTab="roles" onRouteChange={setSuperadminRoute} />
-                  )}
-
-                  {/* Pick 1: Students Central Governance */}
-                  {superadminRoute.startsWith('sa-students-') && (
-                    <SuperadminStudentsView 
-                      activeTab={superadminRoute.replace('sa-students-', '')} 
-                      onTabChange={(tabKey) => setSuperadminRoute(`sa-students-${tabKey}`)} 
-                    />
-                  )}
-
-                  {/* Pick 2: Admissions Central Architecture */}
-                  {superadminRoute.startsWith('sa-admissions-') && (
-                    <SuperadminAdmissionsView 
-                      activeTab={superadminRoute.replace('sa-admissions-', '')} 
-                      onTabChange={(tabKey) => setSuperadminRoute(`sa-admissions-${tabKey}`)} 
-                    />
-                  )}
-
-                  {/* Pick 3: Staff & Faculty Central Oversight */}
-                  {superadminRoute.startsWith('sa-staff-') && (
-                    <SuperadminStaffFacultyView 
-                      activeTab={superadminRoute.replace('sa-staff-', '')} 
-                      onTabChange={(tabKey) => setSuperadminRoute(`sa-staff-${tabKey}`)} 
-                    />
-                  )}
-
-                  {/* Pick 4: Examinations & Results Central Authority */}
-                  {superadminRoute.startsWith('sa-exams-') && (
-                    <SuperadminExaminationsResultsView 
-                      activeTab={superadminRoute.replace('sa-exams-', '')} 
-                      onTabChange={(tabKey) => setSuperadminRoute(`sa-exams-${tabKey}`)} 
-                    />
-                  )}
-
-                  {/* Academics Governance */}
-                  {superadminRoute.startsWith('sa-academics-') && (
-                    <SuperadminAcademicsView 
-                      activeTab={superadminRoute.replace('sa-academics-', '')} 
-                      onTabChange={(tabKey) => setSuperadminRoute(`sa-academics-${tabKey}`)} 
-                    />
-                  )}
-
-                  {/* Attendance Governance */}
-                  {superadminRoute.startsWith('sa-attendance-') && (
-                    <SuperadminAttendanceView 
-                      activeTab={superadminRoute.replace('sa-attendance-', '')} 
-                      onTabChange={(tabKey) => setSuperadminRoute(`sa-attendance-${tabKey}`)} 
-                    />
-                  )}
-
-                  {/* Fees & Finance Governance */}
-                  {superadminRoute.startsWith('sa-fees-') && (
-                    <SuperadminFeesView 
-                      activeTab={superadminRoute.replace('sa-fees-', '')} 
-                      onTabChange={(tabKey) => setSuperadminRoute(`sa-fees-${tabKey}`)} 
-                    />
-                  )}
-
-                  {/* Accounts & Finance Governance */}
-                  {superadminRoute.startsWith('sa-accounts-') && (
-                    <SuperadminAccountsView 
-                      activeTab={superadminRoute.replace('sa-accounts-', '')} 
-                      onTabChange={(tabKey) => setSuperadminRoute(`sa-accounts-${tabKey}`)} 
-                    />
-                  )}
-
-                  {/* Certificates Governance */}
-                  {superadminRoute.startsWith('sa-certificates-') && (
-                    <SuperadminCertificatesView 
-                      activeTab={superadminRoute.replace('sa-certificates-', '')} 
-                      onTabChange={(tabKey) => setSuperadminRoute(`sa-certificates-${tabKey}`)} 
-                    />
-                  )}
-
-                  {/* Campus Services Governance */}
-                  {superadminRoute.startsWith('sa-services-') && (
-                    <SuperadminCampusServicesView 
-                      activeTab={superadminRoute.replace('sa-services-', '')} 
-                      onTabChange={(tabKey) => setSuperadminRoute(`sa-services-${tabKey}`)} 
-                    />
-                  )}
-
-                  {/* Learning & Resources Governance */}
-                  {superadminRoute.startsWith('sa-learning-') && (
-                    <SuperadminLearningView 
-                      activeTab={superadminRoute.replace('sa-learning-', '')} 
-                      onTabChange={(tabKey) => setSuperadminRoute(`sa-learning-${tabKey}`)} 
-                    />
                   )}
 
                   {/* Communication Hub */}
@@ -566,11 +404,12 @@ const AppContent = () => {
                     />
                   )}
                 </Suspense>
-              </ErrorBoundary>            </main>
+              </ErrorBoundary>
+            </main>
           </div>
         </div>
 
-        {/* Global Settings & Supabase Configuration Modal */}
+        {/* Global Settings Modal */}
         <SettingsModal
           isOpen={isSettingsOpen}
           onClose={() => setIsSettingsOpen(false)}
@@ -586,7 +425,7 @@ const AppContent = () => {
     )
   }
 
-    // 2. DEDICATED STUDENT & PARENT ACADEMIC PORTAL
+  // 2. DEDICATED STUDENT & PARENT ACADEMIC PORTAL
   if (user?.role === 'student' || user?.role === 'parent') {
     return (
       <ErrorBoundary onNavigateHome={() => window.location.reload()}>
@@ -650,6 +489,9 @@ const AppContent = () => {
                 {instituteRoute === 'inst-students' && (
                   <StudentsView currentInstitute={activeCampus} />
                 )}
+                {instituteRoute === 'inst-admissions' && (
+                  <AdmissionsPipelineView currentInstitute={activeCampus} />
+                )}
                 {instituteRoute === 'inst-teachers' && (
                   <TeachersView currentInstitute={activeCampus} />
                 )}
@@ -683,14 +525,17 @@ const AppContent = () => {
                 {instituteRoute === 'inst-notices' && (
                   <NoticeBoardView currentInstitute={activeCampus} />
                 )}
-                {instituteRoute === 'inst-admissions' && (
-                  <AdmissionsPipelineView currentInstitute={activeCampus} />
-                )}
                 {instituteRoute === 'inst-transport' && (
                   <TransportView currentInstitute={activeCampus} />
                 )}
                 {instituteRoute === 'inst-library' && (
                   <LibraryView currentInstitute={activeCampus} />
+                )}
+                {instituteRoute === 'inst-certificates' && (
+                  <CertificatesView currentInstitute={activeCampus} />
+                )}
+                {instituteRoute === 'inst-learning' && (
+                  <LearningResourcesView currentInstitute={activeCampus} />
                 )}
               </Suspense>
             </ErrorBoundary>
@@ -717,12 +562,12 @@ function App() {
   return (
     <ErrorBoundary onNavigateHome={() => window.location.reload()}>
       <AuthProvider>
-      <AppDataProvider>
-        <ToastProvider>
-          <AppContent />
-        </ToastProvider>
-      </AppDataProvider>
-    </AuthProvider>
+        <AppDataProvider>
+          <ToastProvider>
+            <AppContent />
+          </ToastProvider>
+        </AppDataProvider>
+      </AuthProvider>
     </ErrorBoundary>
   )
 }

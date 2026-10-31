@@ -420,13 +420,13 @@ export const SuperadminNavbar = ({
               <div className="py-1">
                                 <button
                   onClick={() => {
-                    onRouteChange('sa-students-all')
+                    onRouteChange('cross-institute-analytics')
                     setShowProfileMenu(false)
                   }}
                   className="w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-purple-50/50 flex items-center gap-2.5 transition-colors cursor-pointer"
                 >
                   <User className="w-3.5 h-3.5 text-purple-600" />
-                  <span>All Students Directory</span>
+                  <span>Cross-Campus Analytics</span>
                 </button>
 
                 <button
