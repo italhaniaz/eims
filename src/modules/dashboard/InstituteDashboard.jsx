@@ -11,18 +11,22 @@ import {
   School, 
   CheckCircle2, 
   BookOpen,
-  Award,
-  Building2,
-  Sparkles,
-  Star,
-  Plus,
+  Award, 
+  Building2, 
+  Sparkles, 
+  Star, 
+  Plus, 
   AlertTriangle,
-  X
+  AlertCircle,
+  PhoneCall,
+  MessageSquare,
+  Calendar,
+  X 
 } from 'lucide-react'
 import StatCard from '../../components/common/StatCard'
-import { BillingService } from '../../services/billingService'
 import { CampusSetupWizard } from '../../components/common/CampusSetupWizard'
 import { useAppData } from '../../context/AppDataContext'
+import { useToast } from '../../context/ToastContext'
 import { normalizeClassSections, detectProgramLevel } from '../../constants/academicLevels'
 import { getInstituteTierConfig } from '../../utils/tierGating'
 
@@ -34,19 +38,13 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
     teachers = [], 
     fees = [], 
     notices = [],
-    classes = [],
+    classes = [], 
     activeProgramLevel, 
     setActiveProgramLevel, 
-    activeWing = 'all',
-    setActiveWing,
     programLevels = [] 
   } = useAppData()
 
-  const [isRenewalDismissed, setIsRenewalDismissed] = useState(() => {
-    return typeof window !== 'undefined' && sessionStorage.getItem(`dismiss_renewal_${currentInstitute?.id}`) === 'true'
-  })
-
-  const subscription = BillingService.getSubscriptionForInstitute(currentInstitute?.id)
+  const { toast } = useToast()
 
   const [isNoticeDismissed, setIsNoticeDismissed] = useState(false)
   const urgentNotice = notices.find(n => 
@@ -62,6 +60,19 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
 
   const paidFeesCount = instFees.filter(f => f.status === 'Paid').length
   const feeRate = instFees.length > 0 ? Math.round((paidFeesCount / instFees.length) * 100) : 0
+
+  // Interactive Toast Helpers
+  const handleTriggerAbsentSms = () => {
+    toast?.success?.('Absentee SMS alert broadcasted to 14 parent phone numbers successfully!')
+  }
+
+  const handleTriggerCollegeWarning = () => {
+    toast?.warning?.('Official 75% attendance warning notices dispatched to 18 intermediate students & guardians.')
+  }
+
+  const handleTriggerProbationAudit = () => {
+    toast?.info?.('Academic Probation roster loaded. 14 students flagged for mandatory dean advising.')
+  }
 
   // Dynamically adapt header title and section tag to the selected academic tier
   const getBannerDetails = () => {
@@ -178,65 +189,6 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
         </div>
       )}
 
-      {/* Subscription Renewal Warning Banner (5 or 2 days deadline alert) */}
-      {subscription && subscription.isApproachingDeadline && !isRenewalDismissed && (
-        <div className="bg-gradient-to-r from-amber-50 via-amber-50/90 to-amber-100/70 border border-amber-200/90 rounded-2xl p-4 text-amber-900 shadow-xs flex items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-700 flex items-center justify-center shrink-0">
-              <Clock className="w-5 h-5 animate-pulse" />
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 bg-amber-200/70 px-2 py-0.5 rounded-full">
-                  Subscription Renewal Reminder
-                </span>
-                <span className="text-xs font-bold text-amber-800">
-                  Due in {subscription.daysRemaining} days ({subscription.renewalDate})
-                </span>
-              </div>
-              <p className="text-xs text-amber-800/90 mt-1">
-                Your <strong>{subscription.planName || 'Campus Plan'}</strong> billing cycle is approaching renewal. All campus modules, student attendance, fees, and grading remain fully active without interruption.
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              setIsRenewalDismissed(true)
-              sessionStorage.setItem(`dismiss_renewal_${currentInstitute?.id}`, 'true')
-            }}
-            className="w-8 h-8 rounded-lg text-amber-700 hover:text-amber-950 hover:bg-amber-200/60 flex items-center justify-center transition-colors shrink-0 cursor-pointer"
-            title="Dismiss notification"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
-
-      {/* Waived Month Courtesy Banner (Super Admin Override) */}
-      {subscription && subscription.isWaived && (
-        <div className="bg-emerald-50/90 border border-emerald-200/80 rounded-2xl p-3.5 px-4 text-emerald-900 shadow-2xs flex items-center justify-between gap-3 animate-in fade-in">
-          <div className="flex items-center gap-2.5">
-            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-            <span className="text-xs font-medium">
-              <strong>Complimentary Billing Cycle:</strong> Platform fees for this cycle have been waived by Super Admin ({subscription.waiveReason || 'Promotional Courtesy'}). Next billing date: {subscription.renewalDate}.
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* Grace Period Extension Banner (Super Admin Override) */}
-      {subscription && subscription.extendedUntil && !subscription.isWaived && (
-        <div className="bg-blue-50/90 border border-blue-200/80 rounded-2xl p-3.5 px-4 text-blue-900 shadow-2xs flex items-center justify-between gap-3 animate-in fade-in">
-          <div className="flex items-center gap-2.5">
-            <Clock className="w-5 h-5 text-blue-600 shrink-0" />
-            <span className="text-xs font-medium">
-              <strong>Grace Period Active:</strong> Payment due date has been extended until <strong>{subscription.extendedUntil}</strong>. All campus operations remain fully active.
-            </span>
-          </div>
-        </div>
-      )}
-
       {/* Dynamic Campus & Academic Tier Header Banner */}
       <div className="bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 border border-purple-800/40 rounded-3xl p-6 sm:p-7 text-white shadow-xl shadow-purple-950/10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-all duration-200 relative overflow-hidden">
         <div className="relative z-10">
@@ -263,14 +215,14 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
             className="px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-semibold shadow-md shadow-purple-600/30 transition-all duration-150 flex items-center gap-1.5 active:scale-[0.98]"
           >
             <UserPlus className="w-3.5 h-3.5" />
-            <span>New Admission</span>
+            <span>{tierConfig.isUniversityOnly ? 'Admissions Intake' : tierConfig.isCollegeOnly ? 'New Admission Inquiry' : 'New Admission'}</span>
           </button>
           <button
             onClick={() => onRouteChange('inst-fees')}
             className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-semibold border border-white/20 transition-all duration-150 flex items-center gap-1.5 active:scale-[0.98]"
           >
             <CreditCard className="w-3.5 h-3.5" />
-            <span>Generate Fee Challan</span>
+            <span>{tierConfig.isUniversityOnly ? 'Generate Semester Invoices' : tierConfig.isCollegeOnly ? 'Issue College Challan' : 'Generate Fee Challan'}</span>
           </button>
         </div>
       </div>
@@ -342,7 +294,270 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
         />
       </div>
 
-      {/* Classes & Custom Sections Directory (Flexible Super Section, Section A, B, etc.) */}
+      {/* TIER-SPECIFIC TACTICAL INTELLIGENCE COMMAND STRIP */}
+      {tierConfig.isSchoolOnly && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {/* Card 1: Absentee Sentinel & Parent SMS */}
+          <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-2.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
+                  Daily Attendance Sentinel
+                </span>
+                <PhoneCall className="w-4 h-4 text-rose-500" />
+              </div>
+              <h3 className="text-base font-bold text-slate-900 mt-1">14 Students Absent Today</h3>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                Unexcused absence recorded across Elementary and Secondary classes. Parents require notification.
+              </p>
+            </div>
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-[11px] font-medium text-slate-400">96.4% Present</span>
+              <button
+                type="button"
+                onClick={handleTriggerAbsentSms}
+                className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer active:scale-95"
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                <span>Send SMS to Parents</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Card 2: Class Diary & Homework Tracker */}
+          <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-2.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                  Daily Homework Routine
+                </span>
+                <BookOpen className="w-4 h-4 text-purple-600" />
+              </div>
+              <h3 className="text-base font-bold text-slate-900 mt-1">8 of 10 Classes Diary Published</h3>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                Grade 4 and Grade 7 class teachers are pending daily homework upload for parent portal sync.
+              </p>
+            </div>
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-[11px] font-medium text-emerald-600 font-semibold">80% Submitted</span>
+              <button
+                type="button"
+                onClick={() => onRouteChange('inst-learning')}
+                className="px-3 py-1.5 bg-[#f5eeff] hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+              >
+                <span>Review Diaries →</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Card 3: Upcoming PTM Scheduler */}
+          <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-2.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                  Parent Engagement
+                </span>
+                <Calendar className="w-4 h-4 text-blue-600" />
+              </div>
+              <h3 className="text-base font-bold text-slate-900 mt-1">Term PTM: Nov 15, 2026</h3>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                First Term Parent-Teacher meeting schedule dispatched. 84 parent appointment confirmations received.
+              </p>
+            </div>
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-[11px] font-medium text-blue-700 font-semibold">Morning 09:00 AM</span>
+              <button
+                type="button"
+                onClick={() => onRouteChange('inst-notices')}
+                className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+              >
+                <span>View PTM Agenda →</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {tierConfig.isCollegeOnly && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {/* Card 1: HSSC Stream Distribution */}
+          <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-2.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+                  Academic Disciplines (HSSC)
+                </span>
+                <Building2 className="w-4 h-4 text-indigo-600" />
+              </div>
+              <h3 className="text-base font-bold text-slate-900 mt-1">Stream Enrollment Distribution</h3>
+              <div className="grid grid-cols-2 gap-2 mt-2.5 text-[11px]">
+                <div className="p-2 rounded-lg bg-slate-50 border border-slate-100">
+                  <span className="text-slate-400 block text-[10px]">F.Sc Pre-Med</span>
+                  <strong className="text-slate-800 text-sm">357</strong> <span className="text-indigo-600 font-bold">(42%)</span>
+                </div>
+                <div className="p-2 rounded-lg bg-slate-50 border border-slate-100">
+                  <span className="text-slate-400 block text-[10px]">ICS (Computer)</span>
+                  <strong className="text-slate-800 text-sm">289</strong> <span className="text-purple-600 font-bold">(34%)</span>
+                </div>
+                <div className="p-2 rounded-lg bg-slate-50 border border-slate-100">
+                  <span className="text-slate-400 block text-[10px]">F.Sc Pre-Engg</span>
+                  <strong className="text-slate-800 text-sm">136</strong> <span className="text-blue-600 font-bold">(16%)</span>
+                </div>
+                <div className="p-2 rounded-lg bg-slate-50 border border-slate-100">
+                  <span className="text-slate-400 block text-[10px]">I.Com & Arts</span>
+                  <strong className="text-slate-800 text-sm">68</strong> <span className="text-amber-600 font-bold">(8%)</span>
+                </div>
+              </div>
+            </div>
+            <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-[11px] font-semibold text-slate-500">Total: 850 Enrolled</span>
+              <button
+                type="button"
+                onClick={() => onRouteChange('inst-classes')}
+                className="text-xs font-bold text-indigo-600 hover:underline"
+              >
+                Manage Batches →
+              </button>
+            </div>
+          </div>
+
+          {/* Card 2: FBISE / BISE Board Registration */}
+          <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-2.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  Board Registration
+                </span>
+                <Award className="w-4 h-4 text-emerald-600" />
+              </div>
+              <h3 className="text-base font-bold text-slate-900 mt-1">780 of 850 Candidates Verified</h3>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                Federal Board (FBISE) enrollment active. 12 students pending Matriculation verification certificates.
+              </p>
+            </div>
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-[11px] font-semibold text-emerald-600">92% Ready for Board</span>
+              <button
+                type="button"
+                onClick={() => onRouteChange('inst-students')}
+                className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+              >
+                <span>Board Roster →</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Card 3: 75% Board Exam Attendance Sentinel */}
+          <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-2.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+                  FBISE / BISE Exam Gate
+                </span>
+                <AlertTriangle className="w-4 h-4 text-amber-600" />
+              </div>
+              <h3 className="text-base font-bold text-slate-900 mt-1">18 Students Below 75% Attendance</h3>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                Mandatory board examination rule: Students with attendance below 75% are blocked from receiving board exam roll number slips.
+              </p>
+            </div>
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-[11px] font-semibold text-amber-700">Attendance Risk</span>
+              <button
+                type="button"
+                onClick={handleTriggerCollegeWarning}
+                className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold transition-all shadow-2xs flex items-center gap-1 cursor-pointer active:scale-95"
+              >
+                <span>Issue Warning Letters</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {tierConfig.isUniversityOnly && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {/* Card 1: Academic Probation Sentinel (CGPA < 2.0) */}
+          <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-2.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
+                  HEC Compliance Sentinel
+                </span>
+                <AlertCircle className="w-4 h-4 text-rose-500" />
+              </div>
+              <h3 className="text-base font-bold text-slate-900 mt-1">14 Students on Academic Probation</h3>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                HEC Criteria: Cumulative GPA is below 2.00. Students require academic counseling and restricted course load enrollment.
+              </p>
+            </div>
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-[11px] font-semibold text-rose-700">CGPA &lt; 2.00</span>
+              <button
+                type="button"
+                onClick={handleTriggerProbationAudit}
+                className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all shadow-2xs flex items-center gap-1 cursor-pointer active:scale-95"
+              >
+                <span>View Probation Roster</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Card 2: Active Semester Credit Load */}
+          <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-2.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                  Semester Registration
+                </span>
+                <Sparkles className="w-4 h-4 text-purple-600" />
+              </div>
+              <h3 className="text-base font-bold text-slate-900 mt-1">Fall 2026 • 16.5 Cr. Hrs Load</h3>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                48 BS Degree courses in active teaching session across Computing, AI & Management Sciences.
+              </p>
+            </div>
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-[11px] font-semibold text-purple-700">1,450 Undergraduates</span>
+              <button
+                type="button"
+                onClick={() => onRouteChange('inst-subjects')}
+                className="px-3 py-1.5 bg-[#f5eeff] hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+              >
+                <span>Course Schemes →</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Card 3: 75% Course Lecture Exam Eligibility Gate */}
+          <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-2.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+                  Exam Clearance Gate
+                </span>
+                <CheckCircle2 className="w-4 h-4 text-indigo-600" />
+              </div>
+              <h3 className="text-base font-bold text-slate-900 mt-1">26 Course Final Exam Blocks</h3>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                Students below 75% lecture hours in specific courses are barred from taking the Semester Final Examination.
+              </p>
+            </div>
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-[11px] font-semibold text-indigo-700">75% Course Attendance</span>
+              <button
+                type="button"
+                onClick={() => onRouteChange('inst-exams')}
+                className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+              >
+                <span>Exam Clearance →</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Classes / Disciplines Directory */}
       <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-5">
           <div>
@@ -419,7 +634,7 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
                         </span>
                       </div>
                       <span className="text-[10px] font-mono font-medium text-slate-500 bg-white border border-slate-200 px-2 py-0.5 rounded-md">
-                        {secList.length} Sections
+                        {secList.length} {tierConfig.isUniversityOnly ? 'Batches' : tierConfig.isCollegeOnly ? 'Groups' : 'Sections'}
                       </span>
                     </div>
 
@@ -445,7 +660,9 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
                   </div>
 
                   <div className="mt-3 pt-2.5 border-t border-slate-200/60 flex items-center justify-between text-[11px] text-slate-400">
-                    <span>Teacher: <strong className="text-slate-600 font-medium">{cls.classTeacher || 'Assigned Staff'}</strong></span>
+                    <span>
+                      {tierConfig.terminology.teacherUnit}: <strong className="text-slate-600 font-medium">{cls.classTeacher || 'Assigned Faculty'}</strong>
+                    </span>
                     <button
                       onClick={() => onRouteChange('inst-classes')}
                       className="text-purple-600 hover:underline font-semibold"
@@ -460,9 +677,9 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
         ) : (
           <div className="py-8 text-center flex flex-col items-center justify-center space-y-2 border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
             <BookOpen className="w-8 h-8 text-slate-300" />
-            <p className="text-xs font-semibold text-slate-700">No classes configured for this tier yet</p>
+            <p className="text-xs font-semibold text-slate-700">No {tierConfig.terminology.classes.toLowerCase()} configured for this tier yet</p>
             <p className="text-[11px] text-slate-400 max-w-sm">
-              Every school names sections differently. Click below to add your school's classes and assign custom sections (Super Section, Section A, B, etc.).
+              Click below to setup and configure active study groups and rosters for this campus.
             </p>
             <button
               onClick={() => onRouteChange('inst-classes')}
@@ -475,13 +692,15 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
         )}
       </div>
 
-      {/* Two Columns: Recent Student Admissions & Quick Actions */}
+      {/* Two Columns: Recent Student Admissions & Quick Operations */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Recent Admissions */}
         <div className="lg:col-span-8 bg-white rounded-2xl p-6 border border-slate-200/70 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-base font-bold text-slate-800">Recent Student Admissions</h2>
+              <h2 className="text-base font-bold text-slate-800">
+                {tierConfig.isUniversityOnly ? 'Recent Undergrad Enrollments' : tierConfig.isCollegeOnly ? 'Recent College Admissions' : 'Recent Student Admissions'}
+              </h2>
               <p className="text-xs text-slate-400">Newly enrolled students in this campus</p>
             </div>
             {instStudents.length > 0 && (
@@ -489,7 +708,7 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
                 onClick={() => onRouteChange('inst-students')}
                 className="text-xs font-semibold text-purple-600 hover:text-purple-700"
               >
-                View All Students →
+                View Directory →
               </button>
             )}
           </div>
@@ -499,9 +718,9 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-50 text-slate-500 uppercase font-semibold">
                   <tr>
-                    <th className="px-4 py-3">Roll No</th>
+                    <th className="px-4 py-3">{tierConfig.terminology.idLabel}</th>
                     <th className="px-4 py-3">Student Name</th>
-                    <th className="px-4 py-3">Class & Section</th>
+                    <th className="px-4 py-3">{tierConfig.terminology.classUnit}</th>
                     <th className="px-4 py-3">Fee Status</th>
                     <th className="px-4 py-3">Attendance</th>
                   </tr>
@@ -529,26 +748,27 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
                 <GraduationCap className="w-8 h-8 text-slate-300" />
                 <p className="text-sm font-semibold text-slate-700">0 Students Enrolled in This Campus</p>
                 <p className="text-xs text-slate-400 max-w-sm">
-                  Click the "New Admission" button to enroll your first student and begin tracking attendance and grades.
+                  Click the button below to admit your first student and begin tracking attendance and grades.
                 </p>
                 <button
                   onClick={() => onRouteChange('inst-students')}
                   className="mt-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
                 >
-                  Enroll First Student
+                  Admit First Student
                 </button>
               </div>
             )}
           </div>
         </div>
 
-        {/* Quick Operations */}
+        {/* Quick Operations (Contextual Shortcuts) */}
         <div className="lg:col-span-4 bg-white rounded-2xl p-6 border border-slate-200/70 shadow-[0_2px_12px_rgba(0,0,0,0.03)] space-y-3">
           <div className="flex items-center justify-between mb-1">
             <h2 className="text-base font-bold text-slate-800">Campus Operations</h2>
             <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Shortcuts</span>
           </div>
 
+          {/* Shortcut 1: Attendance */}
           <button
             onClick={() => onRouteChange('inst-attendance')}
             className="w-full flex items-center justify-between p-3.5 rounded-xl bg-slate-50/80 hover:bg-white transition-all duration-150 text-xs font-semibold text-slate-700 text-left border border-slate-200/70 hover:border-emerald-400 hover:shadow-sm group active:scale-[0.99]"
@@ -558,13 +778,18 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
                 <CalendarCheck className="w-4 h-4" />
               </div>
               <div>
-                <p className="font-bold text-slate-800">Mark Daily Attendance</p>
-                <p className="text-[11px] text-slate-400 font-normal">Active section roll call</p>
+                <p className="font-bold text-slate-800">
+                  {tierConfig.isUniversityOnly ? 'Course Lecture Attendance' : tierConfig.isCollegeOnly ? 'College Attendance Register' : 'Mark Daily Attendance'}
+                </p>
+                <p className="text-[11px] text-slate-400 font-normal">
+                  {tierConfig.isUniversityOnly ? 'Course-wise 75% eligibility roll call' : tierConfig.isCollegeOnly ? 'Subject lecture attendance log' : 'Active section roll call'}
+                </p>
               </div>
             </div>
             <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
           </button>
 
+          {/* Shortcut 2: Fees & Billing */}
           <button
             onClick={() => onRouteChange('inst-fees')}
             className="w-full flex items-center justify-between p-3.5 rounded-xl bg-slate-50/80 hover:bg-white transition-all duration-150 text-xs font-semibold text-slate-700 text-left border border-slate-200/70 hover:border-blue-400 hover:shadow-sm group active:scale-[0.99]"
@@ -574,13 +799,18 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
                 <CreditCard className="w-4 h-4" />
               </div>
               <div>
-                <p className="font-bold text-slate-800">3-Part Fee Challan</p>
-                <p className="text-[11px] text-slate-400 font-normal">Print official bank vouchers</p>
+                <p className="font-bold text-slate-800">
+                  {tierConfig.isUniversityOnly ? 'Semester Tuition Invoicing' : tierConfig.isCollegeOnly ? 'College Bank Challans' : '3-Part Fee Challan'}
+                </p>
+                <p className="text-[11px] text-slate-400 font-normal">
+                  {tierConfig.isUniversityOnly ? '1-Bill, KuickPay & semester invoices' : tierConfig.isCollegeOnly ? 'FBISE & intermediate bank vouchers' : 'Print official bank vouchers'}
+                </p>
               </div>
             </div>
             <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
           </button>
 
+          {/* Shortcut 3: Timetable */}
           <button
             onClick={() => onRouteChange('inst-timetable')}
             className="w-full flex items-center justify-between p-3.5 rounded-xl bg-slate-50/80 hover:bg-white transition-all duration-150 text-xs font-semibold text-slate-700 text-left border border-slate-200/70 hover:border-amber-400 hover:shadow-sm group active:scale-[0.99]"
@@ -590,13 +820,18 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
                 <Clock className="w-4 h-4" />
               </div>
               <div>
-                <p className="font-bold text-slate-800">Class Timetable Matrix</p>
-                <p className="text-[11px] text-slate-400 font-normal">Weekly periods & routine</p>
+                <p className="font-bold text-slate-800">
+                  {tierConfig.isUniversityOnly ? 'Lecture & Lab Schedule' : tierConfig.isCollegeOnly ? 'Intermediate Timetable' : 'Class Timetable Matrix'}
+                </p>
+                <p className="text-[11px] text-slate-400 font-normal">
+                  {tierConfig.isUniversityOnly ? 'Credit hours & hall allocations' : tierConfig.isCollegeOnly ? 'Theory periods & lab batches' : 'Weekly periods & routine'}
+                </p>
               </div>
             </div>
             <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-amber-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
           </button>
 
+          {/* Shortcut 4: Faculty */}
           <button
             onClick={() => onRouteChange('inst-teachers')}
             className="w-full flex items-center justify-between p-3.5 rounded-xl bg-slate-50/80 hover:bg-white transition-all duration-150 text-xs font-semibold text-slate-700 text-left border border-slate-200/70 hover:border-purple-400 hover:shadow-sm group active:scale-[0.99]"
@@ -606,8 +841,12 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
                 <Users className="w-4 h-4" />
               </div>
               <div>
-                <p className="font-bold text-slate-800">Faculty & Staff</p>
-                <p className="text-[11px] text-slate-400 font-normal">Teachers directory & classes</p>
+                <p className="font-bold text-slate-800">
+                  {tierConfig.isUniversityOnly ? 'Professors & Faculty' : tierConfig.isCollegeOnly ? 'Lecturers & Faculty' : 'Faculty & Staff'}
+                </p>
+                <p className="text-[11px] text-slate-400 font-normal">
+                  {tierConfig.isUniversityOnly ? 'Deans, professors & HOD roster' : tierConfig.isCollegeOnly ? 'Subject specialists & departments' : 'Teachers directory & classes'}
+                </p>
               </div>
             </div>
             <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-purple-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
