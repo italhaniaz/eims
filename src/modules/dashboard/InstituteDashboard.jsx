@@ -10,7 +10,6 @@ import {
   ArrowUpRight, 
   School, 
   CheckCircle2, 
-  Layers,
   BookOpen,
   Award,
   Building2,
@@ -269,83 +268,6 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
           </button>
         </div>
       </div>
-
-      {/* Quick Academic Tier Switcher Strip (One-Click Scope) */}
-      <div className="bg-white border border-slate-200/80 rounded-2xl p-3 sm:p-4 shadow-xs">
-        <div className="flex items-center justify-between gap-2 mb-2 px-1">
-          <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
-            <Layers className="w-4 h-4 text-purple-600" />
-            <span>Academic Tier Scope:</span>
-            <span className="text-slate-400 font-normal hidden sm:inline">Switch campus view by educational level</span>
-          </div>
-          <button
-            onClick={() => onRouteChange('inst-program-levels')}
-            className="text-[11px] font-semibold text-purple-600 hover:underline flex items-center gap-1"
-          >
-            <span>View All Tiers & Streams</span>
-            <ArrowUpRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        {/* Scrollable / Responsive Horizontal Pill Strip */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-          {programLevels.map((lvl) => {
-            const isSelected = activeProgramLevel === lvl.id
-            return (
-              <button
-                key={lvl.id}
-                onClick={() => setActiveProgramLevel(lvl.id)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-150 shrink-0 border ${
-                  isSelected
-                    ? 'bg-purple-600 text-white border-purple-600 shadow-xs'
-                    : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200/80'
-                }`}
-              >
-                <span>{lvl.shortTitle}</span>
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                  isSelected ? 'bg-white/20 text-white' : 'bg-white border border-slate-200 text-slate-500'
-                }`}>
-                  {lvl.badge}
-                </span>
-              </button>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* Active Academic Level Filter Banner */}
-      {activeProgramLevel !== 'all' && activeLevelObj && (
-        <div className="bg-gradient-to-r from-purple-50/90 via-indigo-50/50 to-white border border-purple-200/90 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-[0_2px_10px_rgba(124,58,237,0.04)] animate-in fade-in slide-in-from-top-2">
-          <div className="flex items-start sm:items-center gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center font-bold text-sm shadow-sm shrink-0">
-              <GraduationCap className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#f5eeff] text-purple-700 border border-purple-200">
-                  Active Tier Filter
-                </span>
-                <span className="text-sm font-bold text-slate-900">{activeLevelObj.title}</span>
-                <span className="text-xs text-slate-500 font-mono">({activeLevelObj.grades})</span>
-              </div>
-              <p className="text-xs text-slate-500 mt-1">{activeLevelObj.description}</p>
-              <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                {activeLevelObj.categories.map((cat, idx) => (
-                  <span key={idx} className="text-[11px] bg-white border border-purple-200/60 text-slate-700 px-2 py-0.5 rounded-md font-medium shadow-2xs">
-                    {cat.name} <span className="text-slate-400 font-mono">({cat.span})</span>
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-          <button
-            onClick={() => setActiveProgramLevel('all')}
-            className="px-3.5 py-1.5 text-xs font-semibold text-purple-700 bg-white border border-purple-200 hover:bg-[#f5eeff] hover:border-purple-300 rounded-xl shadow-2xs transition-all shrink-0 active:scale-95"
-          >
-            Reset to All Levels
-          </button>
-        </div>
-      )}
 
       {/* Layman-Friendly Interactive Campus Setup Wizard */}
       <CampusSetupWizard currentInstitute={currentInstitute} onRouteChange={onRouteChange} />
