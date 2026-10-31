@@ -134,7 +134,7 @@ export const CampusSetupWizard = ({ currentInstitute, onRouteChange }) => {
           <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-2xs ${
             isAllComplete 
               ? 'bg-emerald-500 text-white' 
-              : 'bg-blue-600 text-white'
+              : 'bg-purple-600 text-white'
           }`}>
             {isAllComplete ? <Award className="w-5 h-5" /> : <Sparkles className="w-5 h-5" />}
           </div>
@@ -152,7 +152,7 @@ export const CampusSetupWizard = ({ currentInstitute, onRouteChange }) => {
                   <span>100% Operational</span>
                 </span>
               ) : (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 font-mono">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#f5eeff] text-purple-700 border border-purple-200 font-mono">
                   {completedCount}/{steps.length} Steps
                 </span>
               )}
@@ -172,7 +172,7 @@ export const CampusSetupWizard = ({ currentInstitute, onRouteChange }) => {
             <div className="w-24 sm:w-32 bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200/60">
               <div 
                 className={`h-full transition-all duration-500 rounded-full ${
-                  isAllComplete ? 'bg-emerald-500' : 'bg-blue-600'
+                  isAllComplete ? 'bg-emerald-500' : 'bg-purple-600'
                 }`}
                 style={{ width: `${progressPercent}%` }}
               ></div>
@@ -209,12 +209,12 @@ export const CampusSetupWizard = ({ currentInstitute, onRouteChange }) => {
                     step.isCompleted
                       ? 'bg-slate-50/70 border-emerald-200/80 hover:bg-slate-50'
                       : isNext
-                        ? 'bg-white border-blue-500 shadow-sm ring-2 ring-blue-500/10'
+                        ? 'bg-white border-purple-500 shadow-sm ring-2 ring-purple-500/10'
                         : 'bg-white border-slate-200/80 hover:border-slate-300'
                   }`}
                 >
                   {isNext && (
-                    <div className="absolute top-0 right-0 left-0 h-0.5 bg-blue-600"></div>
+                    <div className="absolute top-0 right-0 left-0 h-0.5 bg-purple-600"></div>
                   )}
 
                   <div>
@@ -225,7 +225,7 @@ export const CampusSetupWizard = ({ currentInstitute, onRouteChange }) => {
                           step.isCompleted 
                             ? 'bg-emerald-100 text-emerald-800' 
                             : isNext 
-                              ? 'bg-blue-100 text-blue-800'
+                              ? 'bg-[#f5eeff] text-purple-800'
                               : 'bg-slate-100 text-slate-600'
                         }`}>
                           Step {index + 1}
@@ -235,7 +235,7 @@ export const CampusSetupWizard = ({ currentInstitute, onRouteChange }) => {
                       {step.isCompleted ? (
                         <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                       ) : (
-                        <Circle className={`w-4 h-4 ${isNext ? 'text-blue-600 animate-pulse' : 'text-slate-300'}`} />
+                        <Circle className={`w-4 h-4 ${isNext ? 'text-purple-600 animate-pulse' : 'text-slate-300'}`} />
                       )}
                     </div>
 
@@ -263,7 +263,7 @@ export const CampusSetupWizard = ({ currentInstitute, onRouteChange }) => {
                         step.isCompleted
                           ? 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
                           : isNext
-                            ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-xs'
+                            ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-xs'
                             : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                       }`}
                     >
@@ -277,9 +277,9 @@ export const CampusSetupWizard = ({ currentInstitute, onRouteChange }) => {
           </div>
 
           {/* Bottom Guidance Footer for Layman Users */}
-          <div className="p-2.5 bg-blue-50/60 border border-blue-100/80 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs">
+          <div className="p-2.5 bg-[#f5eeff]/60 border border-purple-100/80 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs">
             <div className="flex items-center gap-2 text-slate-700">
-              <Zap className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+              <Zap className="w-3.5 h-3.5 text-purple-600 shrink-0" />
               <span>
                 <strong>Setup Tip:</strong> Follow the steps in order from left to right. Once classes are configured, attendance and fee challans activate automatically.
               </span>

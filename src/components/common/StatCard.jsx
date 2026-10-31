@@ -38,6 +38,12 @@ const COLOR_SCHEMES = {
     iconColor: 'text-cyan-600',
     showAllText: 'text-cyan-600 hover:text-cyan-700',
     btnBg: 'bg-cyan-50/90 hover:bg-cyan-100 text-cyan-600 hover:text-cyan-700 border border-cyan-200/60',
+  },
+  purple: {
+    iconBg: 'bg-[#f5eeff]',
+    iconColor: 'text-purple-600',
+    showAllText: 'text-purple-600 hover:text-purple-700',
+    btnBg: 'bg-[#f5eeff] hover:bg-purple-100 text-purple-700 hover:text-purple-800 border border-purple-200/70',
   }
 }
 

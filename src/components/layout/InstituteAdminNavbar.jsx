@@ -213,9 +213,9 @@ export const InstituteAdminNavbar = ({
             <div className="relative" ref={campusRef}>
               <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="flex items-center gap-1.5 sm:gap-2 bg-emerald-50 text-emerald-800 border border-emerald-200/80 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-emerald-100 transition-colors"
+                className="flex items-center gap-1.5 sm:gap-2 bg-[#f5eeff] text-purple-800 border border-purple-200/80 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-purple-100 transition-colors"
               >
-                <School className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <School className="w-3.5 h-3.5 text-purple-600 shrink-0" />
                 <span className="max-w-[100px] sm:max-w-[150px] truncate">{selectedInstitute?.name || 'Main Campus'}</span>
                 <ChevronDown className="w-3.5 h-3.5 opacity-60 shrink-0" />
               </button>
@@ -234,7 +234,7 @@ export const InstituteAdminNavbar = ({
                           setDropdownOpen(false)
                         }}
                         className={`w-full text-left px-3 py-2 text-xs transition-colors flex items-center justify-between ${
-                          selectedInstitute?.id === inst.id ? 'bg-emerald-50 text-emerald-700 font-bold' : 'hover:bg-slate-50 text-slate-700'
+                          selectedInstitute?.id === inst.id ? 'bg-[#f5eeff] text-purple-700 font-bold' : 'hover:bg-slate-50 text-slate-700'
                         }`}
                       >
                         <span className="truncate">{inst.name}</span>
@@ -259,18 +259,18 @@ export const InstituteAdminNavbar = ({
             onClick={() => setLevelDropdownOpen(!levelDropdownOpen)}
             className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 border ${
               activeProgramLevel !== 'all'
-                ? 'bg-blue-50 text-blue-800 border-blue-300 ring-2 ring-blue-100 shadow-2xs'
+                ? 'bg-[#f5eeff] text-purple-800 border-purple-300 ring-2 ring-purple-100 shadow-2xs'
                 : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 hover:border-slate-300'
             }`}
             title="Expand Academic Program Levels"
           >
-            {getLevelIcon(activeProgramLevel, activeProgramLevel !== 'all' ? 'w-3.5 h-3.5 text-blue-600 shrink-0' : 'w-3.5 h-3.5 text-slate-500 shrink-0')}
+            {getLevelIcon(activeProgramLevel, activeProgramLevel !== 'all' ? 'w-3.5 h-3.5 text-purple-600 shrink-0' : 'w-3.5 h-3.5 text-slate-500 shrink-0')}
             <span className="hidden md:inline font-medium text-slate-400">Level:</span>
             <span className="max-w-[90px] sm:max-w-[130px] truncate font-bold">
               {currentLevelObj?.shortTitle || 'All Levels'}
             </span>
             {activeProgramLevel !== 'all' && (
-              <span className="hidden sm:inline-block w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
+              <span className="hidden sm:inline-block w-2 h-2 rounded-full bg-purple-600 animate-pulse"></span>
             )}
             <ChevronDown className="w-3.5 h-3.5 opacity-60 ml-0.5 shrink-0" />
           </button>
@@ -283,7 +283,7 @@ export const InstituteAdminNavbar = ({
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-xs font-bold text-slate-900 tracking-tight flex items-center gap-1.5">
-                      <Layers className="w-3.5 h-3.5 text-blue-600" />
+                      <Layers className="w-3.5 h-3.5 text-purple-600" />
                       <span>Academic Program Levels</span>
                     </div>
                     <p className="text-[11px] text-slate-400 mt-0.5">K-12 to University Educational Hierarchy</p>
@@ -298,7 +298,7 @@ export const InstituteAdminNavbar = ({
                     {activeProgramLevel !== 'all' && (
                       <button
                         onClick={() => selectLevel('all')}
-                        className="text-[10px] font-semibold text-blue-600 hover:underline px-2 py-0.5 rounded bg-blue-50 border border-blue-100"
+                        className="text-[10px] font-semibold text-purple-600 hover:underline px-2 py-0.5 rounded bg-[#f5eeff] border border-purple-200"
                       >
                         Reset All
                       </button>
@@ -335,7 +335,7 @@ export const InstituteAdminNavbar = ({
                     onClick={() => selectLevel('all')}
                     className={`w-full text-left px-3 py-2 rounded-xl text-xs transition-colors flex items-center justify-between ${
                       activeProgramLevel === 'all' 
-                        ? 'bg-blue-50 text-blue-800 font-bold border border-blue-200' 
+                        ? 'bg-[#f5eeff] text-purple-800 font-bold border border-purple-200' 
                         : 'hover:bg-slate-50 text-slate-700'
                     }`}
                   >
@@ -349,7 +349,7 @@ export const InstituteAdminNavbar = ({
                       </div>
                     </div>
                     {activeProgramLevel === 'all' && (
-                      <Check className="w-4 h-4 text-blue-600 shrink-0" />
+                      <Check className="w-4 h-4 text-purple-600 shrink-0" />
                     )}
                   </button>
                 </div>
@@ -366,7 +366,7 @@ export const InstituteAdminNavbar = ({
                       key={lvl.id}
                       className={`rounded-xl border transition-all duration-150 overflow-hidden ${
                         isSelected 
-                          ? 'bg-blue-50/40 border-blue-200 shadow-2xs' 
+                          ? 'bg-[#f5eeff]/40 border-purple-200 shadow-2xs' 
                           : 'border-slate-100 hover:border-slate-200 bg-white'
                       }`}
                     >
@@ -379,7 +379,7 @@ export const InstituteAdminNavbar = ({
                           className="flex items-center gap-2.5 flex-1 text-left min-w-0"
                         >
                           <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                            isSelected ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'
+                            isSelected ? 'bg-purple-600 text-white' : 'bg-slate-100 text-slate-600'
                           }`}>
                             {getLevelIcon(lvl.id, "w-4 h-4")}
                           </div>
@@ -450,7 +450,7 @@ export const InstituteAdminNavbar = ({
                     setLevelDropdownOpen(false)
                     if (onRouteChange) onRouteChange('inst-program-levels')
                   }}
-                  className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 group"
+                  className="text-xs font-semibold text-purple-600 hover:text-purple-700 flex items-center gap-1 group"
                 >
                   <span>Open Full Program Matrix</span>
                   <ExternalLink className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
@@ -487,16 +487,16 @@ export const InstituteAdminNavbar = ({
                 onClick={() => setActiveWing && setActiveWing(wing.id)}
                 className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                   isActive 
-                    ? 'bg-white text-blue-700 shadow-xs border border-slate-200/70 ring-1 ring-blue-500/10' 
+                    ? 'bg-white text-purple-700 shadow-xs border border-purple-200/70 ring-1 ring-purple-500/10' 
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
                 }`}
                 title={`Switch active view to ${wing.label}`}
               >
-                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-blue-600' : 'text-slate-500'}`} />
+                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-purple-600' : 'text-slate-500'}`} />
                 <span>{wing.label}</span>
                 {wing.badge && (
                   <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-semibold ${
-                    isActive ? 'bg-blue-50 text-blue-700' : 'bg-slate-200 text-slate-500'
+                    isActive ? 'bg-[#f5eeff] text-purple-700' : 'bg-slate-200 text-slate-500'
                   }`}>
                     {wing.badge}
                   </span>
@@ -510,8 +510,8 @@ export const InstituteAdminNavbar = ({
       {/* Single Tier Campus Badge (when institute only has 1 tier enabled) */}
       {availableWings.length <= 2 && (
         <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-700 text-xs font-semibold">
-          {enabledTiers[0] === 'school' && <School className="w-4 h-4 text-blue-600" />}
-          {enabledTiers[0] === 'college' && <Building2 className="w-4 h-4 text-indigo-600" />}
+          {enabledTiers[0] === 'school' && <School className="w-4 h-4 text-purple-600" />}
+          {enabledTiers[0] === 'college' && <Building2 className="w-4 h-4 text-purple-600" />}
           {enabledTiers[0] === 'undergraduate' && <GraduationCap className="w-4 h-4 text-purple-600" />}
           <span>{enabledTiers[0] === 'undergraduate' ? 'Undergraduates / University' : (enabledTiers[0] || 'Campus').toUpperCase()} Portal</span>
         </div>
@@ -536,7 +536,7 @@ export const InstituteAdminNavbar = ({
         <div className="relative" ref={profileRef}>
           <button 
             onClick={() => setShowProfileMenu(!showProfileMenu)}
-            className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-white cursor-pointer hover:ring-2 hover:ring-emerald-300 transition-all shadow-sm focus:outline-none"
+            className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-white cursor-pointer hover:ring-2 hover:ring-purple-300 transition-all shadow-sm focus:outline-none"
             title="Institute Admin Profile"
           >
             <User className="w-4 h-4 text-white" />
@@ -547,8 +547,8 @@ export const InstituteAdminNavbar = ({
               <div className="px-4 py-3 border-b border-slate-100">
                 <p className="text-xs font-bold text-slate-800">{user?.name || 'Campus Administrator'}</p>
                 <p className="text-[11px] text-slate-400 mt-0.5 truncate">{user?.email || 'admin@campus.edu'}</p>
-                <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#f5eeff] text-purple-700 border border-purple-200">
+                  <ShieldCheck className="w-3 h-3 text-purple-600" />
                   <span>Campus Administrator</span>
                 </div>
               </div>
@@ -561,7 +561,7 @@ export const InstituteAdminNavbar = ({
                   }}
                   className="w-full text-left px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-medium"
                 >
-                  <Key className="w-3.5 h-3.5 text-emerald-600" />
+                  <Key className="w-3.5 h-3.5 text-purple-600" />
                   <span>Change Password & Security</span>
                 </button>
 

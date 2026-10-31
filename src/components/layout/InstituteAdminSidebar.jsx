@@ -70,7 +70,7 @@ export const InstituteAdminSidebar = ({
       {isMobileOpen && (
         <div 
           onClick={onCloseMobile}
-          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 lg:hidden"
         />
       )}
 
@@ -79,22 +79,22 @@ export const InstituteAdminSidebar = ({
           fixed lg:static top-0 bottom-0 left-0 z-50
           ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
           ${collapsed ? 'lg:w-20' : 'w-64'} 
-          h-full max-h-screen bg-[#111c30] text-slate-300 flex flex-col 
-          transition-all duration-300 shrink-0 border-r border-[#1e2d4d] select-none
+          h-full max-h-screen bg-white text-slate-700 flex flex-col 
+          transition-all duration-300 shrink-0 border-r border-slate-100 shadow-[1px_0_15px_rgba(0,0,0,0.02)] select-none
         `}
       >
         {/* Top Header */}
-        <div className="h-16 sm:h-20 min-h-[64px] sm:min-h-[80px] flex items-center justify-between px-4 border-b border-[#1e2d4d] shrink-0">
+        <div className="h-16 sm:h-20 min-h-[64px] sm:min-h-[80px] flex items-center justify-between px-4 sm:px-5 border-b border-slate-100 shrink-0">
           {(!collapsed || isMobileOpen) && (
             <div className="flex items-center gap-2.5 overflow-hidden">
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
-                <School className="w-4 h-4" />
+              <div className="w-9 h-9 rounded-xl bg-[#f5eeff] text-purple-700 border border-purple-100 flex items-center justify-center shrink-0 font-bold text-xs shadow-2xs">
+                <School className="w-4 h-4 text-purple-600" />
               </div>
               <div className="flex flex-col truncate">
-                <span className="text-xs font-bold text-white tracking-wide truncate">
+                <span className="text-sm font-extrabold text-slate-900 tracking-tight font-heading truncate">
                   {instituteName || 'Campus Administration'}
                 </span>
-                <span className="text-[10px] text-emerald-400 font-semibold uppercase tracking-wider">
+                <span className="text-[10px] text-purple-600 font-bold uppercase tracking-wider">
                   {user?.roleTitle || (isTeacher ? 'Faculty Portal' : isAccountant ? 'Accounts Officer' : 'Campus Admin')}
                 </span>
               </div>
@@ -104,7 +104,7 @@ export const InstituteAdminSidebar = ({
           {/* Mobile Close Button */}
           <button 
             onClick={onCloseMobile}
-            className="lg:hidden text-slate-400 hover:text-white p-1 rounded hover:bg-[#1d2a46] transition-colors ml-auto cursor-pointer"
+            className="lg:hidden text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition-colors ml-auto cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -112,7 +112,7 @@ export const InstituteAdminSidebar = ({
           {/* Desktop Collapse Button */}
           <button 
             onClick={() => setCollapsed(!collapsed)}
-            className="hidden lg:block text-slate-400 hover:text-white p-1 rounded hover:bg-[#1d2a46] transition-colors ml-auto cursor-pointer"
+            className="hidden lg:block text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition-colors ml-auto cursor-pointer"
             title={collapsed ? "Expand Sidebar" : "Collapse Sidebar"}
           >
             {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -122,17 +122,24 @@ export const InstituteAdminSidebar = ({
         {/* Navigation Menu */}
         <div className="flex-1 py-4 px-3 space-y-1 overflow-y-auto dark-scroll text-[13.5px]">
           {/* Campus Dashboard */}
-          <button
-            onClick={() => handleNavClick('inst-dashboard')}
-            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg transition-all text-left cursor-pointer ${
-              isRouteActive('inst-dashboard')
-                ? 'bg-emerald-600 text-white font-semibold shadow-md'
-                : 'text-slate-300 hover:text-white hover:bg-[#1a2744]'
-            }`}
-          >
-            <LayoutDashboard className={`w-[18px] h-[18px] shrink-0 ${isRouteActive('inst-dashboard') ? 'text-white' : 'text-slate-400'}`} />
-            {(!collapsed || isMobileOpen) && <span>Campus Dashboard</span>}
-          </button>
+          <div className="relative">
+            {isRouteActive('inst-dashboard') && (
+              <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+            )}
+            <button
+              onClick={() => handleNavClick('inst-dashboard')}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
+                isRouteActive('inst-dashboard')
+                  ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
+              }`}
+            >
+              <LayoutDashboard className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                isRouteActive('inst-dashboard') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+              }`} />
+              {(!collapsed || isMobileOpen) && <span>Campus Dashboard</span>}
+            </button>
+          </div>
 
           {/* Section Divider */}
           {(!collapsed || isMobileOpen) && (
@@ -141,64 +148,92 @@ export const InstituteAdminSidebar = ({
             </div>
           )}
 
-          {/* Module 1: Students */}
+          {/* Module 1: Students Directory */}
           {(!isAccountant || isCampusAdmin) && (
-            <button
-              onClick={() => handleNavClick('inst-students')}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg transition-all text-left cursor-pointer ${
-                isRouteActive('inst-students')
-                  ? 'bg-emerald-600 text-white font-semibold shadow-md'
-                  : 'text-slate-300 hover:text-white hover:bg-[#1a2744]'
-              }`}
-            >
-              <GraduationCap className={`w-[18px] h-[18px] shrink-0 ${isRouteActive('inst-students') ? 'text-white' : 'text-emerald-400'}`} />
-              {(!collapsed || isMobileOpen) && <span>Students Directory</span>}
-            </button>
+            <div className="relative">
+              {isRouteActive('inst-students') && (
+                <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+              )}
+              <button
+                onClick={() => handleNavClick('inst-students')}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
+                  isRouteActive('inst-students')
+                    ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
+                }`}
+              >
+                <GraduationCap className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                  isRouteActive('inst-students') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                }`} />
+                {(!collapsed || isMobileOpen) && <span>Students Directory</span>}
+              </button>
+            </div>
           )}
 
-          {/* Module 2: Admissions */}
+          {/* Module 2: Admissions & Leads */}
           {isCampusAdmin && (
-            <button
-              onClick={() => handleNavClick('inst-admissions')}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg transition-all text-left cursor-pointer ${
-                isRouteActive('inst-admissions')
-                  ? 'bg-emerald-600 text-white font-semibold shadow-md'
-                  : 'text-slate-300 hover:text-white hover:bg-[#1a2744]'
-              }`}
-            >
-              <UserCheck className={`w-[18px] h-[18px] shrink-0 ${isRouteActive('inst-admissions') ? 'text-white' : 'text-teal-400'}`} />
-              {(!collapsed || isMobileOpen) && <span>Admissions & Leads</span>}
-            </button>
+            <div className="relative">
+              {isRouteActive('inst-admissions') && (
+                <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+              )}
+              <button
+                onClick={() => handleNavClick('inst-admissions')}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
+                  isRouteActive('inst-admissions')
+                    ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
+                }`}
+              >
+                <UserCheck className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                  isRouteActive('inst-admissions') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                }`} />
+                {(!collapsed || isMobileOpen) && <span>Admissions & Leads</span>}
+              </button>
+            </div>
           )}
 
           {/* Module 3: Staff & Faculty */}
           {isCampusAdmin && (
-            <button
-              onClick={() => handleNavClick('inst-teachers')}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg transition-all text-left cursor-pointer ${
-                isRouteActive('inst-teachers')
-                  ? 'bg-emerald-600 text-white font-semibold shadow-md'
-                  : 'text-slate-300 hover:text-white hover:bg-[#1a2744]'
-              }`}
-            >
-              <Users className={`w-[18px] h-[18px] shrink-0 ${isRouteActive('inst-teachers') ? 'text-white' : 'text-blue-400'}`} />
-              {(!collapsed || isMobileOpen) && <span>Staff & Faculty</span>}
-            </button>
+            <div className="relative">
+              {isRouteActive('inst-teachers') && (
+                <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+              )}
+              <button
+                onClick={() => handleNavClick('inst-teachers')}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
+                  isRouteActive('inst-teachers')
+                    ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
+                }`}
+              >
+                <Users className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                  isRouteActive('inst-teachers') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                }`} />
+                {(!collapsed || isMobileOpen) && <span>Staff & Faculty</span>}
+              </button>
+            </div>
           )}
 
           {/* Module 4: Examinations & Results */}
           {!isAccountant && (
-            <button
-              onClick={() => handleNavClick('inst-exams')}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg transition-all text-left cursor-pointer ${
-                isRouteActive('inst-exams')
-                  ? 'bg-emerald-600 text-white font-semibold shadow-md'
-                  : 'text-slate-300 hover:text-white hover:bg-[#1a2744]'
-              }`}
-            >
-              <Award className={`w-[18px] h-[18px] shrink-0 ${isRouteActive('inst-exams') ? 'text-white' : 'text-rose-400'}`} />
-              {(!collapsed || isMobileOpen) && <span>Examinations & Results</span>}
-            </button>
+            <div className="relative">
+              {isRouteActive('inst-exams') && (
+                <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+              )}
+              <button
+                onClick={() => handleNavClick('inst-exams')}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
+                  isRouteActive('inst-exams')
+                    ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
+                }`}
+              >
+                <Award className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                  isRouteActive('inst-exams') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                }`} />
+                {(!collapsed || isMobileOpen) && <span>Examinations & Results</span>}
+              </button>
+            </div>
           )}
 
           {/* Module 5: Academics (Expandable) */}
@@ -209,107 +244,120 @@ export const InstituteAdminSidebar = ({
                   if (collapsed) setCollapsed(false)
                   setAcademicsOpen(!academicsOpen)
                 }}
-                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg transition-colors cursor-pointer ${
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-colors cursor-pointer group ${
                   isAcademicsRoute 
-                    ? 'text-white bg-[#1a2744]/70 font-medium' 
-                    : 'text-slate-300 hover:text-white hover:bg-[#1a2744]'
+                    ? 'text-purple-700 bg-[#f5eeff]/50 font-semibold' 
+                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/80'
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <BookOpen className={`w-[18px] h-[18px] shrink-0 ${isAcademicsRoute ? 'text-emerald-400' : 'text-indigo-400'}`} />
+                  <BookOpen className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                    isAcademicsRoute ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                  }`} />
                   {(!collapsed || isMobileOpen) && <span>Academics</span>}
                 </div>
                 {(!collapsed || isMobileOpen) && (
-                  academicsOpen ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />
+                  academicsOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
                 )}
               </button>
 
               {(!collapsed || isMobileOpen) && academicsOpen && (
-                <div className="mt-1 pl-4 pr-1 space-y-0.5 border-l border-[#24365c] ml-5">
-                  <button
-                    onClick={() => handleNavClick('inst-classes')}
-                    className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
-                      isRouteActive('inst-classes') ? 'text-white font-medium bg-[#1e2f54]' : 'text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    <BookOpen className="w-3.5 h-3.5 opacity-80 text-indigo-400 shrink-0" />
-                    <span className="truncate">Classes & Sections</span>
-                  </button>
-                  <button
-                    onClick={() => handleNavClick('inst-subjects')}
-                    className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
-                      isRouteActive('inst-subjects') ? 'text-white font-medium bg-[#1e2f54]' : 'text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    <Bookmark className="w-3.5 h-3.5 opacity-80 text-blue-400 shrink-0" />
-                    <span className="truncate">Curriculum & Subjects</span>
-                  </button>
-                  <button
-                    onClick={() => handleNavClick('inst-timetable')}
-                    className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
-                      isRouteActive('inst-timetable') ? 'text-white font-medium bg-[#1e2f54]' : 'text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    <Clock className="w-3.5 h-3.5 opacity-80 text-amber-400 shrink-0" />
-                    <span className="truncate">Class Timetable</span>
-                  </button>
-                  <button
-                    onClick={() => handleNavClick('inst-program-levels')}
-                    title="Academic Program Levels"
-                    className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
-                      isRouteActive('inst-program-levels') ? 'text-white font-medium bg-[#1e2f54]' : 'text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    <GraduationCap className="w-3.5 h-3.5 opacity-80 text-teal-400 shrink-0" />
-                    <span className="truncate">Program Levels</span>
-                  </button>
+                <div className="mt-1 pl-3.5 space-y-1 border-l-2 border-slate-100 ml-5">
+                  {[
+                    { route: 'inst-classes', label: 'Classes & Sections', icon: BookOpen },
+                    { route: 'inst-subjects', label: 'Curriculum & Subjects', icon: Bookmark },
+                    { route: 'inst-timetable', label: 'Class Timetable', icon: Clock },
+                    { route: 'inst-program-levels', label: 'Program Levels', icon: GraduationCap }
+                  ].map(item => {
+                    const ItemIcon = item.icon
+                    const active = isRouteActive(item.route)
+                    return (
+                      <div key={item.route} className="relative">
+                        {active && (
+                          <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                        )}
+                        <button
+                          onClick={() => handleNavClick(item.route)}
+                          className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
+                            active
+                              ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                              : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                          }`}
+                        >
+                          <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-purple-600' : 'text-slate-400'}`} />
+                          <span className="truncate">{item.label}</span>
+                        </button>
+                      </div>
+                    )
+                  })}
                 </div>
               )}
             </div>
           )}
 
-          {/* Module 6: Attendance */}
+          {/* Module 6: Attendance Register */}
           {!isAccountant && (
-            <button
-              onClick={() => handleNavClick('inst-attendance')}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg transition-all text-left cursor-pointer ${
-                isRouteActive('inst-attendance')
-                  ? 'bg-emerald-600 text-white font-semibold shadow-md'
-                  : 'text-slate-300 hover:text-white hover:bg-[#1a2744]'
-              }`}
-            >
-              <CalendarCheck className={`w-[18px] h-[18px] shrink-0 ${isRouteActive('inst-attendance') ? 'text-white' : 'text-emerald-400'}`} />
-              {(!collapsed || isMobileOpen) && <span>Attendance Register</span>}
-            </button>
+            <div className="relative">
+              {isRouteActive('inst-attendance') && (
+                <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+              )}
+              <button
+                onClick={() => handleNavClick('inst-attendance')}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
+                  isRouteActive('inst-attendance')
+                    ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
+                }`}
+              >
+                <CalendarCheck className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                  isRouteActive('inst-attendance') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                }`} />
+                {(!collapsed || isMobileOpen) && <span>Attendance Register</span>}
+              </button>
+            </div>
           )}
 
           {/* Module 7: Fees & Finance */}
           {!isTeacher && (
-            <button
-              onClick={() => handleNavClick('inst-fees')}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg transition-all text-left cursor-pointer ${
-                isRouteActive('inst-fees')
-                  ? 'bg-emerald-600 text-white font-semibold shadow-md'
-                  : 'text-slate-300 hover:text-white hover:bg-[#1a2744]'
-              }`}
-            >
-              <Receipt className={`w-[18px] h-[18px] shrink-0 ${isRouteActive('inst-fees') ? 'text-white' : 'text-emerald-400'}`} />
-              {(!collapsed || isMobileOpen) && <span>Fees & Finance</span>}
-            </button>
+            <div className="relative">
+              {isRouteActive('inst-fees') && (
+                <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+              )}
+              <button
+                onClick={() => handleNavClick('inst-fees')}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
+                  isRouteActive('inst-fees')
+                    ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
+                }`}
+              >
+                <Receipt className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                  isRouteActive('inst-fees') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                }`} />
+                {(!collapsed || isMobileOpen) && <span>Fees & Finance</span>}
+              </button>
+            </div>
           )}
 
           {/* Module 8: Certificates */}
-          <button
-            onClick={() => handleNavClick('inst-certificates')}
-            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg transition-all text-left cursor-pointer ${
-              isRouteActive('inst-certificates')
-                ? 'bg-emerald-600 text-white font-semibold shadow-md'
-                : 'text-slate-300 hover:text-white hover:bg-[#1a2744]'
-            }`}
-          >
-            <FileBadge className={`w-[18px] h-[18px] shrink-0 ${isRouteActive('inst-certificates') ? 'text-white' : 'text-amber-400'}`} />
-            {(!collapsed || isMobileOpen) && <span>Certificates (SLC/Conduct)</span>}
-          </button>
+          <div className="relative">
+            {isRouteActive('inst-certificates') && (
+              <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+            )}
+            <button
+              onClick={() => handleNavClick('inst-certificates')}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
+                isRouteActive('inst-certificates')
+                  ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
+              }`}
+            >
+              <FileBadge className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                isRouteActive('inst-certificates') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+              }`} />
+              {(!collapsed || isMobileOpen) && <span>Certificates (SLC/Conduct)</span>}
+            </button>
+          </div>
 
           {/* Module 9: Campus Services (Expandable) */}
           <div>
@@ -318,41 +366,50 @@ export const InstituteAdminSidebar = ({
                 if (collapsed) setCollapsed(false)
                 setServicesOpen(!servicesOpen)
               }}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg transition-colors cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-colors cursor-pointer group ${
                 isServicesRoute 
-                  ? 'text-white bg-[#1a2744]/70 font-medium' 
-                  : 'text-slate-300 hover:text-white hover:bg-[#1a2744]'
+                  ? 'text-purple-700 bg-[#f5eeff]/50 font-semibold' 
+                  : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/80'
               }`}
             >
               <div className="flex items-center gap-3">
-                <Bus className={`w-[18px] h-[18px] shrink-0 ${isServicesRoute ? 'text-emerald-400' : 'text-amber-400'}`} />
+                <Bus className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                  isServicesRoute ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                }`} />
                 {(!collapsed || isMobileOpen) && <span>Campus Services</span>}
               </div>
               {(!collapsed || isMobileOpen) && (
-                servicesOpen ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />
+                servicesOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
               )}
             </button>
 
             {(!collapsed || isMobileOpen) && servicesOpen && (
-              <div className="mt-1 pl-4 pr-1 space-y-0.5 border-l border-[#24365c] ml-5">
-                <button
-                  onClick={() => handleNavClick('inst-transport')}
-                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
-                    isRouteActive('inst-transport') ? 'text-white font-medium bg-[#1e2f54]' : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  <Bus className="w-3.5 h-3.5 opacity-80 text-amber-400 shrink-0" />
-                  <span className="truncate">Transport & Vans</span>
-                </button>
-                <button
-                  onClick={() => handleNavClick('inst-library')}
-                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
-                    isRouteActive('inst-library') ? 'text-white font-medium bg-[#1e2f54]' : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  <BookMarked className="w-3.5 h-3.5 opacity-80 text-indigo-400 shrink-0" />
-                  <span className="truncate">Library & Books</span>
-                </button>
+              <div className="mt-1 pl-3.5 space-y-1 border-l-2 border-slate-100 ml-5">
+                {[
+                  { route: 'inst-transport', label: 'Transport & Vans', icon: Bus },
+                  { route: 'inst-library', label: 'Library & Books', icon: BookMarked }
+                ].map(item => {
+                  const ItemIcon = item.icon
+                  const active = isRouteActive(item.route)
+                  return (
+                    <div key={item.route} className="relative">
+                      {active && (
+                        <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                      )}
+                      <button
+                        onClick={() => handleNavClick(item.route)}
+                        className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
+                          active
+                            ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                            : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                        }`}
+                      >
+                        <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-purple-600' : 'text-slate-400'}`} />
+                        <span className="truncate">{item.label}</span>
+                      </button>
+                    </div>
+                  )
+                })}
               </div>
             )}
           </div>
@@ -364,51 +421,60 @@ export const InstituteAdminSidebar = ({
                 if (collapsed) setCollapsed(false)
                 setLearningOpen(!learningOpen)
               }}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg transition-colors cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-colors cursor-pointer group ${
                 isLearningRoute 
-                  ? 'text-white bg-[#1a2744]/70 font-medium' 
-                  : 'text-slate-300 hover:text-white hover:bg-[#1a2744]'
+                  ? 'text-purple-700 bg-[#f5eeff]/50 font-semibold' 
+                  : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/80'
               }`}
             >
               <div className="flex items-center gap-3">
-                <Laptop className={`w-[18px] h-[18px] shrink-0 ${isLearningRoute ? 'text-emerald-400' : 'text-cyan-400'}`} />
+                <Laptop className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                  isLearningRoute ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                }`} />
                 {(!collapsed || isMobileOpen) && <span>Learning & Resources</span>}
               </div>
               {(!collapsed || isMobileOpen) && (
-                learningOpen ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />
+                learningOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
               )}
             </button>
 
             {(!collapsed || isMobileOpen) && learningOpen && (
-              <div className="mt-1 pl-4 pr-1 space-y-0.5 border-l border-[#24365c] ml-5">
-                <button
-                  onClick={() => handleNavClick('inst-learning')}
-                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
-                    isRouteActive('inst-learning') ? 'text-white font-medium bg-[#1e2f54]' : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  <Laptop className="w-3.5 h-3.5 opacity-80 text-cyan-400 shrink-0" />
-                  <span className="truncate">Study Notes & LMS</span>
-                </button>
-                <button
-                  onClick={() => handleNavClick('inst-notices')}
-                  className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-md text-[13px] transition-colors cursor-pointer ${
-                    isRouteActive('inst-notices') ? 'text-white font-medium bg-[#1e2f54]' : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  <Megaphone className="w-3.5 h-3.5 opacity-80 text-purple-400 shrink-0" />
-                  <span className="truncate">Campus Notices</span>
-                </button>
+              <div className="mt-1 pl-3.5 space-y-1 border-l-2 border-slate-100 ml-5">
+                {[
+                  { route: 'inst-learning', label: 'Study Notes & LMS', icon: Laptop },
+                  { route: 'inst-notices', label: 'Campus Notices', icon: Megaphone }
+                ].map(item => {
+                  const ItemIcon = item.icon
+                  const active = isRouteActive(item.route)
+                  return (
+                    <div key={item.route} className="relative">
+                      {active && (
+                        <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                      )}
+                      <button
+                        onClick={() => handleNavClick(item.route)}
+                        className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
+                          active
+                            ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                            : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                        }`}
+                      >
+                        <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-purple-600' : 'text-slate-400'}`} />
+                        <span className="truncate">{item.label}</span>
+                      </button>
+                    </div>
+                  )
+                })}
               </div>
             )}
           </div>
         </div>
 
         {/* Clean Sign Out Footer */}
-        <div className="p-3 border-t border-[#1e2d4d] bg-[#0c1526]">
+        <div className="p-3 border-t border-slate-100 bg-white">
           <button
             onClick={logout}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors text-xs font-semibold cursor-pointer"
+            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors text-xs font-semibold cursor-pointer"
           >
             <LogOut className="w-4 h-4 shrink-0" />
             {(!collapsed || isMobileOpen) && <span>Sign Out</span>}

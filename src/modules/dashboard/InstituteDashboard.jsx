@@ -72,7 +72,7 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
       case 'elementary':
         return {
           icon: BookOpen,
-          iconColor: 'text-emerald-400',
+          iconColor: 'text-purple-300',
           sectionTag: 'Elementary School Section (Grade 1 - 8)',
           mainTitle: `${campusName} • Elementary School Wing`,
           description: `Tier: Grades 1 to 8 • Primary (1-5) & Middle (6-8) Foundation • ${campusCode}-ELEM`,
@@ -233,8 +233,8 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
       )}
 
       {/* Dynamic Campus & Academic Tier Header Banner */}
-      <div className="bg-gradient-to-r from-[#0f172a] via-[#14233c] to-[#132c4b] border border-slate-800 rounded-2xl p-6 text-white shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-all duration-200">
-        <div>
+      <div className="bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 border border-purple-800/40 rounded-3xl p-6 sm:p-7 text-white shadow-xl shadow-purple-950/10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-all duration-200 relative overflow-hidden">
+        <div className="relative z-10">
           <div className="flex items-center gap-2">
             <span className={`text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 ${banner.iconColor}`}>
               <BannerIcon className="w-4 h-4" />
@@ -247,22 +247,22 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
           <h1 className="text-2xl font-bold mt-1.5 tracking-tight text-white flex items-center gap-2">
             <span>{banner.mainTitle}</span>
           </h1>
-          <p className="text-xs text-slate-300 mt-1">
+          <p className="text-xs text-purple-200/80 mt-1">
             {banner.description}
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 flex-wrap">
+        <div className="flex items-center gap-2.5 flex-wrap relative z-10">
           <button
             onClick={() => onRouteChange('inst-students')}
-            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold shadow transition-all duration-150 flex items-center gap-1.5 active:scale-[0.98]"
+            className="px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-semibold shadow-md shadow-purple-600/30 transition-all duration-150 flex items-center gap-1.5 active:scale-[0.98]"
           >
             <UserPlus className="w-3.5 h-3.5" />
             <span>New Admission</span>
           </button>
           <button
             onClick={() => onRouteChange('inst-fees')}
-            className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-semibold border border-white/20 transition-all duration-150 flex items-center gap-1.5 active:scale-[0.98]"
+            className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-semibold border border-white/20 transition-all duration-150 flex items-center gap-1.5 active:scale-[0.98]"
           >
             <CreditCard className="w-3.5 h-3.5" />
             <span>Generate Fee Challan</span>
@@ -274,13 +274,13 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
       <div className="bg-white border border-slate-200/80 rounded-2xl p-3 sm:p-4 shadow-xs">
         <div className="flex items-center justify-between gap-2 mb-2 px-1">
           <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
-            <Layers className="w-4 h-4 text-blue-600" />
+            <Layers className="w-4 h-4 text-purple-600" />
             <span>Academic Tier Scope:</span>
             <span className="text-slate-400 font-normal hidden sm:inline">Switch campus view by educational level</span>
           </div>
           <button
             onClick={() => onRouteChange('inst-program-levels')}
-            className="text-[11px] font-semibold text-blue-600 hover:underline flex items-center gap-1"
+            className="text-[11px] font-semibold text-purple-600 hover:underline flex items-center gap-1"
           >
             <span>View All Tiers & Streams</span>
             <ArrowUpRight className="w-3.5 h-3.5" />
@@ -297,7 +297,7 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
                 onClick={() => setActiveProgramLevel(lvl.id)}
                 className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-150 shrink-0 border ${
                   isSelected
-                    ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                    ? 'bg-purple-600 text-white border-purple-600 shadow-xs'
                     : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200/80'
                 }`}
               >
@@ -315,14 +315,14 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
 
       {/* Active Academic Level Filter Banner */}
       {activeProgramLevel !== 'all' && activeLevelObj && (
-        <div className="bg-gradient-to-r from-blue-50/90 via-indigo-50/50 to-white border border-blue-200/90 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-[0_2px_10px_rgba(37,99,235,0.04)] animate-in fade-in slide-in-from-top-2">
+        <div className="bg-gradient-to-r from-purple-50/90 via-indigo-50/50 to-white border border-purple-200/90 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-[0_2px_10px_rgba(124,58,237,0.04)] animate-in fade-in slide-in-from-top-2">
           <div className="flex items-start sm:items-center gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-sm shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center font-bold text-sm shadow-sm shrink-0">
               <GraduationCap className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#f5eeff] text-purple-700 border border-purple-200">
                   Active Tier Filter
                 </span>
                 <span className="text-sm font-bold text-slate-900">{activeLevelObj.title}</span>
@@ -331,7 +331,7 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
               <p className="text-xs text-slate-500 mt-1">{activeLevelObj.description}</p>
               <div className="flex items-center gap-1.5 mt-2 flex-wrap">
                 {activeLevelObj.categories.map((cat, idx) => (
-                  <span key={idx} className="text-[11px] bg-white border border-blue-200/60 text-slate-700 px-2 py-0.5 rounded-md font-medium shadow-2xs">
+                  <span key={idx} className="text-[11px] bg-white border border-purple-200/60 text-slate-700 px-2 py-0.5 rounded-md font-medium shadow-2xs">
                     {cat.name} <span className="text-slate-400 font-mono">({cat.span})</span>
                   </span>
                 ))}
@@ -340,7 +340,7 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
           </div>
           <button
             onClick={() => setActiveProgramLevel('all')}
-            className="px-3.5 py-1.5 text-xs font-semibold text-blue-700 bg-white border border-blue-200 hover:bg-blue-50 hover:border-blue-300 rounded-xl shadow-2xs transition-all shrink-0 active:scale-95"
+            className="px-3.5 py-1.5 text-xs font-semibold text-purple-700 bg-white border border-purple-200 hover:bg-[#f5eeff] hover:border-purple-300 rounded-xl shadow-2xs transition-all shrink-0 active:scale-95"
           >
             Reset to All Levels
           </button>
@@ -355,7 +355,7 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
         <StatCard
           title="Total Students"
           value={instStudents.length}
-          color="emerald"
+          color="purple"
           badge={activeProgramLevel !== 'all' ? `${activeLevelObj?.shortTitle}` : (instStudents.length > 0 ? `+${instStudents.length} active` : '0 active')}
           badgePositive={instStudents.length > 0}
           icon={GraduationCap}
@@ -419,12 +419,12 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-5">
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <BookOpen className="w-5 h-5 text-blue-600" />
+              <BookOpen className="w-5 h-5 text-purple-600" />
               <h2 className="text-base font-bold text-slate-900 tracking-tight">
                 Classes & Custom Sections Directory
               </h2>
               {activeProgramLevel !== 'all' && (
-                <span className="text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                <span className="text-[11px] font-semibold text-purple-700 bg-[#f5eeff] px-2 py-0.5 rounded-full border border-purple-200">
                   {activeLevelObj?.shortTitle}
                 </span>
               )}
@@ -436,7 +436,7 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
 
           <button
             onClick={() => onRouteChange('inst-classes')}
-            className="px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 shrink-0"
+            className="px-3.5 py-1.5 bg-[#f5eeff] hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 shrink-0"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Manage All Classes & Sections</span>
@@ -515,7 +515,7 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
                     <span>Teacher: <strong className="text-slate-600 font-medium">{cls.classTeacher || 'Assigned Staff'}</strong></span>
                     <button
                       onClick={() => onRouteChange('inst-classes')}
-                      className="text-blue-600 hover:underline font-semibold"
+                      className="text-purple-600 hover:underline font-semibold"
                     >
                       Configure →
                     </button>
@@ -533,7 +533,7 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
             </p>
             <button
               onClick={() => onRouteChange('inst-classes')}
-              className="mt-1 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-xs transition-all flex items-center gap-1"
+              className="mt-1 px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-semibold shadow-xs transition-all flex items-center gap-1"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Configure Classes & Custom Sections</span>
@@ -554,7 +554,7 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
             {instStudents.length > 0 && (
               <button
                 onClick={() => onRouteChange('inst-students')}
-                className="text-xs font-semibold text-emerald-600 hover:text-emerald-700"
+                className="text-xs font-semibold text-purple-600 hover:text-purple-700"
               >
                 View All Students →
               </button>
@@ -600,7 +600,7 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
                 </p>
                 <button
                   onClick={() => onRouteChange('inst-students')}
-                  className="mt-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
+                  className="mt-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
                 >
                   Enroll First Student
                 </button>
