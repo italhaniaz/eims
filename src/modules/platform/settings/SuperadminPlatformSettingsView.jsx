@@ -193,7 +193,19 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
       if (PlatformService?.startImpersonation) {
         await PlatformService.startImpersonation(inst, user)
       }
-      login('institute_admin', `admin@${inst.slug || 'campus'}.edu`)
+      const instId = inst.id || ''
+      const instType = (inst.type || '').toLowerCase()
+      const tiers = inst.enabledTiers || []
+      
+      if (instId === 'inst-2' || instType === 'school' || (tiers.includes('school') && !tiers.includes('college'))) {
+        login('school_admin', 'admin.school@cityschool.edu')
+      } else if (instId === 'inst-3' || instType === 'college' || (tiers.includes('college') && !tiers.includes('undergraduate'))) {
+        login('college_admin', 'admin.college@roots.edu')
+      } else if (instId === 'inst-4' || instType === 'university' || tiers.includes('undergraduate')) {
+        login('university_admin', 'admin.uni@ias.edu.pk')
+      } else {
+        login('institute_admin', `admin@${inst.slug || 'campus'}.edu`)
+      }
       toast?.info?.(`Now impersonating "${inst.name}". A 60-minute delegation session is active.`)
     } catch (err) {
       toast?.error?.(err.message || 'Failed to initiate impersonation session')

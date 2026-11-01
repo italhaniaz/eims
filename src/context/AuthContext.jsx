@@ -204,6 +204,9 @@ export const AuthProvider = ({ children }) => {
         }
         break
 
+      // ==========================================
+      // SCHOOL TIER SPECIFIC PORTALS (Pick 1)
+      // ==========================================
       case 'school_admin':
         userPayload = {
           id: 'usr-school',
@@ -215,8 +218,368 @@ export const AuthProvider = ({ children }) => {
           instituteId: 'inst-2',
           instituteName: 'City School Model Town Campus',
           instituteType: 'School',
+          tier: 'school',
           enabledTiers: ['school'],
           scope: 'School Administration (K-10)',
+          isExplicitLogin: true,
+          loginTimestamp: new Date().toISOString()
+        }
+        break
+
+      case 'school_parent':
+        userPayload = {
+          id: 'usr-sch-parent',
+          name: 'Farooq Ahmed (Guardian)',
+          roleTitle: 'School Parent / Guardian',
+          role: 'parent',
+          tier: 'school',
+          email: customEmail || 'parent.school@cityschool.edu',
+          avatar: null,
+          instituteId: 'inst-2',
+          instituteName: 'City School Model Town Campus',
+          instituteType: 'School',
+          wardName: 'Hamza Farooq',
+          wardRollNo: 'CSM-2026-104',
+          wardClass: 'Grade 10 - Section A',
+          isExplicitLogin: true,
+          loginTimestamp: new Date().toISOString()
+        }
+        break
+
+      case 'school_student':
+        userPayload = {
+          id: 'usr-sch-student',
+          name: 'Hamza Farooq',
+          roleTitle: 'School Student (Matric/O-Levels)',
+          role: 'student',
+          tier: 'school',
+          email: customEmail || 'student.school@cityschool.edu',
+          avatar: null,
+          instituteId: 'inst-2',
+          instituteName: 'City School Model Town Campus',
+          instituteType: 'School',
+          studentId: 'CSM-2026-104',
+          rollNumber: 'CSM-2026-104',
+          className: 'Grade 10 - Section A',
+          section: 'Section A',
+          isExplicitLogin: true,
+          loginTimestamp: new Date().toISOString()
+        }
+        break
+
+      case 'school_teacher':
+        userPayload = {
+          id: 'usr-sch-teacher',
+          name: 'Sir Salman Ahmed',
+          roleTitle: 'Class Teacher (Grade 10)',
+          role: 'teacher',
+          tier: 'school',
+          email: customEmail || 'teacher.school@cityschool.edu',
+          avatar: null,
+          instituteId: 'inst-2',
+          instituteName: 'City School Model Town Campus',
+          instituteType: 'School',
+          department: 'Mathematics & Science',
+          assignedClasses: ['Grade 10 - Section A', 'Grade 9 - Section B'],
+          isExplicitLogin: true,
+          loginTimestamp: new Date().toISOString()
+        }
+        break
+
+      case 'school_accountant':
+        userPayload = {
+          id: 'usr-sch-accountant',
+          name: 'Muhammad Waqas (Bursar)',
+          roleTitle: 'School Accounts & Fees Officer',
+          role: 'accountant',
+          tier: 'school',
+          email: customEmail || 'accounts.school@cityschool.edu',
+          avatar: null,
+          instituteId: 'inst-2',
+          instituteName: 'City School Model Town Campus',
+          instituteType: 'School',
+          scope: 'Fees & Accounts Only',
+          isExplicitLogin: true,
+          loginTimestamp: new Date().toISOString()
+        }
+        break
+
+      // ==========================================
+      // COLLEGE TIER SPECIFIC PORTALS (Pick 2)
+      // ==========================================
+      case 'college_student':
+        userPayload = {
+          id: 'usr-col-student',
+          name: 'Zainab Fatima',
+          roleTitle: 'College Student (HSSC Pre-Med)',
+          role: 'student',
+          tier: 'college',
+          email: customEmail || 'student.college@roots.edu',
+          avatar: null,
+          instituteId: 'inst-3',
+          instituteName: 'Roots International College & Academy',
+          instituteType: 'College',
+          studentId: 'COL-24-101',
+          rollNumber: 'COL-24-101',
+          boardRollNo: '710429 (BISE Lahore)',
+          className: 'F.Sc Pre-Medical (Part II)',
+          section: 'Pre-Med A',
+          isExplicitLogin: true,
+          loginTimestamp: new Date().toISOString()
+        }
+        break
+
+      case 'college_parent':
+        userPayload = {
+          id: 'usr-col-parent',
+          name: 'Tariq Sheikh (Father)',
+          roleTitle: 'College Parent / Guardian',
+          role: 'parent',
+          tier: 'college',
+          email: customEmail || 'parent.college@roots.edu',
+          avatar: null,
+          instituteId: 'inst-3',
+          instituteName: 'Roots International College & Academy',
+          instituteType: 'College',
+          wardName: 'Zainab Fatima',
+          wardRollNo: 'COL-24-101',
+          wardClass: 'F.Sc Pre-Medical (Part II)',
+          isExplicitLogin: true,
+          loginTimestamp: new Date().toISOString()
+        }
+        break
+
+      case 'college_faculty':
+        userPayload = {
+          id: 'usr-col-faculty',
+          name: 'Dr. Nadia Hashmi',
+          roleTitle: 'Associate Professor of Chemistry',
+          role: 'teacher',
+          tier: 'college',
+          email: customEmail || 'faculty.college@roots.edu',
+          avatar: null,
+          instituteId: 'inst-3',
+          instituteName: 'Roots International College & Academy',
+          instituteType: 'College',
+          department: 'Natural Sciences & Pre-Medical',
+          assignedClasses: ['F.Sc Pre-Medical (Part II)', 'ICS (Part I)'],
+          isExplicitLogin: true,
+          loginTimestamp: new Date().toISOString()
+        }
+        break
+
+      case 'college_hod':
+        userPayload = {
+          id: 'usr-col-hod',
+          name: 'Prof. Tariq Jamil',
+          roleTitle: 'HOD Department of Natural Sciences',
+          role: 'hod',
+          tier: 'college',
+          email: customEmail || 'hod.college@roots.edu',
+          avatar: null,
+          instituteId: 'inst-3',
+          instituteName: 'Roots International College & Academy',
+          instituteType: 'College',
+          department: 'Natural Sciences & Computer Studies',
+          scope: 'Department Performance, Workload & Results',
+          isExplicitLogin: true,
+          loginTimestamp: new Date().toISOString()
+        }
+        break
+
+      case 'college_accountant':
+        userPayload = {
+          id: 'usr-col-accountant',
+          name: 'Rashid Khan (Fee Desk)',
+          roleTitle: 'College Accounts & Concessions Officer',
+          role: 'accountant',
+          tier: 'college',
+          email: customEmail || 'accounts.college@roots.edu',
+          avatar: null,
+          instituteId: 'inst-3',
+          instituteName: 'Roots International College & Academy',
+          instituteType: 'College',
+          scope: 'Fees & Accounts Only',
+          isExplicitLogin: true,
+          loginTimestamp: new Date().toISOString()
+        }
+        break
+
+      // ==========================================
+      // UNIVERSITY TIER SPECIFIC PORTALS (Pick 3)
+      // ==========================================
+      case 'uni_student':
+        userPayload = {
+          id: 'usr-uni-student',
+          name: 'Daniyal Qureshi',
+          roleTitle: 'Undergraduate BSCS (Semester 6)',
+          role: 'student',
+          tier: 'university',
+          email: customEmail || 'student.uni@ias.edu.pk',
+          avatar: null,
+          instituteId: 'inst-4',
+          instituteName: 'Institute of Applied Sciences & Undergraduates',
+          instituteType: 'University',
+          studentId: 'BSCS-F23-018',
+          rollNumber: 'BSCS-F23-018',
+          className: 'BS Computer Science - Semester 6',
+          section: 'Cohort A',
+          cgpa: '3.72',
+          activeCrHrs: 18,
+          isExplicitLogin: true,
+          loginTimestamp: new Date().toISOString()
+        }
+        break
+
+      case 'uni_faculty':
+        userPayload = {
+          id: 'usr-uni-faculty',
+          name: 'Dr. Shahzad Rafiq',
+          roleTitle: 'Assistant Professor & FYP Supervisor',
+          role: 'teacher',
+          tier: 'university',
+          email: customEmail || 'faculty.uni@ias.edu.pk',
+          avatar: null,
+          instituteId: 'inst-4',
+          instituteName: 'Institute of Applied Sciences & Undergraduates',
+          instituteType: 'University',
+          department: 'Department of Computing',
+          assignedClasses: ['BSCS - Semester 6', 'BSAI - Semester 4'],
+          isExplicitLogin: true,
+          loginTimestamp: new Date().toISOString()
+        }
+        break
+
+      case 'uni_dean':
+        userPayload = {
+          id: 'usr-uni-dean',
+          name: 'Prof. Dr. Tariq Jamil',
+          roleTitle: 'Dean Faculty of Computing & Engineering',
+          role: 'dean',
+          tier: 'university',
+          email: customEmail || 'dean.uni@ias.edu.pk',
+          avatar: null,
+          instituteId: 'inst-4',
+          instituteName: 'Institute of Applied Sciences & Undergraduates',
+          instituteType: 'University',
+          scope: 'Department Performance, Workload & Senate Approvals',
+          isExplicitLogin: true,
+          loginTimestamp: new Date().toISOString()
+        }
+        break
+
+      case 'uni_registrar':
+        userPayload = {
+          id: 'usr-uni-registrar',
+          name: 'Malik Mansoor (Registrar)',
+          roleTitle: 'University Registrar (Admissions & CMS)',
+          role: 'registrar',
+          tier: 'university',
+          email: customEmail || 'registrar.uni@ias.edu.pk',
+          avatar: null,
+          instituteId: 'inst-4',
+          instituteName: 'Institute of Applied Sciences & Undergraduates',
+          instituteType: 'University',
+          scope: 'Admissions, Student CMS, Certificates & Senate Approvals',
+          isExplicitLogin: true,
+          loginTimestamp: new Date().toISOString()
+        }
+        break
+
+      case 'uni_controller':
+        userPayload = {
+          id: 'usr-uni-controller',
+          name: 'Dr. Asim Cheema',
+          roleTitle: 'Controller of Examinations',
+          role: 'controller',
+          tier: 'university',
+          email: customEmail || 'controller.uni@ias.edu.pk',
+          avatar: null,
+          instituteId: 'inst-4',
+          instituteName: 'Institute of Applied Sciences & Undergraduates',
+          instituteType: 'University',
+          scope: 'Exams, Results Tabulation, Transcripts & Degree Conferment',
+          isExplicitLogin: true,
+          loginTimestamp: new Date().toISOString()
+        }
+        break
+
+      case 'uni_finance':
+        userPayload = {
+          id: 'usr-uni-finance',
+          name: 'Muhammad Waqas (Treasurer)',
+          roleTitle: 'Director Finance & Accounts',
+          role: 'finance',
+          tier: 'university',
+          email: customEmail || 'finance.uni@ias.edu.pk',
+          avatar: null,
+          instituteId: 'inst-4',
+          instituteName: 'Institute of Applied Sciences & Undergraduates',
+          instituteType: 'University',
+          scope: 'Semester Fees, Fiscal Budget, Payroll & HEC Grants',
+          isExplicitLogin: true,
+          loginTimestamp: new Date().toISOString()
+        }
+        break
+
+      case 'uni_parent':
+        userPayload = {
+          id: 'usr-uni-parent',
+          name: 'Qureshi Nadeem (Guardian)',
+          roleTitle: 'University Parent / Guardian',
+          role: 'parent',
+          tier: 'university',
+          email: customEmail || 'parent.uni@ias.edu.pk',
+          avatar: null,
+          instituteId: 'inst-4',
+          instituteName: 'Institute of Applied Sciences & Undergraduates',
+          instituteType: 'University',
+          wardName: 'Daniyal Qureshi',
+          wardRollNo: 'BSCS-F23-018',
+          wardClass: 'BS Computer Science - Semester 6',
+          isExplicitLogin: true,
+          loginTimestamp: new Date().toISOString()
+        }
+        break
+
+      case 'uni_applicant':
+        userPayload = {
+          id: 'usr-uni-applicant',
+          name: 'Sarah Khan',
+          roleTitle: 'Undergraduate Applicant (Merit Rank #14)',
+          role: 'applicant',
+          tier: 'university',
+          email: customEmail || 'applicant.uni@ias.edu.pk',
+          avatar: null,
+          instituteId: 'inst-4',
+          instituteName: 'Institute of Applied Sciences & Undergraduates',
+          instituteType: 'University',
+          programApplied: 'BS Artificial Intelligence',
+          meritRank: 14,
+          meritStatus: 'Selected in 1st Merit List',
+          testScore: 84,
+          isExplicitLogin: true,
+          loginTimestamp: new Date().toISOString()
+        }
+        break
+
+      case 'uni_alumni':
+        userPayload = {
+          id: 'usr-uni-alumni',
+          name: 'Farhan Zaidi',
+          roleTitle: 'IAS Alumnus (BSCS Class 2024)',
+          role: 'alumni',
+          tier: 'university',
+          email: customEmail || 'alumni.uni@ias.edu.pk',
+          avatar: null,
+          instituteId: 'inst-4',
+          instituteName: 'Institute of Applied Sciences & Undergraduates',
+          instituteType: 'University',
+          degree: 'BS Computer Science',
+          graduationYear: 2024,
+          currentCompany: 'Amazon Web Services (AWS)',
+          location: 'Dubai, UAE',
+          isMentor: true,
           isExplicitLogin: true,
           loginTimestamp: new Date().toISOString()
         }

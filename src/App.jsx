@@ -441,8 +441,8 @@ const AppContent = () => {
     )
   }
 
-  // 2. DEDICATED STUDENT & PARENT ACADEMIC PORTAL
-  if (user?.role === 'student' || user?.role === 'parent') {
+  // 2. DEDICATED STUDENT, PARENT, APPLICANT & ALUMNI PORTALS
+  if (['student', 'parent', 'applicant', 'alumni'].includes(user?.role)) {
     return (
       <ErrorBoundary onNavigateHome={() => window.location.reload()}>
         <Suspense fallback={<ModuleLoader />}>
@@ -475,7 +475,7 @@ const AppContent = () => {
         address: 'Designated Campus'
       } : null)
 
-  const activeCampus = (user?.role === 'institute_admin' && scopedInstitute)
+  const activeCampus = (user?.role !== 'superadmin' && scopedInstitute)
     ? scopedInstitute
     : (selectedInstitute || matchedInst || allKnownInstitutes[0] || {
         id: user?.instituteId || 'inst-1',

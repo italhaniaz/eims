@@ -57,9 +57,42 @@ export const InstituteAdminSidebar = ({
   const isCollege = tierConfig.isCollegeOnly
   const isUniversity = tierConfig.isUniversityOnly
   const userRole = user?.role || 'institute_admin'
-  const isTeacher = userRole === 'teacher'
-  const isAccountant = userRole === 'accountant'
-  const isCampusAdmin = !isTeacher && !isAccountant
+  
+  // Specific sub-roles across School, College, and University
+  const isAccountant = ['accountant', 'school_accountant', 'college_accountant', 'finance', 'uni_finance'].includes(userRole)
+  const isTeacher = ['teacher', 'faculty', 'school_teacher', 'college_faculty', 'uni_faculty'].includes(userRole)
+  const isHod = ['hod', 'college_hod', 'dean', 'uni_dean'].includes(userRole)
+  const isRegistrar = ['registrar', 'uni_registrar'].includes(userRole)
+  const isController = ['controller', 'uni_controller'].includes(userRole)
+  const isFullAdmin = !isAccountant && !isTeacher && !isHod && !isRegistrar && !isController
+  const isCampusAdmin = isFullAdmin
+
+  // Route access permissions engine based on user requirements
+  const canAccessRoute = (routeId) => {
+    if (isFullAdmin) return true
+
+    if (isAccountant) {
+      return ['inst-dashboard', 'inst-fees', 'inst-accounts', 'inst-payroll', 'inst-scholarships', 'inst-reports'].includes(routeId)
+    }
+
+    if (isTeacher) {
+      return ['inst-dashboard', 'inst-classes', 'inst-subjects', 'inst-timetable', 'inst-attendance', 'inst-exams', 'inst-learning', 'inst-teachers', 'inst-payroll', 'inst-research-fyp', 'inst-notices'].includes(routeId)
+    }
+
+    if (isHod) {
+      return ['inst-dashboard', 'inst-students', 'inst-course-registration', 'inst-program-levels', 'inst-classes', 'inst-subjects', 'inst-timetable', 'inst-attendance', 'inst-exams', 'inst-board-exams', 'inst-teachers', 'inst-research-fyp', 'inst-discipline', 'inst-labs', 'inst-learning', 'inst-notices', 'inst-reports'].includes(routeId)
+    }
+
+    if (isRegistrar) {
+      return ['inst-dashboard', 'inst-admissions', 'inst-students', 'inst-certificates', 'inst-discipline', 'inst-career-alumni', 'inst-events', 'inst-reports', 'inst-users', 'inst-notices'].includes(routeId)
+    }
+
+    if (isController) {
+      return ['inst-dashboard', 'inst-course-registration', 'inst-exams', 'inst-certificates', 'inst-events', 'inst-reports', 'inst-notices'].includes(routeId)
+    }
+
+    return true
+  }
 
   // Route active state check
   const isRouteActive = (route) => currentRoute === route
@@ -619,6 +652,7 @@ export const InstituteAdminSidebar = ({
               )}
 
               {/* 16. Learning Management (LMS) */}
+              {canAccessRoute('inst-learning') && (
               <div className="relative">
                 {isRouteActive('inst-learning') && (
                   <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
@@ -637,8 +671,10 @@ export const InstituteAdminSidebar = ({
                   {(!collapsed || isMobileOpen) && <span>Learning Management (LMS)</span>}
                 </button>
               </div>
+              )}
 
               {/* 17. Career, Placement & Alumni */}
+              {canAccessRoute('inst-career-alumni') && (
               <div className="relative">
                 {isRouteActive('inst-career-alumni') && (
                   <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
@@ -657,8 +693,10 @@ export const InstituteAdminSidebar = ({
                   {(!collapsed || isMobileOpen) && <span>Career, Placement & Alumni</span>}
                 </button>
               </div>
+              )}
 
               {/* 18. Communication & Notices */}
+              {canAccessRoute('inst-notices') && (
               <div className="relative">
                 {isRouteActive('inst-notices') && (
                   <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
@@ -677,8 +715,10 @@ export const InstituteAdminSidebar = ({
                   {(!collapsed || isMobileOpen) && <span>Communication & Notices</span>}
                 </button>
               </div>
+              )}
 
               {/* 19. Events & Convocation */}
+              {canAccessRoute('inst-events') && (
               <div className="relative">
                 {isRouteActive('inst-events') && (
                   <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
@@ -697,8 +737,10 @@ export const InstituteAdminSidebar = ({
                   {(!collapsed || isMobileOpen) && <span>Events & Convocation</span>}
                 </button>
               </div>
+              )}
 
               {/* 20. Reports & HEC / QEC Compliance */}
+              {canAccessRoute('inst-reports') && (
               <div className="relative">
                 {isRouteActive('inst-reports') && (
                   <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
@@ -717,6 +759,7 @@ export const InstituteAdminSidebar = ({
                   {(!collapsed || isMobileOpen) && <span>Reports & HEC / QEC Compliance</span>}
                 </button>
               </div>
+              )}
 
               {/* 21. Users, Roles & Workflow Approvals */}
               {isCampusAdmin && (
@@ -1106,6 +1149,7 @@ export const InstituteAdminSidebar = ({
               )}
 
               {/* 12. Communication & Notices */}
+              {canAccessRoute('inst-notices') && (
               <div className="relative">
                 {isRouteActive('inst-notices') && (
                   <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
@@ -1124,6 +1168,7 @@ export const InstituteAdminSidebar = ({
                   {(!collapsed || isMobileOpen) && <span>Communication & Notices</span>}
                 </button>
               </div>
+              )}
 
               {/* 13. Student Affairs & Discipline */}
               {!isAccountant && (
@@ -1207,6 +1252,7 @@ export const InstituteAdminSidebar = ({
               )}
 
               {/* 15. Learning & Resources */}
+              {canAccessRoute('inst-learning') && (
               <div className="relative">
                 {isRouteActive('inst-learning') && (
                   <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
@@ -1225,8 +1271,10 @@ export const InstituteAdminSidebar = ({
                   {(!collapsed || isMobileOpen) && <span>Learning & Resources</span>}
                 </button>
               </div>
+              )}
 
               {/* 16. Events & Calendar */}
+              {canAccessRoute('inst-events') && (
               <div className="relative">
                 {isRouteActive('inst-events') && (
                   <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
@@ -1245,8 +1293,10 @@ export const InstituteAdminSidebar = ({
                   {(!collapsed || isMobileOpen) && <span>Events & Calendar</span>}
                 </button>
               </div>
+              )}
 
               {/* 17. Reports & Analytics */}
+              {canAccessRoute('inst-reports') && (
               <div className="relative">
                 {isRouteActive('inst-reports') && (
                   <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
@@ -1265,6 +1315,7 @@ export const InstituteAdminSidebar = ({
                   {(!collapsed || isMobileOpen) && <span>Reports & Analytics</span>}
                 </button>
               </div>
+              )}
 
               {/* 18. Users, Roles & Settings */}
               {isCampusAdmin && (
@@ -1603,6 +1654,7 @@ export const InstituteAdminSidebar = ({
               )}
 
               {/* 9. Communication & Notices */}
+              {canAccessRoute('inst-notices') && (
               <div className="relative">
                 {isRouteActive('inst-notices') && (
                   <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
@@ -1621,8 +1673,10 @@ export const InstituteAdminSidebar = ({
                   {(!collapsed || isMobileOpen) && <span>Communication & Notices</span>}
                 </button>
               </div>
+              )}
 
               {/* 10. Homework & Learning Resources */}
+              {canAccessRoute('inst-learning') && (
               <div className="relative">
                 {isRouteActive('inst-learning') && (
                   <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
@@ -1641,6 +1695,7 @@ export const InstituteAdminSidebar = ({
                   {(!collapsed || isMobileOpen) && <span>Homework & Learning Resources</span>}
                 </button>
               </div>
+              )}
 
               {/* 11. Campus Services (Transport, Library, Inventory) */}
               {!isAccountant && (
@@ -1723,6 +1778,7 @@ export const InstituteAdminSidebar = ({
               )}
 
               {/* 13. Events & Calendar */}
+              {canAccessRoute('inst-events') && (
               <div className="relative">
                 {isRouteActive('inst-events') && (
                   <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
@@ -1741,8 +1797,10 @@ export const InstituteAdminSidebar = ({
                   {(!collapsed || isMobileOpen) && <span>Events & Calendar</span>}
                 </button>
               </div>
+              )}
 
               {/* 14. Reports & Analytics */}
+              {canAccessRoute('inst-reports') && (
               <div className="relative">
                 {isRouteActive('inst-reports') && (
                   <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
@@ -1761,6 +1819,7 @@ export const InstituteAdminSidebar = ({
                   {(!collapsed || isMobileOpen) && <span>Reports & Analytics</span>}
                 </button>
               </div>
+              )}
 
               {/* 15. Users, Roles & Settings */}
               {isCampusAdmin && (
