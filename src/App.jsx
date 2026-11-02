@@ -144,7 +144,7 @@ const AppContent = () => {
   const [publicView, setPublicView] = useState(() => {
     if (typeof window !== 'undefined' && window.location.hash) {
       const hash = window.location.hash.replace(/^#\/?/, '')
-      if (hash === 'login' || hash === 'signin' || hash === 'superadmin' || hash === 'superadmin-login') return 'login'
+      if (hash === 'login' || hash === 'signin' || hash === 'superadmin' || hash === 'superadmin-login' || (typeof window !== 'undefined' && window.location.pathname.toLowerCase().includes('superadmin'))) return 'login'
       if (hash === 'demo' || hash === 'live-demo') return 'demo'
     }
     return 'landing'

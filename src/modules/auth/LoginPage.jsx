@@ -29,7 +29,8 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
   const [authMode, setAuthMode] = useState(() => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash.toLowerCase()
-      if (hash.includes('superadmin') || hash.includes('admin-login')) return 'superadmin'
+      const pathname = window.location.pathname.toLowerCase()
+      if (pathname.includes('superadmin') || hash.includes('superadmin') || hash.includes('admin-login')) return 'superadmin'
       const search = window.location.search.toLowerCase()
       if (search.includes('superadmin')) return 'superadmin'
     }
@@ -41,7 +42,8 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
     const handleHash = () => {
       if (typeof window !== 'undefined') {
         const hash = window.location.hash.toLowerCase()
-        if (hash.includes('superadmin') || hash.includes('admin-login')) {
+        const pathname = window.location.pathname.toLowerCase()
+        if (pathname.includes('superadmin') || hash.includes('superadmin') || hash.includes('admin-login')) {
           setAuthMode('superadmin')
         } else if (hash.includes('login') || hash.includes('signin')) {
           setAuthMode('campus')
@@ -70,7 +72,7 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
   const [rememberMe, setRememberMe] = useState(true)
   const [authError, setAuthError] = useState('')
   const [infoMessage, setInfoMessage] = useState('')
-  const [quickLoginTier, setQuickLoginTier] = useState('school') // 'school' | 'college' | 'university'
+  const [showDemoProfiles, setShowDemoProfiles] = useState(false)
 
   // Brute-force Rate Limiting & Account Lockout Guard
   const [failedAttempts, setFailedAttempts] = useState(() => {
@@ -513,7 +515,7 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
               <form onSubmit={handleSubmit} className="mt-6 space-y-4">
                 <div>
                   <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-                    Email or Username
+                    Institutional Email or Staff ID
                   </label>
                   <div className="relative group">
                     <Mail className="w-4 h-4 text-slate-500 absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-purple-400 transition-colors pointer-events-none" />
@@ -805,7 +807,7 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2">
-                  Email or Username
+                  Institutional Email or Staff ID
                 </label>
                 <div className="relative group">
                   <Mail className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-purple-600 transition-colors pointer-events-none" />
@@ -821,7 +823,7 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
                     className={`w-full pl-11 pr-4 py-3 rounded-xl bg-slate-50/70 hover:bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 text-sm focus:bg-white focus:outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 transition-all ${
                       isLockedOut ? 'opacity-50 cursor-not-allowed' : ''
                     }`}
-                    placeholder="e.g. admin or admin.beacon@sms.edu"
+                    placeholder="e.g. name@giki.com or teacher@gmail.com"
                   />
                 </div>
               </div>
@@ -907,289 +909,102 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
               </button>
             </form>
 
-            {/* Dedicated Separate Login Portals by Educational Tier (Pic 1, 2, 3) */}
-            <div className="pt-4 mt-4 border-t border-slate-100">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                  Dedicated Institution Login Portals
+            {/* Quick Testing Profiles (Clean Collapsible Accordion) */}
+            <div className="pt-4 mt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setShowDemoProfiles(!showDemoProfiles)}
+                className="w-full flex items-center justify-between py-2 px-3 rounded-xl bg-slate-50/80 hover:bg-purple-50/70 border border-slate-200/80 text-slate-500 hover:text-purple-700 text-xs font-semibold transition-all cursor-pointer select-none"
+              >
+                <span className="flex items-center gap-1.5">
+                  <Zap className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Quick Demo Test Accounts</span>
                 </span>
-                <span className="text-[10px] text-purple-700 font-extrabold uppercase tracking-wider">
-                  Pick 1, 2, 3
+                <span className="text-[11px] text-purple-600 font-bold">
+                  {showDemoProfiles ? 'Hide ▲' : 'Show Profiles ▼'}
                 </span>
-              </div>
+              </button>
 
-              {/* 3 Tier Selector Tabs */}
-              <div className="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-slate-100/80 mb-3 text-xs font-bold">
-                <button
-                  type="button"
-                  onClick={() => setQuickLoginTier('school')}
-                  className={`py-1.5 px-2 rounded-lg transition-all text-center cursor-pointer flex items-center justify-center gap-1 ${
-                    quickLoginTier === 'school'
-                      ? 'bg-white text-emerald-800 shadow-xs border border-emerald-200/60'
-                      : 'text-slate-500 hover:text-slate-800'
-                  }`}
-                >
-                  <span>🏫 School</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setQuickLoginTier('college')}
-                  className={`py-1.5 px-2 rounded-lg transition-all text-center cursor-pointer flex items-center justify-center gap-1 ${
-                    quickLoginTier === 'college'
-                      ? 'bg-white text-indigo-800 shadow-xs border border-indigo-200/60'
-                      : 'text-slate-500 hover:text-slate-800'
-                  }`}
-                >
-                  <span>🏛️ College</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setQuickLoginTier('university')}
-                  className={`py-1.5 px-2 rounded-lg transition-all text-center cursor-pointer flex items-center justify-center gap-1 ${
-                    quickLoginTier === 'university'
-                      ? 'bg-white text-purple-800 shadow-xs border border-purple-200/60'
-                      : 'text-slate-500 hover:text-slate-800'
-                  }`}
-                >
-                  <span>🎓 University</span>
-                </button>
-              </div>
-
-              {/* ============================================================== */}
-              {/* PICK 1: SCHOOL LOGIN PORTALS (City School - K-10 Scope)        */}
-              {/* ============================================================== */}
-              {quickLoginTier === 'school' && (
-                <div className="space-y-2 animate-in fade-in duration-200">
-                  <div className="flex items-center justify-between text-[11px] px-1">
-                    <span className="font-bold text-slate-800">City School Model Town</span>
-                    <button
-                      type="button"
-                      onClick={() => handleQuickDemo('school_admin')}
-                      className="text-[10px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-md cursor-pointer transition-colors"
-                    >
-                      Principal (Admin) →
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleQuickDemo('school_parent')}
-                      className="p-2.5 rounded-xl border border-slate-200 hover:border-emerald-300 bg-white hover:bg-emerald-50/40 text-left transition-all cursor-pointer group shadow-2xs"
-                    >
-                      <div className="text-xs font-bold text-slate-800 group-hover:text-emerald-700 flex items-center gap-1">
-                        <span>👨‍👩‍👧 Parent Portal</span>
-                      </div>
-                      <p className="text-[10px] text-slate-400 line-clamp-2 mt-0.5 leading-tight">
-                        Attendance, fee, result, diary, notices, PTM, challan download
-                      </p>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleQuickDemo('school_student')}
-                      className="p-2.5 rounded-xl border border-slate-200 hover:border-emerald-300 bg-white hover:bg-emerald-50/40 text-left transition-all cursor-pointer group shadow-2xs"
-                    >
-                      <div className="text-xs font-bold text-slate-800 group-hover:text-emerald-700 flex items-center gap-1">
-                        <span>🎓 Student Portal</span>
-                      </div>
-                      <p className="text-[10px] text-slate-400 line-clamp-2 mt-0.5 leading-tight">
-                        Timetable, homework, results, notes
-                      </p>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleQuickDemo('school_teacher')}
-                      className="p-2.5 rounded-xl border border-slate-200 hover:border-emerald-300 bg-white hover:bg-emerald-50/40 text-left transition-all cursor-pointer group shadow-2xs"
-                    >
-                      <div className="text-xs font-bold text-slate-800 group-hover:text-emerald-700 flex items-center gap-1">
-                        <span>👨‍🏫 Teacher Portal</span>
-                      </div>
-                      <p className="text-[10px] text-slate-400 line-clamp-2 mt-0.5 leading-tight">
-                        Apni classes, attendance, marks entry, diary upload, timetable, leave apply
-                      </p>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleQuickDemo('school_accountant')}
-                      className="p-2.5 rounded-xl border border-slate-200 hover:border-emerald-300 bg-white hover:bg-emerald-50/40 text-left transition-all cursor-pointer group shadow-2xs"
-                    >
-                      <div className="text-xs font-bold text-slate-800 group-hover:text-emerald-700 flex items-center gap-1">
-                        <span>💼 Accountant Portal</span>
-                      </div>
-                      <p className="text-[10px] text-slate-400 line-clamp-2 mt-0.5 leading-tight">
-                        Sirf fees aur accounts
-                      </p>
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* ============================================================== */}
-              {/* PICK 2: COLLEGE LOGIN PORTALS (Roots College - 11-12 & ADP)     */}
-              {/* ============================================================== */}
-              {quickLoginTier === 'college' && (
-                <div className="space-y-2 animate-in fade-in duration-200">
-                  <div className="flex items-center justify-between text-[11px] px-1">
-                    <span className="font-bold text-slate-800">Roots International College</span>
-                    <button
-                      type="button"
-                      onClick={() => handleQuickDemo('college_admin')}
-                      className="text-[10px] font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-2 py-0.5 rounded-md cursor-pointer transition-colors"
-                    >
-                      Principal (Admin) →
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleQuickDemo('college_student')}
-                      className="p-2 rounded-xl border border-slate-200 hover:border-indigo-300 bg-white hover:bg-indigo-50/40 text-left transition-all cursor-pointer group shadow-2xs"
-                    >
-                      <div className="text-xs font-bold text-slate-800 group-hover:text-indigo-700">
-                        <span>🎓 Student Portal</span>
-                      </div>
-                      <p className="text-[10px] text-slate-400 line-clamp-2 mt-0.5 leading-tight">
-                        Attendance, timetable, results, notes, fee challan, notices, board forms
-                      </p>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleQuickDemo('college_parent')}
-                      className="p-2 rounded-xl border border-slate-200 hover:border-indigo-300 bg-white hover:bg-indigo-50/40 text-left transition-all cursor-pointer group shadow-2xs"
-                    >
-                      <div className="text-xs font-bold text-slate-800 group-hover:text-indigo-700">
-                        <span>👨‍👩‍👦 Parent Portal</span>
-                      </div>
-                      <p className="text-[10px] text-slate-400 line-clamp-2 mt-0.5 leading-tight">
-                        Attendance, fee, result, notices, PTM, concessions
-                      </p>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleQuickDemo('college_faculty')}
-                      className="p-2 rounded-xl border border-slate-200 hover:border-indigo-300 bg-white hover:bg-indigo-50/40 text-left transition-all cursor-pointer group shadow-2xs"
-                    >
-                      <div className="text-xs font-bold text-slate-800 group-hover:text-indigo-700">
-                        <span>👨‍🏫 Faculty Portal</span>
-                      </div>
-                      <p className="text-[10px] text-slate-400 line-clamp-2 mt-0.5 leading-tight">
-                        Classes, attendance, marks entry, lecture upload, leave apply, salary slip
-                      </p>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleQuickDemo('college_hod')}
-                      className="p-2 rounded-xl border border-slate-200 hover:border-indigo-300 bg-white hover:bg-indigo-50/40 text-left transition-all cursor-pointer group shadow-2xs"
-                    >
-                      <div className="text-xs font-bold text-slate-800 group-hover:text-indigo-700">
-                        <span>🏛️ HOD Portal</span>
-                      </div>
-                      <p className="text-[10px] text-slate-400 line-clamp-2 mt-0.5 leading-tight">
-                        Apne department ki performance, attendance, results
-                      </p>
-                    </button>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleQuickDemo('college_accountant')}
-                    className="w-full p-2 rounded-xl border border-slate-200 hover:border-indigo-300 bg-white hover:bg-indigo-50/40 text-left transition-all cursor-pointer group shadow-2xs flex items-center justify-between"
-                  >
-                    <div>
-                      <span className="text-xs font-bold text-slate-800 group-hover:text-indigo-700">💼 Accountant Portal</span>
-                      <span className="text-[10px] text-slate-400 ml-2">Sirf fees aur accounts</span>
+              {showDemoProfiles && (
+                <div className="mt-2.5 p-3 rounded-xl bg-[#faf5ff] border border-purple-100 space-y-2.5 animate-in fade-in duration-200">
+                  <div>
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-purple-700 mb-1.5">
+                      Institutional Tiers
                     </div>
-                    <span className="text-[10px] font-bold text-indigo-600">Login →</span>
-                  </button>
-                </div>
-              )}
-
-              {/* ============================================================== */}
-              {/* PICK 3: UNIVERSITY LOGIN PORTALS (IAS - HEC BS/MS Scope)        */}
-              {/* ============================================================== */}
-              {quickLoginTier === 'university' && (
-                <div className="space-y-2 animate-in fade-in duration-200 max-h-[220px] overflow-y-auto pr-1">
-                  <div className="flex items-center justify-between text-[11px] px-1">
-                    <span className="font-bold text-slate-800">Institute of Applied Sciences</span>
-                    <button
-                      type="button"
-                      onClick={() => handleQuickDemo('university_admin')}
-                      className="text-[10px] font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 px-2 py-0.5 rounded-md cursor-pointer transition-colors"
-                    >
-                      Dean/Registrar (Admin) →
-                    </button>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => handleQuickDemo('school_admin')}
+                        className="py-1.5 px-2 rounded-lg bg-white hover:bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold transition-all shadow-2xs cursor-pointer text-center"
+                      >
+                        🏫 School
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleQuickDemo('college_admin')}
+                        className="py-1.5 px-2 rounded-lg bg-white hover:bg-indigo-50 border border-indigo-200 text-indigo-800 text-[11px] font-bold transition-all shadow-2xs cursor-pointer text-center"
+                      >
+                        🏛️ College
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleQuickDemo('university_admin')}
+                        className="py-1.5 px-2 rounded-lg bg-white hover:bg-purple-50 border border-purple-200 text-purple-800 text-[11px] font-bold transition-all shadow-2xs cursor-pointer text-center"
+                      >
+                        🎓 Uni
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleQuickDemo('institute')}
+                        className="py-1.5 px-2 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-bold transition-all shadow-2xs cursor-pointer text-center"
+                      >
+                        🏢 Multi-Tier
+                      </button>
+                    </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleQuickDemo('uni_student')}
-                      className="p-2 rounded-xl border border-slate-200 hover:border-purple-300 bg-white hover:bg-purple-50/40 text-left transition-all cursor-pointer group shadow-2xs"
-                    >
-                      <div className="text-xs font-bold text-slate-800 group-hover:text-purple-700">🎓 Student Portal</div>
-                      <p className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">Course registration, timetable, transcript, LMS</p>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleQuickDemo('uni_faculty')}
-                      className="p-2 rounded-xl border border-slate-200 hover:border-purple-300 bg-white hover:bg-purple-50/40 text-left transition-all cursor-pointer group shadow-2xs"
-                    >
-                      <div className="text-xs font-bold text-slate-800 group-hover:text-purple-700">👨‍🏫 Faculty Portal</div>
-                      <p className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">Courses, attendance, marks, research profile</p>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleQuickDemo('uni_dean')}
-                      className="p-2 rounded-xl border border-slate-200 hover:border-purple-300 bg-white hover:bg-purple-50/40 text-left transition-all cursor-pointer group shadow-2xs"
-                    >
-                      <div className="text-xs font-bold text-slate-800 group-hover:text-purple-700">🏛️ HOD / Dean</div>
-                      <p className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">Dept performance, faculty workload, approvals</p>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleQuickDemo('uni_registrar')}
-                      className="p-2 rounded-xl border border-slate-200 hover:border-purple-300 bg-white hover:bg-purple-50/40 text-left transition-all cursor-pointer group shadow-2xs"
-                    >
-                      <div className="text-xs font-bold text-slate-800 group-hover:text-purple-700">📜 Registrar</div>
-                      <p className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">Admissions, records, certificates, approvals</p>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleQuickDemo('uni_controller')}
-                      className="p-2 rounded-xl border border-slate-200 hover:border-purple-300 bg-white hover:bg-purple-50/40 text-left transition-all cursor-pointer group shadow-2xs"
-                    >
-                      <div className="text-xs font-bold text-slate-800 group-hover:text-purple-700">🎯 Controller</div>
-                      <p className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">Exams, results, transcripts, degrees</p>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleQuickDemo('uni_finance')}
-                      className="p-2 rounded-xl border border-slate-200 hover:border-purple-300 bg-white hover:bg-purple-50/40 text-left transition-all cursor-pointer group shadow-2xs"
-                    >
-                      <div className="text-xs font-bold text-slate-800 group-hover:text-purple-700">💰 Finance</div>
-                      <p className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">Fees, budget, payroll, accounts</p>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleQuickDemo('uni_applicant')}
-                      className="p-2 rounded-xl border border-slate-200 hover:border-purple-300 bg-white hover:bg-purple-50/40 text-left transition-all cursor-pointer group shadow-2xs"
-                    >
-                      <div className="text-xs font-bold text-slate-800 group-hover:text-purple-700">📝 Applicant</div>
-                      <p className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">Admission form, merit status, challan</p>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleQuickDemo('uni_alumni')}
-                      className="p-2 rounded-xl border border-slate-200 hover:border-purple-300 bg-white hover:bg-purple-50/40 text-left transition-all cursor-pointer group shadow-2xs"
-                    >
-                      <div className="text-xs font-bold text-slate-800 group-hover:text-purple-700">🌐 Alumni</div>
-                      <p className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">Profile, events, transcript request, donations</p>
-                    </button>
+
+                  <div>
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                      Campus Staff & Students
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => handleQuickDemo('teacher')}
+                        className="py-1.5 px-2 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-medium transition-all shadow-2xs cursor-pointer text-center"
+                      >
+                        Teacher
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleQuickDemo('accountant')}
+                        className="py-1.5 px-2 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-medium transition-all shadow-2xs cursor-pointer text-center"
+                      >
+                        Accounts
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleQuickDemo('student')}
+                        className="py-1.5 px-2 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-medium transition-all shadow-2xs cursor-pointer text-center"
+                      >
+                        Student
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleQuickDemo('parent')}
+                        className="py-1.5 px-2 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-medium transition-all shadow-2xs cursor-pointer text-center"
+                      >
+                        Parent
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Bottom Section: Divider & Register Institution / Start Free Trial */}
-          <div className="pt-4 mt-4 border-t border-slate-100 space-y-3">
+          {/* Bottom Section: Register Institution / Start Free Trial */}
+          <div className="pt-4 mt-3 border-t border-slate-100">
             <div className="text-center space-y-2">
               <span className="text-xs text-slate-500 block font-medium">
                 New Educational Institution?
@@ -1208,19 +1023,6 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
                 <Building2 className="w-4 h-4 text-purple-600 group-hover:scale-110 transition-transform" />
                 <span>Register Institution / Start Free Trial</span>
                 <ArrowRight className="w-3.5 h-3.5 text-purple-600 group-hover:translate-x-1 transition-transform" />
-              </button>
-            </div>
-
-            {/* Discreet Link to Super Admin Login */}
-            <div className="text-center pt-1">
-              <button
-                type="button"
-                onClick={() => toggleAuthMode('superadmin')}
-                className="text-[11px] font-bold text-slate-400 hover:text-purple-600 transition-colors inline-flex items-center gap-1 cursor-pointer"
-                title="Open Superadmin Control Plane Login"
-              >
-                <Lock className="w-3 h-3 text-slate-400" />
-                <span>Superadmin Control Plane Login →</span>
               </button>
             </div>
           </div>
