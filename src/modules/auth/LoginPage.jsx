@@ -146,7 +146,38 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
 
         if (authMode === 'superadmin' || isSuperadmin) {
           login('superadmin', id.includes('@') ? id : 'admin@schoolms.com', rememberMe)
-        } else if (id.includes('applicant') || id === 'applicant') {
+          setIsLoading(false)
+          return
+        }
+
+        // 1. Smart Local Database Staff/User Lookup by Attached instituteId
+        try {
+          const storedData = DataService.getStoredData?.() || {}
+          const teachers = storedData.teachers || []
+          const matchedTeacher = teachers.find(t => 
+            (t.email || '').toLowerCase() === id || 
+            (t.empId || '').toLowerCase() === id
+          )
+          if (matchedTeacher) {
+            const tInst = String(matchedTeacher.instituteId || '').toLowerCase()
+            const tLevel = String(matchedTeacher.level || '').toLowerCase()
+            const tCampus = String(matchedTeacher.campus || '').toLowerCase()
+            if (tInst === 'inst-3' || tLevel === 'college' || tCampus.includes('college')) {
+              login('college_faculty', matchedTeacher.email, rememberMe)
+            } else if (tInst === 'inst-4' || tLevel === 'university' || tCampus.includes('uni')) {
+              login('uni_faculty', matchedTeacher.email, rememberMe)
+            } else {
+              login('school_teacher', matchedTeacher.email, rememberMe)
+            }
+            setIsLoading(false)
+            return
+          }
+        } catch (e) {
+          console.warn('Teacher DB lookup error:', e)
+        }
+
+        // 2. Domain & Attached Institute Auto-Recognition
+        if (id.includes('applicant') || id === 'applicant') {
           login('uni_applicant', id.includes('@') ? id : 'applicant.uni@ias.edu.pk', rememberMe)
         } else if (id.includes('alumni') || id === 'alumni') {
           login('uni_alumni', id.includes('@') ? id : 'alumni.uni@ias.edu.pk', rememberMe)
@@ -160,23 +191,29 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
           login('uni_finance', id.includes('@') ? id : 'finance.uni@ias.edu.pk', rememberMe)
         } else if (id.includes('hod') || id === 'hod') {
           login('college_hod', id.includes('@') ? id : 'hod.college@roots.edu', rememberMe)
+        } else if (id.includes('giki') || id.includes('ias') || id.includes('uni') || id.includes('university')) {
+          if (id.includes('student')) login('uni_student', id, rememberMe)
+          else if (id.includes('parent')) login('uni_parent', id, rememberMe)
+          else if (id.includes('faculty') || id.includes('teacher') || id.includes('prof')) login('uni_faculty', id, rememberMe)
+          else login('university_admin', id, rememberMe)
         } else if (id.includes('roots') || id.includes('college')) {
           if (id.includes('student')) login('college_student', id, rememberMe)
           else if (id.includes('parent')) login('college_parent', id, rememberMe)
-          else if (id.includes('faculty') || id.includes('teacher')) login('college_faculty', id, rememberMe)
+          else if (id.includes('faculty') || id.includes('teacher') || id.includes('lecturer')) login('college_faculty', id, rememberMe)
           else if (id.includes('account')) login('college_accountant', id, rememberMe)
           else login('college_admin', id, rememberMe)
-        } else if (id.includes('ias') || id.includes('uni')) {
-          if (id.includes('student')) login('uni_student', id, rememberMe)
-          else if (id.includes('parent')) login('uni_parent', id, rememberMe)
-          else if (id.includes('faculty') || id.includes('teacher')) login('uni_faculty', id, rememberMe)
-          else login('university_admin', id, rememberMe)
         } else if (id.includes('cityschool') || id.includes('school')) {
           if (id.includes('parent')) login('school_parent', id, rememberMe)
           else if (id.includes('student')) login('school_student', id, rememberMe)
           else if (id.includes('teacher')) login('school_teacher', id, rememberMe)
           else if (id.includes('account')) login('school_accountant', id, rememberMe)
           else login('school_admin', id, rememberMe)
+        } else if (id.includes('beacon')) {
+          if (id.includes('parent')) login('parent', id, rememberMe)
+          else if (id.includes('student')) login('student', id, rememberMe)
+          else if (id.includes('teacher') || id.includes('faculty')) login('teacher', id, rememberMe)
+          else if (id.includes('account')) login('accountant', id, rememberMe)
+          else login('institute_admin', id, rememberMe)
         } else if (isTeacher) {
           login('teacher', id.includes('@') ? id : 'tariq.faculty@sms.edu', rememberMe)
         } else if (isAccountant) {
