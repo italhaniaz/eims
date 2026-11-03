@@ -16,8 +16,6 @@ import {
   Sparkles,
   BarChart3,
   CheckCircle2,
-  ChevronDown,
-  ChevronUp,
   HelpCircle,
   X
 } from 'lucide-react'
@@ -417,6 +415,7 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
     setIdentifier(email)
     setPassword(pass)
     setAuthError('')
+    setShowDemoProfiles(false)
     executeLogin(email, pass, role)
   }
 
@@ -703,9 +702,9 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
 
   // =========================================================================
   // VIEW 2: UNIVERSAL SMART SIGN-IN ARCHITECTURE (Light SaaS - Option 1)
-  // 100% Executive Aesthetic, Clean & Modern Dual Pane (Desktop & Tablet)
+  // 100% Clean, Professional & Executive Dual Pane (Desktop & Tablet)
   // Perfectly Responsive on Mobile (< md: Compact Header + Immediate Form)
-  // Zero Clutter: Superadmin tag is completely isolated and hidden!
+  // No Clutter: Main card contains ONLY email, password, and sign-in button!
   // =========================================================================
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-[#fcfaff] relative overflow-x-hidden px-3 sm:px-6 py-6 sm:py-10 selection:bg-purple-500 selection:text-white font-sans">
@@ -745,7 +744,7 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
         </svg>
       </div>
 
-      {/* Top Navigation: Back to Home & Help */}
+      {/* Top Navigation: Back to Home */}
       {onBackToLanding && (
         <div className="absolute top-3 left-3 sm:top-5 sm:left-6 z-30">
           <button
@@ -760,8 +759,8 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
         </div>
       )}
 
-      {/* Main Dual-Pane Responsive Card */}
-      <div className="w-full max-w-[1000px] z-10 rounded-2xl sm:rounded-3xl bg-white border border-purple-100/90 shadow-[0_20px_60px_-15px_rgba(147,51,234,0.1),0_2px_8px_rgba(0,0,0,0.03)] overflow-hidden grid grid-cols-1 md:grid-cols-12 relative mt-10 sm:mt-0">
+      {/* Main Dual-Pane Responsive Card (Clean, Modern, Clutter-Free) */}
+      <div className="w-full max-w-[960px] z-10 rounded-2xl sm:rounded-3xl bg-white border border-purple-100/90 shadow-[0_20px_60px_-15px_rgba(147,51,234,0.1),0_2px_8px_rgba(0,0,0,0.03)] overflow-hidden grid grid-cols-1 md:grid-cols-12 relative mt-10 sm:mt-0">
         
         {/* ================================================================= */}
         {/* LEFT PANE: BRANDING & SYSTEM TELEMETRY (Hidden on Mobile, Visible on md+) */}
@@ -840,12 +839,12 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
         </div>
 
         {/* ================================================================= */}
-        {/* RIGHT PANE: UNIVERSAL SIGN IN FORM (Full-width on Mobile, 7 Cols on md+) */}
+        {/* RIGHT PANE: 100% CLEAN SIGN IN FORM (Full-width on Mobile, 7 Cols on md+) */}
         {/* ================================================================= */}
-        <div className="md:col-span-7 p-5 sm:p-8 lg:p-10 flex flex-col justify-between bg-white">
+        <div className="md:col-span-7 p-6 sm:p-8 lg:p-10 flex flex-col justify-between bg-white">
           <div>
             
-            {/* MOBILE-ONLY COMPACT HERO HEADER (Keeps form immediate on phone screens) */}
+            {/* MOBILE-ONLY COMPACT HERO HEADER */}
             <div className="md:hidden mb-5 pb-4 border-b border-purple-50 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-700 to-indigo-600 text-white flex items-center justify-center p-2 shadow-xs">
@@ -1031,218 +1030,12 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
                 )}
               </button>
             </form>
-
-            {/* ============================================================= */}
-            {/* COLLAPSIBLE QUICK DEMO TEST ACCOUNTS DRAWER */}
-            {/* Senior Architect Pattern: Keep the main view clean, while      */}
-            {/* providing instant 1-click test credentials for evaluators    */}
-            {/* ============================================================= */}
-            <div className="pt-4 mt-3 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => setShowDemoProfiles(!showDemoProfiles)}
-                className="w-full flex items-center justify-between py-2 px-3 rounded-xl bg-slate-50/80 hover:bg-purple-50/70 border border-slate-200/80 text-slate-600 hover:text-purple-700 text-xs font-semibold transition-all cursor-pointer select-none"
-              >
-                <span className="flex items-center gap-1.5">
-                  <Zap className="w-3.5 h-3.5 text-amber-500" />
-                  <span>⚡ Quick Demo Test Accounts</span>
-                </span>
-                <span className="text-[11px] text-purple-600 font-bold flex items-center gap-1">
-                  <span>{showDemoProfiles ? 'Hide Profiles' : 'Show Demo Profiles'}</span>
-                  {showDemoProfiles ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                </span>
-              </button>
-
-              {showDemoProfiles && (
-                <div className="mt-2.5 p-3 sm:p-3.5 rounded-xl bg-[#faf5ff] border border-purple-100 space-y-3 animate-in fade-in duration-200">
-                  
-                  {/* Category Switcher Tabs */}
-                  <div className="flex items-center gap-1 border-b border-purple-200/70 pb-2">
-                    <button
-                      type="button"
-                      onClick={() => setActiveDemoCategory('school')}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
-                        activeDemoCategory === 'school' 
-                          ? 'bg-purple-600 text-white shadow-2xs' 
-                          : 'bg-white/80 text-slate-600 hover:bg-white'
-                      }`}
-                    >
-                      🏫 School (Pick 1)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setActiveDemoCategory('college')}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
-                        activeDemoCategory === 'college' 
-                          ? 'bg-purple-600 text-white shadow-2xs' 
-                          : 'bg-white/80 text-slate-600 hover:bg-white'
-                      }`}
-                    >
-                      🏛️ College (Pick 2)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setActiveDemoCategory('university')}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
-                        activeDemoCategory === 'university' 
-                          ? 'bg-purple-600 text-white shadow-2xs' 
-                          : 'bg-white/80 text-slate-600 hover:bg-white'
-                      }`}
-                    >
-                      🎓 Uni (Pick 3)
-                    </button>
-                  </div>
-
-                  {/* TAB 1: SCHOOL DEMO ROLES */}
-                  {activeDemoCategory === 'school' && (
-                    <div className="space-y-2">
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-purple-700">
-                        City School Model Town (@cityschool.edu)
-                      </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => handleQuickDemo('school_admin', 'admin.school@cityschool.edu', 'institute123')}
-                          className="py-1.5 px-2 rounded-lg bg-white hover:bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold transition-all shadow-2xs cursor-pointer text-center"
-                        >
-                          Principal / Admin
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleQuickDemo('school_teacher', 'teacher.school@cityschool.edu', 'teacher123')}
-                          className="py-1.5 px-2 rounded-lg bg-white hover:bg-emerald-50 border border-slate-200 text-slate-700 text-[11px] font-medium transition-all shadow-2xs cursor-pointer text-center"
-                        >
-                          Senior Teacher
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleQuickDemo('school_student', 'student.school@cityschool.edu', 'student123')}
-                          className="py-1.5 px-2 rounded-lg bg-white hover:bg-emerald-50 border border-slate-200 text-slate-700 text-[11px] font-medium transition-all shadow-2xs cursor-pointer text-center"
-                        >
-                          Student
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleQuickDemo('school_parent', 'parent.school@cityschool.edu', 'parent123')}
-                          className="py-1.5 px-2 rounded-lg bg-white hover:bg-emerald-50 border border-slate-200 text-slate-700 text-[11px] font-medium transition-all shadow-2xs cursor-pointer text-center"
-                        >
-                          Parent
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleQuickDemo('school_accountant', 'accounts.school@cityschool.edu', 'institute123')}
-                          className="py-1.5 px-2 rounded-lg bg-white hover:bg-emerald-50 border border-slate-200 text-slate-700 text-[11px] font-medium transition-all shadow-2xs cursor-pointer text-center"
-                        >
-                          Fee Accountant
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* TAB 2: COLLEGE DEMO ROLES */}
-                  {activeDemoCategory === 'college' && (
-                    <div className="space-y-2">
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-indigo-700">
-                        Roots International College (@roots.edu)
-                      </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => handleQuickDemo('college_admin', 'admin.college@roots.edu', 'institute123')}
-                          className="py-1.5 px-2 rounded-lg bg-white hover:bg-indigo-50 border border-indigo-200 text-indigo-800 text-[11px] font-bold transition-all shadow-2xs cursor-pointer text-center"
-                        >
-                          College Director
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleQuickDemo('college_faculty', 'faculty.college@roots.edu', 'teacher123')}
-                          className="py-1.5 px-2 rounded-lg bg-white hover:bg-indigo-50 border border-slate-200 text-slate-700 text-[11px] font-medium transition-all shadow-2xs cursor-pointer text-center"
-                        >
-                          College Lecturer
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleQuickDemo('college_hod', 'hod.college@roots.edu', 'institute123')}
-                          className="py-1.5 px-2 rounded-lg bg-white hover:bg-indigo-50 border border-slate-200 text-slate-700 text-[11px] font-medium transition-all shadow-2xs cursor-pointer text-center"
-                        >
-                          HOD Science
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleQuickDemo('college_student', 'student.college@roots.edu', 'student123')}
-                          className="py-1.5 px-2 rounded-lg bg-white hover:bg-indigo-50 border border-slate-200 text-slate-700 text-[11px] font-medium transition-all shadow-2xs cursor-pointer text-center"
-                        >
-                          FSc Student
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleQuickDemo('college_accountant', 'accounts.college@roots.edu', 'institute123')}
-                          className="py-1.5 px-2 rounded-lg bg-white hover:bg-indigo-50 border border-slate-200 text-slate-700 text-[11px] font-medium transition-all shadow-2xs cursor-pointer text-center"
-                        >
-                          Bursar / Accounts
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* TAB 3: UNIVERSITY DEMO ROLES */}
-                  {activeDemoCategory === 'university' && (
-                    <div className="space-y-2">
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-purple-700">
-                        IAS & GIKI University Network (@ias.edu.pk / @giki.com)
-                      </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => handleQuickDemo('university_admin', 'admin.uni@ias.edu.pk', 'institute123')}
-                          className="py-1.5 px-2 rounded-lg bg-white hover:bg-purple-50 border border-purple-200 text-purple-800 text-[11px] font-bold transition-all shadow-2xs cursor-pointer text-center"
-                        >
-                          Vice Chancellor / Reg
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleQuickDemo('uni_faculty', 'faculty.uni@ias.edu.pk', 'teacher123')}
-                          className="py-1.5 px-2 rounded-lg bg-white hover:bg-purple-50 border border-slate-200 text-slate-700 text-[11px] font-medium transition-all shadow-2xs cursor-pointer text-center"
-                        >
-                          Professor / Faculty
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleQuickDemo('uni_dean', 'dean.uni@ias.edu.pk', 'institute123')}
-                          className="py-1.5 px-2 rounded-lg bg-white hover:bg-purple-50 border border-slate-200 text-slate-700 text-[11px] font-medium transition-all shadow-2xs cursor-pointer text-center"
-                        >
-                          Dean of Academics
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleQuickDemo('uni_controller', 'controller.uni@ias.edu.pk', 'institute123')}
-                          className="py-1.5 px-2 rounded-lg bg-white hover:bg-purple-50 border border-slate-200 text-slate-700 text-[11px] font-medium transition-all shadow-2xs cursor-pointer text-center"
-                        >
-                          Exam Controller
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleQuickDemo('uni_student', 'student.uni@ias.edu.pk', 'student123')}
-                          className="py-1.5 px-2 rounded-lg bg-white hover:bg-purple-50 border border-slate-200 text-slate-700 text-[11px] font-medium transition-all shadow-2xs cursor-pointer text-center"
-                        >
-                          Undergrad Student
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="text-[10px] text-slate-400 text-center pt-1">
-                    Password for all demo accounts is standard <code className="text-purple-600 font-mono font-bold">institute123</code> / <code className="text-purple-600 font-mono font-bold">teacher123</code>
-                  </div>
-                </div>
-              )}
-            </div>
           </div>
 
           {/* =============================================================== */}
           {/* BOTTOM FOOTER: NEW INSTITUTION REGISTRATION / FREE TRIAL        */}
           {/* =============================================================== */}
-          <div className="pt-4 mt-3 border-t border-slate-100">
+          <div className="pt-6 mt-6 border-t border-slate-100">
             <div className="text-center space-y-2">
               <span className="text-xs text-slate-500 block font-medium">
                 New Educational Institution?
@@ -1266,6 +1059,23 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
           </div>
         </div>
 
+      </div>
+
+      {/* =================================================================== */}
+      {/* FLOATING DEMO TESTING PILL (Discreet, Outside Login Card in Corner) */}
+      {/* Keeps the login card 100% spotless while giving evaluators 1-click testing */}
+      {/* =================================================================== */}
+      <div className="fixed bottom-3 right-3 sm:bottom-4 sm:right-4 z-40">
+        <button
+          type="button"
+          onClick={() => setShowDemoProfiles(true)}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-full text-xs font-semibold text-slate-600 hover:text-purple-700 bg-white/95 hover:bg-white border border-slate-200/90 shadow-sm hover:shadow transition-all backdrop-blur-xs cursor-pointer opacity-70 hover:opacity-100 group"
+          title="Quick Test Profiles (Evaluation Mode)"
+        >
+          <Zap className="w-3.5 h-3.5 text-amber-500 group-hover:scale-110 transition-transform" />
+          <span className="hidden sm:inline">Demo Test Accounts</span>
+          <span className="sm:hidden">Demo</span>
+        </button>
       </div>
 
       {/* =================================================================== */}
@@ -1378,7 +1188,7 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
                 </div>
                 <div className="flex items-start gap-2 text-slate-600">
                   <span className="w-4 h-4 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">2</span>
-                  <span>If you are evaluating this platform, expand the <strong className="text-purple-700">⚡ Quick Demo Test Accounts</strong> drawer below to use instant test profiles.</span>
+                  <span>If you are evaluating this platform, click the <strong className="text-purple-700">Demo Test Accounts</strong> pill at the bottom-right of your screen.</span>
                 </div>
               </div>
             </div>
@@ -1392,6 +1202,237 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
                 Understood
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* =================================================================== */}
+      {/* MODAL 3: EVALUATION QUICK DEMO PROFILES (Outside Login Card)        */}
+      {/* Professional, clean dialog accessible via floating pill only        */}
+      {/* =================================================================== */}
+      {showDemoProfiles && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4 animate-in fade-in">
+          <div className="bg-white rounded-2xl sm:rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-purple-100 space-y-4">
+            
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <Zap className="w-5 h-5 text-amber-500" />
+                <h3 className="font-bold text-slate-900 text-base">Platform Evaluation Test Accounts</h3>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setShowDemoProfiles(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-500">
+              Select any profile below to automatically populate credentials and sign into the corresponding campus portal:
+            </p>
+
+            {/* Category Switcher Tabs (Clean Professional Titles) */}
+            <div className="flex items-center gap-1.5 border-b border-slate-100 pb-2">
+              <button
+                type="button"
+                onClick={() => setActiveDemoCategory('school')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  activeDemoCategory === 'school' 
+                    ? 'bg-purple-600 text-white shadow-2xs' 
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                🏫 School System
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveDemoCategory('college')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  activeDemoCategory === 'college' 
+                    ? 'bg-purple-600 text-white shadow-2xs' 
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                🏛️ College Portal
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveDemoCategory('university')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  activeDemoCategory === 'university' 
+                    ? 'bg-purple-600 text-white shadow-2xs' 
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                🎓 University Portal
+              </button>
+            </div>
+
+            {/* TAB 1: SCHOOL DEMO ROLES */}
+            {activeDemoCategory === 'school' && (
+              <div className="space-y-2">
+                <div className="text-[11px] font-bold text-slate-600">
+                  City School Model Town (@cityschool.edu)
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleQuickDemo('school_admin', 'admin.school@cityschool.edu', 'institute123')}
+                    className="p-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 text-left transition-all cursor-pointer group"
+                  >
+                    <div className="text-xs font-bold text-slate-800 group-hover:text-emerald-800">Principal / Admin</div>
+                    <div className="text-[10px] text-slate-400">admin.school@cityschool.edu</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickDemo('school_teacher', 'teacher.school@cityschool.edu', 'teacher123')}
+                    className="p-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 text-left transition-all cursor-pointer group"
+                  >
+                    <div className="text-xs font-bold text-slate-800 group-hover:text-emerald-800">Senior Teacher</div>
+                    <div className="text-[10px] text-slate-400">teacher.school@cityschool.edu</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickDemo('school_student', 'student.school@cityschool.edu', 'student123')}
+                    className="p-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 text-left transition-all cursor-pointer group"
+                  >
+                    <div className="text-xs font-bold text-slate-800 group-hover:text-emerald-800">Student Portal</div>
+                    <div className="text-[10px] text-slate-400">student.school@cityschool.edu</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickDemo('school_parent', 'parent.school@cityschool.edu', 'parent123')}
+                    className="p-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 text-left transition-all cursor-pointer group"
+                  >
+                    <div className="text-xs font-bold text-slate-800 group-hover:text-emerald-800">Parent Portal</div>
+                    <div className="text-[10px] text-slate-400">parent.school@cityschool.edu</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickDemo('school_accountant', 'accounts.school@cityschool.edu', 'institute123')}
+                    className="p-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 text-left transition-all cursor-pointer col-span-2 group"
+                  >
+                    <div className="text-xs font-bold text-slate-800 group-hover:text-emerald-800">Fee Accountant / Bursar</div>
+                    <div className="text-[10px] text-slate-400">accounts.school@cityschool.edu</div>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 2: COLLEGE DEMO ROLES */}
+            {activeDemoCategory === 'college' && (
+              <div className="space-y-2">
+                <div className="text-[11px] font-bold text-slate-600">
+                  Roots International College (@roots.edu)
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleQuickDemo('college_admin', 'admin.college@roots.edu', 'institute123')}
+                    className="p-2.5 rounded-xl bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 text-left transition-all cursor-pointer group"
+                  >
+                    <div className="text-xs font-bold text-slate-800 group-hover:text-indigo-800">College Director</div>
+                    <div className="text-[10px] text-slate-400">admin.college@roots.edu</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickDemo('college_faculty', 'faculty.college@roots.edu', 'teacher123')}
+                    className="p-2.5 rounded-xl bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 text-left transition-all cursor-pointer group"
+                  >
+                    <div className="text-xs font-bold text-slate-800 group-hover:text-indigo-800">College Lecturer</div>
+                    <div className="text-[10px] text-slate-400">faculty.college@roots.edu</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickDemo('college_hod', 'hod.college@roots.edu', 'institute123')}
+                    className="p-2.5 rounded-xl bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 text-left transition-all cursor-pointer group"
+                  >
+                    <div className="text-xs font-bold text-slate-800 group-hover:text-indigo-800">HOD Science</div>
+                    <div className="text-[10px] text-slate-400">hod.college@roots.edu</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickDemo('college_student', 'student.college@roots.edu', 'student123')}
+                    className="p-2.5 rounded-xl bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 text-left transition-all cursor-pointer group"
+                  >
+                    <div className="text-xs font-bold text-slate-800 group-hover:text-indigo-800">FSc Student</div>
+                    <div className="text-[10px] text-slate-400">student.college@roots.edu</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickDemo('college_accountant', 'accounts.college@roots.edu', 'institute123')}
+                    className="p-2.5 rounded-xl bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 text-left transition-all cursor-pointer col-span-2 group"
+                  >
+                    <div className="text-xs font-bold text-slate-800 group-hover:text-indigo-800">Accounts & Fees</div>
+                    <div className="text-[10px] text-slate-400">accounts.college@roots.edu</div>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 3: UNIVERSITY DEMO ROLES */}
+            {activeDemoCategory === 'university' && (
+              <div className="space-y-2">
+                <div className="text-[11px] font-bold text-slate-600">
+                  IAS & GIKI University Network (@ias.edu.pk / @giki.com)
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleQuickDemo('university_admin', 'admin.uni@ias.edu.pk', 'institute123')}
+                    className="p-2.5 rounded-xl bg-slate-50 hover:bg-purple-50 border border-slate-200 hover:border-purple-300 text-left transition-all cursor-pointer group"
+                  >
+                    <div className="text-xs font-bold text-slate-800 group-hover:text-purple-800">Vice Chancellor / Reg</div>
+                    <div className="text-[10px] text-slate-400">admin.uni@ias.edu.pk</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickDemo('uni_faculty', 'faculty.uni@ias.edu.pk', 'teacher123')}
+                    className="p-2.5 rounded-xl bg-slate-50 hover:bg-purple-50 border border-slate-200 hover:border-purple-300 text-left transition-all cursor-pointer group"
+                  >
+                    <div className="text-xs font-bold text-slate-800 group-hover:text-purple-800">Professor / Faculty</div>
+                    <div className="text-[10px] text-slate-400">faculty.uni@ias.edu.pk</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickDemo('uni_dean', 'dean.uni@ias.edu.pk', 'institute123')}
+                    className="p-2.5 rounded-xl bg-slate-50 hover:bg-purple-50 border border-slate-200 hover:border-purple-300 text-left transition-all cursor-pointer group"
+                  >
+                    <div className="text-xs font-bold text-slate-800 group-hover:text-purple-800">Dean of Academics</div>
+                    <div className="text-[10px] text-slate-400">dean.uni@ias.edu.pk</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickDemo('uni_controller', 'controller.uni@ias.edu.pk', 'institute123')}
+                    className="p-2.5 rounded-xl bg-slate-50 hover:bg-purple-50 border border-slate-200 hover:border-purple-300 text-left transition-all cursor-pointer group"
+                  >
+                    <div className="text-xs font-bold text-slate-800 group-hover:text-purple-800">Exam Controller</div>
+                    <div className="text-[10px] text-slate-400">controller.uni@ias.edu.pk</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickDemo('uni_student', 'student.uni@ias.edu.pk', 'student123')}
+                    className="p-2.5 rounded-xl bg-slate-50 hover:bg-purple-50 border border-slate-200 hover:border-purple-300 text-left transition-all cursor-pointer col-span-2 group"
+                  >
+                    <div className="text-xs font-bold text-slate-800 group-hover:text-purple-800">Undergrad Student Portal</div>
+                    <div className="text-[10px] text-slate-400">student.uni@ias.edu.pk</div>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="pt-2 flex items-center justify-between border-t border-slate-100 text-[11px] text-slate-500">
+              <span>Standard Password: <code className="text-purple-600 font-mono font-bold">institute123</code></span>
+              <button
+                type="button"
+                onClick={() => setShowDemoProfiles(false)}
+                className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition-all cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+
           </div>
         </div>
       )}
