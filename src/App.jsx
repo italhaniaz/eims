@@ -142,10 +142,14 @@ const AppContent = () => {
 
   // Public visitor routing (Landing Page vs Login Page)
   const [publicView, setPublicView] = useState(() => {
-    if (typeof window !== 'undefined' && window.location.hash) {
-      const hash = window.location.hash.replace(/^#\/?/, '')
-      if (hash === 'login' || hash === 'signin' || hash === 'superadmin' || hash === 'superadmin-login' || (typeof window !== 'undefined' && window.location.pathname.toLowerCase().includes('superadmin'))) return 'login'
-      if (hash === 'demo' || hash === 'live-demo') return 'demo'
+    if (typeof window !== 'undefined') {
+      const pathname = window.location.pathname.toLowerCase()
+      if (pathname.includes('superadmin') || pathname.includes('admin-login')) return 'login'
+      if (window.location.hash) {
+        const hash = window.location.hash.replace(/^#\/?/, '').toLowerCase()
+        if (hash === 'login' || hash === 'signin' || hash === 'superadmin' || hash === 'superadmin-login') return 'login'
+        if (hash === 'demo' || hash === 'live-demo') return 'demo'
+      }
     }
     return 'landing'
   })
