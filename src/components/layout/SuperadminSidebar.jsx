@@ -319,6 +319,28 @@ export const SuperadminSidebar = ({
                 </div>
 
                 <div className="relative">
+                  {isRouteActive('platform-modules') && (
+                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                  )}
+                  <button
+                    onClick={() => handleNavClick('platform-modules')}
+                    className={`w-full flex items-center justify-between text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
+                      isRouteActive('platform-modules')
+                        ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Sliders className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('platform-modules') ? 'text-purple-600' : 'text-slate-400'}`} />
+                      <span>Modules & Feature Control</span>
+                    </div>
+                    <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 tracking-wide uppercase">
+                      Toggles
+                    </span>
+                  </button>
+                </div>
+
+                <div className="relative">
                   {isRouteActive('support-approvals') && (
                     <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
                   )}

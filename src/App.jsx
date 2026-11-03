@@ -356,7 +356,7 @@ const AppContent = () => {
                     />
                   )}
                   {superadminRoute === 'institutes' && (
-                    <InstitutesView />
+                    <InstitutesView onRouteChange={setSuperadminRoute} />
                   )}
                   {superadminRoute === 'platform-modules' && (
                     <ModulesControlView />

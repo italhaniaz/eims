@@ -66,7 +66,7 @@ import { useToast } from '../../../context/ToastContext'
 import Modal from '../../../components/common/Modal'
 import { PlatformService, PLATFORM_MODULES, SUBSCRIPTION_PLANS } from '../../../services/platformService'
 
-export const InstitutesView = () => {
+export const InstitutesView = ({ onRouteChange }) => {
   const { 
     institutes = [], 
     divisions = [], 
@@ -1738,6 +1738,16 @@ export const InstitutesView = () => {
           >
             <Download className="w-3.5 h-3.5 text-slate-500 shrink-0" />
             <span>Export CSV</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onRouteChange && onRouteChange('platform-modules')}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#f5eeff] hover:bg-purple-100 text-purple-700 rounded-lg text-xs font-bold border border-purple-200/80 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
+            title="Configure Educational Wings & System Modules per Campus"
+          >
+            <Sliders className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+            <span>Modules & Features Control</span>
           </button>
 
           <button

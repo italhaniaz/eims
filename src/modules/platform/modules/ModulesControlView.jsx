@@ -448,34 +448,33 @@ export const ModulesControlView = () => {
 
       {/* Navigation Matrix Dropdown & Compact Wing Filter Bar */}
       <div className="bg-white p-2.5 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
-        {/* Matrix View Mode Dropdown */}
-        <div className="flex items-center gap-2">
-          <div className="relative inline-flex items-center">
-            <div className="flex items-center gap-2.5 px-3 py-1.5 bg-gradient-to-r from-[#fbf8ff] to-white hover:bg-slate-50 border border-purple-200/90 rounded-xl shadow-2xs transition-all">
-              {activeControlTab === 'wings' ? (
-                <div className="w-7 h-7 rounded-lg bg-[#f5eeff] text-purple-700 flex items-center justify-center shrink-0">
-                  <GraduationCap className="w-4 h-4 text-purple-600" />
-                </div>
-              ) : (
-                <div className="w-7 h-7 rounded-lg bg-[#f5eeff] text-purple-700 flex items-center justify-center shrink-0">
-                  <Sliders className="w-4 h-4 text-purple-600" />
-                </div>
-              )}
-              <div className="flex flex-col text-left">
-                <span className="text-[9px] font-bold text-purple-600 uppercase tracking-wider leading-none">Matrix Control View</span>
-                <select
-                  value={activeControlTab}
-                  onChange={(e) => setActiveControlTab(e.target.value)}
-                  aria-label="Select Matrix Control View"
-                  className="bg-transparent text-xs sm:text-[13px] font-bold text-slate-900 focus:outline-none cursor-pointer pr-6 appearance-none mt-0.5"
-                >
-                  <option value="wings">Educational Wings Matrix (School • College • University)</option>
-                  <option value="features">Feature Capabilities Matrix (10 Core Modules)</option>
-                </select>
-              </div>
-              <ChevronDown className="w-4 h-4 text-purple-600 pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2" />
-            </div>
-          </div>
+        {/* Matrix View Mode High-Visibility Segmented Buttons */}
+        <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100/90 rounded-2xl border border-slate-200/80 shadow-2xs">
+          <button
+            type="button"
+            onClick={() => setActiveControlTab('wings')}
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeControlTab === 'wings'
+                ? 'bg-purple-600 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/70'
+            }`}
+          >
+            <GraduationCap className="w-4 h-4 shrink-0" />
+            <span>🏫 Educational Wings Matrix</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveControlTab('features')}
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeControlTab === 'features'
+                ? 'bg-purple-600 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/70'
+            }`}
+          >
+            <Sliders className="w-4 h-4 shrink-0" />
+            <span>🎛️ System Modules & Features (${PLATFORM_MODULES.length})</span>
+          </button>
         </div>
 
         {/* Compact Wing Filter & Search Controls */}
