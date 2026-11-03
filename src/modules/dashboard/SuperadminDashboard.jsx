@@ -1395,15 +1395,15 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
             <span className="hidden md:inline">Export CSV</span>
           </button>
 
-          {/* Action 5: Wings Matrix */}
+          {/* Action 5: Modules & Features Control */}
           <button
             type="button"
             onClick={() => onRouteChange('platform-modules')}
-            className="h-10 px-3 bg-white hover:bg-purple-50/60 border border-slate-200 text-slate-700 hover:text-purple-700 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs whitespace-nowrap shrink-0"
-            title="Open Educational Wings Matrix"
+            className="h-10 px-3.5 bg-[#f5eeff] hover:bg-purple-100 border border-purple-200 text-purple-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs whitespace-nowrap shrink-0"
+            title="Configure Educational Wings & System Modules per Campus"
           >
             <Sliders className="w-4 h-4 text-purple-600 shrink-0" />
-            <span className="hidden lg:inline">Wings Matrix</span>
+            <span>Modules & Feature Control</span>
           </button>
         </div>
       </div>

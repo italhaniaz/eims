@@ -624,6 +624,22 @@ export const AuthProvider = ({ children }) => {
       case 'institute_admin':
       default: {
         const mail = (customEmail || '').toLowerCase()
+        if (mail === 'admin' || mail === 'superadmin' || mail === 'admin@schoolms.com' || mail.includes('superadmin') || mail === 'root') {
+          userPayload = {
+            id: 'usr-1',
+            name: 'Super Administrator',
+            roleTitle: 'Superadmin',
+            role: 'superadmin',
+            email: customEmail || 'admin@schoolms.com',
+            avatar: null,
+            instituteId: null,
+            instituteName: 'Central Headquarters',
+            scope: 'Platform Wide',
+            isExplicitLogin: true,
+            loginTimestamp: new Date().toISOString()
+          }
+          break
+        }
         if (mail.includes('cityschool') || mail.includes('school')) {
           userPayload = {
             id: 'usr-school',
