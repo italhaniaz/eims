@@ -15,7 +15,6 @@ import {
   Activity,
   Sparkles,
   BarChart3,
-  CheckCircle2,
   HelpCircle,
   X
 } from 'lucide-react'
@@ -79,7 +78,6 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
   const [showDemoProfiles, setShowDemoProfiles] = useState(false)
   const [activeDemoCategory, setActiveDemoCategory] = useState('school')
   const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false)
-  const [showCampusPickerModal, setShowCampusPickerModal] = useState(false)
 
   // Rate Limiting & Account Lockout Guard (Brute-force protection)
   const [failedAttempts, setFailedAttempts] = useState(() => {
@@ -134,8 +132,7 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
         tier: 'university',
         label: 'University Portal',
         color: 'purple',
-        badge: '🎓 University Detected',
-        subtext: 'Routing to Higher Education & Degree Programs'
+        badge: '🎓 University Detected'
       }
     }
 
@@ -154,8 +151,7 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
         tier: 'college',
         label: 'College Portal',
         color: 'indigo',
-        badge: '🏛️ College Detected',
-        subtext: 'Routing to Intermediate & Higher Secondary Board'
+        badge: '🏛️ College Detected'
       }
     }
 
@@ -172,8 +168,7 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
         tier: 'school',
         label: 'School Portal',
         color: 'emerald',
-        badge: '🏫 School Detected',
-        subtext: 'Routing to Primary, Middle & Matric/O-Levels'
+        badge: '🏫 School Detected'
       }
     }
 
@@ -183,63 +178,12 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
         tier: 'custom',
         label: 'Universal Directory',
         color: 'blue',
-        badge: '🏢 Multi-Tenant Directory Lookup',
-        subtext: 'Auto-matching institutional staff and student database'
+        badge: '🏢 Multi-Tenant Directory'
       }
     }
 
     return null
   }, [identifier])
-
-  // =========================================================================
-  // MULTI-CAMPUS REGISTERED INSTITUTIONS (For Smart Disambiguation & Fallback)
-  // =========================================================================
-  const registeredInstitutes = [
-    {
-      id: 'inst-2',
-      name: 'City School Model Town Campus',
-      code: 'CSM-002',
-      type: 'School',
-      tierBadge: '🏫 School System',
-      badgeColor: 'emerald',
-      role: 'school_admin',
-      defaultEmail: 'admin.school@cityschool.edu',
-      desc: 'Primary, Middle & High School Wings (Matric / Cambridge)'
-    },
-    {
-      id: 'inst-3',
-      name: 'Roots International College & Academy',
-      code: 'RIA-003',
-      type: 'College',
-      tierBadge: '🏛️ Intermediate College',
-      badgeColor: 'indigo',
-      role: 'college_admin',
-      defaultEmail: 'admin.college@roots.edu',
-      desc: 'FSc Pre-Med, Pre-Eng, ICS & A-Levels Board Education'
-    },
-    {
-      id: 'inst-4',
-      name: 'Institute of Applied Sciences & Undergraduates',
-      code: 'IAS-004',
-      type: 'University',
-      tierBadge: '🎓 University Institute',
-      badgeColor: 'purple',
-      role: 'university_admin',
-      defaultEmail: 'admin.uni@ias.edu.pk',
-      desc: 'Undergraduate BS Programs, Semester System & Research FYP'
-    },
-    {
-      id: 'inst-1',
-      name: 'Beaconhouse Central High School',
-      code: 'BHS-001',
-      type: 'Custom',
-      tierBadge: '🏢 Multi-Tier Campus',
-      badgeColor: 'blue',
-      role: 'institute_admin',
-      defaultEmail: 'admin.beacon@sms.edu',
-      desc: 'Central Hybrid Campus with Unified Fee & Multi-Wing Ledgers'
-    }
-  ]
 
   // =========================================================================
   // CORE AUTHENTICATION EXECUTOR (Option 1 Universal Routing Engine)
@@ -263,7 +207,7 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
     setIsLoading(true)
 
     setTimeout(() => {
-      // 1. Direct Target Override (e.g. from disambiguation picker or quick demo)
+      // 1. Direct Target Override (e.g. from quick demo)
       if (targetRoleOverride) {
         sessionStorage.removeItem('sms_auth_failed_attempts')
         sessionStorage.removeItem('sms_auth_lockout_until')
@@ -292,13 +236,12 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
         }
       }
 
-      // 3. Password Verification (supports standard seed passwords or robust passwords)
+      // 3. Password Verification
       const isValidPass = pass === 'admin123' || pass === 'admin' || pass === 'institute123' || 
                           pass === 'teacher123' || pass === 'student123' || pass === 'parent123' || 
                           pass.length >= 5
 
       if (!isValidPass) {
-        // Failed attempt - increment rate-limiting counter
         const nextAttempts = failedAttempts + 1
         setFailedAttempts(nextAttempts)
         sessionStorage.setItem('sms_auth_failed_attempts', nextAttempts.toString())
@@ -398,7 +341,6 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
       } else if (id.includes('parent')) {
         login('parent', id.includes('@') ? id : 'farooq.parent@gmail.com', rememberMe)
       } else {
-        // Universal Campus Admin default
         login('institute_admin', id.includes('@') ? id : 'admin.beacon@sms.edu', rememberMe)
       }
       setIsLoading(false)
@@ -421,171 +363,147 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
 
   // =========================================================================
   // VIEW 1: SUPER ADMIN DEDICATED DARK-THEME LOGIN (Isolated Terminal)
-  // Matching Reference Pic 1 (POS / Next-Gen Academic ERP)
   // Accessible ONLY via URL (#superadmin or /superadmin)
   // =========================================================================
   if (authMode === 'superadmin') {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-[#070A12] text-slate-100 relative overflow-hidden px-4 py-8 sm:py-12 selection:bg-purple-600 selection:text-white font-sans">
+      <div className="min-h-screen w-full flex items-center justify-center bg-[#070A12] text-slate-100 relative overflow-hidden p-3 sm:p-5 selection:bg-purple-600 selection:text-white font-sans">
         {/* Dark Cyber Ambient Glows & Constellation Grid */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute top-0 -left-20 w-[550px] h-[550px] bg-purple-900/20 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 -right-20 w-[550px] h-[550px] bg-indigo-900/20 rounded-full blur-3xl"></div>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-blue-950/20 rounded-full blur-3xl"></div>
-
-          {/* Network constellation lines */}
-          <svg className="w-full h-full opacity-15" xmlns="http://www.w3.org/2000/svg">
-            <line x1="6%" y1="12%" x2="18%" y2="28%" stroke="#818cf8" strokeWidth="1" />
-            <line x1="18%" y1="28%" x2="12%" y2="62%" stroke="#818cf8" strokeWidth="1" />
-            <line x1="18%" y1="28%" x2="32%" y2="18%" stroke="#818cf8" strokeWidth="1" />
-            <line x1="32%" y1="18%" x2="48%" y2="10%" stroke="#818cf8" strokeWidth="1" />
-            <line x1="12%" y1="62%" x2="22%" y2="82%" stroke="#818cf8" strokeWidth="1" />
-            <line x1="88%" y1="60%" x2="74%" y2="42%" stroke="#818cf8" strokeWidth="1" />
-            <line x1="74%" y1="42%" x2="68%" y2="22%" stroke="#818cf8" strokeWidth="1" />
-            <circle cx="18%" cy="28%" r="3.5" fill="#a855f7" />
-            <circle cx="32%" cy="18%" r="3" fill="#6366f1" />
-            <circle cx="74%" cy="42%" r="3.5" fill="#a855f7" />
-          </svg>
+          <div className="absolute top-0 -left-20 w-[450px] h-[450px] bg-purple-900/20 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 -right-20 w-[450px] h-[450px] bg-indigo-900/20 rounded-full blur-3xl"></div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-950/20 rounded-full blur-3xl"></div>
         </div>
 
         {/* Top-Left: Back to Home Button */}
         {onBackToLanding && (
-          <div className="absolute top-4 left-4 sm:top-6 sm:left-8 z-30">
+          <div className="absolute top-3 left-3 sm:top-5 sm:left-6 z-30">
             <button
               type="button"
               onClick={onBackToLanding}
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-400 hover:text-white bg-slate-900/80 hover:bg-slate-800 border border-slate-800 shadow-2xs transition-all cursor-pointer backdrop-blur-xs group"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white bg-slate-900/80 hover:bg-slate-800 border border-slate-800 shadow-2xs transition-all cursor-pointer backdrop-blur-xs group"
               title="Back to Landing Page"
             >
-              <ArrowLeft className="w-4 h-4 text-slate-400 group-hover:text-purple-400 group-hover:-translate-x-0.5 transition-transform" />
+              <ArrowLeft className="w-3.5 h-3.5 text-slate-400 group-hover:text-purple-400 group-hover:-translate-x-0.5 transition-transform" />
               <span>Back to Home</span>
             </button>
           </div>
         )}
 
-        {/* Main Superadmin Dual-Pane Dark Container */}
-        <div className="w-full max-w-[960px] z-10 rounded-3xl bg-[#0D121F] border border-slate-800 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] overflow-hidden grid grid-cols-1 md:grid-cols-12 relative mt-12 sm:mt-0">
+        {/* Main Superadmin Dual-Pane Container (Compact & Centered) */}
+        <div className="w-full max-w-[840px] z-10 rounded-2xl sm:rounded-3xl bg-[#0D121F] border border-slate-800 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] overflow-hidden grid grid-cols-1 md:grid-cols-12 relative my-auto">
           
-          {/* LEFT PANE: Superadmin Control Plane Architecture (5 Cols) */}
-          <div className="md:col-span-5 p-6 sm:p-8 flex flex-col justify-between border-b md:border-b-0 md:border-r border-slate-800/90 bg-gradient-to-b from-[#0F1626] to-[#0A0E1A] relative">
+          {/* LEFT PANE: Superadmin Control Plane */}
+          <div className="md:col-span-5 p-5 sm:p-6 lg:p-7 flex flex-col justify-between border-b md:border-b-0 md:border-r border-slate-800/90 bg-gradient-to-b from-[#0F1626] to-[#0A0E1A]">
             <div>
-              {/* Top Eyebrow Badge */}
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold text-purple-300 bg-purple-950/80 border border-purple-800/60 shadow-2xs mb-5 self-start">
-                <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold text-purple-300 bg-purple-950/80 border border-purple-800/60 shadow-2xs mb-3">
+                <Sparkles className="w-3 h-3 text-purple-400" />
                 <span>Next-Gen Academic ERP</span>
               </div>
 
-              {/* Logo Mark with Orbit Ring Indicator */}
-              <div className="flex items-center gap-2.5 mb-4">
-                <div className="w-13 h-13 rounded-2xl bg-gradient-to-tr from-purple-700 via-purple-600 to-indigo-600 text-white flex items-center justify-center p-2.5 shadow-lg shadow-purple-600/30">
-                  <GraduationCap className="w-8 h-8 stroke-[2.2]" />
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-700 via-purple-600 to-indigo-600 text-white flex items-center justify-center p-2 shadow-lg shadow-purple-600/30">
+                  <GraduationCap className="w-6 h-6 stroke-[2.2]" />
                 </div>
-                <div className="w-4 h-4 rounded-full border-2 border-slate-700 bg-slate-900 flex items-center justify-center">
+                <div className="w-3.5 h-3.5 rounded-full border-2 border-slate-700 bg-slate-900 flex items-center justify-center">
                   <div className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-ping"></div>
                 </div>
               </div>
 
-              {/* Heading & Subtitle */}
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-heading">
+              <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight font-heading">
                 Apex<span className="text-purple-400">Ed</span> Portal
               </h1>
-              <p className="text-xs sm:text-sm text-slate-400 leading-relaxed mt-2 mb-6">
+              <p className="text-xs text-slate-400 leading-normal mt-1 mb-4">
                 Control plane architecture for multi-campus orchestration & tenant governance.
               </p>
 
-              {/* 3 Dark Feature Cards */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-[#131B2E]/70 border border-slate-800/90 hover:border-slate-700 transition-all group">
-                  <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-700/80 flex items-center justify-center text-purple-400 group-hover:scale-105 transition-transform shrink-0">
-                    <Zap className="w-4.5 h-4.5" />
+              <div className="space-y-2">
+                <div className="flex items-center gap-3 p-2.5 rounded-xl bg-[#131B2E]/70 border border-slate-800/90">
+                  <div className="w-8 h-8 rounded-lg bg-slate-900 border border-slate-700/80 flex items-center justify-center text-purple-400 shrink-0">
+                    <Zap className="w-4 h-4" />
                   </div>
                   <div>
                     <h4 className="text-xs font-bold text-white">Lightning Checkout</h4>
-                    <p className="text-[11px] text-slate-400 leading-tight">Sub-50ms instant receipt rendering</p>
+                    <p className="text-[10px] text-slate-400">Sub-50ms instant receipt rendering</p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-[#131B2E]/70 border border-slate-800/90 hover:border-slate-700 transition-all group">
-                  <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-700/80 flex items-center justify-center text-indigo-400 group-hover:scale-105 transition-transform shrink-0">
-                    <BarChart3 className="w-4.5 h-4.5" />
+                <div className="flex items-center gap-3 p-2.5 rounded-xl bg-[#131B2E]/70 border border-slate-800/90">
+                  <div className="w-8 h-8 rounded-lg bg-slate-900 border border-slate-700/80 flex items-center justify-center text-indigo-400 shrink-0">
+                    <BarChart3 className="w-4 h-4" />
                   </div>
                   <div>
                     <h4 className="text-xs font-bold text-white">Real-Time Telemetry</h4>
-                    <p className="text-[11px] text-slate-400 leading-tight">Automated profit, loss & stock sync</p>
+                    <p className="text-[10px] text-slate-400">Automated profit, loss & stock sync</p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-[#131B2E]/70 border border-slate-800/90 hover:border-slate-700 transition-all group">
-                  <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-700/80 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform shrink-0">
-                    <ShieldCheck className="w-4.5 h-4.5" />
+                <div className="flex items-center gap-3 p-2.5 rounded-xl bg-[#131B2E]/70 border border-slate-800/90">
+                  <div className="w-8 h-8 rounded-lg bg-slate-900 border border-slate-700/80 flex items-center justify-center text-emerald-400 shrink-0">
+                    <ShieldCheck className="w-4 h-4" />
                   </div>
                   <div>
                     <h4 className="text-xs font-bold text-white">Bank-Grade Security</h4>
-                    <p className="text-[11px] text-slate-400 leading-tight">Encrypted sessions & audit trails</p>
+                    <p className="text-[10px] text-slate-400">Encrypted sessions & audit trails</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Bottom Status Indicator */}
-            <div className="pt-6 mt-6 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
-              <span className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <div className="pt-3 mt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
+              <span className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                 <span className="font-semibold text-slate-300">POS Engine Operational</span>
               </span>
               <span className="font-mono text-slate-500 font-bold">v2.5 Pro</span>
             </div>
           </div>
 
-          {/* RIGHT PANE: Superadmin Credentials Form (7 Cols) */}
-          <div className="md:col-span-7 p-6 sm:p-10 flex flex-col justify-between bg-[#0D121F]">
+          {/* RIGHT PANE: Superadmin Credentials Form */}
+          <div className="md:col-span-7 p-5 sm:p-6 lg:p-7 flex flex-col justify-between bg-[#0D121F]">
             <div>
-              {/* Header Row: Sign In + Superadmin Badge */}
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-white font-heading tracking-tight">
+              <div className="flex items-center justify-between mb-1">
+                <h2 className="text-xl sm:text-2xl font-extrabold text-white font-heading tracking-tight">
                   Sign In
                 </h2>
-                <span className="px-3 py-1 rounded-md bg-[#1d3557] text-[#93c5fd] border border-[#2563eb]/60 text-xs font-black uppercase tracking-wider shadow-inner">
+                <span className="px-2.5 py-0.5 rounded-md bg-[#1d3557] text-[#93c5fd] border border-[#2563eb]/60 text-[11px] font-black uppercase tracking-wider">
                   Superadmin
                 </span>
               </div>
-              <p className="text-xs sm:text-sm text-slate-400 mt-1">
+              <p className="text-xs text-slate-400">
                 Authenticate with superadmin credentials
               </p>
 
-              {/* Return to Campus Login Switcher */}
               <button
                 type="button"
                 onClick={() => toggleAuthMode('campus')}
-                className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-purple-300 font-semibold mt-2.5 transition-colors cursor-pointer group"
+                className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-purple-300 font-semibold mt-2 transition-colors cursor-pointer group"
               >
                 <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
                 <span>Return to Campus Portal</span>
               </button>
 
-              {/* Alert / Error Banners */}
               {authError && (
-                <div className="mt-4 p-3.5 rounded-xl bg-rose-950/60 border border-rose-800 text-rose-200 text-xs font-medium flex items-start gap-2.5 animate-in fade-in">
+                <div className="mt-3 p-3 rounded-xl bg-rose-950/60 border border-rose-800 text-rose-200 text-xs font-medium flex items-start gap-2">
                   <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
                   <span>{authError}</span>
                 </div>
               )}
 
               {infoMessage && (
-                <div className="mt-4 p-3 rounded-xl bg-purple-950/60 border border-purple-800 text-purple-200 text-xs font-medium flex items-center justify-between animate-in fade-in">
+                <div className="mt-3 p-2.5 rounded-xl bg-purple-950/60 border border-purple-800 text-purple-200 text-xs font-medium flex items-center justify-between">
                   <span>{infoMessage}</span>
                   <button type="button" onClick={() => setInfoMessage('')} className="text-purple-400 hover:text-purple-200 font-bold ml-2">✕</button>
                 </div>
               )}
 
-              {/* Sign In Form */}
-              <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+              <form onSubmit={handleSubmit} className="mt-4 space-y-3">
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                  <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
                     Superadmin Email or Username
                   </label>
                   <div className="relative group">
-                    <Mail className="w-4 h-4 text-slate-500 absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-purple-400 transition-colors pointer-events-none" />
+                    <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 group-focus-within:text-purple-400 pointer-events-none" />
                     <input
                       type="text"
                       required
@@ -595,27 +513,27 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
                         setIdentifier(e.target.value)
                         if (authError) setAuthError('')
                       }}
-                      className="w-full pl-11 pr-4 py-3 rounded-xl bg-[#0A0E1A] border border-slate-700/80 text-white placeholder-slate-500 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all"
+                      className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-[#0A0E1A] border border-slate-700/80 text-white placeholder-slate-500 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all"
                       placeholder="admin@schoolms.com or admin"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center justify-between mb-1">
                     <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                       Master Key Password
                     </label>
                     <button 
                       type="button"
-                      onClick={() => setInfoMessage('Superadmin credentials recovery: Contact system infrastructure host or run recovery console.')}
-                      className="text-xs text-purple-400 hover:text-purple-300 font-semibold cursor-pointer transition-colors"
+                      onClick={() => setInfoMessage('Contact infrastructure host to reset master credentials.')}
+                      className="text-xs text-purple-400 hover:text-purple-300 font-semibold cursor-pointer"
                     >
                       Forgot Password?
                     </button>
                   </div>
                   <div className="relative group">
-                    <Lock className="w-4 h-4 text-slate-500 absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-purple-400 transition-colors pointer-events-none" />
+                    <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 group-focus-within:text-purple-400 pointer-events-none" />
                     <input
                       type={showPassword ? 'text' : 'password'}
                       required
@@ -625,14 +543,14 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
                         setPassword(e.target.value)
                         if (authError) setAuthError('')
                       }}
-                      className="w-full pl-11 pr-11 py-3 rounded-xl bg-[#0A0E1A] border border-slate-700/80 text-white placeholder-slate-500 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all font-mono"
+                      className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-[#0A0E1A] border border-slate-700/80 text-white placeholder-slate-500 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all font-mono"
                       placeholder="••••••••••••"
                     />
                     <button
                       type="button"
                       disabled={isLockedOut}
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors cursor-pointer"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 cursor-pointer p-1"
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -640,15 +558,15 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
                 </div>
 
                 <div className="flex items-center justify-between text-xs pt-0.5 text-slate-400">
-                  <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
                     <input
                       type="checkbox"
                       checked={rememberMe}
                       disabled={isLockedOut}
                       onChange={(e) => setRememberMe(e.target.checked)}
-                      className="w-4 h-4 rounded border-slate-700 bg-[#0A0E1A] text-purple-600 focus:ring-purple-500 accent-purple-600 cursor-pointer"
+                      className="w-3.5 h-3.5 rounded border-slate-700 bg-[#0A0E1A] text-purple-600 focus:ring-purple-500 accent-purple-600 cursor-pointer"
                     />
-                    <span className="text-slate-300 font-medium">Remember this terminal</span>
+                    <span className="text-slate-300 font-medium">Remember terminal</span>
                   </label>
                   <span className="text-slate-500 font-medium">30 Days Active</span>
                 </div>
@@ -656,10 +574,10 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
                 <button
                   type="submit"
                   disabled={isLoading || isLockedOut}
-                  className="w-full py-3.5 rounded-xl font-bold text-sm text-white bg-[#374151] hover:bg-[#4b5563] border border-slate-600 shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] disabled:opacity-50"
+                  className="w-full py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white bg-[#374151] hover:bg-[#4b5563] border border-slate-600 shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {isLoading ? (
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                   ) : (
                     <>
                       <span>Sign In</span>
@@ -668,27 +586,9 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
                   )}
                 </button>
               </form>
-
-              {/* 1-Click Super Admin Demo Shortcut */}
-              <div className="pt-4 mt-4 border-t border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIdentifier('admin')
-                    setPassword('admin123')
-                    executeLogin('admin', 'admin123', 'superadmin')
-                  }}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-purple-500/40 bg-purple-950/30 hover:bg-purple-900/40 text-purple-300 text-xs font-bold transition-all cursor-pointer group shadow-2xs"
-                  title="Direct 1-Click Super Admin Access"
-                >
-                  <span className="w-2 h-2 rounded-full bg-purple-400 group-hover:scale-125 transition-transform"></span>
-                  <span>Quick 1-Click Super Admin Access</span>
-                </button>
-              </div>
             </div>
 
-            {/* Bottom Security Guarantee */}
-            <div className="pt-6 mt-4 border-t border-slate-800/80 text-center">
+            <div className="pt-4 mt-3 border-t border-slate-800/80 text-center">
               <span className="text-[11px] text-slate-500 flex items-center justify-center gap-1.5 font-medium">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
                 <span>Enterprise Multi-Tenant Security Guaranteed</span>
@@ -702,46 +602,17 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
 
   // =========================================================================
   // VIEW 2: UNIVERSAL SMART SIGN-IN ARCHITECTURE (Light SaaS - Option 1)
-  // 100% Clean, Professional & Executive Dual Pane (Desktop & Tablet)
-  // Perfectly Responsive on Mobile (< md: Compact Header + Immediate Form)
-  // No Clutter: Main card contains ONLY email, password, and sign-in button!
+  // 100% Clean, Compact & Perfectly Sized for PC & Mobile
+  // "Select Campus Directory" has been completely removed per user request.
   // =========================================================================
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-[#fcfaff] relative overflow-x-hidden px-3 sm:px-6 py-6 sm:py-10 selection:bg-purple-500 selection:text-white font-sans">
+    <div className="min-h-screen w-full flex items-center justify-center bg-[#fcfaff] relative overflow-x-hidden p-3 sm:p-5 selection:bg-purple-500 selection:text-white font-sans">
       
-      {/* Background Ambient Glows & Constellation Network Mesh (Soft Light SaaS) */}
+      {/* Background Soft Glows */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 -left-20 w-[450px] sm:w-[550px] h-[450px] sm:h-[550px] bg-purple-200/30 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 -right-20 w-[450px] sm:w-[550px] h-[450px] sm:h-[550px] bg-[#f5eeff] rounded-full blur-3xl"></div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-50/40 rounded-full blur-3xl"></div>
-
-        {/* Network Vector Mesh Lines */}
-        <svg className="w-full h-full opacity-25" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="lightMeshGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#9333ea" stopOpacity="0.35" />
-              <stop offset="100%" stopColor="#6366f1" stopOpacity="0.1" />
-            </linearGradient>
-          </defs>
-          <line x1="6%" y1="12%" x2="18%" y2="28%" stroke="url(#lightMeshGrad)" strokeWidth="1" />
-          <line x1="18%" y1="28%" x2="12%" y2="62%" stroke="url(#lightMeshGrad)" strokeWidth="1" />
-          <line x1="18%" y1="28%" x2="32%" y2="18%" stroke="url(#lightMeshGrad)" strokeWidth="1" />
-          <line x1="32%" y1="18%" x2="48%" y2="10%" stroke="url(#lightMeshGrad)" strokeWidth="1" />
-          <line x1="12%" y1="62%" x2="22%" y2="82%" stroke="url(#lightMeshGrad)" strokeWidth="1" />
-          <line x1="22%" y1="82%" x2="40%" y2="88%" stroke="url(#lightMeshGrad)" strokeWidth="1" />
-          <line x1="40%" y1="88%" x2="58%" y2="92%" stroke="url(#lightMeshGrad)" strokeWidth="1" />
-          <line x1="82%" y1="12%" x2="94%" y2="26%" stroke="url(#lightMeshGrad)" strokeWidth="1" />
-          <line x1="94%" y1="26%" x2="88%" y2="60%" stroke="url(#lightMeshGrad)" strokeWidth="1" />
-          <line x1="88%" y1="60%" x2="74%" y2="42%" stroke="url(#lightMeshGrad)" strokeWidth="1" />
-          <line x1="74%" y1="42%" x2="68%" y2="22%" stroke="url(#lightMeshGrad)" strokeWidth="1" />
-          <line x1="68%" y1="22%" x2="82%" y2="12%" stroke="url(#lightMeshGrad)" strokeWidth="1" />
-          <circle cx="6%" cy="12%" r="3.5" fill="#9333ea" />
-          <circle cx="18%" cy="28%" r="4" fill="#7c3aed" />
-          <circle cx="12%" cy="62%" r="3.5" fill="#9333ea" />
-          <circle cx="32%" cy="18%" r="3" fill="#6366f1" />
-          <circle cx="88%" cy="60%" r="3" fill="#6366f1" />
-          <circle cx="74%" cy="42%" r="3.5" fill="#7c3aed" />
-        </svg>
+        <div className="absolute top-0 -left-20 w-[400px] h-[400px] bg-purple-200/25 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 -right-20 w-[400px] h-[400px] bg-[#f5eeff] rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-indigo-50/35 rounded-full blur-3xl"></div>
       </div>
 
       {/* Top Navigation: Back to Home */}
@@ -750,156 +621,143 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
           <button
             type="button"
             onClick={onBackToLanding}
-            className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 hover:text-purple-700 bg-white/95 hover:bg-white border border-purple-100 shadow-2xs hover:shadow-xs transition-all backdrop-blur-xs group cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 hover:text-purple-700 bg-white/95 hover:bg-white border border-purple-100 shadow-2xs hover:shadow-xs transition-all backdrop-blur-xs group cursor-pointer"
             title="Back to Landing Page"
           >
-            <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-500 group-hover:text-purple-600 group-hover:-translate-x-0.5 transition-transform" />
+            <ArrowLeft className="w-3.5 h-3.5 text-slate-500 group-hover:text-purple-600 group-hover:-translate-x-0.5 transition-transform" />
             <span>Back to Home</span>
           </button>
         </div>
       )}
 
-      {/* Main Dual-Pane Responsive Card (Clean, Modern, Clutter-Free) */}
-      <div className="w-full max-w-[960px] z-10 rounded-2xl sm:rounded-3xl bg-white border border-purple-100/90 shadow-[0_20px_60px_-15px_rgba(147,51,234,0.1),0_2px_8px_rgba(0,0,0,0.03)] overflow-hidden grid grid-cols-1 md:grid-cols-12 relative mt-10 sm:mt-0">
+      {/* Main Dual-Pane Card: Compact Max Width (840px) to Fit Perfectly on PC & Mobile Screens */}
+      <div className="w-full max-w-[840px] z-10 rounded-2xl sm:rounded-3xl bg-white border border-purple-100/90 shadow-[0_15px_45px_-10px_rgba(147,51,234,0.08),0_2px_6px_rgba(0,0,0,0.02)] overflow-hidden grid grid-cols-1 md:grid-cols-12 relative my-auto">
         
-        {/* ================================================================= */}
-        {/* LEFT PANE: BRANDING & SYSTEM TELEMETRY (Hidden on Mobile, Visible on md+) */}
-        {/* ================================================================= */}
-        <div className="hidden md:flex md:col-span-5 p-7 lg:p-9 flex-col justify-between border-r border-purple-100/80 bg-gradient-to-b from-[#fbf8fe] via-[#f7f2fc] to-[#f4edfb] relative">
+        {/* LEFT PANE: BRANDING & SYSTEM TELEMETRY (Compact & Elegant) */}
+        <div className="hidden md:flex md:col-span-5 p-5 lg:p-6 flex-col justify-between border-r border-purple-100/80 bg-gradient-to-b from-[#fbf8fe] via-[#f7f2fc] to-[#f4edfb]">
           <div>
-            {/* Pill Badge */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold text-purple-700 bg-purple-100/80 border border-purple-200/80 shadow-2xs mb-5 self-start">
-              <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold text-purple-700 bg-purple-100/80 border border-purple-200/80 shadow-2xs mb-3">
+              <Sparkles className="w-3 h-3 text-purple-600" />
               <span>Next-Gen Academic ERP</span>
             </div>
 
-            {/* Logo Mark with Orbit Ring Indicator */}
-            <div className="flex items-center gap-2.5 mb-4">
-              <div className="w-13 h-13 rounded-2xl bg-gradient-to-tr from-purple-700 via-purple-600 to-indigo-600 text-white flex items-center justify-center p-2.5 shadow-md shadow-purple-500/25">
-                <GraduationCap className="w-8 h-8 stroke-[2.2]" />
+            <div className="flex items-center gap-2 mb-2.5">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-700 via-purple-600 to-indigo-600 text-white flex items-center justify-center p-2 shadow-md shadow-purple-500/25">
+                <GraduationCap className="w-6 h-6 stroke-[2.2]" />
               </div>
-              <div className="w-4 h-4 rounded-full border-2 border-purple-200 bg-white flex items-center justify-center shadow-xs">
+              <div className="w-3.5 h-3.5 rounded-full border-2 border-purple-200 bg-white flex items-center justify-center shadow-xs">
                 <div className="w-1.5 h-1.5 rounded-full bg-purple-600 animate-ping"></div>
               </div>
             </div>
 
-            {/* Heading & Subtitle */}
-            <h1 className="text-2xl lg:text-3xl font-extrabold text-slate-900 tracking-tight font-heading">
+            <h1 className="text-xl lg:text-2xl font-extrabold text-slate-900 tracking-tight font-heading">
               Apex<span className="text-purple-600">Ed</span> Portal
             </h1>
-            <p className="text-xs lg:text-sm text-slate-500 leading-relaxed mt-2 mb-6">
-              Intelligent multi-campus academic operating system with computerized fee challans, live attendance, and multi-tier exam governance.
+            <p className="text-xs text-slate-500 leading-normal mt-1 mb-3.5">
+              Intelligent multi-campus academic operating system with computerized fee challans & live attendance.
             </p>
 
-            {/* Feature Highlights Stack */}
-            <div className="space-y-3">
-              {/* Feature 1: Instant Fee Barcoding */}
-              <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white border border-purple-100/90 shadow-2xs hover:shadow-xs hover:border-purple-200 transition-all group">
-                <div className="w-10 h-10 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 group-hover:scale-105 transition-transform shrink-0">
-                  <Zap className="w-4.5 h-4.5" />
+            <div className="space-y-2">
+              <div className="flex items-center gap-3 p-2.5 rounded-xl bg-white/90 border border-purple-100/90 shadow-2xs">
+                <div className="w-8 h-8 rounded-lg bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 shrink-0">
+                  <Zap className="w-4 h-4" />
                 </div>
                 <div>
                   <h4 className="text-xs font-bold text-slate-800">Instant Fee Barcoding</h4>
-                  <p className="text-[11px] text-slate-500 leading-tight">Sub-50ms 1Link & JazzCash challans</p>
+                  <p className="text-[10px] text-slate-500 leading-tight">Sub-50ms 1Link & JazzCash challans</p>
                 </div>
               </div>
 
-              {/* Feature 2: Multi-Wing Telemetry */}
-              <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white border border-purple-100/90 shadow-2xs hover:shadow-xs hover:border-purple-200 transition-all group">
-                <div className="w-10 h-10 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 group-hover:scale-105 transition-transform shrink-0">
-                  <Activity className="w-4.5 h-4.5" />
+              <div className="flex items-center gap-3 p-2.5 rounded-xl bg-white/90 border border-purple-100/90 shadow-2xs">
+                <div className="w-8 h-8 rounded-lg bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 shrink-0">
+                  <Activity className="w-4 h-4" />
                 </div>
                 <div>
                   <h4 className="text-xs font-bold text-slate-800">Multi-Wing Telemetry</h4>
-                  <p className="text-[11px] text-slate-500 leading-tight">Automated attendance & wing sync</p>
+                  <p className="text-[10px] text-slate-500 leading-tight">Automated attendance & wing sync</p>
                 </div>
               </div>
 
-              {/* Feature 3: Bank-Grade Security */}
-              <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white border border-purple-100/90 shadow-2xs hover:shadow-xs hover:border-purple-200 transition-all group">
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 group-hover:scale-105 transition-transform shrink-0">
-                  <ShieldCheck className="w-4.5 h-4.5" />
+              <div className="flex items-center gap-3 p-2.5 rounded-xl bg-white/90 border border-purple-100/90 shadow-2xs">
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                  <ShieldCheck className="w-4 h-4" />
                 </div>
                 <div>
                   <h4 className="text-xs font-bold text-slate-800">Bank-Grade Security</h4>
-                  <p className="text-[11px] text-slate-500 leading-tight">Encrypted sessions & audit trails</p>
+                  <p className="text-[10px] text-slate-500 leading-tight">Encrypted sessions & audit trails</p>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Bottom Operational Status */}
-          <div className="pt-6 mt-6 border-t border-purple-100/80 flex items-center justify-between text-xs text-slate-500">
-            <span className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <div className="pt-3 mt-3 border-t border-purple-100/80 flex items-center justify-between text-[11px] text-slate-500">
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
               <span className="font-semibold text-slate-700">Portal Engine Operational</span>
             </span>
             <span className="font-mono text-slate-400 font-bold">v2.5 Enterprise</span>
           </div>
         </div>
 
-        {/* ================================================================= */}
-        {/* RIGHT PANE: 100% CLEAN SIGN IN FORM (Full-width on Mobile, 7 Cols on md+) */}
-        {/* ================================================================= */}
-        <div className="md:col-span-7 p-6 sm:p-8 lg:p-10 flex flex-col justify-between bg-white">
+        {/* RIGHT PANE: 100% CLEAN SIGN IN FORM */}
+        <div className="md:col-span-7 p-5 sm:p-6 lg:p-7 flex flex-col justify-between bg-white">
           <div>
-            
-            {/* MOBILE-ONLY COMPACT HERO HEADER */}
-            <div className="md:hidden mb-5 pb-4 border-b border-purple-50 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-700 to-indigo-600 text-white flex items-center justify-center p-2 shadow-xs">
-                  <GraduationCap className="w-6 h-6" />
+            {/* Mobile Header Banner */}
+            <div className="md:hidden mb-4 pb-3 border-b border-purple-50 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-700 to-indigo-600 text-white flex items-center justify-center p-1.5 shadow-xs">
+                  <GraduationCap className="w-5 h-5" />
                 </div>
                 <div>
-                  <h1 className="text-lg font-extrabold text-slate-900 tracking-tight font-heading">
+                  <h1 className="text-base font-extrabold text-slate-900 tracking-tight font-heading">
                     Apex<span className="text-purple-600">Ed</span> Portal
                   </h1>
-                  <p className="text-[11px] text-slate-500 font-medium">Unified Institutional Gateway</p>
+                  <p className="text-[10px] text-slate-500 font-medium">Unified Institutional Gateway</p>
                 </div>
               </div>
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200">
+                <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse"></span>
                 <span>Active</span>
               </span>
             </div>
 
             {/* Desktop Form Title */}
-            <div className="hidden md:block mb-6">
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading tracking-tight">
+            <div className="hidden md:block mb-3.5">
+              <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 font-heading tracking-tight">
                 Sign In
               </h2>
-              <p className="text-xs sm:text-sm text-slate-500 mt-1">
+              <p className="text-xs text-slate-500 mt-0.5">
                 Enter your institutional credentials to access your campus portal
               </p>
             </div>
 
             {/* Mobile Form Title */}
-            <div className="md:hidden mb-4">
-              <h2 className="text-xl font-bold text-slate-900 font-heading">Sign In</h2>
-              <p className="text-xs text-slate-500">Sign in with institutional email or staff code</p>
+            <div className="md:hidden mb-3">
+              <h2 className="text-lg font-bold text-slate-900 font-heading">Sign In</h2>
+              <p className="text-[11px] text-slate-500">Sign in with institutional email or staff code</p>
             </div>
 
             {/* Alerts & Notifications */}
             {authError && (
-              <div className="mb-4 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium flex items-start gap-2.5 animate-in fade-in">
+              <div className="mb-3 p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium flex items-start gap-2 animate-in fade-in">
                 <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
                 <span>{authError}</span>
               </div>
             )}
 
             {infoMessage && (
-              <div className="mb-4 p-3 rounded-xl bg-purple-50 border border-purple-200 text-purple-800 text-xs font-medium flex items-center justify-between animate-in fade-in">
+              <div className="mb-3 p-2.5 rounded-xl bg-purple-50 border border-purple-200 text-purple-800 text-xs font-medium flex items-center justify-between animate-in fade-in">
                 <span>{infoMessage}</span>
                 <button type="button" onClick={() => setInfoMessage('')} className="text-purple-600 hover:text-purple-800 font-bold ml-2">✕</button>
               </div>
             )}
 
             {/* Main Sign In Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-3">
               
               {/* FIELD 1: Institutional Email or Staff ID */}
               <div>
-                <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center justify-between mb-1">
                   <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider">
                     Institutional Email or Staff ID
                   </label>
@@ -918,7 +776,7 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
                 </div>
 
                 <div className="relative group">
-                  <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 group-focus-within:text-purple-600 transition-colors pointer-events-none" />
+                  <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 group-focus-within:text-purple-600 transition-colors pointer-events-none" />
                   <input
                     type="text"
                     required
@@ -928,30 +786,18 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
                       setIdentifier(e.target.value)
                       if (authError) setAuthError('')
                     }}
-                    className={`w-full pl-10 sm:pl-11 pr-4 py-3 rounded-xl bg-slate-50/70 hover:bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 text-sm focus:bg-white focus:outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 transition-all ${
+                    className={`w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-50/70 hover:bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 text-sm focus:bg-white focus:outline-none focus:ring-3 focus:ring-purple-500/10 focus:border-purple-500 transition-all ${
                       isLockedOut ? 'opacity-50 cursor-not-allowed' : ''
                     }`}
                     placeholder="e.g. name@giki.com, staff@roots.edu or teacher@cityschool.edu"
                     autoComplete="username"
                   />
                 </div>
-                
-                {/* Micro Helper Note */}
-                <div className="flex items-center justify-between mt-1 text-[11px] text-slate-400">
-                  <span>Enter institutional email or employee code</span>
-                  <button 
-                    type="button" 
-                    onClick={() => setShowCampusPickerModal(true)}
-                    className="text-purple-600 hover:text-purple-700 font-semibold cursor-pointer underline hover:no-underline"
-                  >
-                    Select Campus Directory
-                  </button>
-                </div>
               </div>
 
               {/* FIELD 2: Password */}
               <div>
-                <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center justify-between mb-1">
                   <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider">
                     Password
                   </label>
@@ -964,7 +810,7 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
                   </button>
                 </div>
                 <div className="relative group">
-                  <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 group-focus-within:text-purple-600 transition-colors pointer-events-none" />
+                  <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 group-focus-within:text-purple-600 transition-colors pointer-events-none" />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     required
@@ -974,7 +820,7 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
                       setPassword(e.target.value)
                       if (authError) setAuthError('')
                     }}
-                    className={`w-full pl-10 sm:pl-11 pr-11 py-3 rounded-xl bg-slate-50/70 hover:bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 text-sm focus:bg-white focus:outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 transition-all ${
+                    className={`w-full pl-10 pr-10 py-2.5 rounded-xl bg-slate-50/70 hover:bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 text-sm focus:bg-white focus:outline-none focus:ring-3 focus:ring-purple-500/10 focus:border-purple-500 transition-all ${
                       isLockedOut ? 'opacity-50 cursor-not-allowed' : ''
                     }`}
                     placeholder="••••••••••••"
@@ -984,7 +830,7 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
                     type="button"
                     disabled={isLockedOut}
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer p-1"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer p-1"
                     title={showPassword ? 'Hide password' : 'Show password'}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -1000,7 +846,7 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
                     checked={rememberMe}
                     disabled={isLockedOut}
                     onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500 accent-purple-600 cursor-pointer"
+                    className="w-3.5 h-3.5 rounded border-slate-300 text-purple-600 focus:ring-purple-500 accent-purple-600 cursor-pointer"
                   />
                   <span className="text-slate-700 font-medium">Remember this terminal</span>
                 </label>
@@ -1011,12 +857,12 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
               <button
                 type="submit"
                 disabled={isLoading || isLockedOut}
-                className={`w-full py-3.5 rounded-xl font-bold text-sm text-white bg-purple-600 hover:bg-purple-700 shadow-md shadow-purple-600/25 hover:shadow-lg hover:shadow-purple-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                className={`w-full py-2.5 sm:py-3 rounded-xl font-bold text-sm text-white bg-purple-600 hover:bg-purple-700 shadow-md shadow-purple-600/20 hover:shadow-lg hover:shadow-purple-600/25 transition-all flex items-center justify-center gap-2 cursor-pointer ${
                   isLoading || isLockedOut ? 'opacity-70 cursor-not-allowed' : 'active:scale-[0.99]'
                 }`}
               >
                 {isLoading ? (
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                 ) : isLockedOut ? (
                   <>
                     <ShieldAlert className="w-4 h-4 text-rose-200" />
@@ -1032,11 +878,9 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
             </form>
           </div>
 
-          {/* =============================================================== */}
-          {/* BOTTOM FOOTER: NEW INSTITUTION REGISTRATION / FREE TRIAL        */}
-          {/* =============================================================== */}
-          <div className="pt-6 mt-6 border-t border-slate-100">
-            <div className="text-center space-y-2">
+          {/* BOTTOM FOOTER: NEW INSTITUTION REGISTRATION */}
+          <div className="pt-3.5 mt-3.5 border-t border-slate-100">
+            <div className="text-center space-y-1.5">
               <span className="text-xs text-slate-500 block font-medium">
                 New Educational Institution?
               </span>
@@ -1049,7 +893,7 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
                     onBackToLanding()
                   }
                 }}
-                className="w-full py-3 rounded-xl border border-purple-200 bg-purple-50/60 hover:bg-purple-100/80 text-purple-700 hover:text-purple-800 text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs group"
+                className="w-full py-2 sm:py-2.5 px-3 rounded-xl border border-purple-200 bg-purple-50/60 hover:bg-purple-100/80 text-purple-700 hover:text-purple-800 text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs group"
               >
                 <Building2 className="w-4 h-4 text-purple-600 group-hover:scale-110 transition-transform" />
                 <span>Register Institution / Start Free Trial</span>
@@ -1061,15 +905,12 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
 
       </div>
 
-      {/* =================================================================== */}
-      {/* FLOATING DEMO TESTING PILL (Discreet, Outside Login Card in Corner) */}
-      {/* Keeps the login card 100% spotless while giving evaluators 1-click testing */}
-      {/* =================================================================== */}
-      <div className="fixed bottom-3 right-3 sm:bottom-4 sm:right-4 z-40">
+      {/* FLOATING DEMO TESTING PILL (Discreet in Bottom Right Corner) */}
+      <div className="fixed bottom-3 right-3 z-40">
         <button
           type="button"
           onClick={() => setShowDemoProfiles(true)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-full text-xs font-semibold text-slate-600 hover:text-purple-700 bg-white/95 hover:bg-white border border-slate-200/90 shadow-sm hover:shadow transition-all backdrop-blur-xs cursor-pointer opacity-70 hover:opacity-100 group"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-500 hover:text-purple-700 bg-white/95 hover:bg-white border border-slate-200/90 shadow-2xs hover:shadow-xs transition-all backdrop-blur-xs cursor-pointer opacity-60 hover:opacity-100 group"
           title="Quick Test Profiles (Evaluation Mode)"
         >
           <Zap className="w-3.5 h-3.5 text-amber-500 group-hover:scale-110 transition-transform" />
@@ -1078,86 +919,10 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
         </button>
       </div>
 
-      {/* =================================================================== */}
-      {/* MODAL 1: CAMPUS DISAMBIGUATION / INSTITUTE DIRECTORY SELECTOR       */}
-      {/* Conflict Safety: Lets users select their institute cleanly          */}
-      {/* =================================================================== */}
-      {showCampusPickerModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4 animate-in fade-in">
-          <div className="bg-white rounded-2xl sm:rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-purple-100 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2">
-                <Building2 className="w-5 h-5 text-purple-600" />
-                <h3 className="font-bold text-slate-900 text-base">Select Your Campus Institution</h3>
-              </div>
-              <button 
-                type="button"
-                onClick={() => setShowCampusPickerModal(false)}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <p className="text-xs text-slate-500">
-              Select your registered institute below to automatically direct your login session to the appropriate portal:
-            </p>
-
-            <div className="space-y-2.5 max-h-[380px] overflow-y-auto pr-1">
-              {registeredInstitutes.map((inst) => (
-                <div
-                  key={inst.id}
-                  onClick={() => {
-                    setIdentifier(inst.defaultEmail)
-                    setPassword('institute123')
-                    setShowCampusPickerModal(false)
-                    setInfoMessage(`Loaded credentials for ${inst.name}. Click Sign In to proceed.`)
-                  }}
-                  className="p-3.5 rounded-xl border border-slate-200 hover:border-purple-300 bg-slate-50/50 hover:bg-purple-50/40 transition-all cursor-pointer group"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
-                          inst.badgeColor === 'purple' ? 'bg-purple-100 text-purple-800' :
-                          inst.badgeColor === 'indigo' ? 'bg-indigo-100 text-indigo-800' :
-                          inst.badgeColor === 'emerald' ? 'bg-emerald-100 text-emerald-800' :
-                          'bg-blue-100 text-blue-800'
-                        }`}>
-                          {inst.tierBadge}
-                        </span>
-                        <span className="text-[10px] font-mono text-slate-400 font-semibold">{inst.code}</span>
-                      </div>
-                      <h4 className="text-xs font-bold text-slate-800 group-hover:text-purple-700 transition-colors">
-                        {inst.name}
-                      </h4>
-                      <p className="text-[11px] text-slate-500 mt-0.5">{inst.desc}</p>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-purple-600 group-hover:translate-x-0.5 transition-all mt-1" />
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="pt-2 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setShowCampusPickerModal(false)}
-                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all cursor-pointer"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* =================================================================== */}
-      {/* MODAL 2: FORGOT PASSWORD RECOVERY HELPER                            */}
-      {/* =================================================================== */}
+      {/* MODAL: FORGOT PASSWORD RECOVERY HELPER */}
       {showForgotPasswordModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4 animate-in fade-in">
-          <div className="bg-white rounded-2xl sm:rounded-3xl max-w-md w-full p-6 shadow-2xl border border-purple-100 space-y-4">
+          <div className="bg-white rounded-2xl sm:rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-purple-100 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
                 <HelpCircle className="w-5 h-5 text-purple-600" />
@@ -1166,7 +931,7 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
               <button 
                 type="button"
                 onClick={() => setShowForgotPasswordModal(false)}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 cursor-pointer"
+                className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1188,7 +953,7 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
                 </div>
                 <div className="flex items-start gap-2 text-slate-600">
                   <span className="w-4 h-4 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">2</span>
-                  <span>If you are evaluating this platform, click the <strong className="text-purple-700">Demo Test Accounts</strong> pill at the bottom-right of your screen.</span>
+                  <span>If evaluating the system, click the <strong className="text-purple-700">Demo Test Accounts</strong> pill at bottom-right.</span>
                 </div>
               </div>
             </div>
@@ -1206,10 +971,7 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
         </div>
       )}
 
-      {/* =================================================================== */}
-      {/* MODAL 3: EVALUATION QUICK DEMO PROFILES (Outside Login Card)        */}
-      {/* Professional, clean dialog accessible via floating pill only        */}
-      {/* =================================================================== */}
+      {/* MODAL: EVALUATION QUICK DEMO PROFILES */}
       {showDemoProfiles && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4 animate-in fade-in">
           <div className="bg-white rounded-2xl sm:rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-purple-100 space-y-4">
@@ -1222,7 +984,7 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
               <button 
                 type="button"
                 onClick={() => setShowDemoProfiles(false)}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 cursor-pointer"
+                className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1232,7 +994,7 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
               Select any profile below to automatically populate credentials and sign into the corresponding campus portal:
             </p>
 
-            {/* Category Switcher Tabs (Clean Professional Titles) */}
+            {/* Category Switcher Tabs */}
             <div className="flex items-center gap-1.5 border-b border-slate-100 pb-2">
               <button
                 type="button"
