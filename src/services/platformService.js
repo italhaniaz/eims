@@ -13,7 +13,12 @@ export const PLATFORM_MODULES = [
   { key: 'hostel', name: 'Hostel & Boarding Facility', category: 'Logistics', defaultQuota: 200, description: 'Dormitory rooms, bed allocations, mess charges and warden alerts' },
   { key: 'admissions', name: 'Admissions Pipeline & CRM', category: 'Intake', defaultQuota: 500, description: 'Online applications, entrance tests, interviews and seat allotment' },
   { key: 'communication', name: 'SMS & WhatsApp Gateway', category: 'Messaging', defaultQuota: 10000, description: 'Automated fee alerts, circular broadcasts and attendance notifications' },
-  { key: 'inventory', name: 'Campus Inventory & Assets', category: 'Resources', defaultQuota: 1000, description: 'Lab equipment, stationery, stock audits and maintenance tracking' }
+  { key: 'inventory', name: 'Campus Inventory & Assets', category: 'Resources', defaultQuota: 1000, description: 'Lab equipment, stationery, stock audits and maintenance tracking' },
+  { key: 'labs', name: 'Science & Computer Labs', category: 'Logistics', defaultQuota: 50, description: 'Practical labs, apparatus rosters and science workstations' },
+  { key: 'scholarships', name: 'Scholarships & Concessions', category: 'Finance', defaultQuota: 500, description: 'Merit concessions, fee waivers and financial aid grants' },
+  { key: 'research', name: 'Research, FYP & Thesis', category: 'Core Academic', defaultQuota: 200, description: 'Undergraduate final year projects and MS research defense' },
+  { key: 'career', name: 'Career Placement & Alumni', category: 'Operations', defaultQuota: 1000, description: 'Graduate employment tracking and alumni directory' },
+  { key: 'it', name: 'Campus IT & Infrastructure', category: 'Operations', defaultQuota: 500, description: 'Server infrastructure, WiFi network and campus IT helpdesk' }
 ]
 
 export const SUBSCRIPTION_PLANS = [
@@ -86,6 +91,22 @@ export const getStoredModuleMatrix = () => {
 }
 
 export const PlatformService = {
+  // Synchronous module status checker
+  isModuleEnabled(instituteId, moduleKey, defaultVal = true) {
+    if (!instituteId || !moduleKey) return defaultVal;
+    try {
+      const store = getStoredData();
+      const list = store.instituteModules || [];
+      const entry = list.find(
+        m => (m.instituteId === instituteId || m.institute_id === instituteId) &&
+             (m.moduleKey === moduleKey || m.module_key === moduleKey)
+      );
+      if (entry !== undefined && entry.enabled !== undefined) {
+        return Boolean(entry.enabled);
+      }
+    } catch (_) {}
+    return defaultVal;
+  },
   // 1. Get module state for specific institute
   async getInstituteModules(instituteId) {
     if (isSupabaseConfigured && supabase) {
@@ -207,6 +228,16 @@ export const PlatformService = {
     }
 
     saveStoredData(store)
+
+    if (typeof window !== 'undefined') {
+      try {
+        window.dispatchEvent(new CustomEvent('sms_modules_updated', {
+          detail: { instituteId, moduleKey, enabled }
+        }));
+      } catch (err) {
+        console.warn('sms_modules_updated event failed:', err);
+      }
+    }
 
     // Audit Log
     DataService.logAuditEvent(
