@@ -452,7 +452,9 @@ const cleanZeroData = {
   feeSettings: defaultInitialFeeSettings,
   admissionsFreeze: false,
   auditLogs: [],
-  communicationLogs: []
+  communicationLogs: [],
+  teacherPermissions: {},
+  campusStudentGates: {}
 }
 
 // Rich sample template for preview
@@ -1286,6 +1288,89 @@ export const DataService = {
   loadSampleTemplate() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(sampleTemplateData))
     return sampleTemplateData
+  },
+
+  // Staff Delegated Capabilities Governance
+  getTeacherPermissions(teacherId) {
+    if (!teacherId) return { canEnrollStudents: false, canPublishMarks: false, canBroadcastNotices: false, canEditAttendanceHistory: false, canManageClassDiary: true };
+    const store = getStoredData();
+    const perms = store.teacherPermissions || {};
+    if (perms[teacherId]) return perms[teacherId];
+
+    const teacher = (store.teachers || []).find(t => t.id === teacherId || t.email === teacherId);
+    const roleStr = ((teacher?.roleTitle || '') + ' ' + (teacher?.designation || '')).toLowerCase();
+    const isHead = teacher && (
+      roleStr.includes('in-charge') ||
+      roleStr.includes('incharge') ||
+      roleStr.includes('head') ||
+      roleStr.includes('hod') ||
+      roleStr.includes('coordinator') ||
+      roleStr.includes('class teacher') ||
+      Boolean(teacher.isClassIncharge)
+    );
+
+    return {
+      canEnrollStudents: Boolean(isHead),
+      canPublishMarks: Boolean(isHead),
+      canBroadcastNotices: Boolean(isHead),
+      canEditAttendanceHistory: false,
+      canManageClassDiary: true
+    };
+  },
+
+  setTeacherPermissions(teacherId, permissions) {
+    if (!teacherId) return null;
+    const store = getStoredData();
+    store.teacherPermissions = store.teacherPermissions || {};
+    store.teacherPermissions[teacherId] = {
+      ...this.getTeacherPermissions(teacherId),
+      ...permissions
+    };
+    saveStoredData(store);
+
+    if (typeof window !== 'undefined') {
+      try {
+        window.dispatchEvent(new CustomEvent('sms_permissions_updated', {
+          detail: { teacherId, permissions: store.teacherPermissions[teacherId] }
+        }));
+      } catch (_) {}
+    }
+    return store.teacherPermissions[teacherId];
+  },
+
+  // Campus Student & Parent Portal Feature Gates
+  getCampusStudentGates(instituteId) {
+    const store = getStoredData();
+    const gates = store.campusStudentGates || {};
+    if (instituteId && gates[instituteId]) return gates[instituteId];
+
+    return {
+      allowOnlineFeePayment: true,
+      allowHomeworkUploads: true,
+      allowReportCardDownload: true,
+      allowProfileSelfEdit: true,
+      allowDirectTeacherChat: true
+    };
+  },
+
+  setCampusStudentGates(instituteId, updatedGates) {
+    if (!instituteId) return null;
+    const store = getStoredData();
+    store.campusStudentGates = store.campusStudentGates || {};
+    store.campusStudentGates[instituteId] = {
+      ...this.getCampusStudentGates(instituteId),
+      ...updatedGates
+    };
+    saveStoredData(store);
+
+    if (typeof window !== 'undefined') {
+      try {
+        window.dispatchEvent(new CustomEvent('sms_permissions_updated', {
+          detail: { instituteId, gates: store.campusStudentGates[instituteId] }
+        }));
+      } catch (_) {}
+    }
+    return store.campusStudentGates[instituteId];
   },
 
   logAuditEvent(action, user = null, status = 'Success', ip = null) {

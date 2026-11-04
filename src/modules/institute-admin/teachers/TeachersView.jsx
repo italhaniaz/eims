@@ -42,7 +42,8 @@ import {
   List,
   CheckSquare,
   Square,
-  AlertCircle
+  AlertCircle,
+  ShieldCheck
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
@@ -56,6 +57,7 @@ import { getAllTimetables } from '../timetable/timetableService'
 import { StaffIdCardModal } from './StaffIdCardModal'
 import { StaffPaySlipModal } from './StaffPaySlipModal'
 import { AppointmentLetterModal } from './AppointmentLetterModal'
+import { TeacherPermissionsMatrix } from './TeacherPermissionsMatrix'
 
 export const TeachersView = ({ currentInstitute, initialTab = "directory" }) => {
   const tierConfig = getInstituteTierConfig(currentInstitute)
@@ -871,6 +873,18 @@ export const TeachersView = ({ currentInstitute, initialTab = "directory" }) => 
           >
             <DollarSign className="w-3.5 h-3.5" />
             <span>Compensation & Payroll</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('permissions')}
+            className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+              activeTab === 'permissions'
+                ? 'bg-purple-600 text-white shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>Roles & Permissions Matrix</span>
           </button>
         </div>
 
@@ -1777,6 +1791,14 @@ export const TeachersView = ({ currentInstitute, initialTab = "directory" }) => 
             </div>
           )}
         </div>
+      )}
+
+      {/* TAB: DELEGATED PERMISSIONS & CAMPUS GATES */}
+      {activeTab === 'permissions' && (
+        <TeacherPermissionsMatrix 
+          currentInstitute={currentInstitute} 
+          teachers={teachers} 
+        />
       )}
 
       {/* Leave & Proxy Assignment Modal */}

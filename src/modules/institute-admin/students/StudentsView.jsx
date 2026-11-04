@@ -59,6 +59,7 @@ import { DataService } from '../../../services/dataService'
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
 import useDebounce from '../../../hooks/useDebounce'
+import { useAuth } from '../../../context/AuthContext'
 import { detectProgramLevel, normalizeClassSections } from '../../../constants/academicLevels'
 import Modal from '../../../components/common/Modal'
 import { getInstituteTierConfig } from '../../../utils/tierGating'
@@ -67,6 +68,31 @@ import PrintableExamAdmitCardModal from '../../../components/common/PrintableExa
 
 export const StudentsView = ({ currentInstitute }) => {
   const tierConfig = getInstituteTierConfig(currentInstitute)
+  const { user } = useAuth()
+  const isSuperOrInstituteAdmin = ['superadmin', 'admin', 'institute_admin', 'registrar', 'principal'].includes(user?.role) || !user?.role
+
+  const [canEnrollStudents, setCanEnrollStudents] = useState(() => {
+    if (isSuperOrInstituteAdmin) return true
+    return Boolean(DataService.getTeacherPermissions(user?.id || user?.email)?.canEnrollStudents)
+  })
+
+  useEffect(() => {
+    const handleSync = () => {
+      if (isSuperOrInstituteAdmin) {
+        setCanEnrollStudents(true)
+      } else {
+        const perms = DataService.getTeacherPermissions(user?.id || user?.email)
+        setCanEnrollStudents(Boolean(perms?.canEnrollStudents))
+      }
+    }
+    window.addEventListener('sms_permissions_updated', handleSync)
+    window.addEventListener('storage', handleSync)
+    return () => {
+      window.removeEventListener('sms_permissions_updated', handleSync)
+      window.removeEventListener('storage', handleSync)
+    }
+  }, [user, isSuperOrInstituteAdmin])
+
   const { 
     students = [], 
     classes = [], 
@@ -1405,16 +1431,20 @@ const validatePakistaniPhone = (phone) => {
             <span className="whitespace-nowrap">Export CSV</span>
           </button>
 
-          {/* New Student Admission */}
-          <button
-            type="button"
-            onClick={openAddModal}
-            className="flex items-center gap-1.5 px-4 h-9 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-sm transition-all cursor-pointer shrink-0"
-            title="Enroll a new student"
-          >
-            <Plus className="w-4 h-4" />
-            <span className="whitespace-nowrap">New Student Admission</span>
-          </button>
+          {/* New Student Admission (Shown if Admin or Authorized Teacher) */}
+          {canEnrollStudents && (
+            <button
+              type="button"
+              onClick={openAddModal}
+              className="flex items-center gap-1.5 px-4 h-9 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-sm transition-all cursor-pointer shrink-0"
+              title={!isSuperOrInstituteAdmin ? "Enroll student in your assigned class" : "Enroll a new student"}
+            >
+              <Plus className="w-4 h-4" />
+              <span className="whitespace-nowrap">
+                {!isSuperOrInstituteAdmin ? 'Enroll Section Student' : 'New Student Admission'}
+              </span>
+            </button>
+          )}
         </div>
       </div>
 

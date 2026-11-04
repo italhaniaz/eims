@@ -27,14 +27,27 @@ import {
   PhoneCall,
   Check,
   ExternalLink,
-  Layers
+  Layers,
+  Lock
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useAppData } from '../../context/AppDataContext'
 import { useToast } from '../../context/ToastContext'
+import { DataService } from '../../services/dataService'
 
 export const StudentParentPortalView = () => {
   const { user, logout, login } = useAuth()
+  const [gatesVersion, setGatesVersion] = useState(0)
+
+  useEffect(() => {
+    const handleSync = () => setGatesVersion(v => v + 1)
+    window.addEventListener('sms_permissions_updated', handleSync)
+    window.addEventListener('storage', handleSync)
+    return () => {
+      window.removeEventListener('sms_permissions_updated', handleSync)
+      window.removeEventListener('storage', handleSync)
+    }
+  }, [])
   const { toast } = useToast()
   const { 
     students = [], 
@@ -54,6 +67,11 @@ export const StudentParentPortalView = () => {
   const isAlumni = user?.role === 'alumni' || user?.role === 'uni_alumni'
   const isParent = ['parent', 'school_parent', 'college_parent', 'uni_parent'].includes(user?.role)
   const isStudent = ['student', 'school_student', 'college_student', 'uni_student'].includes(user?.role)
+
+  const campusGates = useMemo(() => {
+    const instId = user?.instituteId || (isSchool ? 'inst-2' : isCollege ? 'inst-3' : 'inst-4')
+    return DataService.getCampusStudentGates(instId)
+  }, [user, isSchool, isCollege, gatesVersion])
 
   // Dynamic initial tab based on role and tier
   const [isGuardianPinModalOpen, setIsGuardianPinModalOpen] = useState(false)
@@ -797,6 +815,17 @@ export const StudentParentPortalView = () => {
         {/* TAB: FEES & CHALLAN */}
         {activeTab === 'fees' && (
           <div className="space-y-4">
+            {!campusGates.allowOnlineFeePayment && (
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-900 flex items-start gap-3 shadow-2xs">
+                <Lock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="font-bold text-amber-900">Online Fees Settlement Gate is Closed by Campus</h4>
+                  <p className="text-amber-800 text-[11px] mt-0.5">
+                    Direct digital payments are temporarily closed by campus administration. Please print your computerized 3-part bank voucher and deposit at the authorized bank branch or campus cashier desk.
+                  </p>
+                </div>
+              </div>
+            )}
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-slate-800 text-sm">Official Bank Fee Challans & Vouchers</h3>
               <span className="text-xs font-bold text-slate-500">1Link Computerized Barcoded</span>
