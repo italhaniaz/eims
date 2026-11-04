@@ -991,6 +991,30 @@ export const DataService = {
         inst.teachersCount = inst.totalTeachers
       }
       try { window.dispatchEvent(new Event('sms_teachers_updated')) } catch {}
+      }
+
+      if (collectionName === 'institutes' && id) {
+        // Cascade delete child collections for this institute to prevent orphan ghost records
+        const cascadeCollections = ['students', 'teachers', 'fees', 'classes', 'subjects', 'exams', 'notices', 'admissionsPipeline']
+        cascadeCollections.forEach(col => {
+          if (Array.isArray(store[col])) {
+            store[col] = store[col].filter(item => item.instituteId !== id)
+          }
+        })
+        if (store.timetable && typeof store.timetable === 'object') {
+          Object.keys(store.timetable).forEach(k => {
+            if (k.startsWith(`${id}_`) || k.includes(`_${id}_`)) {
+              delete store.timetable[k]
+            }
+          })
+        }
+        try {
+          if (typeof localStorage !== 'undefined') {
+            localStorage.removeItem(`sms_timetables_${id}`)
+            localStorage.removeItem(`sms_bell_schedule_${id}`)
+            localStorage.removeItem(`sms_exam_grading_settings_${id}`)
+          }
+        } catch {}
     }
 
     const itemName = finalItem.name || finalItem.title || finalItem.studentName || finalItem.rollNumber || finalItem.id
@@ -1167,6 +1191,63 @@ export const DataService = {
       saveStoredData(store)
     }
     return true
+  },
+
+  async addItemsBatch(collectionName, items = []) {
+    if (!Array.isArray(items) || items.length === 0) return []
+    const store = getStoredData()
+    if (!store[collectionName]) store[collectionName] = []
+
+    const timestamp = new Date().toISOString()
+    const addedItems = []
+
+    items.forEach((item, idx) => {
+      const id = item.id || `${collectionName.slice(0, 3)}-${Date.now()}-${idx}-${Math.random().toString(36).substr(2, 4)}`
+      const newItem = {
+        ...item,
+        id,
+        createdAt: item.createdAt || timestamp
+      }
+      store[collectionName].push(newItem)
+      addedItems.push(newItem)
+
+      // Sync institute counters
+      if (collectionName === 'students' && newItem.instituteId && Array.isArray(store.institutes)) {
+        const inst = store.institutes.find(i => i.id === newItem.instituteId)
+        if (inst) {
+          inst.totalStudents = (Number(inst.totalStudents) || 0) + 1
+          inst.studentsCount = inst.totalStudents
+        }
+      }
+    })
+
+    saveStoredData(store)
+
+    if (collectionName === 'students') {
+      try { window.dispatchEvent(new Event('sms_students_updated')) } catch {}
+    }
+    return addedItems
+  },
+
+  async updateItemsBatch(collectionName, updatesList = []) {
+    if (!Array.isArray(updatesList) || updatesList.length === 0) return []
+    const store = getStoredData()
+    if (!store[collectionName]) return []
+
+    const updated = []
+    updatesList.forEach(({ id, updates }) => {
+      const idx = store[collectionName].findIndex(item => item.id === id)
+      if (idx !== -1) {
+        store[collectionName][idx] = { ...store[collectionName][idx], ...updates, updatedAt: new Date().toISOString() }
+        updated.push(store[collectionName][idx])
+      }
+    })
+
+    saveStoredData(store)
+    if (collectionName === 'students') {
+      try { window.dispatchEvent(new Event('sms_students_updated')) } catch {}
+    }
+    return updated
   },
 
   saveAttendance(date, classKey, records) {

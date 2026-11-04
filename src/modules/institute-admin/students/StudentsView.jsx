@@ -58,6 +58,7 @@ import {
 import { DataService } from '../../../services/dataService'
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
+import useDebounce from '../../../hooks/useDebounce'
 import { detectProgramLevel, normalizeClassSections } from '../../../constants/academicLevels'
 import Modal from '../../../components/common/Modal'
 import { getInstituteTierConfig } from '../../../utils/tierGating'
@@ -199,6 +200,7 @@ export const StudentsView = ({ currentInstitute }) => {
 
   // Search & Multi-Dimensional Filters
   const [searchTerm, setSearchTerm] = useState('')
+  const debouncedSearchTerm = useDebounce(searchTerm, 250)
   const [selectedClassFilter, setSelectedClassFilter] = useState('ALL')
   const [selectedSectionFilter, setSelectedSectionFilter] = useState('ALL')
   const [selectedStatusFilter, setSelectedStatusFilter] = useState('ALL') // 'Active' | 'Withdrawn' | 'Transferred' | 'Graduated' | 'Suspended'
@@ -554,7 +556,7 @@ const validatePakistaniPhone = (phone) => {
   // Multi-Filter & Search Engine
   const filteredAndSorted = useMemo(() => {
     const list = campusStudents.filter(s => {
-      const query = searchTerm.toLowerCase().trim()
+      const query = debouncedSearchTerm.toLowerCase().trim()
       const matchesSearch = 
         !query ||
         (s.name || '').toLowerCase().includes(query) ||

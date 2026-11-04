@@ -217,3 +217,105 @@ INSERT INTO activity_logs (title, user_name, time_label) VALUES
 ('User activity #3', 'Registrar - City School', '2 hours ago'),
 ('User activity #4', 'Examination Officer', '2 hours ago'),
 ('User activity #5', 'Admin User', '3 hours ago');
+
+
+-- =========================================================================
+-- 17. ROW LEVEL SECURITY (RLS) & MULTI-TENANT ACCESS CONTROL POLICIES
+-- =========================================================================
+
+-- Enable RLS across all platform & operational tables
+ALTER TABLE institutes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE departments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE classes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE students ENABLE ROW LEVEL SECURITY;
+ALTER TABLE teachers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fee_records ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE activity_logs ENABLE ROW LEVEL SECURITY;
+
+-- Helper function to check if current authenticated user is superadmin
+CREATE OR REPLACE FUNCTION is_superadmin()
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM user_profiles
+    WHERE id = auth.uid() AND role = 'superadmin'
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Helper function to fetch current authenticated user's institute_id
+CREATE OR REPLACE FUNCTION get_user_institute_id()
+RETURNS UUID AS $$
+BEGIN
+  RETURN (
+    SELECT institute_id FROM user_profiles
+    WHERE id = auth.uid()
+    LIMIT 1
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 1. Institutes Table Policies
+CREATE POLICY "Institutes: Superadmin full access"
+  ON institutes FOR ALL
+  USING (is_superadmin())
+  WITH CHECK (is_superadmin());
+
+CREATE POLICY "Institutes: Tenant read own campus"
+  ON institutes FOR SELECT
+  USING (id = get_user_institute_id());
+
+-- 2. Students Table Policies (Strict Multi-Tenant Scoping)
+CREATE POLICY "Students: Superadmin full access"
+  ON students FOR ALL
+  USING (is_superadmin())
+  WITH CHECK (is_superadmin());
+
+CREATE POLICY "Students: Tenant campus isolation"
+  ON students FOR ALL
+  USING (institute_id = get_user_institute_id())
+  WITH CHECK (institute_id = get_user_institute_id());
+
+-- 3. Teachers Table Policies
+CREATE POLICY "Teachers: Superadmin full access"
+  ON teachers FOR ALL
+  USING (is_superadmin())
+  WITH CHECK (is_superadmin());
+
+CREATE POLICY "Teachers: Tenant campus isolation"
+  ON teachers FOR ALL
+  USING (institute_id = get_user_institute_id())
+  WITH CHECK (institute_id = get_user_institute_id());
+
+-- 4. Classes Table Policies
+CREATE POLICY "Classes: Superadmin full access"
+  ON classes FOR ALL
+  USING (is_superadmin())
+  WITH CHECK (is_superadmin());
+
+CREATE POLICY "Classes: Tenant campus isolation"
+  ON classes FOR ALL
+  USING (institute_id = get_user_institute_id())
+  WITH CHECK (institute_id = get_user_institute_id());
+
+-- 5. Fee Records Policies
+CREATE POLICY "Fees: Superadmin full access"
+  ON fee_records FOR ALL
+  USING (is_superadmin())
+  WITH CHECK (is_superadmin());
+
+CREATE POLICY "Fees: Tenant campus isolation"
+  ON fee_records FOR ALL
+  USING (institute_id = get_user_institute_id())
+  WITH CHECK (institute_id = get_user_institute_id());
+
+-- 6. User Profiles Policies
+CREATE POLICY "Users: Superadmin full access"
+  ON user_profiles FOR ALL
+  USING (is_superadmin())
+  WITH CHECK (is_superadmin());
+
+CREATE POLICY "Users: View self profile"
+  ON user_profiles FOR SELECT
+  USING (id = auth.uid());

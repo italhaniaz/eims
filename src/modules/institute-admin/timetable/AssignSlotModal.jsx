@@ -238,8 +238,10 @@ export const AssignSlotModal = ({
       color: colorObj
     }
 
-    onSaveSlot(payload)
-    onClose()
+    const success = onSaveSlot(payload)
+    if (success !== false) {
+      onClose()
+    }
   }
 
   // Handle Delete Slot

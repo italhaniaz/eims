@@ -34,7 +34,8 @@ import { useToast } from '../../../context/ToastContext'
 import { normalizeClassSections } from '../../../constants/academicLevels'
 import { getCampusRooms } from '../../../constants/campusRooms'
 import { 
-  getBellSchedule, 
+  getBellSchedule,
+  checkSlotConflicts, 
   hasBellScheduleConfigured,
   getSectionTimetable,
   saveSectionTimetable,

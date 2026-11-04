@@ -36,6 +36,7 @@ import {
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
+import { DataService } from '../../../services/dataService'
 import { 
   detectProgramLevel, 
   normalizeClassSections, 

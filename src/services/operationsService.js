@@ -36,6 +36,17 @@ const FALLBACK_BACKUPS = [
   }
 ]
 
+export const computeStringChecksum = (str) => {
+  if (!str || typeof str !== 'string') return 'chk-00000000'
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i)
+    hash = ((hash << 5) - hash) + char
+    hash |= 0
+  }
+  return 'chk-' + Math.abs(hash).toString(16).padStart(8, '0')
+}
+
 export const OperationsService = {
   // 1. BACKUPS REGISTRY & CREATION
   async getBackups() {
@@ -98,7 +109,7 @@ export const OperationsService = {
       filename,
       backupType,
       sizeBytes,
-      checksum: 'sha256:' + Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2),
+      checksum: computeStringChecksum(payloadString),
       createdBy: 'Super Administrator',
       status: 'COMPLETED',
       createdAt: new Date().toISOString()
@@ -260,16 +271,14 @@ export const OperationsService = {
     }
 
     const timestamp = new Date().toISOString()
-    let committedCount = 0
+    const collectionName = importType === 'teachers' ? 'teachers' : importType === 'institutes' ? 'institutes' : 'students'
 
-    for (const item of validRows) {
+    const payloads = validRows.map((item, idx) => {
       const data = item.data || item
-      let payload = {}
-
       if (importType === 'students') {
-        payload = {
+        return {
           name: data.name || 'Unnamed Student',
-          rollNumber: data.rollNumber || data.roll || `STU-${Date.now().toString().slice(-4)}`,
+          rollNumber: data.rollNumber || data.roll || `STU-${Date.now().toString().slice(-4)}-${idx + 1}`,
           fatherName: data.fatherName || data.guardianName || 'Guardian',
           className: data.className || data.class || 'Grade 1',
           section: data.section || 'Section A',
@@ -282,9 +291,9 @@ export const OperationsService = {
           createdAt: timestamp
         }
       } else if (importType === 'teachers') {
-        payload = {
+        return {
           name: data.name || 'Faculty Member',
-          empId: data.empId || `EMP-${Date.now().toString().slice(-4)}`,
+          empId: data.empId || `EMP-${Date.now().toString().slice(-4)}-${idx + 1}`,
           department: data.department || 'General',
           designation: data.designation || 'Lecturer',
           email: data.email || '',
@@ -294,35 +303,44 @@ export const OperationsService = {
           createdAt: timestamp
         }
       } else if (importType === 'institutes') {
-        payload = {
+        return {
           name: data.name || 'New Campus',
-          code: data.code || `INST-${Date.now().toString().slice(-3)}`,
+          code: data.code || `INST-${Date.now().toString().slice(-3)}-${idx + 1}`,
           type: data.type || 'School',
           city: data.city || 'Lahore',
           status: 'Active',
           createdAt: timestamp
         }
       } else {
-        payload = {
+        return {
           ...data,
           instituteId: targetInstituteId,
           createdAt: timestamp
         }
       }
+    })
 
-      if (typeof addItem === 'function') {
-        try {
-          await addItem(importType === 'teachers' ? 'teachers' : importType === 'institutes' ? 'institutes' : 'students', payload)
-          committedCount++
-        } catch (e) {
-          console.error('Failed to commit row via addItem:', e)
-        }
-      } else {
-        try {
-          DataService.addItem(importType === 'teachers' ? 'teachers' : importType === 'institutes' ? 'institutes' : 'students', payload)
-          committedCount++
-        } catch (e) {
-          console.error('Failed to commit row via DataService:', e)
+    let committedCount = 0
+
+    if (DataService && typeof DataService.addItemsBatch === 'function') {
+      const added = await DataService.addItemsBatch(collectionName, payloads)
+      committedCount = added.length
+    } else {
+      for (const p of payloads) {
+        if (typeof addItem === 'function') {
+          try {
+            await addItem(collectionName, p)
+            committedCount++
+          } catch (e) {
+            console.error('Failed to commit row via addItem:', e)
+          }
+        } else {
+          try {
+            DataService.addItem(collectionName, p)
+            committedCount++
+          } catch (e) {
+            console.error('Failed to commit row via DataService:', e)
+          }
         }
       }
     }
