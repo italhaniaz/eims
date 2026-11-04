@@ -231,12 +231,13 @@ export const getApprovedLeaveForStudent = (studentId, dateStr) => {
 }
 
 // 5. Unique Key Builder & Master Records Store
-export const buildAttendanceKey = (session, className, sectionName, date, subjectId = 'general') => {
+export const buildAttendanceKey = (session, className, sectionName, date, subjectId = 'general', instituteId = '') => {
+  const inst = (instituteId || '').toLowerCase().trim()
   const s = (session || 'default').toLowerCase().trim()
   const c = (className || 'default').toLowerCase().trim()
   const sec = (sectionName || 'all').toLowerCase().trim()
   const sub = (subjectId || 'general').toLowerCase().trim()
-  return `${s}__${c}__${sec}__${sub}__${date}`
+  return inst ? `${inst}__${s}__${c}__${sec}__${sub}__${date}` : `${s}__${c}__${sec}__${sub}__${date}`
 }
 
 export const getAllAttendanceStore = () => {
@@ -247,10 +248,11 @@ export const getAllAttendanceStore = () => {
   return {}
 }
 
-export const getAttendanceRecord = (session, className, sectionName, date, subjectId = 'general') => {
+export const getAttendanceRecord = (session, className, sectionName, date, subjectId = 'general', instituteId = '') => {
   const store = getAllAttendanceStore()
-  const key = buildAttendanceKey(session, className, sectionName, date, subjectId)
-  return store[key] || null
+  const keyWithInst = instituteId ? buildAttendanceKey(session, className, sectionName, date, subjectId, instituteId) : null
+  const legacyKey = buildAttendanceKey(session, className, sectionName, date, subjectId)
+  return (keyWithInst && store[keyWithInst]) || store[legacyKey] || null
 }
 
 /**
@@ -264,10 +266,12 @@ export const saveAttendanceRecord = (
   payload,
   user = 'Administrator',
   sheetState = 'Saved', // 'Saved' | 'Locked'
-  reason = ''
+  reason = '',
+  instituteId = ''
 ) => {
   const store = getAllAttendanceStore()
-  const key = buildAttendanceKey(session, className, sectionName, date, payload.subjectId || 'general')
+  const instId = instituteId || payload.instituteId || ''
+  const key = buildAttendanceKey(session, className, sectionName, date, payload.subjectId || 'general', instId)
   const existing = store[key] || null
 
   const nowIso = new Date().toISOString()
@@ -382,7 +386,8 @@ export const getConsecutiveAbsences = (
   className,
   sectionName,
   currentDateStr,
-  threshold = 3
+  threshold = 3,
+  instituteId = ''
 ) => {
   const store = getAllAttendanceStore()
   const settings = getAttendanceSettings()
@@ -402,8 +407,9 @@ export const getConsecutiveAbsences = (
     if (!workingDays.includes(dayName)) continue
     if (checkDateHoliday(dateStr)) continue
 
-    const key = buildAttendanceKey(session, className, sectionName, dateStr, 'general')
-    const rec = store[key]
+    const keyWithInst = instituteId ? buildAttendanceKey(session, className, sectionName, dateStr, 'general', instituteId) : null
+    const legacyKey = buildAttendanceKey(session, className, sectionName, dateStr, 'general')
+    const rec = (keyWithInst && store[keyWithInst]) || store[legacyKey]
     if (!rec || !rec.records || !rec.records[studentId]) {
       // If we hit an unrecorded working day before today, break chain
       if (i > 0) break

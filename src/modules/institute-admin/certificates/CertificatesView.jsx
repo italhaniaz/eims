@@ -31,7 +31,7 @@ import { getInstituteTierConfig } from '../../../utils/tierGating'
 
 export const CertificatesView = ({ currentInstitute }) => {
   const tierConfig = getInstituteTierConfig(currentInstitute)
-  const { students = [] } = useAppData()
+  const { students = [], fees = [], bookIssues = [] } = useAppData()
   const { toast } = useToast()
 
   const campusName = currentInstitute?.name || 'Main Campus'
@@ -127,6 +127,10 @@ export const CertificatesView = ({ currentInstitute }) => {
   const [filterType, setFilterType] = useState('ALL')
   const [selectedCertForPreview, setSelectedCertForPreview] = useState(null)
   const [isIssueModalOpen, setIsIssueModalOpen] = useState(false)
+  const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false)
+  const [lookupQuery, setLookupQuery] = useState('')
+  const [verifiedRecord, setVerifiedRecord] = useState(null)
+  const [hasSearchedVerify, setHasSearchedVerify] = useState(false)
 
   // Form state for issuing new certificate
   const [formData, setFormData] = useState({
@@ -168,6 +172,23 @@ export const CertificatesView = ({ currentInstitute }) => {
   }, [certificates, searchTerm, filterType])
 
   // Handle issuance
+  const handleVerifyLookup = (e) => {
+    e?.preventDefault?.()
+    const q = (lookupQuery || '').trim().toLowerCase()
+    if (!q) {
+      toast?.error?.('Please enter a certificate serial number or QR code hash.')
+      return
+    }
+    const match = certificates.find(c => 
+      (c.serialNumber || '').toLowerCase() === q ||
+      (c.qrHash || '').toLowerCase() === q ||
+      (c.studentName || '').toLowerCase() === q ||
+      (c.rollNumber || '').toLowerCase() === q
+    )
+    setVerifiedRecord(match || null)
+    setHasSearchedVerify(true)
+  }
+
   const handleIssueCertificate = (e) => {
     e.preventDefault()
     if (!formData.studentId) {
@@ -254,13 +275,23 @@ export const CertificatesView = ({ currentInstitute }) => {
               Issue School Leaving Certificates (SLC), Character Certificates, and Bonafide verifications with QR cryptographic hash for {campusName}.
             </p>
           </div>
-          <button 
-            onClick={() => setIsIssueModalOpen(true)}
-            className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg transition-all cursor-pointer self-start md:self-auto shrink-0"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Issue New Certificate</span>
-          </button>
+          <div className="flex items-center gap-2.5 self-start md:self-auto shrink-0">
+            <button 
+              type="button"
+              onClick={() => { setIsVerifyModalOpen(true); setLookupQuery(''); setVerifiedRecord(null); setHasSearchedVerify(false); }}
+              className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold text-xs sm:text-sm flex items-center gap-2 shadow-sm transition-all cursor-pointer"
+            >
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <span>Verify / QR Lookup</span>
+            </button>
+            <button 
+              onClick={() => setIsIssueModalOpen(true)}
+              className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg transition-all cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Issue New Certificate</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -645,10 +676,39 @@ export const CertificatesView = ({ currentInstitute }) => {
 
       {/* Modal: Official Printable Certificate Document Preview */}
       {selectedCertForPreview && (
-        <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 my-auto">
+        <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto print:p-0 print:bg-white print:static print:z-auto">
+          {/* Print Style Isolation Rules */}
+          <style>{`
+            @media print {
+              body * {
+                visibility: hidden !important;
+              }
+              #printable-certificate, #printable-certificate * {
+                visibility: visible !important;
+              }
+              #printable-certificate {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 24px !important;
+                background: #ffffff !important;
+                border: 6px double #334155 !important;
+                box-shadow: none !important;
+              }
+              .no-print {
+                display: none !important;
+              }
+              @page {
+                size: A4 portrait;
+                margin: 8mm;
+              }
+            }
+          `}</style>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 my-auto print:border-none print:shadow-none print:max-w-none print:rounded-none">
             {/* Modal Header */}
-            <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
+            <div className="p-4 bg-slate-900 text-white flex items-center justify-between no-print">
               <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold">
                 <Printer className="w-4 h-4 text-emerald-400" />
                 <span>Certificate Document Preview ({selectedCertForPreview.serialNumber})</span>
@@ -671,7 +731,7 @@ export const CertificatesView = ({ currentInstitute }) => {
             </div>
 
             {/* Certificate Paper Layout */}
-            <div className="p-8 sm:p-10 bg-[#fffdfa] border-8 border-double border-slate-300 relative select-text text-slate-900">
+            <div id="printable-certificate" className="p-8 sm:p-10 bg-[#fffdfa] border-8 border-double border-slate-300 relative select-text text-slate-900">
               {/* Institutional Header */}
               <div className="text-center border-b-2 border-slate-800 pb-5 mb-6">
                 <div className="w-12 h-12 rounded-full bg-slate-900 text-white mx-auto flex items-center justify-center mb-2 font-bold">
@@ -730,6 +790,116 @@ export const CertificatesView = ({ currentInstitute }) => {
                   <span className="text-[10px] text-slate-400">Official Signature & Stamp</span>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Modal: Public Verification Registry Lookup */}
+      {isVerifyModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-900 text-white">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                <div>
+                  <h3 className="font-bold text-base">Official Credential Verification Desk</h3>
+                  <p className="text-[11px] text-slate-300">Anti-Tamper Public Verification Registry</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsVerifyModalOpen(false)}
+                className="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <form onSubmit={handleVerifyLookup} className="space-y-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                    Enter Certificate Serial Number or QR Hash
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      required
+                      value={lookupQuery}
+                      onChange={(e) => setLookupQuery(e.target.value)}
+                      placeholder="e.g. SCH-001-SLC-2026-001 or 8a9b2c3d4e5f6789"
+                      className="w-full px-3.5 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
+                    />
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition-colors shrink-0 cursor-pointer flex items-center gap-1.5"
+                    >
+                      <Search className="w-3.5 h-3.5" />
+                      <span>Verify</span>
+                    </button>
+                  </div>
+                </div>
+              </form>
+
+              {hasSearchedVerify && (
+                <div>
+                  {verifiedRecord ? (
+                    <div className="p-4 rounded-xl bg-emerald-50/80 border border-emerald-200 space-y-2.5 animate-in fade-in">
+                      <div className="flex items-center justify-between border-b border-emerald-200/80 pb-2">
+                        <div className="flex items-center gap-1.5 font-bold text-xs text-emerald-900">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                          <span>AUTHENTIC & VERIFIED CREDENTIAL</span>
+                        </div>
+                        <span className="font-mono text-[10px] text-emerald-800 bg-emerald-200/80 px-2 py-0.5 rounded font-bold">
+                          Official Status: {verifiedRecord.status}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <span className="text-[10px] text-slate-500 block">Student Name</span>
+                          <span className="font-bold text-slate-900">{verifiedRecord.studentName}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-500 block">Father's Name</span>
+                          <span className="font-semibold text-slate-800">{verifiedRecord.fatherName}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-500 block">Class / Program</span>
+                          <span className="font-medium text-slate-700">{verifiedRecord.className}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-500 block">Certificate Type</span>
+                          <span className="font-medium text-slate-700">{verifiedRecord.certType}</span>
+                        </div>
+                        <div className="col-span-2 pt-1 border-t border-emerald-100 flex items-center justify-between text-[11px]">
+                          <span className="text-slate-500 font-mono">Serial: {verifiedRecord.serialNumber}</span>
+                          <span className="text-emerald-700 font-semibold">Issued: {verifiedRecord.issueDate}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2 animate-in fade-in">
+                      <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
+                      <div>
+                        <div className="font-bold">Record Not Found in Institutional Ledger</div>
+                        <p className="text-[11px] text-rose-700 mt-0.5">
+                          No certificate was found matching this serial or QR code. Please verify the serial number or contact the Campus Registrar.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setIsVerifyModalOpen(false)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>

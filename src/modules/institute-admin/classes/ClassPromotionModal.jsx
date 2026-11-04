@@ -43,10 +43,14 @@ export const ClassPromotionModal = ({
     return classes.find(c => c.id === targetClassId)
   }, [classes, targetClassId])
 
-  // Students in source class
+  // Students in source class (with strict tenant isolation)
   const sourceStudents = useMemo(() => {
     if (!sourceClass) return []
-    return students.filter(s => (s.className || '').toLowerCase().trim() === sourceClass.name.toLowerCase().trim())
+    return students.filter(s => {
+      const matchInst = !s.instituteId || !sourceClass.instituteId || s.instituteId === sourceClass.instituteId
+      const matchClass = (s.className || '').toLowerCase().trim() === sourceClass.name.toLowerCase().trim()
+      return matchInst && matchClass
+    })
   }, [students, sourceClass])
 
   // Classes in the session to clone

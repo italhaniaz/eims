@@ -476,7 +476,15 @@ export const StudentsView = ({ currentInstitute }) => {
   }, [isModalOpen, isFormDirty])
 
   // Pakistani Phone Number Validator (+92 3XX XXXXXXX or 03XXXXXXXXX)
-  const validatePakistaniPhone = (phone) => {
+  // Formatter for Pakistani NADRA 13-digit B-Form / CNIC (XXXXX-XXXXXXX-X)
+  const formatBFormCnic = (val) => {
+    const digits = (val || '').replace(/\D/g, '').slice(0, 13)
+    if (digits.length <= 5) return digits
+    if (digits.length <= 12) return `${digits.slice(0, 5)}-${digits.slice(5)}`
+    return `${digits.slice(0, 5)}-${digits.slice(5, 12)}-${digits.slice(12)}`
+  }
+
+const validatePakistaniPhone = (phone) => {
     if (!phone) return true // optional if empty, checked in required validation
     const clean = phone.replace(/[\s\-\(\)]/g, '')
     const regex = /^(\+92|0092|92)?3[0-9]{9}$/
@@ -792,7 +800,12 @@ export const StudentsView = ({ currentInstitute }) => {
       if (!formData.name.trim()) errs.name = 'Student Full Name is required.'
       if (!formData.dob) errs.dob = 'Date of birth is required.'
       if (!formData.gender) errs.gender = 'Gender is required.'
-      if (!formData.bFormCnic.trim()) errs.bFormCnic = 'B-Form / CNIC number is required.'
+      const rawCnic = (formData.bFormCnic || '').replace(/[^0-9]/g, '')
+      if (!formData.bFormCnic.trim()) {
+        errs.bFormCnic = 'B-Form / CNIC number is required.'
+      } else if (rawCnic.length !== 13) {
+        errs.bFormCnic = 'B-Form / CNIC must be exactly 13 digits (e.g. 35201-1234567-1).'
+      }
       if (!formData.address.trim()) errs.address = 'Residential address is required.'
       if (!formData.city.trim()) errs.city = 'City is required.'
       if (formData.phone && !validatePakistaniPhone(formData.phone)) {
@@ -891,6 +904,20 @@ export const StudentsView = ({ currentInstitute }) => {
         toast.error(`Identity Conflict: A student with B-Form/CNIC "${formData.bFormCnic}" already exists: ${duplicateBForm.name} (${duplicateBForm.rollNumber} - ${duplicateBForm.className})!`)
         setIsSubmitting(false)
         return
+      }
+    }
+
+    // 3. Section Capacity Override Guard
+    if (!editingStudent && formData.className && formData.section) {
+      const targetSec = dynamicSectionsForSelectedClass.find(s => s.name === formData.section)
+      if (targetSec && targetSec.isFull) {
+        const confirmOverride = window.confirm(
+          `Section "${formData.section}" has reached maximum sanctioned capacity (${targetSec.enrolled}/${targetSec.capacity} seats).\n\nDo you want to proceed with an Administrative Over-Capacity Override?`
+        )
+        if (!confirmOverride) {
+          setIsSubmitting(false)
+          return
+        }
       }
     }
 
@@ -3794,7 +3821,13 @@ export const StudentsView = ({ currentInstitute }) => {
                     </div>
                     <div>
                       <span className="text-[10px] text-slate-400 uppercase font-semibold">National ID (CNIC)</span>
-                      <p className="font-mono font-bold text-slate-800 mt-0.5">{selectedProfile.fatherCnic || '—'}</p>
+                      <p className="font-mono font-bold text-slate-800 mt-0.5">
+                        {selectedProfile.fatherCnic 
+                          ? (showMaskedBForm 
+                              ? selectedProfile.fatherCnic.replace(/^(\d{5})-?(\d{7})-?(\d)$/, '$1-*******-$3')
+                              : selectedProfile.fatherCnic)
+                          : '—'}
+                      </p>
                     </div>
                     <div>
                       <span className="text-[10px] text-slate-400 uppercase font-semibold">Guardian Calling Phone</span>

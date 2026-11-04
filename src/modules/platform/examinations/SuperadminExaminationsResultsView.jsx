@@ -2896,7 +2896,24 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
               </button>
             </div>
 
-            <div className="p-4 rounded-2xl border border-slate-300 bg-slate-50 space-y-3 text-xs">
+            <style>{`
+              @media print {
+                body * { visibility: hidden !important; }
+                #printable-supp-admit-card, #printable-supp-admit-card * { visibility: visible !important; }
+                #printable-supp-admit-card {
+                  position: absolute !important;
+                  left: 0 !important;
+                  top: 0 !important;
+                  width: 100% !important;
+                  margin: 0 !important;
+                  padding: 8mm !important;
+                  background: white !important;
+                }
+                .no-print { display: none !important; }
+                @page { size: A4 portrait; margin: 8mm; }
+              }
+            `}</style>
+            <div id="printable-supp-admit-card" className="p-4 rounded-2xl border border-slate-300 bg-slate-50 space-y-3 text-xs">
               <div className="text-center pb-2 border-b border-slate-200">
                 <div className="text-[10px] font-bold uppercase text-purple-700">Official Retake Permission Slip</div>
                 <div className="text-sm font-extrabold text-slate-900">{selectedSuppAdmitCard.student}</div>
@@ -2934,7 +2951,7 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 no-print">
               <button
                 type="button"
                 onClick={() => setSelectedSuppAdmitCard(null)}
@@ -3090,7 +3107,24 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
               </div>
             </div>
 
-            <div className="overflow-x-auto max-h-96 dark-scroll">
+            <style>{`
+              @media print {
+                body * { visibility: hidden !important; }
+                #printable-tabulation-register, #printable-tabulation-register * { visibility: visible !important; }
+                #printable-tabulation-register {
+                  position: absolute !important;
+                  left: 0 !important;
+                  top: 0 !important;
+                  width: 100% !important;
+                  margin: 0 !important;
+                  padding: 8mm !important;
+                  background: white !important;
+                }
+                .no-print { display: none !important; }
+                @page { size: A4 landscape; margin: 8mm; }
+              }
+            `}</style>
+            <div id="printable-tabulation-register" className="overflow-x-auto max-h-96 dark-scroll">
               <table className="w-full text-left text-xs text-slate-700 border border-slate-200">
                 <thead className="bg-slate-100 border-b border-slate-300 font-bold uppercase tracking-wider text-[10px] text-slate-800">
                   <tr>

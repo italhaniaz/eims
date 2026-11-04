@@ -30,6 +30,7 @@ import {
   School
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
+import { useToast } from '../../../context/ToastContext'
 import { normalizeClassSections } from '../../../constants/academicLevels'
 import { getCampusRooms } from '../../../constants/campusRooms'
 import { 
@@ -53,6 +54,7 @@ import TimetableVersionsModal from './TimetableVersionsModal'
 import TimetablePrintModal from './TimetablePrintModal'
 
 export const TimetableView = ({ currentInstitute, onRouteChange }) => {
+  const { toast } = useToast()
   const { 
     classes = [], 
     teachers = [], 
@@ -71,7 +73,7 @@ export const TimetableView = ({ currentInstitute, onRouteChange }) => {
     return classes.filter(c => {
       if (!c.instituteId) return true
       if (!currentInstitute?.id) return true
-      return c.instituteId === currentInstitute.id || c.instituteId === 'inst-1' || c.instituteId === 'inst-default'
+      return c.instituteId === currentInstitute.id
     })
   }, [classes, currentInstitute?.id])
 
@@ -79,7 +81,7 @@ export const TimetableView = ({ currentInstitute, onRouteChange }) => {
     return teachers.filter(t => {
       if (!t.instituteId) return true
       if (!currentInstitute?.id) return true
-      return t.instituteId === currentInstitute.id || t.instituteId === 'inst-1' || t.instituteId === 'inst-default'
+      return t.instituteId === currentInstitute.id
     })
   }, [teachers, currentInstitute?.id])
 
@@ -132,8 +134,8 @@ export const TimetableView = ({ currentInstitute, onRouteChange }) => {
   // Bell Schedule for active class tier & shift
   const [bellScheduleRefreshKey, setBellScheduleRefreshKey] = useState(0)
   const bellSchedule = useMemo(() => {
-    return getBellSchedule(classTier, classShift)
-  }, [classTier, classShift, bellScheduleRefreshKey])
+    return getBellSchedule(classTier, classShift, currentInstitute?.id)
+  }, [classTier, classShift, currentInstitute?.id, bellScheduleRefreshKey])
 
   const workingDays = useMemo(() => {
     return bellSchedule?.workingDays || ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
@@ -147,17 +149,19 @@ export const TimetableView = ({ currentInstitute, onRouteChange }) => {
   const [timetableRefreshKey, setTimetableRefreshKey] = useState(0)
   const currentTimetableRecord = useMemo(() => {
     if (!selectedClassName || !selectedSectionName) return null
-    return getSectionTimetable(selectedSession, selectedClassName, selectedSectionName)
+    return getSectionTimetable(selectedSession, selectedClassName, selectedSectionName, currentInstitute?.id)
   }, [selectedSession, selectedClassName, selectedSectionName, timetableRefreshKey])
 
   const isPublished = currentTimetableRecord?.status === 'Published'
   const scheduleSlots = currentTimetableRecord?.slots || {}
 
   // Active Toast Feedback
-  const [toastMessage, setToastMessage] = useState(null)
   const triggerToast = (msg, isError = false) => {
-    setToastMessage({ text: msg, isError })
-    setTimeout(() => setToastMessage(null), 4000)
+    if (isError) {
+      toast?.error?.(msg)
+    } else {
+      toast?.success?.(msg)
+    }
   }
 
   // Modals
@@ -234,8 +238,9 @@ export const TimetableView = ({ currentInstitute, onRouteChange }) => {
       selectedSession,
       selectedClassName,
       selectedSectionName,
-      { slots: updatedSlots, level: classTier, shift: classShift },
-      'Administrator'
+      { slots: updatedSlots, level: classTier, shift: classShift, instituteId: currentInstitute?.id },
+      'Administrator',
+      currentInstitute?.id
     )
     setTimetableRefreshKey(prev => prev + 1)
     setDraggedSlotKey(null)
@@ -273,8 +278,9 @@ export const TimetableView = ({ currentInstitute, onRouteChange }) => {
       selectedSession,
       selectedClassName,
       selectedSectionName,
-      { slots: updatedSlots, level: classTier, shift: classShift },
-      'Administrator'
+      { slots: updatedSlots, level: classTier, shift: classShift, instituteId: currentInstitute?.id },
+      'Administrator',
+      currentInstitute?.id
     )
     setTimetableRefreshKey(prev => prev + 1)
     triggerToast(`Scheduled ${slotData.subjectName} for ${slotData.day} (${slotData.periodNum})`)
@@ -296,8 +302,9 @@ export const TimetableView = ({ currentInstitute, onRouteChange }) => {
       selectedSession,
       selectedClassName,
       selectedSectionName,
-      { slots: updatedSlots, level: classTier, shift: classShift },
-      'Administrator'
+      { slots: updatedSlots, level: classTier, shift: classShift, instituteId: currentInstitute?.id },
+      'Administrator',
+      currentInstitute?.id
     )
     setTimetableRefreshKey(prev => prev + 1)
     triggerToast(`Removed period from routine.`)
@@ -325,8 +332,9 @@ export const TimetableView = ({ currentInstitute, onRouteChange }) => {
       selectedSession,
       selectedClassName,
       selectedSectionName,
-      { slots: updatedSlots, level: classTier, shift: classShift },
-      'Administrator'
+      { slots: updatedSlots, level: classTier, shift: classShift, instituteId: currentInstitute?.id },
+      'Administrator',
+      currentInstitute?.id
     )
     setTimetableRefreshKey(prev => prev + 1)
     triggerToast(`Swapped slots successfully.`)
@@ -353,8 +361,9 @@ export const TimetableView = ({ currentInstitute, onRouteChange }) => {
       selectedSession,
       selectedClassName,
       selectedSectionName,
-      { slots: updatedSlots, level: classTier, shift: classShift },
-      'Administrator'
+      { slots: updatedSlots, level: classTier, shift: classShift, instituteId: currentInstitute?.id },
+      'Administrator',
+      currentInstitute?.id
     )
     setTimetableRefreshKey(prev => prev + 1)
     triggerToast(`Replicated ${sourceDay} schedule across ${targetDays.join(', ')}!`)
@@ -363,20 +372,20 @@ export const TimetableView = ({ currentInstitute, onRouteChange }) => {
   // Toggle Publish & Lock
   const handleTogglePublish = () => {
     const newStatus = !isPublished
-    setTimetablePublishStatus(selectedSession, selectedClassName, selectedSectionName, newStatus, 'Administrator')
+    setTimetablePublishStatus(selectedSession, selectedClassName, selectedSectionName, newStatus, 'Administrator', currentInstitute?.id)
     setTimetableRefreshKey(prev => prev + 1)
     triggerToast(newStatus ? 'Timetable has been Published and Locked against edits.' : 'Timetable unlocked for draft edits.')
   }
 
   // Restore Version
   const handleRestoreVersion = (versionNum) => {
-    restoreTimetableVersion(selectedSession, selectedClassName, selectedSectionName, versionNum, 'Administrator')
+    restoreTimetableVersion(selectedSession, selectedClassName, selectedSectionName, versionNum, 'Administrator', currentInstitute?.id)
     setTimetableRefreshKey(prev => prev + 1)
     triggerToast(`Timetable successfully restored to Version ${versionNum}!`)
   }
 
   // Compute Teacher View Schedule
-  const allTimetablesList = useMemo(() => getAllTimetables(), [timetableRefreshKey])
+  const allTimetablesList = useMemo(() => getAllTimetables(currentInstitute?.id), [timetableRefreshKey, currentInstitute?.id])
   const activeTeacherSchedule = useMemo(() => {
     if (!selectedTeacherId) return { slots: {}, total: 0 }
     const map = {}
@@ -418,22 +427,7 @@ export const TimetableView = ({ currentInstitute, onRouteChange }) => {
 
   return (
     <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className={`px-4 py-3 rounded-xl flex items-center justify-between shadow-xs border animate-in fade-in duration-150 ${
-          toastMessage.isError 
-            ? 'bg-rose-50 border-rose-200 text-rose-800' 
-            : 'bg-emerald-50 border-emerald-200 text-emerald-800'
-        }`}>
-          <div className="flex items-center gap-2">
-            {toastMessage.isError ? <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" /> : <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />}
-            <span className="text-xs font-semibold">{toastMessage.text}</span>
-          </div>
-          <button onClick={() => setToastMessage(null)} className="text-xs underline font-semibold">
-            Dismiss
-          </button>
-        </div>
-      )}
+
 
       {/* Top Header Card */}
       <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -1127,6 +1121,7 @@ export const TimetableView = ({ currentInstitute, onRouteChange }) => {
           onClose={() => setIsBellModalOpen(false)}
           currentLevel={classTier}
           currentShift={classShift}
+          currentInstitute={currentInstitute}
           onScheduleSaved={(saved) => {
             setBellScheduleRefreshKey(prev => prev + 1)
             triggerToast('Bell Schedule successfully saved!')

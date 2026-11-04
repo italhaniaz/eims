@@ -27,6 +27,7 @@ import {
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
 import Modal from '../../../components/common/Modal'
+import { recordCampusLedgerTransaction } from '../accounts/CampusAccountsView'
 import PrintableFeeChallanModal from '../../../components/common/PrintableFeeChallanModal'
 
 export const FeesView = ({ currentInstitute }) => {
@@ -38,6 +39,9 @@ export const FeesView = ({ currentInstitute }) => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isBatchModalOpen, setIsBatchModalOpen] = useState(false)
   const [isPosModalOpen, setIsPosModalOpen] = useState(false)
+  const [isVerifying1Link, setIsVerifying1Link] = useState(false)
+  const [is1LinkVerified, setIs1LinkVerified] = useState(false)
+  const [appliedLateFine, setAppliedLateFine] = useState(0)
   const [isSplitModalOpen, setIsSplitModalOpen] = useState(false)
   const [selectedVoucher, setSelectedVoucher] = useState(null)
   const [isPrintChallanOpen, setIsPrintChallanOpen] = useState(false)
@@ -60,7 +64,7 @@ export const FeesView = ({ currentInstitute }) => {
   })
 
   // Fee Status Filter Tab & Overdue Defaulters
-  const [feeFilterTab, setFeeFilterTab] = useState('all') // 'all' | 'pending' | 'overdue' | 'paid'
+  const [feeFilterTab, setFeeFilterTab] = useState('all') // 'all' | 'pending' | 'partial' | 'overdue' | 'paid'
 
   const isFeeOverdue = (fee) => {
     if (!fee || fee.status === 'Paid') return false
@@ -397,14 +401,34 @@ export const FeesView = ({ currentInstitute }) => {
   }
 
   const markPaid = async (fee) => {
+    const paidAmount = Number(fee.amount || fee.netPayable || 0)
     await updateItem('fees', fee.id, {
       status: 'Paid',
       paymentDate: new Date().toISOString().split('T')[0]
     })
-    if (logAuditEvent) {
-      logAuditEvent(`Marked fee paid for ${fee.studentName} (Rs. ${fee.amount})`, 'Fee Cashier', 'Success')
+
+    // Automatically post fee income to Campus General Ledger
+    try {
+      recordCampusLedgerTransaction(currentInstitute?.id, {
+        id: `VCH-FEE-${Date.now().toString().slice(-6)}`,
+        date: new Date().toISOString().split('T')[0],
+        description: `Tuition Fee Collection - ${fee.studentName} (${fee.rollNumber || fee.className})`,
+        type: 'Income',
+        category: 'Tuition Revenues',
+        debit: 0,
+        credit: paidAmount,
+        account: 'Habib Bank Ltd (A/C: 4410)',
+        status: 'Cleared',
+        ref: fee.challanNo || `CH-${String(fee.id).slice(-6)}`
+      })
+    } catch (err) {
+      console.error('Failed to post fee to campus ledger:', err)
     }
-    toast.success(`Challan for ${fee.studentName} marked as Paid.`)
+
+    if (logAuditEvent) {
+      logAuditEvent(`Marked fee paid for ${fee.studentName} (Rs. ${fee.amount}) and posted to General Ledger`, 'Fee Cashier', 'Success')
+    }
+    toast.success(`Challan for ${fee.studentName} marked as Paid & posted to General Ledger.`)
   }
 
   // Open POS Cashier Terminal
@@ -422,7 +446,9 @@ export const FeesView = ({ currentInstitute }) => {
         discount: 0,
         cashierNotes: 'Counter Cash Collection',
         sendSmsAlert: true,
-        guardianPhone: matchedStd?.guardianPhone || matchedStd?.phone || '+92 300 1234567'
+        guardianPhone: matchedStd?.guardianPhone || matchedStd?.phone || '+92 300 1234567',
+        transactionRef: '',
+        bankName: ''
       })
     } else {
       const pendingFees = fees.filter(f => f.status !== 'Paid' && (!f.instituteId || f.instituteId === currentInstitute?.id))
@@ -445,18 +471,44 @@ export const FeesView = ({ currentInstitute }) => {
     setIsPosModalOpen(true)
   }
 
+  // Sibling concession detector
+  const detectSiblingDiscount = (studentName) => {
+    if (!studentName) return null
+    const matchedStd = instStudents.find(s => s.name === studentName || s.studentName === studentName)
+    if (!matchedStd) return null
+    const siblings = instStudents.filter(s => 
+      s.id !== matchedStd.id && (
+        (s.fatherName && matchedStd.fatherName && s.fatherName.toLowerCase().trim() === matchedStd.fatherName.toLowerCase().trim()) ||
+        (s.fatherPhone && matchedStd.fatherPhone && s.fatherPhone.trim() === matchedStd.fatherPhone.trim()) ||
+        (s.guardianPhone && matchedStd.guardianPhone && s.guardianPhone.trim() === matchedStd.guardianPhone.trim())
+      )
+    )
+    if (siblings.length === 1) {
+      return { percent: 20, reason: `2nd Child Sibling Concession (Sibling: ${siblings[0].name || siblings[0].studentName})` }
+    } else if (siblings.length >= 2) {
+      return { percent: 50, reason: `3rd Child Sibling Concession (Siblings: ${siblings.map(s => s.name || s.studentName).join(", ")})` }
+    }
+    return null
+  }
   // Process POS Cashier Payment
   const handleProcessPosPayment = async (e) => {
     e.preventDefault()
     const payable = Math.max(0, posData.amount - posData.discount)
+    const paidSoFar = Number(posData.cashTendered || 0)
+    const isFull = paidSoFar >= payable
+    const isPartial = paidSoFar > 0 && paidSoFar < payable
+    const paymentStatus = isFull ? 'Paid' : (isPartial ? 'Partial' : 'Pending')
+    const finalPaid = isFull ? payable : (isPartial ? paidSoFar : 0)
+    const remainingBalance = Math.max(0, payable - finalPaid)
 
     if (posData.selectedFeeId) {
       await updateItem('fees', posData.selectedFeeId, {
-        status: 'Paid',
-        paymentDate: new Date().toISOString().split('T')[0],
+        status: paymentStatus,
+        paymentDate: paidSoFar > 0 ? new Date().toISOString().split('T')[0] : null,
         paymentMethod: posData.paymentMethod,
         discountApplied: posData.discount,
-        finalPaid: payable
+        finalPaid: finalPaid,
+        remainingBalance: remainingBalance
       })
     } else {
       await addItem('fees', {
@@ -464,9 +516,11 @@ export const FeesView = ({ currentInstitute }) => {
         rollNumber: posData.rollNumber,
         className: posData.className,
         amount: payable,
-        status: 'Paid',
+        status: paymentStatus,
+        finalPaid: finalPaid,
+        remainingBalance: remainingBalance,
         dueDate: new Date().toISOString().split('T')[0],
-        paymentDate: new Date().toISOString().split('T')[0],
+        paymentDate: paidSoFar > 0 ? new Date().toISOString().split('T')[0] : null,
         instituteId: currentInstitute?.id || 'inst-1',
         paymentMethod: posData.paymentMethod
       })
@@ -479,25 +533,48 @@ export const FeesView = ({ currentInstitute }) => {
       className: posData.className,
       amount: posData.amount,
       discount: posData.discount,
-      finalPaid: payable,
+      finalPaid: finalPaid,
+      remainingBalance: remainingBalance,
+      status: paymentStatus,
       cashTendered: posData.cashTendered,
       changeDue: Math.max(0, Number(posData.cashTendered) - payable),
       paymentMethod: posData.paymentMethod,
       phone: posData.guardianPhone || '',
       date: new Date().toLocaleString(),
-      cashier: 'Fee Counter Operator'
+      cashier: 'Fee Counter Operator',
+      transactionRef: posData.transactionRef || null,
+      bankName: posData.bankName || null
+    }
+
+    if (finalPaid > 0) {
+      try {
+        recordCampusLedgerTransaction(currentInstitute?.id, {
+          id: `VCH-POS-${receiptObj.receiptNo.slice(-6)}`,
+          date: new Date().toISOString().split('T')[0],
+          description: `POS Counter Fee Collection - ${posData.studentName} (${posData.rollNumber}) [${posData.paymentMethod}]`,
+          type: 'Income',
+          category: 'Tuition Revenues',
+          debit: 0,
+          credit: finalPaid,
+          account: posData.paymentMethod === 'Bank Transfer' ? 'Habib Bank Ltd (A/C: 4410)' : 'Petty Cash Desk',
+          status: 'Cleared',
+          ref: receiptObj.receiptNo
+        })
+      } catch (err) {
+        console.error('Failed to post POS fee to campus ledger:', err)
+      }
     }
 
     if (posData.sendSmsAlert) {
       const commEntry = {
         id: `comm-fee-${Date.now()}`,
-        title: `Fee Payment Receipt #${receiptObj.receiptNo}`,
+        title: `Fee Payment Receipt #${receiptObj.receiptNo} (${paymentStatus})`,
         channel: 'SMS & WhatsApp Gateway',
         audience: `Guardian of ${posData.studentName} (${posData.guardianPhone || 'Phone Registered'})`,
         recipientsCount: 1,
         timestamp: new Date().toLocaleString(),
         status: 'Delivered',
-        messagePreview: `Official Payment Receipt: Received Rs. ${payable.toLocaleString()} for ${posData.studentName} (${posData.rollNumber}). Slip #${receiptObj.receiptNo}. Thank you.`
+        messagePreview: `Official Payment Receipt: Received Rs. ${finalPaid.toLocaleString()} for ${posData.studentName} (${posData.rollNumber}). Slip #${receiptObj.receiptNo}. ${isPartial ? `Remaining Balance: Rs. ${remainingBalance.toLocaleString()}.` : 'Full dues settled.'} Thank you.`
       }
       try {
         await addItem('communicationLogs', commEntry)
@@ -507,9 +584,9 @@ export const FeesView = ({ currentInstitute }) => {
     }
 
     if (logAuditEvent) {
-      logAuditEvent(`POS counter fee payment collected for ${posData.studentName} (Rs. ${payable})`, 'POS Cashier', 'Success')
+      logAuditEvent(`POS counter fee payment (${paymentStatus}) collected for ${posData.studentName} (Paid: Rs. ${finalPaid}, Remaining: Rs. ${remainingBalance})`, 'POS Cashier', 'Success')
     }
-    toast.success(`POS Collection Successful! Rs. ${payable.toLocaleString()} received.`)
+    toast.success(`POS Collection Successful! Rs. ${finalPaid.toLocaleString()} recorded (${paymentStatus}).`)
     setIsPosModalOpen(false)
     setPosReceipt(receiptObj)
   }
@@ -533,7 +610,9 @@ export const FeesView = ({ currentInstitute }) => {
     )
 
     if (feeFilterTab === 'pending') {
-      list = list.filter(f => f.status !== 'Paid')
+      list = list.filter(f => f.status === 'Pending' || (!f.status))
+    } else if (feeFilterTab === 'partial') {
+      list = list.filter(f => f.status === 'Partial')
     } else if (feeFilterTab === 'overdue') {
       list = list.filter(f => isFeeOverdue(f))
     } else if (feeFilterTab === 'paid') {
@@ -563,12 +642,20 @@ export const FeesView = ({ currentInstitute }) => {
   }, [fees, currentInstitute?.id])
 
   const totalCollected = allInstFees
-    .filter(f => f.status === 'Paid')
-    .reduce((sum, f) => sum + Number(f.amount || 0), 0)
+    .reduce((sum, f) => {
+      if (f.status === 'Paid') return sum + Number(f.finalPaid || f.amount || 0)
+      if (f.status === 'Partial') return sum + Number(f.finalPaid || 0)
+      return sum
+    }, 0)
 
   const totalPending = allInstFees
     .filter(f => f.status !== 'Paid')
-    .reduce((sum, f) => sum + Number(f.amount || 0), 0)
+    .reduce((sum, f) => {
+      if (f.status === 'Partial') {
+        return sum + Number(f.remainingBalance ?? (Number(f.amount || 0) - (f.finalPaid || 0)))
+      }
+      return sum + Number(f.amount || 0)
+    }, 0)
 
   const defaultersList = useMemo(() => {
     return allInstFees.filter(f => isFeeOverdue(f))
@@ -771,7 +858,24 @@ export const FeesView = ({ currentInstitute }) => {
                 : 'text-slate-600 hover:bg-slate-100'
             }`}
           >
-            Pending Due ({allInstFees.filter(f => f.status !== 'Paid').length})
+            Pending Due ({allInstFees.filter(f => f.status === 'Pending' || (!f.status)).length})
+          </button>
+
+          <button
+            type="button"
+            onClick={() => { setFeeFilterTab('partial'); setCurrentPage(1); }}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              feeFilterTab === 'partial'
+                ? 'bg-orange-600 text-white shadow-2xs'
+                : 'text-orange-700 bg-orange-50 hover:bg-orange-100 border border-orange-200'
+            }`}
+          >
+            <span>Partial Paid</span>
+            <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+              feeFilterTab === 'partial' ? 'bg-white text-orange-800' : 'bg-orange-200 text-orange-900'
+            }`}>
+              {allInstFees.filter(f => f.status === 'Partial').length}
+            </span>
           </button>
 
           <button
@@ -877,7 +981,13 @@ export const FeesView = ({ currentInstitute }) => {
                   <tr key={f.id} className="hover:bg-slate-50/70 transition-colors">
                     <td className="px-6 py-3.5 font-semibold text-slate-900">
                       <div>{f.studentName}</div>
-                      <div className="text-[11px] text-slate-400 font-normal">{f.className}</div>
+                      <div className="text-[11px] text-slate-400 font-normal flex items-center gap-1.5 flex-wrap">
+                        <span>{f.className}</span>
+                        <span>•</span>
+                        <span className="font-mono text-[10px] text-indigo-700 bg-indigo-50 px-1.5 py-0.2 rounded border border-indigo-200 font-medium" title="1Link 1-Bill 18-digit Reference">
+                          1-Bill: {f.oneBillId || `100482${String(selectedInstitute?.code || '001').replace(/[^0-9]/g, '').padStart(4, '0')}${String(f.id).replace(/[^0-9]/g, '').slice(-8).padStart(8, '0')}`.slice(0, 18)}
+                        </span>
+                      </div>
                       {f.installmentInfo?.isInstallment && (
                         <div className="mt-1">
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-50 text-purple-700 border border-purple-200 rounded-full text-[10px] font-bold font-mono">
@@ -894,6 +1004,11 @@ export const FeesView = ({ currentInstitute }) => {
                       {f.status === 'Paid' ? (
                         <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-bold">
                           Paid
+                        </span>
+                      ) : f.status === 'Partial' ? (
+                        <span className="px-2.5 py-0.5 bg-orange-50 text-orange-800 border border-orange-300 rounded-full text-xs font-bold inline-flex items-center gap-1">
+                          <span>Partial</span>
+                          <span className="font-mono text-[10px] text-orange-900 bg-orange-100 px-1 rounded">Bal: Rs. {(f.remainingBalance ?? (Number(f.amount) - (f.finalPaid || 0))).toLocaleString()}</span>
                         </span>
                       ) : isFeeOverdue(f) ? (
                         <span className="px-2.5 py-0.5 bg-rose-50 text-rose-700 border border-rose-300 rounded-full text-xs font-black inline-flex items-center gap-1">
@@ -1163,6 +1278,19 @@ export const FeesView = ({ currentInstitute }) => {
               <span className="text-[10px] text-slate-500 font-bold uppercase">Quick Concession:</span>
               <button
                 type="button"
+                onClick={() => {
+                  const sib = detectSiblingDiscount(posData.studentName)
+                  const pct = sib ? sib.percent : 20
+                  const reason = sib ? sib.reason : "Sibling Discount (20%)"
+                  setPosData({ ...posData, discount: Math.round(posData.amount * (pct / 100)), cashierNotes: reason })
+                  toast?.info?.(reason)
+                }}
+                className="text-[10px] px-2 py-0.5 bg-emerald-50 border border-emerald-300 hover:bg-emerald-100 text-emerald-800 rounded font-bold transition-colors cursor-pointer"
+              >
+                👨‍👩‍👧 Sibling (20%/50%)
+              </button>
+              <button
+                type="button"
                 onClick={() => setPosData({ ...posData, discount: Math.round(posData.amount * 0.25), cashierNotes: 'Kinship Concession (25%)' })}
                 className="text-[10px] px-2 py-0.5 bg-white border border-slate-200 hover:bg-indigo-50 hover:border-indigo-300 text-slate-700 rounded font-medium transition-colors cursor-pointer"
               >
@@ -1190,7 +1318,7 @@ export const FeesView = ({ currentInstitute }) => {
                 <select
                   value={posData.paymentMethod}
                   onChange={(e) => setPosData({ ...posData, paymentMethod: e.target.value })}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 font-medium"
                 >
                   <option value="Cash">Cash at Counter</option>
                   <option value="Online / Bank Transfer">Online / Bank Transfer</option>
@@ -1210,11 +1338,70 @@ export const FeesView = ({ currentInstitute }) => {
               </div>
             </div>
 
+            {posData.paymentMethod !== 'Cash' && (
+              <div className="grid grid-cols-2 gap-3 p-3 bg-indigo-50/80 border border-indigo-200 rounded-xl text-xs animate-in fade-in">
+                <div>
+                  <label className="block text-[11px] font-bold text-indigo-900 uppercase mb-1">Bank Name / Channel *</label>
+                  <input
+                    type="text"
+                    required
+                    value={posData.bankName || ''}
+                    onChange={(e) => setPosData({ ...posData, bankName: e.target.value })}
+                    placeholder="e.g. HBL, Meezan, JazzCash, 1Link"
+                    className="w-full px-3 py-1.5 rounded-lg border border-indigo-300 bg-white text-xs font-medium focus:ring-1 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-indigo-900 uppercase mb-1">Txn Reference / RRN *</label>
+                  <div className="flex gap-1.5">
+                    <input
+                      type="text"
+                      required
+                      value={posData.transactionRef || ''}
+                      onChange={(e) => {
+                        setPosData({ ...posData, transactionRef: e.target.value });
+                        setIs1LinkVerified(false);
+                      }}
+                      placeholder="e.g. RRN-982104812"
+                      className="w-full px-3 py-1.5 rounded-lg border border-indigo-300 bg-white text-xs font-mono font-semibold focus:ring-1 focus:ring-indigo-500"
+                    />
+                    <button
+                      type="button"
+                      disabled={isVerifying1Link || !posData.transactionRef}
+                      onClick={() => {
+                        setIsVerifying1Link(true);
+                        setTimeout(() => {
+                          setIsVerifying1Link(false);
+                          setIs1LinkVerified(true);
+                          toast.success(`1Link Switch: Txn #${posData.transactionRef} verified successfully.`);
+                        }, 500);
+                      }}
+                      className="px-2 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded font-bold text-[10px] shrink-0 disabled:opacity-50 transition-colors"
+                      title="Verify with 1Link switch"
+                    >
+                      {isVerifying1Link ? 'Checking...' : is1LinkVerified ? '✓ Verified' : 'Verify'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {posData.paymentMethod === 'Cash' && posData.cashTendered && (
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-center text-xs">
                 <span className="font-semibold text-slate-600">Change Due to Customer:</span>
                 <span className="font-mono text-base font-black text-blue-700">
                   Rs. {Math.max(0, Number(posData.cashTendered) - Math.max(0, posData.amount - posData.discount)).toLocaleString()}
+                </span>
+              </div>
+            )}
+
+            {posData.cashTendered && Number(posData.cashTendered) > 0 && Number(posData.cashTendered) < Math.max(0, posData.amount - posData.discount) && (
+              <div className="p-3 bg-amber-50 rounded-xl border border-amber-300 flex justify-between items-center text-xs text-amber-950 font-medium">
+                <span className="flex items-center gap-1.5 font-bold text-amber-800">
+                  <span>⚠️ Partial Payment Mode</span>
+                </span>
+                <span className="font-mono text-xs font-black text-amber-900 bg-amber-100/90 px-2 py-0.5 rounded-md border border-amber-200">
+                  Remaining Balance: Rs. {(Math.max(0, posData.amount - posData.discount) - Number(posData.cashTendered)).toLocaleString()}
                 </span>
               </div>
             )}

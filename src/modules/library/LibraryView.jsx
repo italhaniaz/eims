@@ -30,9 +30,26 @@ import { useAppData } from '../../context/AppDataContext'
 import { useToast } from '../../context/ToastContext'
 import Modal from '../../components/common/Modal'
 
-export const LibraryView = () => {
+export const LibraryView = ({ currentInstitute }) => {
   const { library = [], bookIssues = [], students = [], institutes = [], addItem, updateItem, deleteItem } = useAppData()
   const { toast } = useToast()
+
+  // Scoped students for current campus
+  const campusStudents = useMemo(() => {
+    if (!currentInstitute?.id) return students
+    return students.filter(s => !s.instituteId || s.instituteId === currentInstitute.id)
+  }, [students, currentInstitute?.id])
+
+  // Tenant scoped library collection & book circulation loans
+  const campusLibrary = useMemo(() => {
+    if (!currentInstitute?.id) return library
+    return library.filter(b => !b.instituteId || b.instituteId === currentInstitute.id)
+  }, [library, currentInstitute?.id])
+
+  const campusBookIssues = useMemo(() => {
+    if (!currentInstitute?.id) return bookIssues
+    return bookIssues.filter(i => !i.instituteId || i.instituteId === currentInstitute.id)
+  }, [bookIssues, currentInstitute?.id])
 
   const [activeTab, setActiveTab] = useState('catalog') // 'catalog' | 'issued' | 'overdue'
   const [searchTerm, setSearchTerm] = useState('')
@@ -64,8 +81,8 @@ export const LibraryView = () => {
 
   // Issue Book Form
   const [issueData, setIssueData] = useState({
-    studentName: students[0]?.name || '',
-    rollNumber: students[0]?.rollNumber || '',
+    studentName: '',
+    rollNumber: '',
     dueDate: '2026-11-15'
   })
 
@@ -118,9 +135,10 @@ export const LibraryView = () => {
     setSelectedBookForIssue(book)
     const defDue = new Date()
     defDue.setDate(defDue.getDate() + 14)
+    const firstCampusStudent = campusStudents[0] || students[0]
     setIssueData({
-      studentName: students[0]?.name || '',
-      rollNumber: students[0]?.rollNumber || '',
+      studentName: firstCampusStudent?.name || '',
+      rollNumber: firstCampusStudent?.rollNumber || '',
       dueDate: defDue.toISOString().split('T')[0]
     })
     setIsIssueModalOpen(true)
@@ -135,6 +153,7 @@ export const LibraryView = () => {
 
     const payload = {
       ...formData,
+      instituteId: currentInstitute?.id || 'inst-1',
       totalCopies: Number(formData.totalCopies),
       issuedCopies: Number(formData.issuedCopies || 0),
       status: Number(formData.totalCopies) > Number(formData.issuedCopies || 0) ? 'Available' : 'Out of Stock'
@@ -167,6 +186,7 @@ export const LibraryView = () => {
       author: selectedBookForIssue.author,
       studentName: issueData.studentName,
       rollNumber: issueData.rollNumber,
+      instituteId: currentInstitute?.id || 'inst-1',
       issueDate: new Date().toISOString().split('T')[0],
       dueDate: issueData.dueDate,
       status: 'Issued'
@@ -212,7 +232,7 @@ export const LibraryView = () => {
         dueDate: new Date().toISOString().split('T')[0],
         status: 'Pending',
         feeTitle: `Library Book Loss Replacement Penalty: ${iss.bookTitle}`,
-        instituteId: 'inst-1',
+        instituteId: currentInstitute?.id || 'inst-1',
         paymentDate: null
       })
 
@@ -243,7 +263,7 @@ export const LibraryView = () => {
         dueDate: new Date().toISOString().split('T')[0],
         status: 'Pending',
         feeTitle: `Library Overdue Circulation Fine: ${iss.bookTitle} (${overdue.days} days)`,
-        instituteId: 'inst-1',
+        instituteId: currentInstitute?.id || 'inst-1',
         paymentDate: null
       })
 
@@ -319,7 +339,7 @@ export const LibraryView = () => {
   }
 
   const filtered = useMemo(() => {
-    return library.filter(b => {
+    return campusLibrary.filter(b => {
       const matchesSearch = 
         (b.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (b.author || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -327,7 +347,7 @@ export const LibraryView = () => {
       const matchesCat = selectedCategory === 'ALL' || b.category === selectedCategory
       return matchesSearch && matchesCat
     })
-  }, [library, searchTerm, selectedCategory])
+  }, [campusLibrary, searchTerm, selectedCategory])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
   const paginatedBooks = useMemo(() => {
@@ -336,8 +356,8 @@ export const LibraryView = () => {
   }, [filtered, currentPage, pageSize])
 
   const activeIssues = useMemo(() => {
-    return bookIssues.filter(i => i.status === 'Issued')
-  }, [bookIssues])
+    return campusBookIssues.filter(i => i.status === 'Issued')
+  }, [campusBookIssues])
 
   const overdueIssues = useMemo(() => {
     return activeIssues.filter(i => getOverdueDetails(i.dueDate).isOverdue)
@@ -808,7 +828,7 @@ export const LibraryView = () => {
                 }}
                 className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 bg-white"
               >
-                {students.map(s => (
+                {campusStudents.map(s => (
                   <option key={s.id} value={s.name}>{s.name} ({s.rollNumber}) - {s.className}</option>
                 ))}
               </select>

@@ -28,37 +28,81 @@ export const getPortalFeatures = (institute) => {
   }
 
   const idStr = String(institute.id || '').toLowerCase()
+  const codeStr = String(institute.code || institute.registrationCode || '').toLowerCase()
   const nameStr = String(institute.name || institute.instituteName || '').toLowerCase()
   const scopeStr = String(institute.scope || institute.roleTitle || '').toLowerCase()
   const rawType = String(institute.type || institute.planType || institute.instituteType || '').trim().toLowerCase()
+  const tiersArr = Array.isArray(institute.tiers) ? institute.tiers.map(t => String(t).toLowerCase()) : []
+  const enabledTiersArr = Array.isArray(institute.enabledTiers) ? institute.enabledTiers.map(t => String(t).toLowerCase()) : []
 
   let selectedTier = 'school'
 
+  // 1. Explicit University Matcher
   if (
-    rawType === 'college' || 
-    idStr === 'inst-3' || 
-    nameStr.includes('college') || 
-    scopeStr.includes('college')
-  ) {
-    selectedTier = 'college'
-  } else if (
-    rawType === 'university' || 
-    rawType === 'undergraduate' || 
-    idStr === 'inst-4' || 
-    nameStr.includes('university') || 
-    scopeStr.includes('dean') || 
-    scopeStr.includes('registrar')
+    rawType.includes('uni') ||
+    rawType.includes('undergrad') ||
+    rawType.includes('higher') ||
+    rawType.includes('degree') ||
+    idStr === 'inst-4' ||
+    idStr.includes('ias') ||
+    codeStr.includes('ias') ||
+    codeStr.includes('uni') ||
+    nameStr.includes('university') ||
+    nameStr.includes('undergraduate') ||
+    nameStr.includes('applied sciences') ||
+    nameStr.includes('degree') ||
+    scopeStr.includes('dean') ||
+    scopeStr.includes('registrar') ||
+    scopeStr.includes('rector') ||
+    scopeStr.includes('hec') ||
+    scopeStr.includes('controller') ||
+    tiersArr.includes('undergraduate') ||
+    tiersArr.includes('university') ||
+    enabledTiersArr.includes('undergraduate') ||
+    enabledTiersArr.includes('university')
   ) {
     selectedTier = 'university'
-  } else if (
-    rawType === 'custom' || 
-    rawType === 'hybrid' || 
-    idStr === 'inst-1' || 
-    nameStr.includes('composite') || 
-    nameStr.includes('beaconhouse')
+  }
+  // 2. Explicit College Matcher
+  else if (
+    rawType.includes('college') ||
+    rawType.includes('inter') ||
+    rawType.includes('hssc') ||
+    idStr === 'inst-3' ||
+    idStr.includes('ria') ||
+    codeStr.includes('ria') ||
+    codeStr.includes('col') ||
+    nameStr.includes('college') ||
+    nameStr.includes('roots') ||
+    nameStr.includes('intermediate') ||
+    nameStr.includes('hssc') ||
+    scopeStr.includes('college') ||
+    scopeStr.includes('hod') ||
+    scopeStr.includes('bise') ||
+    scopeStr.includes('fbise') ||
+    tiersArr.includes('college') ||
+    enabledTiersArr.includes('college')
+  ) {
+    selectedTier = 'college'
+  }
+  // 3. Explicit Multi-Tier / Custom Matcher
+  else if (
+    rawType.includes('custom') ||
+    rawType.includes('hybrid') ||
+    rawType.includes('multi') ||
+    rawType.includes('composite') ||
+    idStr === 'inst-1' ||
+    idStr.includes('bhs') ||
+    codeStr.includes('bhs') ||
+    nameStr.includes('composite') ||
+    nameStr.includes('beaconhouse') ||
+    (enabledTiersArr.length > 1) ||
+    (tiersArr.length > 1)
   ) {
     selectedTier = 'custom'
-  } else {
+  }
+  // 4. Default to School
+  else {
     selectedTier = 'school'
   }
 

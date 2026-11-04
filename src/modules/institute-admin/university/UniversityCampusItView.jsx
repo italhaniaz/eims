@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { 
   Laptop, 
   Server, 
@@ -25,8 +25,9 @@ export const UniversityCampusItView = ({ currentInstitute }) => {
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false)
   const [isPinging, setIsPinging] = useState(false)
 
+
   // Demo IT Infrastructure
-  const [nodes, setNodes] = useState([
+  const DEFAULT_NODES = [
     {
       id: 'NODE-PERN-01',
       name: 'HEC PERN Optical Gateway (1 Gbps)',
@@ -63,10 +64,10 @@ export const UniversityCampusItView = ({ currentInstitute }) => {
       load: '61%',
       latency: '8ms'
     }
-  ])
+  ]
 
   // Demo Accounts
-  const [digitalAccounts, setDigitalAccounts] = useState([
+  const DEFAULT_DIGITAL_ACCOUNTS = [
     {
       id: 'ACC-01',
       name: 'Dr. Nadia Hashmi',
@@ -91,10 +92,10 @@ export const UniversityCampusItView = ({ currentInstitute }) => {
       services: ['Campus WiFi SSID IAS-SECURE', 'Bloomberg Terminal Access', 'Google Workspace Edu'],
       status: 'Active'
     }
-  ])
+  ]
 
   // Demo Tickets
-  const [tickets, setTickets] = useState([
+  const DEFAULT_TICKETS = [
     {
       id: 'TKT-2026-104',
       subject: 'Lab 3 Projector HDMI Signal Intermittent Drop',
@@ -113,7 +114,54 @@ export const UniversityCampusItView = ({ currentInstitute }) => {
       status: 'Resolved',
       date: '2026-10-30'
     }
-  ])
+  ]
+
+  const instId = currentInstitute?.id || 'default'
+  const itStorageKey = `sms_university_it_${instId}`
+
+  const [itData, setItData] = useState(() => {
+    try {
+      const saved = localStorage.getItem(itStorageKey)
+      if (saved) return JSON.parse(saved)
+    } catch {}
+    return {
+      nodes: DEFAULT_NODES,
+      digitalAccounts: DEFAULT_DIGITAL_ACCOUNTS,
+      tickets: DEFAULT_TICKETS
+    }
+  })
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(itStorageKey, JSON.stringify(itData))
+    } catch {}
+  }, [itData, itStorageKey])
+
+  const nodes = itData.nodes || DEFAULT_NODES
+  const digitalAccounts = itData.digitalAccounts || DEFAULT_DIGITAL_ACCOUNTS
+  const tickets = itData.tickets || DEFAULT_TICKETS
+
+  const setNodes = (updater) => {
+    setItData(prev => ({
+      ...prev,
+      nodes: typeof updater === 'function' ? updater(prev.nodes || DEFAULT_NODES) : updater
+    }))
+  }
+
+  const setDigitalAccounts = (updater) => {
+    setItData(prev => ({
+      ...prev,
+      digitalAccounts: typeof updater === 'function' ? updater(prev.digitalAccounts || DEFAULT_DIGITAL_ACCOUNTS) : updater
+    }))
+  }
+
+  const setTickets = (updater) => {
+    setItData(prev => ({
+      ...prev,
+      tickets: typeof updater === 'function' ? updater(prev.tickets || DEFAULT_TICKETS) : updater
+    }))
+  }
+
 
   const [formData, setFormData] = useState({
     name: '',

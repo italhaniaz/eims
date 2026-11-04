@@ -51,6 +51,7 @@ export const BellScheduleModal = ({
   onClose,
   currentLevel = 'secondary',
   currentShift = 'Morning',
+  currentInstitute = null,
   onScheduleSaved
 }) => {
   const [selectedLevel, setSelectedLevel] = useState(currentLevel || 'secondary')
@@ -65,7 +66,7 @@ export const BellScheduleModal = ({
 
   useEffect(() => {
     if (isOpen) {
-      const existing = getBellSchedule(selectedLevel, selectedShift)
+      const existing = getBellSchedule(selectedLevel, selectedShift, currentInstitute?.id)
       if (existing) {
         setScheduleData(existing)
       } else {
@@ -267,7 +268,7 @@ export const BellScheduleModal = ({
     }
 
     // Save
-    const saved = saveBellSchedule(selectedLevel, selectedShift, scheduleData)
+    const saved = saveBellSchedule(selectedLevel, selectedShift, scheduleData, currentInstitute?.id)
     if (onScheduleSaved) onScheduleSaved(saved)
     onClose()
   }

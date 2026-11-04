@@ -74,19 +74,16 @@ export const createDefaultBellSchedule = (level = 'secondary', shift = 'Morning'
 // Sanitizes any legacy demo data from localStorage
 export const purgeStaleTimetableData = () => {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY_TIMETABLES)
-    if (raw && (raw.includes('Prof. Tariq') || raw.includes('Dr. Fatima') || raw.includes('Qari Sb') || raw.includes('Library / Reading'))) {
-      localStorage.removeItem(STORAGE_KEY_TIMETABLES)
-    }
-    // Also remove legacy keys if present
+    // Only clean obsolete legacy store keys without wiping live timetables
     localStorage.removeItem('sms_schedule_store')
     localStorage.removeItem('timetableStore')
   } catch (e) {}
 }
 
-export const getStoredBellSchedules = () => {
+export const getStoredBellSchedules = (instituteId = null) => {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY_BELL_SCHEDULES)
+    const key = instituteId ? `sms_bell_schedules_${instituteId}` : STORAGE_KEY_BELL_SCHEDULES
+    const raw = localStorage.getItem(key) || (instituteId ? localStorage.getItem(STORAGE_KEY_BELL_SCHEDULES) : null)
     if (raw) {
       const parsed = JSON.parse(raw)
       if (typeof parsed === 'object' && parsed !== null) return parsed
@@ -95,23 +92,26 @@ export const getStoredBellSchedules = () => {
   return {}
 }
 
-export const saveBellSchedule = (level, shift, schedule) => {
-  const store = getStoredBellSchedules()
+export const saveBellSchedule = (level, shift, schedule, instituteId = null) => {
+  const store = getStoredBellSchedules(instituteId)
   const key = `${level || 'secondary'}_${shift || 'Morning'}`
   store[key] = {
     ...schedule,
     level,
     shift,
+    instituteId: instituteId || schedule.instituteId || 'inst-1',
     updatedAt: new Date().toISOString()
   }
   try {
+    const storageKey = instituteId ? `sms_bell_schedules_${instituteId}` : STORAGE_KEY_BELL_SCHEDULES
+    localStorage.setItem(storageKey, JSON.stringify(store))
     localStorage.setItem(STORAGE_KEY_BELL_SCHEDULES, JSON.stringify(store))
   } catch (e) {}
   return store[key]
 }
 
-export const getBellSchedule = (level = 'secondary', shift = 'Morning') => {
-  const store = getStoredBellSchedules()
+export const getBellSchedule = (level = 'secondary', shift = 'Morning', instituteId = null) => {
+  const store = getStoredBellSchedules(instituteId)
   const key = `${level}_${shift}`
   if (store[key]) return store[key]
 
@@ -125,48 +125,77 @@ export const getBellSchedule = (level = 'secondary', shift = 'Morning') => {
   return null
 }
 
-export const hasBellScheduleConfigured = (level = 'secondary', shift = 'Morning') => {
-  const store = getStoredBellSchedules()
+export const hasBellScheduleConfigured = (level = 'secondary', shift = 'Morning', instituteId = null) => {
+  const store = getStoredBellSchedules(instituteId)
   const key = `${level}_${shift}`
   return Boolean(store[key] || Object.keys(store).length > 0)
 }
 
 // Timetables Repository
-export const getAllTimetables = () => {
+export const getAllTimetables = (instituteId = null) => {
   purgeStaleTimetableData()
   try {
-    const raw = localStorage.getItem(STORAGE_KEY_TIMETABLES)
+    const key = instituteId ? `sms_timetables_${instituteId}` : STORAGE_KEY_TIMETABLES
+    let raw = localStorage.getItem(key)
+    if (!raw && instituteId) {
+      const globalRaw = localStorage.getItem(STORAGE_KEY_TIMETABLES)
+      if (globalRaw) {
+        const parsedGlobal = JSON.parse(globalRaw)
+        if (Array.isArray(parsedGlobal)) {
+          const filtered = parsedGlobal.filter(t => !t.instituteId || t.instituteId === instituteId)
+          if (filtered.length > 0) return filtered
+        }
+      }
+    }
     if (raw) {
       const parsed = JSON.parse(raw)
-      if (Array.isArray(parsed)) return parsed
+      if (Array.isArray(parsed)) {
+        if (instituteId) {
+          return parsed.filter(t => !t.instituteId || t.instituteId === instituteId)
+        }
+        return parsed
+      }
     }
   } catch (e) {}
   return []
 }
 
-export const saveAllTimetables = (timetablesList = []) => {
+export const saveAllTimetables = (timetablesList = [], instituteId = null) => {
   try {
-    localStorage.setItem(STORAGE_KEY_TIMETABLES, JSON.stringify(timetablesList))
+    const key = instituteId ? `sms_timetables_${instituteId}` : STORAGE_KEY_TIMETABLES
+    localStorage.setItem(key, JSON.stringify(timetablesList))
+    
+    // Sync to global catalog while preserving other tenant records
+    const targetInstId = instituteId || 'inst-1'
+    const globalRaw = localStorage.getItem(STORAGE_KEY_TIMETABLES)
+    let globalList = globalRaw ? JSON.parse(globalRaw) : []
+    if (!Array.isArray(globalList)) globalList = []
+    const otherInsts = globalList.filter(t => t.instituteId && t.instituteId !== targetInstId)
+    const currentTagged = timetablesList.map(t => ({ ...t, instituteId: t.instituteId || targetInstId }))
+    localStorage.setItem(STORAGE_KEY_TIMETABLES, JSON.stringify([...otherInsts, ...currentTagged]))
   } catch (e) {}
 }
 
-export const getSectionTimetable = (session, className, sectionName) => {
+export const getSectionTimetable = (session, className, sectionName, instituteId = null) => {
   if (!session || !className || !sectionName) return null
-  const all = getAllTimetables()
+  const all = getAllTimetables(instituteId)
   return all.find(t => 
     (t.session || '').toLowerCase().trim() === session.toLowerCase().trim() &&
     (t.className || '').toLowerCase().trim() === className.toLowerCase().trim() &&
-    (t.sectionName || '').toLowerCase().trim() === sectionName.toLowerCase().trim()
+    (t.sectionName || '').toLowerCase().trim() === sectionName.toLowerCase().trim() &&
+    (!instituteId || !t.instituteId || t.instituteId === instituteId)
   ) || null
 }
 
-export const saveSectionTimetable = (session, className, sectionName, data, user = 'Administrator') => {
+export const saveSectionTimetable = (session, className, sectionName, data, user = 'Administrator', instituteId = null) => {
   if (!session || !className || !sectionName) return null
-  const all = getAllTimetables()
+  const targetInstId = instituteId || data.instituteId || 'inst-1'
+  const all = getAllTimetables(targetInstId)
   const existingIdx = all.findIndex(t => 
     (t.session || '').toLowerCase().trim() === session.toLowerCase().trim() &&
     (t.className || '').toLowerCase().trim() === className.toLowerCase().trim() &&
-    (t.sectionName || '').toLowerCase().trim() === sectionName.toLowerCase().trim()
+    (t.sectionName || '').toLowerCase().trim() === sectionName.toLowerCase().trim() &&
+    (!t.instituteId || t.instituteId === targetInstId)
   )
 
   const now = new Date().toISOString()
@@ -231,17 +260,19 @@ export const saveSectionTimetable = (session, className, sectionName, data, user
     all.push(updatedRecord)
   }
 
-  saveAllTimetables(all)
+  saveAllTimetables(all, targetInstId)
   return updatedRecord
 }
 
 // Publish & Lock Timetable
-export const setTimetablePublishStatus = (session, className, sectionName, isPublished, user = 'Administrator') => {
-  const all = getAllTimetables()
+export const setTimetablePublishStatus = (session, className, sectionName, isPublished, user = 'Administrator', instituteId = null) => {
+  const targetInstId = instituteId || 'inst-1'
+  const all = getAllTimetables(targetInstId)
   const idx = all.findIndex(t => 
     (t.session || '').toLowerCase().trim() === session.toLowerCase().trim() &&
     (t.className || '').toLowerCase().trim() === className.toLowerCase().trim() &&
-    (t.sectionName || '').toLowerCase().trim() === sectionName.toLowerCase().trim()
+    (t.sectionName || '').toLowerCase().trim() === sectionName.toLowerCase().trim() &&
+    (!t.instituteId || t.instituteId === targetInstId)
   )
   if (idx === -1) return null
 
@@ -253,17 +284,19 @@ export const setTimetablePublishStatus = (session, className, sectionName, isPub
     updatedAt: new Date().toISOString()
   }
 
-  saveAllTimetables(all)
+  saveAllTimetables(all, targetInstId)
   return all[idx]
 }
 
 // Restore a previous version
-export const restoreTimetableVersion = (session, className, sectionName, versionNumber, user = 'Administrator') => {
-  const all = getAllTimetables()
+export const restoreTimetableVersion = (session, className, sectionName, versionNumber, user = 'Administrator', instituteId = null) => {
+  const targetInstId = instituteId || 'inst-1'
+  const all = getAllTimetables(targetInstId)
   const idx = all.findIndex(t => 
     (t.session || '').toLowerCase().trim() === session.toLowerCase().trim() &&
     (t.className || '').toLowerCase().trim() === className.toLowerCase().trim() &&
-    (t.sectionName || '').toLowerCase().trim() === sectionName.toLowerCase().trim()
+    (t.sectionName || '').toLowerCase().trim() === sectionName.toLowerCase().trim() &&
+    (!t.instituteId || t.instituteId === targetInstId)
   )
   if (idx === -1) return null
 
@@ -294,7 +327,7 @@ export const restoreTimetableVersion = (session, className, sectionName, version
     updatedAt: now
   }
 
-  saveAllTimetables(all)
+  saveAllTimetables(all, targetInstId)
   return all[idx]
 }
 
@@ -311,7 +344,8 @@ export const checkSlotConflicts = ({
   targetClassName,
   targetSectionName,
   currentSlotKey,
-  teachersList = []
+  teachersList = [],
+  instituteId = null
 }) => {
   const conflicts = {
     blocked: false,
@@ -321,7 +355,7 @@ export const checkSlotConflicts = ({
 
   if (!day || !periodNum) return conflicts
 
-  const allTimetables = getAllTimetables()
+  const allTimetables = getAllTimetables(instituteId)
 
   // 1. Check Teacher on Approved Leave
   if (teacherId || teacherName) {

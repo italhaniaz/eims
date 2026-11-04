@@ -1833,6 +1833,27 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
           maxWidth="max-w-md"
         >
           <div className="space-y-4 text-xs">
+            <style>{`
+              @media print {
+                body * { visibility: hidden !important; }
+                #student-printable-badge, #student-printable-badge * { visibility: visible !important; }
+                #student-printable-badge {
+                  position: absolute !important;
+                  left: 50% !important;
+                  top: 20mm !important;
+                  transform: translateX(-50%) !important;
+                  width: 85.6mm !important;
+                  min-height: 54mm !important;
+                  margin: 0 !important;
+                  padding: 5mm !important;
+                  background: linear-gradient(to bottom right, #581c87, #312e81, #0f172a) !important;
+                  -webkit-print-color-adjust: exact !important;
+                  print-color-adjust: exact !important;
+                }
+                .no-print { display: none !important; }
+                @page { size: portrait; margin: 10mm; }
+              }
+            `}</style>
             <div id="student-printable-badge" className="bg-gradient-to-br from-purple-900 via-indigo-900 to-slate-900 text-white p-5 rounded-2xl border-2 border-purple-400/40 shadow-xl relative overflow-hidden">
               <div className="flex items-center justify-between border-b border-white/20 pb-2 mb-3">
                 <div className="flex items-center gap-2">
@@ -1865,7 +1886,7 @@ export const SuperadminStudentsView = ({ activeTab = 'all', onTabChange = () => 
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 no-print">
               <button
                 type="button"
                 onClick={() => window.print()}

@@ -801,7 +801,7 @@ const CrossInstituteAnalyticsView = () => {
                         <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
                           <div
                             className={`h-full rounded-full ${
-                              inst.attendanceRate >= 90 ? 'bg-emerald-500' : inst.attendanceRate >= 80 ? 'bg-[#f5eeff]0' : 'bg-amber-500'
+                              inst.attendanceRate >= 90 ? 'bg-emerald-500' : inst.attendanceRate >= 80 ? 'bg-indigo-500' : 'bg-amber-500'
                             }`}
                             style={{ width: `${Math.min(100, inst.attendanceRate)}%` }}
                           />
@@ -888,7 +888,7 @@ const CrossInstituteAnalyticsView = () => {
                 <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all duration-500 ${
-                      inst.attendanceRate >= 90 ? 'bg-gradient-to-r from-blue-500 to-emerald-500' : 'bg-[#f5eeff]0'
+                      inst.attendanceRate >= 90 ? 'bg-gradient-to-r from-blue-500 to-emerald-500' : 'bg-indigo-500'
                     }`}
                     style={{ width: `${inst.attendanceRate}%` }}
                   />
@@ -1053,7 +1053,6 @@ const CrossInstituteAnalyticsView = () => {
               <button
                 onClick={() => {
                   window.print()
-                  setIsPrintModalOpen(false)
                 }}
                 className="flex items-center gap-2 px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs sm:text-sm shadow-sm transition-colors cursor-pointer"
               >

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { 
   FlaskConical, 
   Search, 
@@ -25,8 +25,9 @@ export const CollegeLabsView = ({ currentInstitute }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false)
 
+
   // Demo Labs
-  const [labs, setLabs] = useState([
+  const DEFAULT_LABS = [
     {
       id: 'LAB-PHY-01',
       name: 'Advanced Physics Practical Lab',
@@ -67,10 +68,10 @@ export const CollegeLabsView = ({ currentInstitute }) => {
       status: 'Fully Operational',
       safetyAuditDate: '2026-10-25'
     }
-  ])
+  ]
 
   // Demo Practical Schedules
-  const [practicalSchedules, setPracticalSchedules] = useState([
+  const DEFAULT_PRACTICAL_SCHEDULES = [
     {
       id: 'PRAC-801',
       labName: 'Advanced Physics Practical Lab',
@@ -98,15 +99,62 @@ export const CollegeLabsView = ({ currentInstitute }) => {
       supervisor: 'Engr. Kamran Akram',
       studentsCount: 48
     }
-  ])
+  ]
 
   // Demo Equipment Stock
-  const [equipment, setEquipment] = useState([
+  const DEFAULT_EQUIPMENT = [
     { id: 'EQ-01', name: 'Digital Cathode Ray Oscilloscopes (CRO)', lab: 'Physics Lab', qty: 12, condition: 'Excellent' },
     { id: 'EQ-02', name: 'Compound Optical Microscopes (1000x)', lab: 'Biology Lab', qty: 30, condition: 'Calibrated' },
     { id: 'EQ-03', name: 'Analytical Electronic Balance (0.001g)', lab: 'Chemistry Lab', qty: 6, condition: 'Verified' },
     { id: 'EQ-04', name: 'Dell OptiPlex Core i7 Workstations', lab: 'CS Lab', qty: 50, condition: 'Active' }
-  ])
+  ]
+
+  const instId = currentInstitute?.id || 'default'
+  const labsStorageKey = `sms_labs_data_${instId}`
+
+  const [labsData, setLabsData] = useState(() => {
+    try {
+      const saved = localStorage.getItem(labsStorageKey)
+      if (saved) return JSON.parse(saved)
+    } catch {}
+    return {
+      labs: DEFAULT_LABS,
+      practicalSchedules: DEFAULT_PRACTICAL_SCHEDULES,
+      equipment: DEFAULT_EQUIPMENT
+    }
+  })
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(labsStorageKey, JSON.stringify(labsData))
+    } catch {}
+  }, [labsData, labsStorageKey])
+
+  const labs = labsData.labs || DEFAULT_LABS
+  const practicalSchedules = labsData.practicalSchedules || DEFAULT_PRACTICAL_SCHEDULES
+  const equipment = labsData.equipment || DEFAULT_EQUIPMENT
+
+  const setLabs = (updater) => {
+    setLabsData(prev => ({
+      ...prev,
+      labs: typeof updater === 'function' ? updater(prev.labs || DEFAULT_LABS) : updater
+    }))
+  }
+
+  const setPracticalSchedules = (updater) => {
+    setLabsData(prev => ({
+      ...prev,
+      practicalSchedules: typeof updater === 'function' ? updater(prev.practicalSchedules || DEFAULT_PRACTICAL_SCHEDULES) : updater
+    }))
+  }
+
+  const setEquipment = (updater) => {
+    setLabsData(prev => ({
+      ...prev,
+      equipment: typeof updater === 'function' ? updater(prev.equipment || DEFAULT_EQUIPMENT) : updater
+    }))
+  }
+
 
   const [formData, setFormData] = useState({
     labName: 'Advanced Physics Practical Lab',

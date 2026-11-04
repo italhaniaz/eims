@@ -21,12 +21,19 @@ export const ToastProvider = ({ children }) => {
     }
   }, [removeToast])
 
-  const toast = {
-    success: (message, duration) => addToast({ message, type: 'success', duration }),
-    error: (message, duration) => addToast({ message, type: 'error', duration }),
-    info: (message, duration) => addToast({ message, type: 'info', duration }),
-    warning: (message, duration) => addToast({ message, type: 'warning', duration })
-  }
+  const toast = (arg, duration) => {
+    if (typeof arg === 'string') {
+      addToast({ message: arg, type: 'info', duration });
+    } else if (arg && typeof arg === 'object') {
+      const msg = arg.message || arg.title || '';
+      const text = arg.title && arg.message ? `${arg.title}: ${arg.message}` : (msg || 'Notification');
+      addToast({ message: text, type: arg.type || 'info', duration: arg.duration || duration });
+    }
+  };
+  toast.success = (message, duration) => addToast({ message, type: 'success', duration });
+  toast.error = (message, duration) => addToast({ message, type: 'error', duration });
+  toast.info = (message, duration) => addToast({ message, type: 'info', duration });
+  toast.warning = (message, duration) => addToast({ message, type: 'warning', duration });
 
   const getIcon = (type) => {
     switch (type) {
@@ -90,14 +97,15 @@ export const useToast = () => {
   const context = useContext(ToastContext)
   if (!context) {
     // Fallback if accessed outside provider
-    return {
-      toast: {
-        success: (msg) => console.log('Toast (success):', msg),
-        error: (msg) => console.error('Toast (error):', msg),
-        info: (msg) => console.info('Toast (info):', msg),
-        warning: (msg) => console.warn('Toast (warning):', msg)
-      }
-    }
+    const fallbackToast = (arg) => {
+      const msg = typeof arg === 'string' ? arg : (arg?.message || arg?.title || 'Notification');
+      console.log('Toast:', msg);
+    };
+    fallbackToast.success = (msg) => console.log('Toast (success):', msg);
+    fallbackToast.error = (msg) => console.error('Toast (error):', msg);
+    fallbackToast.info = (msg) => console.info('Toast (info):', msg);
+    fallbackToast.warning = (msg) => console.warn('Toast (warning):', msg);
+    return { toast: fallbackToast };
   }
   return context
 }

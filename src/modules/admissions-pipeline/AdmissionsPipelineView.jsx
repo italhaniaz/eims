@@ -54,6 +54,7 @@ import MeritListGazetteModal from './MeritListGazetteModal'
 import OfferLetterModal from './OfferLetterModal'
 import LeadDetailsDrawer from './LeadDetailsDrawer'
 import ConvertStudentModal from './ConvertStudentModal'
+import { recordCampusLedgerTransaction } from '../institute-admin/accounts/CampusAccountsView'
 
 // Format ISO date to DD/MM/YYYY
 const formatDateDDMMYYYY = (isoDate) => {
@@ -670,6 +671,26 @@ export const AdmissionsPipelineView = ({ currentInstitute }) => {
       academicSession: enrollData.academicSession || selectedSession,
       paymentDate: enrollData.feeStatus === 'Paid' ? new Date().toISOString().split('T')[0] : null
     })
+
+    if (enrollData.feeStatus === 'Paid') {
+      try {
+        const paidFeeAmt = Number(enrollData.admissionFeeAmount) || 25000
+        recordCampusLedgerTransaction(currentInstitute?.id, {
+          id: `VCH-ADM-${Date.now().toString().slice(-6)}`,
+          date: new Date().toISOString().split('T')[0],
+          description: `New Student Admission & Security Fee - ${enrollData.name} (${enrollData.rollNumber})`,
+          type: 'Income',
+          category: 'Admissions Fee',
+          debit: 0,
+          credit: paidFeeAmt,
+          account: 'Habib Bank Ltd (A/C: 4410)',
+          status: 'Cleared',
+          ref: `ADM-${enrollData.rollNumber}`
+        })
+      } catch (err) {
+        console.error('Failed to post admission fee to ledger:', err)
+      }
+    }
 
     // 3. Auto-provision portal login account for student / guardian
     try {

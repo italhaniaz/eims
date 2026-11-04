@@ -35,13 +35,11 @@ export const InstituteAdminNavbar = ({
   } = useAppData()
 
   const [dropdownOpen, setDropdownOpen] = useState(false)
-  const [portalsOpen, setPortalsOpen] = useState(false)
   const [showProfileMenu, setShowProfileMenu] = useState(false)
   const [showPasswordModal, setShowPasswordModal] = useState(false)
 
   const profileRef = useRef(null)
   const campusRef = useRef(null)
-  const portalsRef = useRef(null)
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -51,15 +49,23 @@ export const InstituteAdminNavbar = ({
       if (campusRef.current && !campusRef.current.contains(e.target)) {
         setDropdownOpen(false)
       }
-      if (portalsRef.current && !portalsRef.current.contains(e.target)) {
-        setPortalsOpen(false)
+    }
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setShowProfileMenu(false)
+        setDropdownOpen(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      window.removeEventListener('keydown', handleKeyDown)
+    }
   }, [])
 
   const tierConfig = getInstituteTierConfig(selectedInstitute)
+
 
   const availableWings = [
     ...(tierConfig.isMultiTier ? [{ id: 'all', label: 'All Wings', icon: Layers, badge: 'Overview' }] : []),
@@ -107,7 +113,7 @@ export const InstituteAdminNavbar = ({
   }
 
   return (
-    <header className="h-16 sm:h-20 min-h-[64px] sm:min-h-[80px] bg-white border-b border-slate-100 px-3.5 sm:px-6 md:px-8 flex items-center justify-between sticky top-0 z-30 shrink-0 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+    <header className="h-14 sm:h-16 min-h-[56px] sm:min-h-[64px] bg-white border-b border-slate-100 px-3.5 sm:px-6 md:px-8 flex items-center justify-between sticky top-0 z-30 shrink-0 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
       {/* Left: Mobile Hamburger, Campus Switcher, & Route Breadcrumb */}
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         {/* Mobile Hamburger */}
@@ -202,264 +208,6 @@ export const InstituteAdminNavbar = ({
           })}
         </div>
       )}
-
-      {/* Campus Dedicated Portals Switcher Dropdown (Pick 1, Pick 2, Pick 3) */}
-      <div className="relative" ref={portalsRef}>
-        <button
-          type="button"
-          onClick={() => setPortalsOpen(!portalsOpen)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 border border-purple-200/90 text-purple-800 text-xs font-bold transition-all cursor-pointer shadow-2xs"
-          title="Switch to another dedicated portal for this institution"
-        >
-          <Layers className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-          <span className="hidden sm:inline">Portals (Alag Log In)</span>
-          <span className="sm:hidden">Portals</span>
-          <ChevronDown className="w-3 h-3 text-purple-500 opacity-70" />
-        </button>
-
-        {portalsOpen && (
-          <div className="absolute right-0 sm:left-0 sm:right-auto mt-2 w-72 sm:w-80 bg-white rounded-2xl shadow-2xl border border-purple-100 py-2.5 z-50 animate-in fade-in zoom-in-95">
-            <div className="px-3.5 py-1 border-b border-slate-100 pb-2 mb-1.5">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-purple-700">
-                {tierConfig.isUniversityOnly ? '🎓 University Login Portals (Pick 3)' : tierConfig.isCollegeOnly ? '🏛️ College Login Portals (Pick 2)' : '🏫 School Login Portals (Pick 1)'}
-              </span>
-              <p className="text-[11px] text-slate-400 mt-0.5 leading-tight">
-                Seperate portals with zero overlap
-              </p>
-            </div>
-
-            <div className="max-h-[300px] overflow-y-auto px-1 space-y-1">
-              {/* SCHOOL PORTALS */}
-              {tierConfig.isSchoolOnly && (
-                <>
-                  <button
-                    onClick={() => { setPortalsOpen(false); useAuth().login?.('school_admin'); }}
-                    className="w-full text-left p-2 rounded-xl hover:bg-emerald-50 text-xs transition-colors flex items-center justify-between group"
-                  >
-                    <div>
-                      <div className="font-bold text-slate-800 group-hover:text-emerald-700">🏫 School Principal (Admin)</div>
-                      <div className="text-[10px] text-slate-400 leading-tight">Campus Dashboard & all 15 operational modules</div>
-                    </div>
-                    <span className="text-[10px] text-emerald-600 font-bold">Open →</span>
-                  </button>
-                  <button
-                    onClick={() => { setPortalsOpen(false); useAuth().login?.('school_parent'); }}
-                    className="w-full text-left p-2 rounded-xl hover:bg-emerald-50 text-xs transition-colors flex items-center justify-between group"
-                  >
-                    <div>
-                      <div className="font-bold text-slate-800 group-hover:text-emerald-700">👨‍👩‍👧 Parent Portal</div>
-                      <div className="text-[10px] text-slate-400 leading-tight">Attendance, fee, result, diary, notices, PTM, challan download</div>
-                    </div>
-                    <span className="text-[10px] text-emerald-600 font-bold">Open →</span>
-                  </button>
-                  <button
-                    onClick={() => { setPortalsOpen(false); useAuth().login?.('school_student'); }}
-                    className="w-full text-left p-2 rounded-xl hover:bg-emerald-50 text-xs transition-colors flex items-center justify-between group"
-                  >
-                    <div>
-                      <div className="font-bold text-slate-800 group-hover:text-emerald-700">🎓 Student Portal</div>
-                      <div className="text-[10px] text-slate-400 leading-tight">Timetable, homework, results, notes</div>
-                    </div>
-                    <span className="text-[10px] text-emerald-600 font-bold">Open →</span>
-                  </button>
-                  <button
-                    onClick={() => { setPortalsOpen(false); useAuth().login?.('school_teacher'); }}
-                    className="w-full text-left p-2 rounded-xl hover:bg-emerald-50 text-xs transition-colors flex items-center justify-between group"
-                  >
-                    <div>
-                      <div className="font-bold text-slate-800 group-hover:text-emerald-700">👨‍🏫 Teacher Portal</div>
-                      <div className="text-[10px] text-slate-400 leading-tight">Apni classes, attendance, marks entry, diary upload, timetable, leave apply</div>
-                    </div>
-                    <span className="text-[10px] text-emerald-600 font-bold">Open →</span>
-                  </button>
-                  <button
-                    onClick={() => { setPortalsOpen(false); useAuth().login?.('school_accountant'); }}
-                    className="w-full text-left p-2 rounded-xl hover:bg-emerald-50 text-xs transition-colors flex items-center justify-between group"
-                  >
-                    <div>
-                      <div className="font-bold text-slate-800 group-hover:text-emerald-700">💼 Accountant Portal</div>
-                      <div className="text-[10px] text-slate-400 leading-tight">Sirf fees aur accounts</div>
-                    </div>
-                    <span className="text-[10px] text-emerald-600 font-bold">Open →</span>
-                  </button>
-                </>
-              )}
-
-              {/* COLLEGE PORTALS */}
-              {tierConfig.isCollegeOnly && (
-                <>
-                  <button
-                    onClick={() => { setPortalsOpen(false); useAuth().login?.('college_admin'); }}
-                    className="w-full text-left p-2 rounded-xl hover:bg-indigo-50 text-xs transition-colors flex items-center justify-between group"
-                  >
-                    <div>
-                      <div className="font-bold text-slate-800 group-hover:text-indigo-700">🏛️ College Principal (Admin)</div>
-                      <div className="text-[10px] text-slate-400 leading-tight">Campus Dashboard & all 18 operational modules</div>
-                    </div>
-                    <span className="text-[10px] text-indigo-600 font-bold">Open →</span>
-                  </button>
-                  <button
-                    onClick={() => { setPortalsOpen(false); useAuth().login?.('college_student'); }}
-                    className="w-full text-left p-2 rounded-xl hover:bg-indigo-50 text-xs transition-colors flex items-center justify-between group"
-                  >
-                    <div>
-                      <div className="font-bold text-slate-800 group-hover:text-indigo-700">🎓 Student Portal</div>
-                      <div className="text-[10px] text-slate-400 leading-tight">Attendance, timetable, results, notes, fee challan, notices, board forms</div>
-                    </div>
-                    <span className="text-[10px] text-indigo-600 font-bold">Open →</span>
-                  </button>
-                  <button
-                    onClick={() => { setPortalsOpen(false); useAuth().login?.('college_parent'); }}
-                    className="w-full text-left p-2 rounded-xl hover:bg-indigo-50 text-xs transition-colors flex items-center justify-between group"
-                  >
-                    <div>
-                      <div className="font-bold text-slate-800 group-hover:text-indigo-700">👨‍👩‍👦 Parent Portal</div>
-                      <div className="text-[10px] text-slate-400 leading-tight">Attendance, fee, result, notices, PTM, concessions</div>
-                    </div>
-                    <span className="text-[10px] text-indigo-600 font-bold">Open →</span>
-                  </button>
-                  <button
-                    onClick={() => { setPortalsOpen(false); useAuth().login?.('college_faculty'); }}
-                    className="w-full text-left p-2 rounded-xl hover:bg-indigo-50 text-xs transition-colors flex items-center justify-between group"
-                  >
-                    <div>
-                      <div className="font-bold text-slate-800 group-hover:text-indigo-700">👨‍🏫 Faculty Portal</div>
-                      <div className="text-[10px] text-slate-400 leading-tight">Classes, attendance, marks entry, lecture upload, leave apply, salary slip</div>
-                    </div>
-                    <span className="text-[10px] text-indigo-600 font-bold">Open →</span>
-                  </button>
-                  <button
-                    onClick={() => { setPortalsOpen(false); useAuth().login?.('college_hod'); }}
-                    className="w-full text-left p-2 rounded-xl hover:bg-indigo-50 text-xs transition-colors flex items-center justify-between group"
-                  >
-                    <div>
-                      <div className="font-bold text-slate-800 group-hover:text-indigo-700">🏛️ HOD Portal</div>
-                      <div className="text-[10px] text-slate-400 leading-tight">Apne department ki performance, attendance, results</div>
-                    </div>
-                    <span className="text-[10px] text-indigo-600 font-bold">Open →</span>
-                  </button>
-                  <button
-                    onClick={() => { setPortalsOpen(false); useAuth().login?.('college_accountant'); }}
-                    className="w-full text-left p-2 rounded-xl hover:bg-indigo-50 text-xs transition-colors flex items-center justify-between group"
-                  >
-                    <div>
-                      <div className="font-bold text-slate-800 group-hover:text-indigo-700">💼 Accountant Portal</div>
-                      <div className="text-[10px] text-slate-400 leading-tight">Sirf fees aur accounts</div>
-                    </div>
-                    <span className="text-[10px] text-indigo-600 font-bold">Open →</span>
-                  </button>
-                </>
-              )}
-
-              {/* UNIVERSITY PORTALS */}
-              {tierConfig.isUniversityOnly && (
-                <>
-                  <button
-                    onClick={() => { setPortalsOpen(false); useAuth().login?.('university_admin'); }}
-                    className="w-full text-left p-2 rounded-xl hover:bg-purple-50 text-xs transition-colors flex items-center justify-between group"
-                  >
-                    <div>
-                      <div className="font-bold text-slate-800 group-hover:text-purple-700">🎓 University Admin (Dean / Rector)</div>
-                      <div className="text-[10px] text-slate-400 leading-tight">Executive Dashboard & all 22 operational modules</div>
-                    </div>
-                    <span className="text-[10px] text-purple-600 font-bold">Open →</span>
-                  </button>
-                  <button
-                    onClick={() => { setPortalsOpen(false); useAuth().login?.('uni_student'); }}
-                    className="w-full text-left p-2 rounded-xl hover:bg-purple-50 text-xs transition-colors flex items-center justify-between group"
-                  >
-                    <div>
-                      <div className="font-bold text-slate-800 group-hover:text-purple-700">🎓 Student Portal</div>
-                      <div className="text-[10px] text-slate-400 leading-tight">Course registration, timetable, attendance, results, transcript, LMS</div>
-                    </div>
-                    <span className="text-[10px] text-purple-600 font-bold">Open →</span>
-                  </button>
-                  <button
-                    onClick={() => { setPortalsOpen(false); useAuth().login?.('uni_faculty'); }}
-                    className="w-full text-left p-2 rounded-xl hover:bg-purple-50 text-xs transition-colors flex items-center justify-between group"
-                  >
-                    <div>
-                      <div className="font-bold text-slate-800 group-hover:text-purple-700">👨‍🏫 Faculty Portal</div>
-                      <div className="text-[10px] text-slate-400 leading-tight">Courses, attendance, marks, lecture upload, leave, research profile</div>
-                    </div>
-                    <span className="text-[10px] text-purple-600 font-bold">Open →</span>
-                  </button>
-                  <button
-                    onClick={() => { setPortalsOpen(false); useAuth().login?.('uni_dean'); }}
-                    className="w-full text-left p-2 rounded-xl hover:bg-purple-50 text-xs transition-colors flex items-center justify-between group"
-                  >
-                    <div>
-                      <div className="font-bold text-slate-800 group-hover:text-purple-700">🏛️ HOD / Dean Portal</div>
-                      <div className="text-[10px] text-slate-400 leading-tight">Department performance, faculty workload, approvals, results</div>
-                    </div>
-                    <span className="text-[10px] text-purple-600 font-bold">Open →</span>
-                  </button>
-                  <button
-                    onClick={() => { setPortalsOpen(false); useAuth().login?.('uni_registrar'); }}
-                    className="w-full text-left p-2 rounded-xl hover:bg-purple-50 text-xs transition-colors flex items-center justify-between group"
-                  >
-                    <div>
-                      <div className="font-bold text-slate-800 group-hover:text-purple-700">📜 Registrar Portal</div>
-                      <div className="text-[10px] text-slate-400 leading-tight">Admissions, records, certificates, approvals</div>
-                    </div>
-                    <span className="text-[10px] text-purple-600 font-bold">Open →</span>
-                  </button>
-                  <button
-                    onClick={() => { setPortalsOpen(false); useAuth().login?.('uni_controller'); }}
-                    className="w-full text-left p-2 rounded-xl hover:bg-purple-50 text-xs transition-colors flex items-center justify-between group"
-                  >
-                    <div>
-                      <div className="font-bold text-slate-800 group-hover:text-purple-700">🎯 Controller Portal</div>
-                      <div className="text-[10px] text-slate-400 leading-tight">Exams, results, transcripts, degrees</div>
-                    </div>
-                    <span className="text-[10px] text-purple-600 font-bold">Open →</span>
-                  </button>
-                  <button
-                    onClick={() => { setPortalsOpen(false); useAuth().login?.('uni_finance'); }}
-                    className="w-full text-left p-2 rounded-xl hover:bg-purple-50 text-xs transition-colors flex items-center justify-between group"
-                  >
-                    <div>
-                      <div className="font-bold text-slate-800 group-hover:text-purple-700">💰 Finance Portal</div>
-                      <div className="text-[10px] text-slate-400 leading-tight">Fees, budget, payroll, accounts</div>
-                    </div>
-                    <span className="text-[10px] text-purple-600 font-bold">Open →</span>
-                  </button>
-                  <button
-                    onClick={() => { setPortalsOpen(false); useAuth().login?.('uni_parent'); }}
-                    className="w-full text-left p-2 rounded-xl hover:bg-purple-50 text-xs transition-colors flex items-center justify-between group"
-                  >
-                    <div>
-                      <div className="font-bold text-slate-800 group-hover:text-purple-700">👨‍👩‍👦 Parent Portal</div>
-                      <div className="text-[10px] text-slate-400 leading-tight">Attendance, results, fee optional</div>
-                    </div>
-                    <span className="text-[10px] text-purple-600 font-bold">Open →</span>
-                  </button>
-                  <button
-                    onClick={() => { setPortalsOpen(false); useAuth().login?.('uni_applicant'); }}
-                    className="w-full text-left p-2 rounded-xl hover:bg-purple-50 text-xs transition-colors flex items-center justify-between group"
-                  >
-                    <div>
-                      <div className="font-bold text-slate-800 group-hover:text-purple-700">📝 Applicant Portal</div>
-                      <div className="text-[10px] text-slate-400 leading-tight">Admission form, merit status #14, challan</div>
-                    </div>
-                    <span className="text-[10px] text-purple-600 font-bold">Open →</span>
-                  </button>
-                  <button
-                    onClick={() => { setPortalsOpen(false); useAuth().login?.('uni_alumni'); }}
-                    className="w-full text-left p-2 rounded-xl hover:bg-purple-50 text-xs transition-colors flex items-center justify-between group"
-                  >
-                    <div>
-                      <div className="font-bold text-slate-800 group-hover:text-purple-700">🌐 Alumni Portal</div>
-                      <div className="text-[10px] text-slate-400 leading-tight">Profile, events, transcript request, donations</div>
-                    </div>
-                    <span className="text-[10px] text-purple-600 font-bold">Open →</span>
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
 
       {/* Single Tier Campus Badge (when institute only has 1 tier enabled) */}
       {!tierConfig.isMultiTier && (

@@ -59,7 +59,29 @@ export const OperationsService = {
       ? `${instituteName.toLowerCase().replace(/[^a-z0-9]/g, '_')}_export_${timestamp}.json`
       : `sms_full_backup_${timestamp}.json`
 
-    const payloadString = JSON.stringify(store, null, 2)
+    // Collect all partitioned tenant stores (hostel, labs, accounts, grading, attendance)
+    const extraStores = {}
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i)
+        if (k && k.startsWith('sms_') && k !== 'sms_app_data' && k !== 'sms_system_backups') {
+          try {
+            extraStores[k] = JSON.parse(localStorage.getItem(k))
+          } catch {
+            extraStores[k] = localStorage.getItem(k)
+          }
+        }
+      }
+    } catch {}
+
+    const fullPayload = {
+      ...store,
+      extraStores,
+      backupVersion: '2.0-multi-tenant',
+      exportedAt: new Date().toISOString()
+    }
+
+    const payloadString = JSON.stringify(fullPayload, null, 2)
     const sizeBytes = new Blob([payloadString]).size
 
     try {
@@ -121,6 +143,15 @@ export const OperationsService = {
 
     // Replace platform persistent store
     saveStoredData(parsedData)
+
+    // Atomically restore partitioned tenant stores if present in snapshot
+    if (parsedData.extraStores && typeof parsedData.extraStores === 'object') {
+      Object.entries(parsedData.extraStores).forEach(([k, v]) => {
+        try {
+          localStorage.setItem(k, typeof v === 'string' ? v : JSON.stringify(v))
+        } catch {}
+      })
+    }
 
     try {
       await fetch(`${API_BASE_URL}/api/backup/restore`, {
@@ -219,6 +250,94 @@ export const OperationsService = {
       headers,
       preview: parsedRows.slice(0, 10),
       allRows: parsedRows
+    }
+  },
+
+  // 4b. COMMIT BULK IMPORTED RECORDS TO PERSISTENT DATABASE
+  async commitBulkImport(validRows = [], importType = 'students', targetInstituteId = 'inst-1', addItem = null) {
+    if (!validRows || validRows.length === 0) {
+      return { success: false, error: 'No valid rows to commit.' }
+    }
+
+    const timestamp = new Date().toISOString()
+    let committedCount = 0
+
+    for (const item of validRows) {
+      const data = item.data || item
+      let payload = {}
+
+      if (importType === 'students') {
+        payload = {
+          name: data.name || 'Unnamed Student',
+          rollNumber: data.rollNumber || data.roll || `STU-${Date.now().toString().slice(-4)}`,
+          fatherName: data.fatherName || data.guardianName || 'Guardian',
+          className: data.className || data.class || 'Grade 1',
+          section: data.section || 'Section A',
+          gender: data.gender || 'Not Specified',
+          phone: data.phone || data.contact || '',
+          email: data.email || '',
+          address: data.address || '',
+          status: data.status || 'Active',
+          instituteId: targetInstituteId,
+          createdAt: timestamp
+        }
+      } else if (importType === 'teachers') {
+        payload = {
+          name: data.name || 'Faculty Member',
+          empId: data.empId || `EMP-${Date.now().toString().slice(-4)}`,
+          department: data.department || 'General',
+          designation: data.designation || 'Lecturer',
+          email: data.email || '',
+          phone: data.phone || '',
+          status: 'Active',
+          instituteId: targetInstituteId,
+          createdAt: timestamp
+        }
+      } else if (importType === 'institutes') {
+        payload = {
+          name: data.name || 'New Campus',
+          code: data.code || `INST-${Date.now().toString().slice(-3)}`,
+          type: data.type || 'School',
+          city: data.city || 'Lahore',
+          status: 'Active',
+          createdAt: timestamp
+        }
+      } else {
+        payload = {
+          ...data,
+          instituteId: targetInstituteId,
+          createdAt: timestamp
+        }
+      }
+
+      if (typeof addItem === 'function') {
+        try {
+          await addItem(importType === 'teachers' ? 'teachers' : importType === 'institutes' ? 'institutes' : 'students', payload)
+          committedCount++
+        } catch (e) {
+          console.error('Failed to commit row via addItem:', e)
+        }
+      } else {
+        try {
+          DataService.addItem(importType === 'teachers' ? 'teachers' : importType === 'institutes' ? 'institutes' : 'students', payload)
+          committedCount++
+        } catch (e) {
+          console.error('Failed to commit row via DataService:', e)
+        }
+      }
+    }
+
+    if (DataService && typeof DataService.logAuditEvent === 'function') {
+      DataService.logAuditEvent({
+        action: `Bulk imported and committed ${committedCount} ${importType} records into institute ${targetInstituteId}`,
+        category: 'Platform Backup & Data'
+      })
+    }
+
+    return {
+      success: committedCount > 0,
+      committedCount,
+      totalRequested: validRows.length
     }
   },
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { 
   Bus, 
   Plus, 
@@ -26,9 +26,20 @@ import { useAppData } from '../../context/AppDataContext'
 import { useToast } from '../../context/ToastContext'
 import Modal from '../../components/common/Modal'
 
-export const TransportView = () => {
+export const TransportView = ({ currentInstitute }) => {
   const { transport = [], students = [], institutes = [], addItem, updateItem, deleteItem, logAuditEvent } = useAppData()
   const { toast } = useToast()
+
+  // Tenant scoped fleet & students
+  const campusStudents = useMemo(() => {
+    if (!currentInstitute?.id) return students
+    return students.filter(s => !s.instituteId || s.instituteId === currentInstitute.id)
+  }, [students, currentInstitute?.id])
+
+  const campusTransport = useMemo(() => {
+    if (!currentInstitute?.id) return transport
+    return transport.filter(b => !b.instituteId || b.instituteId === currentInstitute.id)
+  }, [transport, currentInstitute?.id])
 
   const [searchTerm, setSearchTerm] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -110,14 +121,19 @@ export const TransportView = () => {
     e.preventDefault()
     if (!formData.vehicleNo || !formData.driverName) return
 
+    const payload = {
+      ...formData,
+      instituteId: currentInstitute?.id || 'inst-1'
+    }
+
     if (editingBus) {
-      await updateItem('transport', editingBus.id, formData)
+      await updateItem('transport', editingBus.id, payload)
       if (logAuditEvent) {
         logAuditEvent(`Updated transport vehicle: ${formData.vehicleNo} (${formData.busName})`, 'Transport Manager', 'Success')
       }
       toast.success('Transport vehicle updated successfully!')
     } else {
-      await addItem('transport', formData)
+      await addItem('transport', payload)
       if (logAuditEvent) {
         logAuditEvent(`Registered new transport vehicle: ${formData.vehicleNo}`, 'Transport Manager', 'Success')
       }
@@ -139,8 +155,8 @@ export const TransportView = () => {
   // Open Passenger Roster Modal for a bus
   const openPassengerModal = (bus) => {
     let passengers = bus.passengers || []
-    if (passengers.length === 0 && students.length > 0) {
-      passengers = students.slice(0, Math.min(2, students.length)).map(std => ({
+    if (passengers.length === 0 && campusStudents.length > 0) {
+      passengers = campusStudents.slice(0, Math.min(2, campusStudents.length)).map(std => ({
         studentId: std.id,
         name: std.name,
         rollNumber: std.rollNumber,
@@ -156,7 +172,7 @@ export const TransportView = () => {
     })
 
     setPassengerForm({
-      studentId: students[0]?.id || '',
+      studentId: campusStudents[0]?.id || '',
       pickupStop: 'Main Boulevard Stop',
       emergencyContact: students[0]?.phone || '+92 300 1234567'
     })
@@ -221,7 +237,7 @@ export const TransportView = () => {
     toast.info(`${studentName} removed from route.`)
   }
 
-  const filtered = transport.filter(b => 
+  const filtered = campusTransport.filter(b => 
     b.vehicleNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
     b.busName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     b.driverName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -556,7 +572,7 @@ export const TransportView = () => {
                   <select
                     value={passengerForm.studentId}
                     onChange={(e) => {
-                      const std = students.find(s => s.id === e.target.value)
+                      const std = campusStudents.find(s => s.id === e.target.value) || students.find(s => s.id === e.target.value)
                       setPassengerForm({
                         ...passengerForm,
                         studentId: e.target.value,
@@ -565,7 +581,7 @@ export const TransportView = () => {
                     }}
                     className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white"
                   >
-                    {students.map(s => (
+                    {campusStudents.map(s => (
                       <option key={s.id} value={s.id}>
                         {s.name} ({s.rollNumber})
                       </option>
@@ -683,7 +699,7 @@ export const TransportView = () => {
         <Modal
           isOpen={Boolean(selectedBusForAudit)}
           onClose={() => setSelectedBusForAudit(null)}
-          title="Punjab Transport Authority (PTA) Vehicle Fitness & Safety Certificate"
+          title="Regional Transport Authority Vehicle Fitness & Safety Certificate"
           maxWidth="max-w-2xl"
         >
           <div className="space-y-4">
@@ -721,13 +737,13 @@ export const TransportView = () => {
                   <ShieldCheck className="w-7 h-7" />
                 </div>
                 <h3 className="text-base font-black uppercase tracking-wider text-slate-900">
-                  GOVERNMENT OF THE PUNJAB • TRANSPORT WING
+                  GOVERNMENT TRANSPORT & VEHICLE SAFETY INSPECTION WING
                 </h3>
                 <p className="text-xs uppercase tracking-widest text-slate-600 font-bold">
                   SCHOOL VEHICLE STATUTORY SAFETY & FITNESS INSPECTION CERTIFICATE
                 </p>
                 <p className="text-[10px] text-slate-500 font-mono">
-                  Under Motor Vehicles Ordinance 1965 & Punjab Educational Institutions Transport Guidelines
+                  Under Motor Vehicles Ordinance & Regional Educational Institutions Transport Guidelines
                 </p>
               </div>
 
@@ -782,7 +798,7 @@ export const TransportView = () => {
                     </tr>
                     <tr>
                       <td className="p-2 font-bold">Motor Vehicle Token Tax</td>
-                      <td className="p-2 text-slate-500">Excise & Taxation Punjab</td>
+                      <td className="p-2 text-slate-500">Excise & Taxation Department</td>
                       <td className="p-2 font-mono">{selectedBusForAudit.tokenTaxExpiry || '2027-06-30'}</td>
                       <td className="p-2 text-right font-bold text-emerald-700">✓ PAID IN FULL</td>
                     </tr>

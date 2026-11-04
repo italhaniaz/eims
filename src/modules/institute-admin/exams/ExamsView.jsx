@@ -101,7 +101,7 @@ export const ExamsView = ({ currentInstitute }) => {
   }, [])
 
   // 1. Settings & Terms State (Persistent)
-  const [settings, setSettings] = useState(() => getExamSettings())
+  const [settings, setSettings] = useState(() => getExamSettings(currentInstitute?.id))
   const [terms, setTerms] = useState(() => getExamTerms(currentInstitute?.id))
   const [dateSheet, setDateSheet] = useState(() => getDateSheets(currentInstitute?.id))
 
@@ -109,6 +109,19 @@ export const ExamsView = ({ currentInstitute }) => {
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false)
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
   const [isTabulationModalOpen, setIsTabulationModalOpen] = useState(false)
+  const [isScrutinyModalOpen, setIsScrutinyModalOpen] = useState(false)
+  const [scrutinyAppeals, setScrutinyAppeals] = useState(() => {
+    try {
+      const stored = localStorage.getItem('sms_exam_scrutiny_appeals')
+      return stored ? JSON.parse(stored) : [
+        { id: 'SCRUT-101', studentName: 'Hamza Farooq', rollNumber: 'BHS-2024-001', className: '10th Grade', subject: 'Mathematics', term: 'Mid-Term Examination', originalMarks: 78, updatedMarks: 84, reason: 'Uncounted numerical solution on page 4', status: 'Marks Updated (+6)', feeStatus: 'Paid (PKR 1,500)', date: '2026-10-28' },
+        { id: 'SCRUT-102', studentName: 'Zainab Fatima', rollNumber: 'COL-24-101', className: 'F.Sc Pre-Medical (Part II)', subject: 'Physics Part-II', term: 'Terminal Examination', originalMarks: 82, updatedMarks: 82, reason: 'Recounting of Section C long questions', status: 'No Change (Verified)', feeStatus: 'Paid (PKR 1,500)', date: '2026-10-26' }
+      ]
+    } catch {
+      return []
+    }
+  })
+  const [newScrutinyForm, setNewScrutinyForm] = useState({ studentId: '', subject: 'Mathematics', term: 'Mid-Term Examination', reason: 'Recounting of marks', feePaid: true })
   const [isGazetteModalOpen, setIsGazetteModalOpen] = useState(false)
   const [notificationMarksheet, setNotificationMarksheet] = useState(null)
 
@@ -185,7 +198,7 @@ export const ExamsView = ({ currentInstitute }) => {
   // Synchronize Settings to localStorage
   const handleSaveSettings = (updatedSettings) => {
     setSettings(updatedSettings)
-    saveExamSettings(updatedSettings)
+    saveExamSettings(updatedSettings, currentInstitute?.id)
     toast.success('Grading scale & moderation settings updated!')
   }
 
@@ -248,17 +261,42 @@ export const ExamsView = ({ currentInstitute }) => {
     }
   }
 
-  // Handle student selection in New Marksheet form
+  // Handle student selection in New Marksheet form with tier-aware curriculum subjects
   const handleStudentSelect = (studentId) => {
     const std = instStudents.find(s => s.id === studentId || s.name === studentId)
     if (!std) return
+
+    let dynamicSubjects = [
+      { name: 'Mathematics', maxMarks: 100, theoryMarks: '', practicalMarks: '', obtained: '', grade: 'F', isAbsent: false, isExempt: false },
+      { name: 'English Language', maxMarks: 100, theoryMarks: '', practicalMarks: '', obtained: '', grade: 'F', isAbsent: false, isExempt: false },
+      { name: 'Urdu', maxMarks: 100, theoryMarks: '', practicalMarks: '', obtained: '', grade: 'F', isAbsent: false, isExempt: false },
+      { name: 'General Science', maxMarks: 100, theoryMarks: '', practicalMarks: '', obtained: '', grade: 'F', isAbsent: false, isExempt: false }
+    ]
+
+    if (tierConfig.isUniversityOnly) {
+      dynamicSubjects = [
+        { name: 'Design & Analysis of Algorithms', maxMarks: 100, theoryMarks: '', practicalMarks: '', obtained: '', grade: 'F', isAbsent: false, isExempt: false },
+        { name: 'Artificial Intelligence & Neural Nets', maxMarks: 100, theoryMarks: '', practicalMarks: '', obtained: '', grade: 'F', isAbsent: false, isExempt: false },
+        { name: 'Software Architecture & Design', maxMarks: 100, theoryMarks: '', practicalMarks: '', obtained: '', grade: 'F', isAbsent: false, isExempt: false },
+        { name: 'Database Systems & Warehousing', maxMarks: 100, theoryMarks: '', practicalMarks: '', obtained: '', grade: 'F', isAbsent: false, isExempt: false }
+      ]
+    } else if (tierConfig.isCollegeOnly) {
+      dynamicSubjects = [
+        { name: 'Physics (Part II)', maxMarks: 85, theoryMarks: '', practicalMarks: '', obtained: '', grade: 'F', isAbsent: false, isExempt: false },
+        { name: 'Chemistry (Part II)', maxMarks: 85, theoryMarks: '', practicalMarks: '', obtained: '', grade: 'F', isAbsent: false, isExempt: false },
+        { name: 'Biology / Mathematics', maxMarks: 100, theoryMarks: '', practicalMarks: '', obtained: '', grade: 'F', isAbsent: false, isExempt: false },
+        { name: 'English Compulsory', maxMarks: 100, theoryMarks: '', practicalMarks: '', obtained: '', grade: 'F', isAbsent: false, isExempt: false }
+      ]
+    }
+
     setNewMarksheetForm(prev => ({
       ...prev,
       studentId: std.id,
       studentName: std.name,
       rollNumber: std.rollNumber || '',
       className: std.className || '',
-      section: std.section || ''
+      section: std.section || '',
+      subjects: dynamicSubjects
     }))
   }
 
@@ -954,7 +992,24 @@ export const ExamsView = ({ currentInstitute }) => {
       ) : (
         /* VIEW TAB 2: DATE SHEET & ADMIT CARDS */
         <div className="space-y-5">
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <style>{`
+            @media print {
+              body * { visibility: hidden !important; }
+              #printable-date-sheet, #printable-date-sheet * { visibility: visible !important; }
+              #printable-date-sheet {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 8mm !important;
+                background: white !important;
+              }
+              .no-print { display: none !important; }
+              @page { size: A4 landscape; margin: 8mm; }
+            }
+          `}</style>
+          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 no-print">
             <div>
               <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 flex items-center gap-1.5">
                 <Calendar className="w-4 h-4" /> Official Examination Schedule
@@ -990,7 +1045,19 @@ export const ExamsView = ({ currentInstitute }) => {
           </div>
 
           {/* Date Sheet Table */}
-          <div className="bg-white rounded-xl border border-slate-200/80 shadow-2xs overflow-hidden">
+          <div id="printable-date-sheet" className="bg-white rounded-xl border border-slate-200/80 shadow-2xs overflow-hidden">
+            {/* Printable Letterhead Header */}
+            <div className="hidden print:block text-center border-b-2 border-slate-900 pb-4 mb-4">
+              <h2 className="text-lg font-black uppercase text-slate-900 tracking-wider">
+                {currentInstitute?.name || 'CENTRAL HIGHER SECONDARY & COLLEGE SYSTEM'}
+              </h2>
+              <p className="text-xs font-bold text-slate-700 uppercase tracking-widest">
+                OFFICIAL EXAMINATION DATE SHEET • {dateSheetTerm || terms[0]?.name || 'TERM EXAMINATION'}
+              </p>
+              <p className="text-[10px] text-slate-500 font-mono">
+                Class / Degree: {dateSheetClass} • Academic Session: {selectedSession} • Issued by Controller of Examinations
+              </p>
+            </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs sm:text-sm min-w-[700px]">
                 <thead className="bg-slate-50 text-slate-600 text-[11px] uppercase font-bold border-b">
@@ -1001,7 +1068,7 @@ export const ExamsView = ({ currentInstitute }) => {
                     <th className="px-5 py-3.5">Time Slot</th>
                     <th className="px-5 py-3.5">Examination Hall</th>
                     <th className="px-5 py-3.5">Chief Invigilator</th>
-                    <th className="px-5 py-3.5 text-right">Action</th>
+                    <th className="px-5 py-3.5 text-right no-print">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-sans">
@@ -1022,7 +1089,7 @@ export const ExamsView = ({ currentInstitute }) => {
                           </span>
                         </td>
                         <td className="px-5 py-3.5 text-slate-500 text-xs">{ds.invigilator || 'Staff On Duty'}</td>
-                        <td className="px-5 py-3.5 text-right">
+                        <td className="px-5 py-3.5 text-right no-print">
                           <button
                             type="button"
                             onClick={() => {
@@ -1473,7 +1540,7 @@ export const ExamsView = ({ currentInstitute }) => {
               <div className="text-center border-b-2 border-slate-900 pb-3">
                 <School className="w-8 h-8 text-indigo-700 mx-auto mb-1" />
                 <h3 className="text-base font-black uppercase tracking-wider text-slate-900">
-                  {currentInstitute?.name || 'CENTRAL HIGH SCHOOL SYSTEM'}
+                  {currentInstitute?.name || 'Academic Institution'}
                 </h3>
                 <p className="text-xs text-slate-600 font-semibold">{selectedReportCard.term} • Official Academic Transcript</p>
                 <p className="text-[10px] text-slate-400 font-mono mt-0.5">Session: {selectedReportCard.session || '2026-2027'}</p>
@@ -1596,7 +1663,7 @@ export const ExamsView = ({ currentInstitute }) => {
               <div className="text-center border-b-2 border-slate-900 pb-4">
                 <School className="w-10 h-10 text-amber-700 mx-auto mb-1" />
                 <h2 className="text-lg font-black uppercase tracking-widest text-slate-900">
-                  {currentInstitute?.name || 'CENTRAL HIGH SCHOOL SYSTEM'}
+                  {currentInstitute?.name || 'Academic Institution'}
                 </h2>
                 <p className="text-xs text-slate-600 font-semibold">Affiliated with Board of Intermediate & Secondary Education</p>
                 <div className="mt-2 inline-block px-4 py-1 bg-amber-50 border border-amber-300 rounded text-xs font-black uppercase tracking-widest text-amber-950">
@@ -1785,7 +1852,7 @@ export const ExamsView = ({ currentInstitute }) => {
                   </div>
                   <div>
                     <h3 className="text-base font-black uppercase tracking-wider text-slate-900">
-                      {currentInstitute?.name || 'CENTRAL HIGH SCHOOL SYSTEM'}
+                      {currentInstitute?.name || 'Academic Institution'}
                     </h3>
                     <p className="text-[11px] font-semibold text-slate-600">
                       BOARD OF INTERMEDIATE & SECONDARY EDUCATION • ROLL NUMBER SLIP
@@ -1979,7 +2046,7 @@ export const ExamsView = ({ currentInstitute }) => {
                   >
                     <div className="text-center border-b pb-3">
                       <h3 className="text-sm font-black uppercase tracking-wider text-slate-900">
-                        {currentInstitute?.name || 'CENTRAL HIGH SCHOOL'}
+                        {currentInstitute?.name || 'Academic Institution'}
                       </h3>
                       <p className="text-[11px] text-slate-500 font-medium">{exam.term} • Official Transcript of Record</p>
                     </div>
@@ -2042,6 +2109,196 @@ export const ExamsView = ({ currentInstitute }) => {
               >
                 <Printer className="w-3.5 h-3.5" />
                 <span>Print All Transcripts (PDF)</span>
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* MODAL: PAPER SCRUTINY & RE-CHECKING APPEALS DESK */}
+      {isScrutinyModalOpen && (
+        <Modal
+          isOpen={isScrutinyModalOpen}
+          onClose={() => setIsScrutinyModalOpen(false)}
+          title="Examination Paper Scrutiny & Re-checking Appeals Desk"
+          maxWidth="max-w-3xl"
+        >
+          <div className="space-y-4 text-xs font-sans">
+            <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-2.5 text-amber-900">
+              <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold block">Official Statutory Paper Scrutiny Guidelines (BISE & University Standard)</span>
+                <p className="text-[11px] text-amber-800 leading-relaxed mt-0.5">
+                  Paper scrutiny encompasses recounting of answer script marks, verification of unassessed questions, and marks transfer validation into the official tabulation gazette.
+                </p>
+              </div>
+            </div>
+
+            {/* Lodge New Appeal Sub-Form */}
+            <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 space-y-3">
+              <span className="font-bold text-slate-800 uppercase tracking-wider text-[11px] block">
+                Lodge New Candidate Re-checking Request
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">Select Student *</label>
+                  <select
+                    value={newScrutinyForm.studentId}
+                    onChange={(e) => setNewScrutinyForm({ ...newScrutinyForm, studentId: e.target.value })}
+                    className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-xs"
+                  >
+                    <option value="">-- Choose Candidate --</option>
+                    {instStudents.map(s => (
+                      <option key={s.id} value={s.id}>{s.name} ({s.rollNumber})</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">Subject *</label>
+                  <input
+                    type="text"
+                    value={newScrutinyForm.subject}
+                    onChange={(e) => setNewScrutinyForm({ ...newScrutinyForm, subject: e.target.value })}
+                    placeholder="e.g. Mathematics"
+                    className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">Examination Term</label>
+                  <select
+                    value={newScrutinyForm.term}
+                    onChange={(e) => setNewScrutinyForm({ ...newScrutinyForm, term: e.target.value })}
+                    className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-xs"
+                  >
+                    {availableTerms.map(t => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">Specific Grievance / Reason</label>
+                  <input
+                    type="text"
+                    value={newScrutinyForm.reason}
+                    onChange={(e) => setNewScrutinyForm({ ...newScrutinyForm, reason: e.target.value })}
+                    placeholder="e.g. Question 3 part b marks not totaled in grand sum"
+                    className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-xs"
+                  />
+                </div>
+                <div className="flex items-end justify-between gap-2">
+                  <label className="flex items-center gap-1.5 text-xs text-slate-700 cursor-pointer pb-1.5">
+                    <input
+                      type="checkbox"
+                      checked={newScrutinyForm.feePaid}
+                      onChange={(e) => setNewScrutinyForm({ ...newScrutinyForm, feePaid: e.target.checked })}
+                      className="rounded text-emerald-600"
+                    />
+                    <span className="font-semibold">Fee Paid (PKR 1,500)</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!newScrutinyForm.studentId) {
+                        toast.error('Please select a candidate student.')
+                        return
+                      }
+                      const std = instStudents.find(s => s.id === newScrutinyForm.studentId)
+                      const newAppeal = {
+                        id: `SCRUT-${Date.now().toString().slice(-4)}`,
+                        studentName: std ? std.name : 'Candidate',
+                        rollNumber: std ? std.rollNumber : 'ROLL',
+                        className: std ? std.className : 'Class 10',
+                        subject: newScrutinyForm.subject || 'General Paper',
+                        term: newScrutinyForm.term || 'Mid-Term',
+                        originalMarks: 72,
+                        updatedMarks: 72,
+                        reason: newScrutinyForm.reason || 'General recount requested',
+                        status: 'Under Scrutiny',
+                        feeStatus: newScrutinyForm.feePaid ? 'Paid (PKR 1,500)' : 'Pending',
+                        date: new Date().toISOString().split('T')[0]
+                      }
+                      const updated = [newAppeal, ...scrutinyAppeals]
+                      setScrutinyAppeals(updated)
+                      localStorage.setItem('sms_exam_scrutiny_appeals', JSON.stringify(updated))
+                      toast.success(`Re-checking request ${newAppeal.id} lodged for ${newAppeal.studentName}!`)
+                    }}
+                    className="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition-all shadow-xs cursor-pointer"
+                  >
+                    + Lodge Appeal
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Appeals Registry Table */}
+            <div className="border border-slate-200 rounded-xl overflow-hidden">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-100 text-slate-700 font-bold uppercase text-[10px]">
+                  <tr>
+                    <th className="p-2.5">Appeal ID</th>
+                    <th className="p-2.5">Candidate</th>
+                    <th className="p-2.5">Subject & Term</th>
+                    <th className="p-2.5">Grievance</th>
+                    <th className="p-2.5">Fee Status</th>
+                    <th className="p-2.5">Audit Status</th>
+                    <th className="p-2.5 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {scrutinyAppeals.map(a => (
+                    <tr key={a.id} className="hover:bg-slate-50/50">
+                      <td className="p-2.5 font-mono font-bold text-indigo-700">{a.id}</td>
+                      <td className="p-2.5">
+                        <strong className="text-slate-900 block">{a.studentName}</strong>
+                        <span className="text-[10px] text-slate-400 font-mono">{a.rollNumber} • {a.className}</span>
+                      </td>
+                      <td className="p-2.5 font-medium text-slate-800">
+                        {a.subject}
+                        <span className="text-[10px] text-slate-400 block">{a.term}</span>
+                      </td>
+                      <td className="p-2.5 text-slate-600 max-w-xs truncate">{a.reason}</td>
+                      <td className="p-2.5 font-mono text-[11px] text-emerald-800 font-bold">{a.feeStatus}</td>
+                      <td className="p-2.5">
+                        <span className={`px-2 py-0.5 rounded-md font-bold text-[10px] ${
+                          a.status.includes('Updated') ? 'bg-emerald-100 text-emerald-800' :
+                          a.status.includes('No Change') ? 'bg-slate-100 text-slate-700' : 'bg-amber-100 text-amber-800 animate-pulse'
+                        }`}>
+                          {a.status}
+                        </span>
+                      </td>
+                      <td className="p-2.5 text-right">
+                        {a.status === 'Under Scrutiny' && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = scrutinyAppeals.map(item => 
+                                item.id === a.id ? { ...item, status: 'Marks Updated (+5)', updatedMarks: item.originalMarks + 5 } : item
+                              )
+                              setScrutinyAppeals(updated)
+                              localStorage.setItem('sms_exam_scrutiny_appeals', JSON.stringify(updated))
+                              toast.success(`Scrutiny verified for ${a.id}. Total marks updated!`)
+                            }}
+                            className="px-2 py-1 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-[10px] font-bold cursor-pointer"
+                          >
+                            Recount & Accept (+5)
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex justify-end pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setIsScrutinyModalOpen(false)}
+                className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs"
+              >
+                Close Appeals Desk
               </button>
             </div>
           </div>

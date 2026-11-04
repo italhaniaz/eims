@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { 
   FlaskConical, 
   Search, 
@@ -29,8 +29,9 @@ export const UniversityResearchFypView = ({ currentInstitute }) => {
   const [deptFilter, setDeptFilter] = useState('ALL')
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
 
+
   // Demo FYP Projects
-  const [fypProjects, setFypProjects] = useState([
+  const DEFAULT_FYP_PROJECTS = [
     {
       id: 'FYP-2026-001',
       title: 'Autonomous Drone Navigation Using Visual SLAM & Deep Reinforcement Learning',
@@ -67,10 +68,10 @@ export const UniversityResearchFypView = ({ currentInstitute }) => {
       status: 'Revision Recommended',
       defenseDate: '2026-11-28'
     }
-  ])
+  ]
 
   // Demo MS / PhD Theses
-  const [theses, setTheses] = useState([
+  const DEFAULT_THESES = [
     {
       id: 'THS-MS-041',
       candidateName: 'Engr. Salman Farooq',
@@ -93,10 +94,10 @@ export const UniversityResearchFypView = ({ currentInstitute }) => {
       defenseStatus: 'Synopsis Approved',
       synopsisApproved: true
     }
-  ])
+  ]
 
   // Demo Research Publications
-  const [publications, setPublications] = useState([
+  const DEFAULT_PUBLICATIONS = [
     {
       id: 'PUB-2026-01',
       title: 'Real-Time Edge Perception Algorithms for Low-Altitude Autonomous Aerial Vehicles',
@@ -117,7 +118,54 @@ export const UniversityResearchFypView = ({ currentInstitute }) => {
       year: '2026',
       doi: '10.1016/j.jss.2026.111890'
     }
-  ])
+  ]
+
+  const instId = currentInstitute?.id || 'default'
+  const fypStorageKey = `sms_university_fyp_${instId}`
+
+  const [fypData, setFypData] = useState(() => {
+    try {
+      const saved = localStorage.getItem(fypStorageKey)
+      if (saved) return JSON.parse(saved)
+    } catch {}
+    return {
+      fypProjects: DEFAULT_FYP_PROJECTS,
+      theses: DEFAULT_THESES,
+      publications: DEFAULT_PUBLICATIONS
+    }
+  })
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(fypStorageKey, JSON.stringify(fypData))
+    } catch {}
+  }, [fypData, fypStorageKey])
+
+  const fypProjects = fypData.fypProjects || DEFAULT_FYP_PROJECTS
+  const theses = fypData.theses || DEFAULT_THESES
+  const publications = fypData.publications || DEFAULT_PUBLICATIONS
+
+  const setFypProjects = (updater) => {
+    setFypData(prev => ({
+      ...prev,
+      fypProjects: typeof updater === 'function' ? updater(prev.fypProjects || DEFAULT_FYP_PROJECTS) : updater
+    }))
+  }
+
+  const setTheses = (updater) => {
+    setFypData(prev => ({
+      ...prev,
+      theses: typeof updater === 'function' ? updater(prev.theses || DEFAULT_THESES) : updater
+    }))
+  }
+
+  const setPublications = (updater) => {
+    setFypData(prev => ({
+      ...prev,
+      publications: typeof updater === 'function' ? updater(prev.publications || DEFAULT_PUBLICATIONS) : updater
+    }))
+  }
+
 
   const [formData, setFormData] = useState({
     title: '',

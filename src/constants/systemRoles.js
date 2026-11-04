@@ -1,4 +1,6 @@
 import { 
+  Building,
+  Award, 
   ShieldCheck, 
   School, 
   GraduationCap, 
@@ -488,3 +490,52 @@ export const getRoleMeta = (roleId) => {
     tierLevel: 'Standard User'
   }
 }
+
+export const TIER_ROLE_GROUPS = [
+  {
+    group: 'Platform Leadership',
+    tier: 'platform',
+    roles: [
+      { id: 'superadmin', name: 'Super Administrator', tier: 'platform' }
+    ]
+  },
+  {
+    group: '🏫 School Portal Roles (Pick 2)',
+    tier: 'school',
+    roles: [
+      { id: 'school_admin', name: 'School Principal (Admin) - 15 Modules', tier: 'school' },
+      { id: 'school_teacher', name: 'Teacher Portal (Classes, Attendance, Diary, Marks)', tier: 'school' },
+      { id: 'school_parent', name: 'Parent Portal (Attendance, Fee, Diary, Results)', tier: 'school' },
+      { id: 'school_student', name: 'Student Portal (Timetable, Homework, Results)', tier: 'school' },
+      { id: 'school_accountant', name: 'Accountant Portal (Fees & Accounts Only)', tier: 'school' }
+    ]
+  },
+  {
+    group: '🏛️ College Portal Roles (Pick 3)',
+    tier: 'college',
+    roles: [
+      { id: 'college_admin', name: 'College Principal (Admin) - 18 Modules', tier: 'college' },
+      { id: 'college_student', name: 'Student Portal (Timetable, Notes, Board Forms, Challan)', tier: 'college' },
+      { id: 'college_parent', name: 'Parent Portal (Attendance, Results, Concessions)', tier: 'college' },
+      { id: 'college_faculty', name: 'Faculty Portal (Classes, Lectures, Attendance, Salary)', tier: 'college' },
+      { id: 'college_hod', name: 'HOD Portal (Department Performance & Results)', tier: 'college' },
+      { id: 'college_accountant', name: 'Accountant Portal (Fees & Accounts Only)', tier: 'college' }
+    ]
+  },
+  {
+    group: '🎓 University Portal Roles (Pick 4)',
+    tier: 'university',
+    roles: [
+      { id: 'university_admin', name: 'Dean / Registrar Admin - 22 Modules', tier: 'university' },
+      { id: 'uni_student', name: 'Student Portal (Registration, LMS, GPA Transcript)', tier: 'university' },
+      { id: 'uni_faculty', name: 'Faculty Portal (Courses, Attendance, Marks, Research Profile)', tier: 'university' },
+      { id: 'uni_dean', name: 'HOD / Dean Portal (Workload, Approvals, Results)', tier: 'university' },
+      { id: 'uni_registrar', name: 'Registrar Portal (Admissions, Records, Approvals)', tier: 'university' },
+      { id: 'uni_controller', name: 'Controller Portal (Exams, Results, Degrees)', tier: 'university' },
+      { id: 'uni_finance', name: 'Finance Portal (Fees, Budget, Payroll)', tier: 'university' },
+      { id: 'uni_parent', name: 'Parent Portal (Attendance, Results, Fee - Optional)', tier: 'university' },
+      { id: 'uni_applicant', name: 'Applicant Portal (Admission Form, Merit, Challan)', tier: 'university' },
+      { id: 'uni_alumni', name: 'Alumni Portal (Profile, Events, Transcripts, Donations)', tier: 'university' }
+    ]
+  }
+];

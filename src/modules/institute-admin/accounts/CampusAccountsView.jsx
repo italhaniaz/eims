@@ -18,7 +18,8 @@ import {
   Tag, 
   Filter, 
   X, 
-  Trash2, 
+  Trash2,
+  RotateCcw, 
   ArrowUpRight 
 } from 'lucide-react'
 import { useToast } from '../../../context/ToastContext'
@@ -26,12 +27,32 @@ import { useToast } from '../../../context/ToastContext'
 const INITIAL_TRANSACTIONS = [
   { id: 'VCH-801', date: '2026-10-28', description: 'Monthly Tuition Fee Collections (Batch A)', type: 'Income', category: 'Tuition Revenues', debit: 0, credit: 3850000, account: 'Habib Bank Ltd (A/C: 4410)', status: 'Cleared', ref: 'FEE-DEP-OCT-01' },
   { id: 'VCH-802', date: '2026-10-25', description: 'Faculty & Administrative Staff Payroll Disbursement', type: 'Expense', category: 'Staff Payroll', debit: 2150000, credit: 0, account: 'Habib Bank Ltd (A/C: 4410)', status: 'Cleared', ref: 'SAL-OCT-2026' },
-  { id: 'VCH-803', date: '2026-10-20', description: 'LESCO Electricity & Campus Utility Bill', type: 'Expense', category: 'Utilities', debit: 245000, credit: 0, account: 'Meezan Bank (A/C: 9912)', status: 'Cleared', ref: 'UTIL-ELEC-778' },
+  { id: 'VCH-803', date: '2026-10-20', description: 'Electricity & Campus Utility Bill', type: 'Expense', category: 'Utilities', debit: 245000, credit: 0, account: 'Commercial Bank (A/C: 9912)', status: 'Cleared', ref: 'UTIL-ELEC-778' },
   { id: 'VCH-804', date: '2026-10-18', description: 'Annual Admission Prospectus & Form Sales', type: 'Income', category: 'Admissions Fee', debit: 0, credit: 480000, account: 'Petty Cash Desk', status: 'Cleared', ref: 'ADM-PROS-2026' },
   { id: 'VCH-805', date: '2026-10-15', description: 'Science Lab Chemicals & Glassware Replenishment', type: 'Expense', category: 'Academic Supplies', debit: 115000, credit: 0, account: 'Petty Cash Desk', status: 'Cleared', ref: 'LAB-PUR-104' },
   { id: 'VCH-806', date: '2026-10-12', description: 'Campus Transport Diesel & Fleet Maintenance', type: 'Expense', category: 'Transport Operations', debit: 185000, credit: 0, account: 'Meezan Bank (A/C: 9912)', status: 'Cleared', ref: 'FLEET-OCT-02' },
   { id: 'VCH-807', date: '2026-10-05', description: 'Library Books & Reference Encyclopedias', type: 'Expense', category: 'Library Acquisitions', debit: 65000, credit: 0, account: 'Habib Bank Ltd (A/C: 4410)', status: 'Cleared', ref: 'LIB-BOOK-55' }
 ]
+
+// Exported global helper to record ledger entries from Fees, Payroll, and Admissions
+export const recordCampusLedgerTransaction = (instituteId, txn) => {
+  try {
+    const key = `sms_campus_accounts_${instituteId || 'inst-1'}`
+    const raw = localStorage.getItem(key)
+    const existing = raw ? JSON.parse(raw) : INITIAL_TRANSACTIONS
+    // Prevent duplicate voucher posting
+    if (existing.some(t => t.id === txn.id || (txn.ref && t.ref === txn.ref))) {
+      return
+    }
+    const updated = [txn, ...existing]
+    localStorage.setItem(key, JSON.stringify(updated))
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('campus-ledger-updated', { detail: { instituteId } }))
+    }
+  } catch (e) {
+    console.error('Failed to post ledger transaction:', e)
+  }
+}
 
 export const CampusAccountsView = ({ currentInstitute }) => {
   const { toast } = useToast()
@@ -48,6 +69,20 @@ export const CampusAccountsView = ({ currentInstitute }) => {
   })
 
   const [activeTab, setActiveTab] = useState('ledger') // 'ledger' | 'statement' | 'chart'
+
+  // Live listener for fee receipts and payroll disbursements
+  useEffect(() => {
+    const handleLedgerUpdate = (e) => {
+      if (!e.detail?.instituteId || e.detail.instituteId === instituteId) {
+        try {
+          const saved = localStorage.getItem(storageKey)
+          if (saved) setTransactions(JSON.parse(saved))
+        } catch {}
+      }
+    }
+    window.addEventListener('campus-ledger-updated', handleLedgerUpdate)
+    return () => window.removeEventListener('campus-ledger-updated', handleLedgerUpdate)
+  }, [instituteId, storageKey])
   const [searchQuery, setSearchQuery] = useState('')
   const [filterType, setFilterType] = useState('All')
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -84,9 +119,9 @@ export const CampusAccountsView = ({ currentInstitute }) => {
     }).sort((a, b) => new Date(b.date) - new Date(a.date))
   }, [transactions, searchQuery, filterType])
 
-  // Computations
-  const totalInflow = useMemo(() => transactions.reduce((acc, curr) => acc + (curr.credit || 0), 0), [transactions])
-  const totalOutflow = useMemo(() => transactions.reduce((acc, curr) => acc + (curr.debit || 0), 0), [transactions])
+  // Computations (excluding voided transactions for GAAP parity)
+  const totalInflow = useMemo(() => transactions.filter(t => t.status !== 'Voided').reduce((acc, curr) => acc + (curr.credit || 0), 0), [transactions])
+  const totalOutflow = useMemo(() => transactions.filter(t => t.status !== 'Voided').reduce((acc, curr) => acc + (curr.debit || 0), 0), [transactions])
   const netSurplus = totalInflow - totalOutflow
 
   const handleFormSubmit = (e) => {
@@ -115,11 +150,40 @@ export const CampusAccountsView = ({ currentInstitute }) => {
     setIsModalOpen(false)
   }
 
-  const handleDelete = (id) => {
-    if (window.confirm('Delete this ledger voucher entry?')) {
-      const updated = transactions.filter(t => t.id !== id)
-      saveTransactions(updated)
-      toast?.success?.('Voucher entry deleted.')
+  const handleReverseVoucher = (txn) => {
+    if (txn.status === 'Voided') {
+      if (window.confirm(`Permanently delete voided voucher ${txn.id} from local cache?`)) {
+        const updated = transactions.filter(t => t.id !== txn.id)
+        saveTransactions(updated)
+        toast?.success?.('Voided voucher purged.')
+      }
+      return
+    }
+
+    if (window.confirm(`Void & Post GAAP Contra Reversal for voucher ${txn.id} (${txn.description})?\n\nThis preserves audit compliance by creating an offsetting reversal entry.`)) {
+      const updatedExisting = transactions.map(t => {
+        if (t.id === txn.id) {
+          return { ...t, status: 'Voided', voidedAt: new Date().toISOString() }
+        }
+        return t
+      })
+
+      const contraTxn = {
+        id: `VCH-REV-${txn.id.replace('VCH-', '')}`,
+        date: new Date().toISOString().split('T')[0],
+        description: `[CONTRA REVERSAL] Void of ${txn.id}: ${txn.description}`,
+        type: txn.type === 'Income' ? 'Expense' : 'Income',
+        category: 'Adjustments & Reversals',
+        debit: txn.type === 'Income' ? (txn.credit || 0) : 0,
+        credit: txn.type === 'Expense' ? (txn.debit || 0) : 0,
+        account: txn.account,
+        status: 'Cleared',
+        ref: `REV-${txn.ref || txn.id}`,
+        isReversalEntry: true
+      }
+
+      saveTransactions([contraTxn, ...updatedExisting])
+      toast?.success?.(`Contra Reversal ${contraTxn.id} posted. Original voucher marked as Voided.`)
     }
   }
 
@@ -327,17 +391,21 @@ export const CampusAccountsView = ({ currentInstitute }) => {
                           {t.credit > 0 ? `PKR ${t.credit.toLocaleString()}` : '-'}
                         </td>
                         <td className="py-3 px-4">
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            t.status === 'Voided'
+                              ? 'bg-rose-50 text-rose-700 border border-rose-200 line-through'
+                              : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          }`}>
                             {t.status}
                           </span>
                         </td>
                         <td className="py-3 px-4 text-right">
                           <button
-                            onClick={() => handleDelete(t.id)}
+                            onClick={() => handleReverseVoucher(t)}
                             className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                            title="Delete Voucher"
+                            title={t.status === 'Voided' ? 'Purge Voided Record' : 'Void & Post GAAP Contra Reversal'}
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            {t.status === 'Voided' ? <Trash2 className="w-3.5 h-3.5 text-slate-400" /> : <RotateCcw className="w-3.5 h-3.5" />}
                           </button>
                         </td>
                       </tr>

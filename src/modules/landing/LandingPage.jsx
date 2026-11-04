@@ -640,7 +640,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                   if (landingBanner.ctaAction === 'trial_modal') {
                     setIsTrialModalOpen(true)
                   } else if (landingBanner.ctaAction === 'login') {
-                    onNavigateToLogin('signin')
+                    onNavigateToLogin('school')
                   } else if (landingBanner.ctaAction === 'pricing') {
                     scrollToSection(e, 'pricing')
                   } else if (landingBanner.ctaLink) {
@@ -688,7 +688,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
 
       {/* 2. STICKY GLASSMORPHIC NAVBAR WITH ACTIVE HIGHLIGHT ANIMATION */}
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-purple-100/90 shadow-[0_4px_20px_-4px_rgba(147,51,234,0.06)] transition-all duration-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-18 flex items-center justify-between gap-2 sm:gap-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
           
           {/* Brand Logo */}
           <div 
@@ -737,8 +737,19 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
             })}
           </nav>
 
-          {/* Right Action Controls (Mobile Menu Toggle) */}
+          {/* Right Action Controls: Desktop Direct Portal Sign In & Mobile Toggle */}
           <div className="flex items-center gap-2 sm:gap-3">
+            <button
+              type="button"
+              onClick={() => onNavigateToLogin('school')}
+              className="hidden lg:inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-50 hover:bg-[#f5eeff] text-purple-700 hover:text-purple-900 border border-purple-200 hover:border-purple-400 text-xs font-bold shadow-2xs hover:shadow-xs transition-all cursor-pointer group"
+              title="Sign in to your Institutional Portal"
+            >
+              <Lock className="w-3.5 h-3.5 text-purple-600 group-hover:scale-110 transition-transform" />
+              <span>Portal Sign In</span>
+              <ArrowRight className="w-3.5 h-3.5 text-purple-400 group-hover:translate-x-0.5 transition-transform" />
+            </button>
+
             {/* Mobile Hamburger Menu Toggle Button */}
             <button
               type="button"
@@ -802,7 +813,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                 type="button"
                 onClick={() => {
                   setIsMobileMenuOpen(false)
-                  onNavigateToLogin('signin')
+                  onNavigateToLogin('school')
                 }}
                 className="w-full py-2.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs sm:text-sm border border-purple-200 transition-colors flex items-center justify-center gap-2"
               >
@@ -846,7 +857,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
       </header>
 
       {/* 3. HERO SECTION */}
-      <section id="hero" className="relative pt-14 pb-20 overflow-hidden bg-gradient-to-b from-[#fcfaff] via-[#f5eeff]/35 to-white">
+      <section id="hero" className="relative pt-8 sm:pt-12 pb-12 sm:pb-16 overflow-hidden bg-gradient-to-b from-[#fcfaff] via-[#f5eeff]/35 to-white">
         {/* Soft Ambient Radial Accents */}
         <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-purple-200/40 rounded-full blur-3xl pointer-events-none -z-10"></div>
         <div className="absolute top-40 right-10 w-96 h-96 bg-indigo-100/40 rounded-full blur-3xl pointer-events-none -z-10"></div>
@@ -860,7 +871,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
           </div>
 
           {/* Hero Headline */}
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 font-heading tracking-tight max-w-4xl mx-auto leading-[1.15]">
+          <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 font-heading tracking-tight max-w-3xl mx-auto leading-tight">
             One Intelligent Platform to Run <br className="hidden sm:inline" />
             <span className="bg-gradient-to-r from-purple-700 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
               Schools, Colleges & Universities
@@ -884,7 +895,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
 
             <button
               type="button"
-              onClick={() => onNavigateToLogin('signin')}
+              onClick={() => onNavigateToLogin('school')}
               className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-purple-50 hover:bg-[#f5eeff] text-purple-700 hover:text-purple-900 border-2 border-purple-300 hover:border-purple-500 font-extrabold text-sm shadow-xs hover:shadow-md transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer flex items-center justify-center gap-2 group whitespace-nowrap"
               title="Sign in to your Educational Portal"
             >
@@ -1708,7 +1719,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                 <span>Launch 14-Day Free Trial (₨ 0)</span>
               </button>
               <button
-                onClick={() => onNavigateToLogin('signin')}
+                onClick={() => onNavigateToLogin('school')}
                 className="w-full sm:w-auto px-5 py-3 rounded-xl bg-purple-800/80 hover:bg-purple-800 text-white border border-purple-400/40 font-semibold text-xs sm:text-sm transition-all cursor-pointer flex items-center justify-center gap-2"
               >
                 <Lock className="w-3.5 h-3.5" />
@@ -1820,15 +1831,27 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
               </span>
               <ul className="space-y-2">
                 <li>
-                  <button onClick={() => onNavigateToLogin('superadmin')} className="text-purple-400 hover:text-purple-300 font-semibold flex items-center gap-1 cursor-pointer">
-                    <Lock className="w-3 h-3" />
-                    <span>Super Admin Sign In</span>
+                  <button onClick={() => onNavigateToLogin('school')} className="text-emerald-400 hover:text-emerald-300 font-semibold flex items-center gap-1 cursor-pointer">
+                    <School className="w-3 h-3" />
+                    <span>🏫 School Portal (K-10)</span>
                   </button>
                 </li>
                 <li>
-                  <button onClick={() => onNavigateToLogin('institute')} className="text-purple-400 hover:text-purple-300 font-semibold flex items-center gap-1 cursor-pointer">
+                  <button onClick={() => onNavigateToLogin('college')} className="text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1 cursor-pointer">
                     <Building2 className="w-3 h-3" />
-                    <span>Campus Admin Sign In</span>
+                    <span>🏛️ College Portal (11-12)</span>
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => onNavigateToLogin('university')} className="text-purple-400 hover:text-purple-300 font-semibold flex items-center gap-1 cursor-pointer">
+                    <GraduationCap className="w-3 h-3" />
+                    <span>🎓 University Portal (HEC)</span>
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => onNavigateToLogin('superadmin')} className="text-purple-400 hover:text-purple-300 font-semibold flex items-center gap-1 cursor-pointer">
+                    <Lock className="w-3 h-3" />
+                    <span>🛡️ Super Admin Control Plane</span>
                   </button>
                 </li>
                 <li>

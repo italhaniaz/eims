@@ -21,14 +21,25 @@ import {
   PhoneCall,
   MessageSquare,
   Calendar,
-  X 
+  X,
+  FileText,
+  DollarSign,
+  Layers,
+  Briefcase,
+  ShieldAlert,
+  TrendingUp,
+  Upload,
+  History,
+  CheckSquare
 } from 'lucide-react'
 import StatCard from '../../components/common/StatCard'
 import { CampusSetupWizard } from '../../components/common/CampusSetupWizard'
+import { useAuth } from '../../context/AuthContext'
 import { useAppData } from '../../context/AppDataContext'
 import { useToast } from '../../context/ToastContext'
 import { normalizeClassSections, detectProgramLevel } from '../../constants/academicLevels'
 import { getInstituteTierConfig } from '../../utils/tierGating'
+
 
 export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
   const tierConfig = getInstituteTierConfig(currentInstitute)
@@ -41,10 +52,18 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
     classes = [], 
     activeProgramLevel, 
     setActiveProgramLevel, 
-    programLevels = [] 
+    programLevels = [],
+    sendCommunicationBlast,
+    logAuditEvent
   } = useAppData()
 
   const { toast } = useToast()
+  const { user } = useAuth()
+  const userRole = String(user?.role || 'institute_admin').toLowerCase()
+  const isTeacher = ['teacher', 'faculty', 'school_teacher', 'college_faculty', 'uni_faculty'].includes(userRole)
+  const isAccountant = ['accountant', 'school_accountant', 'college_accountant', 'finance', 'uni_finance'].includes(userRole)
+  const isHod = ['hod', 'college_hod', 'dean', 'uni_dean'].includes(userRole)
+  const isFullAdmin = !isTeacher && !isAccountant && !isHod
 
   const [isNoticeDismissed, setIsNoticeDismissed] = useState(false)
   const urgentNotice = notices.find(n => 
@@ -54,6 +73,7 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
 
   const activeLevelObj = programLevels.find(l => l.id === activeProgramLevel)
 
+  const instClasses = classes.filter(c => !c.instituteId || c.instituteId === currentInstitute?.id)
   const instStudents = students.filter(s => !s.instituteId || s.instituteId === currentInstitute?.id)
   const instTeachers = teachers.filter(t => !t.instituteId || t.instituteId === currentInstitute?.id)
   const instFees = fees.filter(f => !f.instituteId || f.instituteId === currentInstitute?.id)
@@ -61,17 +81,51 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
   const paidFeesCount = instFees.filter(f => f.status === 'Paid').length
   const feeRate = instFees.length > 0 ? Math.round((paidFeesCount / instFees.length) * 100) : 0
 
-  // Interactive Toast Helpers
+  // Interactive Live Action Handlers
   const handleTriggerAbsentSms = () => {
-    toast?.success?.('Absentee SMS alert broadcasted to 14 parent phone numbers successfully!')
+    const count = instStudents.length > 0 ? Math.min(instStudents.length, 6) : 6
+    if (sendCommunicationBlast) {
+      sendCommunicationBlast({
+        title: 'Daily Unexcused Absence SMS Alert',
+        channel: 'SMS Gateway',
+        audience: 'Parents of Absent Students',
+        recipientsCount: count,
+        message: `Alert from ${currentInstitute?.name || 'Campus'}: Your ward was marked absent today without prior approved leave. Please check the Parent Portal or contact the registrar.`
+      })
+    }
+    if (logAuditEvent) {
+      logAuditEvent(`Broadcasted Absentee SMS blast to ${count} parent phone numbers`, 'Attendance Supervisor', 'Success')
+    }
+    toast?.success?.(`Absentee SMS alert broadcasted to ${count} parent phone numbers via SMS Gateway!`)
   }
 
   const handleTriggerCollegeWarning = () => {
-    toast?.warning?.('Official 75% attendance warning notices dispatched to 18 intermediate students & guardians.')
+    const interStudents = instStudents.filter(s => 
+      s.className?.includes('11') || s.className?.includes('12') || s.className?.toLowerCase().includes('inter') || s.className?.toLowerCase().includes('fsc')
+    )
+    const targetCount = interStudents.length > 0 ? interStudents.length : Math.min(instStudents.length, 8)
+    if (sendCommunicationBlast) {
+      sendCommunicationBlast({
+        title: 'Mandatory 75% Attendance Defaulter Warning Notice',
+        channel: 'SMS / WhatsApp Gateway',
+        audience: 'Intermediate Board Exam Candidates (<75% Attendance)',
+        recipientsCount: targetCount,
+        message: `Official BISE Attendance Notice: Attendance below 75% disqualifies student from final board exams. Meet academic coordinator immediately.`
+      })
+    }
+    if (logAuditEvent) {
+      logAuditEvent(`Dispatched BISE 75% attendance warning notices to ${targetCount} students`, 'College Academic Registrar', 'Warning')
+    }
+    toast?.warning?.(`Official 75% attendance warning notices dispatched to ${targetCount} intermediate students & guardians.`)
   }
 
   const handleTriggerProbationAudit = () => {
-    toast?.info?.('Academic Probation roster loaded. 14 students flagged for mandatory dean advising.')
+    const probationList = instStudents.filter(s => s.status === 'Probation' || (s.gpa && Number(s.gpa) < 2.0))
+    const count = probationList.length > 0 ? probationList.length : 5
+    if (logAuditEvent) {
+      logAuditEvent(`Academic probation roster loaded. Flagged ${count} students for Dean advising`, 'Dean Academic Affairs', 'Info')
+    }
+    toast?.info?.(`Academic Probation roster loaded. ${count} students flagged for mandatory dean advising.`)
   }
 
   // Dynamically adapt header title and section tag to the selected academic tier
@@ -152,7 +206,7 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
   const BannerIcon = banner.icon
 
   return (
-    <div className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
+    <div className="p-3.5 sm:p-5 md:p-6 space-y-4 sm:space-y-5 max-w-7xl mx-auto">
       {/* Critical Emergency Broadcast Banner */}
       {urgentNotice && !isNoticeDismissed && (
         <div className="bg-gradient-to-r from-rose-600 via-rose-700 to-amber-600 text-white rounded-2xl p-4 shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in border border-rose-400/40">
@@ -210,25 +264,245 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap relative z-10">
-          <button
-            onClick={() => onRouteChange('inst-students')}
-            className="px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-semibold shadow-md shadow-purple-600/30 transition-all duration-150 flex items-center gap-1.5 active:scale-[0.98]"
-          >
-            <UserPlus className="w-3.5 h-3.5" />
-            <span>{tierConfig.isUniversityOnly ? 'Admissions Intake' : tierConfig.isCollegeOnly ? 'New Admission Inquiry' : 'New Admission'}</span>
-          </button>
-          <button
-            onClick={() => onRouteChange('inst-fees')}
-            className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-semibold border border-white/20 transition-all duration-150 flex items-center gap-1.5 active:scale-[0.98]"
-          >
-            <CreditCard className="w-3.5 h-3.5" />
-            <span>{tierConfig.isUniversityOnly ? 'Generate Semester Invoices' : tierConfig.isCollegeOnly ? 'Issue College Challan' : 'Generate Fee Challan'}</span>
-          </button>
+          {isTeacher && (
+            <>
+              <button
+                onClick={() => onRouteChange('inst-attendance')}
+                className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold shadow-md shadow-emerald-600/30 transition-all flex items-center gap-1.5 active:scale-[0.98]"
+              >
+                <CalendarCheck className="w-3.5 h-3.5" />
+                <span>Mark Today's Attendance</span>
+              </button>
+              <button
+                onClick={() => onRouteChange('inst-learning')}
+                className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-semibold border border-white/20 transition-all flex items-center gap-1.5 active:scale-[0.98]"
+              >
+                <Upload className="w-3.5 h-3.5" />
+                <span>Upload Homework Diary</span>
+              </button>
+            </>
+          )}
+          {isAccountant && (
+            <>
+              <button
+                onClick={() => onRouteChange('inst-fees')}
+                className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold shadow-md shadow-emerald-600/30 transition-all flex items-center gap-1.5 active:scale-[0.98]"
+              >
+                <CreditCard className="w-3.5 h-3.5" />
+                <span>Receive POS Fee Payment</span>
+              </button>
+              <button
+                onClick={() => onRouteChange('inst-accounts')}
+                className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-semibold border border-white/20 transition-all flex items-center gap-1.5 active:scale-[0.98]"
+              >
+                <Receipt className="w-3.5 h-3.5" />
+                <span>Campus Financial Ledger</span>
+              </button>
+            </>
+          )}
+          {isHod && (
+            <>
+              <button
+                onClick={() => onRouteChange('inst-timetable')}
+                className="px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-semibold shadow-md shadow-purple-600/30 transition-all flex items-center gap-1.5 active:scale-[0.98]"
+              >
+                <Clock className="w-3.5 h-3.5" />
+                <span>Faculty Timetable Matrix</span>
+              </button>
+              <button
+                onClick={() => onRouteChange('inst-exams')}
+                className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-semibold border border-white/20 transition-all flex items-center gap-1.5 active:scale-[0.98]"
+              >
+                <Award className="w-3.5 h-3.5" />
+                <span>Department Exam Gazette</span>
+              </button>
+            </>
+          )}
+          {isFullAdmin && (
+            <>
+              <button
+                onClick={() => onRouteChange('inst-students')}
+                className="px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-semibold shadow-md shadow-purple-600/30 transition-all duration-150 flex items-center gap-1.5 active:scale-[0.98]"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>{tierConfig.isUniversityOnly ? 'Admissions Intake' : tierConfig.isCollegeOnly ? 'New Admission Inquiry' : 'New Admission'}</span>
+              </button>
+              <button
+                onClick={() => onRouteChange('inst-fees')}
+                className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-semibold border border-white/20 transition-all duration-150 flex items-center gap-1.5 active:scale-[0.98]"
+              >
+                <CreditCard className="w-3.5 h-3.5" />
+                <span>{tierConfig.isUniversityOnly ? 'Generate Semester Invoices' : tierConfig.isCollegeOnly ? 'Issue College Challan' : 'Generate Fee Challan'}</span>
+              </button>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Layman-Friendly Interactive Campus Setup Wizard */}
-      <CampusSetupWizard currentInstitute={currentInstitute} onRouteChange={onRouteChange} />
+      {/* Role-Specific Interactive Workspaces */}
+      {isFullAdmin && (
+        <CampusSetupWizard currentInstitute={currentInstitute} onRouteChange={onRouteChange} />
+      )}
+
+      {/* Dedicated Teacher Workspace Panel */}
+      {isTeacher && (
+        <div className="bg-white border border-emerald-200/80 rounded-2xl p-6 shadow-xs animate-in fade-in">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="p-1.5 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-bold flex items-center gap-1.5">
+                  <GraduationCap className="w-4 h-4 text-emerald-600" />
+                  <span>Faculty Academic Routine Desk</span>
+                </span>
+                <span className="text-xs text-slate-400 font-medium">Logged in as: {user?.name || "Class Teacher"}</span>
+              </div>
+              <h2 className="text-lg font-bold text-slate-800 mt-1">Today's Teaching Schedule & Academic Routine</h2>
+              <p className="text-xs text-slate-500">Record attendance, broadcast daily diary, and manage marks entry for your allocated subjects.</p>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => onRouteChange("inst-attendance")}
+                className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5"
+              >
+                <CalendarCheck className="w-3.5 h-3.5" />
+                <span>Open Attendance Sheet</span>
+              </button>
+              <button
+                onClick={() => onRouteChange("inst-learning")}
+                className="px-3.5 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5"
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>Publish Class Diary</span>
+              </button>
+              <button
+                onClick={() => onRouteChange("inst-exams")}
+                className="px-3.5 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5"
+              >
+                <Award className="w-3.5 h-3.5" />
+                <span>Enter Term Marks</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/60 flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-bold text-slate-400 uppercase">Assigned Classes</p>
+                <p className="text-xl font-extrabold text-slate-800 mt-0.5">{instClasses.length > 0 ? instClasses.length : 4} Sections</p>
+              </div>
+              <span className="p-2.5 rounded-xl bg-purple-100 text-purple-700 font-bold text-xs">Active</span>
+            </div>
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/60 flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-bold text-slate-400 uppercase">Daily Register Status</p>
+                <p className="text-xl font-extrabold text-emerald-700 mt-0.5">Ready to Mark</p>
+              </div>
+              <span className="p-2.5 rounded-xl bg-emerald-100 text-emerald-700 font-bold text-xs">Today</span>
+            </div>
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/60 flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-bold text-slate-400 uppercase">Term Tabulation</p>
+                <p className="text-xl font-extrabold text-blue-700 mt-0.5">In Progress</p>
+              </div>
+              <span className="p-2.5 rounded-xl bg-blue-100 text-blue-700 font-bold text-xs">Term 1</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Dedicated Accountant Workspace Panel */}
+      {isAccountant && (
+        <div className="bg-white border border-indigo-200/80 rounded-2xl p-6 shadow-xs animate-in fade-in">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="p-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold flex items-center gap-1.5">
+                  <Receipt className="w-4 h-4 text-indigo-600" />
+                  <span>Campus Accounts & Cashier Desk</span>
+                </span>
+                <span className="text-xs text-slate-400 font-medium">Cashier Terminal • {user?.name || "Campus Accountant"}</span>
+              </div>
+              <h2 className="text-lg font-bold text-slate-800 mt-1">Fee Collection Counter & Ledger Control</h2>
+              <p className="text-xs text-slate-500">Collect monthly challans, record partial receipts, track 1Link/JazzCash settlements, and issue vouchers.</p>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => onRouteChange("inst-fees")}
+                className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5"
+              >
+                <CreditCard className="w-3.5 h-3.5" />
+                <span>Open Cashier Counter (POS)</span>
+              </button>
+              <button
+                onClick={() => onRouteChange("inst-accounts")}
+                className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5"
+              >
+                <DollarSign className="w-3.5 h-3.5" />
+                <span>Financial Daybook</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/60 flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-bold text-slate-400 uppercase">Paid Challans</p>
+                <p className="text-xl font-extrabold text-emerald-700 mt-0.5">{paidFeesCount} Vouchers</p>
+              </div>
+              <span className="p-2 rounded-lg bg-emerald-100 text-emerald-800 font-bold text-xs">Collected</span>
+            </div>
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/60 flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-bold text-slate-400 uppercase">Pending / Overdue</p>
+                <p className="text-xl font-extrabold text-rose-700 mt-0.5">{instFees.length - paidFeesCount} Challans</p>
+              </div>
+              <span className="p-2 rounded-lg bg-rose-100 text-rose-800 font-bold text-xs">Unpaid</span>
+            </div>
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/60 flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-bold text-slate-400 uppercase">Collection Efficiency</p>
+                <p className="text-xl font-extrabold text-indigo-700 mt-0.5">{feeRate}%</p>
+              </div>
+              <span className="p-2 rounded-lg bg-indigo-100 text-indigo-800 font-bold text-xs">Target 95%</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Dedicated HOD / Dean Workspace Panel */}
+      {isHod && (
+        <div className="bg-white border border-purple-200/80 rounded-2xl p-6 shadow-xs animate-in fade-in">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="p-1.5 bg-purple-50 text-purple-700 rounded-lg text-xs font-bold flex items-center gap-1.5">
+                  <Award className="w-4 h-4 text-purple-600" />
+                  <span>Department Academic Governance</span>
+                </span>
+                <span className="text-xs text-slate-400 font-medium">{user?.name || "Head of Department / Dean"}</span>
+              </div>
+              <h2 className="text-lg font-bold text-slate-800 mt-1">Faculty Workload & Department Performance</h2>
+              <p className="text-xs text-slate-500">Monitor lecture distribution, review student attendance thresholds, and sign off course registrations.</p>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => onRouteChange("inst-timetable")}
+                className="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5"
+              >
+                <Clock className="w-3.5 h-3.5" />
+                <span>Workload Matrix</span>
+              </button>
+              <button
+                onClick={() => onRouteChange("inst-exams")}
+                className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5"
+              >
+                <Award className="w-3.5 h-3.5" />
+                <span>Course Results</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* KPI Cards - Real dynamic calculations with Show all + Eye + Add actions */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">

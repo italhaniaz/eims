@@ -47,7 +47,12 @@ export const COLLEGE_FEATURES = {
     'inst-program-levels',
     'inst-admissions',
     'inst-transport',
-    'inst-library'
+    'inst-library',
+    'inst-board-exams',
+    'inst-scholarships',
+    'inst-discipline',
+    'inst-hostel',
+    'inst-labs'
   ],
 
   // Specific operational sentinel for College Principal

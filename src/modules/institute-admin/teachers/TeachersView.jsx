@@ -48,6 +48,7 @@ import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
 import { hashPassword } from '../../../context/AuthContext'
 import Modal from '../../../components/common/Modal'
+import { recordCampusLedgerTransaction } from '../accounts/CampusAccountsView'
 import { getInstituteTierConfig } from '../../../utils/tierGating'
 import { AddStaffModal } from './AddStaffModal'
 import { StaffProfileDrawer } from './StaffProfileDrawer'
@@ -1667,13 +1668,46 @@ export const TeachersView = ({ currentInstitute, initialTab = "directory" }) => 
               <h2 className="text-base font-bold text-slate-900">Institutional Payroll & Compensation Registry</h2>
               <p className="text-xs text-slate-500">Official monthly salary disbursement, allowances, and printable pay vouchers</p>
             </div>
-            <button
-              onClick={() => handleExportCSV(false)}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-sm transition-all"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>Export Payroll Sheet</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const totalNet = filteredStaff.reduce((sum, s) => {
+                    const basic = Number(s.basicSalary || 0)
+                    const allow = Number(s.allowance || 0)
+                    const ded = Number(s.deductions || 0)
+                    return sum + (s.netSalary || (basic + allow - ded))
+                  }, 0)
+
+                  if (window.confirm(`Disburse monthly payroll batch of PKR ${totalNet.toLocaleString()} for ${filteredStaff.length} faculty and staff members?`)) {
+                    recordCampusLedgerTransaction(currentInstitute?.id, {
+                      id: `VCH-PAYROLL-${Date.now()}`,
+                      date: new Date().toISOString().split('T')[0],
+                      description: `Monthly Staff & Faculty Payroll Disbursement (${filteredStaff.length} Employees)`,
+                      type: 'Expense',
+                      category: 'Staff Payroll',
+                      debit: totalNet,
+                      credit: 0,
+                      account: 'Habib Bank Ltd (A/C: 4410)',
+                      status: 'Cleared',
+                      ref: `PAY-BATCH-${Date.now().toString().slice(-6)}`
+                    })
+                    toast.success(`Disbursed PKR ${totalNet.toLocaleString()} across ${filteredStaff.length} staff members and recorded to General Ledger!`)
+                  }
+                }}
+                className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>Disburse Monthly Payroll</span>
+              </button>
+              <button
+                onClick={() => handleExportCSV(false)}
+                className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-sm transition-all"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Export Payroll Sheet</span>
+              </button>
+            </div>
           </div>
 
           {filteredStaff.length > 0 ? (

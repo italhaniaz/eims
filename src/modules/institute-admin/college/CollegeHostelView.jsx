@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { 
   Building, 
   Search, 
@@ -25,8 +25,9 @@ export const CollegeHostelView = ({ currentInstitute }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [isAllocateModalOpen, setIsAllocateModalOpen] = useState(false)
 
+
   // Demo Rooms
-  const [rooms, setRooms] = useState([
+  const DEFAULT_ROOMS = [
     {
       id: 'RM-101',
       wing: 'Iqbal Hall (Boys Wing A)',
@@ -71,10 +72,10 @@ export const CollegeHostelView = ({ currentInstitute }) => {
       warden: 'Dr. Nadia Hashmi',
       status: '1 Bed Available'
     }
-  ])
+  ]
 
   // Demo Residents
-  const [residents, setResidents] = useState([
+  const DEFAULT_RESIDENTS = [
     {
       id: 'RES-01',
       studentName: 'Zainab Fatima',
@@ -111,10 +112,10 @@ export const CollegeHostelView = ({ currentInstitute }) => {
       checkInDate: '2026-09-05',
       messFeeStatus: 'Pending'
     }
-  ])
+  ]
 
   // Demo Gate Passes
-  const [gatePasses, setGatePasses] = useState([
+  const DEFAULT_GATE_PASSES = [
     {
       id: 'GP-8901',
       studentName: 'Ali Raza',
@@ -127,7 +128,54 @@ export const CollegeHostelView = ({ currentInstitute }) => {
       wardenSigned: 'Prof. Tariq Jamil',
       status: 'Active Pass'
     }
-  ])
+  ]
+
+  const instId = currentInstitute?.id || 'default'
+  const hostelStorageKey = `sms_hostel_data_${instId}`
+
+  const [hostelData, setHostelData] = useState(() => {
+    try {
+      const saved = localStorage.getItem(hostelStorageKey)
+      if (saved) return JSON.parse(saved)
+    } catch {}
+    return {
+      rooms: DEFAULT_ROOMS,
+      residents: DEFAULT_RESIDENTS,
+      gatePasses: DEFAULT_GATE_PASSES
+    }
+  })
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(hostelStorageKey, JSON.stringify(hostelData))
+    } catch {}
+  }, [hostelData, hostelStorageKey])
+
+  const rooms = hostelData.rooms || DEFAULT_ROOMS
+  const residents = hostelData.residents || DEFAULT_RESIDENTS
+  const gatePasses = hostelData.gatePasses || DEFAULT_GATE_PASSES
+
+  const setRooms = (updater) => {
+    setHostelData(prev => ({
+      ...prev,
+      rooms: typeof updater === 'function' ? updater(prev.rooms || DEFAULT_ROOMS) : updater
+    }))
+  }
+
+  const setResidents = (updater) => {
+    setHostelData(prev => ({
+      ...prev,
+      residents: typeof updater === 'function' ? updater(prev.residents || DEFAULT_RESIDENTS) : updater
+    }))
+  }
+
+  const setGatePasses = (updater) => {
+    setHostelData(prev => ({
+      ...prev,
+      gatePasses: typeof updater === 'function' ? updater(prev.gatePasses || DEFAULT_GATE_PASSES) : updater
+    }))
+  }
+
 
   const [formData, setFormData] = useState({
     studentName: '',

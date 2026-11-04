@@ -66,7 +66,7 @@ import { useToast } from '../../../context/ToastContext'
 import Modal from '../../../components/common/Modal'
 import { PlatformService, PLATFORM_MODULES, SUBSCRIPTION_PLANS } from '../../../services/platformService'
 
-export const InstitutesView = ({ onRouteChange }) => {
+export const InstitutesView = () => {
   const { 
     institutes = [], 
     divisions = [], 
@@ -313,7 +313,7 @@ export const InstitutesView = ({ onRouteChange }) => {
         await updateItem('institutes', viewingDetails.id, { enabledModules: updatedEnabledList })
       }
       if (refreshData) {
-        refreshData()
+        refreshData?.()
       }
       const moduleName = PLATFORM_MODULES.find(m => m.key === moduleKey)?.name ||
         (viewingDetails.customModules || []).find(m => m.key === moduleKey)?.name || moduleKey
@@ -344,7 +344,7 @@ export const InstitutesView = ({ onRouteChange }) => {
         await updateItem('institutes', viewingDetails.id, { enabledModules: updatedEnabledList })
       }
       if (refreshData) {
-        refreshData()
+        refreshData?.()
       }
       toast.success(enableAll ? 'All feature modules ENABLED for this campus!' : 'Optional modules REMOVED/DISABLED (Core academic intact)!')
     } catch (err) {
@@ -390,7 +390,7 @@ export const InstitutesView = ({ onRouteChange }) => {
         })
       }
       if (refreshData) {
-        refreshData()
+        refreshData?.()
       }
       toast.success(`Custom module "${newModuleObj.name}" created and enabled for "${viewingDetails.name}"!`)
     } catch (err) {
@@ -419,7 +419,7 @@ export const InstitutesView = ({ onRouteChange }) => {
         })
       }
       if (refreshData) {
-        refreshData()
+        refreshData?.()
       }
       toast.success(`Custom module "${moduleName}" permanently removed!`)
     } catch (err) {
@@ -820,7 +820,7 @@ export const InstitutesView = ({ onRouteChange }) => {
   const handleCompleteWizard = async () => {
     try {
       await PlatformService.onboardInstitute(wizardData)
-      refreshData()
+      refreshData?.()
       setIsWizardOpen(false)
       setNewlyCreatedCreds({
         name: wizardData.name,
@@ -854,7 +854,7 @@ export const InstitutesView = ({ onRouteChange }) => {
 
     try {
       await PlatformService.updateInstituteLifecycle(inst.id, action)
-      refreshData()
+      refreshData?.()
       toast.success(`Institute "${inst.name}" set to ${action.toUpperCase()} successfully.`)
     } catch (err) {
       toast.error(err.message || 'Lifecycle update failed')
@@ -869,7 +869,7 @@ export const InstitutesView = ({ onRouteChange }) => {
 
     try {
       await PlatformService.updateInstituteLifecycle(suspensionTarget.id, 'Suspend', suspensionReason.trim())
-      refreshData()
+      refreshData?.()
       toast.warning(`Institute "${suspensionTarget.name}" has been SUSPENDED. Access revoked.`)
       setSuspensionTarget(null)
       setSuspensionReason('')
@@ -949,7 +949,7 @@ export const InstitutesView = ({ onRouteChange }) => {
         adminEmail: credentialsForm.adminEmail,
         password: credentialsForm.password
       })
-      refreshData()
+      refreshData?.()
       toast.success(`Administrator credentials for "${credentialsModal.name}" updated successfully!`)
       setCredentialsModal(null)
     } catch (err) {
@@ -965,7 +965,7 @@ export const InstitutesView = ({ onRouteChange }) => {
 
     try {
       await PlatformService.resetAdminPassword(passwordResetTarget.id, newAdminPassword)
-      refreshData()
+      refreshData?.()
       toast.success(`Administrator password for "${passwordResetTarget.name}" has been reset.`)
       setPasswordResetTarget(null)
       setNewAdminPassword('')
@@ -1347,7 +1347,7 @@ export const InstitutesView = ({ onRouteChange }) => {
       for (const id of selectedCampusIds) {
         await PlatformService.updateInstituteLifecycle(id, action, `Bulk ${verb} by Superadmin`)
       }
-      refreshData()
+      refreshData?.()
       setSelectedCampusIds([])
       toast.success(`Successfully ${verb} ${count} selected campuses.`)
     } catch (err) {
@@ -1595,7 +1595,7 @@ export const InstitutesView = ({ onRouteChange }) => {
         importedCount++
       }
 
-      refreshData()
+      refreshData?.()
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new Event('sms_institutes_updated'))
         window.dispatchEvent(new Event('storage'))
@@ -1738,16 +1738,6 @@ export const InstitutesView = ({ onRouteChange }) => {
           >
             <Download className="w-3.5 h-3.5 text-slate-500 shrink-0" />
             <span>Export CSV</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onRouteChange && onRouteChange('platform-modules')}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#f5eeff] hover:bg-purple-100 text-purple-700 rounded-lg text-xs font-bold border border-purple-200/80 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
-            title="Configure Educational Wings & System Modules per Campus"
-          >
-            <Sliders className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-            <span>Modules & Features Control</span>
           </button>
 
           <button

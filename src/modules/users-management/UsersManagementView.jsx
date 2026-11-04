@@ -54,7 +54,7 @@ import {
 } from 'lucide-react'
 import { useAppData } from '../../context/AppDataContext'
 import { useAuth, hashPassword } from '../../context/AuthContext'
-import { SYSTEM_ROLES, DEFAULT_RBAC_PERMISSIONS, getRoleMeta } from '../../constants/systemRoles'
+import { SYSTEM_ROLES, DEFAULT_RBAC_PERMISSIONS, getRoleMeta, TIER_ROLE_GROUPS } from '../../constants/systemRoles'
 import { DataService } from '../../services/dataService'
 import Modal from '../../components/common/Modal'
 
@@ -75,7 +75,7 @@ export const hasPermission = (permId, role) => {
   return fallback ? !!fallback[role] : false
 }
 
-export const UsersManagementView = ({ defaultTab = 'all', onRouteChange }) => {
+export const UsersManagementView = ({ defaultTab = 'all', onRouteChange, currentInstitute }) => {
   const { users = [], stats, addItem, updateItem, deleteItem, institutes = [] } = useAppData()
   const { user: currentUser } = useAuth()
   
@@ -521,6 +521,33 @@ export const UsersManagementView = ({ defaultTab = 'all', onRouteChange }) => {
     handleExportUsersCSV(selectedUsersList)
   }
 
+  // Selected institute tier resolution for strict role scoping
+  const selectedInstTier = useMemo(() => {
+    const inst = (institutes || []).find(i => i.id === formData.institute)
+    if (!inst) return 'all'
+    const id = (inst.id || '').toLowerCase()
+    const name = (inst.name || '').toLowerCase()
+    const type = (inst.type || '').toLowerCase()
+    if (id === 'inst-4' || id.includes('ias') || type.includes('uni') || name.includes('undergraduate') || name.includes('applied sciences')) return 'university'
+    if (id === 'inst-3' || id.includes('ria') || type.includes('col') || name.includes('roots') || name.includes('college')) return 'college'
+    if (id === 'inst-2' || id.includes('csm') || type.includes('school') || name.includes('school')) return 'school'
+    return 'all'
+  }, [formData.institute, institutes])
+
+  const filteredRoleGroups = useMemo(() => {
+    if (!TIER_ROLE_GROUPS || TIER_ROLE_GROUPS.length === 0) return []
+    if (selectedInstTier === 'school') {
+      return TIER_ROLE_GROUPS.filter(g => g.tier === 'school' || g.tier === 'platform')
+    }
+    if (selectedInstTier === 'college') {
+      return TIER_ROLE_GROUPS.filter(g => g.tier === 'college' || g.tier === 'platform')
+    }
+    if (selectedInstTier === 'university') {
+      return TIER_ROLE_GROUPS.filter(g => g.tier === 'university' || g.tier === 'platform')
+    }
+    return TIER_ROLE_GROUPS
+  }, [selectedInstTier])
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -678,7 +705,12 @@ export const UsersManagementView = ({ defaultTab = 'all', onRouteChange }) => {
       const hashed = await hashPassword(newResetPassword)
       await updateItem('users', resetPasswordUser.id, {
         passwordHash: hashed,
-        passwordLastChangedAt: new Date().toISOString()
+        passwordLastChangedAt: new Date().toISOString(),
+        tier: formData.tier || (
+          formData.role.startsWith('college_') ? 'college' :
+          (formData.role.startsWith('uni_') || formData.role === 'university_admin') ? 'university' :
+          formData.role === 'superadmin' ? 'platform' : 'school'
+        )
       })
       if (DataService?.logAuditEvent) {
         DataService.logAuditEvent(
@@ -3104,9 +3136,19 @@ Audit library physical assets"
                 onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                 className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm bg-white font-medium"
               >
-                {allRoles.map(r => (
-                  <option key={r.id} value={r.id}>{r.name}</option>
-                ))}
+                {(filteredRoleGroups && filteredRoleGroups.length > 0 ? filteredRoleGroups : TIER_ROLE_GROUPS).length > 0 ? (
+                  (filteredRoleGroups && filteredRoleGroups.length > 0 ? filteredRoleGroups : TIER_ROLE_GROUPS).map(g => (
+                    <optgroup key={g.group} label={g.group}>
+                      {g.roles.map(r => (
+                        <option key={r.id} value={r.id}>{r.name}</option>
+                      ))}
+                    </optgroup>
+                  ))
+                ) : (
+                  allRoles.map(r => (
+                    <option key={r.id} value={r.id}>{r.name}</option>
+                  ))
+                )}
               </select>
             </div>
             <div>

@@ -326,7 +326,10 @@ export const PrintableFeeChallanModal = ({
             const grossAmount = Number(v.grossAmount || netAmount)
             const discount = Number(v.discountAmount || (grossAmount - netAmount))
             const lateAmount = netAmount + Number(lateFeeFine || 0)
-            const voucherCode = v.id ? `CH-${String(v.id).replace(/[^0-9]/g, '').slice(-6) || '260412'}` : `CH-260412`
+            const rawNum = String(v.id || '').replace(/[^0-9]/g, '').slice(-8) || '260412'
+            const instNum = String(currentInstitute?.code || '001').replace(/[^0-9]/g, '').padStart(4, '0')
+            // Standard Pakistani 1Link 1-Bill 18-digit numeric consumer code: 100482 + 4-digit institute + 8-digit invoice
+            const voucherCode = v.oneBillId || `100482${instNum}${rawNum.padStart(8, '0')}`.slice(0, 18)
 
             return (
               <div 
@@ -378,7 +381,7 @@ export const PrintableFeeChallanModal = ({
                           {/* 2. Barcode & Challan Metadata */}
                           <div className="my-2 py-1 bg-slate-50 border border-slate-200 rounded flex items-center justify-between px-2">
                             <div>
-                              <div className="text-[9px] text-slate-500 uppercase font-semibold">Voucher No</div>
+                              <div className="text-[9px] text-slate-500 uppercase font-semibold">1Link 1-Bill Consumer ID / Voucher No</div>
                               <div className="font-mono font-black text-xs text-slate-900">{voucherCode}</div>
                               <div className="text-[8px] text-slate-400">Session: 2026-2027</div>
                             </div>

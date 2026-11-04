@@ -46,8 +46,15 @@ export const UNIVERSITY_FEATURES = {
     'inst-timetable',
     'inst-program-levels',
     'inst-admissions',
-    'inst-library'
-    // Notice transport is usually optional/unneeded for university campuses, library is core
+    'inst-library',
+    'inst-course-registration',
+    'inst-research-fyp',
+    'inst-career-alumni',
+    'inst-campus-it',
+    'inst-scholarships',
+    'inst-discipline',
+    'inst-hostel',
+    'inst-labs'
   ],
 
   // Specific operational sentinel for University Dean / Registrar

@@ -159,11 +159,14 @@ export const ClassesView = ({ currentInstitute }) => {
     return teachers.filter(t => !t.instituteId || t.instituteId === currentInstitute?.id)
   }, [teachers, currentInstitute?.id])
 
+  // Filtered students for this campus (strict tenant isolation)
+  const campusStudents = useMemo(() => {
+    return students.filter(s => !s.instituteId || s.instituteId === currentInstitute?.id)
+  }, [students, currentInstitute?.id])
+
   // Count live enrolled students for a specific class & section
   const getLiveEnrolledCount = (className, sectionName) => {
-    return students.filter(s => {
-      const matchInst = !s.instituteId || s.instituteId === currentInstitute?.id
-      if (!matchInst) return false
+    return campusStudents.filter(s => {
       const matchClass = (s.className || '').toLowerCase().trim() === className.toLowerCase().trim()
       const matchSec = !sectionName || (s.section || '').toLowerCase().trim() === sectionName.toLowerCase().trim()
       return matchClass && matchSec
@@ -942,19 +945,26 @@ export const ClassesView = ({ currentInstitute }) => {
                       {secList.map((sec, idx) => {
                         const secEnrolled = getLiveEnrolledCount(c.name, sec.name)
                         const secCap = Number(sec.capacity || 40)
+                        const isOverCap = secEnrolled > secCap
                         const isSecFull = secEnrolled >= secCap
 
                         return (
                           <div 
                             key={sec.id || idx}
-                            className="p-2.5 rounded-xl border border-slate-200/80 bg-slate-50/60 hover:bg-slate-50 transition-colors flex items-center justify-between text-xs"
+                            className={`p-2.5 rounded-xl border transition-colors flex items-center justify-between text-xs ${
+                              isOverCap 
+                                ? 'border-rose-300 bg-rose-50/40 hover:bg-rose-50/70' 
+                                : 'border-slate-200/80 bg-slate-50/60 hover:bg-slate-50'
+                            }`}
                           >
                             <div 
                               onClick={() => setRosterDrawerData({ classItem: c, sectionItem: sec })}
                               className="flex items-center gap-2 cursor-pointer truncate flex-1"
                               title="Click to view section student roster"
                             >
-                              <div className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-[10px] shrink-0">
+                              <div className={`w-6 h-6 rounded-lg flex items-center justify-center font-bold text-[10px] shrink-0 ${
+                                isOverCap ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'
+                              }`}>
                                 {sec.name.replace(/Section\s*/i, '').charAt(0) || 'A'}
                               </div>
                               <div className="truncate">
@@ -962,7 +972,9 @@ export const ClassesView = ({ currentInstitute }) => {
                                 <span className="text-[10px] text-slate-400 flex items-center gap-1">
                                   <span>{sec.roomNo || 'Room 101'}</span>
                                   <span>•</span>
-                                  <span className="font-mono text-slate-600">{secEnrolled}/{secCap} Enrolled</span>
+                                  <span className={`font-mono ${isOverCap ? 'text-rose-700 font-black' : isSecFull ? 'text-amber-700 font-bold' : 'text-slate-600'}`}>
+                                    {secEnrolled}/{secCap} Enrolled
+                                  </span>
                                   {sec.classTeacherName && (
                                     <>
                                       <span>•</span>
@@ -974,8 +986,12 @@ export const ClassesView = ({ currentInstitute }) => {
                             </div>
 
                             <div className="flex items-center gap-1 shrink-0 ml-2">
-                              {isSecFull ? (
-                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
+                              {isOverCap ? (
+                                <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 border border-rose-300" title={`Classroom exceeded capacity by ${secEnrolled - secCap} students`}>
+                                  Over Cap (+{secEnrolled - secCap})
+                                </span>
+                              ) : isSecFull ? (
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
                                   Full
                                 </span>
                               ) : (
@@ -1174,7 +1190,7 @@ export const ClassesView = ({ currentInstitute }) => {
           targetClass={rosterDrawerData.classItem}
           targetSection={rosterDrawerData.sectionItem}
           allClasses={campusClasses}
-          students={students}
+          students={campusStudents}
           currentInstitute={currentInstitute}
           onMoveStudent={handleMoveStudent}
           onBulkMoveStudents={handleBulkMoveStudents}
@@ -1187,7 +1203,7 @@ export const ClassesView = ({ currentInstitute }) => {
         isOpen={isPromotionModalOpen}
         onClose={() => setIsPromotionModalOpen(false)}
         classes={campusClasses}
-        students={students}
+        students={campusStudents}
         currentSession={selectedSession}
         onPromoteClass={handlePromoteClass}
         onCloneSession={handleCloneSession}
@@ -1199,7 +1215,7 @@ export const ClassesView = ({ currentInstitute }) => {
         onClose={() => setProfileModalClass(null)}
         classItem={profileModalClass}
         teachers={instTeachers}
-        students={students}
+        students={campusStudents}
         currentInstitute={currentInstitute}
       />
 

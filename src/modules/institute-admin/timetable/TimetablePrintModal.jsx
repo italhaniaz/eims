@@ -30,7 +30,11 @@ export const TimetablePrintModal = ({
   const [printTarget, setPrintTarget] = useState('class') // 'class' | 'teacher' | 'school'
   const [selectedTeacherId, setSelectedTeacherId] = useState(teachers[0]?.id || '')
 
-  const allTimetables = useMemo(() => getAllTimetables(), [])
+  const allTimetables = useMemo(() => {
+    const list = getAllTimetables(currentInstitute?.id)
+    if (!currentInstitute?.id) return list
+    return list.filter(t => !t.instituteId || t.instituteId === currentInstitute.id)
+  }, [currentInstitute?.id])
 
   // Teacher Schedule computation
   const selectedTeacher = teachers.find(t => t.id === selectedTeacherId) || teachers[0]

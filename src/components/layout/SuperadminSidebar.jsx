@@ -52,6 +52,7 @@ export const SuperadminSidebar = ({
   const { user, logout } = useAuth()
   const [collapsed, setCollapsed] = useState(false)
   
+  const isAcademicGovRoute = ["sa-students", "sa-staff", "sa-academics", "sa-admissions", "sa-exams", "sa-fees", "sa-attendance", "sa-accounts", "sa-services", "sa-certificates", "sa-learning"].includes(currentRoute)
   const isPlatformRoute = ['institutes', 'support-approvals', 'platform-billing', 'platform-modules', 'cross-institute-analytics'].includes(currentRoute)
   const isUserRoute = ['users-all', 'users-roles', 'security-center'].includes(currentRoute)
   const isOperationsRoute = ['system-health', 'audit-logs', 'backup-data', 'communication', 'announcements', 'global-templates'].includes(currentRoute)
@@ -141,6 +142,7 @@ export const SuperadminSidebar = ({
 
   // Accordion states with smart auto-open for active routes
   const [platformOpen, setPlatformOpen] = useState(true)
+  const [academicGovOpen, setAcademicGovOpen] = useState(true)
   const [usersOpen, setUsersOpen] = useState(isUserRoute)
   const [operationsOpen, setOperationsOpen] = useState(isOperationsRoute)
   const [communicationOpen, setCommunicationOpen] = useState(isCommunicationRoute)
@@ -150,6 +152,7 @@ export const SuperadminSidebar = ({
 
   const closeAllGroups = () => {
     setPlatformOpen(false)
+    setAcademicGovOpen(false)
     setUsersOpen(false)
     setOperationsOpen(false)
     setCommunicationOpen(false)
@@ -198,7 +201,7 @@ export const SuperadminSidebar = ({
         `}
       >
         {/* Top Brand Header */}
-        <div className="h-16 sm:h-20 min-h-[64px] sm:min-h-[80px] flex items-center justify-between px-4 sm:px-5 border-b border-slate-100 shrink-0">
+        <div className="h-14 sm:h-16 min-h-[56px] sm:min-h-[64px] flex items-center justify-between px-4 sm:px-5 border-b border-slate-100 shrink-0">
           <div className="flex items-center gap-2.5 overflow-hidden">
             <div className="w-9 h-9 rounded-xl bg-[#f5eeff] text-purple-700 border border-purple-100 flex items-center justify-center shrink-0 font-bold text-xs shadow-2xs">
               <ShieldCheck className="w-5 h-5 text-purple-600" />
@@ -315,28 +318,6 @@ export const SuperadminSidebar = ({
                         {campusesCount}
                       </span>
                     )}
-                  </button>
-                </div>
-
-                <div className="relative">
-                  {isRouteActive('platform-modules') && (
-                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
-                  )}
-                  <button
-                    onClick={() => handleNavClick('platform-modules')}
-                    className={`w-full flex items-center justify-between text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
-                      isRouteActive('platform-modules')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold'
-                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Sliders className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('platform-modules') ? 'text-purple-600' : 'text-slate-400'}`} />
-                      <span>Modules & Feature Control</span>
-                    </div>
-                    <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 tracking-wide uppercase">
-                      Toggles
-                    </span>
                   </button>
                 </div>
 

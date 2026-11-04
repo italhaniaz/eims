@@ -734,39 +734,15 @@ export const getStoredData = () => {
       const parsed = JSON.parse(raw)
       const demoNames = ['Hamza Farooq', 'Ayesha Siddiqui', 'Daniyal Tariq', 'Zainab Fatima', 'Bilal Ahmed Khan', 'Ahmed Raza']
       const demoRolls = ['STD-101', 'COL-201', 'STD-103', 'REG-401', 'STD-105', 'BHS-2024-001', 'BHS-2024-002', 'STD-1001', 'COL-2002', 'REG-3003']
-      // Scrub dummy institutes
-      if (Array.isArray(parsed.institutes)) {
-        const demoInstIds = ['inst-1', 'inst-2', 'inst-3', 'c1000000-0000-0000-0000-000000000001', 'c1000000-0000-0000-0000-000000000002', 'c1000000-0000-0000-0000-000000000003']
-        const demoInstCodes = ['BHS-001', 'CSM-002', 'RIA-003']
-        const demoKeywords = ['beaconhouse', 'city school model town', 'roots international']
-        const filteredInsts = parsed.institutes.filter(inst => {
-          if (!inst) return false
-          if (demoInstIds.includes(inst.id)) return false
-          if (demoInstCodes.includes(inst.code)) return false
-          const nameLower = (inst.name || '').toLowerCase()
-          if (demoKeywords.some(k => nameLower.includes(k))) return false
-          return true
-        })
-        if (filteredInsts.length !== parsed.institutes.length) {
-          parsed.institutes = filteredInsts
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed))
-        }
+      // Ensure multi-tenant institutes persist reliably
+      if (!Array.isArray(parsed.institutes) || parsed.institutes.length === 0) {
+        parsed.institutes = sampleTemplateData.institutes || []
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed)) } catch {}
       }
 
-      // Scrub dummy users
-      if (Array.isArray(parsed.users)) {
-        const demoUserIds = ['usr-1', 'usr-2', 'usr-3', 'usr-admin-1', 'usr-demo']
-        const demoEmails = ['beacon.admin@sms.edu', 'beacon.central@sms.edu', 'info@cityschool.edu', 'rawalpindi@roots.edu', 'admin@schoolms.com']
-        const filteredUsers = parsed.users.filter(u => {
-          if (!u) return false
-          if (demoUserIds.includes(u.id)) return false
-          if (demoEmails.includes((u.email || '').toLowerCase())) return false
-          return true
-        })
-        if (filteredUsers.length !== parsed.users.length) {
-          parsed.users = filteredUsers
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed))
-        }
+      // Users list initialized safely
+      if (!Array.isArray(parsed.users)) {
+        parsed.users = []
       }
 
       // Scrub dummy audit logs
@@ -795,27 +771,12 @@ export const getStoredData = () => {
         parsed.teachers = defaultInitialTeachers
         try { localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed)) } catch {}
       }
-      if (Array.isArray(parsed.classes)) {
-        const demoClassIds = ['cls-1', 'cls-demo']
-        const demoClassNames = ['9th grade', 'Class 10']
-        const filteredClasses = parsed.classes.filter(c => {
-          if (demoClassIds.includes(c.id)) return false
-          const cNameLower = (c.name || '').toLowerCase()
-          if (demoClassNames.some(d => d.toLowerCase() === cNameLower)) return false
-          if (c.section && typeof c.section === 'string' && c.section.toLowerCase().includes('super section') && cNameLower.includes('9th')) return false
-          return true
-        })
-        if (filteredClasses.length !== parsed.classes.length) {
-          parsed.classes = filteredClasses
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed))
-        }
+      if (!Array.isArray(parsed.classes)) {
+        parsed.classes = []
       }
-      if (parsed.timetable) {
-        const strVal = JSON.stringify(parsed.timetable)
-        if (strVal.includes('Prof. Tariq') || strVal.includes('Dr. Fatima') || strVal.includes('Qari Sb') || strVal.includes('Engr. Imran') || strVal.includes('Library / Reading')) {
-          parsed.timetable = {}
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed))
-        }
+      // Live timetable store preserved
+      if (!parsed.timetable || typeof parsed.timetable !== 'object') {
+        parsed.timetable = {}
       }
       return {
         ...cleanZeroData,
@@ -839,7 +800,27 @@ export const saveStoredData = (data) => {
       ...data,
       stats: updatedStats
     }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload))
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload))
+    } catch (quotaErr) {
+      if (quotaErr.name === 'QuotaExceededError' || quotaErr.code === 22 || quotaErr.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+        console.warn('Storage quota limit reached! Pruning ephemeral audit & communication logs...')
+        if (Array.isArray(payload.auditLogs)) payload.auditLogs = payload.auditLogs.slice(0, 50)
+        if (Array.isArray(payload.communicationLogs)) payload.communicationLogs = payload.communicationLogs.slice(0, 30)
+        if (Array.isArray(payload.recentActivity)) payload.recentActivity = payload.recentActivity.slice(0, 20)
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(payload))
+        } catch (secondErr) {
+          if (Array.isArray(payload.auditLogs)) payload.auditLogs = payload.auditLogs.slice(0, 10)
+          if (Array.isArray(payload.communicationLogs)) payload.communicationLogs = payload.communicationLogs.slice(0, 10)
+          if (Array.isArray(payload.recentActivity)) payload.recentActivity = payload.recentActivity.slice(0, 5)
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(payload))
+        }
+      } else {
+        throw quotaErr
+      }
+    }
+
     if (typeof window !== 'undefined') {
       try {
         window.dispatchEvent(new CustomEvent('app-data-sync', { detail: payload }))

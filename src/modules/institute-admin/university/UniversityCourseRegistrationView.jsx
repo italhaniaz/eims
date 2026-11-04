@@ -20,6 +20,7 @@ import {
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
 import Modal from '../../../components/common/Modal'
+import { isAcademicProbation } from '../../../utils/securityUtils'
 
 export const UniversityCourseRegistrationView = ({ currentInstitute }) => {
   const { students = [] } = useAppData()
@@ -30,23 +31,32 @@ export const UniversityCourseRegistrationView = ({ currentInstitute }) => {
   const [programFilter, setProgramFilter] = useState('ALL')
   const [statusFilter, setStatusFilter] = useState('ALL')
   const [isEnrollModalOpen, setIsEnrollModalOpen] = useState(false)
+  const [deanWaiverModalReq, setDeanWaiverModalReq] = useState(null)
+  const [deanWaiverReason, setDeanWaiverReason] = useState('')
 
-  // Demo Registration Requests
-  const [registrationRequests, setRegistrationRequests] = useState([
+  const storageKey = `sms_uni_course_reg_${currentInstitute?.id || 'default'}`
+  // Persistent Registration Requests with HEC CGPA & Prerequisite Trackers
+  const [registrationRequests, setRegistrationRequests] = useState(() => {
+    try {
+      const saved = localStorage.getItem(storageKey)
+      if (saved) return JSON.parse(saved)
+    } catch {}
+    return [
     {
       id: 'REG-2026-101',
       studentName: 'Muhammad Hamza',
       regNo: 'BSCS-F23-018',
       program: 'BS Computer Science',
       semester: 'Semester 6',
+      cgpa: 3.68,
       totalCredits: 18,
       courses: [
-        { code: 'CS-301', title: 'Design & Analysis of Algorithms', cr: 3, section: 'A' },
-        { code: 'CS-305', title: 'Software Engineering Methodologies', cr: 3, section: 'B' },
-        { code: 'CS-308', title: 'Artificial Intelligence & Neural Nets', cr: 4, section: 'A' },
-        { code: 'CS-312', title: 'Database Systems & Warehousing', cr: 4, section: 'A' },
-        { code: 'HU-201', title: 'Technical & Business Writing', cr: 3, section: 'C' },
-        { code: 'CS-399', title: 'Junior Project Laboratory', cr: 1, section: 'A' }
+        { code: 'CS-301', title: 'Design & Analysis of Algorithms', cr: 3, section: 'A', prereq: 'CS-201 Data Structures', prereqMet: true },
+        { code: 'CS-305', title: 'Software Engineering Methodologies', cr: 3, section: 'B', prereq: 'None', prereqMet: true },
+        { code: 'CS-308', title: 'Artificial Intelligence & Neural Nets', cr: 4, section: 'A', prereq: 'CS-201 Data Structures', prereqMet: true },
+        { code: 'CS-312', title: 'Database Systems & Warehousing', cr: 4, section: 'A', prereq: 'CS-102 OOP', prereqMet: true },
+        { code: 'HU-201', title: 'Technical & Business Writing', cr: 3, section: 'C', prereq: 'None', prereqMet: true },
+        { code: 'CS-399', title: 'Junior Project Laboratory', cr: 1, section: 'A', prereq: 'Advisor Consent', prereqMet: true }
       ],
       advisorStatus: 'Approved',
       advisorName: 'Dr. Nadia Hashmi',
@@ -59,13 +69,14 @@ export const UniversityCourseRegistrationView = ({ currentInstitute }) => {
       regNo: 'BSSE-F23-042',
       program: 'BS Software Engineering',
       semester: 'Semester 6',
+      cgpa: 3.25,
       totalCredits: 17,
       courses: [
-        { code: 'SE-302', title: 'Software Architecture & Design', cr: 3, section: 'A' },
-        { code: 'SE-307', title: 'Web Application Frameworks', cr: 4, section: 'B' },
-        { code: 'CS-301', title: 'Design & Analysis of Algorithms', cr: 3, section: 'A' },
-        { code: 'MS-204', title: 'Probability & Statistics for Computing', cr: 3, section: 'C' },
-        { code: 'SE-320', title: 'Cloud DevOps Pipelines', cr: 4, section: 'A' }
+        { code: 'SE-302', title: 'Software Architecture & Design', cr: 3, section: 'A', prereq: 'SE-201 Intro to SE', prereqMet: true },
+        { code: 'SE-307', title: 'Web Application Frameworks', cr: 4, section: 'B', prereq: 'CS-102 OOP', prereqMet: true },
+        { code: 'CS-301', title: 'Design & Analysis of Algorithms', cr: 3, section: 'A', prereq: 'CS-201 Data Structures', prereqMet: true },
+        { code: 'MS-204', title: 'Probability & Statistics for Computing', cr: 3, section: 'C', prereq: 'MT-101 Calculus', prereqMet: true },
+        { code: 'SE-320', title: 'Cloud DevOps Pipelines', cr: 4, section: 'A', prereq: 'CS-210 OS', prereqMet: false }
       ],
       advisorStatus: 'Pending Review',
       advisorName: 'Prof. Tariq Jamil',
@@ -78,15 +89,16 @@ export const UniversityCourseRegistrationView = ({ currentInstitute }) => {
       regNo: 'BBA-F24-009',
       program: 'Bachelor of Business Admin (BBA)',
       semester: 'Semester 4',
-      totalCredits: 15,
+      cgpa: 1.82,
+      totalCredits: 14,
       courses: [
-        { code: 'FIN-201', title: 'Corporate Finance & Valuation', cr: 3, section: 'A' },
-        { code: 'MKT-202', title: 'Consumer Behavior & Brand Marketing', cr: 3, section: 'A' },
-        { code: 'MGT-205', title: 'Operations & Supply Chain', cr: 3, section: 'B' },
-        { code: 'ECO-203', title: 'Macroeconomic Analysis', cr: 3, section: 'A' },
-        { code: 'IT-105', title: 'Business Analytics with Python', cr: 3, section: 'C' }
+        { code: 'FIN-201', title: 'Corporate Finance & Valuation', cr: 3, section: 'A', prereq: 'ACC-101 Principles of Accounting', prereqMet: true },
+        { code: 'MKT-202', title: 'Consumer Behavior & Brand Marketing', cr: 3, section: 'A', prereq: 'MKT-101 Principles of Marketing', prereqMet: true },
+        { code: 'MGT-205', title: 'Operations & Supply Chain', cr: 3, section: 'B', prereq: 'None', prereqMet: true },
+        { code: 'ECO-203', title: 'Macroeconomic Analysis', cr: 3, section: 'A', prereq: 'ECO-101 Microeconomics', prereqMet: true },
+        { code: 'IT-105', title: 'Business Analytics with Python', cr: 2, section: 'C', prereq: 'None', prereqMet: true }
       ],
-      advisorStatus: 'Approved',
+      advisorStatus: 'Academic Probation Lock (Max 15 Cr)',
       advisorName: 'Dr. Shahzad Rafiq',
       status: 'Approved',
       submissionDate: '2026-10-22'
@@ -97,21 +109,29 @@ export const UniversityCourseRegistrationView = ({ currentInstitute }) => {
       regNo: 'BSAI-F25-014',
       program: 'BS Artificial Intelligence',
       semester: 'Semester 2',
+      cgpa: 3.85,
       totalCredits: 21,
       courses: [
-        { code: 'AI-101', title: 'Fundamentals of Artificial Intelligence', cr: 3, section: 'A' },
-        { code: 'CS-102', title: 'Object Oriented Programming', cr: 4, section: 'A' },
-        { code: 'MT-102', title: 'Multivariable Calculus & Linear Algebra', cr: 4, section: 'B' },
-        { code: 'PHY-101', title: 'Applied Physics & Semiconductors', cr: 4, section: 'A' },
-        { code: 'HU-102', title: 'Pakistan Studies & Islamic Thought', cr: 3, section: 'C' },
-        { code: 'AI-103', title: 'Python for Data Sciences Lab', cr: 3, section: 'A' }
+        { code: 'AI-101', title: 'Fundamentals of Artificial Intelligence', cr: 3, section: 'A', prereq: 'None', prereqMet: true },
+        { code: 'CS-102', title: 'Object Oriented Programming', cr: 4, section: 'A', prereq: 'CS-101 Intro to Prog', prereqMet: true },
+        { code: 'MT-102', title: 'Multivariable Calculus & Linear Algebra', cr: 4, section: 'B', prereq: 'MT-101 Calculus', prereqMet: true },
+        { code: 'PHY-101', title: 'Applied Physics & Semiconductors', cr: 4, section: 'A', prereq: 'None', prereqMet: true },
+        { code: 'HU-102', title: 'Pakistan Studies & Islamic Thought', cr: 3, section: 'C', prereq: 'None', prereqMet: true },
+        { code: 'AI-103', title: 'Python for Data Sciences Lab', cr: 3, section: 'A', prereq: 'CS-101', prereqMet: true }
       ],
-      advisorStatus: 'Overload Flagged',
+      advisorStatus: 'Overload Flagged (21 Cr Hrs)',
       advisorName: 'Dr. Nadia Hashmi',
       status: 'Dean Approval Required',
       submissionDate: '2026-10-29'
     }
-  ])
+    ]
+  })
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(registrationRequests))
+    } catch {}
+  }, [registrationRequests, storageKey])
 
   // Course Quotas & Capacities
   const [courseQuotas, setCourseQuotas] = useState([
@@ -144,6 +164,13 @@ export const UniversityCourseRegistrationView = ({ currentInstitute }) => {
   })
 
   const handleApprove = (id) => {
+    const targetReq = registrationRequests.find(r => r.id === id)
+    const hasUnmetPrereq = targetReq?.courses?.some(c => c.prereqMet === false)
+    if (hasUnmetPrereq && !targetReq?.deanWaiver) {
+      setDeanWaiverModalReq(targetReq)
+      setDeanWaiverReason('')
+      return
+    }
     setRegistrationRequests(prev => prev.map(req => {
       if (req.id === id) {
         return { ...req, status: 'Approved', advisorStatus: 'Approved' }
@@ -151,6 +178,28 @@ export const UniversityCourseRegistrationView = ({ currentInstitute }) => {
       return req
     }))
     toast.success('Course registration approved. Student study plan locked and synced with attendance ledger.')
+  }
+
+  const handleGrantDeanWaiver = (e) => {
+    e.preventDefault()
+    if (!deanWaiverReason.trim()) {
+      toast.error('Dean exemption reason is required for prerequisite bypass audit.')
+      return
+    }
+    setRegistrationRequests(prev => prev.map(req => {
+      if (req.id === deanWaiverModalReq.id) {
+        return {
+          ...req,
+          status: 'Approved',
+          advisorStatus: 'Approved (Dean Waiver)',
+          deanWaiver: deanWaiverReason.trim()
+        }
+      }
+      return req
+    }))
+    toast.success(`Dean Prerequisite Waiver granted for ${deanWaiverModalReq.studentName}. Registration approved.`)
+    setDeanWaiverModalReq(null)
+    setDeanWaiverReason('')
   }
 
   const handleCreateEnrollment = (e) => {
@@ -358,21 +407,42 @@ export const UniversityCourseRegistrationView = ({ currentInstitute }) => {
                         <div className="text-[11px] text-slate-400">{req.semester}</div>
                       </td>
                       <td className="py-3.5 px-4">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full font-bold text-xs ${
-                          req.totalCredits > 18 
-                            ? 'bg-rose-100 text-rose-700' 
-                            : 'bg-purple-100 text-purple-700'
-                        }`}>
-                          {req.totalCredits} Cr. Hrs
-                        </span>
+                        <div className="space-y-1">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full font-bold text-xs ${
+                            req.totalCredits > 18 
+                              ? 'bg-amber-100 text-amber-800 border border-amber-300' 
+                              : req.totalCredits < 15
+                              ? 'bg-slate-100 text-slate-700 border border-slate-200'
+                              : 'bg-purple-100 text-purple-800 border border-purple-200'
+                          }`}>
+                            {req.totalCredits} Cr. Hrs
+                          </span>
+                          <div className="text-[10px] font-semibold text-slate-500">
+                            {req.totalCredits > 18 ? '⚠️ Overload Cap' : req.totalCredits < 15 ? 'Underload (<15)' : 'HEC Regular Load'}
+                          </div>
+                        </div>
                       </td>
                       <td className="py-3.5 px-4">
-                        <div className="flex flex-wrap gap-1 max-w-xs">
-                          {req.courses.map(c => (
-                            <span key={c.code} className="text-[10px] bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-mono font-semibold" title={c.title}>
-                              {c.code} ({c.cr})
-                            </span>
-                          ))}
+                        <div className="space-y-1.5 max-w-xs">
+                          <div className="flex flex-wrap gap-1">
+                            {req.courses.map(c => (
+                              <span key={c.code} className="text-[10px] bg-slate-100 text-slate-800 px-1.5 py-0.5 rounded font-mono font-semibold border border-slate-200 flex items-center gap-1" title={`${c.title} — Prereq: ${c.prereq || 'None'}`}>
+                                <span>{c.code}</span>
+                                <span className="text-slate-400">({c.cr})</span>
+                              </span>
+                            ))}
+                          </div>
+                          {req.cgpa && (
+                            <div className="text-[10px] flex items-center gap-1">
+                              <span className="font-bold text-slate-600">HEC CGPA:</span>
+                              <span className={`font-mono font-bold ${isAcademicProbation(req.cgpa) ? 'text-rose-700 bg-rose-50 px-1 rounded border border-rose-200' : 'text-slate-800'}`}>
+                                {req.cgpa.toFixed(2)}
+                              </span>
+                              {isAcademicProbation(req.cgpa) && (
+                                <span className="text-[9px] font-bold text-rose-700 bg-rose-100 px-1 rounded">Probation</span>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </td>
                       <td className="py-3.5 px-4">
@@ -393,14 +463,24 @@ export const UniversityCourseRegistrationView = ({ currentInstitute }) => {
                       </td>
                       <td className="py-3.5 px-4 text-right">
                         {req.status !== 'Approved' ? (
-                          <button
-                            onClick={() => handleApprove(req.id)}
-                            className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-2xs active:scale-95 cursor-pointer"
-                          >
-                            Approve
-                          </button>
+                          (() => {
+                            const hasUnmet = req.courses.some(c => c.prereqMet === false)
+                            return (
+                              <button
+                                onClick={() => handleApprove(req.id)}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-2xs active:scale-95 cursor-pointer flex items-center gap-1 ml-auto ${
+                                  hasUnmet
+                                    ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                                    : 'bg-purple-600 hover:bg-purple-700 text-white'
+                                }`}
+                                title={hasUnmet ? 'Requires Dean Prerequisite Waiver' : 'Approve Registration'}
+                              >
+                                <span>{hasUnmet ? 'Dean Waiver Req.' : 'Approve'}</span>
+                              </button>
+                            )
+                          })()
                         ) : (
-                          <span className="text-xs text-slate-400 font-medium">Locked</span>
+                          <span className="text-xs text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Locked ✓</span>
                         )}
                       </td>
                     </tr>
@@ -565,6 +645,68 @@ export const UniversityCourseRegistrationView = ({ currentInstitute }) => {
           </div>
         </form>
       </Modal>
+      {/* Modal: Dean Prerequisite Exemption Waiver */}
+      {deanWaiverModalReq && (
+        <Modal
+          isOpen={Boolean(deanWaiverModalReq)}
+          onClose={() => setDeanWaiverModalReq(null)}
+          title="Dean Prerequisite Exemption Waiver (HEC Regulations)"
+          size="md"
+        >
+          <form onSubmit={handleGrantDeanWaiver} className="space-y-4">
+            <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-950 text-xs space-y-2">
+              <div className="font-bold flex items-center gap-1.5 text-amber-900">
+                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                <span>Statutory Prerequisite Missing</span>
+              </div>
+              <p className="text-slate-600 leading-relaxed">
+                Student <strong className="text-slate-900">{deanWaiverModalReq.studentName}</strong> ({deanWaiverModalReq.regNo}) is attempting to register for a course with an uncleared prerequisite:
+              </p>
+              <div className="space-y-1 font-mono text-[11px] bg-white p-2 rounded-lg border border-amber-200">
+                {deanWaiverModalReq.courses.filter(c => c.prereqMet === false).map(c => (
+                  <div key={c.code} className="text-rose-700 font-bold flex items-center justify-between">
+                    <span>{c.code}: {c.title}</span>
+                    <span className="text-[10px] bg-rose-100 text-rose-800 px-1.5 rounded">Requires: {c.prereq}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-slate-500 text-[11px]">
+                HEC Semester Rules mandate Dean / Academic Council authorization for prerequisite waivers.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5">
+                Dean Waiver Justification / Council Minute Reference *
+              </label>
+              <textarea
+                required
+                rows={3}
+                value={deanWaiverReason}
+                onChange={(e) => setDeanWaiverReason(e.target.value)}
+                placeholder="e.g. Final graduating semester special dispensation approved by Dean of Faculty under concurrent study regulations."
+                className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setDeanWaiverModalReq(null)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-purple-700 hover:bg-purple-800 transition-colors shadow-sm cursor-pointer"
+              >
+                Grant Dean Exemption & Lock Plan
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
     </div>
   )
 }

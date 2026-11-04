@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { 
   Sparkles, 
   Search, 
@@ -26,8 +26,9 @@ export const CollegeScholarshipsView = ({ currentInstitute }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false)
 
+
   // Demo Scholarships Data
-  const [scholarships, setScholarships] = useState([
+  const DEFAULT_SCHOLARSHIPS = [
     {
       id: 'SCH-2026-001',
       studentName: 'Amina Batool',
@@ -76,10 +77,10 @@ export const CollegeScholarshipsView = ({ currentInstitute }) => {
       approvedDate: '2026-09-12',
       status: 'Active'
     }
-  ])
+  ]
 
   // Demo Pending Applications
-  const [applications, setApplications] = useState([
+  const DEFAULT_APPLICATIONS = [
     {
       id: 'APP-901',
       studentName: 'Bilal Shahid',
@@ -102,7 +103,45 @@ export const CollegeScholarshipsView = ({ currentInstitute }) => {
       submissionDate: '2026-10-28',
       status: 'Under Review'
     }
-  ])
+  ]
+
+  const instId = currentInstitute?.id || 'default'
+  const scholarshipsStorageKey = `sms_scholarships_data_${instId}`
+
+  const [scholarshipsData, setScholarshipsData] = useState(() => {
+    try {
+      const saved = localStorage.getItem(scholarshipsStorageKey)
+      if (saved) return JSON.parse(saved)
+    } catch {}
+    return {
+      scholarships: DEFAULT_SCHOLARSHIPS,
+      applications: DEFAULT_APPLICATIONS
+    }
+  })
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(scholarshipsStorageKey, JSON.stringify(scholarshipsData))
+    } catch {}
+  }, [scholarshipsData, scholarshipsStorageKey])
+
+  const scholarships = scholarshipsData.scholarships || DEFAULT_SCHOLARSHIPS
+  const applications = scholarshipsData.applications || DEFAULT_APPLICATIONS
+
+  const setScholarships = (updater) => {
+    setScholarshipsData(prev => ({
+      ...prev,
+      scholarships: typeof updater === 'function' ? updater(prev.scholarships || DEFAULT_SCHOLARSHIPS) : updater
+    }))
+  }
+
+  const setApplications = (updater) => {
+    setScholarshipsData(prev => ({
+      ...prev,
+      applications: typeof updater === 'function' ? updater(prev.applications || DEFAULT_APPLICATIONS) : updater
+    }))
+  }
+
 
   const [formData, setFormData] = useState({
     studentName: '',

@@ -3,16 +3,36 @@
 @tailwind utilities;
 
 @layer base {
+  /* Ergonomic, user-friendly viewport base scaling (neither too large nor too small) */
+  html {
+    scroll-behavior: smooth;
+    font-size: 14px; /* Golden-ratio desktop scale: compact, clean, and highly readable */
+  }
+
+  @media (min-width: 1440px) {
+    html {
+      font-size: 14.5px;
+    }
+  }
+
+  @media (min-width: 1920px) {
+    html {
+      font-size: 15px;
+    }
+  }
+
+  @media (max-width: 640px) {
+    html {
+      font-size: 13.5px;
+    }
+  }
+
   html, body, #root {
     min-height: 100%;
     width: 100%;
     margin: 0;
     padding: 0;
     overflow-x: clip;
-  }
-
-  html {
-    scroll-behavior: smooth;
   }
 
   body {
@@ -98,30 +118,52 @@
   body {
     background: #ffffff !important;
     color: #000000 !important;
-    margin: 0 !important;
-    padding: 0 !important;
+    font-size: 11pt !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
-  .fixed,
-  .backdrop-blur-sm,
-  .bg-black\/60 {
-    position: static !important;
-    background: transparent !important;
-    backdrop-filter: none !important;
+  .print-page {
     box-shadow: none !important;
-    padding: 0 !important;
+    border: none !important;
     margin: 0 !important;
+    padding: 0 !important;
     width: 100% !important;
-    max-width: 100% !important;
+  }
+}
+
+/* Professional A4 Bank Challan Print Rules & Sticky Data Grid */
+@media print {
+  @page {
+    size: auto;
+    margin: 8mm;
   }
 
-  .border,
-  .border-2 {
-    border-color: #000000 !important;
-  }
-
-  .break-inside-avoid {
-    break-inside: avoid !important;
+  .challan-print-layout {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+    width: 100% !important;
     page-break-inside: avoid !important;
   }
+
+  .challan-part {
+    border: 1px dashed #334155 !important;
+    padding: 10px !important;
+    background: #ffffff !important;
+    font-size: 8.5pt !important;
+  }
+}
+
+/* Sticky Data Grid Table Column & Touch Fluidity */
+.table-sticky-col {
+  position: sticky;
+  left: 0;
+  background-color: inherit;
+  z-index: 10;
+  box-shadow: 3px 0 6px -3px rgba(0, 0, 0, 0.08);
+}
+
+.scroll-touch {
+  -webkit-overflow-scrolling: touch;
 }

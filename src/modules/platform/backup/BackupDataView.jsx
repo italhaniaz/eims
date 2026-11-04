@@ -24,11 +24,14 @@ import {
 } from 'lucide-react'
 import StatCard from '../../../components/common/StatCard'
 import Modal from '../../../components/common/Modal'
+import { useAppData } from '../../../context/AppDataContext'
 import { OperationsService } from '../../../services/operationsService'
 import { DataService, getStoredData } from '../../../services/dataService'
 
 const BackupDataView = ({ initialTab = 'backups' }) => {
+  const { addItem } = useAppData() || {}
   const [activeTab, setActiveTab] = useState(initialTab)
+  const [isCommitting, setIsCommitting] = useState(false)
   const [inspectingSessionBackup, setInspectingSessionBackup] = useState(null)
   const [sessionBackupSearch, setSessionBackupSearch] = useState('')
   const [sessionBackups, setSessionBackups] = useState(() => {
@@ -144,6 +147,34 @@ const BackupDataView = ({ initialTab = 'backups' }) => {
     if (!csvContent.trim()) return
     const result = OperationsService.validateBulkImport(csvContent, importType)
     setValidationResult(result)
+  }
+
+  const handleCommitBulkImport = async () => {
+    if (!validationResult || validationResult.validCount === 0) return
+    const validRows = (validationResult.allRows || []).filter(r => r.isValid)
+    if (validRows.length === 0) return
+
+    setIsCommitting(true)
+    try {
+      const res = await OperationsService.commitBulkImport(
+        validRows,
+        importType,
+        selectedInstituteId || 'inst-1',
+        addItem
+      )
+      if (res.success) {
+        showToast(`Successfully imported and committed ${res.committedCount} ${importType} records!`)
+        setValidationResult(null)
+        setCsvContent('')
+      } else {
+        showToast(res.error || 'Failed to commit bulk import records.')
+      }
+    } catch (err) {
+      console.error(err)
+      showToast('An unexpected error occurred during bulk import execution.')
+    } finally {
+      setIsCommitting(false)
+    }
   }
 
   const handleFileSelectForRestore = (e) => {
@@ -669,19 +700,35 @@ const BackupDataView = ({ initialTab = 'backups' }) => {
           </div>
 
           <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <label className="text-xs font-semibold text-slate-700">Entity Type:</label>
-              <select
-                value={importType}
-                onChange={(e) => {
-                  setImportType(e.target.value)
-                  setValidationResult(null)
-                }}
-                className="px-3 py-1.5 text-xs border border-slate-200 rounded-lg bg-white"
-              >
-                <option value="students">Students Roster</option>
-                <option value="institutes">Institutes Directory</option>
-              </select>
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-semibold text-slate-700">Entity Type:</label>
+                <select
+                  value={importType}
+                  onChange={(e) => {
+                    setImportType(e.target.value)
+                    setValidationResult(null)
+                  }}
+                  className="px-3 py-1.5 text-xs border border-slate-200 rounded-lg bg-white"
+                >
+                  <option value="students">Students Roster</option>
+                  <option value="teachers">Staff & Faculty Directory</option>
+                  <option value="institutes">Institutes Directory</option>
+                </select>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-semibold text-slate-700">Target Campus:</label>
+                <select
+                  value={selectedInstituteId}
+                  onChange={(e) => setSelectedInstituteId(e.target.value)}
+                  className="px-3 py-1.5 text-xs border border-slate-200 rounded-lg bg-white max-w-xs"
+                >
+                  {institutes.map(inst => (
+                    <option key={inst.id} value={inst.id}>{inst.name} ({inst.code || 'Campus'})</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div>
@@ -759,6 +806,31 @@ const BackupDataView = ({ initialTab = 'backups' }) => {
                       ))}
                     </tbody>
                   </table>
+                </div>
+
+                {/* Execute Commit Action Button */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                  <div className="text-xs text-slate-600">
+                    Target: <strong className="text-slate-900">{institutes.find(i => i.id === selectedInstituteId)?.name || 'Designated Campus'}</strong> • Ready to commit <strong className="text-emerald-700">{validationResult.validCount}</strong> valid {importType} rows.
+                  </div>
+                  <button
+                    type="button"
+                    disabled={isCommitting || validationResult.validCount === 0}
+                    onClick={handleCommitBulkImport}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
+                  >
+                    {isCommitting ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        <span>Committing Records...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-4 h-4" />
+                        <span>Execute Import (Commit {validationResult.validCount} Valid Records)</span>
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
             )}

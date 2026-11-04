@@ -34,8 +34,27 @@ export const PrintableSyllabusModal = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto animate-in fade-in duration-150">
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden my-auto">
+        {/* Print Styles for Official Syllabus Gazette */}
+        <style>{`
+          @media print {
+            body * { visibility: hidden !important; }
+            #printable-syllabus-sheet, #printable-syllabus-sheet * { visibility: visible !important; }
+            #printable-syllabus-sheet {
+              position: absolute !important;
+              left: 0 !important;
+              top: 0 !important;
+              width: 100% !important;
+              margin: 0 !important;
+              padding: 8mm !important;
+              background: white !important;
+            }
+            .no-print { display: none !important; }
+            @page { size: A4 landscape; margin: 8mm; }
+          }
+        `}</style>
+
         {/* Header bar (Hidden in Print) */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/80 print:hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/80 print:hidden no-print">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
               <Printer className="w-5 h-5" />
@@ -63,7 +82,7 @@ export const PrintableSyllabusModal = ({
         </div>
 
         {/* Printable Paper Area */}
-        <div className="p-8 sm:p-12 overflow-y-auto print:p-0 print:overflow-visible">
+        <div id="printable-syllabus-sheet" className="p-8 sm:p-12 overflow-y-auto print:p-0 print:overflow-visible">
           {/* Institutional Letterhead */}
           <div className="border-b-2 border-slate-900 pb-5 mb-6 text-center space-y-1">
             <div className="flex items-center justify-center gap-2 font-black text-xl tracking-tight text-slate-950 uppercase">

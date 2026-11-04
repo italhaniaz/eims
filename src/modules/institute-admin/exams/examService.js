@@ -50,10 +50,11 @@ export const DEFAULT_CAMBRIDGE_BANDS = [
 /**
  * Get Exam Settings with fallback
  */
-export const getExamSettings = () => {
+export const getExamSettings = (instituteId = null) => {
   try {
     if (typeof localStorage !== 'undefined') {
-      const raw = localStorage.getItem(STORAGE_KEYS.SETTINGS)
+      const tenantKey = instituteId ? `${STORAGE_KEYS.SETTINGS}_${instituteId}` : null
+      const raw = (tenantKey && localStorage.getItem(tenantKey)) || localStorage.getItem(STORAGE_KEYS.SETTINGS)
       if (raw) return JSON.parse(raw)
     }
   } catch (e) {
@@ -72,12 +73,16 @@ export const getExamSettings = () => {
 }
 
 /**
- * Save Exam Settings
+ * Save Exam Settings with multi-tenant storage scoping
  */
-export const saveExamSettings = (settings) => {
+export const saveExamSettings = (settings, instituteId = null) => {
   try {
     if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings))
+      const tenantKey = instituteId ? `${STORAGE_KEYS.SETTINGS}_${instituteId}` : STORAGE_KEYS.SETTINGS
+      localStorage.setItem(tenantKey, JSON.stringify(settings))
+      if (instituteId) {
+        localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings))
+      }
     }
   } catch (e) {
     console.error('Failed saving exam settings:', e)

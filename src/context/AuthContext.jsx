@@ -86,11 +86,12 @@ export const AuthProvider = ({ children }) => {
     let timeoutId
     let sessionTimeoutMins = 30
     try {
-      const stored = localStorage.getItem('edu_sms_data_v2')
+      const stored = localStorage.getItem('sms_database_v3_enterprise') || localStorage.getItem('edu_sms_data_v2')
       if (stored) {
         const parsed = JSON.parse(stored)
-        if (parsed?.systemPolicy?.sessionTimeoutMinutes) {
-          sessionTimeoutMins = Number(parsed.systemPolicy.sessionTimeoutMinutes) || 30
+        const policy = parsed?.securityPolicy || parsed?.systemPolicy
+        if (policy?.sessionTimeoutMinutes) {
+          sessionTimeoutMins = Number(policy.sessionTimeoutMinutes) || 30
         }
       }
     } catch (e) {}
@@ -104,12 +105,20 @@ export const AuthProvider = ({ children }) => {
       }, IDLE_TIMEOUT_MS)
     }
 
+    const handleStorageChange = (e) => {
+      if (e.key === 'sms_auth_user' && !e.newValue) {
+        logout()
+      }
+    }
+    window.addEventListener('storage', handleStorageChange)
+
     const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart']
     events.forEach(evt => window.addEventListener(evt, resetTimer, { passive: true }))
     resetTimer()
 
     return () => {
       clearTimeout(timeoutId)
+      window.removeEventListener('storage', handleStorageChange)
       events.forEach(evt => window.removeEventListener(evt, resetTimer))
     }
   }, [user])
@@ -624,22 +633,6 @@ export const AuthProvider = ({ children }) => {
       case 'institute_admin':
       default: {
         const mail = (customEmail || '').toLowerCase()
-        if (mail === 'admin' || mail === 'superadmin' || mail === 'admin@schoolms.com' || mail.includes('superadmin') || mail === 'root') {
-          userPayload = {
-            id: 'usr-1',
-            name: 'Super Administrator',
-            roleTitle: 'Superadmin',
-            role: 'superadmin',
-            email: customEmail || 'admin@schoolms.com',
-            avatar: null,
-            instituteId: null,
-            instituteName: 'Central Headquarters',
-            scope: 'Platform Wide',
-            isExplicitLogin: true,
-            loginTimestamp: new Date().toISOString()
-          }
-          break
-        }
         if (mail.includes('cityschool') || mail.includes('school')) {
           userPayload = {
             id: 'usr-school',
@@ -733,6 +726,27 @@ export const AuthProvider = ({ children }) => {
       console.error('Storage clear error:', e)
     }
   }
+
+  // Inactivity watchdog: Auto-logout after 30 minutes of terminal inactivity
+  useEffect(() => {
+    if (!user || typeof window === 'undefined') return
+    let timer
+    const IDLE_LIMIT = 30 * 60 * 1000
+    const resetTimer = () => {
+      if (timer) clearTimeout(timer)
+      timer = setTimeout(() => {
+        console.warn('Session expired due to inactivity watchdog.')
+        logout()
+      }, IDLE_LIMIT)
+    }
+    const evts = ['mousemove', 'keydown', 'mousedown', 'touchstart', 'scroll']
+    evts.forEach(evt => window.addEventListener(evt, resetTimer, { passive: true }))
+    resetTimer()
+    return () => {
+      if (timer) clearTimeout(timer)
+      evts.forEach(evt => window.removeEventListener(evt, resetTimer))
+    }
+  }, [user])
 
   const switchRole = (newRole) => {
     login(newRole)

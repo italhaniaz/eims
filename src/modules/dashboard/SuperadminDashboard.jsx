@@ -1220,7 +1220,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
   }
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 pb-16 space-y-6 max-w-[1400px] mx-auto">
+    <div className="p-3 sm:p-4 md:p-6 pb-12 space-y-4 sm:space-y-5 max-w-[1360px] mx-auto">
       {/* Toast Feedback */}
       {reportSuccess && (
         <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-2xl flex items-center justify-between shadow-xs animate-in fade-in">
@@ -1255,7 +1255,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               <span>Multi-Campus Platform Governance</span>
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-heading">
+          <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight font-heading">
             Super Admin Dashboard
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1 font-sans">
@@ -1395,15 +1395,15 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
             <span className="hidden md:inline">Export CSV</span>
           </button>
 
-          {/* Action 5: Modules & Features Control */}
+          {/* Action 5: Wings Matrix */}
           <button
             type="button"
             onClick={() => onRouteChange('platform-modules')}
-            className="h-10 px-3.5 bg-[#f5eeff] hover:bg-purple-100 border border-purple-200 text-purple-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs whitespace-nowrap shrink-0"
-            title="Configure Educational Wings & System Modules per Campus"
+            className="h-10 px-3 bg-white hover:bg-purple-50/60 border border-slate-200 text-slate-700 hover:text-purple-700 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs whitespace-nowrap shrink-0"
+            title="Open Educational Wings Matrix"
           >
             <Sliders className="w-4 h-4 text-purple-600 shrink-0" />
-            <span>Modules & Feature Control</span>
+            <span className="hidden lg:inline">Wings Matrix</span>
           </button>
         </div>
       </div>

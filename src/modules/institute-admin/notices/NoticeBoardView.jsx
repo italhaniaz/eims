@@ -694,7 +694,7 @@ export const NoticeBoardView = ({ currentInstitute }) => {
                     : 'OFFICE OF THE PRINCIPAL & ADMINISTRATIVE REGISTRAR'}
                 </p>
                 <p className="text-[10px] text-slate-500 font-mono font-sans">
-                  Campus Code: {currentInstitute?.code || 'CAMPUS-01'} • Government of the Punjab Registered
+                  Campus Code: {currentInstitute?.code || 'CAMPUS-01'} • {currentInstitute?.affiliation || currentInstitute?.province || 'Registered Institution'}
                 </p>
               </div>
 

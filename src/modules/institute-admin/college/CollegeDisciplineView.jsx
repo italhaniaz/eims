@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { 
   ShieldAlert, 
   Search, 
@@ -25,8 +25,9 @@ export const CollegeDisciplineView = ({ currentInstitute }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [isIncidentModalOpen, setIsIncidentModalOpen] = useState(false)
 
+
   // Demo Disciplinary Incidents
-  const [incidents, setIncidents] = useState([
+  const DEFAULT_INCIDENTS = [
     {
       id: 'DISC-2026-101',
       studentName: 'Usman Ghani',
@@ -63,10 +64,10 @@ export const CollegeDisciplineView = ({ currentInstitute }) => {
       actionTaken: '3-Day Suspension & Show-Cause Hearing',
       status: 'Committee Review'
     }
-  ])
+  ]
 
   // Demo Show-Cause Notices
-  const [notices, setNotices] = useState([
+  const DEFAULT_NOTICES = [
     {
       id: 'SCN-2026-08',
       studentName: 'Haris Qureshi',
@@ -87,7 +88,45 @@ export const CollegeDisciplineView = ({ currentInstitute }) => {
       committeeDecision: 'Pending Hearing with Parents',
       status: 'Scheduled'
     }
-  ])
+  ]
+
+  const instId = currentInstitute?.id || 'default'
+  const disciplineStorageKey = `sms_discipline_data_${instId}`
+
+  const [disciplineData, setDisciplineData] = useState(() => {
+    try {
+      const saved = localStorage.getItem(disciplineStorageKey)
+      if (saved) return JSON.parse(saved)
+    } catch {}
+    return {
+      incidents: DEFAULT_INCIDENTS,
+      notices: DEFAULT_NOTICES
+    }
+  })
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(disciplineStorageKey, JSON.stringify(disciplineData))
+    } catch {}
+  }, [disciplineData, disciplineStorageKey])
+
+  const incidents = disciplineData.incidents || DEFAULT_INCIDENTS
+  const notices = disciplineData.notices || DEFAULT_NOTICES
+
+  const setIncidents = (updater) => {
+    setDisciplineData(prev => ({
+      ...prev,
+      incidents: typeof updater === 'function' ? updater(prev.incidents || DEFAULT_INCIDENTS) : updater
+    }))
+  }
+
+  const setNotices = (updater) => {
+    setDisciplineData(prev => ({
+      ...prev,
+      notices: typeof updater === 'function' ? updater(prev.notices || DEFAULT_NOTICES) : updater
+    }))
+  }
+
 
   // Demo Proctorial Board
   const proctors = [

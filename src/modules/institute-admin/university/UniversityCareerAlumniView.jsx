@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { 
   Briefcase, 
   Search, 
@@ -28,8 +28,9 @@ export const UniversityCareerAlumniView = ({ currentInstitute }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [isDriveModalOpen, setIsDriveModalOpen] = useState(false)
 
+
   // Demo Recruitment Drives
-  const [recruitmentDrives, setRecruitmentDrives] = useState([
+  const DEFAULT_RECRUITMENT_DRIVES = [
     {
       id: 'DRV-2026-01',
       company: 'Systems Limited',
@@ -66,10 +67,10 @@ export const UniversityCareerAlumniView = ({ currentInstitute }) => {
       status: 'Upcoming',
       deadline: '2026-11-30'
     }
-  ])
+  ]
 
   // Demo Internships
-  const [internships, setInternships] = useState([
+  const DEFAULT_INTERNSHIPS = [
     {
       id: 'INT-2026-001',
       studentName: 'Muhammad Hamza',
@@ -100,10 +101,10 @@ export const UniversityCareerAlumniView = ({ currentInstitute }) => {
       evaluationScore: 'A (Outstanding)',
       hecMandatoryCleared: true
     }
-  ])
+  ]
 
   // Demo Alumni Directory
-  const [alumni, setAlumni] = useState([
+  const DEFAULT_ALUMNI = [
     {
       id: 'ALM-2024-01',
       name: 'Farhan Zaidi',
@@ -131,7 +132,54 @@ export const UniversityCareerAlumniView = ({ currentInstitute }) => {
       location: 'Karachi, Pakistan',
       isMentor: false
     }
-  ])
+  ]
+
+  const instId = currentInstitute?.id || 'default'
+  const careerStorageKey = `sms_career_alumni_${instId}`
+
+  const [careerData, setCareerData] = useState(() => {
+    try {
+      const saved = localStorage.getItem(careerStorageKey)
+      if (saved) return JSON.parse(saved)
+    } catch {}
+    return {
+      recruitmentDrives: DEFAULT_RECRUITMENT_DRIVES,
+      internships: DEFAULT_INTERNSHIPS,
+      alumni: DEFAULT_ALUMNI
+    }
+  })
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(careerStorageKey, JSON.stringify(careerData))
+    } catch {}
+  }, [careerData, careerStorageKey])
+
+  const recruitmentDrives = careerData.recruitmentDrives || DEFAULT_RECRUITMENT_DRIVES
+  const internships = careerData.internships || DEFAULT_INTERNSHIPS
+  const alumni = careerData.alumni || DEFAULT_ALUMNI
+
+  const setRecruitmentDrives = (updater) => {
+    setCareerData(prev => ({
+      ...prev,
+      recruitmentDrives: typeof updater === 'function' ? updater(prev.recruitmentDrives || DEFAULT_RECRUITMENT_DRIVES) : updater
+    }))
+  }
+
+  const setInternships = (updater) => {
+    setCareerData(prev => ({
+      ...prev,
+      internships: typeof updater === 'function' ? updater(prev.internships || DEFAULT_INTERNSHIPS) : updater
+    }))
+  }
+
+  const setAlumni = (updater) => {
+    setCareerData(prev => ({
+      ...prev,
+      alumni: typeof updater === 'function' ? updater(prev.alumni || DEFAULT_ALUMNI) : updater
+    }))
+  }
+
 
   const [formData, setFormData] = useState({
     company: '',

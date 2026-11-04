@@ -34,10 +34,13 @@ import {
   RefreshCw,
   Sun,
   ShieldAlert,
-  GraduationCap
+  GraduationCap,
+  Cpu,
+  Activity
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
 import { useAuth } from '../../../context/AuthContext'
+import { useToast } from '../../../context/ToastContext'
 import { normalizeClassSections } from '../../../constants/academicLevels'
 import {
   ATTENDANCE_STATUSES,
@@ -69,6 +72,7 @@ import UnlockSheetModal from './UnlockSheetModal'
 import AttendanceAuditHistoryModal from './AttendanceAuditHistoryModal'
 
 export const AttendanceView = ({ currentInstitute, onRouteChange }) => {
+  const { toast } = useToast()
   const { 
     students = [], 
     classes = [], 
@@ -91,6 +95,8 @@ export const AttendanceView = ({ currentInstitute, onRouteChange }) => {
   const [settings, setSettings] = useState(() => getAttendanceSettings())
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isLeavesModalOpen, setIsLeavesModalOpen] = useState(false)
+  const [isBiometricModalOpen, setIsBiometricModalOpen] = useState(false)
+  const [biometricInput, setBiometricInput] = useState("")
 
   // 2. Shared Academic Sessions Management (format 2026-2027)
   const [sessionsList, setSessionsList] = useState(() => {
@@ -269,12 +275,11 @@ export const AttendanceView = ({ currentInstitute, onRouteChange }) => {
   const [sheetMetadata, setSheetMetadata] = useState(null)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [unmarkedAlert, setUnmarkedAlert] = useState(false)
-  const [toastMessage, setToastMessage] = useState(null)
 
   const activeCompoundKey = useMemo(() => {
     if (!selectedClass || !selectedSection) return null
-    return buildAttendanceKey(selectedSession, selectedClass, selectedSection, date, selectedSubjectId)
-  }, [selectedSession, selectedClass, selectedSection, date, selectedSubjectId])
+    return buildAttendanceKey(selectedSession, selectedClass, selectedSection, date, selectedSubjectId, currentInstitute?.id)
+  }, [selectedSession, selectedClass, selectedSection, date, selectedSubjectId, currentInstitute?.id])
 
   // Load Record or Draft on selection change
   useEffect(() => {
@@ -288,7 +293,7 @@ export const AttendanceView = ({ currentInstitute, onRouteChange }) => {
     }
 
     // 1. Check existing saved record in persistent store
-    const saved = getAttendanceRecord(selectedSession, selectedClass, selectedSection, date, selectedSubjectId)
+    const saved = getAttendanceRecord(selectedSession, selectedClass, selectedSection, date, selectedSubjectId, currentInstitute?.id)
     if (saved && saved.records && Object.keys(saved.records).length > 0) {
       const loaded = {}
       rosterStudents.forEach(s => {
@@ -480,7 +485,9 @@ export const AttendanceView = ({ currentInstitute, onRouteChange }) => {
       date,
       payload,
       user || 'Teacher',
-      'Saved'
+      'Saved',
+      '',
+      currentInstitute?.id
     )
 
     if (saveAttendanceContext) {
@@ -494,6 +501,50 @@ export const AttendanceView = ({ currentInstitute, onRouteChange }) => {
     triggerToast(`Daily attendance for ${selectedClass} (${selectedSection}) saved successfully!`)
   }
 
+  // Biometric machine parser handler (ZKTeco, RFID, Realtime)
+  const handleApplyBiometricPunches = () => {
+    if (!biometricInput.trim()) {
+      triggerToast("Please enter or paste biometric machine punch records.", true)
+      return
+    }
+    const lines = biometricInput.split("\n").map(l => l.trim()).filter(Boolean)
+    const punchMap = {}
+    lines.forEach(line => {
+      const parts = line.split(/[,\t\s]+/)
+      if (parts.length >= 2) {
+        const roll = parts[0].trim().toUpperCase()
+        const time = parts[1].trim()
+        punchMap[roll] = time
+      }
+    })
+    let matchedCount = 0
+    const updatedRecords = { ...attendanceRecords }
+    rosterStudents.forEach(std => {
+      const roll = (std.rollNumber || "").toUpperCase()
+      const punchTime = punchMap[roll]
+      if (punchTime) {
+        matchedCount++
+        const [hh, mm] = punchTime.split(":").map(Number)
+        const isLate = (hh > 8) || (hh === 8 && mm > 10)
+        updatedRecords[std.id] = {
+          status: isLate ? "L" : "P",
+          reason: isLate ? `Biometric In: ${punchTime} (Late Arrival)` : `Biometric In: ${punchTime}`,
+          remarks: "Verified via Biometric Terminal"
+        }
+      } else if (!updatedRecords[std.id] || updatedRecords[std.id].status === "unmarked") {
+        updatedRecords[std.id] = {
+          status: "A",
+          reason: "No biometric punch record found",
+          remarks: "Auto-flagged Absent"
+        }
+      }
+    })
+    setAttendanceRecords(updatedRecords)
+    setHasUnsavedChanges(true)
+    setIsBiometricModalOpen(false)
+    setBiometricInput("")
+    triggerToast(`Biometric punch times synchronized for ${matchedCount} student(s)!`)
+  }
   // Lock / Unlock sheet handlers
   const [isUnlockModalOpen, setIsUnlockModalOpen] = useState(false)
   const [isAuditModalOpen, setIsAuditModalOpen] = useState(false)
@@ -518,7 +569,8 @@ export const AttendanceView = ({ currentInstitute, onRouteChange }) => {
         payload,
         user || 'Administrator',
         'Locked',
-        'Locked sheet by administrator'
+        'Locked sheet by administrator',
+        currentInstitute?.id
       )
       setSheetStatus('Locked')
       setSheetMetadata(locked)
@@ -547,8 +599,11 @@ export const AttendanceView = ({ currentInstitute, onRouteChange }) => {
 
   // Toast feedback helper
   const triggerToast = (text, isError = false) => {
-    setToastMessage({ text, isError })
-    setTimeout(() => setToastMessage(null), 4000)
+    if (isError) {
+      toast?.error?.(text)
+    } else {
+      toast?.success?.(text)
+    }
   }
 
   // 12. Keyboard Navigation (P, A, L, V, S, ArrowUp, ArrowDown)
@@ -602,7 +657,7 @@ export const AttendanceView = ({ currentInstitute, onRouteChange }) => {
   // 13. Monthly Matrix Calculation
   const monthlyData = useMemo(() => {
     if (!selectedClass || !selectedSection || rosterStudents.length === 0) return null
-    return getMonthlyAttendanceMatrix(selectedSession, selectedClass, selectedSection, yearMonth, rosterStudents, selectedSubjectId)
+    return getMonthlyAttendanceMatrix(selectedSession, selectedClass, selectedSection, yearMonth, rosterStudents, selectedSubjectId, currentInstitute?.id)
   }, [selectedSession, selectedClass, selectedSection, yearMonth, rosterStudents, selectedSubjectId])
 
   const defaultersList = useMemo(() => {
@@ -623,22 +678,7 @@ export const AttendanceView = ({ currentInstitute, onRouteChange }) => {
 
   return (
     <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className={`px-4 py-3 rounded-2xl flex items-center justify-between shadow-xs border animate-in fade-in duration-150 ${
-          toastMessage.isError 
-            ? 'bg-rose-50 border-rose-200 text-rose-800' 
-            : 'bg-emerald-50 border-emerald-200 text-emerald-800'
-        }`}>
-          <div className="flex items-center gap-2">
-            {toastMessage.isError ? <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" /> : <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />}
-            <span className="text-xs font-semibold">{toastMessage.text}</span>
-          </div>
-          <button onClick={() => setToastMessage(null)} className="text-xs underline font-semibold">
-            Dismiss
-          </button>
-        </div>
-      )}
+
 
       {/* Top Header Banner */}
       <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -669,6 +709,24 @@ export const AttendanceView = ({ currentInstitute, onRouteChange }) => {
               <span>Rules & Holidays</span>
             </button>
           )}
+
+          {/* Biometric Machine Importer (ZKTeco / RFID) */}
+          <button
+            type="button"
+            disabled={rosterStudents.length === 0 || sheetStatus === "Locked"}
+            onClick={() => {
+              if (!biometricInput) {
+                const sample = rosterStudents.slice(0, 5).map((s, idx) => `${s.rollNumber}, 07:${50 + idx * 4}:00, ${date}`).join("\n")
+                setBiometricInput(sample)
+              }
+              setIsBiometricModalOpen(true)
+            }}
+            className="flex items-center gap-1.5 px-3 py-2 bg-indigo-50 hover:bg-indigo-100 disabled:opacity-40 text-indigo-700 font-bold rounded-xl text-xs transition-colors shadow-2xs cursor-pointer"
+            title="Import punch logs from ZKTeco, Hikvision, or RFID machines"
+          >
+            <Cpu className="w-3.5 h-3.5 text-indigo-600" />
+            <span>Biometric Import</span>
+          </button>
 
           {/* Student Leaves Application Drawer */}
           <button
@@ -1200,9 +1258,9 @@ export const AttendanceView = ({ currentInstitute, onRouteChange }) => {
                   <table className="w-full text-left text-xs min-w-[780px]">
                     <thead className="bg-slate-50 text-slate-700 uppercase font-bold border-b border-slate-200 text-[11px]">
                       <tr>
-                        <th className="p-3 w-12 text-center">Sr</th>
-                        <th className="p-3 w-28">Roll No</th>
-                        <th className="p-3">Student &amp; Parent Contact</th>
+                        <th className="p-3 w-12 text-center sticky left-0 z-20 bg-slate-50">Sr</th>
+                        <th className="p-3 w-28 sticky left-12 z-20 bg-slate-50">Roll No</th>
+                        <th className="p-3 sticky left-40 z-20 bg-slate-50 shadow-[4px_0_6px_-2px_rgba(0,0,0,0.06)] min-w-[200px]">Student &amp; Parent Contact</th>
                         <th className="p-3 w-32">Section</th>
                         <th className="p-3 text-center w-84">Attendance Status</th>
                         <th className="p-3 w-44 text-right">Remarks &amp; Notes</th>
@@ -1219,7 +1277,7 @@ export const AttendanceView = ({ currentInstitute, onRouteChange }) => {
                         const isUnmarked = !curStatus && curStatus !== 'not_admitted'
 
                         // Consecutive absence check
-                        const cInfo = getConsecutiveAbsences(std.id, selectedSession, selectedClass, selectedSection, date, settings.consecutiveAbsenceThreshold)
+                        const cInfo = getConsecutiveAbsences(std.id, selectedSession, selectedClass, selectedSection, date, settings.consecutiveAbsenceThreshold, currentInstitute?.id)
 
                         return (
                           <tr 
@@ -1229,20 +1287,26 @@ export const AttendanceView = ({ currentInstitute, onRouteChange }) => {
                               isFocused ? 'bg-slate-50/90 ring-1 ring-inset ring-emerald-500/20' : 'hover:bg-slate-50/50'
                             } ${isUnmarked && unmarkedAlert ? 'bg-rose-50/40' : ''}`}
                           >
-                            <td className="p-3 text-center font-mono text-slate-400 text-[11px]">
+                            <td className={`p-3 text-center font-mono text-slate-400 text-[11px] sticky left-0 z-10 ${
+                              isFocused ? 'bg-slate-100' : isUnmarked && unmarkedAlert ? 'bg-rose-50' : 'bg-white'
+                            }`}>
                               {idx + 1}
                             </td>
 
-                            <td className="p-3 font-mono font-bold text-slate-800 text-xs">
+                            <td className={`p-3 font-mono font-bold text-slate-800 text-xs sticky left-12 z-10 ${
+                              isFocused ? 'bg-slate-100' : isUnmarked && unmarkedAlert ? 'bg-rose-50' : 'bg-white'
+                            }`}>
                               {std.rollNumber}
                             </td>
 
-                            <td className="p-3">
+                            <td className={`p-3 sticky left-40 z-10 shadow-[4px_0_6px_-2px_rgba(0,0,0,0.06)] ${
+                              isFocused ? 'bg-slate-100' : isUnmarked && unmarkedAlert ? 'bg-rose-50' : 'bg-white'
+                            }`}>
                               <div className="flex items-center gap-2">
                                 <div className="w-7 h-7 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-[10px] shrink-0 uppercase">
                                   {std.name.slice(0, 2)}
                                 </div>
-                                <div className="truncate">
+                                <div className="truncate max-w-[160px]">
                                   <div className="flex items-center gap-1.5">
                                     <strong className="text-slate-900 font-bold text-xs truncate">
                                       {std.name}
@@ -1251,6 +1315,15 @@ export const AttendanceView = ({ currentInstitute, onRouteChange }) => {
                                       <span className="px-1.5 py-0.2 rounded font-mono text-[9px] bg-rose-100 text-rose-800 font-bold flex items-center gap-1" title={`${cInfo.count} consecutive days absent`}>
                                         <AlertTriangle className="w-3 h-3 text-rose-600" />
                                         <span>{cInfo.count}d Absent</span>
+                                      </span>
+                                    )}
+                                    {(std.medicalCondition || std.allergies || std.emergencyMedicalAlert || (std.bloodGroup && std.bloodGroup !== 'Unknown')) && (
+                                      <span 
+                                        className="px-1.5 py-0.2 rounded font-sans text-[9px] bg-rose-50 text-rose-700 border border-rose-200 font-bold flex items-center gap-1 cursor-help shrink-0" 
+                                        title={`Medical Alert: ${std.medicalCondition || std.allergies || 'Active Health Monitoring'}${std.bloodGroup ? ` • Blood: ${std.bloodGroup}` : ''}`}
+                                      >
+                                        <Activity className="w-2.5 h-2.5 text-rose-600" />
+                                        <span>{std.bloodGroup || 'Med'}</span>
                                       </span>
                                     )}
                                   </div>
@@ -1659,6 +1732,57 @@ export const AttendanceView = ({ currentInstitute, onRouteChange }) => {
           submittedAt={sheetMetadata.submittedAt}
           submittedBy={sheetMetadata.submittedBy}
         />
+      )}
+      {/* Biometric RFID / Fingerprint Log Importer Modal */}
+      {isBiometricModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-indigo-50 text-indigo-700">
+                  <Cpu className="w-5 h-5 text-indigo-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-800">Biometric Terminal Punch Importer</h3>
+                  <p className="text-[11px] text-slate-500">Sync ZKTeco, Realtime & RFID card logs to daily register</p>
+                </div>
+              </div>
+              <button onClick={() => setIsBiometricModalOpen(false)} className="text-slate-400 hover:text-slate-600 font-bold p-1">✕</button>
+            </div>
+
+            <div className="my-4 space-y-3 text-xs">
+              <div className="p-3 bg-indigo-50/70 border border-indigo-200/60 rounded-xl text-indigo-900 text-[11px] leading-relaxed">
+                <strong>Format:</strong> Paste punch lines in <code>RollNumber, PunchTime, Date</code> format (e.g. <code>101, 07:55:00, 2026-11-03</code>). Punches after 08:10 AM are automatically flagged as <strong>Late</strong>.
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-bold uppercase text-[10px] mb-1">Terminal Raw Log Records</label>
+                <textarea
+                  rows={6}
+                  value={biometricInput}
+                  onChange={(e) => setBiometricInput(e.target.value)}
+                  placeholder="101, 07:55:00, 2026-11-03&#10;102, 08:20:00, 2026-11-03"
+                  className="w-full p-3 font-mono text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <button
+                onClick={() => setIsBiometricModalOpen(false)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleApplyBiometricPunches}
+                className="px-4 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-xs transition-colors cursor-pointer"
+              >
+                Apply Punches to Register →
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

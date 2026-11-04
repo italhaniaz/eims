@@ -213,7 +213,7 @@ export const CampusEventsCalendarView = ({ currentInstitute }) => {
               Master schedule for term examinations, gazetted holidays, parent-teacher conferences, and sports galas.
             </p>
           </div>
-          <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="flex items-center gap-2.5 flex-wrap no-print">
             <button
               onClick={() => {
                 window.print()
@@ -234,8 +234,27 @@ export const CampusEventsCalendarView = ({ currentInstitute }) => {
         </div>
       </div>
 
+      {/* Print Specific CSS */}
+      <style>{`
+        @media print {
+          body * { visibility: hidden !important; }
+          #printable-academic-calendar, #printable-academic-calendar * { visibility: visible !important; }
+          #printable-academic-calendar {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 8mm !important;
+            background: white !important;
+          }
+          .no-print { display: none !important; }
+          @page { size: A4 landscape; margin: 8mm; }
+        }
+      `}</style>
+
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 no-print">
         <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Scheduled Events</p>
@@ -288,7 +307,7 @@ export const CampusEventsCalendarView = ({ currentInstitute }) => {
       </div>
 
       {/* Control Strip & View Toggle */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
+      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs space-y-3 no-print">
         <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
           <div className="relative flex-1 max-w-md">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -340,6 +359,17 @@ export const CampusEventsCalendarView = ({ currentInstitute }) => {
           ))}
         </div>
       </div>
+
+      <div id="printable-academic-calendar">
+        {/* Printable Header Letterhead */}
+        <div className="hidden print:block text-center border-b-2 border-slate-900 pb-3 mb-4">
+          <h2 className="text-lg font-black uppercase text-slate-900 tracking-wider">
+            {currentInstitute?.name || 'CENTRAL HIGHER SECONDARY & COLLEGE SYSTEM'}
+          </h2>
+          <p className="text-xs font-bold text-slate-700 uppercase tracking-widest">
+            OFFICIAL ACADEMIC ALMANAC & EVENTS CALENDAR • {year}
+          </p>
+        </div>
 
       {/* View Mode: Month Grid */}
       {viewMode === 'month' && (
@@ -480,6 +510,8 @@ export const CampusEventsCalendarView = ({ currentInstitute }) => {
           )}
         </div>
       )}
+
+      </div>
 
       {/* Modal: Schedule / Edit Event */}
       {isModalOpen && (
