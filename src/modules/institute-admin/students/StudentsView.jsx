@@ -62,7 +62,12 @@ import useDebounce from '../../../hooks/useDebounce'
 import { useAuth } from '../../../context/AuthContext'
 import { detectProgramLevel, normalizeClassSections } from '../../../constants/academicLevels'
 import Modal from '../../../components/common/Modal'
-import { getInstituteTierConfig } from '../../../utils/tierGating'
+import { 
+  getInstituteTierConfig, 
+  getDistinctInstituteClassNames, 
+  isClassAllowedForTier,
+  filterClassesByInstituteTier 
+} from '../../../utils/tierGating'
 import PrintableStudentIdCardModal from '../../../components/common/PrintableStudentIdCardModal'
 import PrintableExamAdmitCardModal from '../../../components/common/PrintableExamAdmitCardModal'
 
@@ -350,16 +355,16 @@ export const StudentsView = ({ currentInstitute }) => {
 
   const [formData, setFormData] = useState(initialFormState)
 
-  // Real Campus Student Pool (Excluding any legacy seed/demo records)
+  // Real Campus Student Pool strictly scoped by campus and tier
   const campusStudents = useMemo(() => {
-    const demoNames = ['Hamza Farooq', 'Ayesha Siddiqui', 'Daniyal Tariq', 'Zainab Fatima', 'Bilal Ahmed Khan', 'Ahmed Raza']
-    const demoRolls = ['STD-101', 'COL-201', 'STD-103', 'REG-401', 'STD-105', 'BHS-2024-001', 'BHS-2024-002', 'STD-1001', 'COL-2002', 'REG-3003']
+    const legacyStaleRolls = ['STD-101', 'COL-201', 'STD-103', 'REG-401', 'STD-105', 'BHS-2024-001', 'BHS-2024-002', 'STD-1001', 'COL-2002', 'REG-3003']
 
     return students.filter(s => {
-      if (demoNames.includes(s.name) || demoRolls.includes(s.rollNumber)) return false
-      return !s.instituteId || !currentInstitute?.id || s.instituteId === currentInstitute?.id || currentInstitute?.id === 'inst-default'
+      if (legacyStaleRolls.includes(s.rollNumber)) return false
+      if (s.instituteId && currentInstitute?.id && s.instituteId !== currentInstitute?.id) return false
+      return isClassAllowedForTier(s.className, currentInstitute)
     })
-  }, [students, currentInstitute?.id])
+  }, [students, currentInstitute])
 
   // Dynamic Level Determination & Adaptive Tier Vocabulary (Respects current institute authority)
   const currentLevelKey = useMemo(() => {
@@ -429,22 +434,15 @@ export const StudentsView = ({ currentInstitute }) => {
     return `${prefix}-${String(nextVal).padStart(3, '0')}` // STD-001, STD-002...
   }
 
-  // Distinct classes and sections available from DB classes
+  // Distinct classes strictly scoped by campus & educational tier
   const availableClasses = useMemo(() => {
-    const set = new Set()
-    classes.forEach(c => {
-      if (c.name) set.add(c.name)
-    })
-    campusStudents.forEach(s => {
-      if (s.className) set.add(s.className)
-    })
-    return Array.from(set).sort()
-  }, [classes, campusStudents])
+    return getDistinctInstituteClassNames(classes, campusStudents, currentInstitute)
+  }, [classes, campusStudents, currentInstitute])
 
   // Dynamic sections strictly tied to currently selected class in form with remaining capacity
   const dynamicSectionsForSelectedClass = useMemo(() => {
     if (!formData.className) return []
-    const matchingClassObj = classes.find(c => c.name === formData.className)
+    const matchingClassObj = classes.find(c => c.name === formData.className && (!c.instituteId || c.instituteId === currentInstitute?.id)) || classes.find(c => c.name === formData.className)
     if (matchingClassObj) {
       const parsedSecs = normalizeClassSections(matchingClassObj)
       return parsedSecs.map(s => {

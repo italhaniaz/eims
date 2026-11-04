@@ -6,7 +6,7 @@ import {
   COMMON_TERMINOLOGY, 
   COMMON_ROUTES, 
   COMMON_DASHBOARD_SHORTCUTS 
-} from './common.features'
+} from './common.features.js'
 
 export const CUSTOM_FEATURES = {
   tier: 'custom',

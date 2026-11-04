@@ -56,7 +56,7 @@ import TabulationSheetModal from './TabulationSheetModal'
 import ResultGazetteModal from './ResultGazetteModal'
 import ExamGradingSettingsModal from './ExamGradingSettingsModal'
 import ExamResultNotificationModal from './ExamResultNotificationModal'
-import { getInstituteTierConfig } from '../../../utils/tierGating'
+import { getInstituteTierConfig, getDistinctInstituteClassNames, isClassAllowedForTier } from '../../../utils/tierGating'
 
 export const ExamsView = ({ currentInstitute }) => {
   const tierConfig = getInstituteTierConfig(currentInstitute)
@@ -80,9 +80,12 @@ export const ExamsView = ({ currentInstitute }) => {
     } catch (e) {}
   }, [])
 
-  // Scoped student & exam lists
+  // Scoped student & exam lists strictly gated by campus and tier
   const instStudents = useMemo(() => {
-    return students.filter(s => !s.instituteId || !currentInstitute?.id || s.instituteId === currentInstitute.id)
+    return students.filter(s => {
+      if (s.instituteId && currentInstitute?.id && s.instituteId !== currentInstitute?.id) return false
+      return isClassAllowedForTier(s.className, currentInstitute)
+    })
   }, [students, currentInstitute])
 
   const instExams = useMemo(() => {
@@ -203,14 +206,10 @@ export const ExamsView = ({ currentInstitute }) => {
     toast.success('Grading scale & moderation settings updated!')
   }
 
-  // Available classes
+  // Available classes strictly scoped by campus & educational tier
   const availableClasses = useMemo(() => {
-    const set = new Set()
-    classes.forEach(c => { if (c.name) set.add(c.name) })
-    instStudents.forEach(s => { if (s.className) set.add(s.className) })
-    instExams.forEach(e => { if (e.className) set.add(e.className) })
-    return Array.from(set).sort()
-  }, [classes, instStudents, instExams])
+    return getDistinctInstituteClassNames(classes, instStudents, currentInstitute)
+  }, [classes, instStudents, currentInstitute])
 
   // Available terms
   const availableTerms = useMemo(() => {
@@ -1483,6 +1482,7 @@ export const ExamsView = ({ currentInstitute }) => {
         existingMarksheets={instExams}
         onBulkSaveMarks={handleBulkSaveTabulation}
         gradingSettings={settings}
+        currentInstitute={currentInstitute}
       />
 
       {/* MODAL 5: OFFICIAL RESULT GAZETTE & MERIT STANDINGS */}

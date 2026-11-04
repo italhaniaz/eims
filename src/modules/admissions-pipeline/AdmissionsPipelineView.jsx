@@ -49,6 +49,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import Modal from '../../components/common/Modal'
 import { detectProgramLevel, normalizeClassSections } from '../../constants/academicLevels'
+import { filterClassesByInstituteTier, getDistinctInstituteClassNames } from '../../utils/tierGating'
 import { QrCodeSvg } from '../../components/common/PrintHelpers'
 import MeritListGazetteModal from './MeritListGazetteModal'
 import OfferLetterModal from './OfferLetterModal'
@@ -235,31 +236,16 @@ export const AdmissionsPipelineView = ({ currentInstitute }) => {
     return 'school'
   }, [selectedLevelFilter, activeProgramLevel])
 
-  // Available classes list from classes context
+  // Available classes strictly scoped to current institute and educational tier
   const availableClasses = useMemo(() => {
-    return (classes || []).map(c => c.name).filter(Boolean)
-  }, [classes])
+    return getDistinctInstituteClassNames(classes, students, currentInstitute)
+  }, [classes, students, currentInstitute])
 
   // Available classes matching selected Level tier
   const availableClassesForLevel = useMemo(() => {
-    if (!classes || classes.length === 0) return []
-    const filtered = classes.filter(c => {
-      if (!c.name) return false
-      const lvl = detectProgramLevel(c.name)
-      if (currentLevelKey === 'school') {
-        return ['elementary', 'secondary', 'school'].includes(lvl)
-      }
-      if (currentLevelKey === 'college') {
-        return ['higher-secondary', 'college'].includes(lvl)
-      }
-      if (currentLevelKey === 'university') {
-        return lvl === 'university'
-      }
-      return true
-    }).map(c => c.name)
-
-    return filtered.length > 0 ? filtered : availableClasses
-  }, [classes, currentLevelKey, availableClasses])
+    const scoped = filterClassesByInstituteTier(classes, currentInstitute)
+    return scoped.map(c => c.name)
+  }, [classes, currentInstitute])
 
   // Initial New Inquiry Form State
   const initialFormState = {

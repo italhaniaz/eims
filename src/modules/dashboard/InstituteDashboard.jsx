@@ -39,7 +39,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useAppData } from '../../context/AppDataContext'
 import { useToast } from '../../context/ToastContext'
 import { normalizeClassSections, detectProgramLevel } from '../../constants/academicLevels'
-import { getInstituteTierConfig } from '../../utils/tierGating'
+import { getInstituteTierConfig, filterClassesByInstituteTier, isClassAllowedForTier } from '../../utils/tierGating'
 
 
 export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
@@ -74,10 +74,27 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
 
   const activeLevelObj = programLevels.find(l => l.id === activeProgramLevel)
 
-  const instClasses = classes.filter(c => !c.instituteId || c.instituteId === currentInstitute?.id)
-  const instStudents = students.filter(s => !s.instituteId || s.instituteId === currentInstitute?.id)
+  const instClasses = useMemo(() => {
+    return filterClassesByInstituteTier(classes, currentInstitute)
+  }, [classes, currentInstitute])
+
+  const instStudents = useMemo(() => {
+    return students.filter(s => {
+      if (s.instituteId && currentInstitute?.id && s.instituteId !== currentInstitute?.id) return false
+      return isClassAllowedForTier(s.className, currentInstitute)
+    })
+  }, [students, currentInstitute])
+
   const instTeachers = teachers.filter(t => !t.instituteId || t.instituteId === currentInstitute?.id)
   const instFees = fees.filter(f => !f.instituteId || f.instituteId === currentInstitute?.id)
+
+  const displayedClasses = useMemo(() => {
+    if (!activeProgramLevel || activeProgramLevel === 'all') return instClasses
+    return instClasses.filter(c => {
+      const cLevel = c.programLevel || detectProgramLevel(c.name)
+      return cLevel === activeProgramLevel
+    })
+  }, [instClasses, activeProgramLevel])
 
   const paidFeesCount = instFees.filter(f => f.status === 'Paid').length
   const feeRate = instFees.length > 0 ? Math.round((paidFeesCount / instFees.length) * 100) : 0
@@ -973,34 +990,9 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
           </button>
         </div>
 
-        {classes.filter(c => {
-          const matchesCampus = 
-            !c.instituteId || 
-            !currentInstitute?.id || 
-            c.instituteId === currentInstitute.id || 
-            ((c.instituteId === 'inst-1' || c.instituteId === 'inst-default') &&
-             (currentInstitute.id === 'inst-1' || currentInstitute.id === 'inst-default')) ||
-            (institutes || []).length <= 1
-          if (!matchesCampus) return false
-          const cLevel = c.programLevel || detectProgramLevel(c.name)
-          if (!tierConfig.isLevelAllowed(cLevel)) return false
-          if (activeProgramLevel === 'all') return true
-          return cLevel === activeProgramLevel || detectProgramLevel(c.name) === activeProgramLevel
-        }).length > 0 ? (
+        {displayedClasses.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {classes.filter(c => {
-              const matchesCampus = 
-                !c.instituteId || 
-                !currentInstitute?.id || 
-                c.instituteId === currentInstitute.id || 
-                ((c.instituteId === 'inst-1' || c.instituteId === 'inst-default') &&
-                 (currentInstitute.id === 'inst-1' || currentInstitute.id === 'inst-default')) ||
-                (institutes || []).length <= 1
-              if (!matchesCampus) return false
-              if (activeProgramLevel === 'all') return true
-              const cLevel = c.programLevel || detectProgramLevel(c.name)
-              return cLevel === activeProgramLevel || detectProgramLevel(c.name) === activeProgramLevel
-            }).map(cls => {
+            {displayedClasses.map(cls => {
               const secList = normalizeClassSections(cls)
               const cLevel = cls.programLevel || detectProgramLevel(cls.name)
               return (

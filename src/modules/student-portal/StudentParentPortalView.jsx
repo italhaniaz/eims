@@ -37,6 +37,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useAppData } from '../../context/AppDataContext'
 import { useToast } from '../../context/ToastContext'
 import { DataService } from '../../services/dataService'
+import { isClassAllowedForTier } from '../../utils/tierGating'
 
 export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin = null }) => {
   const { user, logout, login } = useAuth()
@@ -134,11 +135,14 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
     return 'overview'
   })
 
-  // Filter students belonging to active institute
+  // Filter students belonging to active institute and tier
   const campusStudents = useMemo(() => {
     const instId = currentInstitute?.id || user?.instituteId || (isSchool ? 'inst-2' : isCollege ? 'inst-3' : 'inst-4')
-    const filtered = (students || []).filter(s => !s.instituteId || s.instituteId === instId)
-    return filtered.length > 0 ? filtered : (students || [])
+    const instObj = currentInstitute || { id: instId }
+    return (students || []).filter(s => {
+      if (s.instituteId && s.instituteId !== instId) return false
+      return isClassAllowedForTier(s.className, instObj)
+    })
   }, [students, currentInstitute, user, isSchool, isCollege])
 
   const [selectedStudentId, setSelectedStudentId] = useState('')

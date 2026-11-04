@@ -53,7 +53,11 @@ import { ClassProfileModal } from './ClassProfileModal'
 import { RoomsRegisterModal } from './RoomsRegisterModal'
 import { ClassCsvImportModal } from './ClassCsvImportModal'
 import { getAllTimetables } from '../timetable/timetableService'
-import { getInstituteTierConfig } from '../../../utils/tierGating'
+import { 
+  getInstituteTierConfig, 
+  filterClassesByInstituteTier, 
+  calculateClassSortRank 
+} from '../../../utils/tierGating'
 
 export const ClassesView = ({ currentInstitute }) => {
   const tierConfig = getInstituteTierConfig(currentInstitute)
@@ -174,22 +178,12 @@ export const ClassesView = ({ currentInstitute }) => {
     }).length
   }
 
-  // Filter campus classes for current institute and session
+  // Filter campus classes strictly scoped to current institute, educational tier and session
   const campusClasses = useMemo(() => {
-    return classes.filter(c => {
-      const matchInst = !c.instituteId || c.instituteId === currentInstitute?.id
-      if (!matchInst) return false
-
-      const cLevel = c.programLevel || detectProgramLevel(c.name)
-      if (!tierConfig.isLevelAllowed(cLevel)) return false
-
-      // Filter by session if specified on class
-      if (c.academicSession && selectedSession) {
-        if (c.academicSession !== selectedSession) return false
-      }
-      return true
-    })
-  }, [classes, currentInstitute?.id, selectedSession])
+    const scoped = filterClassesByInstituteTier(classes, currentInstitute)
+    if (!selectedSession) return scoped
+    return scoped.filter(c => !c.academicSession || c.academicSession === selectedSession)
+  }, [classes, currentInstitute, selectedSession])
 
   // Filter by level tab & search term, then apply natural numeric sorting
   const filteredClasses = useMemo(() => {
@@ -222,8 +216,8 @@ export const ClassesView = ({ currentInstitute }) => {
     // Natural educational & numeric sorting: Nursery -> Prep -> Class 1 -> Class 10
     return list.sort((a, b) => {
       if (sortField === 'numericName') {
-        const orderA = a.sortOrder !== undefined ? a.sortOrder : calculateClassSortOrder(a.name, a.programLevel)
-        const orderB = b.sortOrder !== undefined ? b.sortOrder : calculateClassSortOrder(b.name, b.programLevel)
+        const orderA = a.sortOrder !== undefined ? a.sortOrder : calculateClassSortRank(a.name, currentInstitute)
+        const orderB = b.sortOrder !== undefined ? b.sortOrder : calculateClassSortRank(b.name, currentInstitute)
         if (orderA !== orderB) {
           return sortDirection === 'asc' ? orderA - orderB : orderB - orderA
         }

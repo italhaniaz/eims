@@ -29,11 +29,21 @@ import { useToast } from '../../../context/ToastContext'
 import Modal from '../../../components/common/Modal'
 import { recordCampusLedgerTransaction } from '../accounts/CampusAccountsView'
 import PrintableFeeChallanModal from '../../../components/common/PrintableFeeChallanModal'
+import { getDistinctInstituteClassNames, isClassAllowedForTier } from '../../../utils/tierGating'
 
 export const FeesView = ({ currentInstitute }) => {
-  const { fees = [], students = [], addItem, updateItem, deleteItem, logAuditEvent } = useAppData()
+  const { fees = [], students = [], classes = [], addItem, updateItem, deleteItem, logAuditEvent } = useAppData()
   const { toast } = useToast()
-  const instStudents = students.filter(s => !s.instituteId || s.instituteId === currentInstitute?.id)
+  const instStudents = useMemo(() => {
+    return students.filter(s => {
+      if (s.instituteId && currentInstitute?.id && s.instituteId !== currentInstitute?.id) return false
+      return isClassAllowedForTier(s.className, currentInstitute)
+    })
+  }, [students, currentInstitute])
+
+  const availableClasses = useMemo(() => {
+    return getDistinctInstituteClassNames(classes, instStudents, currentInstitute)
+  }, [classes, instStudents, currentInstitute])
 
   const [searchTerm, setSearchTerm] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -120,7 +130,7 @@ export const FeesView = ({ currentInstitute }) => {
 
   // Batch Fee Generator Form
   const [batchData, setBatchData] = useState({
-    targetClass: '10th Grade',
+    targetClass: 'All Classes',
     feeTitle: 'Monthly Tuition Fee',
     amount: 15000,
     dueDate: '2026-11-10'
@@ -1152,11 +1162,10 @@ export const FeesView = ({ currentInstitute }) => {
               onChange={(e) => setBatchData({ ...batchData, targetClass: e.target.value })}
               className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
             >
-              <option value="10th Grade">10th Grade</option>
-              <option value="9th Grade">9th Grade</option>
-              <option value="11th Grade (ICS)">11th Grade (ICS)</option>
-              <option value="12th Grade (Pre-Med)">12th Grade (Pre-Med)</option>
               <option value="All Classes">All Classes (Entire Campus)</option>
+              {availableClasses.map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
             </select>
           </div>
 

@@ -50,7 +50,7 @@ import { useToast } from '../../../context/ToastContext'
 import { hashPassword } from '../../../context/AuthContext'
 import Modal from '../../../components/common/Modal'
 import { recordCampusLedgerTransaction } from '../accounts/CampusAccountsView'
-import { getInstituteTierConfig } from '../../../utils/tierGating'
+import { getInstituteTierConfig, filterClassesByInstituteTier } from '../../../utils/tierGating'
 import { AddStaffModal } from './AddStaffModal'
 import { StaffProfileDrawer } from './StaffProfileDrawer'
 import { getAllTimetables } from '../timetable/timetableService'
@@ -2070,7 +2070,7 @@ export const TeachersView = ({ currentInstitute, initialTab = "directory" }) => 
           setEditingStaff(null)
         }}
         editingStaff={editingStaff}
-        classes={classes}
+        classes={filterClassesByInstituteTier(classes, currentInstitute)}
         teachers={teachers}
         currentInstitute={currentInstitute}
         onSaveStaff={handleSaveStaff}

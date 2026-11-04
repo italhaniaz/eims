@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import Modal from '../../../components/common/Modal'
 import { calculateGrade } from './examService'
+import { getDistinctInstituteClassNames } from '../../../utils/tierGating'
 
 export const TabulationSheetModal = ({
   isOpen,
@@ -25,7 +26,8 @@ export const TabulationSheetModal = ({
   subjects = [],
   existingMarksheets = [],
   onBulkSaveMarks,
-  gradingSettings = null
+  gradingSettings = null,
+  currentInstitute = null
 }) => {
   // Class & Section filters
   const [selectedClass, setSelectedClass] = useState('')
@@ -44,13 +46,10 @@ export const TabulationSheetModal = ({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [saveSuccessMsg, setSaveSuccessMsg] = useState('')
 
-  // Extract available classes
+  // Extract available classes strictly scoped by campus and tier
   const classNames = useMemo(() => {
-    const set = new Set()
-    classes.forEach(c => { if (c.name) set.add(c.name) })
-    students.forEach(s => { if (s.className) set.add(s.className) })
-    return Array.from(set)
-  }, [classes, students])
+    return getDistinctInstituteClassNames(classes, students, currentInstitute)
+  }, [classes, students, currentInstitute])
 
   // Sections for selected class
   const availableSections = useMemo(() => {

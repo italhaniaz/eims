@@ -526,9 +526,155 @@ export const defaultInitialFeeSettings = [
 ]
 
 export const defaultInitialClasses = [
-  // School Tier: City School Model Town Campus (inst-2)
+  // ==========================================
+  // School Tier: City School Model Town Campus (inst-2) - Grade 1 to 10
+  // ==========================================
   {
     id: 'cls-sch-1',
+    name: 'Grade 1',
+    programLevel: 'elementary',
+    academicSession: '2026-2027',
+    instituteId: 'inst-2',
+    section: 'A, B',
+    capacity: 70,
+    enrolled: 40,
+    roomNo: 'Room 101',
+    classTeacher: 'Ms. Ayesha Siddiqui',
+    sections: [
+      { id: 'sec-sch-1a', name: 'A', roomNo: 'Room 101', capacity: 35, enrolled: 20, classTeacher: 'Ms. Ayesha Siddiqui', shift: 'Morning', medium: 'English' },
+      { id: 'sec-sch-1b', name: 'B', roomNo: 'Room 102', capacity: 35, enrolled: 20, classTeacher: 'Ms. Fatima Noor', shift: 'Morning', medium: 'English' }
+    ]
+  },
+  {
+    id: 'cls-sch-2',
+    name: 'Grade 2',
+    programLevel: 'elementary',
+    academicSession: '2026-2027',
+    instituteId: 'inst-2',
+    section: 'A, B',
+    capacity: 70,
+    enrolled: 38,
+    roomNo: 'Room 103',
+    classTeacher: 'Ms. Hira Mansoor',
+    sections: [
+      { id: 'sec-sch-2a', name: 'A', roomNo: 'Room 103', capacity: 35, enrolled: 19, classTeacher: 'Ms. Hira Mansoor', shift: 'Morning', medium: 'English' },
+      { id: 'sec-sch-2b', name: 'B', roomNo: 'Room 104', capacity: 35, enrolled: 19, classTeacher: 'Ms. Sana Qasim', shift: 'Morning', medium: 'English' }
+    ]
+  },
+  {
+    id: 'cls-sch-3',
+    name: 'Grade 3',
+    programLevel: 'elementary',
+    academicSession: '2026-2027',
+    instituteId: 'inst-2',
+    section: 'A, B',
+    capacity: 70,
+    enrolled: 42,
+    roomNo: 'Room 105',
+    classTeacher: 'Ms. Zainab Bibi',
+    sections: [
+      { id: 'sec-sch-3a', name: 'A', roomNo: 'Room 105', capacity: 35, enrolled: 22, classTeacher: 'Ms. Zainab Bibi', shift: 'Morning', medium: 'English' },
+      { id: 'sec-sch-3b', name: 'B', roomNo: 'Room 106', capacity: 35, enrolled: 20, classTeacher: '', shift: 'Morning', medium: 'English' }
+    ]
+  },
+  {
+    id: 'cls-sch-4',
+    name: 'Grade 4',
+    programLevel: 'elementary',
+    academicSession: '2026-2027',
+    instituteId: 'inst-2',
+    section: 'A, B',
+    capacity: 70,
+    enrolled: 36,
+    roomNo: 'Room 107',
+    classTeacher: 'Sir Bilal Tariq',
+    sections: [
+      { id: 'sec-sch-4a', name: 'A', roomNo: 'Room 107', capacity: 35, enrolled: 18, classTeacher: 'Sir Bilal Tariq', shift: 'Morning', medium: 'English' },
+      { id: 'sec-sch-4b', name: 'B', roomNo: 'Room 108', capacity: 35, enrolled: 18, classTeacher: '', shift: 'Morning', medium: 'English' }
+    ]
+  },
+  {
+    id: 'cls-sch-5',
+    name: 'Grade 5',
+    programLevel: 'elementary',
+    academicSession: '2026-2027',
+    instituteId: 'inst-2',
+    section: 'A, B',
+    capacity: 70,
+    enrolled: 44,
+    roomNo: 'Room 109',
+    classTeacher: 'Ms. Mariam Farooq',
+    sections: [
+      { id: 'sec-sch-5a', name: 'A', roomNo: 'Room 109', capacity: 35, enrolled: 23, classTeacher: 'Ms. Mariam Farooq', shift: 'Morning', medium: 'English' },
+      { id: 'sec-sch-5b', name: 'B', roomNo: 'Room 110', capacity: 35, enrolled: 21, classTeacher: '', shift: 'Morning', medium: 'English' }
+    ]
+  },
+  {
+    id: 'cls-sch-6',
+    name: 'Grade 6',
+    programLevel: 'elementary',
+    academicSession: '2026-2027',
+    instituteId: 'inst-2',
+    section: 'A, B',
+    capacity: 70,
+    enrolled: 40,
+    roomNo: 'Room 111',
+    classTeacher: 'Sir Kashif Raza',
+    sections: [
+      { id: 'sec-sch-6a', name: 'A', roomNo: 'Room 111', capacity: 35, enrolled: 20, classTeacher: 'Sir Kashif Raza', shift: 'Morning', medium: 'English' },
+      { id: 'sec-sch-6b', name: 'B', roomNo: 'Room 112', capacity: 35, enrolled: 20, classTeacher: '', shift: 'Morning', medium: 'English' }
+    ]
+  },
+  {
+    id: 'cls-sch-7',
+    name: 'Grade 7',
+    programLevel: 'elementary',
+    academicSession: '2026-2027',
+    instituteId: 'inst-2',
+    section: 'A, B',
+    capacity: 70,
+    enrolled: 41,
+    roomNo: 'Room 114',
+    classTeacher: 'Ms. Sadia Munir',
+    sections: [
+      { id: 'sec-sch-7a', name: 'A', roomNo: 'Room 114', capacity: 35, enrolled: 21, classTeacher: 'Ms. Sadia Munir', shift: 'Morning', medium: 'English' },
+      { id: 'sec-sch-7b', name: 'B', roomNo: 'Room 115', capacity: 35, enrolled: 20, classTeacher: '', shift: 'Morning', medium: 'English' }
+    ]
+  },
+  {
+    id: 'cls-sch-8',
+    name: 'Grade 8',
+    programLevel: 'elementary',
+    academicSession: '2026-2027',
+    instituteId: 'inst-2',
+    section: 'A, B',
+    capacity: 70,
+    enrolled: 45,
+    roomNo: 'Room 116',
+    classTeacher: 'Ms. Ayesha Siddiqui',
+    sections: [
+      { id: 'sec-sch-8a', name: 'A', roomNo: 'Room 116', capacity: 35, enrolled: 25, classTeacher: 'Ms. Ayesha Siddiqui', shift: 'Morning', medium: 'English' },
+      { id: 'sec-sch-8b', name: 'B', roomNo: 'Room 117', capacity: 35, enrolled: 20, classTeacher: '', shift: 'Morning', medium: 'English' }
+    ]
+  },
+  {
+    id: 'cls-sch-9',
+    name: 'Grade 9',
+    programLevel: 'secondary',
+    academicSession: '2026-2027',
+    instituteId: 'inst-2',
+    section: 'A, B',
+    capacity: 70,
+    enrolled: 38,
+    roomNo: 'Room 118',
+    classTeacher: 'Sir Salman Ahmed',
+    sections: [
+      { id: 'sec-sch-9a', name: 'A', roomNo: 'Room 118', capacity: 35, enrolled: 20, classTeacher: 'Sir Salman Ahmed', shift: 'Morning', medium: 'English' },
+      { id: 'sec-sch-9b', name: 'B', roomNo: 'Room 119', capacity: 35, enrolled: 18, classTeacher: '', shift: 'Morning', medium: 'English' }
+    ]
+  },
+  {
+    id: 'cls-sch-10',
     name: 'Grade 10',
     programLevel: 'secondary',
     academicSession: '2026-2027',
@@ -539,45 +685,32 @@ export const defaultInitialClasses = [
     roomNo: 'Room 201',
     classTeacher: 'Sir Salman Ahmed',
     sections: [
-      { id: 'sec-sch-1a', name: 'A', roomNo: 'Room 201', capacity: 35, enrolled: 22, classTeacher: 'Sir Salman Ahmed', shift: 'Morning', medium: 'English' },
-      { id: 'sec-sch-1b', name: 'B', roomNo: 'Room 202', capacity: 35, enrolled: 20, classTeacher: 'Ms. Ayesha Siddiqui', shift: 'Morning', medium: 'English' }
-    ]
-  },
-  {
-    id: 'cls-sch-2',
-    name: 'Grade 9',
-    programLevel: 'secondary',
-    academicSession: '2026-2027',
-    instituteId: 'inst-2',
-    section: 'A, B',
-    capacity: 70,
-    enrolled: 38,
-    roomNo: 'Room 105',
-    classTeacher: 'Sir Salman Ahmed',
-    sections: [
-      { id: 'sec-sch-2a', name: 'A', roomNo: 'Room 105', capacity: 35, enrolled: 20, classTeacher: '', shift: 'Morning', medium: 'English' },
-      { id: 'sec-sch-2b', name: 'B', roomNo: 'Room 106', capacity: 35, enrolled: 18, classTeacher: '', shift: 'Morning', medium: 'English' }
-    ]
-  },
-  {
-    id: 'cls-sch-3',
-    name: 'Grade 8',
-    programLevel: 'elementary',
-    academicSession: '2026-2027',
-    instituteId: 'inst-2',
-    section: 'A',
-    capacity: 35,
-    enrolled: 25,
-    roomNo: 'Room 102',
-    classTeacher: 'Ms. Ayesha Siddiqui',
-    sections: [
-      { id: 'sec-sch-3a', name: 'A', roomNo: 'Room 102', capacity: 35, enrolled: 25, classTeacher: 'Ms. Ayesha Siddiqui', shift: 'Morning', medium: 'English' }
+      { id: 'sec-sch-10a', name: 'A', roomNo: 'Room 201', capacity: 35, enrolled: 22, classTeacher: 'Sir Salman Ahmed', shift: 'Morning', medium: 'English' },
+      { id: 'sec-sch-10b', name: 'B', roomNo: 'Room 202', capacity: 35, enrolled: 20, classTeacher: 'Ms. Ayesha Siddiqui', shift: 'Morning', medium: 'English' }
     ]
   },
 
+  // ==========================================
   // College Tier: Roots International College (inst-3)
+  // ==========================================
   {
     id: 'cls-col-1',
+    name: 'F.Sc Pre-Medical (Part I)',
+    programLevel: 'higher-secondary',
+    academicSession: '2026-2027',
+    instituteId: 'inst-3',
+    section: 'Pre-Med A, Pre-Med B',
+    capacity: 80,
+    enrolled: 50,
+    roomNo: 'Lecture Hall 1',
+    classTeacher: 'Dr. Nadia Hashmi',
+    sections: [
+      { id: 'sec-col-1a', name: 'Pre-Med A', roomNo: 'Lecture Hall 1', capacity: 40, enrolled: 26, classTeacher: 'Dr. Nadia Hashmi', shift: 'Morning', medium: 'English' },
+      { id: 'sec-col-1b', name: 'Pre-Med B', roomNo: 'Lecture Hall 2', capacity: 40, enrolled: 24, classTeacher: 'Lecturer Bilal Zubair', shift: 'Morning', medium: 'English' }
+    ]
+  },
+  {
+    id: 'cls-col-2',
     name: 'F.Sc Pre-Medical (Part II)',
     programLevel: 'higher-secondary',
     academicSession: '2026-2027',
@@ -588,44 +721,187 @@ export const defaultInitialClasses = [
     roomNo: 'Lecture Hall 1',
     classTeacher: 'Dr. Nadia Hashmi',
     sections: [
-      { id: 'sec-col-1a', name: 'Pre-Med A', roomNo: 'Lecture Hall 1', capacity: 40, enrolled: 30, classTeacher: 'Dr. Nadia Hashmi', shift: 'Morning', medium: 'English' },
-      { id: 'sec-col-1b', name: 'Pre-Med B', roomNo: 'Lecture Hall 2', capacity: 40, enrolled: 24, classTeacher: 'Lecturer Bilal Zubair', shift: 'Morning', medium: 'English' }
+      { id: 'sec-col-2a', name: 'Pre-Med A', roomNo: 'Lecture Hall 1', capacity: 40, enrolled: 30, classTeacher: 'Dr. Nadia Hashmi', shift: 'Morning', medium: 'English' },
+      { id: 'sec-col-2b', name: 'Pre-Med B', roomNo: 'Lecture Hall 2', capacity: 40, enrolled: 24, classTeacher: 'Lecturer Bilal Zubair', shift: 'Morning', medium: 'English' }
     ]
   },
   {
-    id: 'cls-col-2',
-    name: 'ICS (Part I)',
+    id: 'cls-col-3',
+    name: 'F.Sc Pre-Engineering (Part I)',
+    programLevel: 'higher-secondary',
+    academicSession: '2026-2027',
+    instituteId: 'inst-3',
+    section: 'Pre-Eng A, Pre-Eng B',
+    capacity: 80,
+    enrolled: 46,
+    roomNo: 'Physics Lab Hall',
+    classTeacher: 'Prof. Tariq Jamil',
+    sections: [
+      { id: 'sec-col-3a', name: 'Pre-Eng A', roomNo: 'Physics Lab Hall', capacity: 40, enrolled: 25, classTeacher: 'Prof. Tariq Jamil', shift: 'Morning', medium: 'English' },
+      { id: 'sec-col-3b', name: 'Pre-Eng B', roomNo: 'Lecture Hall 3', capacity: 40, enrolled: 21, classTeacher: '', shift: 'Morning', medium: 'English' }
+    ]
+  },
+  {
+    id: 'cls-col-4',
+    name: 'F.Sc Pre-Engineering (Part II)',
+    programLevel: 'higher-secondary',
+    academicSession: '2026-2027',
+    instituteId: 'inst-3',
+    section: 'Pre-Eng A, Pre-Eng B',
+    capacity: 80,
+    enrolled: 48,
+    roomNo: 'Physics Lab Hall',
+    classTeacher: 'Prof. Tariq Jamil',
+    sections: [
+      { id: 'sec-col-4a', name: 'Pre-Eng A', roomNo: 'Physics Lab Hall', capacity: 40, enrolled: 26, classTeacher: 'Prof. Tariq Jamil', shift: 'Morning', medium: 'English' },
+      { id: 'sec-col-4b', name: 'Pre-Eng B', roomNo: 'Lecture Hall 3', capacity: 40, enrolled: 22, classTeacher: '', shift: 'Morning', medium: 'English' }
+    ]
+  },
+  {
+    id: 'cls-col-5',
+    name: 'ICS Computer Science (Part I)',
+    programLevel: 'higher-secondary',
+    academicSession: '2026-2027',
+    instituteId: 'inst-3',
+    section: 'A, B',
+    capacity: 80,
+    enrolled: 62,
+    roomNo: 'CS Lab 2',
+    classTeacher: 'Dr. Nadia Hashmi',
+    sections: [
+      { id: 'sec-col-5a', name: 'A', roomNo: 'CS Lab 2', capacity: 40, enrolled: 32, classTeacher: 'Dr. Nadia Hashmi', shift: 'Morning', medium: 'English' },
+      { id: 'sec-col-5b', name: 'B', roomNo: 'CS Lab 3', capacity: 40, enrolled: 30, classTeacher: '', shift: 'Morning', medium: 'English' }
+    ]
+  },
+  {
+    id: 'cls-col-6',
+    name: 'ICS Computer Science (Part II)',
+    programLevel: 'higher-secondary',
+    academicSession: '2026-2027',
+    instituteId: 'inst-3',
+    section: 'A, B',
+    capacity: 80,
+    enrolled: 58,
+    roomNo: 'CS Lab 2',
+    classTeacher: 'Dr. Nadia Hashmi',
+    sections: [
+      { id: 'sec-col-6a', name: 'A', roomNo: 'CS Lab 2', capacity: 40, enrolled: 30, classTeacher: 'Dr. Nadia Hashmi', shift: 'Morning', medium: 'English' },
+      { id: 'sec-col-6b', name: 'B', roomNo: 'CS Lab 3', capacity: 40, enrolled: 28, classTeacher: '', shift: 'Morning', medium: 'English' }
+    ]
+  },
+  {
+    id: 'cls-col-7',
+    name: 'I.Com Commerce (Part I)',
     programLevel: 'higher-secondary',
     academicSession: '2026-2027',
     instituteId: 'inst-3',
     section: 'A',
     capacity: 45,
     enrolled: 32,
-    roomNo: 'CS Lab 2',
+    roomNo: 'Commerce Block 101',
+    classTeacher: 'Prof. Tariq Jamil',
+    sections: [
+      { id: 'sec-col-7a', name: 'A', roomNo: 'Commerce Block 101', capacity: 45, enrolled: 32, classTeacher: 'Prof. Tariq Jamil', shift: 'Morning', medium: 'English' }
+    ]
+  },
+  {
+    id: 'cls-col-8',
+    name: 'I.Com Commerce (Part II)',
+    programLevel: 'higher-secondary',
+    academicSession: '2026-2027',
+    instituteId: 'inst-3',
+    section: 'A',
+    capacity: 45,
+    enrolled: 30,
+    roomNo: 'Commerce Block 102',
+    classTeacher: 'Prof. Tariq Jamil',
+    sections: [
+      { id: 'sec-col-8a', name: 'A', roomNo: 'Commerce Block 102', capacity: 45, enrolled: 30, classTeacher: 'Prof. Tariq Jamil', shift: 'Morning', medium: 'English' }
+    ]
+  },
+  {
+    id: 'cls-col-9',
+    name: 'ADP in Computer Science (ADP-CS)',
+    programLevel: 'college',
+    academicSession: '2026-2027',
+    instituteId: 'inst-3',
+    section: 'Morning Batch, Evening Batch',
+    capacity: 90,
+    enrolled: 48,
+    roomNo: 'Block B-101',
     classTeacher: 'Dr. Nadia Hashmi',
     sections: [
-      { id: 'sec-col-2a', name: 'A', roomNo: 'CS Lab 2', capacity: 45, enrolled: 32, classTeacher: '', shift: 'Morning', medium: 'English' }
+      { id: 'sec-col-9a', name: 'Morning Batch', roomNo: 'Block B-101', capacity: 45, enrolled: 28, classTeacher: 'Dr. Nadia Hashmi', shift: 'Morning', medium: 'English' },
+      { id: 'sec-col-9b', name: 'Evening Batch', roomNo: 'Block B-102', capacity: 45, enrolled: 20, classTeacher: '', shift: 'Evening', medium: 'English' }
+    ]
+  },
+  {
+    id: 'cls-col-10',
+    name: 'ADP in Business Administration (ADP-BBA)',
+    programLevel: 'college',
+    academicSession: '2026-2027',
+    instituteId: 'inst-3',
+    section: 'Morning Batch',
+    capacity: 50,
+    enrolled: 34,
+    roomNo: 'Block B-103',
+    classTeacher: 'Prof. Tariq Jamil',
+    sections: [
+      { id: 'sec-col-10a', name: 'Morning Batch', roomNo: 'Block B-103', capacity: 50, enrolled: 34, classTeacher: 'Prof. Tariq Jamil', shift: 'Morning', medium: 'English' }
     ]
   },
 
+  // ==========================================
   // University Tier: IAS (inst-4)
+  // ==========================================
   {
     id: 'cls-uni-1',
-    name: 'BS Computer Science - Semester 6',
+    name: 'BS Computer Science - Semester 1',
+    programLevel: 'university',
+    academicSession: '2026-2027',
+    instituteId: 'inst-4',
+    section: 'Cohort A, Cohort B',
+    capacity: 90,
+    enrolled: 76,
+    roomNo: 'Auditorium A',
+    classTeacher: 'Dr. Shahzad Rafiq',
+    sections: [
+      { id: 'sec-uni-1a', name: 'Cohort A', roomNo: 'Auditorium A', capacity: 45, enrolled: 40, classTeacher: 'Dr. Shahzad Rafiq', shift: 'Morning', medium: 'English' },
+      { id: 'sec-uni-1b', name: 'Cohort B', roomNo: 'Lab Complex 1', capacity: 45, enrolled: 36, classTeacher: 'Engr. Usman Ali', shift: 'Morning', medium: 'English' }
+    ]
+  },
+  {
+    id: 'cls-uni-2',
+    name: 'BS Computer Science - Semester 2',
     programLevel: 'university',
     academicSession: '2026-2027',
     instituteId: 'inst-4',
     section: 'Cohort A',
     capacity: 50,
-    enrolled: 38,
-    roomNo: 'Auditorium B',
-    classTeacher: 'Dr. Shahzad Rafiq',
+    enrolled: 42,
+    roomNo: 'Lab Complex 2',
+    classTeacher: 'Engr. Usman Ali',
     sections: [
-      { id: 'sec-uni-1a', name: 'Cohort A', roomNo: 'Auditorium B', capacity: 50, enrolled: 38, classTeacher: 'Dr. Shahzad Rafiq', shift: 'Morning', medium: 'English' }
+      { id: 'sec-uni-2a', name: 'Cohort A', roomNo: 'Lab Complex 2', capacity: 50, enrolled: 42, classTeacher: 'Engr. Usman Ali', shift: 'Morning', medium: 'English' }
     ]
   },
   {
-    id: 'cls-uni-2',
+    id: 'cls-uni-3',
+    name: 'BS Computer Science - Semester 3',
+    programLevel: 'university',
+    academicSession: '2026-2027',
+    instituteId: 'inst-4',
+    section: 'Cohort A',
+    capacity: 50,
+    enrolled: 40,
+    roomNo: 'CS Lab 3',
+    classTeacher: 'Dr. Shahzad Rafiq',
+    sections: [
+      { id: 'sec-uni-3a', name: 'Cohort A', roomNo: 'CS Lab 3', capacity: 50, enrolled: 40, classTeacher: 'Dr. Shahzad Rafiq', shift: 'Morning', medium: 'English' }
+    ]
+  },
+  {
+    id: 'cls-uni-4',
     name: 'BS Computer Science - Semester 4',
     programLevel: 'university',
     academicSession: '2026-2027',
@@ -636,11 +912,133 @@ export const defaultInitialClasses = [
     roomNo: 'Lab 4',
     classTeacher: 'Engr. Usman Ali',
     sections: [
-      { id: 'sec-uni-2a', name: 'Cohort A', roomNo: 'Lab 4', capacity: 50, enrolled: 40, classTeacher: 'Engr. Usman Ali', shift: 'Morning', medium: 'English' }
+      { id: 'sec-uni-4a', name: 'Cohort A', roomNo: 'Lab 4', capacity: 50, enrolled: 40, classTeacher: 'Engr. Usman Ali', shift: 'Morning', medium: 'English' }
+    ]
+  },
+  {
+    id: 'cls-uni-5',
+    name: 'BS Computer Science - Semester 5',
+    programLevel: 'university',
+    academicSession: '2026-2027',
+    instituteId: 'inst-4',
+    section: 'Cohort A',
+    capacity: 50,
+    enrolled: 38,
+    roomNo: 'Auditorium C',
+    classTeacher: 'Dr. Shahzad Rafiq',
+    sections: [
+      { id: 'sec-uni-5a', name: 'Cohort A', roomNo: 'Auditorium C', capacity: 50, enrolled: 38, classTeacher: 'Dr. Shahzad Rafiq', shift: 'Morning', medium: 'English' }
+    ]
+  },
+  {
+    id: 'cls-uni-6',
+    name: 'BS Computer Science - Semester 6',
+    programLevel: 'university',
+    academicSession: '2026-2027',
+    instituteId: 'inst-4',
+    section: 'Cohort A',
+    capacity: 50,
+    enrolled: 38,
+    roomNo: 'Auditorium B',
+    classTeacher: 'Dr. Shahzad Rafiq',
+    sections: [
+      { id: 'sec-uni-6a', name: 'Cohort A', roomNo: 'Auditorium B', capacity: 50, enrolled: 38, classTeacher: 'Dr. Shahzad Rafiq', shift: 'Morning', medium: 'English' }
+    ]
+  },
+  {
+    id: 'cls-uni-7',
+    name: 'BS Computer Science - Semester 7',
+    programLevel: 'university',
+    academicSession: '2026-2027',
+    instituteId: 'inst-4',
+    section: 'Cohort A',
+    capacity: 50,
+    enrolled: 35,
+    roomNo: 'Research Lab 1',
+    classTeacher: 'Dr. Shahzad Rafiq',
+    sections: [
+      { id: 'sec-uni-7a', name: 'Cohort A', roomNo: 'Research Lab 1', capacity: 50, enrolled: 35, classTeacher: 'Dr. Shahzad Rafiq', shift: 'Morning', medium: 'English' }
+    ]
+  },
+  {
+    id: 'cls-uni-8',
+    name: 'BS Computer Science - Semester 8',
+    programLevel: 'university',
+    academicSession: '2026-2027',
+    instituteId: 'inst-4',
+    section: 'Cohort A',
+    capacity: 50,
+    enrolled: 34,
+    roomNo: 'Capstone Studio',
+    classTeacher: 'Engr. Usman Ali',
+    sections: [
+      { id: 'sec-uni-8a', name: 'Cohort A', roomNo: 'Capstone Studio', capacity: 50, enrolled: 34, classTeacher: 'Engr. Usman Ali', shift: 'Morning', medium: 'English' }
+    ]
+  },
+  {
+    id: 'cls-uni-9',
+    name: 'BS Software Engineering - Semester 2',
+    programLevel: 'university',
+    academicSession: '2026-2027',
+    instituteId: 'inst-4',
+    section: 'Section Alpha',
+    capacity: 45,
+    enrolled: 32,
+    roomNo: 'Software Hall 1',
+    classTeacher: 'Engr. Usman Ali',
+    sections: [
+      { id: 'sec-uni-9a', name: 'Section Alpha', roomNo: 'Software Hall 1', capacity: 45, enrolled: 32, classTeacher: 'Engr. Usman Ali', shift: 'Morning', medium: 'English' }
+    ]
+  },
+  {
+    id: 'cls-uni-10',
+    name: 'BS Software Engineering - Semester 4',
+    programLevel: 'university',
+    academicSession: '2026-2027',
+    instituteId: 'inst-4',
+    section: 'Section Alpha',
+    capacity: 45,
+    enrolled: 35,
+    roomNo: 'Software Hall 2',
+    classTeacher: 'Engr. Usman Ali',
+    sections: [
+      { id: 'sec-uni-10a', name: 'Section Alpha', roomNo: 'Software Hall 2', capacity: 45, enrolled: 35, classTeacher: 'Engr. Usman Ali', shift: 'Morning', medium: 'English' }
+    ]
+  },
+  {
+    id: 'cls-uni-11',
+    name: 'BBA Honors - Semester 3',
+    programLevel: 'university',
+    academicSession: '2026-2027',
+    instituteId: 'inst-4',
+    section: 'Section Alpha',
+    capacity: 50,
+    enrolled: 36,
+    roomNo: 'Management Wing 201',
+    classTeacher: 'Dr. Shahzad Rafiq',
+    sections: [
+      { id: 'sec-uni-11a', name: 'Section Alpha', roomNo: 'Management Wing 201', capacity: 50, enrolled: 36, classTeacher: 'Dr. Shahzad Rafiq', shift: 'Morning', medium: 'English' }
+    ]
+  },
+  {
+    id: 'cls-uni-12',
+    name: 'MS Computer Science - Semester 1',
+    programLevel: 'university',
+    academicSession: '2026-2027',
+    instituteId: 'inst-4',
+    section: 'Evening Batch',
+    capacity: 35,
+    enrolled: 22,
+    roomNo: 'Postgraduate Seminar Room',
+    classTeacher: 'Dr. Shahzad Rafiq',
+    sections: [
+      { id: 'sec-uni-12a', name: 'Evening Batch', roomNo: 'Postgraduate Seminar Room', capacity: 35, enrolled: 22, classTeacher: 'Dr. Shahzad Rafiq', shift: 'Evening', medium: 'English' }
     ]
   },
 
+  // ==========================================
   // Central / Beaconhouse (inst-1)
+  // ==========================================
   {
     id: 'cls-bhs-1',
     name: '10th Grade',
@@ -659,10 +1057,18 @@ export const defaultInitialClasses = [
 ]
 
 export const defaultInitialStudents = [
-  // School Tier (inst-2)
+  // School Tier (inst-2) - Grade 1 to Grade 10 active representation
   { id: 'std-sch-1', name: 'Hamza Farooq', rollNumber: 'CSM-2026-104', campus: 'City School Model Town Campus', instituteId: 'inst-2', wing: 'High School', className: 'Grade 10', section: 'A', status: 'Active', gender: 'Male', phone: '0300-1234567', bFormCnic: '35201-7890123-1', feeStatus: 'Pending', fatherName: 'Farooq Ahmed' },
   { id: 'std-sch-2', name: 'Ayesha Tariq', rollNumber: 'CSM-2026-105', campus: 'City School Model Town Campus', instituteId: 'inst-2', wing: 'High School', className: 'Grade 10', section: 'B', status: 'Active', gender: 'Female', phone: '0301-9876543', bFormCnic: '35201-8901234-2', feeStatus: 'Paid', fatherName: 'Tariq Mehmood' },
   { id: 'std-sch-3', name: 'Bilal Khan', rollNumber: 'CSM-2026-106', campus: 'City School Model Town Campus', instituteId: 'inst-2', wing: 'High School', className: 'Grade 9', section: 'A', status: 'Active', gender: 'Male', phone: '0321-4567890', bFormCnic: '35201-9012345-3', feeStatus: 'Paid', fatherName: 'Aslam Khan' },
+  { id: 'std-sch-4', name: 'Zainab Imran', rollNumber: 'CSM-2026-101', campus: 'City School Model Town Campus', instituteId: 'inst-2', wing: 'Primary Wing', className: 'Grade 1', section: 'A', status: 'Active', gender: 'Female', phone: '0300-9988771', bFormCnic: '35201-1111222-1', feeStatus: 'Paid', fatherName: 'Imran Ashraf' },
+  { id: 'std-sch-5', name: 'Rayyan Ali', rollNumber: 'CSM-2026-102', campus: 'City School Model Town Campus', instituteId: 'inst-2', wing: 'Primary Wing', className: 'Grade 2', section: 'A', status: 'Active', gender: 'Male', phone: '0301-8877662', bFormCnic: '35201-2222333-2', feeStatus: 'Paid', fatherName: 'Ali Raza' },
+  { id: 'std-sch-6', name: 'Fatima Zahra', rollNumber: 'CSM-2026-103', campus: 'City School Model Town Campus', instituteId: 'inst-2', wing: 'Primary Wing', className: 'Grade 3', section: 'A', status: 'Active', gender: 'Female', phone: '0302-7766553', bFormCnic: '35201-3333444-3', feeStatus: 'Paid', fatherName: 'Zahid Hussain' },
+  { id: 'std-sch-7', name: 'Usman Farooq', rollNumber: 'CSM-2026-107', campus: 'City School Model Town Campus', instituteId: 'inst-2', wing: 'Primary Wing', className: 'Grade 4', section: 'A', status: 'Active', gender: 'Male', phone: '0303-6655444', bFormCnic: '35201-4444555-4', feeStatus: 'Pending', fatherName: 'Farooq Shah' },
+  { id: 'std-sch-8', name: 'Hania Kashif', rollNumber: 'CSM-2026-108', campus: 'City School Model Town Campus', instituteId: 'inst-2', wing: 'Primary Wing', className: 'Grade 5', section: 'A', status: 'Active', gender: 'Female', phone: '0304-5544335', bFormCnic: '35201-5555666-5', feeStatus: 'Paid', fatherName: 'Kashif Munir' },
+  { id: 'std-sch-9', name: 'Muhammad Saad', rollNumber: 'CSM-2026-109', campus: 'City School Model Town Campus', instituteId: 'inst-2', wing: 'Middle Wing', className: 'Grade 6', section: 'A', status: 'Active', gender: 'Male', phone: '0305-4433226', bFormCnic: '35201-6666777-6', feeStatus: 'Paid', fatherName: 'Saad Rafique' },
+  { id: 'std-sch-10', name: 'Meerab Tariq', rollNumber: 'CSM-2026-110', campus: 'City School Model Town Campus', instituteId: 'inst-2', wing: 'Middle Wing', className: 'Grade 7', section: 'A', status: 'Active', gender: 'Female', phone: '0306-3322117', bFormCnic: '35201-7777888-7', feeStatus: 'Paid', fatherName: 'Tariq Bashir' },
+  { id: 'std-sch-11', name: 'Hamna Asif', rollNumber: 'CSM-2026-111', campus: 'City School Model Town Campus', instituteId: 'inst-2', wing: 'Middle Wing', className: 'Grade 8', section: 'A', status: 'Active', gender: 'Female', phone: '0307-2211008', bFormCnic: '35201-8888999-8', feeStatus: 'Pending', fatherName: 'Asif Mehmood' },
 
   // College Tier (inst-3)
   { id: 'std-col-1', name: 'Zainab Fatima', rollNumber: 'COL-24-101', campus: 'Roots International College & Academy', instituteId: 'inst-3', wing: 'College Wing', className: 'F.Sc Pre-Medical (Part II)', section: 'Pre-Med A', status: 'Active', gender: 'Female', phone: '0321-4455667', bFormCnic: '35201-4455667-4', feeStatus: 'Paid', fatherName: 'Tariq Sheikh' },
@@ -1026,11 +1432,16 @@ export const getStoredData = () => {
         parsed.students = defaultInitialStudents
         try { localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed)) } catch {}
       } else {
+        let studentsUpdated = false
         defaultInitialStudents.forEach(ds => {
           if (!parsed.students.some(s => s.rollNumber === ds.rollNumber)) {
             parsed.students.push(ds)
+            studentsUpdated = true
           }
         })
+        if (studentsUpdated) {
+          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed)) } catch {}
+        }
       }
       if (!Array.isArray(parsed.admissionsPipeline) || parsed.admissionsPipeline.length === 0) {
         parsed.admissionsPipeline = defaultInitialAdmissionsPipeline
@@ -1050,11 +1461,16 @@ export const getStoredData = () => {
         parsed.classes = defaultInitialClasses
         try { localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed)) } catch {}
       } else {
+        let classesUpdated = false
         defaultInitialClasses.forEach(dc => {
           if (!parsed.classes.some(c => c.name === dc.name && c.instituteId === dc.instituteId)) {
             parsed.classes.push(dc)
+            classesUpdated = true
           }
         })
+        if (classesUpdated) {
+          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed)) } catch {}
+        }
       }
       // Live timetable store preserved
       if (!parsed.timetable || typeof parsed.timetable !== 'object') {

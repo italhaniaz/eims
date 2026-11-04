@@ -42,6 +42,7 @@ import { useAppData } from '../../../context/AppDataContext'
 import { useAuth } from '../../../context/AuthContext'
 import { useToast } from '../../../context/ToastContext'
 import { normalizeClassSections } from '../../../constants/academicLevels'
+import { filterClassesByInstituteTier, isClassAllowedForTier } from '../../../utils/tierGating'
 import {
   ATTENDANCE_STATUSES,
   getAttendanceSettings,
@@ -143,35 +144,24 @@ export const AttendanceView = ({ currentInstitute, onRouteChange }) => {
     setNewSessionName('')
   }
 
-  // 3. Filter classes & students for current institute & activeProgramLevel
+  // 3. Filter classes & students strictly scoped for current institute tier & activeProgramLevel
   const instClasses = useMemo(() => {
-    return classes.filter(c => {
-      const matchInst = (!c.instituteId || !currentInstitute?.id || c.instituteId === currentInstitute.id ||
-        ((c.instituteId === 'inst-1' || c.instituteId === 'inst-default') && (currentInstitute.id === 'inst-1' || currentInstitute.id === 'inst-default')) ||
-        (institutes || []).length <= 1)
-      if (!matchInst) return false
-
-      if (activeProgramLevel && activeProgramLevel !== 'all') {
+    const scoped = filterClassesByInstituteTier(classes, currentInstitute)
+    if (activeProgramLevel && activeProgramLevel !== 'all') {
+      return scoped.filter(c => {
         const tier = (c.programLevel || '').toLowerCase().trim()
-        if (tier && tier !== activeProgramLevel.toLowerCase().trim()) return false
-      }
-      return true
-    })
-  }, [classes, currentInstitute?.id, institutes, activeProgramLevel])
+        return !tier || tier === activeProgramLevel.toLowerCase().trim()
+      })
+    }
+    return scoped
+  }, [classes, currentInstitute, activeProgramLevel])
 
   const instStudents = useMemo(() => {
     return students.filter(s => {
-      if (!s.instituteId) return true
-      if (!currentInstitute?.id) return true
-      if (s.instituteId === currentInstitute.id) return true
-      if ((s.instituteId === 'inst-1' || s.instituteId === 'inst-default') &&
-          (currentInstitute.id === 'inst-1' || currentInstitute.id === 'inst-default')) {
-        return true
-      }
-      if ((institutes || []).length <= 1) return true
-      return false
+      if (s.instituteId && currentInstitute?.id && s.instituteId !== currentInstitute?.id) return false
+      return isClassAllowedForTier(s.className, currentInstitute)
     })
-  }, [students, currentInstitute?.id, institutes])
+  }, [students, currentInstitute])
 
   // 4. Class & Section Selection (Starts UNSELECTED - Zero dummy rule)
   const [selectedClass, setSelectedClass] = useState('')

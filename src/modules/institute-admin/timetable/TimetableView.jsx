@@ -32,6 +32,7 @@ import {
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
 import { normalizeClassSections } from '../../../constants/academicLevels'
+import { filterClassesByInstituteTier } from '../../../utils/tierGating'
 import { getCampusRooms } from '../../../constants/campusRooms'
 import { 
   getBellSchedule,
@@ -69,14 +70,10 @@ export const TimetableView = ({ currentInstitute, onRouteChange }) => {
     purgeStaleTimetableData()
   }, [])
 
-  // Filter classes & teachers for current institute
+  // Filter classes & teachers strictly scoped by campus & educational tier
   const instClasses = useMemo(() => {
-    return classes.filter(c => {
-      if (!c.instituteId) return true
-      if (!currentInstitute?.id) return true
-      return c.instituteId === currentInstitute.id
-    })
-  }, [classes, currentInstitute?.id])
+    return filterClassesByInstituteTier(classes, currentInstitute)
+  }, [classes, currentInstitute])
 
   const instTeachers = useMemo(() => {
     return teachers.filter(t => {

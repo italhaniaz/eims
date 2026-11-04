@@ -4,11 +4,11 @@
  * terminology, and route guards based on Institute Tier & Subscription.
  */
 
-import { COMMON_ROUTES, COMMON_TERMINOLOGY, COMMON_DASHBOARD_SHORTCUTS } from './common.features'
-import { SCHOOL_FEATURES } from './school.features'
-import { COLLEGE_FEATURES } from './college.features'
-import { UNIVERSITY_FEATURES } from './university.features'
-import { CUSTOM_FEATURES } from './custom.features'
+import { COMMON_ROUTES, COMMON_TERMINOLOGY, COMMON_DASHBOARD_SHORTCUTS } from './common.features.js'
+import { SCHOOL_FEATURES } from './school.features.js'
+import { COLLEGE_FEATURES } from './college.features.js'
+import { UNIVERSITY_FEATURES } from './university.features.js'
+import { CUSTOM_FEATURES } from './custom.features.js'
 
 export const FEATURE_REGISTRY = {
   school: SCHOOL_FEATURES,
