@@ -19,8 +19,9 @@ import {
   CheckCircle2
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { PortalFilterBar } from './PortalFilterBar'
 
-export const SchoolLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier }) => {
+export const SchoolLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier, selectedTiers, onSetTiers }) => {
   const { login } = useAuth()
   const formRef = useRef(null)
 
@@ -161,53 +162,13 @@ export const SchoolLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier }) 
       {/* Main Container */}
       <div className="w-full max-w-[940px] z-10 flex flex-col items-center mt-12 sm:mt-0">
         
-        {/* TOP SEGMENTED PORTAL SWITCHER BAR */}
-        <div className="w-full flex flex-wrap items-center justify-center gap-2 mb-4 sm:mb-5">
-          <button
-            type="button"
-            className="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-emerald-600 text-white shadow-emerald-600/30 ring-2 ring-emerald-500/40 shadow-xs cursor-default flex items-center gap-2"
-          >
-            <School className="w-4 h-4 text-white" />
-            <span>🏫 School Portal Login</span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-white/20 text-white font-extrabold">
-              K-10 Scope
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onSwitchTier('college')}
-            className="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-white hover:bg-indigo-50 text-slate-700 border border-slate-200 hover:border-indigo-300 transition-all shadow-xs cursor-pointer flex items-center gap-2"
-          >
-            <Building2 className="w-4 h-4 text-indigo-600" />
-            <span>🏛️ College Portal Login</span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-indigo-100 text-indigo-800">
-              11-12 & ADP
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onSwitchTier('university')}
-            className="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-white hover:bg-purple-50 text-slate-700 border border-slate-200 hover:border-purple-300 transition-all shadow-xs cursor-pointer flex items-center gap-2"
-          >
-            <GraduationCap className="w-4 h-4 text-purple-600" />
-            <span>🎓 University Portal Login</span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-purple-100 text-purple-800">
-              HEC BS/MS
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onSwitchTier('superadmin')}
-            className="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-purple-700 bg-white hover:bg-slate-50 border border-slate-200 transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
-            title="Open Master Superadmin Control Plane"
-          >
-            <Lock className="w-3.5 h-3.5 text-purple-600" />
-            <span className="hidden sm:inline">Super Admin</span>
-          </button>
-        </div>
+        {/* TOP SEGMENTED PORTAL SWITCHER & CHECKBOX FILTER BAR */}
+        <PortalFilterBar
+          activeTier="school"
+          onSwitchTier={onSwitchTier}
+          selectedTiers={selectedTiers}
+          onSetTiers={onSetTiers}
+        />
 
         {/* Dual-Pane Card */}
         <div className="w-full rounded-3xl bg-white border border-slate-200/90 shadow-[0_15px_45px_-5px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.02)] overflow-hidden grid grid-cols-1 md:grid-cols-12 relative">

@@ -169,17 +169,17 @@ export const TeacherPermissionsMatrix = ({ currentInstitute, teachers = [] }) =>
   return (
     <div className="space-y-6">
       {/* 1. Header Banner & Executive KPI Metrics */}
-      <div className="bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 text-white p-5 sm:p-6 rounded-3xl shadow-md border border-purple-800/40">
+      <div className="bg-gradient-to-r from-emerald-950 via-slate-900 to-teal-950 text-white p-5 sm:p-6 rounded-3xl shadow-md border border-emerald-800/40">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-purple-500/20 text-purple-300 border border-purple-400/30 mb-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 mb-2">
               <ShieldCheck className="w-3.5 h-3.5" />
               <span>Hierarchical Role Governance</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-black tracking-tight font-heading">
               Faculty Capability Delegation & Student Portal Gates
             </h2>
-            <p className="text-xs sm:text-sm text-purple-200/80 mt-1 max-w-2xl">
+            <p className="text-xs sm:text-sm text-emerald-200/80 mt-1 max-w-2xl">
               Grant specific teachers administrative rights (e.g. admitting students into assigned sections) and control what features students & parents can access on <strong>{currentInstitute?.name || 'this campus'}</strong>.
             </p>
           </div>
@@ -208,17 +208,17 @@ export const TeacherPermissionsMatrix = ({ currentInstitute, teachers = [] }) =>
         </div>
 
         {/* 3 KPI Summary Blocks */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6 pt-5 border-t border-purple-800/60">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6 pt-5 border-t border-emerald-800/60">
           <div className="bg-white/5 backdrop-blur-sm p-3 rounded-2xl border border-white/10">
-            <span className="text-[11px] font-bold text-purple-300 uppercase block">Total Campus Staff</span>
+            <span className="text-[11px] font-bold text-emerald-300 uppercase block">Total Campus Staff</span>
             <span className="text-xl sm:text-2xl font-black mt-0.5 block">{campusTeachers.length}</span>
-            <span className="text-[10px] text-purple-200/70">Registered Faculty</span>
+            <span className="text-[10px] text-emerald-200/70">Registered Faculty</span>
           </div>
 
           <div className="bg-white/5 backdrop-blur-sm p-3 rounded-2xl border border-white/10">
             <span className="text-[11px] font-bold text-emerald-300 uppercase block">Admissions Authorized</span>
             <span className="text-xl sm:text-2xl font-black text-emerald-400 mt-0.5 block">
-              {enrollmentAuthCount} <span className="text-xs text-purple-200/70 font-normal">/ {campusTeachers.length}</span>
+              {enrollmentAuthCount} <span className="text-xs text-emerald-200/70 font-normal">/ {campusTeachers.length}</span>
             </span>
             <span className="text-[10px] text-emerald-200/70">Can Enroll Section Students</span>
           </div>
@@ -226,7 +226,7 @@ export const TeacherPermissionsMatrix = ({ currentInstitute, teachers = [] }) =>
           <div className="bg-white/5 backdrop-blur-sm p-3 rounded-2xl border border-white/10">
             <span className="text-[11px] font-bold text-blue-300 uppercase block">Marks Lock Authorized</span>
             <span className="text-xl sm:text-2xl font-black text-blue-300 mt-0.5 block">
-              {marksAuthCount} <span className="text-xs text-purple-200/70 font-normal">/ {campusTeachers.length}</span>
+              {marksAuthCount} <span className="text-xs text-blue-200/70 font-normal">/ {campusTeachers.length}</span>
             </span>
             <span className="text-[10px] text-blue-200/70">Can Finalize Report Cards</span>
           </div>
@@ -250,13 +250,13 @@ export const TeacherPermissionsMatrix = ({ currentInstitute, teachers = [] }) =>
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search faculty name, email, ID..."
-            className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+            className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
           />
         </div>
 
         <div className="flex items-center gap-2 self-stretch sm:self-auto justify-end">
           <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700">
-            <Filter className="w-3.5 h-3.5 text-purple-600" />
+            <Filter className="w-3.5 h-3.5 text-emerald-600" />
             <select
               value={filterRole}
               onChange={(e) => setFilterRole(e.target.value)}
@@ -277,7 +277,7 @@ export const TeacherPermissionsMatrix = ({ currentInstitute, teachers = [] }) =>
             <h3 className="text-sm font-extrabold text-slate-800">Faculty Capability Matrix</h3>
             <p className="text-[11px] text-slate-500">Toggle administrative privileges per teacher. Changes take effect in real-time.</p>
           </div>
-          <span className="text-xs font-bold text-purple-700 bg-purple-50 px-2.5 py-1 rounded-full border border-purple-200/60">
+          <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200/60">
             Showing {filteredTeachers.length} of {campusTeachers.length}
           </span>
         </div>
@@ -323,7 +323,7 @@ export const TeacherPermissionsMatrix = ({ currentInstitute, teachers = [] }) =>
                       {/* Teacher Profile Column */}
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-purple-50 text-purple-700 border border-purple-100 flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+                          <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-100 flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
                             {t.name ? t.name.charAt(0) : 'T'}
                           </div>
                           <div>
@@ -458,7 +458,7 @@ export const TeacherPermissionsMatrix = ({ currentInstitute, teachers = [] }) =>
       <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-5 sm:p-6 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
           <div>
-            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-purple-700 bg-purple-50 px-2.5 py-0.5 rounded-full mb-1">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full mb-1">
               <Sliders className="w-3.5 h-3.5" />
               <span>Campus Operational Gates</span>
             </div>
