@@ -35,7 +35,7 @@ import { useAppData } from '../../context/AppDataContext'
 import { useToast } from '../../context/ToastContext'
 import { DataService } from '../../services/dataService'
 
-export const StudentParentPortalView = () => {
+export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin = null }) => {
   const { user, logout, login } = useAuth()
   const [gatesVersion, setGatesVersion] = useState(0)
 
@@ -59,17 +59,30 @@ export const StudentParentPortalView = () => {
     attendance = {} 
   } = useAppData()
 
-  const tier = user?.tier || (user?.instituteType?.toLowerCase() === 'university' ? 'university' : user?.instituteType?.toLowerCase() === 'college' ? 'college' : 'school')
-  const isSchool = tier === 'school'
-  const isCollege = tier === 'college'
-  const isUniversity = tier === 'university'
-  const isApplicant = user?.role === 'applicant' || user?.role === 'uni_applicant'
-  const isAlumni = user?.role === 'alumni' || user?.role === 'uni_alumni'
-  const isParent = ['parent', 'school_parent', 'college_parent', 'uni_parent'].includes(user?.role)
-  const isStudent = ['student', 'school_student', 'college_student', 'uni_student'].includes(user?.role)
+  const effectiveTier = currentInstitute
+    ? (currentInstitute.type?.toLowerCase().includes('uni') || currentInstitute.id === 'inst-4'
+        ? 'university'
+        : currentInstitute.type?.toLowerCase().includes('col') || currentInstitute.id === 'inst-3'
+        ? 'college'
+        : 'school')
+    : (user?.tier || (user?.instituteType?.toLowerCase() === 'university' ? 'university' : user?.instituteType?.toLowerCase() === 'college' ? 'college' : 'school'))
+
+  const [simulatedRole, setSimulatedRole] = useState(() => {
+    if (user?.role && ['student', 'parent', 'applicant', 'alumni', 'school_student', 'school_parent', 'college_student', 'college_parent', 'uni_student', 'uni_parent', 'uni_applicant', 'uni_alumni'].includes(user.role)) {
+      return user.role
+    }
+    return effectiveTier === 'university' ? 'uni_student' : effectiveTier === 'college' ? 'college_student' : 'school_student'
+  })
+  const isSchool = effectiveTier === 'school'
+  const isCollege = effectiveTier === 'college'
+  const isUniversity = effectiveTier === 'university'
+  const isApplicant = simulatedRole === 'applicant' || simulatedRole === 'uni_applicant'
+  const isAlumni = simulatedRole === 'alumni' || simulatedRole === 'uni_alumni'
+  const isParent = ['parent', 'school_parent', 'college_parent', 'uni_parent'].includes(simulatedRole)
+  const isStudent = ['student', 'school_student', 'college_student', 'uni_student'].includes(simulatedRole)
 
   const campusGates = useMemo(() => {
-    const instId = user?.instituteId || (isSchool ? 'inst-2' : isCollege ? 'inst-3' : 'inst-4')
+    const instId = currentInstitute?.id || user?.instituteId || (isSchool ? 'inst-2' : isCollege ? 'inst-3' : 'inst-4')
     return DataService.getCampusStudentGates(instId)
   }, [user, isSchool, isCollege, gatesVersion])
 
@@ -118,8 +131,37 @@ export const StudentParentPortalView = () => {
     return 'overview'
   })
 
+  // Filter students belonging to active institute
+  const campusStudents = useMemo(() => {
+    const instId = currentInstitute?.id || user?.instituteId || (isSchool ? 'inst-2' : isCollege ? 'inst-3' : 'inst-4')
+    const filtered = (students || []).filter(s => !s.instituteId || s.instituteId === instId)
+    return filtered.length > 0 ? filtered : (students || [])
+  }, [students, currentInstitute, user, isSchool, isCollege])
+
+  const [selectedStudentId, setSelectedStudentId] = useState('')
+
   // Match the student profile from central context based on user payload or fallback
   const studentProfile = useMemo(() => {
+    if (selectedStudentId) {
+      const found = campusStudents.find(s => s.id === selectedStudentId || s.rollNumber === selectedStudentId)
+      if (found) {
+        return {
+          id: found.id,
+          studentName: found.name || found.studentName,
+          rollNumber: found.rollNumber || found.rollNo || found.id,
+          className: found.className || found.class || (isSchool ? 'Grade 10 - Section A' : isCollege ? 'F.Sc Pre-Medical (Part II)' : 'BS Computer Science - Semester 6'),
+          section: found.section || 'Section A',
+          campusName: currentInstitute?.name || found.campus || (isSchool ? 'City School Model Town Campus' : isCollege ? 'Roots International College & Academy' : 'Institute of Applied Sciences'),
+          fatherName: found.fatherName || found.guardianName || 'Parent Guardian',
+          gender: found.gender || 'Male',
+          dob: found.dob || '2008-05-15',
+          emergencyContact: found.phone || found.emergencyContact || '+92 300 1234567',
+          bloodGroup: found.bloodGroup || 'B+',
+          status: found.status || 'Active',
+          cgpa: found.cgpa || '3.75'
+        }
+      }
+    }
     const match = students.find(s => 
       (user?.studentId && s.id === user.studentId) ||
       (user?.studentId && s.rollNumber === user.studentId) ||
@@ -411,6 +453,83 @@ export const StudentParentPortalView = () => {
 
   return (
     <div className="flex flex-col h-screen w-full bg-[#f8fafc] overflow-y-auto">
+      {/* Interactive Campus Admin Bridge & Role Switcher Bar */}
+      {onBackToAdmin && (
+        <div className="bg-gradient-to-r from-purple-900 via-indigo-950 to-slate-900 text-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 shadow-lg border-b border-purple-700/50 sticky top-0 z-50">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onBackToAdmin}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all cursor-pointer shadow-xs border border-white/20 active:scale-95"
+            >
+              <ArrowRight className="w-3.5 h-3.5 rotate-180" />
+              <span>← Return to Admin Desk</span>
+            </button>
+            <div className="h-4 w-px bg-white/20" />
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-purple-200 bg-purple-800/60 px-2 py-0.5 rounded border border-purple-400/30">
+                {isUniversity ? 'University Tier' : isCollege ? 'College Tier' : 'School Tier'}
+              </span>
+              <span className="text-xs font-bold text-white truncate max-w-[200px] sm:max-w-none">
+                {currentInstitute?.name || 'Active Campus'}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Live Role Simulator */}
+            <div className="bg-black/40 p-0.5 rounded-lg flex items-center gap-1 border border-white/10 text-xs">
+              <button
+                type="button"
+                onClick={() => setSimulatedRole(isSchool ? 'school_student' : isCollege ? 'college_student' : 'uni_student')}
+                className={`px-2.5 py-1 rounded-md font-bold transition-all cursor-pointer ${
+                  isStudent ? 'bg-purple-600 text-white shadow-xs' : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                🎓 Student View
+              </button>
+              <button
+                type="button"
+                onClick={() => setSimulatedRole(isSchool ? 'school_parent' : isCollege ? 'college_parent' : 'uni_parent')}
+                className={`px-2.5 py-1 rounded-md font-bold transition-all cursor-pointer ${
+                  isParent ? 'bg-purple-600 text-white shadow-xs' : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                👨‍👩‍👧 Parent View
+              </button>
+              {isUniversity && (
+                <button
+                  type="button"
+                  onClick={() => setSimulatedRole('uni_applicant')}
+                  className={`px-2.5 py-1 rounded-md font-bold transition-all cursor-pointer ${
+                    isApplicant ? 'bg-purple-600 text-white shadow-xs' : 'text-slate-300 hover:text-white'
+                  }`}
+                >
+                  📄 Applicant View
+                </button>
+              )}
+            </div>
+
+            {/* Live Student Profile Selector */}
+            {campusStudents.length > 0 && (
+              <div className="flex items-center gap-1.5 bg-white/10 px-2.5 py-1 rounded-lg border border-white/20">
+                <User className="w-3.5 h-3.5 text-purple-300 shrink-0" />
+                <select
+                  value={selectedStudentId || studentProfile?.id || ''}
+                  onChange={(e) => setSelectedStudentId(e.target.value)}
+                  className="bg-transparent text-white text-xs font-semibold focus:outline-none cursor-pointer pr-2"
+                >
+                  <option value="" className="text-slate-900 bg-white">Select Student Profile...</option>
+                  {campusStudents.map(s => (
+                    <option key={s.id} value={s.id} className="text-slate-900 bg-white">
+                      {s.name || s.studentName} ({s.rollNumber || s.rollNo || s.id})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       {/* Top Header */}
       <header className="bg-gradient-to-r from-slate-900 via-indigo-950 to-purple-950 text-white border-b border-slate-800 shadow-md sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">

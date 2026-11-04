@@ -108,6 +108,7 @@ export const InstituteAdminNavbar = ({
       case 'inst-reports': return tierConfig?.isUniversityOnly ? 'Reports & HEC / QEC Compliance' : 'Reports & Analytics'
       case 'inst-users': return tierConfig?.isUniversityOnly ? 'Users, Roles & Workflow Approvals' : 'Users, Roles & Access'
       case 'inst-settings': return tierConfig?.isUniversityOnly ? 'Settings & Security' : 'Campus System Settings'
+      case 'inst-student-portal': return 'Student & Parent Portal (Live Preview)'
       default: return tierConfig?.portalTitle || 'Campus Portal'
     }
   }
@@ -219,6 +220,52 @@ export const InstituteAdminNavbar = ({
         </div>
       )}
 
+      {/* Multi-Portal Switcher (Admin Desk vs Teacher Desk vs Student & Parent Portal) */}
+      <div className="hidden lg:flex items-center bg-slate-100/90 p-1 rounded-xl border border-slate-200/80 shadow-2xs gap-1">
+        <button
+          type="button"
+          onClick={() => onRouteChange && onRouteChange('inst-dashboard')}
+          className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            currentRoute !== 'inst-student-portal' && currentRoute !== 'inst-teachers'
+              ? 'bg-white text-purple-700 shadow-xs border border-purple-200/70 ring-1 ring-purple-500/10'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+          }`}
+          title="Campus Operations & Management Desk"
+        >
+          <Building2 className="w-3.5 h-3.5 text-purple-600" />
+          <span>Admin Desk</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onRouteChange && onRouteChange('inst-teachers')}
+          className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            currentRoute === 'inst-teachers'
+              ? 'bg-white text-purple-700 shadow-xs border border-purple-200/70 ring-1 ring-purple-500/10'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+          }`}
+          title="Teacher Operations & Delegated Permissions Matrix"
+        >
+          <UserCheck className="w-3.5 h-3.5 text-purple-600" />
+          <span>Teacher Desk</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onRouteChange && onRouteChange('inst-student-portal')}
+          className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            currentRoute === 'inst-student-portal'
+              ? 'bg-purple-600 text-white shadow-xs'
+              : 'text-purple-700 hover:bg-purple-100/70 bg-[#f5eeff] border border-purple-200/70'
+          }`}
+          title="Live Student & Parent Portal for this Campus"
+        >
+          <GraduationCap className={`w-3.5 h-3.5 ${currentRoute === 'inst-student-portal' ? 'text-white' : 'text-purple-600'}`} />
+          <span>Student & Parent Portal</span>
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        </button>
+      </div>
+
       {/* Right: Settings and User Menu */}
       <div className="flex items-center gap-2 sm:gap-3">
         <button 
@@ -260,6 +307,28 @@ export const InstituteAdminNavbar = ({
                 >
                   <Key className="w-3.5 h-3.5 text-purple-600" />
                   <span>Change Password & Security</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setShowProfileMenu(false)
+                    onRouteChange && onRouteChange('inst-student-portal')
+                  }}
+                  className="w-full text-left px-4 py-2 text-xs text-purple-700 hover:bg-purple-50 flex items-center gap-2 font-bold"
+                >
+                  <GraduationCap className="w-3.5 h-3.5 text-purple-600" />
+                  <span>View Student & Parent Portal</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setShowProfileMenu(false)
+                    onRouteChange && onRouteChange('inst-teachers')
+                  }}
+                  className="w-full text-left px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-medium"
+                >
+                  <UserCheck className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Teacher Operations & Matrix</span>
                 </button>
 
                 <button

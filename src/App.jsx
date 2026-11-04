@@ -131,7 +131,7 @@ const AppContent = () => {
     'inst-classes', 'inst-subjects', 'inst-timetable', 'inst-program-levels', 'inst-attendance', 'inst-exams',
     'inst-board-exams', 'inst-fees', 'inst-accounts', 'inst-scholarships', 'inst-notices', 'inst-discipline',
     'inst-learning', 'inst-transport', 'inst-library', 'inst-inventory', 'inst-hostel', 'inst-labs',
-    'inst-certificates', 'inst-events', 'inst-reports', 'inst-users', 'inst-settings', 'inst-course-registration', 'inst-research-fyp', 'inst-career-alumni', 'inst-campus-it'
+    'inst-certificates', 'inst-events', 'inst-reports', 'inst-users', 'inst-settings', 'inst-course-registration', 'inst-research-fyp', 'inst-career-alumni', 'inst-campus-it', 'inst-student-portal'
   ]
 
   // Helpers to safely extract valid initial routes per portal role
@@ -708,6 +708,12 @@ const AppContent = () => {
                 )}
                 {safeInstituteRoute === 'inst-career-alumni' && (
                   <UniversityCareerAlumniView currentInstitute={activeCampus} />
+                )}
+                {safeInstituteRoute === 'inst-student-portal' && (
+                  <StudentParentPortalView 
+                    currentInstitute={activeCampus} 
+                    onBackToAdmin={() => setInstituteRoute('inst-dashboard')}
+                  />
                 )}
                 {safeInstituteRoute === 'inst-campus-it' && (
                   <UniversityCampusItView currentInstitute={activeCampus} />

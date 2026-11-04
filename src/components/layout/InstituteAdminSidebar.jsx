@@ -57,6 +57,8 @@ export const canRoleAccessRoute = (role, routeId) => {
     }
   } catch (e) {}
 
+  if (routeId === 'inst-student-portal') return true;
+
   const isAccountant = ['accountant', 'school_accountant', 'college_accountant', 'finance', 'uni_finance'].includes(userRole);
   const isTeacher = ['teacher', 'faculty', 'school_teacher', 'college_faculty', 'uni_faculty'].includes(userRole);
   const isHod = ['hod', 'college_hod', 'dean', 'uni_dean'].includes(userRole);
@@ -317,6 +319,37 @@ export const InstituteAdminSidebar = ({
                 isRouteActive('inst-dashboard') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
               }`} />
               {(!collapsed || isMobileOpen) && <span>{isUniversity ? 'Executive Dashboard' : 'Campus Dashboard'}</span>}
+            </button>
+          </div>
+
+          {/* Quick Bridge: Student & Parent Portal */}
+          <div className="relative">
+            {isRouteActive('inst-student-portal') && (
+              <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+            )}
+            <button
+              onClick={() => handleNavClick('inst-student-portal')}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
+                isRouteActive('inst-student-portal')
+                  ? 'bg-purple-600 text-white font-semibold shadow-xs'
+                  : 'text-purple-700 bg-purple-50/70 hover:bg-purple-100/80 border border-purple-200/60'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <GraduationCap className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                  isRouteActive('inst-student-portal') ? 'text-white' : 'text-purple-600'
+                }`} />
+                {(!collapsed || isMobileOpen) && (
+                  <span className="font-bold text-xs truncate">Student & Parent Portal</span>
+                )}
+              </div>
+              {(!collapsed || isMobileOpen) && (
+                <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-full ${
+                  isRouteActive('inst-student-portal') ? 'bg-white/20 text-white' : 'bg-purple-200 text-purple-900'
+                }`}>
+                  Live
+                </span>
+              )}
             </button>
           </div>
 
