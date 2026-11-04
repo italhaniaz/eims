@@ -12,7 +12,9 @@ import {
   Settings, 
   User,
   Key,
-  UserCheck
+  UserCheck,
+  Eye,
+  Check
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useAppData } from '../../context/AppDataContext'
@@ -38,9 +40,11 @@ export const InstituteAdminNavbar = ({
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [showProfileMenu, setShowProfileMenu] = useState(false)
   const [showPasswordModal, setShowPasswordModal] = useState(false)
+  const [showPreviewMenu, setShowPreviewMenu] = useState(false)
 
   const profileRef = useRef(null)
   const campusRef = useRef(null)
+  const previewRef = useRef(null)
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -50,11 +54,15 @@ export const InstituteAdminNavbar = ({
       if (campusRef.current && !campusRef.current.contains(e.target)) {
         setDropdownOpen(false)
       }
+      if (previewRef.current && !previewRef.current.contains(e.target)) {
+        setShowPreviewMenu(false)
+      }
     }
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
         setShowProfileMenu(false)
         setDropdownOpen(false)
+        setShowPreviewMenu(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -213,62 +221,147 @@ export const InstituteAdminNavbar = ({
 
       {/* Single Tier Campus Badge (when institute only has 1 tier enabled) */}
       {!tierConfig.isMultiTier && (
-        <div className="hidden md:flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#f5eeff] border border-purple-200/80 text-purple-900 text-xs font-bold shadow-2xs">
-          {tierConfig.isSchoolOnly && <School className="w-4 h-4 text-purple-600" />}
-          {tierConfig.isCollegeOnly && <Building2 className="w-4 h-4 text-purple-600" />}
-          {tierConfig.isUniversityOnly && <GraduationCap className="w-4 h-4 text-purple-600" />}
+        <div className="hidden md:flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200/80 text-emerald-950 text-xs font-bold shadow-2xs">
+          {tierConfig.isSchoolOnly && <School className="w-4 h-4 text-emerald-600" />}
+          {tierConfig.isCollegeOnly && <Building2 className="w-4 h-4 text-emerald-600" />}
+          {tierConfig.isUniversityOnly && <GraduationCap className="w-4 h-4 text-emerald-600" />}
           <span>{tierConfig.portalTypeLabel}</span>
         </div>
       )}
 
-      {/* Multi-Portal Switcher (Admin Desk vs Teacher Desk vs Student & Parent Portal) */}
-      <div className="hidden lg:flex items-center bg-slate-100/90 p-1 rounded-xl border border-slate-200/80 shadow-2xs gap-1">
-        <button
-          type="button"
-          onClick={() => onRouteChange && onRouteChange('inst-dashboard')}
-          className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-            currentRoute !== 'inst-student-portal' && currentRoute !== 'inst-teachers'
-              ? 'bg-white text-emerald-700 shadow-xs border border-emerald-200/70 ring-1 ring-emerald-500/10'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-          }`}
-          title="Campus Operations & Management Desk"
-        >
-          <Building2 className="w-3.5 h-3.5 text-emerald-600" />
-          <span>Admin Desk</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => onRouteChange && onRouteChange('inst-teachers')}
-          className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-            currentRoute === 'inst-teachers'
-              ? 'bg-white text-emerald-700 shadow-xs border border-emerald-200/70 ring-1 ring-emerald-500/10'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-          }`}
-          title="Teacher Operations & Delegated Permissions Matrix"
-        >
-          <UserCheck className="w-3.5 h-3.5 text-emerald-600" />
-          <span>Teacher Desk</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => onRouteChange && onRouteChange('inst-student-portal')}
-          className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-            currentRoute === 'inst-student-portal'
-              ? 'bg-emerald-600 text-white shadow-xs'
-              : 'text-emerald-700 hover:bg-emerald-100/70 bg-[#ecfdf5] border border-emerald-200/70'
-          }`}
-          title="Live Student & Parent Portal for this Campus"
-        >
-          <GraduationCap className={`w-3.5 h-3.5 ${currentRoute === 'inst-student-portal' ? 'text-white' : 'text-emerald-600'}`} />
-          <span>Student & Parent Portal</span>
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-        </button>
-      </div>
-
-      {/* Right: Settings and User Menu */}
+      {/* Right: Preview As Switcher, Settings, and User Menu */}
       <div className="flex items-center gap-2 sm:gap-3">
+        {/* Discrete "Preview As" Role Switcher Dropdown */}
+        <div className="relative" ref={previewRef}>
+          <button
+            type="button"
+            onClick={() => setShowPreviewMenu(!showPreviewMenu)}
+            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs border active:scale-95 ${
+              currentRoute === 'inst-student-portal'
+                ? 'bg-emerald-600 text-white border-emerald-600 shadow-emerald-600/20'
+                : currentRoute === 'inst-teachers'
+                ? 'bg-teal-600 text-white border-teal-600 shadow-teal-600/20'
+                : 'bg-white hover:bg-emerald-50 text-slate-700 hover:text-emerald-800 border-slate-200 hover:border-emerald-300'
+            }`}
+            title="Preview system as Teacher or Student/Parent"
+          >
+            <Eye className={`w-3.5 h-3.5 ${currentRoute === 'inst-student-portal' || currentRoute === 'inst-teachers' ? 'text-white' : 'text-emerald-600'}`} />
+            <span className="hidden sm:inline">
+              {currentRoute === 'inst-student-portal'
+                ? 'Student/Parent View'
+                : currentRoute === 'inst-teachers'
+                ? 'Teacher Desk'
+                : 'Preview As'}
+            </span>
+            <ChevronDown className={`w-3 h-3 transition-transform ${showPreviewMenu ? 'rotate-180' : ''}`} />
+          </button>
+
+          {showPreviewMenu && (
+            <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-slate-100 py-2.5 z-50 animate-in fade-in zoom-in-95">
+              <div className="px-4 py-2 border-b border-slate-100">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">Portal Perspective</span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    Live Simulator
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 mt-0.5">Switch viewing role without logging out</p>
+              </div>
+
+              <div className="p-1.5 space-y-1">
+                {/* 1. Admin Master Desk */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPreviewMenu(false)
+                    onRouteChange && onRouteChange('inst-dashboard')
+                  }}
+                  className={`w-full text-left p-2.5 rounded-xl text-xs flex items-center justify-between transition-colors cursor-pointer ${
+                    currentRoute !== 'inst-student-portal' && currentRoute !== 'inst-teachers'
+                      ? 'bg-emerald-50 text-emerald-950 font-bold border border-emerald-200/80'
+                      : 'text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-100/70 text-emerald-800 flex items-center justify-center font-bold">
+                      <Building2 className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="font-bold flex items-center gap-1.5">
+                        <span>Admin Master Desk</span>
+                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-200 text-slate-700">Full Access</span>
+                      </div>
+                      <p className="text-[11px] text-slate-400 font-normal">Classes, timetable, admissions & fees</p>
+                    </div>
+                  </div>
+                  {currentRoute !== 'inst-student-portal' && currentRoute !== 'inst-teachers' && (
+                    <Check className="w-4 h-4 text-emerald-600" />
+                  )}
+                </button>
+
+                {/* 2. Teacher Desk */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPreviewMenu(false)
+                    onRouteChange && onRouteChange('inst-teachers')
+                  }}
+                  className={`w-full text-left p-2.5 rounded-xl text-xs flex items-center justify-between transition-colors cursor-pointer ${
+                    currentRoute === 'inst-teachers'
+                      ? 'bg-teal-50 text-teal-950 font-bold border border-teal-200/80'
+                      : 'text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-teal-100/70 text-teal-800 flex items-center justify-center font-bold">
+                      <UserCheck className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="font-bold flex items-center gap-1.5">
+                        <span>Teacher & Faculty Desk</span>
+                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-teal-100 text-teal-800">Faculty</span>
+                      </div>
+                      <p className="text-[11px] text-slate-400 font-normal">Attendance, diary & marks entry</p>
+                    </div>
+                  </div>
+                  {currentRoute === 'inst-teachers' && (
+                    <Check className="w-4 h-4 text-teal-600" />
+                  )}
+                </button>
+
+                {/* 3. Student & Parent Portal */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPreviewMenu(false)
+                    onRouteChange && onRouteChange('inst-student-portal')
+                  }}
+                  className={`w-full text-left p-2.5 rounded-xl text-xs flex items-center justify-between transition-colors cursor-pointer ${
+                    currentRoute === 'inst-student-portal'
+                      ? 'bg-emerald-50 text-emerald-950 font-bold border border-emerald-200/80'
+                      : 'text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-100/70 text-emerald-800 flex items-center justify-center font-bold">
+                      <GraduationCap className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="font-bold flex items-center gap-1.5">
+                        <span>Student & Parent Portal</span>
+                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800">Live View</span>
+                      </div>
+                      <p className="text-[11px] text-slate-400 font-normal">Bank fee challan, diary & report card</p>
+                    </div>
+                  </div>
+                  {currentRoute === 'inst-student-portal' && (
+                    <Check className="w-4 h-4 text-emerald-600" />
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
         <button 
           onClick={onOpenSettings}
           className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-50 transition-colors"

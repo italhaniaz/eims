@@ -458,18 +458,18 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
     <div className="flex flex-col h-screen w-full bg-[#f8fafc] overflow-y-auto">
       {/* Interactive Campus Admin Bridge & Role Switcher Bar */}
       {onBackToAdmin && (
-        <div className="bg-gradient-to-r from-purple-900 via-indigo-950 to-slate-900 text-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 shadow-lg border-b border-purple-700/50 sticky top-0 z-50">
+        <div className="bg-gradient-to-r from-emerald-950 via-slate-900 to-teal-950 text-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 shadow-lg border-b border-emerald-700/40 sticky top-0 z-50">
           <div className="flex items-center gap-3">
             <button
               onClick={onBackToAdmin}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all cursor-pointer shadow-xs border border-white/20 active:scale-95"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600/30 hover:bg-emerald-600 text-white text-xs font-bold transition-all cursor-pointer shadow-xs border border-emerald-500/40 active:scale-95"
             >
               <ArrowRight className="w-3.5 h-3.5 rotate-180" />
               <span>← Return to Admin Desk</span>
             </button>
             <div className="h-4 w-px bg-white/20" />
             <div className="flex items-center gap-2">
-              <span className="text-[10px] uppercase font-bold tracking-wider text-purple-200 bg-purple-800/60 px-2 py-0.5 rounded border border-purple-400/30">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-200 bg-emerald-800/60 px-2 py-0.5 rounded border border-emerald-400/30">
                 {isUniversity ? 'University Tier' : isCollege ? 'College Tier' : 'School Tier'}
               </span>
               <span className="text-xs font-bold text-white truncate max-w-[200px] sm:max-w-none">
