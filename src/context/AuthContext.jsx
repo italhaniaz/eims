@@ -278,9 +278,9 @@ export const AuthProvider = ({ children }) => {
 
       case 'school_teacher':
         userPayload = {
-          id: 'usr-sch-teacher',
+          id: 'tch-sch-1',
           name: 'Sir Salman Ahmed',
-          roleTitle: 'Class Teacher (Grade 10)',
+          roleTitle: 'Class In-Charge (Grade 10)',
           role: 'teacher',
           tier: 'school',
           email: customEmail || 'teacher.school@cityschool.edu',
@@ -290,6 +290,27 @@ export const AuthProvider = ({ children }) => {
           instituteType: 'School',
           department: 'Mathematics & Science',
           assignedClasses: ['Grade 10 - Section A', 'Grade 9 - Section B'],
+          isClassIncharge: true,
+          isExplicitLogin: true,
+          loginTimestamp: new Date().toISOString()
+        }
+        break
+
+      case 'school_teacher_std':
+        userPayload = {
+          id: 'tch-sch-2',
+          name: 'Ms. Ayesha Siddiqui',
+          roleTitle: 'General Science Teacher',
+          role: 'teacher',
+          tier: 'school',
+          email: customEmail || 'ayesha.teacher@cityschool.edu',
+          avatar: null,
+          instituteId: 'inst-2',
+          instituteName: 'City School Model Town Campus',
+          instituteType: 'School',
+          department: 'General Science & Biology',
+          assignedClasses: ['Grade 8 - Section A', 'Grade 7 - Section B'],
+          isClassIncharge: false,
           isExplicitLogin: true,
           loginTimestamp: new Date().toISOString()
         }
@@ -360,9 +381,9 @@ export const AuthProvider = ({ children }) => {
 
       case 'college_faculty':
         userPayload = {
-          id: 'usr-col-faculty',
+          id: 'tch-col-1',
           name: 'Dr. Nadia Hashmi',
-          roleTitle: 'Associate Professor of Chemistry',
+          roleTitle: 'Associate Professor & Pre-Med In-Charge',
           role: 'teacher',
           tier: 'college',
           email: customEmail || 'faculty.college@roots.edu',
@@ -372,6 +393,27 @@ export const AuthProvider = ({ children }) => {
           instituteType: 'College',
           department: 'Natural Sciences & Pre-Medical',
           assignedClasses: ['F.Sc Pre-Medical (Part II)', 'ICS (Part I)'],
+          isClassIncharge: true,
+          isExplicitLogin: true,
+          loginTimestamp: new Date().toISOString()
+        }
+        break
+
+      case 'college_lecturer':
+        userPayload = {
+          id: 'tch-col-2',
+          name: 'Lecturer Bilal Zubair',
+          roleTitle: 'Lecturer in Physics',
+          role: 'teacher',
+          tier: 'college',
+          email: customEmail || 'lecturer.college@roots.edu',
+          avatar: null,
+          instituteId: 'inst-3',
+          instituteName: 'Roots International College & Academy',
+          instituteType: 'College',
+          department: 'Physics',
+          assignedClasses: ['F.Sc Pre-Engineering (Part I)'],
+          isClassIncharge: false,
           isExplicitLogin: true,
           loginTimestamp: new Date().toISOString()
         }
@@ -442,9 +484,9 @@ export const AuthProvider = ({ children }) => {
 
       case 'uni_faculty':
         userPayload = {
-          id: 'usr-uni-faculty',
+          id: 'tch-uni-1',
           name: 'Dr. Shahzad Rafiq',
-          roleTitle: 'Assistant Professor & FYP Supervisor',
+          roleTitle: 'Assistant Professor & Program Coordinator',
           role: 'teacher',
           tier: 'university',
           email: customEmail || 'faculty.uni@ias.edu.pk',
@@ -454,6 +496,27 @@ export const AuthProvider = ({ children }) => {
           instituteType: 'University',
           department: 'Department of Computing',
           assignedClasses: ['BSCS - Semester 6', 'BSAI - Semester 4'],
+          isClassIncharge: true,
+          isExplicitLogin: true,
+          loginTimestamp: new Date().toISOString()
+        }
+        break
+
+      case 'uni_lecturer':
+        userPayload = {
+          id: 'tch-uni-2',
+          name: 'Engr. Usman Ali',
+          roleTitle: 'Lab Instructor & Junior Lecturer',
+          role: 'teacher',
+          tier: 'university',
+          email: customEmail || 'lecturer.uni@ias.edu.pk',
+          avatar: null,
+          instituteId: 'inst-4',
+          instituteName: 'Institute of Applied Sciences & Undergraduates',
+          instituteType: 'University',
+          department: 'Computer Science & AI',
+          assignedClasses: ['BSCS - Semester 4 (Cohort A)'],
+          isClassIncharge: false,
           isExplicitLogin: true,
           loginTimestamp: new Date().toISOString()
         }
@@ -632,8 +695,244 @@ export const AuthProvider = ({ children }) => {
 
       case 'institute_admin':
       default: {
-        const mail = (customEmail || '').toLowerCase()
-        if (mail.includes('cityschool') || mail.includes('school')) {
+        const mail = (customEmail || '').toLowerCase();
+        
+        // Exact Email mappings for hierarchy testing
+        if (mail.includes('admin@schoolms.com') || mail === 'admin' || mail === 'superadmin') {
+          userPayload = {
+            id: 'usr-1',
+            name: 'Super Administrator',
+            roleTitle: 'Superadmin',
+            role: 'superadmin',
+            email: customEmail || 'admin@schoolms.com',
+            avatar: null,
+            instituteId: null,
+            instituteName: 'Central Headquarters',
+            scope: 'Platform Wide',
+            isExplicitLogin: true,
+            loginTimestamp: new Date().toISOString()
+          };
+        } else if (mail.includes('ayesha')) {
+          userPayload = {
+            id: 'tch-sch-2',
+            name: 'Ms. Ayesha Siddiqui',
+            roleTitle: 'General Science Teacher',
+            role: 'teacher',
+            tier: 'school',
+            email: customEmail || 'ayesha.teacher@cityschool.edu',
+            avatar: null,
+            instituteId: 'inst-2',
+            instituteName: 'City School Model Town Campus',
+            instituteType: 'School',
+            department: 'General Science & Biology',
+            assignedClasses: ['Grade 8 - Section A', 'Grade 7 - Section B'],
+            isClassIncharge: false,
+            isExplicitLogin: true,
+            loginTimestamp: new Date().toISOString()
+          };
+        } else if (mail.includes('teacher.school')) {
+          userPayload = {
+            id: 'tch-sch-1',
+            name: 'Sir Salman Ahmed',
+            roleTitle: 'Class In-Charge (Grade 10)',
+            role: 'teacher',
+            tier: 'school',
+            email: customEmail || 'teacher.school@cityschool.edu',
+            avatar: null,
+            instituteId: 'inst-2',
+            instituteName: 'City School Model Town Campus',
+            instituteType: 'School',
+            department: 'Mathematics & Science',
+            assignedClasses: ['Grade 10 - Section A', 'Grade 9 - Section B'],
+            isClassIncharge: true,
+            isExplicitLogin: true,
+            loginTimestamp: new Date().toISOString()
+          };
+        } else if (mail.includes('lecturer.college')) {
+          userPayload = {
+            id: 'tch-col-2',
+            name: 'Lecturer Bilal Zubair',
+            roleTitle: 'Lecturer in Physics',
+            role: 'teacher',
+            tier: 'college',
+            email: customEmail || 'lecturer.college@roots.edu',
+            avatar: null,
+            instituteId: 'inst-3',
+            instituteName: 'Roots International College & Academy',
+            instituteType: 'College',
+            department: 'Physics',
+            assignedClasses: ['F.Sc Pre-Engineering (Part I)'],
+            isClassIncharge: false,
+            isExplicitLogin: true,
+            loginTimestamp: new Date().toISOString()
+          };
+        } else if (mail.includes('faculty.college')) {
+          userPayload = {
+            id: 'tch-col-1',
+            name: 'Dr. Nadia Hashmi',
+            roleTitle: 'Associate Professor & Pre-Med In-Charge',
+            role: 'teacher',
+            tier: 'college',
+            email: customEmail || 'faculty.college@roots.edu',
+            avatar: null,
+            instituteId: 'inst-3',
+            instituteName: 'Roots International College & Academy',
+            instituteType: 'College',
+            department: 'Natural Sciences & Pre-Medical',
+            assignedClasses: ['F.Sc Pre-Medical (Part II)', 'ICS (Part I)'],
+            isClassIncharge: true,
+            isExplicitLogin: true,
+            loginTimestamp: new Date().toISOString()
+          };
+        } else if (mail.includes('lecturer.uni') || mail.includes('usman')) {
+          userPayload = {
+            id: 'tch-uni-2',
+            name: 'Engr. Usman Ali',
+            roleTitle: 'Lab Instructor & Junior Lecturer',
+            role: 'teacher',
+            tier: 'university',
+            email: customEmail || 'lecturer.uni@ias.edu.pk',
+            avatar: null,
+            instituteId: 'inst-4',
+            instituteName: 'Institute of Applied Sciences & Undergraduates',
+            instituteType: 'University',
+            department: 'Computer Science & AI',
+            assignedClasses: ['BSCS - Semester 4 (Cohort A)'],
+            isClassIncharge: false,
+            isExplicitLogin: true,
+            loginTimestamp: new Date().toISOString()
+          };
+        } else if (mail.includes('faculty.uni')) {
+          userPayload = {
+            id: 'tch-uni-1',
+            name: 'Dr. Shahzad Rafiq',
+            roleTitle: 'Assistant Professor & Program Coordinator',
+            role: 'teacher',
+            tier: 'university',
+            email: customEmail || 'faculty.uni@ias.edu.pk',
+            avatar: null,
+            instituteId: 'inst-4',
+            instituteName: 'Institute of Applied Sciences & Undergraduates',
+            instituteType: 'University',
+            department: 'Department of Computing',
+            assignedClasses: ['BSCS - Semester 6', 'BSAI - Semester 4'],
+            isClassIncharge: true,
+            isExplicitLogin: true,
+            loginTimestamp: new Date().toISOString()
+          };
+        } else if (mail.includes('student.school')) {
+          userPayload = {
+            id: 'usr-sch-student',
+            name: 'Hamza Farooq',
+            roleTitle: 'School Student',
+            role: 'student',
+            tier: 'school',
+            email: customEmail || 'student.school@cityschool.edu',
+            avatar: null,
+            instituteId: 'inst-2',
+            instituteName: 'City School Model Town Campus',
+            instituteType: 'School',
+            studentId: 'CSM-2026-104',
+            rollNumber: 'CSM-2026-104',
+            className: 'Grade 10',
+            section: 'A',
+            isExplicitLogin: true,
+            loginTimestamp: new Date().toISOString()
+          };
+        } else if (mail.includes('parent.school')) {
+          userPayload = {
+            id: 'usr-sch-parent',
+            name: 'Farooq Ahmed (Guardian)',
+            roleTitle: 'School Parent / Guardian',
+            role: 'parent',
+            tier: 'school',
+            email: customEmail || 'parent.school@cityschool.edu',
+            avatar: null,
+            instituteId: 'inst-2',
+            instituteName: 'City School Model Town Campus',
+            instituteType: 'School',
+            wardName: 'Hamza Farooq',
+            wardRollNo: 'CSM-2026-104',
+            wardClass: 'Grade 10 - Section A',
+            isExplicitLogin: true,
+            loginTimestamp: new Date().toISOString()
+          };
+        } else if (mail.includes('student.college')) {
+          userPayload = {
+            id: 'usr-col-student',
+            name: 'Zainab Fatima',
+            roleTitle: 'College Student (HSSC Pre-Med)',
+            role: 'student',
+            tier: 'college',
+            email: customEmail || 'student.college@roots.edu',
+            avatar: null,
+            instituteId: 'inst-3',
+            instituteName: 'Roots International College & Academy',
+            instituteType: 'College',
+            studentId: 'COL-24-101',
+            rollNumber: 'COL-24-101',
+            className: 'F.Sc Pre-Medical (Part II)',
+            section: 'Pre-Med A',
+            isExplicitLogin: true,
+            loginTimestamp: new Date().toISOString()
+          };
+        } else if (mail.includes('parent.college')) {
+          userPayload = {
+            id: 'usr-col-parent',
+            name: 'Tariq Sheikh (Father)',
+            roleTitle: 'College Parent / Guardian',
+            role: 'parent',
+            tier: 'college',
+            email: customEmail || 'parent.college@roots.edu',
+            avatar: null,
+            instituteId: 'inst-3',
+            instituteName: 'Roots International College & Academy',
+            instituteType: 'College',
+            wardName: 'Zainab Fatima',
+            wardRollNo: 'COL-24-101',
+            wardClass: 'F.Sc Pre-Medical (Part II)',
+            isExplicitLogin: true,
+            loginTimestamp: new Date().toISOString()
+          };
+        } else if (mail.includes('student.uni')) {
+          userPayload = {
+            id: 'usr-uni-student',
+            name: 'Daniyal Qureshi',
+            roleTitle: 'Undergraduate BSCS (Semester 6)',
+            role: 'student',
+            tier: 'university',
+            email: customEmail || 'student.uni@ias.edu.pk',
+            avatar: null,
+            instituteId: 'inst-4',
+            instituteName: 'Institute of Applied Sciences & Undergraduates',
+            instituteType: 'University',
+            studentId: 'BSCS-F23-018',
+            rollNumber: 'BSCS-F23-018',
+            className: 'BS Computer Science - Semester 6',
+            section: 'Cohort A',
+            cgpa: '3.72',
+            isExplicitLogin: true,
+            loginTimestamp: new Date().toISOString()
+          };
+        } else if (mail.includes('parent.uni')) {
+          userPayload = {
+            id: 'usr-uni-parent',
+            name: 'Qureshi Nadeem (Guardian)',
+            roleTitle: 'University Parent / Guardian',
+            role: 'parent',
+            tier: 'university',
+            email: customEmail || 'parent.uni@ias.edu.pk',
+            avatar: null,
+            instituteId: 'inst-4',
+            instituteName: 'Institute of Applied Sciences & Undergraduates',
+            instituteType: 'University',
+            wardName: 'Daniyal Qureshi',
+            wardRollNo: 'BSCS-F23-018',
+            wardClass: 'BS Computer Science - Semester 6',
+            isExplicitLogin: true,
+            loginTimestamp: new Date().toISOString()
+          };
+        } else if (mail.includes('cityschool') || mail.includes('school')) {
           userPayload = {
             id: 'usr-school',
             name: 'Mrs. Samina Khurram',
@@ -648,7 +947,7 @@ export const AuthProvider = ({ children }) => {
             scope: 'School Administration (K-10)',
             isExplicitLogin: true,
             loginTimestamp: new Date().toISOString()
-          }
+          };
         } else if (mail.includes('roots') || mail.includes('college')) {
           userPayload = {
             id: 'usr-college',
@@ -664,7 +963,7 @@ export const AuthProvider = ({ children }) => {
             scope: 'Degree College Administration (11-12 & ADP)',
             isExplicitLogin: true,
             loginTimestamp: new Date().toISOString()
-          }
+          };
         } else if (mail.includes('ias') || mail.includes('uni') || mail.includes('undergrad')) {
           userPayload = {
             id: 'usr-uni',
@@ -680,7 +979,7 @@ export const AuthProvider = ({ children }) => {
             scope: 'University Administration (BS Honors)',
             isExplicitLogin: true,
             loginTimestamp: new Date().toISOString()
-          }
+          };
         } else {
           userPayload = {
             id: 'usr-2',
@@ -696,13 +995,13 @@ export const AuthProvider = ({ children }) => {
             scope: 'Multi-Tier Campus Administration',
             isExplicitLogin: true,
             loginTimestamp: new Date().toISOString()
-          }
+          };
         }
-        break
+        break;
       }
     }
 
-    setUser(userPayload)
+        setUser(userPayload)
 
     try {
       sessionStorage.setItem('sms_auth_user', JSON.stringify(userPayload))

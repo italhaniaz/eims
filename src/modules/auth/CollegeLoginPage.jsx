@@ -55,10 +55,19 @@ export const CollegeLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier })
     },
     {
       role: 'college_faculty',
-      name: 'Faculty Portal',
-      badge: 'Pick 2',
-      scope: 'Classes, attendance, marks entry, lecture upload, leave apply, salary slip',
+      name: 'Faculty In-Charge (Enrollment ON)',
+      badge: 'Enrollment ON',
+      scope: 'Dr. Nadia Hashmi: Pre-Med In-Charge with student enrollment permissions',
       email: 'faculty.college@roots.edu',
+      iconEmoji: '👩‍🏫',
+      type: 'subportal'
+    },
+    {
+      role: 'college_lecturer',
+      name: 'Regular Lecturer (Standard - No Enrollment)',
+      badge: 'Enrollment OFF',
+      scope: 'Lecturer Bilal Zubair: Physics lecturer with standard view (enrollment hidden)',
+      email: 'lecturer.college@roots.edu',
       iconEmoji: '👨‍🏫',
       type: 'subportal'
     },

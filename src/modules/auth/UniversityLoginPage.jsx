@@ -46,11 +46,20 @@ export const UniversityLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
     },
     {
       role: 'uni_faculty',
-      name: 'Faculty Portal',
-      badge: 'Pick 3',
-      scope: 'Courses, attendance, marks entry, lecture upload, leave, salary slip, research profile',
+      name: 'Faculty Coordinator (Enrollment ON)',
+      badge: 'Enrollment ON',
+      scope: 'Dr. Shahzad Rafiq: BSCS Coordinator with batch enrollment permissions',
       email: 'faculty.uni@ias.edu.pk',
       iconEmoji: '👨‍🏫',
+      type: 'subportal'
+    },
+    {
+      role: 'uni_lecturer',
+      name: 'Lab Instructor (Standard - No Enrollment)',
+      badge: 'Enrollment OFF',
+      scope: 'Engr. Usman Ali: Lab Instructor with standard view (enrollment hidden)',
+      email: 'lecturer.uni@ias.edu.pk',
+      iconEmoji: '👨‍💻',
       type: 'subportal'
     },
     {
