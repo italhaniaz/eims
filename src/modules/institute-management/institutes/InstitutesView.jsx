@@ -1702,8 +1702,8 @@ export const InstitutesView = () => {
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
         <div className="min-w-0">
           <div className="flex items-center gap-2 mb-1.5">
-            <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#f5eeff] text-purple-700 border border-purple-100 inline-flex items-center gap-1.5">
-              <Building2 className="w-3.5 h-3.5 text-purple-600" />
+            <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#f5eeff] text-emerald-800 border border-emerald-100 inline-flex items-center gap-1.5">
+              <Building2 className="w-3.5 h-3.5 text-emerald-600" />
               <span>Campus Directory & Global Lifecycle</span>
             </span>
           </div>
@@ -1742,7 +1742,7 @@ export const InstitutesView = () => {
 
           <button
             onClick={openOnboardingWizard}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-semibold shadow-xs transition-all cursor-pointer active:scale-95 whitespace-nowrap"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-xs transition-all cursor-pointer active:scale-95 whitespace-nowrap"
             title="Launch Campus Onboarding Wizard"
           >
             <Plus className="w-3.5 h-3.5 shrink-0" />
@@ -1755,7 +1755,7 @@ export const InstitutesView = () => {
       <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
         {/* Search */}
         <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 text-purple-600 absolute left-3.5 top-1/2 -translate-y-1/2 stroke-[2.2]" />
+          <Search className="w-4 h-4 text-emerald-600 absolute left-3.5 top-1/2 -translate-y-1/2 stroke-[2.2]" />
           <input
             type="text"
             placeholder="Search by institute name, code, or city..."
@@ -1764,7 +1764,7 @@ export const InstitutesView = () => {
               setSearchTerm(e.target.value)
               setCurrentPage(1)
             }}
-            className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm rounded-full bg-[#f8fafc] border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all placeholder-slate-400"
+            className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm rounded-full bg-[#f8fafc] border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all placeholder-slate-400"
           />
         </div>
 
@@ -1777,14 +1777,14 @@ export const InstitutesView = () => {
               onClick={() => setShowMainFilterPopover(!showMainFilterPopover)}
               className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                 showMainFilterPopover || (selectedStatusFilters.length < 3 || selectedTypeFilters.length < 4 || selectedPlanFilters.length < 4)
-                  ? 'bg-[#f5eeff] text-purple-700 border-purple-200 shadow-xs'
+                  ? 'bg-[#f5eeff] text-emerald-800 border-emerald-200 shadow-xs'
                   : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'
               }`}
             >
-              <Filter className="w-3.5 h-3.5 text-purple-600" />
+              <Filter className="w-3.5 h-3.5 text-emerald-600" />
               <span>Filters</span>
               {(selectedStatusFilters.length < 3 || selectedTypeFilters.length < 4 || selectedPlanFilters.length < 4) && (
-                <span className="w-5 h-5 bg-purple-600 text-white rounded-full text-[10px] flex items-center justify-center font-bold">
+                <span className="w-5 h-5 bg-emerald-600 text-white rounded-full text-[10px] flex items-center justify-center font-bold">
                   {(selectedStatusFilters.length < 3 ? 1 : 0) + (selectedTypeFilters.length < 4 ? 1 : 0) + (selectedPlanFilters.length < 4 ? 1 : 0)}
                 </span>
               )}
@@ -1794,12 +1794,12 @@ export const InstitutesView = () => {
               <div className="absolute right-0 sm:left-0 mt-2 w-80 bg-white rounded-3xl border border-slate-200 shadow-2xl p-5 z-50 space-y-4 animate-in fade-in slide-in-from-top-2">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                   <span className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
-                    <Filter className="w-4 h-4 text-purple-600" /> Filter Criteria
+                    <Filter className="w-4 h-4 text-emerald-600" /> Filter Criteria
                   </span>
                   <button
                     type="button"
                     onClick={resetMainFilters}
-                    className="text-xs text-purple-600 hover:text-purple-800 font-semibold cursor-pointer"
+                    className="text-xs text-emerald-600 hover:text-emerald-900 font-semibold cursor-pointer"
                   >
                     Reset All
                   </button>
@@ -1821,7 +1821,7 @@ export const InstitutesView = () => {
                           type="checkbox"
                           checked={selectedStatusFilters.includes(item.id)}
                           onChange={() => toggleStatusCheckbox(item.id)}
-                          className="w-4 h-4 text-purple-600 rounded border-slate-300 focus:ring-purple-500 cursor-pointer"
+                          className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 cursor-pointer"
                         />
                         <span className={`font-medium ${item.color}`}>{item.label}</span>
                       </label>
@@ -1846,7 +1846,7 @@ export const InstitutesView = () => {
                           type="checkbox"
                           checked={selectedTypeFilters.includes(item.id)}
                           onChange={() => toggleTypeCheckbox(item.id)}
-                          className="w-4 h-4 text-purple-600 rounded border-slate-300 focus:ring-purple-500 cursor-pointer"
+                          className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 cursor-pointer"
                         />
                         <span className="font-medium text-slate-800">{item.label}</span>
                       </label>
@@ -1871,7 +1871,7 @@ export const InstitutesView = () => {
                           type="checkbox"
                           checked={selectedPlanFilters.includes(item.id)}
                           onChange={() => togglePlanCheckbox(item.id)}
-                          className="w-4 h-4 text-purple-600 rounded border-slate-300 focus:ring-purple-500 cursor-pointer"
+                          className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 cursor-pointer"
                         />
                         <span className="font-medium text-slate-800">{item.label}</span>
                       </label>
@@ -1883,7 +1883,7 @@ export const InstitutesView = () => {
                   <button
                     type="button"
                     onClick={() => setShowMainFilterPopover(false)}
-                    className="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer"
+                    className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer"
                   >
                     Apply Filters ({filteredAndSorted.length} matches)
                   </button>
@@ -1935,7 +1935,7 @@ export const InstitutesView = () => {
               onClick={() => setViewMode('grid')}
               className={`p-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 viewMode === 'grid'
-                  ? 'bg-white text-purple-700 shadow-2xs'
+                  ? 'bg-white text-emerald-800 shadow-2xs'
                   : 'text-slate-500 hover:text-slate-800'
               }`}
               title="Cards Grid View"
@@ -1947,7 +1947,7 @@ export const InstitutesView = () => {
               onClick={() => setViewMode('table')}
               className={`p-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 viewMode === 'table'
-                  ? 'bg-white text-purple-700 shadow-2xs'
+                  ? 'bg-white text-emerald-800 shadow-2xs'
                   : 'text-slate-500 hover:text-slate-800'
               }`}
               title="Table View"
@@ -1956,7 +1956,7 @@ export const InstitutesView = () => {
             </button>
           </div>
 
-          <span className="text-xs font-bold bg-[#f5eeff] text-purple-700 border border-purple-100 px-3.5 py-2 rounded-xl whitespace-nowrap">
+          <span className="text-xs font-bold bg-[#f5eeff] text-emerald-800 border border-emerald-100 px-3.5 py-2 rounded-xl whitespace-nowrap">
             Total: {totalInstitutes}
           </span>
         </div>
@@ -1966,7 +1966,7 @@ export const InstitutesView = () => {
       {selectedCampusIds.length > 0 && (
         <div className="bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl flex flex-wrap items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2 border border-slate-800">
           <div className="flex items-center gap-2.5">
-            <span className="font-extrabold text-xs bg-purple-600 text-white px-3 py-1 rounded-full shadow-xs">
+            <span className="font-extrabold text-xs bg-emerald-600 text-white px-3 py-1 rounded-full shadow-xs">
               {selectedCampusIds.length} Campuses Selected
             </span>
             <span className="text-xs text-slate-300">Choose bulk lifecycle operation:</span>
@@ -2028,9 +2028,9 @@ export const InstitutesView = () => {
                           onChange={() => handleToggleSelectCampus(inst.id)}
                           onClick={(e) => e.stopPropagation()}
                           aria-label={`Select ${inst.name}`}
-                          className="w-4 h-4 text-purple-600 rounded border-slate-300 focus:ring-purple-500 cursor-pointer"
+                          className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 cursor-pointer"
                         />
-                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-100 to-indigo-100 text-purple-700 flex items-center justify-center font-bold text-lg shadow-2xs shrink-0">
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-100 to-indigo-100 text-emerald-800 flex items-center justify-center font-bold text-lg shadow-2xs shrink-0">
                           {inst.type === 'University' ? (
                             <GraduationCap className="w-6 h-6" />
                           ) : inst.type === 'College' ? (
@@ -2042,7 +2042,7 @@ export const InstitutesView = () => {
                       </div>
 
                       <div className="flex items-center gap-1.5 flex-wrap justify-end">
-                        <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-[#f5eeff] text-purple-700 border border-purple-200">
+                        <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-[#f5eeff] text-emerald-800 border border-emerald-200">
                           {inst.type || 'School'}
                         </span>
                         <span className="font-mono text-xs font-semibold px-2 py-0.5 bg-slate-100 text-slate-600 rounded border border-slate-200">
@@ -2086,7 +2086,7 @@ export const InstitutesView = () => {
                         <button
                           type="button"
                           onClick={() => handleOpenCredentialsModal(inst)}
-                          className="font-mono text-[11px] text-purple-700 bg-[#f5eeff] hover:bg-[#ede0fe] px-2 py-0.5 rounded font-semibold truncate max-w-[170px] cursor-pointer flex items-center gap-1"
+                          className="font-mono text-[11px] text-emerald-800 bg-[#f5eeff] hover:bg-[#ede0fe] px-2 py-0.5 rounded font-semibold truncate max-w-[170px] cursor-pointer flex items-center gap-1"
                           title="Click to view full login password"
                         >
                           <span>admin@{inst.slug || inst.code?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'campus'}.edu</span>
@@ -2100,7 +2100,7 @@ export const InstitutesView = () => {
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-slate-400">Affiliation:</span>
-                        <span className="font-medium text-purple-700 bg-purple-50 px-2 py-0.5 rounded text-[11px] truncate max-w-[170px]">
+                        <span className="font-medium text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded text-[11px] truncate max-w-[170px]">
                           {inst.affiliatedBoard || 'Board Affiliated'}
                         </span>
                       </div>
@@ -2137,7 +2137,7 @@ export const InstitutesView = () => {
                       <button
                         type="button"
                         onClick={() => handleImpersonate(inst)}
-                        className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-all cursor-pointer shadow-2xs hover:shadow-xs active:scale-95"
+                        className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all cursor-pointer shadow-2xs hover:shadow-xs active:scale-95"
                         title={`Launch ${inst.name} Admin & Portals`}
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
@@ -2189,10 +2189,10 @@ export const InstitutesView = () => {
                         <button
                           type="button"
                           onClick={() => openEditModal(inst)}
-                          className="px-2 py-0.5 rounded text-[11px] font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 transition-colors flex items-center gap-1 cursor-pointer shadow-2xs hover:shadow-xs active:scale-95"
+                          className="px-2 py-0.5 rounded text-[11px] font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-colors flex items-center gap-1 cursor-pointer shadow-2xs hover:shadow-xs active:scale-95"
                           title="Campus Settings & Edit Profile"
                         >
-                          <Settings className="w-3 h-3 text-purple-600" />
+                          <Settings className="w-3 h-3 text-emerald-600" />
                           <span>Settings</span>
                         </button>
                         <button
@@ -2231,7 +2231,7 @@ export const InstitutesView = () => {
                           checked={paginatedInstitutes.length > 0 && paginatedInstitutes.every(inst => selectedCampusIds.includes(inst.id))}
                           onChange={handleSelectAllCampuses}
                           aria-label="Select all campuses on page"
-                          className="w-4 h-4 text-purple-600 rounded border-slate-300 focus:ring-purple-500 cursor-pointer"
+                          className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 cursor-pointer"
                         />
                       </th>
                       <th className="py-3.5 px-4">Campus & Code</th>
@@ -2251,7 +2251,7 @@ export const InstitutesView = () => {
                       return (
                         <tr 
                           key={inst.id}
-                          className="hover:bg-purple-50/20 transition-colors group cursor-pointer"
+                          className="hover:bg-emerald-50/20 transition-colors group cursor-pointer"
                           onClick={() => {
                             setViewingDetails(inst)
                             setDetailsTab('overview')
@@ -2264,17 +2264,17 @@ export const InstitutesView = () => {
                               checked={selectedCampusIds.includes(inst.id)}
                               onChange={() => handleToggleSelectCampus(inst.id)}
                               aria-label={`Select ${inst.name}`}
-                              className="w-4 h-4 text-purple-600 rounded border-slate-300 focus:ring-purple-500 cursor-pointer"
+                              className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 cursor-pointer"
                             />
                           </td>
                           {/* Campus & Code */}
                           <td className="py-4 px-4">
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-100 to-indigo-100 text-purple-700 font-bold flex items-center justify-center text-sm shadow-2xs shrink-0">
+                              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-100 to-indigo-100 text-emerald-800 font-bold flex items-center justify-center text-sm shadow-2xs shrink-0">
                                 {inst.name.charAt(0)}
                               </div>
                               <div>
-                                <span className="font-bold text-slate-900 group-hover:text-purple-700 transition-colors text-sm line-clamp-1">
+                                <span className="font-bold text-slate-900 group-hover:text-emerald-800 transition-colors text-sm line-clamp-1">
                                   {inst.name}
                                 </span>
                                 <div className="flex items-center gap-2 mt-0.5">
@@ -2288,7 +2288,7 @@ export const InstitutesView = () => {
                           {/* Tier & Plan */}
                           <td className="py-4 px-4">
                             <div className="flex flex-col gap-1 items-start">
-                              <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-[#f5eeff] text-purple-700 border border-purple-100">
+                              <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-[#f5eeff] text-emerald-800 border border-emerald-100">
                                 {inst.type || 'School'}
                               </span>
                               <span className="text-[11px] text-slate-500 font-medium">{inst.planTier || 'School Plan'}</span>
@@ -2325,10 +2325,10 @@ export const InstitutesView = () => {
                               <button
                                 type="button"
                                 onClick={() => openEditModal(inst)}
-                                className="px-2.5 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1"
+                                className="px-2.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1"
                                 title="Campus Settings & Edit Profile"
                               >
-                                <Settings className="w-3.5 h-3.5 text-purple-600" />
+                                <Settings className="w-3.5 h-3.5 text-emerald-600" />
                                 <span>Settings</span>
                               </button>
                               <button
@@ -2337,7 +2337,7 @@ export const InstitutesView = () => {
                                   setViewingDetails(inst)
                                   setDetailsTab('overview')
                                 }}
-                                className="px-3 py-1.5 rounded-xl bg-[#f5eeff] hover:bg-[#ede0fe] text-purple-700 hover:text-purple-800 text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5"
+                                className="px-3 py-1.5 rounded-xl bg-[#f5eeff] hover:bg-[#ede0fe] text-emerald-800 hover:text-emerald-900 text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5"
                               >
                                 <Eye className="w-3.5 h-3.5" />
                                 <span>View Details</span>
@@ -2348,7 +2348,7 @@ export const InstitutesView = () => {
                                   e.stopPropagation()
                                   handleImpersonate(inst)
                                 }}
-                                className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs hover:shadow-xs active:scale-95"
+                                className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs hover:shadow-xs active:scale-95"
                                 title={`Launch ${inst.name} Admin & Portals`}
                               >
                                 <ExternalLink className="w-3.5 h-3.5" />
@@ -2385,7 +2385,7 @@ export const InstitutesView = () => {
                     onClick={() => setCurrentPage(page)}
                     className={`w-7 h-7 rounded font-semibold ${
                       currentPage === page
-                        ? 'bg-purple-600 text-white'
+                        ? 'bg-emerald-600 text-white'
                         : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
                     }`}
                   >
@@ -2417,7 +2417,7 @@ export const InstitutesView = () => {
           </p>
           <button
             onClick={openOnboardingWizard}
-            className="mt-4 px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold shadow transition-all inline-flex items-center gap-2 cursor-pointer"
+            className="mt-4 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow transition-all inline-flex items-center gap-2 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Launch Onboarding Wizard</span>
@@ -2436,11 +2436,11 @@ export const InstitutesView = () => {
         <div className="space-y-5">
           {/* Progress Indicators */}
           <div className="flex items-center justify-between border-b border-slate-100 pb-3 text-xs overflow-x-auto gap-2">
-            <span className={`font-bold shrink-0 ${wizardStep === 1 ? 'text-purple-600' : 'text-slate-400'}`}>1. Type & Profile</span>
-            <span className={`font-bold shrink-0 ${wizardStep === 2 ? 'text-purple-600' : 'text-slate-400'}`}>2. Campuses</span>
-            <span className={`font-bold shrink-0 ${wizardStep === 3 ? 'text-purple-600' : 'text-slate-400'}`}>3. Contact Details</span>
-            <span className={`font-bold shrink-0 ${wizardStep === 4 ? 'text-purple-600' : 'text-slate-400'}`}>4. Administrator</span>
-            <span className={`font-bold shrink-0 ${wizardStep === 5 ? 'text-purple-600' : 'text-slate-400'}`}>5. Plan & Quotas</span>
+            <span className={`font-bold shrink-0 ${wizardStep === 1 ? 'text-emerald-600' : 'text-slate-400'}`}>1. Type & Profile</span>
+            <span className={`font-bold shrink-0 ${wizardStep === 2 ? 'text-emerald-600' : 'text-slate-400'}`}>2. Campuses</span>
+            <span className={`font-bold shrink-0 ${wizardStep === 3 ? 'text-emerald-600' : 'text-slate-400'}`}>3. Contact Details</span>
+            <span className={`font-bold shrink-0 ${wizardStep === 4 ? 'text-emerald-600' : 'text-slate-400'}`}>4. Administrator</span>
+            <span className={`font-bold shrink-0 ${wizardStep === 5 ? 'text-emerald-600' : 'text-slate-400'}`}>5. Plan & Quotas</span>
           </div>
 
           {/* Step 1: Type & Profile */}
@@ -2460,14 +2460,14 @@ export const InstitutesView = () => {
                       onClick={() => setShowTierFilterPopover(!showTierFilterPopover)}
                       className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg border transition-all cursor-pointer shadow-2xs ${
                         showTierFilterPopover
-                          ? 'bg-purple-50 border-purple-400 text-purple-700 ring-2 ring-purple-500/20'
-                          : 'bg-white border-slate-200 text-slate-700 hover:border-purple-300 hover:bg-slate-50'
+                          ? 'bg-emerald-50 border-purple-400 text-emerald-800 ring-2 ring-emerald-500/20'
+                          : 'bg-white border-slate-200 text-slate-700 hover:border-emerald-300 hover:bg-slate-50'
                       }`}
                       title="Filter which plan cards to display on screen"
                     >
-                      <Filter className="w-3.5 h-3.5 text-purple-600" />
+                      <Filter className="w-3.5 h-3.5 text-emerald-600" />
                       <span>Filter Cards</span>
-                      <span className="text-[10px] font-bold text-purple-700 bg-purple-100 px-1.5 py-0.2 rounded-full">
+                      <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.2 rounded-full">
                         {visibleTierCards.length}/4
                       </span>
                       <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${showTierFilterPopover ? 'rotate-180' : ''}`} />
@@ -2475,7 +2475,7 @@ export const InstitutesView = () => {
 
                     {/* Floating Popover with Checkboxes */}
                     {showTierFilterPopover && (
-                      <div className="absolute right-0 top-full mt-1.5 w-60 bg-white rounded-2xl shadow-xl border border-purple-100 z-50 p-2.5 space-y-2 animate-in fade-in slide-in-from-top-1 duration-150">
+                      <div className="absolute right-0 top-full mt-1.5 w-60 bg-white rounded-2xl shadow-xl border border-emerald-100 z-50 p-2.5 space-y-2 animate-in fade-in slide-in-from-top-1 duration-150">
                         <div className="flex items-center justify-between pb-1.5 border-b border-slate-100 px-1">
                           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
                             Show / Hide Cards
@@ -2484,7 +2484,7 @@ export const InstitutesView = () => {
                             <button
                               type="button"
                               onClick={() => setVisibleTierCards(['School', 'College', 'University', 'Custom'])}
-                              className="text-purple-600 hover:underline font-bold cursor-pointer"
+                              className="text-emerald-600 hover:underline font-bold cursor-pointer"
                             >
                               All
                             </button>
@@ -2505,9 +2505,9 @@ export const InstitutesView = () => {
                         {/* Checkbox Options for each tier card */}
                         <div className="space-y-1">
                           {[
-                            { id: 'School', label: 'School Plan', icon: School, color: 'text-purple-600', badge: 'K-10' },
+                            { id: 'School', label: 'School Plan', icon: School, color: 'text-emerald-600', badge: 'K-10' },
                             { id: 'College', label: 'College Plan', icon: Building2, color: 'text-indigo-600', badge: '11-12' },
-                            { id: 'University', label: 'University Plan', icon: GraduationCap, color: 'text-purple-600', badge: 'BS' },
+                            { id: 'University', label: 'University Plan', icon: GraduationCap, color: 'text-emerald-600', badge: 'BS' },
                             { id: 'Custom', label: 'Custom Hybrid', icon: Layers, color: 'text-amber-600', badge: 'Multi' }
                           ].map(item => {
                             const ItemIcon = item.icon
@@ -2516,7 +2516,7 @@ export const InstitutesView = () => {
                               <label
                                 key={item.id}
                                 className={`flex items-center justify-between px-2.5 py-1.5 rounded-xl cursor-pointer transition-colors text-xs select-none ${
-                                  isChecked ? 'bg-purple-50/70 text-purple-900 font-semibold' : 'hover:bg-slate-50 text-slate-600'
+                                  isChecked ? 'bg-emerald-50/70 text-emerald-950 font-semibold' : 'hover:bg-slate-50 text-slate-600'
                                 }`}
                               >
                                 <div className="flex items-center gap-2">
@@ -2524,7 +2524,7 @@ export const InstitutesView = () => {
                                     type="checkbox"
                                     checked={isChecked}
                                     onChange={() => toggleTierCardVisibility(item.id)}
-                                    className="w-3.5 h-3.5 text-purple-600 rounded border-slate-300 focus:ring-purple-500 cursor-pointer"
+                                    className="w-3.5 h-3.5 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 cursor-pointer"
                                   />
                                   <ItemIcon className={`w-3.5 h-3.5 ${item.color} shrink-0`} />
                                   <span>{item.label}</span>
@@ -2548,9 +2548,9 @@ export const InstitutesView = () => {
                 {/* Dynamically Filtered Tier Cards Displayed On Screen */}
                 {(() => {
                   const allTierCards = [
-                    { id: 'School', label: 'School Plan', icon: School, color: 'text-purple-600' },
+                    { id: 'School', label: 'School Plan', icon: School, color: 'text-emerald-600' },
                     { id: 'College', label: 'College Plan', icon: Building2, color: 'text-indigo-600' },
-                    { id: 'University', label: 'University Plan', icon: GraduationCap, color: 'text-purple-600' },
+                    { id: 'University', label: 'University Plan', icon: GraduationCap, color: 'text-emerald-600' },
                     { id: 'Custom', label: 'Custom Hybrid', icon: Layers, color: 'text-amber-600' }
                   ]
                   const displayedCards = allTierCards.filter(card => visibleTierCards.includes(card.id))
@@ -2564,7 +2564,7 @@ export const InstitutesView = () => {
                         <button
                           type="button"
                           onClick={() => setVisibleTierCards(['School', 'College', 'University', 'Custom'])}
-                          className="mt-3 px-3.5 py-1.5 text-xs font-bold text-purple-700 bg-purple-100 hover:bg-purple-200 rounded-xl transition-colors cursor-pointer"
+                          className="mt-3 px-3.5 py-1.5 text-xs font-bold text-emerald-800 bg-emerald-100 hover:bg-purple-200 rounded-xl transition-colors cursor-pointer"
                         >
                           Show All Cards
                         </button>
@@ -2590,7 +2590,7 @@ export const InstitutesView = () => {
                             onClick={() => handleTierSelection(tierItem.id)}
                             className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center gap-1.5 cursor-pointer ${
                               isSelected 
-                                ? 'border-purple-600 bg-[#f5eeff] text-purple-800 font-bold ring-2 ring-purple-500/20 shadow-2xs' 
+                                ? 'border-purple-600 bg-[#f5eeff] text-emerald-900 font-bold ring-2 ring-emerald-500/20 shadow-2xs' 
                                 : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
                             }`}
                           >
@@ -2639,7 +2639,7 @@ export const InstitutesView = () => {
                                 setWizardData({ ...wizardData, enabledTiers: updated })
                                 if (wizardErrors.enabledTiers) setWizardErrors(prev => ({ ...prev, enabledTiers: null }))
                               }}
-                              className="w-4 h-4 text-purple-600 rounded border-slate-300 focus:ring-purple-500"
+                              className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500"
                             />
                             <WingIcon className="w-4 h-4 text-indigo-600 shrink-0" />
                             <div>
@@ -2670,7 +2670,7 @@ export const InstitutesView = () => {
                   className={`w-full px-3.5 py-2 text-xs rounded-lg border transition-all focus:outline-none focus:ring-2 ${
                     wizardErrors.name 
                       ? 'border-rose-400 bg-rose-50/20 ring-2 ring-rose-200/50' 
-                      : 'border-slate-200 focus:ring-purple-500/20'
+                      : 'border-slate-200 focus:ring-emerald-500/20'
                   }`}
                 />
                 {wizardErrors.name && (
@@ -2695,7 +2695,7 @@ export const InstitutesView = () => {
                     className={`w-full px-3.5 py-2 text-xs rounded-lg border font-mono uppercase transition-all focus:outline-none focus:ring-2 ${
                       wizardErrors.code 
                         ? 'border-rose-400 bg-rose-50/20 ring-2 ring-rose-200/50' 
-                        : 'border-slate-200 focus:ring-purple-500/20'
+                        : 'border-slate-200 focus:ring-emerald-500/20'
                     }`}
                   />
                   {wizardErrors.code && (
@@ -2719,7 +2719,7 @@ export const InstitutesView = () => {
                     className={`w-full px-3.5 py-2 text-xs rounded-lg border transition-all focus:outline-none focus:ring-2 ${
                       wizardErrors.principal 
                         ? 'border-rose-400 bg-rose-50/20 ring-2 ring-rose-200/50' 
-                        : 'border-slate-200 focus:ring-purple-500/20'
+                        : 'border-slate-200 focus:ring-emerald-500/20'
                     }`}
                   />
                   {wizardErrors.principal && (
@@ -2735,8 +2735,8 @@ export const InstitutesView = () => {
                     <span>Country / Geographic Jurisdiction</span>
                     <span className="text-rose-500 font-bold">*</span>
                   </label>
-                  <span className="text-[11px] text-purple-700 font-medium bg-[#f5eeff] px-2 py-0.5 rounded-md border border-purple-200/60 flex items-center gap-1">
-                    <Globe className="w-3 h-3 text-purple-600" />
+                  <span className="text-[11px] text-emerald-800 font-medium bg-[#f5eeff] px-2 py-0.5 rounded-md border border-emerald-200/60 flex items-center gap-1">
+                    <Globe className="w-3 h-3 text-emerald-600" />
                     <span>Auto-configures Boards & Divisions</span>
                   </span>
                 </div>
@@ -2747,7 +2747,7 @@ export const InstitutesView = () => {
                     className={`w-full px-3.5 py-2.5 text-xs font-semibold rounded-lg border bg-white transition-all appearance-none cursor-pointer focus:outline-none focus:ring-2 ${
                       wizardErrors.country 
                         ? 'border-rose-400 bg-rose-50/20 ring-2 ring-rose-200/50' 
-                        : 'border-slate-200 hover:border-slate-300 focus:ring-purple-500/20 text-slate-800'
+                        : 'border-slate-200 hover:border-slate-300 focus:ring-emerald-500/20 text-slate-800'
                     }`}
                   >
                     {getAvailableCountries().map(c => (
@@ -2781,7 +2781,7 @@ export const InstitutesView = () => {
                     <select
                       value={wizardData.affiliatedBoard}
                       onChange={(e) => setWizardData({ ...wizardData, affiliatedBoard: e.target.value })}
-                      className="w-full px-3.5 py-2 text-xs font-medium rounded-lg border border-slate-200 bg-white hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20 appearance-none pr-8 cursor-pointer text-slate-800"
+                      className="w-full px-3.5 py-2 text-xs font-medium rounded-lg border border-slate-200 bg-white hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 appearance-none pr-8 cursor-pointer text-slate-800"
                     >
                       {getCountryBoards(wizardData.country).map(b => (
                         <option key={b.id || b.code} value={b.name || b.code}>
@@ -2809,7 +2809,7 @@ export const InstitutesView = () => {
                     <select
                       value={wizardData.divisionId}
                       onChange={(e) => setWizardData({ ...wizardData, divisionId: e.target.value })}
-                      className="w-full px-3.5 py-2 text-xs font-medium rounded-lg border border-slate-200 bg-white hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20 appearance-none pr-8 cursor-pointer text-slate-800"
+                      className="w-full px-3.5 py-2 text-xs font-medium rounded-lg border border-slate-200 bg-white hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 appearance-none pr-8 cursor-pointer text-slate-800"
                     >
                       {getCountryDivisions(wizardData.country).map(d => (
                         <option key={d.id} value={d.id}>
@@ -2838,7 +2838,7 @@ export const InstitutesView = () => {
                       <span>Province / State</span>
                       <span className="text-rose-500 font-bold">*</span>
                     </label>
-                    <span className="text-[10px] text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-100 font-semibold">
+                    <span className="text-[10px] text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100 font-semibold">
                       {wizardData.country || 'Pakistan'}
                     </span>
                   </div>
@@ -2849,7 +2849,7 @@ export const InstitutesView = () => {
                       className={`w-full px-3.5 py-2.5 text-xs font-semibold rounded-lg border bg-white appearance-none pr-8 cursor-pointer transition-all focus:outline-none focus:ring-2 ${
                         wizardErrors.province 
                           ? 'border-rose-400 bg-rose-50/20 ring-2 ring-rose-200/50' 
-                          : 'border-slate-200 hover:border-slate-300 focus:ring-purple-500/20 text-slate-800'
+                          : 'border-slate-200 hover:border-slate-300 focus:ring-emerald-500/20 text-slate-800'
                       }`}
                     >
                       {availableProvinces.map(provName => (
@@ -2883,7 +2883,7 @@ export const InstitutesView = () => {
                           handleWizardCityChange(currentCapitalCity || availableCities[0] || 'Lahore')
                         }
                       }}
-                      className="text-[11px] text-purple-600 hover:text-purple-800 font-semibold cursor-pointer transition-colors"
+                      className="text-[11px] text-emerald-600 hover:text-emerald-900 font-semibold cursor-pointer transition-colors"
                     >
                       {isCustomCityMode ? '← Choose from list' : '+ Enter custom city'}
                     </button>
@@ -2904,7 +2904,7 @@ export const InstitutesView = () => {
                         className={`w-full px-3.5 py-2.5 text-xs font-semibold rounded-lg border bg-white appearance-none pr-8 cursor-pointer transition-all focus:outline-none focus:ring-2 ${
                           wizardErrors.city 
                             ? 'border-rose-400 bg-rose-50/20 ring-2 ring-rose-200/50' 
-                            : 'border-slate-200 hover:border-slate-300 focus:ring-purple-500/20 text-slate-800'
+                            : 'border-slate-200 hover:border-slate-300 focus:ring-emerald-500/20 text-slate-800'
                         }`}
                       >
                         {availableCities.map(cityName => (
@@ -2929,7 +2929,7 @@ export const InstitutesView = () => {
                         className={`w-full px-3.5 py-2.5 text-xs font-semibold rounded-lg border transition-all focus:outline-none focus:ring-2 ${
                           wizardErrors.city 
                             ? 'border-rose-400 bg-rose-50/20 ring-2 ring-rose-200/50' 
-                            : 'border-slate-200 focus:ring-purple-500/20 text-slate-800'
+                            : 'border-slate-200 focus:ring-emerald-500/20 text-slate-800'
                         }`}
                       />
                       <button
@@ -2968,7 +2968,7 @@ export const InstitutesView = () => {
                   className={`w-full px-3.5 py-2 text-xs rounded-lg border transition-all focus:outline-none focus:ring-2 ${
                     wizardErrors.address 
                       ? 'border-rose-400 bg-rose-50/20 ring-2 ring-rose-200/50' 
-                      : 'border-slate-200 focus:ring-purple-500/20'
+                      : 'border-slate-200 focus:ring-emerald-500/20'
                   }`}
                 />
                 {wizardErrors.address && (
@@ -2992,7 +2992,7 @@ export const InstitutesView = () => {
                         ]
                       })
                     }}
-                    className="text-[11px] font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1 cursor-pointer"
+                    className="text-[11px] font-bold text-emerald-600 hover:text-emerald-900 flex items-center gap-1 cursor-pointer"
                   >
                     <Plus className="w-3 h-3" />
                     <span>Add Branch</span>
@@ -3028,8 +3028,8 @@ export const InstitutesView = () => {
           {/* Step 3: Campus Contact Information (Subdomain & Brand Color Removed As Requested) */}
           {wizardStep === 3 && (
             <div className="space-y-4">
-              <div className="p-3 bg-[#f5eeff]/80 border border-purple-200 rounded-xl text-xs text-purple-800 flex items-start gap-2.5">
-                <Building2 className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
+              <div className="p-3 bg-[#f5eeff]/80 border border-emerald-200 rounded-xl text-xs text-emerald-900 flex items-start gap-2.5">
+                <Building2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                 <div>
                   <span className="font-bold">Official Campus Contact:</span>
                   <p className="mt-0.5 text-slate-600">
@@ -3047,11 +3047,11 @@ export const InstitutesView = () => {
                 <div className={`flex rounded-lg border bg-white transition-all shadow-2xs ${
                   wizardErrors.phone 
                     ? 'border-rose-400 ring-2 ring-rose-200/50' 
-                    : 'border-slate-200 hover:border-slate-300 focus-within:ring-2 focus-within:ring-purple-500/20 focus-within:border-purple-500'
+                    : 'border-slate-200 hover:border-slate-300 focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500'
                 }`}>
                   {/* Fixed Country Dial Code Prefix (Auto-Fixed from Step 1 Country Selection) */}
                   <div className="shrink-0 px-3.5 py-2.5 bg-slate-50 border-r border-slate-200 rounded-l-lg flex items-center gap-1.5 select-none text-slate-700 font-bold text-xs" title={`Auto-fixed for ${wizardData.country || 'Pakistan'}`}>
-                    <span className="font-mono text-purple-700 font-bold">{wizardData.phoneDialCode || '+92'}</span>
+                    <span className="font-mono text-emerald-800 font-bold">{wizardData.phoneDialCode || '+92'}</span>
                     <span className="text-[10px] text-slate-400 font-medium">({wizardData.country || 'Pakistan'})</span>
                   </div>
 
@@ -3092,7 +3092,7 @@ export const InstitutesView = () => {
                   placeholder="e.g. info@campus.edu"
                   value={wizardData.email}
                   onChange={(e) => setWizardData({ ...wizardData, email: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                  className="w-full px-3.5 py-2.5 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                 />
                 <p className="text-[10px] text-slate-400 mt-1">Optional contact email for general public inquiries</p>
               </div>
@@ -3102,7 +3102,7 @@ export const InstitutesView = () => {
           {/* Step 4: Primary Administrator Account */}
           {wizardStep === 4 && (
             <div className="space-y-4">
-              <div className="p-3 bg-[#f5eeff]/80 border border-purple-200 rounded-xl text-xs text-purple-800">
+              <div className="p-3 bg-[#f5eeff]/80 border border-emerald-200 rounded-xl text-xs text-emerald-900">
                 <span className="font-bold">Initial Administrator Account:</span> This user will receive root administrative privileges to oversee student admissions, staff payroll, and daily campus routines for this institute.
               </div>
 
@@ -3122,7 +3122,7 @@ export const InstitutesView = () => {
                   className={`w-full px-3.5 py-2 text-xs rounded-lg border transition-all focus:outline-none focus:ring-2 ${
                     wizardErrors.adminName 
                       ? 'border-rose-400 bg-rose-50/20 ring-2 ring-rose-200/50' 
-                      : 'border-slate-200 focus:ring-purple-500/20'
+                      : 'border-slate-200 focus:ring-emerald-500/20'
                   }`}
                 />
                 {wizardErrors.adminName && (
@@ -3146,7 +3146,7 @@ export const InstitutesView = () => {
                   className={`w-full px-3.5 py-2 text-xs rounded-lg border transition-all focus:outline-none focus:ring-2 ${
                     wizardErrors.adminEmail 
                       ? 'border-rose-400 bg-rose-50/20 ring-2 ring-rose-200/50' 
-                      : 'border-slate-200 focus:ring-purple-500/20'
+                      : 'border-slate-200 focus:ring-emerald-500/20'
                   }`}
                 />
                 {wizardErrors.adminEmail && (
@@ -3169,7 +3169,7 @@ export const InstitutesView = () => {
                   className={`w-full px-3.5 py-2 text-xs rounded-lg border font-mono transition-all focus:outline-none focus:ring-2 ${
                     wizardErrors.adminPassword 
                       ? 'border-rose-400 bg-rose-50/20 ring-2 ring-rose-200/50' 
-                      : 'border-slate-200 focus:ring-purple-500/20'
+                      : 'border-slate-200 focus:ring-emerald-500/20'
                   }`}
                 />
                 {wizardErrors.adminPassword && (
@@ -3187,8 +3187,8 @@ export const InstitutesView = () => {
                   <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
                     Subscription Plan
                   </label>
-                  <span className="text-[11px] font-bold text-purple-700 bg-purple-50 border border-purple-200/60 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 shadow-2xs">
-                    <Lock className="w-3.5 h-3.5 text-purple-600" />
+                  <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/60 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 shadow-2xs">
+                    <Lock className="w-3.5 h-3.5 text-emerald-600" />
                     <span>Auto-Locked to Tier ({wizardData.type || 'School'})</span>
                   </span>
                 </div>
@@ -3201,14 +3201,14 @@ export const InstitutesView = () => {
                         key={plan.id}
                         className={`p-3 rounded-2xl border text-left transition-all ${
                           isMatchedTier
-                            ? 'border-purple-600 bg-[#f5eeff] text-purple-900 ring-2 ring-purple-500/20 font-bold shadow-xs cursor-default'
+                            ? 'border-purple-600 bg-[#f5eeff] text-emerald-950 ring-2 ring-emerald-500/20 font-bold shadow-xs cursor-default'
                             : 'border-slate-200 bg-slate-50/50 text-slate-400 opacity-40 select-none cursor-not-allowed'
                         }`}
                       >
                         <div className="flex items-start justify-between gap-1 mb-1">
                           <span className="text-xs font-bold leading-tight">{plan.name}</span>
                           {isMatchedTier ? (
-                            <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider bg-purple-600 text-white px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow-2xs">
+                            <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider bg-emerald-600 text-white px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow-2xs">
                               <Lock className="w-2.5 h-2.5" />
                               <span>Active</span>
                             </span>
@@ -3218,7 +3218,7 @@ export const InstitutesView = () => {
                             </span>
                           )}
                         </div>
-                        <span className={`text-[11px] font-bold block mt-1 ${isMatchedTier ? 'text-purple-700' : 'text-slate-400'}`}>
+                        <span className={`text-[11px] font-bold block mt-1 ${isMatchedTier ? 'text-emerald-800' : 'text-slate-400'}`}>
                           PKR {plan.pricePKR.toLocaleString()}/mo
                         </span>
                         <span className="text-[10px] text-slate-400 block mt-1 font-medium">
@@ -3247,7 +3247,7 @@ export const InstitutesView = () => {
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                     <div>
                       <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                        <GraduationCap className="w-4 h-4 text-purple-600" />
+                        <GraduationCap className="w-4 h-4 text-emerald-600" />
                         <span>Custom Student Enrollment Limit</span>
                         <span className="text-rose-500 font-bold">*</span>
                       </label>
@@ -3277,7 +3277,7 @@ export const InstitutesView = () => {
                             setWizardData({ ...wizardData, quotaStudents: 1500 })
                           }
                         }}
-                        className="w-32 px-3 py-1.5 text-xs font-extrabold text-slate-900 border border-slate-300 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-purple-500/20 bg-slate-50/50"
+                        className="w-32 px-3 py-1.5 text-xs font-extrabold text-slate-900 border border-slate-300 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-emerald-500/20 bg-slate-50/50"
                       />
                     </div>
                   </div>
@@ -3294,7 +3294,7 @@ export const InstitutesView = () => {
                           onClick={() => setWizardData({ ...wizardData, quotaStudents: tagVal })}
                           className={`px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                             isSelected
-                              ? 'bg-purple-600 text-white shadow-xs ring-2 ring-purple-500/20 scale-105'
+                              ? 'bg-emerald-600 text-white shadow-xs ring-2 ring-emerald-500/20 scale-105'
                               : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80 hover:border-slate-300'
                           }`}
                         >
@@ -3339,7 +3339,7 @@ export const InstitutesView = () => {
               <button
                 type="button"
                 onClick={handleNextStep}
-                className="px-5 py-2.5 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-xl shadow-xs transition-all cursor-pointer active:scale-95 whitespace-nowrap"
+                className="px-5 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-xs transition-all cursor-pointer active:scale-95 whitespace-nowrap"
               >
                 Continue
               </button>
@@ -3545,7 +3545,7 @@ export const InstitutesView = () => {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-slate-400">Login Email:</span>
-                <span className="font-mono font-bold text-purple-700 bg-[#f5eeff] px-2 py-0.5 rounded">{newlyCreatedCreds.adminEmail}</span>
+                <span className="font-mono font-bold text-emerald-800 bg-[#f5eeff] px-2 py-0.5 rounded">{newlyCreatedCreds.adminEmail}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-slate-400">Password:</span>
@@ -3560,7 +3560,7 @@ export const InstitutesView = () => {
             <button
               type="button"
               onClick={() => handleCopyCredentials(newlyCreatedCreds, newlyCreatedCreds)}
-              className="w-full py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+              className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
             >
               <Copy className="w-4 h-4" />
               <span>Copy Login Credentials to Send to Client</span>
@@ -3600,7 +3600,7 @@ export const InstitutesView = () => {
                 placeholder="Minimum 6 characters"
                 value={newAdminPassword}
                 onChange={(e) => setNewAdminPassword(e.target.value)}
-                className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 font-mono focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
               />
             </div>
 
@@ -3642,7 +3642,7 @@ export const InstitutesView = () => {
                     key={tab}
                     onClick={() => handleDetailTabChange(tab)}
                     className={`px-3 py-1.5 rounded-lg font-bold capitalize transition-colors cursor-pointer ${
-                      detailsTab === tab ? 'bg-[#f5eeff] text-purple-700 border border-purple-200' : 'text-slate-500 hover:text-slate-900'
+                      detailsTab === tab ? 'bg-[#f5eeff] text-emerald-800 border border-emerald-200' : 'text-slate-500 hover:text-slate-900'
                     }`}
                   >
                     {tab}
@@ -3658,7 +3658,7 @@ export const InstitutesView = () => {
                     setViewingDetails(null)
                     handleImpersonate(targetInst)
                   }}
-                  className="px-3.5 py-1.5 rounded-lg font-bold text-xs text-white bg-purple-600 hover:bg-purple-700 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+                  className="px-3.5 py-1.5 rounded-lg font-bold text-xs text-white bg-emerald-600 hover:bg-emerald-700 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
                   title="Launch and enter this campus dashboard & portals"
                 >
                   <ExternalLink className="w-3.5 h-3.5 text-white" />
@@ -3673,10 +3673,10 @@ export const InstitutesView = () => {
                     setViewingDetails(null)
                     openEditModal(targetInst)
                   }}
-                  className="px-3 py-1.5 rounded-lg font-bold text-xs text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200/90 transition-all flex items-center gap-1.5 shrink-0 cursor-pointer shadow-2xs hover:shadow-xs active:scale-95"
+                  className="px-3 py-1.5 rounded-lg font-bold text-xs text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/90 transition-all flex items-center gap-1.5 shrink-0 cursor-pointer shadow-2xs hover:shadow-xs active:scale-95"
                   title="Edit this campus profile, location, contacts and quotas"
                 >
-                  <Edit3 className="w-3.5 h-3.5 text-purple-600" />
+                  <Edit3 className="w-3.5 h-3.5 text-emerald-600" />
                   <span>Edit Profile</span>
                 </button>
               </div>
@@ -3689,7 +3689,7 @@ export const InstitutesView = () => {
                 <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="font-mono text-xs px-2 py-0.5 bg-purple-100 text-purple-800 rounded font-bold">
+                      <span className="font-mono text-xs px-2 py-0.5 bg-emerald-100 text-emerald-900 rounded font-bold">
                         {viewingDetails.code}
                       </span>
                       <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
@@ -3726,7 +3726,7 @@ export const InstitutesView = () => {
                     <label className="text-[10px] text-slate-400 uppercase font-bold block mb-1">
                       Board Affiliation
                     </label>
-                    <span className="font-bold text-purple-700 text-sm block">
+                    <span className="font-bold text-emerald-800 text-sm block">
                       {viewingDetails.affiliatedBoard || 'BISE Gujranwala'}
                     </span>
                   </div>
@@ -3736,7 +3736,7 @@ export const InstitutesView = () => {
                     <label className="text-[10px] text-slate-400 uppercase font-bold block mb-1">
                       Official Email
                     </label>
-                    <span className="font-semibold text-purple-600 truncate block font-mono text-xs">
+                    <span className="font-semibold text-emerald-600 truncate block font-mono text-xs">
                       {viewingDetails.email || '—'}
                     </span>
                   </div>
@@ -3763,7 +3763,7 @@ export const InstitutesView = () => {
                     <div>
                       <div className="flex items-center gap-1.5">
                         <span className="font-bold text-slate-800">Main Campus</span>
-                        <span className="text-[10px] font-bold bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">HQ</span>
+                        <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">HQ</span>
                       </div>
                       <p className="text-slate-500 text-[11px] mt-0.5">{viewingDetails.address || `${viewingDetails.city}, Pakistan`}</p>
                     </div>
@@ -3832,7 +3832,7 @@ export const InstitutesView = () => {
                       <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border ${
                         activeModulesCount === allModulesForViewing.length
                           ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                          : 'bg-purple-50 text-purple-700 border-purple-200'
+                          : 'bg-emerald-50 text-emerald-800 border-emerald-200'
                       }`}>
                         {activeModulesCount} of {allModulesForViewing.length} Active
                       </span>
@@ -3863,7 +3863,7 @@ export const InstitutesView = () => {
                     <button
                       type="button"
                       onClick={() => setIsAddCustomModuleOpen(true)}
-                      className="px-2.5 py-1 text-[11px] font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-all shadow-2xs flex items-center gap-1 cursor-pointer"
+                      className="px-2.5 py-1 text-[11px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-all shadow-2xs flex items-center gap-1 cursor-pointer"
                     >
                       <Plus className="w-3 h-3" />
                       <span>Add Module</span>
@@ -3879,7 +3879,7 @@ export const InstitutesView = () => {
                     placeholder="Search modules by name, feature or category..."
                     value={moduleSearchTerm}
                     onChange={(e) => setModuleSearchTerm(e.target.value)}
-                    className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200/80 rounded-lg focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                    className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200/80 rounded-lg focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                   />
                   {moduleSearchTerm && (
                     <button
@@ -3902,7 +3902,7 @@ export const InstitutesView = () => {
                         key={m.key}
                         className={`p-3 rounded-xl border transition-all ${
                           isEnabled
-                            ? 'bg-white border-slate-200/90 shadow-2xs hover:border-purple-200'
+                            ? 'bg-white border-slate-200/90 shadow-2xs hover:border-emerald-200'
                             : 'bg-slate-50/70 border-dashed border-slate-200 opacity-80'
                         }`}
                       >
@@ -3911,7 +3911,7 @@ export const InstitutesView = () => {
                             <div className="flex items-center gap-1.5 mb-1">
                               <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded border ${
                                 m.isCustom
-                                  ? 'bg-purple-100 text-purple-700 border-purple-200'
+                                  ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
                                   : m.category === 'Finance'
                                     ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                     : m.category === 'Core Academic'
@@ -3998,7 +3998,7 @@ export const InstitutesView = () => {
                       openEditModal(target)
                       setEditTab('quotas')
                     }}
-                    className="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer active:scale-95"
+                    className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer active:scale-95"
                     title="Open Edit Quotas & Subscription Tier"
                   >
                     <CreditCard className="w-3.5 h-3.5" />
@@ -4062,7 +4062,7 @@ export const InstitutesView = () => {
                       const currentIndex = tabs.indexOf(detailsTab)
                       if (currentIndex < tabs.length - 1) setDetailsTab(tabs[currentIndex + 1])
                     }}
-                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
                   >
                     <span>Next</span>
                     <ChevronRight className="w-3.5 h-3.5" />
@@ -4071,7 +4071,7 @@ export const InstitutesView = () => {
                   <button
                     type="button"
                     onClick={() => setViewingDetails(null)}
-                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer"
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer"
                   >
                     Done
                   </button>
@@ -4107,7 +4107,7 @@ export const InstitutesView = () => {
                 placeholder="e.g. Alumni Network & Mentorship Portal"
                 value={customModuleForm.name}
                 onChange={(e) => setCustomModuleForm({ ...customModuleForm, name: e.target.value })}
-                className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
               />
             </div>
 
@@ -4118,7 +4118,7 @@ export const InstitutesView = () => {
               <select
                 value={customModuleForm.category}
                 onChange={(e) => setCustomModuleForm({ ...customModuleForm, category: e.target.value })}
-                className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 cursor-pointer"
+                className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer"
               >
                 <option value="Academic Operations">Academic Operations</option>
                 <option value="Finance & Accounts">Finance & Accounts</option>
@@ -4138,7 +4138,7 @@ export const InstitutesView = () => {
                 placeholder="Brief summary of what this module handles for this campus..."
                 value={customModuleForm.description}
                 onChange={(e) => setCustomModuleForm({ ...customModuleForm, description: e.target.value })}
-                className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
               />
             </div>
 
@@ -4152,7 +4152,7 @@ export const InstitutesView = () => {
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Add & Enable Module</span>
@@ -4190,7 +4190,7 @@ export const InstitutesView = () => {
                     onClick={() => setEditTab(t.id)}
                     className={`px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5 transition-all cursor-pointer shrink-0 ${
                       isActive
-                        ? 'bg-purple-600 text-white shadow-2xs'
+                        ? 'bg-emerald-600 text-white shadow-2xs'
                         : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
                     }`}
                   >
@@ -4213,7 +4213,7 @@ export const InstitutesView = () => {
                     required
                     value={editFormData.name}
                     onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-                    className="w-full px-3.5 py-2.5 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                    className="w-full px-3.5 py-2.5 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                   />
                 </div>
 
@@ -4227,7 +4227,7 @@ export const InstitutesView = () => {
                       required
                       value={editFormData.code}
                       onChange={(e) => setEditFormData({ ...editFormData, code: e.target.value.toUpperCase() })}
-                      className="w-full px-3.5 py-2.5 text-xs rounded-lg border border-slate-200 font-mono uppercase focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                      className="w-full px-3.5 py-2.5 text-xs rounded-lg border border-slate-200 font-mono uppercase focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                     />
                   </div>
 
@@ -4238,7 +4238,7 @@ export const InstitutesView = () => {
                     <select
                       value={editFormData.type}
                       onChange={(e) => handleEditTierChange(e.target.value)}
-                      className="w-full px-3.5 py-2.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 cursor-pointer"
+                      className="w-full px-3.5 py-2.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer"
                     >
                       <option value="School">School Plan</option>
                       <option value="College">College Plan</option>
@@ -4258,7 +4258,7 @@ export const InstitutesView = () => {
                     placeholder="e.g. Dr. Shahida Parveen"
                     value={editFormData.principal}
                     onChange={(e) => setEditFormData({ ...editFormData, principal: e.target.value })}
-                    className="w-full px-3.5 py-2.5 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                    className="w-full px-3.5 py-2.5 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                   />
                 </div>
 
@@ -4269,7 +4269,7 @@ export const InstitutesView = () => {
                   <select
                     value={editFormData.country}
                     onChange={(e) => handleEditCountryChange(e.target.value)}
-                    className="w-full px-3.5 py-2.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 cursor-pointer"
+                    className="w-full px-3.5 py-2.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer"
                   >
                     {getAvailableCountries().map(c => (
                       <option key={c.name} value={c.name}>
@@ -4287,7 +4287,7 @@ export const InstitutesView = () => {
                     <select
                       value={editFormData.affiliatedBoard}
                       onChange={(e) => setEditFormData({ ...editFormData, affiliatedBoard: e.target.value })}
-                      className="w-full px-3.5 py-2.5 text-xs font-medium rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 cursor-pointer"
+                      className="w-full px-3.5 py-2.5 text-xs font-medium rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer"
                     >
                       {getCountryBoards(editFormData.country).map(b => (
                         <option key={b.id || b.code} value={b.name || b.code}>
@@ -4304,7 +4304,7 @@ export const InstitutesView = () => {
                     <select
                       value={editFormData.divisionId}
                       onChange={(e) => setEditFormData({ ...editFormData, divisionId: e.target.value })}
-                      className="w-full px-3.5 py-2.5 text-xs font-medium rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 cursor-pointer"
+                      className="w-full px-3.5 py-2.5 text-xs font-medium rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer"
                     >
                       {getCountryDivisions(editFormData.country).map(d => (
                         <option key={d.id} value={d.id}>
@@ -4324,14 +4324,14 @@ export const InstitutesView = () => {
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
                       <label className="block text-xs font-semibold text-slate-700 uppercase">Province / State</label>
-                      <span className="text-[10px] text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-100 font-semibold">
+                      <span className="text-[10px] text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100 font-semibold">
                         {editFormData.country}
                       </span>
                     </div>
                     <select
                       value={editFormData.province}
                       onChange={(e) => handleEditProvinceChange(e.target.value)}
-                      className="w-full px-3.5 py-2.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 cursor-pointer"
+                      className="w-full px-3.5 py-2.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer"
                     >
                       {editProvinces.map(provName => (
                         <option key={provName} value={provName}>{provName}</option>
@@ -4351,7 +4351,7 @@ export const InstitutesView = () => {
                             handleEditCityChange(editCities[0] || 'Lahore')
                           }
                         }}
-                        className="text-[11px] text-purple-600 hover:text-purple-800 font-semibold cursor-pointer"
+                        className="text-[11px] text-emerald-600 hover:text-emerald-900 font-semibold cursor-pointer"
                       >
                         {isEditCustomCity ? '← Choose from list' : '+ Custom city'}
                       </button>
@@ -4368,7 +4368,7 @@ export const InstitutesView = () => {
                             handleEditCityChange(val)
                           }
                         }}
-                        className="w-full px-3.5 py-2.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 cursor-pointer"
+                        className="w-full px-3.5 py-2.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer"
                       >
                         {editCities.map(cityName => (
                           <option key={cityName} value={cityName}>{cityName}</option>
@@ -4383,7 +4383,7 @@ export const InstitutesView = () => {
                           value={editFormData.city}
                           onChange={(e) => handleEditCustomCityChange(e.target.value)}
                           placeholder="Enter custom city"
-                          className="w-full px-3.5 py-2.5 text-xs font-semibold rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                          className="w-full px-3.5 py-2.5 text-xs font-semibold rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                         />
                         <button
                           type="button"
@@ -4409,7 +4409,7 @@ export const InstitutesView = () => {
                     value={editFormData.address}
                     onChange={(e) => setEditFormData({ ...editFormData, address: e.target.value })}
                     placeholder="e.g. Main Boulevard, Gulberg III"
-                    className="w-full px-3.5 py-2.5 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                    className="w-full px-3.5 py-2.5 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                   />
                 </div>
               </div>
@@ -4422,9 +4422,9 @@ export const InstitutesView = () => {
                   <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
                     Official Phone
                   </label>
-                  <div className="flex rounded-lg border border-slate-200 bg-white shadow-2xs focus-within:ring-2 focus-within:ring-purple-500/20 focus-within:border-purple-500">
+                  <div className="flex rounded-lg border border-slate-200 bg-white shadow-2xs focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500">
                     <div className="shrink-0 px-3.5 py-2.5 bg-slate-50 border-r border-slate-200 rounded-l-lg flex items-center gap-1.5 select-none text-slate-700 font-bold text-xs">
-                      <span className="font-mono text-purple-700 font-bold">{editFormData.phoneDialCode || '+92'}</span>
+                      <span className="font-mono text-emerald-800 font-bold">{editFormData.phoneDialCode || '+92'}</span>
                       <span className="text-[10px] text-slate-400 font-medium">({editFormData.country})</span>
                     </div>
                     <input
@@ -4447,7 +4447,7 @@ export const InstitutesView = () => {
                     value={editFormData.email}
                     onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
                     placeholder="e.g. info@campus.edu"
-                    className="w-full px-3.5 py-2.5 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                    className="w-full px-3.5 py-2.5 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                   />
                 </div>
               </div>
@@ -4464,7 +4464,7 @@ export const InstitutesView = () => {
                     <select
                       value={editFormData.planTier}
                       onChange={(e) => setEditFormData({ ...editFormData, planTier: e.target.value })}
-                      className="w-full px-3.5 py-2.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 cursor-pointer"
+                      className="w-full px-3.5 py-2.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer"
                     >
                       {SUBSCRIPTION_PLANS.map(p => (
                         <option key={p.id} value={p.name}>{p.name} (PKR {p.pricePKR.toLocaleString()}/mo)</option>
@@ -4479,7 +4479,7 @@ export const InstitutesView = () => {
                     <select
                       value={editFormData.lifecycleStatus}
                       onChange={(e) => setEditFormData({ ...editFormData, lifecycleStatus: e.target.value })}
-                      className="w-full px-3.5 py-2.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 cursor-pointer"
+                      className="w-full px-3.5 py-2.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer"
                     >
                       <option value="Active">Active (Operational)</option>
                       <option value="Suspended">Suspended (Access Revoked)</option>
@@ -4493,7 +4493,7 @@ export const InstitutesView = () => {
                   <div>
                     <div className="flex items-center justify-between mb-1">
                       <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                        <GraduationCap className="w-4 h-4 text-purple-600" />
+                        <GraduationCap className="w-4 h-4 text-emerald-600" />
                         <span>Student Enrollment Quota</span>
                       </label>
                       <input
@@ -4519,7 +4519,7 @@ export const InstitutesView = () => {
                           onClick={() => setEditFormData({ ...editFormData, quotaStudents: val })}
                           className={`px-2.5 py-0.5 text-xs font-bold rounded transition-all cursor-pointer ${
                             Number(editFormData.quotaStudents) === val
-                              ? 'bg-purple-600 text-white shadow-2xs'
+                              ? 'bg-emerald-600 text-white shadow-2xs'
                               : 'bg-white hover:bg-slate-200 text-slate-700 border border-slate-200'
                           }`}
                         >
@@ -4595,7 +4595,7 @@ export const InstitutesView = () => {
                   <>
                     <button
                       type="submit"
-                      className="px-4 py-2 text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200/80 rounded-lg transition-all cursor-pointer hidden sm:inline-flex"
+                      className="px-4 py-2 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 rounded-lg transition-all cursor-pointer hidden sm:inline-flex"
                       title="Save changes and close"
                     >
                       Save & Close
@@ -4603,7 +4603,7 @@ export const InstitutesView = () => {
                     <button
                       type="button"
                       onClick={handleEditNext}
-                      className="px-5 py-2 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+                      className="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
                     >
                       <span>Save & Continue</span>
                       <ArrowRight className="w-3.5 h-3.5" />
@@ -4612,7 +4612,7 @@ export const InstitutesView = () => {
                 ) : (
                   <button
                     type="submit"
-                    className="px-6 py-2 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+                    className="px-6 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
                   >
                     <Check className="w-3.5 h-3.5" />
                     <span>Save Changes</span>
@@ -4641,10 +4641,10 @@ export const InstitutesView = () => {
       >
         <div className="space-y-4 text-xs font-sans">
           {/* Header Description & Download Template */}
-          <div className="p-3 bg-gradient-to-r from-purple-50 via-slate-50 to-white rounded-xl border border-purple-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="p-3 bg-gradient-to-r from-purple-50 via-slate-50 to-white rounded-xl border border-emerald-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <p className="font-bold text-slate-800 text-xs flex items-center gap-1.5">
-                <FileCode className="w-4 h-4 text-purple-600" />
+                <FileCode className="w-4 h-4 text-emerald-600" />
                 <span>Bulk Campus Onboarding Spreadsheet</span>
               </p>
               <p className="text-[11px] text-slate-500 mt-0.5">
@@ -4654,7 +4654,7 @@ export const InstitutesView = () => {
             <button
               type="button"
               onClick={downloadImportTemplateCSV}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-purple-50 text-purple-700 font-bold rounded-lg border border-purple-200 shadow-2xs transition-all cursor-pointer whitespace-nowrap self-start sm:self-auto"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-emerald-50 text-emerald-800 font-bold rounded-lg border border-emerald-200 shadow-2xs transition-all cursor-pointer whitespace-nowrap self-start sm:self-auto"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Download CSV Template</span>
@@ -4673,9 +4673,9 @@ export const InstitutesView = () => {
           {!importFile ? (
             <div
               onClick={() => csvFileInputRef.current?.click()}
-              className="p-8 border-2 border-dashed border-slate-300 hover:border-purple-400 rounded-2xl bg-slate-50/50 hover:bg-purple-50/20 text-center transition-all cursor-pointer space-y-2"
+              className="p-8 border-2 border-dashed border-slate-300 hover:border-purple-400 rounded-2xl bg-slate-50/50 hover:bg-emerald-50/20 text-center transition-all cursor-pointer space-y-2"
             >
-              <div className="w-12 h-12 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
+              <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
                 <Upload className="w-6 h-6" />
               </div>
               <div>
@@ -4692,7 +4692,7 @@ export const InstitutesView = () => {
               {/* File Info Bar */}
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 bg-purple-100 text-purple-700 rounded-lg flex items-center justify-center font-bold text-xs shrink-0">
+                  <div className="w-9 h-9 bg-emerald-100 text-emerald-800 rounded-lg flex items-center justify-center font-bold text-xs shrink-0">
                     CSV
                   </div>
                   <div className="min-w-0">
@@ -4743,7 +4743,7 @@ export const InstitutesView = () => {
                 <div className="border border-slate-200 rounded-xl overflow-hidden">
                   <div className="px-3 py-2 bg-slate-50 border-b border-slate-200 font-bold text-slate-700 text-xs flex items-center justify-between">
                     <span>Parsed Campuses Preview (Showing {Math.min(5, importParsedRows.length)} of {importParsedRows.length})</span>
-                    <span className="text-[10px] text-purple-600 font-semibold">Auto-configured wings & admin</span>
+                    <span className="text-[10px] text-emerald-600 font-semibold">Auto-configured wings & admin</span>
                   </div>
                   <div className="max-h-48 overflow-y-auto">
                     <table className="w-full text-left text-[11px]">
@@ -4760,9 +4760,9 @@ export const InstitutesView = () => {
                         {importParsedRows.slice(0, 5).map((row, idx) => (
                           <tr key={idx} className="hover:bg-slate-50/60">
                             <td className="py-2 px-2.5 font-bold text-slate-800">{row.name}</td>
-                            <td className="py-2 px-2 font-mono text-purple-700">{row.code}</td>
+                            <td className="py-2 px-2 font-mono text-emerald-800">{row.code}</td>
                             <td className="py-2 px-2">
-                              <span className="px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 font-semibold text-[10px]">
+                              <span className="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-800 font-semibold text-[10px]">
                                 {row.type}
                               </span>
                             </td>
@@ -4797,7 +4797,7 @@ export const InstitutesView = () => {
               type="button"
               disabled={importParsedRows.length === 0 || isImporting}
               onClick={executeCSVImport}
-              className="px-4 py-2 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+              className="px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
             >
               {isImporting ? (
                 <>
@@ -4831,7 +4831,7 @@ export const InstitutesView = () => {
           <div className="flex items-center gap-3">
             <button
               onClick={handleDownloadSnapshot}
-              className="flex-1 py-2.5 px-4 bg-[#f5eeff] text-purple-700 hover:bg-[#ede0fe] rounded-xl text-xs font-bold border border-purple-200 flex items-center justify-center gap-2 transition-all"
+              className="flex-1 py-2.5 px-4 bg-[#f5eeff] text-emerald-800 hover:bg-[#ede0fe] rounded-xl text-xs font-bold border border-emerald-200 flex items-center justify-center gap-2 transition-all"
             >
               <Download className="w-4 h-4" />
               <span>Download Snapshot</span>

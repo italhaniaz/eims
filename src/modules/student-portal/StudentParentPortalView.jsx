@@ -28,7 +28,10 @@ import {
   Check,
   ExternalLink,
   Layers,
-  Lock
+  Lock,
+  Upload,
+  CheckSquare,
+  X
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useAppData } from '../../context/AppDataContext'
@@ -482,7 +485,7 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
                 type="button"
                 onClick={() => setSimulatedRole(isSchool ? 'school_student' : isCollege ? 'college_student' : 'uni_student')}
                 className={`px-2.5 py-1 rounded-md font-bold transition-all cursor-pointer ${
-                  isStudent ? 'bg-purple-600 text-white shadow-xs' : 'text-slate-300 hover:text-white'
+                  isStudent ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-300 hover:text-white'
                 }`}
               >
                 🎓 Student View
@@ -491,7 +494,7 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
                 type="button"
                 onClick={() => setSimulatedRole(isSchool ? 'school_parent' : isCollege ? 'college_parent' : 'uni_parent')}
                 className={`px-2.5 py-1 rounded-md font-bold transition-all cursor-pointer ${
-                  isParent ? 'bg-purple-600 text-white shadow-xs' : 'text-slate-300 hover:text-white'
+                  isParent ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-300 hover:text-white'
                 }`}
               >
                 👨‍👩‍👧 Parent View
@@ -501,7 +504,7 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
                   type="button"
                   onClick={() => setSimulatedRole('uni_applicant')}
                   className={`px-2.5 py-1 rounded-md font-bold transition-all cursor-pointer ${
-                    isApplicant ? 'bg-purple-600 text-white shadow-xs' : 'text-slate-300 hover:text-white'
+                    isApplicant ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-300 hover:text-white'
                   }`}
                 >
                   📄 Applicant View
@@ -537,7 +540,7 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg shadow-sm ${
               isSchool ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
               isCollege ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' :
-              'bg-purple-500/20 text-purple-400 border border-purple-500/30'
+              'bg-emerald-500/20 text-purple-400 border border-emerald-500/30'
             }`}>
               {isSchool ? <School className="w-5 h-5" /> : isCollege ? <Building2 className="w-5 h-5" /> : <GraduationCap className="w-5 h-5" />}
             </div>
@@ -552,7 +555,7 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
                 <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold border ${
                   isSchool ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' :
                   isCollege ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' :
-                  'bg-purple-500/20 text-purple-300 border-purple-500/30'
+                  'bg-emerald-500/20 text-purple-300 border-emerald-500/30'
                 }`}>
                   {isApplicant ? 'Applicant Intake' : isAlumni ? 'Alumni' : isParent ? 'Guardian' : 'Student'}
                 </span>
@@ -834,7 +837,7 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-2xs">
                 <span className="text-xs font-bold text-slate-400">Merit Rank</span>
-                <div className="text-2xl font-black text-purple-700">{applicantData.meritRank}</div>
+                <div className="text-2xl font-black text-emerald-800">{applicantData.meritRank}</div>
               </div>
               <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-2xs">
                 <span className="text-xs font-bold text-slate-400">Calculated Aggregate</span>
@@ -857,7 +860,7 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
               </div>
               <button
                 onClick={() => toast.success('Admission Fee Challan voucher downloaded.')}
-                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-xl text-xs font-bold hover:bg-purple-700 cursor-pointer shadow-md"
+                className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 cursor-pointer shadow-md"
               >
                 <Download className="w-4 h-4" />
                 <span>Download Challan</span>
@@ -871,7 +874,7 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-slate-800 text-base">Daily Homework Diary & Class Notes</h3>
-              <span className="text-xs text-purple-700 font-bold bg-purple-50 px-2.5 py-1 rounded-full border border-purple-200">
+              <span className="text-xs text-emerald-800 font-bold bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
                 City School Academic Diary
               </span>
             </div>
@@ -880,7 +883,7 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
                 <div key={d.id} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-purple-700 text-sm">{d.subject}</span>
+                      <span className="font-bold text-emerald-800 text-sm">{d.subject}</span>
                       <span className="text-xs text-slate-400">• {d.date}</span>
                       <span className="text-xs text-slate-500">({d.teacher})</span>
                     </div>
@@ -934,7 +937,7 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
           <div className="bg-white rounded-2xl border border-slate-100 shadow-2xs overflow-hidden">
             <div className="p-4 border-b border-slate-100 flex items-center justify-between">
               <h3 className="font-bold text-slate-800 text-sm">Fall 2026 Undergraduate Registered Courses</h3>
-              <span className="text-xs font-bold text-purple-700 bg-purple-50 px-2.5 py-1 rounded-full">
+              <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full">
                 Total: {totalUniCredits} Credit Hours
               </span>
             </div>
@@ -951,10 +954,10 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
                   {uniCourses.map((c) => (
-                    <tr key={c.code} className="hover:bg-purple-50/20">
+                    <tr key={c.code} className="hover:bg-emerald-50/20">
                       <td className="py-3 px-4">
                         <div className="font-bold text-slate-900">{c.title}</div>
-                        <div className="text-[11px] font-mono text-purple-700 font-bold">{c.code}</div>
+                        <div className="text-[11px] font-mono text-emerald-800 font-bold">{c.code}</div>
                       </td>
                       <td className="py-3 px-4 font-bold">{c.cr} Cr. Hrs</td>
                       <td className="py-3 px-4">{c.instructor}</td>
@@ -990,7 +993,7 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
               </div>
               <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-2xs">
                 <span className="text-xs font-bold text-slate-400">Attendance Percentage</span>
-                <div className="text-2xl font-black text-purple-700">{attendanceStats.percentage}%</div>
+                <div className="text-2xl font-black text-emerald-800">{attendanceStats.percentage}%</div>
                 <div className="text-[11px] text-emerald-600 font-semibold mt-1">
                   ✓ Above 75% Examination Gate
                 </div>
@@ -1025,7 +1028,7 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
                       <span className="font-bold text-slate-900 text-sm">{f.title}</span>
                       <span className="text-xs text-slate-400">({f.month})</span>
                     </div>
-                    <div className="text-xs font-mono text-purple-700 font-bold">Challan: {f.challanNo}</div>
+                    <div className="text-xs font-mono text-emerald-800 font-bold">Challan: {f.challanNo}</div>
                     {f.concession && (
                       <div className="text-xs text-emerald-600 font-semibold">Scholarship / Concession: {f.concession}</div>
                     )}
@@ -1057,7 +1060,7 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
                     )}
                     <button
                       onClick={() => toast.success(`Downloaded bank voucher for ${f.challanNo}`)}
-                      className="p-2 bg-slate-100 hover:bg-purple-100 hover:text-purple-700 text-slate-700 rounded-lg cursor-pointer transition-colors"
+                      className="p-2 bg-slate-100 hover:bg-emerald-100 hover:text-emerald-800 text-slate-700 rounded-lg cursor-pointer transition-colors"
                       title="Download PDF Challan"
                     >
                       <Download className="w-4 h-4" />
@@ -1074,12 +1077,12 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-2xs space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-purple-100 text-purple-700 font-bold flex items-center justify-center text-lg">
+                <div className="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center text-lg">
                   {studentProfile.studentName.charAt(0)}
                 </div>
                 <div>
                   <h3 className="font-extrabold text-slate-900 text-base">{studentProfile.studentName}</h3>
-                  <p className="text-xs text-purple-700 font-mono font-bold">{studentProfile.rollNumber}</p>
+                  <p className="text-xs text-emerald-800 font-mono font-bold">{studentProfile.rollNumber}</p>
                 </div>
               </div>
               <div className="space-y-2 text-xs border-t border-slate-100 pt-3">
@@ -1088,16 +1091,16 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
                 <div><span className="font-bold text-slate-500">Guardian:</span> {studentProfile.fatherName}</div>
                 <div><span className="font-bold text-slate-500">Blood Group:</span> {studentProfile.bloodGroup}</div>
                 {studentProfile.cgpa && (
-                  <div><span className="font-bold text-slate-500">Cumulative CGPA:</span> <span className="font-bold text-purple-700">{studentProfile.cgpa} / 4.00</span></div>
+                  <div><span className="font-bold text-slate-500">Cumulative CGPA:</span> <span className="font-bold text-emerald-800">{studentProfile.cgpa} / 4.00</span></div>
                 )}
               </div>
             </div>
 
             <div className="md:col-span-2 bg-white p-6 rounded-2xl border border-slate-100 shadow-2xs space-y-4">
               <h3 className="font-bold text-slate-800 text-base">Academic Status & Notifications</h3>
-              <div className="p-4 rounded-xl bg-purple-50/60 border border-purple-100 flex items-start gap-3">
-                <Sparkles className="w-5 h-5 text-purple-600 shrink-0 mt-0.5" />
-                <div className="text-xs text-purple-900 space-y-1">
+              <div className="p-4 rounded-xl bg-emerald-50/60 border border-emerald-100 flex items-start gap-3">
+                <Sparkles className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                <div className="text-xs text-emerald-950 space-y-1">
                   <div className="font-bold">Next Academic Milestone</div>
                   <p>Semester examinations scheduled for December 2026. Hall admit cards and clearance slips will be issued upon 75% lecture verification.</p>
                 </div>
@@ -1186,7 +1189,7 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
                       <tr key={i} className="hover:bg-slate-50/50">
                         <td className="py-3 px-4 font-bold text-slate-900">{r.subject}</td>
                         <td className="py-3 px-4 text-center text-slate-500">{r.total}</td>
-                        <td className="py-3 px-4 text-center font-bold text-purple-700">{r.obtained}</td>
+                        <td className="py-3 px-4 text-center font-bold text-emerald-800">{r.obtained}</td>
                         <td className="py-3 px-4 text-center">
                           <span className="px-2 py-0.5 rounded-full font-black text-xs bg-emerald-100 text-emerald-800">
                             {r.grade}
@@ -1242,7 +1245,7 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
                         </td>
                         <td className="py-3.5 px-4 font-bold text-slate-900">{t.subject}</td>
                         <td className="py-3.5 px-4 text-slate-600">{t.teacher}</td>
-                        <td className="py-3.5 px-4 text-right font-semibold text-purple-700">{t.venue}</td>
+                        <td className="py-3.5 px-4 text-right font-semibold text-emerald-800">{t.venue}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -1261,12 +1264,12 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
                 <p className="text-xs text-slate-500">Reserved consultation slots with class and subject teachers</p>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-purple-700 bg-purple-50 border border-purple-200 px-3 py-1 rounded-full">
+                <span className="text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
                   Semester 1 PTM
                 </span>
                 <button
                   onClick={() => setIsPtmBookModalOpen(true)}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs"
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs"
                 >
                   <CheckSquare className="w-3.5 h-3.5" />
                   <span>Book 15-Min Slot</span>
@@ -1302,7 +1305,7 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
                     </button>
                     <button
                       onClick={() => toast.info('PTM slot change request submitted to school administration.')}
-                      className="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm"
+                      className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm"
                     >
                       Request Reschedule
                     </button>
@@ -1323,7 +1326,7 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
               </div>
               <button
                 onClick={() => toast.success('Course packet archive (.zip) downloaded successfully.')}
-                className="flex items-center gap-2 px-3 py-1.5 bg-purple-50 text-purple-700 rounded-lg text-xs font-bold hover:bg-purple-100 cursor-pointer"
+                className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-800 rounded-lg text-xs font-bold hover:bg-emerald-100 cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>Download All Slides</span>
@@ -1335,7 +1338,7 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
                 <div key={i} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded">
+                      <span className="font-mono text-xs font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded">
                         {mat.course}
                       </span>
                       <span className="text-xs text-slate-400">• Uploaded {mat.date}</span>
@@ -1345,7 +1348,7 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
                   </div>
                   <button
                     onClick={() => toast.success(`Downloaded ${mat.file}`)}
-                    className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-100 hover:bg-purple-100 hover:text-purple-700 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer self-start md:self-auto"
+                    className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-100 hover:bg-emerald-100 hover:text-emerald-800 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer self-start md:self-auto"
                   >
                     <Download className="w-3.5 h-3.5" />
                     <span>Download File</span>
@@ -1361,19 +1364,19 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
           <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-2xs space-y-5">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
-                <span className="text-xs font-bold text-purple-700 uppercase tracking-wider">1Link Standard Voucher</span>
+                <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider">1Link Standard Voucher</span>
                 <h3 className="text-xl font-black text-slate-900 mt-1">Undergraduate Admission Fee Challan</h3>
                 <p className="text-xs text-slate-500">Applicant: {applicantData.name} ({applicantData.appId})</p>
               </div>
               <div className="text-right">
                 <span className="text-xs text-slate-400 block">Total Due</span>
-                <span className="text-2xl font-black text-purple-700">PKR {applicantData.feeAmount.toLocaleString()}</span>
+                <span className="text-2xl font-black text-emerald-800">PKR {applicantData.feeAmount.toLocaleString()}</span>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
               <div className="bg-slate-50 p-4 rounded-xl space-y-2">
-                <div><span className="font-bold text-slate-500">Voucher No:</span> <span className="font-mono font-bold text-purple-700">{applicantData.feeChallanNo}</span></div>
+                <div><span className="font-bold text-slate-500">Voucher No:</span> <span className="font-mono font-bold text-emerald-800">{applicantData.feeChallanNo}</span></div>
                 <div><span className="font-bold text-slate-500">Program:</span> <span className="font-bold text-slate-800">{applicantData.program}</span></div>
                 <div><span className="font-bold text-slate-500">Merit Status:</span> <span className="text-emerald-700 font-bold">{applicantData.meritStatus}</span></div>
               </div>
@@ -1387,7 +1390,7 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
             <div className="pt-2 flex justify-end">
               <button
                 onClick={() => toast.success('Admission Fee Challan downloaded.')}
-                className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer"
+                className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer"
               >
                 <Download className="w-4 h-4" />
                 <span>Download Print Ready Voucher (PDF)</span>
@@ -1441,10 +1444,10 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
         {activeTab === 'alumni_requests' && isAlumni && (
           <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-2xs space-y-4">
             <h3 className="font-bold text-slate-800 text-base">HEC Attestation & Official Transcript Requests</h3>
-            <div className="p-4 rounded-xl bg-purple-50/60 border border-purple-100 flex items-center justify-between">
+            <div className="p-4 rounded-xl bg-emerald-50/60 border border-emerald-100 flex items-center justify-between">
               <div>
                 <div className="font-bold text-sm text-purple-950">Official Transcript & HEC Equivalence Packet</div>
-                <div className="text-xs text-purple-700">Request # HEC-TR-2026-881 • Courier: DHL Express Worldwide</div>
+                <div className="text-xs text-emerald-800">Request # HEC-TR-2026-881 • Courier: DHL Express Worldwide</div>
               </div>
               <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
                 Dispatched
@@ -1453,7 +1456,7 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
             <div className="pt-2 flex justify-end">
               <button
                 onClick={() => toast.info('New document request form opened.')}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold cursor-pointer"
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold cursor-pointer"
               >
                 + Request Additional Duplicate / Certificate
               </button>
@@ -1477,7 +1480,7 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs">
-                <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center font-bold mb-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-800 flex items-center justify-center font-bold mb-3">
                   🎓
                 </div>
                 <h4 className="text-sm font-bold text-slate-900">Need-Based Student Scholarships</h4>
@@ -1540,7 +1543,7 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
               <button
                 type="button"
                 onClick={() => toast.success('Alumni donation voucher generated via KuickPay 1-Bill with 0% gateway fee.')}
-                className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-all shadow-md cursor-pointer flex items-center gap-2"
+                className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-md cursor-pointer flex items-center gap-2"
               >
                 <span>Proceed with 1-Bill / Online Banking Contribution</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -1555,12 +1558,12 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
             <div className="p-5 rounded-xl border border-slate-200 space-y-2">
               <div className="flex items-center justify-between">
                 <h4 className="font-bold text-slate-900 text-sm">Grand Alumni Gala & Innovation Dinner 2026</h4>
-                <span className="text-xs text-purple-700 font-bold">Dec 18, 2026</span>
+                <span className="text-xs text-emerald-800 font-bold">Dec 18, 2026</span>
               </div>
               <p className="text-xs text-slate-600">Main Campus Marquee, Islamabad • Keynote by Distinguished Alumnus & Chancellor</p>
               <button
                 onClick={() => toast.success('Your seat for Alumni Gala 2026 is confirmed!')}
-                className="mt-2 px-3.5 py-1.5 bg-purple-600 text-white rounded-lg text-xs font-bold hover:bg-purple-700 cursor-pointer"
+                className="mt-2 px-3.5 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 cursor-pointer"
               >
                 Confirm Attendance
               </button>
@@ -1667,7 +1670,7 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-5 border border-slate-100 animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <CalendarCheck className="w-4 h-4 text-purple-600" />
+                <CalendarCheck className="w-4 h-4 text-emerald-600" />
                 <h3 className="font-bold text-sm text-slate-900">Book Parent-Teacher Meeting (PTM)</h3>
               </div>
               <button onClick={() => setIsPtmBookModalOpen(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
@@ -1685,7 +1688,7 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
                 <select
                   value={bookedPtmSlot.teacher}
                   onChange={(e) => setBookedPtmSlot({ ...bookedPtmSlot, teacher: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-slate-800 font-medium focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-slate-800 font-medium focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                 >
                   <option value="Mrs. Nasreen Akhtar (Mathematics)">Mrs. Nasreen Akhtar (Mathematics Incharge)</option>
                   <option value="Sir Salman Ahmed (Physics / Class Incharge)">Sir Salman Ahmed (Physics / Class Incharge)</option>
@@ -1704,7 +1707,7 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
                       onClick={() => setBookedPtmSlot({ ...bookedPtmSlot, time: slot })}
                       className={`p-2 text-center rounded-xl border font-bold transition-all cursor-pointer ${
                         bookedPtmSlot.time === slot
-                          ? 'border-purple-600 bg-purple-50 text-purple-700'
+                          ? 'border-purple-600 bg-emerald-50 text-emerald-800'
                           : 'border-slate-200 text-slate-600 hover:bg-slate-50'
                       }`}
                     >
@@ -1725,7 +1728,7 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
                 <button type="button" onClick={() => setIsPtmBookModalOpen(false)} className="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer">
                   Cancel
                 </button>
-                <button type="submit" className="px-4 py-1.5 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors cursor-pointer shadow-sm">
+                <button type="submit" className="px-4 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors cursor-pointer shadow-sm">
                   Confirm Consultation Slot
                 </button>
               </div>
@@ -1740,7 +1743,7 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
           <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-5 border border-slate-100 animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <Lock className="w-4 h-4 text-purple-600" />
+                <Lock className="w-4 h-4 text-emerald-600" />
                 <h3 className="font-bold text-sm text-slate-900">Guardian PIN Required</h3>
               </div>
               <button onClick={() => setIsGuardianPinModalOpen(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
@@ -1771,7 +1774,7 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
                   value={guardianPinInput}
                   onChange={(e) => setGuardianPinInput(e.target.value)}
                   placeholder="••••"
-                  className="w-full px-3 py-2 text-center text-lg font-mono tracking-widest rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 text-center text-lg font-mono tracking-widest rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
                 <p className="text-[10px] text-slate-400 mt-1 text-center font-medium">Default demo PIN: 1234</p>
               </div>
@@ -1779,7 +1782,7 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
                 <button type="button" onClick={() => setIsGuardianPinModalOpen(false)} className="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer">
                   Cancel
                 </button>
-                <button type="submit" className="px-4 py-1.5 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors cursor-pointer shadow-sm">
+                <button type="submit" className="px-4 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors cursor-pointer shadow-sm">
                   Verify & Open
                 </button>
               </div>

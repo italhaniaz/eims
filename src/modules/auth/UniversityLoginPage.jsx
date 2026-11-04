@@ -174,7 +174,7 @@ export const UniversityLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-b from-[#fbf8ff] via-[#f5edff] to-white relative overflow-hidden px-4 py-8 sm:py-12 selection:bg-purple-600 selection:text-white font-sans">
+    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-b from-[#fbf8ff] via-[#f5edff] to-white relative overflow-hidden px-4 py-8 sm:py-12 selection:bg-emerald-600 selection:text-white font-sans">
       {/* Ambient Radial Background Accents */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-0 -left-20 w-[500px] h-[500px] bg-purple-200/40 rounded-full blur-3xl"></div>
@@ -227,7 +227,7 @@ export const UniversityLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
 
           <button
             type="button"
-            className="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-purple-700 text-white shadow-purple-700/30 ring-2 ring-purple-600/40 shadow-xs cursor-default flex items-center gap-2"
+            className="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-emerald-700 text-white shadow-purple-700/30 ring-2 ring-purple-600/40 shadow-xs cursor-default flex items-center gap-2"
           >
             <GraduationCap className="w-4 h-4 text-white" />
             <span>🎓 University Portal Login</span>
@@ -239,10 +239,10 @@ export const UniversityLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
           <button
             type="button"
             onClick={() => onSwitchTier('superadmin')}
-            className="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-purple-700 bg-white hover:bg-slate-50 border border-slate-200 transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
+            className="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-emerald-800 bg-white hover:bg-slate-50 border border-slate-200 transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
             title="Open Master Superadmin Control Plane"
           >
-            <Lock className="w-3.5 h-3.5 text-purple-600" />
+            <Lock className="w-3.5 h-3.5 text-emerald-600" />
             <span className="hidden sm:inline">Super Admin</span>
           </button>
         </div>
@@ -253,17 +253,17 @@ export const UniversityLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
           {/* LEFT PANE: Dedicated University Branding */}
           <div className="md:col-span-5 p-5 sm:p-6 md:p-7 flex flex-col justify-between border-b md:border-b-0 md:border-r border-slate-100 bg-gradient-to-b from-[#fbf8ff] via-[#f4edff] to-[#ebe0fc] relative">
             <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border shadow-2xs mb-5 self-start bg-purple-50 text-purple-900 border-purple-200">
-                <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border shadow-2xs mb-5 self-start bg-emerald-50 text-emerald-950 border-emerald-200">
+                <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
                 <span>University Portal Access (BS, MS & PhD)</span>
               </div>
 
               <div className="flex items-center gap-2.5 mb-4">
-                <div className="w-13 h-13 rounded-2xl flex items-center justify-center p-2.5 shadow-md bg-gradient-to-tr from-purple-800 via-purple-700 to-indigo-600 text-white shadow-purple-600/25">
+                <div className="w-13 h-13 rounded-2xl flex items-center justify-center p-2.5 shadow-md bg-gradient-to-tr from-purple-800 via-purple-700 to-indigo-600 text-white shadow-emerald-600/25">
                   <GraduationCap className="w-8 h-8 stroke-[2.2]" />
                 </div>
                 <div className="w-4 h-4 rounded-full border-2 border-slate-300 bg-white flex items-center justify-center shadow-xs">
-                  <div className="w-1.5 h-1.5 rounded-full animate-ping bg-purple-600"></div>
+                  <div className="w-1.5 h-1.5 rounded-full animate-ping bg-emerald-600"></div>
                 </div>
               </div>
 
@@ -279,7 +279,7 @@ export const UniversityLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
 
               <div className="space-y-2">
                 <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-white/90 border border-slate-100 shadow-2xs">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-purple-50 text-purple-700">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-emerald-50 text-emerald-800">
                     <BookOpen className="w-4 h-4" />
                   </div>
                   <div>
@@ -289,7 +289,7 @@ export const UniversityLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
                 </div>
 
                 <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-white/90 border border-slate-100 shadow-2xs">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-purple-50 text-purple-700">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-emerald-50 text-emerald-800">
                     <Award className="w-4 h-4" />
                   </div>
                   <div>
@@ -299,7 +299,7 @@ export const UniversityLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
                 </div>
 
                 <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-white/90 border border-slate-100 shadow-2xs">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-purple-50 text-purple-700">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-emerald-50 text-emerald-800">
                     <Scroll className="w-4 h-4" />
                   </div>
                   <div>
@@ -309,7 +309,7 @@ export const UniversityLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
                 </div>
 
                 <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-white/90 border border-slate-100 shadow-2xs">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-purple-50 text-purple-700">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-emerald-50 text-emerald-800">
                     <Briefcase className="w-4 h-4" />
                   </div>
                   <div>
@@ -322,7 +322,7 @@ export const UniversityLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
 
             <div className="pt-4 mt-4 border-t border-slate-200/80 flex items-center justify-between text-[11px] text-slate-500">
               <span className="flex items-center gap-1.5 font-medium">
-                <span className="w-2 h-2 rounded-full animate-pulse bg-purple-600"></span>
+                <span className="w-2 h-2 rounded-full animate-pulse bg-emerald-600"></span>
                 <span className="font-semibold text-slate-700">University Portal (HEC Scope)</span>
               </span>
               <span className="font-mono text-slate-400">v2.5 Production</span>
@@ -338,13 +338,13 @@ export const UniversityLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
                   <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
                     University Sign In
                   </h2>
-                  <span className="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full border bg-purple-50 text-purple-900 border-purple-200">
+                  <span className="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full border bg-emerald-50 text-emerald-950 border-emerald-200">
                     University Login Portals
                   </span>
                 </div>
 
                 {/* Selected Portal Indicator Banner */}
-                <div className="mt-2.5 p-2 sm:p-2.5 rounded-xl bg-purple-50/80 border border-purple-200 flex items-center justify-between">
+                <div className="mt-2.5 p-2 sm:p-2.5 rounded-xl bg-emerald-50/80 border border-emerald-200 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-base sm:text-lg">{activePortalMeta.iconEmoji}</span>
                     <div>
@@ -352,10 +352,10 @@ export const UniversityLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
                         <span>Target Portal:</span>
                         <span className="underline decoration-purple-400">{activePortalMeta.name}</span>
                       </div>
-                      <p className="text-[10px] text-purple-700 line-clamp-1">{activePortalMeta.scope || activePortalMeta.description}</p>
+                      <p className="text-[10px] text-emerald-800 line-clamp-1">{activePortalMeta.scope || activePortalMeta.description}</p>
                     </div>
                   </div>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-700 text-white shrink-0 ml-2">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-700 text-white shrink-0 ml-2">
                     Ready to Sign In
                   </span>
                 </div>
@@ -380,7 +380,7 @@ export const UniversityLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
                       type="text"
                       value={identifier}
                       onChange={(e) => setIdentifier(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50/70 hover:bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 text-xs sm:text-sm focus:bg-white focus:outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-600 transition-all font-medium"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50/70 hover:bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 text-xs sm:text-sm focus:bg-white focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-purple-600 transition-all font-medium"
                       placeholder="e.g. dean.uni@ias.edu.pk or student.uni"
                     />
                   </div>
@@ -394,7 +394,7 @@ export const UniversityLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
                     <button
                       type="button"
                       onClick={() => setPassword('password123')}
-                      className="text-xs font-bold text-purple-700 hover:text-purple-800 transition-colors cursor-pointer"
+                      className="text-xs font-bold text-emerald-800 hover:text-emerald-900 transition-colors cursor-pointer"
                     >
                       Use Demo Password
                     </button>
@@ -405,7 +405,7 @@ export const UniversityLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
                       type={showPassword ? 'text' : 'password'}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-slate-50/70 hover:bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 text-xs sm:text-sm focus:bg-white focus:outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-600 transition-all"
+                      className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-slate-50/70 hover:bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 text-xs sm:text-sm focus:bg-white focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-purple-600 transition-all"
                       placeholder="••••••••••••"
                     />
                     <button
@@ -425,7 +425,7 @@ export const UniversityLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
                       type="checkbox"
                       checked={rememberMe}
                       onChange={(e) => setRememberMe(e.target.checked)}
-                      className="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500 accent-purple-600 cursor-pointer"
+                      className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 accent-purple-600 cursor-pointer"
                     />
                     <span className="text-slate-700 font-medium">Remember this terminal</span>
                   </label>
@@ -435,7 +435,7 @@ export const UniversityLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full py-3 rounded-xl font-bold text-xs sm:text-sm text-white bg-purple-700 hover:bg-purple-800 shadow-md shadow-purple-700/25 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] disabled:opacity-50"
+                  className="w-full py-3 rounded-xl font-bold text-xs sm:text-sm text-white bg-emerald-700 hover:bg-purple-800 shadow-md shadow-purple-700/25 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] disabled:opacity-50"
                 >
                   {isLoading ? (
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -452,10 +452,10 @@ export const UniversityLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
               <div className="pt-4 mt-4 border-t border-slate-100">
                 <div className="flex items-center justify-between mb-2.5 px-0.5">
                   <span className="text-[11px] font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                    <Layers className="w-3.5 h-3.5 text-purple-600" />
+                    <Layers className="w-3.5 h-3.5 text-emerald-600" />
                     <span>University Dedicated Portals (Pick 3)</span>
                   </span>
-                  <span className="text-[10px] text-purple-800 font-semibold bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] text-emerald-900 font-semibold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
                     Select Below → Sign In Above
                   </span>
                 </div>
@@ -472,8 +472,8 @@ export const UniversityLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
                         onClick={() => handleSelectPortal(adminPortal)}
                         className={`w-full p-2.5 rounded-xl text-left transition-all cursor-pointer shadow-2xs flex items-center justify-between border ${
                           isSelected 
-                            ? 'border-purple-600 bg-purple-50/90 ring-2 ring-purple-600/30' 
-                            : 'border-slate-200 hover:border-purple-300 bg-white hover:bg-purple-50/40'
+                            ? 'border-purple-600 bg-emerald-50/90 ring-2 ring-purple-600/30' 
+                            : 'border-slate-200 hover:border-emerald-300 bg-white hover:bg-emerald-50/40'
                         }`}
                       >
                         <div className="pr-2">
@@ -489,12 +489,12 @@ export const UniversityLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
                         </div>
                         <div className="shrink-0 flex items-center gap-1">
                           {isSelected ? (
-                            <span className="text-[10px] font-bold text-purple-700 bg-purple-100 px-2 py-1 rounded-md flex items-center gap-1">
+                            <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-1 rounded-md flex items-center gap-1">
                               <CheckCircle2 className="w-3.5 h-3.5" />
                               <span>Selected</span>
                             </span>
                           ) : (
-                            <span className="text-[10px] font-bold text-slate-500 hover:text-purple-700 bg-slate-100 px-2 py-1 rounded-md">
+                            <span className="text-[10px] font-bold text-slate-500 hover:text-emerald-800 bg-slate-100 px-2 py-1 rounded-md">
                               Select Portal
                             </span>
                           )}
@@ -514,8 +514,8 @@ export const UniversityLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
                           onClick={() => handleSelectPortal(p)}
                           className={`p-2.5 rounded-xl text-left transition-all cursor-pointer shadow-2xs border flex flex-col justify-between ${
                             isSelected 
-                              ? 'border-purple-600 bg-purple-50/90 ring-2 ring-purple-600/30' 
-                              : 'border-slate-200 hover:border-purple-300 bg-white hover:bg-purple-50/40'
+                              ? 'border-purple-600 bg-emerald-50/90 ring-2 ring-purple-600/30' 
+                              : 'border-slate-200 hover:border-emerald-300 bg-white hover:bg-emerald-50/40'
                           }`}
                         >
                           <div>
@@ -525,7 +525,7 @@ export const UniversityLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
                                 <span>{p.name}</span>
                               </span>
                               {isSelected && (
-                                <span className="text-[9px] font-extrabold text-purple-800 bg-purple-200/80 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                                <span className="text-[9px] font-extrabold text-emerald-900 bg-purple-200/80 px-1.5 py-0.5 rounded flex items-center gap-0.5">
                                   <CheckCircle2 className="w-3 h-3" />
                                   <span>Active</span>
                                 </span>
@@ -537,7 +537,7 @@ export const UniversityLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
                           </div>
                           <div className="mt-2 pt-1 border-t border-slate-100 flex items-center justify-between text-[10px]">
                             <span className="text-slate-400 font-mono text-[9px] truncate max-w-[130px]">{p.email}</span>
-                            <span className={`font-bold ${isSelected ? 'text-purple-700' : 'text-slate-500'}`}>
+                            <span className={`font-bold ${isSelected ? 'text-emerald-800' : 'text-slate-500'}`}>
                               {isSelected ? 'Ready ↑' : 'Select →'}
                             </span>
                           </div>
@@ -557,7 +557,7 @@ export const UniversityLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
                   if (onOpenTrial) onOpenTrial()
                   else if (onBackToLanding) onBackToLanding()
                 }}
-                className="w-full py-2.5 rounded-xl border border-purple-200 bg-purple-50/60 hover:bg-purple-100 text-purple-800 text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs group"
+                className="w-full py-2.5 rounded-xl border border-emerald-200 bg-emerald-50/60 hover:bg-emerald-100 text-emerald-900 text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs group"
               >
                 <GraduationCap className="w-4 h-4 group-hover:scale-110 transition-transform" />
                 <span>Register University / Start Free Trial</span>

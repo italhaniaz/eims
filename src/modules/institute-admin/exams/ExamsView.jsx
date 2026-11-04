@@ -30,7 +30,8 @@ import {
   AlertTriangle,
   RotateCcw,
   Sliders,
-  Filter
+  Filter,
+  ShieldAlert
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
@@ -659,10 +660,10 @@ export const ExamsView = ({ currentInstitute }) => {
               <button
                 type="button"
                 onClick={() => setIsGazetteModalOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-200 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-950 border border-emerald-200 rounded-lg text-xs font-bold transition-all cursor-pointer"
                 title="Open Official Result Gazette and Merit Standings"
               >
-                <Award className="w-3.5 h-3.5 text-purple-600" />
+                <Award className="w-3.5 h-3.5 text-emerald-600" />
                 <span>Result Gazette</span>
               </button>
 
@@ -920,7 +921,7 @@ export const ExamsView = ({ currentInstitute }) => {
                               <button
                                 type="button"
                                 onClick={() => handleGenerateRollNumberSlip({ name: e.studentName, rollNumber: e.rollNumber, className: e.className })}
-                                className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors cursor-pointer"
+                                className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
                                 title="Generate Candidate Roll Number Slip"
                               >
                                 <IdCard className="w-4 h-4" />

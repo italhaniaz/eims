@@ -68,7 +68,7 @@ const PLAN_CONFIGS = {
     badgeColor: 'text-emerald-700',
     description: 'Enter your institutional details below to immediately launch an isolated 14-day evaluation request for your school or college.',
     buttonText: 'Submit Institution Registration Request',
-    buttonClass: 'bg-purple-600 hover:bg-purple-700 text-white font-bold shadow-md shadow-purple-600/20',
+    buttonClass: 'bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md shadow-emerald-600/20',
     iconBg: 'bg-emerald-50 text-emerald-600 border border-emerald-200/80'
   },
   school: {
@@ -80,11 +80,11 @@ const PLAN_CONFIGS = {
     priceDisplay: 'PKR 25,000/mo',
     priceSub: 'Up to 1,500 Students · 2 Campuses',
     badge: '14 Days full testing access',
-    badgeColor: 'text-purple-700',
+    badgeColor: 'text-emerald-800',
     description: 'Submit institutional onboarding details for primary or matriculation school campus.',
     buttonText: 'Submit Institution Registration Request',
-    buttonClass: 'bg-purple-600 hover:bg-purple-700 text-white font-bold shadow-md shadow-purple-600/20',
-    iconBg: 'bg-purple-50 text-purple-600 border border-purple-200/80'
+    buttonClass: 'bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md shadow-emerald-600/20',
+    iconBg: 'bg-emerald-50 text-emerald-600 border border-emerald-200/80'
   },
   college: {
     id: 'college',
@@ -98,7 +98,7 @@ const PLAN_CONFIGS = {
     badgeColor: 'text-indigo-700',
     description: 'Submit higher secondary college registration (F.Sc, ICS, FA, I.Com) for Super Admin review.',
     buttonText: 'Submit Institution Registration Request',
-    buttonClass: 'bg-purple-600 hover:bg-purple-700 text-white font-bold shadow-md shadow-purple-600/20',
+    buttonClass: 'bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md shadow-emerald-600/20',
     iconBg: 'bg-indigo-50 text-indigo-600 border border-indigo-200/80'
   },
   university: {
@@ -113,7 +113,7 @@ const PLAN_CONFIGS = {
     badgeColor: 'text-blue-700',
     description: 'Submit multi-campus university network application for dedicated enterprise portal credentialing.',
     buttonText: 'Submit Institution Registration Request',
-    buttonClass: 'bg-purple-600 hover:bg-purple-700 text-white font-bold shadow-md shadow-purple-600/20',
+    buttonClass: 'bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md shadow-emerald-600/20',
     iconBg: 'bg-blue-50 text-blue-600 border border-blue-200/80'
   }
 }
@@ -598,7 +598,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
   ]
 
   return (
-    <div className="min-h-screen w-full bg-[#fcfaff] text-slate-900 font-sans selection:bg-purple-100 selection:text-purple-900 overflow-x-clip relative">
+    <div className="min-h-screen w-full bg-[#fcfaff] text-slate-900 font-sans selection:bg-emerald-100 selection:text-emerald-950 overflow-x-clip relative">
       
       {/* 1. TOP ANNOUNCEMENT BANNER (Controlled Live via Super Admin) */}
       {landingBanner?.isActive && showAnnouncementBanner && (
@@ -612,7 +612,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
               ? 'bg-amber-50 text-amber-950 border-amber-200/80'
               : landingBanner.theme === 'indigo'
               ? 'bg-indigo-50 text-indigo-950 border-indigo-200/80'
-              : 'bg-[#f5eeff] text-purple-900 border-purple-200/80'
+              : 'bg-[#f5eeff] text-emerald-950 border-emerald-200/80'
           }`}
         >
           <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 text-center pr-8 sm:pr-0">
@@ -626,7 +626,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                   ? 'bg-amber-600'
                   : landingBanner.theme === 'indigo'
                   ? 'bg-indigo-600'
-                  : 'bg-purple-600'
+                  : 'bg-emerald-600'
               }`}
             ></span>
             <span>
@@ -664,7 +664,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                     ? 'hover:text-amber-800'
                     : landingBanner.theme === 'indigo'
                     ? 'hover:text-indigo-700'
-                    : 'hover:text-purple-700'
+                    : 'hover:text-emerald-800'
                 }`}
               >
                 <span>{landingBanner.ctaText}</span>
@@ -687,7 +687,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
       )}
 
       {/* 2. STICKY GLASSMORPHIC NAVBAR WITH ACTIVE HIGHLIGHT ANIMATION */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-purple-100/90 shadow-[0_4px_20px_-4px_rgba(147,51,234,0.06)] transition-all duration-200">
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-emerald-100/90 shadow-[0_4px_20px_-4px_rgba(147,51,234,0.06)] transition-all duration-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
           
           {/* Brand Logo */}
@@ -695,15 +695,15 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
             onClick={(e) => scrollToSection(e, 'hero')}
             className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group shrink-0"
           >
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-purple-700 via-purple-600 to-indigo-600 flex items-center justify-center text-white shadow-sm shadow-purple-500/25 group-hover:scale-105 transition-transform shrink-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-purple-700 via-purple-600 to-indigo-600 flex items-center justify-center text-white shadow-sm shadow-emerald-500/25 group-hover:scale-105 transition-transform shrink-0">
               <GraduationCap className="w-5 h-5 stroke-[2.2]" />
             </div>
             <div>
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <span className="text-base sm:text-lg font-extrabold font-heading tracking-tight text-slate-900">
-                  Apex<span className="text-purple-600">Ed</span>
+                  Apex<span className="text-emerald-600">Ed</span>
                 </span>
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#f5eeff] text-purple-700 border border-purple-200 hidden xs:inline-block">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#f5eeff] text-emerald-800 border border-emerald-200 hidden xs:inline-block">
                   ERP v2.4
                 </span>
               </div>
@@ -714,7 +714,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
           </div>
 
           {/* Center Navigation Links with Smooth Active Highlighting Animation (Desktop) */}
-          <nav className="hidden lg:flex items-center gap-1.5 p-1 bg-slate-50/70 rounded-2xl border border-purple-100/70 text-xs">
+          <nav className="hidden lg:flex items-center gap-1.5 p-1 bg-slate-50/70 rounded-2xl border border-emerald-100/70 text-xs">
             {navItems.map((item) => {
               const isActive = activeSection === item.id
               return (
@@ -724,12 +724,12 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                   onClick={(e) => scrollToSection(e, item.id)}
                   className={`px-3 py-1.5 rounded-xl font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5 ${
                     isActive
-                      ? 'bg-[#f5eeff] text-purple-700 border border-purple-200 shadow-xs'
-                      : 'text-slate-600 hover:text-purple-600 hover:bg-white/80'
+                      ? 'bg-[#f5eeff] text-emerald-800 border border-emerald-200 shadow-xs'
+                      : 'text-slate-600 hover:text-emerald-600 hover:bg-white/80'
                   }`}
                 >
                   {isActive && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-purple-600 animate-pulse"></span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
                   )}
                   <span>{item.label}</span>
                 </button>
@@ -742,10 +742,10 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
             <button
               type="button"
               onClick={() => onNavigateToLogin('school')}
-              className="hidden lg:inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-50 hover:bg-[#f5eeff] text-purple-700 hover:text-purple-900 border border-purple-200 hover:border-purple-400 text-xs font-bold shadow-2xs hover:shadow-xs transition-all cursor-pointer group"
+              className="hidden lg:inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-50 hover:bg-[#f5eeff] text-emerald-800 hover:text-emerald-950 border border-emerald-200 hover:border-purple-400 text-xs font-bold shadow-2xs hover:shadow-xs transition-all cursor-pointer group"
               title="Sign in to your Institutional Portal"
             >
-              <Lock className="w-3.5 h-3.5 text-purple-600 group-hover:scale-110 transition-transform" />
+              <Lock className="w-3.5 h-3.5 text-emerald-600 group-hover:scale-110 transition-transform" />
               <span>Portal Sign In</span>
               <ArrowRight className="w-3.5 h-3.5 text-purple-400 group-hover:translate-x-0.5 transition-transform" />
             </button>
@@ -754,11 +754,11 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
             <button
               type="button"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden p-2 rounded-xl text-slate-700 hover:text-purple-700 hover:bg-purple-50 border border-purple-100 transition-colors cursor-pointer"
+              className="lg:hidden p-2 rounded-xl text-slate-700 hover:text-emerald-800 hover:bg-emerald-50 border border-emerald-100 transition-colors cursor-pointer"
               aria-label="Toggle Navigation Menu"
             >
               {isMobileMenuOpen ? (
-                <X className="w-5 h-5 text-purple-700" />
+                <X className="w-5 h-5 text-emerald-800" />
               ) : (
                 <Menu className="w-5 h-5 text-slate-700" />
               )}
@@ -768,7 +768,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
 
         {/* Mobile Navigation Dropdown Drawer (Animated & Full Interactive Response) */}
         {isMobileMenuOpen && (
-          <div className="lg:hidden border-t border-purple-100 bg-white/98 backdrop-blur-md px-4 py-4 shadow-xl space-y-3.5 animate-in slide-in-from-top-2 duration-200 max-h-[80vh] overflow-y-auto">
+          <div className="lg:hidden border-t border-emerald-100 bg-white/98 backdrop-blur-md px-4 py-4 shadow-xl space-y-3.5 animate-in slide-in-from-top-2 duration-200 max-h-[80vh] overflow-y-auto">
             {/* Nav Items */}
             <div className="space-y-1">
               {navItems.map((item) => {
@@ -780,13 +780,13 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                     onClick={(e) => scrollToSection(e, item.id)}
                     className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-between transition-colors ${
                       isActive
-                        ? 'bg-[#f5eeff] text-purple-700 border border-purple-200'
-                        : 'text-slate-700 hover:bg-purple-50 hover:text-purple-700'
+                        ? 'bg-[#f5eeff] text-emerald-800 border border-emerald-200'
+                        : 'text-slate-700 hover:bg-emerald-50 hover:text-emerald-800'
                     }`}
                   >
                     <span>{item.label}</span>
                     {isActive ? (
-                      <span className="w-2 h-2 rounded-full bg-purple-600 animate-pulse"></span>
+                      <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
                     ) : (
                       <ArrowRight className="w-3.5 h-3.5 text-slate-300" />
                     )}
@@ -796,14 +796,14 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
             </div>
 
             {/* Quick Actions in Mobile Menu */}
-            <div className="pt-2 border-t border-purple-100 space-y-2">
+            <div className="pt-2 border-t border-emerald-100 space-y-2">
               <button
                 type="button"
                 onClick={() => {
                   setIsMobileMenuOpen(false)
                   setIsTrialModalOpen(true)
                 }}
-                className="w-full py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs sm:text-sm shadow-xs transition-colors flex items-center justify-center gap-2"
+                className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-xs transition-colors flex items-center justify-center gap-2"
               >
                 <Sparkles className="w-4 h-4 text-purple-200" />
                 <span>Start 14-Day Free Trial (₨ 0)</span>
@@ -815,7 +815,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                   setIsMobileMenuOpen(false)
                   onNavigateToLogin('school')
                 }}
-                className="w-full py-2.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs sm:text-sm border border-purple-200 transition-colors flex items-center justify-center gap-2"
+                className="w-full py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs sm:text-sm border border-emerald-200 transition-colors flex items-center justify-center gap-2"
               >
                 <Lock className="w-4 h-4" />
                 <span>Portal Sign In</span>
@@ -823,7 +823,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
             </div>
 
             {/* Direct 1-Click Interactive Demos in Mobile Drawer */}
-            <div className="pt-2 border-t border-purple-100">
+            <div className="pt-2 border-t border-emerald-100">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
                 Instant 1-Click Demo Evaluation:
               </span>
@@ -834,9 +834,9 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                     setIsMobileMenuOpen(false)
                     handleQuickDemo('superadmin')
                   }}
-                  className="py-2 px-2.5 rounded-xl bg-slate-50 hover:bg-purple-50 border border-slate-200 text-slate-700 hover:text-purple-700 font-semibold text-center transition-colors flex items-center justify-center gap-1"
+                  className="py-2 px-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-200 text-slate-700 hover:text-emerald-800 font-semibold text-center transition-colors flex items-center justify-center gap-1"
                 >
-                  <Laptop className="w-3.5 h-3.5 text-purple-600" />
+                  <Laptop className="w-3.5 h-3.5 text-emerald-600" />
                   <span>Super Admin</span>
                 </button>
                 <button
@@ -845,7 +845,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                     setIsMobileMenuOpen(false)
                     handleQuickDemo('institute')
                   }}
-                  className="py-2 px-2.5 rounded-xl bg-slate-50 hover:bg-purple-50 border border-slate-200 text-slate-700 hover:text-purple-700 font-semibold text-center transition-colors flex items-center justify-center gap-1"
+                  className="py-2 px-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-200 text-slate-700 hover:text-emerald-800 font-semibold text-center transition-colors flex items-center justify-center gap-1"
                 >
                   <Building2 className="w-3.5 h-3.5 text-emerald-600" />
                   <span>Campus Admin</span>
@@ -865,8 +865,8 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           
           {/* Eyebrow Badge */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#f5eeff] text-purple-700 border border-purple-200 text-xs font-bold shadow-xs mb-6 animate-in fade-in">
-            <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#f5eeff] text-emerald-800 border border-emerald-200 text-xs font-bold shadow-xs mb-6 animate-in fade-in">
+            <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
             <span>Next-Gen Multi-Campus Academic Operating System</span>
           </div>
 
@@ -887,7 +887,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
             <button
               onClick={() => setIsTrialModalOpen(true)}
-              className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-sm shadow-md shadow-purple-600/25 hover:shadow-lg transition-all hover:scale-[1.02] active:scale-95 cursor-pointer flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md shadow-emerald-600/25 hover:shadow-lg transition-all hover:scale-[1.02] active:scale-95 cursor-pointer flex items-center justify-center gap-2"
             >
               <Sparkles className="w-4 h-4 text-purple-200" />
               <span>Start 14-Day Free Trial (₨ 0)</span>
@@ -896,32 +896,32 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
             <button
               type="button"
               onClick={() => onNavigateToLogin('school')}
-              className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-purple-50 hover:bg-[#f5eeff] text-purple-700 hover:text-purple-900 border-2 border-purple-300 hover:border-purple-500 font-extrabold text-sm shadow-xs hover:shadow-md transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer flex items-center justify-center gap-2 group whitespace-nowrap"
+              className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-emerald-50 hover:bg-[#f5eeff] text-emerald-800 hover:text-emerald-950 border-2 border-emerald-300 hover:border-emerald-500 font-extrabold text-sm shadow-xs hover:shadow-md transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer flex items-center justify-center gap-2 group whitespace-nowrap"
               title="Sign in to your Educational Portal"
             >
-              <div className="w-5 h-5 rounded-lg bg-purple-100 group-hover:bg-purple-200 flex items-center justify-center text-purple-700 transition-colors shrink-0">
+              <div className="w-5 h-5 rounded-lg bg-emerald-100 group-hover:bg-purple-200 flex items-center justify-center text-emerald-800 transition-colors shrink-0">
                 <Lock className="w-3.5 h-3.5 stroke-[2.4]" />
               </div>
               <span className="font-heading tracking-tight">Portal Sign In</span>
-              <ArrowRight className="w-4 h-4 text-purple-400 group-hover:text-purple-700 group-hover:translate-x-0.5 transition-all shrink-0" />
+              <ArrowRight className="w-4 h-4 text-purple-400 group-hover:text-emerald-800 group-hover:translate-x-0.5 transition-all shrink-0" />
             </button>
           </div>
 
           {/* Trust Highlights */}
-          <div className="mt-10 pt-8 border-t border-purple-100/80 max-w-3xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-semibold text-slate-600">
-            <div className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/80 border border-purple-100 shadow-2xs">
+          <div className="mt-10 pt-8 border-t border-emerald-100/80 max-w-3xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-semibold text-slate-600">
+            <div className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/80 border border-emerald-100 shadow-2xs">
               <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
               <span className="font-bold text-slate-800">₨ 0 Free Evaluation</span>
             </div>
-            <div className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/80 border border-purple-100 shadow-2xs">
+            <div className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/80 border border-emerald-100 shadow-2xs">
               <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
               <span className="font-bold text-slate-800">1Link & JazzCash</span>
             </div>
-            <div className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/80 border border-purple-100 shadow-2xs">
+            <div className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/80 border border-emerald-100 shadow-2xs">
               <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
               <span className="font-bold text-slate-800">Multi-Tenant Cloud</span>
             </div>
-            <div className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/80 border border-purple-100 shadow-2xs">
+            <div className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/80 border border-emerald-100 shadow-2xs">
               <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
               <span className="font-bold text-slate-800">Zero Setup Fees</span>
             </div>
@@ -930,11 +930,11 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
       </section>
 
       {/* 4. CORE PLATFORM MODULES SECTION */}
-      <section id="features" className="py-20 bg-white border-y border-purple-100/70">
+      <section id="features" className="py-20 bg-white border-y border-emerald-100/70">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
           <div className="text-center max-w-3xl mx-auto mb-14">
-            <span className="text-xs font-bold uppercase tracking-wider text-purple-700 bg-[#f5eeff] px-3 py-1 rounded-full border border-purple-200">
+            <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 bg-[#f5eeff] px-3 py-1 rounded-full border border-emerald-200">
               Built for Real Pakistani & Global Operations
             </span>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 font-heading tracking-tight mt-3">
@@ -948,8 +948,8 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             
             {/* Feature 1 */}
-            <div className="p-6 rounded-2xl bg-[#fcfaff] border border-purple-100/80 hover:border-purple-200 transition-all">
-              <div className="w-10 h-10 rounded-xl bg-[#f5eeff] text-purple-700 flex items-center justify-center mb-4">
+            <div className="p-6 rounded-2xl bg-[#fcfaff] border border-emerald-100/80 hover:border-emerald-200 transition-all">
+              <div className="w-10 h-10 rounded-xl bg-[#f5eeff] text-emerald-800 flex items-center justify-center mb-4">
                 <CreditCard className="w-5 h-5" />
               </div>
               <h4 className="text-base font-bold text-slate-900">Fee Challans & Pakistani Gateways</h4>
@@ -959,8 +959,8 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
             </div>
 
             {/* Feature 2 */}
-            <div className="p-6 rounded-2xl bg-[#fcfaff] border border-purple-100/80 hover:border-purple-200 transition-all">
-              <div className="w-10 h-10 rounded-xl bg-[#f5eeff] text-purple-700 flex items-center justify-center mb-4">
+            <div className="p-6 rounded-2xl bg-[#fcfaff] border border-emerald-100/80 hover:border-emerald-200 transition-all">
+              <div className="w-10 h-10 rounded-xl bg-[#f5eeff] text-emerald-800 flex items-center justify-center mb-4">
                 <FileText className="w-5 h-5" />
               </div>
               <h4 className="text-base font-bold text-slate-900">Examinations & Printable Admit Cards</h4>
@@ -970,8 +970,8 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
             </div>
 
             {/* Feature 3 */}
-            <div className="p-6 rounded-2xl bg-[#fcfaff] border border-purple-100/80 hover:border-purple-200 transition-all">
-              <div className="w-10 h-10 rounded-xl bg-[#f5eeff] text-purple-700 flex items-center justify-center mb-4">
+            <div className="p-6 rounded-2xl bg-[#fcfaff] border border-emerald-100/80 hover:border-emerald-200 transition-all">
+              <div className="w-10 h-10 rounded-xl bg-[#f5eeff] text-emerald-800 flex items-center justify-center mb-4">
                 <Calendar className="w-5 h-5" />
               </div>
               <h4 className="text-base font-bold text-slate-900">Daily Digital Attendance</h4>
@@ -981,8 +981,8 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
             </div>
 
             {/* Feature 4 */}
-            <div className="p-6 rounded-2xl bg-[#fcfaff] border border-purple-100/80 hover:border-purple-200 transition-all">
-              <div className="w-10 h-10 rounded-xl bg-[#f5eeff] text-purple-700 flex items-center justify-center mb-4">
+            <div className="p-6 rounded-2xl bg-[#fcfaff] border border-emerald-100/80 hover:border-emerald-200 transition-all">
+              <div className="w-10 h-10 rounded-xl bg-[#f5eeff] text-emerald-800 flex items-center justify-center mb-4">
                 <MessageCircle className="w-5 h-5" />
               </div>
               <h4 className="text-base font-bold text-slate-900">Direct WhatsApp & SMS Broadcasts</h4>
@@ -992,8 +992,8 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
             </div>
 
             {/* Feature 5 */}
-            <div className="p-6 rounded-2xl bg-[#fcfaff] border border-purple-100/80 hover:border-purple-200 transition-all">
-              <div className="w-10 h-10 rounded-xl bg-[#f5eeff] text-purple-700 flex items-center justify-center mb-4">
+            <div className="p-6 rounded-2xl bg-[#fcfaff] border border-emerald-100/80 hover:border-emerald-200 transition-all">
+              <div className="w-10 h-10 rounded-xl bg-[#f5eeff] text-emerald-800 flex items-center justify-center mb-4">
                 <BarChart3 className="w-5 h-5" />
               </div>
               <h4 className="text-base font-bold text-slate-900">Cross-Institute Financial Analytics</h4>
@@ -1003,8 +1003,8 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
             </div>
 
             {/* Feature 6 */}
-            <div className="p-6 rounded-2xl bg-[#fcfaff] border border-purple-100/80 hover:border-purple-200 transition-all">
-              <div className="w-10 h-10 rounded-xl bg-[#f5eeff] text-purple-700 flex items-center justify-center mb-4">
+            <div className="p-6 rounded-2xl bg-[#fcfaff] border border-emerald-100/80 hover:border-emerald-200 transition-all">
+              <div className="w-10 h-10 rounded-xl bg-[#f5eeff] text-emerald-800 flex items-center justify-center mb-4">
                 <ShieldCheck className="w-5 h-5" />
               </div>
               <h4 className="text-base font-bold text-slate-900">Multi-Tenant Cloud Security</h4>
@@ -1022,7 +1022,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
           <div className="text-center max-w-3xl mx-auto mb-14">
-            <span className="text-xs font-bold uppercase tracking-wider text-purple-700 bg-[#f5eeff] px-3 py-1 rounded-full border border-purple-200">
+            <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 bg-[#f5eeff] px-3 py-1 rounded-full border border-emerald-200">
               Engineered for Every Educational Wing
             </span>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 font-heading tracking-tight mt-3">
@@ -1036,12 +1036,12 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             
             {/* Wing 1: School */}
-            <div className="p-6 rounded-3xl bg-white border border-purple-100 hover:border-purple-300 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group">
+            <div className="p-6 rounded-3xl bg-white border border-emerald-100 hover:border-emerald-300 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group">
               <div>
-                <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-700 border border-purple-200 flex items-center justify-center mb-5 group-hover:scale-105 transition-transform">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center justify-center mb-5 group-hover:scale-105 transition-transform">
                   <School className="w-6 h-6 stroke-[2.2]" />
                 </div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-purple-700 bg-[#f5eeff] px-2.5 py-0.5 rounded-md border border-purple-200">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800 bg-[#f5eeff] px-2.5 py-0.5 rounded-md border border-emerald-200">
                   Primary & Secondary
                 </span>
                 <h3 className="text-xl font-bold text-slate-900 mt-2">School Wing</h3>
@@ -1068,7 +1068,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
               <div className="mt-6 pt-4 border-t border-slate-100">
                 <button
                   onClick={() => handleOpenTrialModal('school')}
-                  className="w-full py-2.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                  className="w-full py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <span>Start School Free Trial</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -1077,7 +1077,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
             </div>
 
             {/* Wing 2: College */}
-            <div className="p-6 rounded-3xl bg-white border border-purple-100 hover:border-purple-300 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group">
+            <div className="p-6 rounded-3xl bg-white border border-emerald-100 hover:border-emerald-300 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group">
               <div>
                 <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-700 border border-indigo-200 flex items-center justify-center mb-5 group-hover:scale-105 transition-transform">
                   <Building2 className="w-6 h-6 stroke-[2.2]" />
@@ -1118,7 +1118,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
             </div>
 
             {/* Wing 3: University */}
-            <div className="p-6 rounded-3xl bg-white border border-purple-100 hover:border-purple-300 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group">
+            <div className="p-6 rounded-3xl bg-white border border-emerald-100 hover:border-emerald-300 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group">
               <div>
                 <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center mb-5 group-hover:scale-105 transition-transform">
                   <GraduationCap className="w-6 h-6 stroke-[2.2]" />
@@ -1163,11 +1163,11 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
       </section>
 
       {/* 6. INTERACTIVE PRODUCT PREVIEW SECTION */}
-      <section id="preview" className="py-20 bg-white border-y border-purple-100/70">
+      <section id="preview" className="py-20 bg-white border-y border-emerald-100/70">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
           <div className="text-center max-w-3xl mx-auto mb-10">
-            <span className="text-xs font-bold uppercase tracking-wider text-purple-700 bg-[#f5eeff] px-3 py-1 rounded-full border border-purple-200">
+            <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 bg-[#f5eeff] px-3 py-1 rounded-full border border-emerald-200">
               Interactive Dashboard Preview
             </span>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading tracking-tight mt-3">
@@ -1183,8 +1183,8 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                 onClick={() => setActiveTab('school')}
                 className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   activeTab === 'school'
-                    ? 'bg-purple-600 text-white shadow-xs'
-                    : 'text-slate-600 hover:text-purple-700 hover:bg-white'
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-emerald-800 hover:bg-white'
                 }`}
               >
                 <School className="w-3.5 h-3.5" />
@@ -1194,8 +1194,8 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                 onClick={() => setActiveTab('college')}
                 className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   activeTab === 'college'
-                    ? 'bg-purple-600 text-white shadow-xs'
-                    : 'text-slate-600 hover:text-purple-700 hover:bg-white'
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-emerald-800 hover:bg-white'
                 }`}
               >
                 <Building2 className="w-3.5 h-3.5" />
@@ -1205,8 +1205,8 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                 onClick={() => setActiveTab('university')}
                 className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   activeTab === 'university'
-                    ? 'bg-purple-600 text-white shadow-xs'
-                    : 'text-slate-600 hover:text-purple-700 hover:bg-white'
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-emerald-800 hover:bg-white'
                 }`}
               >
                 <GraduationCap className="w-3.5 h-3.5" />
@@ -1216,8 +1216,8 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                 onClick={() => setActiveTab('custom')}
                 className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   activeTab === 'custom'
-                    ? 'bg-purple-600 text-white shadow-xs'
-                    : 'text-slate-600 hover:text-purple-700 hover:bg-white'
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-emerald-800 hover:bg-white'
                 }`}
               >
                 <Sliders className="w-3.5 h-3.5" />
@@ -1227,7 +1227,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
           </div>
 
           {/* Mockup Card Window */}
-          <div className="rounded-3xl border border-purple-200/90 bg-white shadow-[0_20px_50px_rgba(147,51,234,0.06)] overflow-hidden">
+          <div className="rounded-3xl border border-emerald-200/90 bg-white shadow-[0_20px_50px_rgba(147,51,234,0.06)] overflow-hidden">
             
             {/* Window Titlebar (macOS Style Browser Window Chrome) */}
             <div className="px-5 py-3.5 bg-slate-950 text-slate-200 flex items-center justify-between border-b border-slate-800">
@@ -1253,10 +1253,10 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
             <div className="p-6 sm:p-8 bg-[#fcfaff]">
               
               {/* Inner Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-purple-100">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-emerald-100">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#f5eeff] text-purple-700 border border-purple-200">
+                    <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#f5eeff] text-emerald-800 border border-emerald-200">
                       {currentPreview.tag}
                     </span>
                     <span className="text-xs text-slate-400">· Real-time Synchronization</span>
@@ -1272,7 +1272,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                 <div className="flex items-center gap-2 shrink-0">
                   <button
                     onClick={() => handleQuickDemo(activeTab === 'custom' ? 'superadmin' : 'institute')}
-                    className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs"
+                    className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs"
                   >
                     Open Live Portal
                   </button>
@@ -1282,12 +1282,12 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
               {/* 4 Metrics Cards */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
                 {currentPreview.metrics.map((m, idx) => (
-                  <div key={idx} className="p-4 rounded-2xl bg-white border border-purple-100 shadow-xs">
+                  <div key={idx} className="p-4 rounded-2xl bg-white border border-emerald-100 shadow-xs">
                     <span className="text-xs font-medium text-slate-500 block">{m.label}</span>
                     <span className="text-2xl font-extrabold text-slate-900 font-heading tracking-tight block mt-1">
                       {m.value}
                     </span>
-                    <span className="text-[11px] font-semibold text-purple-600 block mt-1">
+                    <span className="text-[11px] font-semibold text-emerald-600 block mt-1">
                       {m.sub}
                     </span>
                   </div>
@@ -1295,13 +1295,13 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
               </div>
 
               {/* Module Capabilities List */}
-              <div className="mt-6 p-4 rounded-2xl bg-[#f5eeff]/60 border border-purple-200/80">
-                <span className="text-xs font-bold uppercase tracking-wider text-purple-900 block mb-3">
+              <div className="mt-6 p-4 rounded-2xl bg-[#f5eeff]/60 border border-emerald-200/80">
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-950 block mb-3">
                   Activated Academic Modules in this Wing:
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   {currentPreview.features.map((feat, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-xs text-slate-800 bg-white p-2.5 rounded-xl border border-purple-100/90 shadow-2xs">
+                    <div key={idx} className="flex items-center gap-2 text-xs text-slate-800 bg-white p-2.5 rounded-xl border border-emerald-100/90 shadow-2xs">
                       <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                       <span className="font-medium">{feat}</span>
                     </div>
@@ -1349,7 +1349,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
           <div className="text-center max-w-3xl mx-auto mb-12">
-            <span className="text-xs font-bold uppercase tracking-wider text-purple-700 bg-[#f5eeff] px-3 py-1 rounded-full border border-purple-200">
+            <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 bg-[#f5eeff] px-3 py-1 rounded-full border border-emerald-200">
               Clear & Transparent SaaS Pricing
             </span>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 font-heading tracking-tight mt-3">
@@ -1376,7 +1376,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                 }`}
               >
                 <span>Annual Prepaid</span>
-                <span className="text-[10px] font-bold text-purple-700 bg-[#f5eeff] px-1.5 py-0.2 rounded-full border border-purple-200">
+                <span className="text-[10px] font-bold text-emerald-800 bg-[#f5eeff] px-1.5 py-0.2 rounded-full border border-emerald-200">
                   Save 15%
                 </span>
               </button>
@@ -1450,13 +1450,13 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
             </div>
 
             {/* TIER 1: SCHOOL PLAN */}
-            <div className="rounded-3xl border border-purple-200 bg-white p-6 flex flex-col justify-between shadow-xs hover:border-purple-300 transition-all">
+            <div className="rounded-3xl border border-emerald-200 bg-white p-6 flex flex-col justify-between shadow-xs hover:border-emerald-300 transition-all">
               <div>
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-800 flex items-center justify-center">
                     <School className="w-4 h-4" />
                   </div>
-                  <span className="text-xs font-bold uppercase text-purple-700 bg-[#f5eeff] px-2 py-0.5 rounded-md">
+                  <span className="text-xs font-bold uppercase text-emerald-800 bg-[#f5eeff] px-2 py-0.5 rounded-md">
                     School Plan
                   </span>
                 </div>
@@ -1481,19 +1481,19 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
 
                 <ul className="space-y-2.5 text-xs text-slate-600">
                   <li className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                     <span>Up to <strong>1,500 Students</strong></span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                     <span><strong>2 Campuses</strong></span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                     <span><strong>50 Staff Accounts</strong></span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                     <span>1Link Barcode Fee Vouchers</span>
                   </li>
                 </ul>
@@ -1502,7 +1502,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
               <div className="mt-6 pt-4 border-t border-slate-100">
                 <button
                   onClick={() => openPlanModal('school')}
-                  className="w-full py-2.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs transition-colors cursor-pointer"
+                  className="w-full py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs transition-colors cursor-pointer"
                 >
                   Choose School Plan
                 </button>
@@ -1570,13 +1570,13 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
             </div>
 
             {/* TIER 3: UNIVERSITY / CUSTOM */}
-            <div className="rounded-3xl border border-purple-300 ring-2 ring-purple-500/20 bg-gradient-to-b from-white to-[#f5eeff]/30 p-6 flex flex-col justify-between shadow-xs">
+            <div className="rounded-3xl border border-emerald-300 ring-2 ring-emerald-500/20 bg-gradient-to-b from-white to-[#f5eeff]/30 p-6 flex flex-col justify-between shadow-xs">
               <div>
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center">
                     <GraduationCap className="w-4 h-4" />
                   </div>
-                  <span className="text-xs font-bold uppercase text-purple-700 bg-white px-2 py-0.5 rounded-md border border-purple-200">
+                  <span className="text-xs font-bold uppercase text-emerald-800 bg-white px-2 py-0.5 rounded-md border border-emerald-200">
                     Apex Enterprise
                   </span>
                 </div>
@@ -1586,10 +1586,10 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                   Large universities and multi-branch groups.
                 </p>
 
-                <div className="mt-4 mb-5 p-3 rounded-xl bg-white border border-purple-100 shadow-2xs">
+                <div className="mt-4 mb-5 p-3 rounded-xl bg-white border border-emerald-100 shadow-2xs">
                   <div className="flex items-baseline gap-1 font-heading">
-                    <span className="text-lg font-bold text-purple-600">₨</span>
-                    <span className="text-3xl sm:text-4xl font-extrabold text-purple-700 tracking-tight">
+                    <span className="text-lg font-bold text-emerald-600">₨</span>
+                    <span className="text-3xl sm:text-4xl font-extrabold text-emerald-800 tracking-tight">
                       {billingCycle === 'annual' ? '46,750' : '55,000'}
                       <span className="text-2xl text-purple-500 font-bold">+</span>
                     </span>
@@ -1602,19 +1602,19 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
 
                 <ul className="space-y-2.5 text-xs text-slate-600">
                   <li className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                     <span><strong>8,000+ Students</strong></span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                     <span><strong>15+ Campuses</strong></span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                     <span>BS Degrees, Semesters & CGPA</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                     <span>Dedicated VIP Support & SLA</span>
                   </li>
                 </ul>
@@ -1623,7 +1623,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
               <div className="mt-6 pt-4 border-t border-slate-100">
                 <button
                   onClick={() => openPlanModal('university')}
-                  className="w-full py-2.5 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs shadow-sm shadow-purple-700/25 transition-all cursor-pointer"
+                  className="w-full py-2.5 rounded-xl bg-emerald-700 hover:bg-purple-800 text-white font-bold text-xs shadow-sm shadow-purple-700/25 transition-all cursor-pointer"
                 >
                   Activate University Plan
                 </button>
@@ -1635,11 +1635,11 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
       </section>
 
       {/* 8. INTERACTIVE FAQ SECTION */}
-      <section id="faq" className="py-20 bg-white border-t border-purple-100">
+      <section id="faq" className="py-20 bg-white border-t border-emerald-100">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           
           <div className="text-center mb-12">
-            <span className="text-xs font-bold uppercase tracking-wider text-purple-700 bg-[#f5eeff] px-3 py-1 rounded-full border border-purple-200">
+            <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 bg-[#f5eeff] px-3 py-1 rounded-full border border-emerald-200">
               Frequently Asked Questions
             </span>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading tracking-tight mt-3">
@@ -1670,17 +1670,17 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
               return (
                 <div
                   key={idx}
-                  className="border border-purple-100/90 rounded-2xl overflow-hidden bg-[#fcfaff] transition-all"
+                  className="border border-emerald-100/90 rounded-2xl overflow-hidden bg-[#fcfaff] transition-all"
                 >
                   <button
                     onClick={() => setExpandedFaq(isOpen ? -1 : idx)}
                     className="w-full p-4 sm:p-5 text-left flex items-center justify-between gap-4 font-bold text-xs sm:text-sm text-slate-900 cursor-pointer hover:bg-[#f5eeff]/50 transition-colors"
                   >
                     <span>{faq.q}</span>
-                    <ChevronDown className={`w-4 h-4 text-purple-600 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                    <ChevronDown className={`w-4 h-4 text-emerald-600 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                   </button>
                   {isOpen && (
-                    <div className="px-5 pb-5 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-purple-100/60 pt-3">
+                    <div className="px-5 pb-5 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-emerald-100/60 pt-3">
                       {faq.a}
                     </div>
                   )}
@@ -1713,9 +1713,9 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
               <button
                 onClick={() => setIsTrialModalOpen(true)}
-                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-white text-purple-700 hover:bg-purple-50 font-bold text-xs sm:text-sm shadow-md transition-all hover:scale-105 cursor-pointer flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-white text-emerald-800 hover:bg-emerald-50 font-bold text-xs sm:text-sm shadow-md transition-all hover:scale-105 cursor-pointer flex items-center justify-center gap-2"
               >
-                <Sparkles className="w-4 h-4 text-purple-600" />
+                <Sparkles className="w-4 h-4 text-emerald-600" />
                 <span>Launch 14-Day Free Trial (₨ 0)</span>
               </button>
               <button
@@ -1788,7 +1788,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                 onClick={(e) => scrollToSection(e, 'hero')}
                 className="flex items-center gap-2.5 text-white font-heading font-extrabold text-base mb-3 cursor-pointer"
               >
-                <div className="w-7 h-7 rounded-lg bg-purple-600 flex items-center justify-center text-white">
+                <div className="w-7 h-7 rounded-lg bg-emerald-600 flex items-center justify-center text-white">
                   <GraduationCap className="w-4 h-4" />
                 </div>
                 <span>ApexEd ERP</span>
@@ -1897,8 +1897,8 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
           <div
             className={`absolute inset-1 rounded-full blur-lg transition-all duration-300 pointer-events-none ${
               isPointerSticking
-                ? 'bg-purple-500/70 scale-110'
-                : 'bg-purple-600/40 group-hover:bg-purple-500/70'
+                ? 'bg-emerald-500/70 scale-110'
+                : 'bg-emerald-600/40 group-hover:bg-emerald-500/70'
             }`}
           />
 
@@ -1958,7 +1958,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
             <span className="text-[15px] sm:text-base font-black tracking-tight uppercase font-heading leading-none text-white drop-shadow-md mt-0.5">
               TRIAL
             </span>
-            <div className="flex items-center gap-1 mt-1 bg-purple-950/70 px-2 py-0.5 rounded-full border border-purple-300/40 backdrop-blur-md shadow-xs">
+            <div className="flex items-center gap-1 mt-1 bg-purple-950/70 px-2 py-0.5 rounded-full border border-emerald-300/40 backdrop-blur-md shadow-xs">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_6px_#34d399]" />
               <span className="text-[8px] sm:text-[8.5px] font-extrabold text-emerald-300 tracking-wider">₨ 0 EVALUATION</span>
             </div>
@@ -1993,7 +1993,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
               >
                 <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
                   modalStep === 1 
-                    ? 'bg-purple-600 text-white ring-4 ring-purple-100 shadow-xs' 
+                    ? 'bg-emerald-600 text-white ring-4 ring-purple-100 shadow-xs' 
                     : 'bg-emerald-100 text-emerald-700 font-extrabold'
                 }`}>
                   {modalStep === 1 ? '1' : '✓'}
@@ -2014,7 +2014,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
               >
                 <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
                   modalStep === 2 
-                    ? 'bg-purple-600 text-white ring-4 ring-purple-100 shadow-xs' 
+                    ? 'bg-emerald-600 text-white ring-4 ring-purple-100 shadow-xs' 
                     : 'bg-slate-100 text-slate-500 border border-slate-200'
                 }`}>
                   2
@@ -2045,7 +2045,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                   </span>
                   <span className="text-sm font-bold text-slate-900 flex items-center gap-2">
                     <span>{(PLAN_CONFIGS[activeModalPlan] || PLAN_CONFIGS.trial).planName}</span>
-                    <span className="text-purple-600 font-mono text-xs font-bold">
+                    <span className="text-emerald-600 font-mono text-xs font-bold">
                       ({(PLAN_CONFIGS[activeModalPlan] || PLAN_CONFIGS.trial).priceDisplay})
                     </span>
                   </span>
@@ -2101,8 +2101,8 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                           }}
                           className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${
                             isSelected
-                              ? 'bg-purple-50/70 border-2 border-purple-600 ring-2 ring-purple-600/10 shadow-md shadow-purple-600/5'
-                              : 'bg-white border-slate-200 hover:border-purple-200 hover:bg-slate-50/70 hover:shadow-sm'
+                              ? 'bg-emerald-50/70 border-2 border-purple-600 ring-2 ring-purple-600/10 shadow-md shadow-emerald-600/5'
+                              : 'bg-white border-slate-200 hover:border-emerald-200 hover:bg-slate-50/70 hover:shadow-sm'
                           }`}
                         >
                           <div>
@@ -2111,14 +2111,14 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                                 <PlanCardIcon className="w-5 h-5" />
                               </div>
                               {isSelected && (
-                                <span className="text-[10px] font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full border border-purple-200">
+                                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-200">
                                   Active
                                 </span>
                               )}
                             </div>
 
                             <h4 className="text-sm font-bold text-slate-900">{p.planName}</h4>
-                            <div className="mt-1 font-mono text-base font-extrabold text-purple-600">
+                            <div className="mt-1 font-mono text-base font-extrabold text-emerald-600">
                               {p.priceDisplay}
                             </div>
                             <p className="text-[11px] text-slate-500 mt-1 leading-snug">
@@ -2130,8 +2130,8 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                             type="button"
                             className={`w-full mt-4 py-2 px-3 rounded-xl font-bold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
                               isSelected
-                                ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-xs'
-                                : 'bg-slate-100 text-slate-700 hover:bg-purple-50 hover:text-purple-700'
+                                ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
+                                : 'bg-slate-100 text-slate-700 hover:bg-emerald-50 hover:text-emerald-800'
                             }`}
                           >
                             <span>Select Package</span>
@@ -2147,7 +2147,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                   {/* Header: Enter Your Educational Institute & Admin Credentials */}
                   <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
                     <div className="flex items-center gap-2.5">
-                      <span className="w-6 h-6 rounded-full bg-purple-600 text-white flex items-center justify-center text-xs font-bold shrink-0 shadow-xs shadow-purple-600/30">
+                      <span className="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs font-bold shrink-0 shadow-xs shadow-emerald-600/30">
                         2
                       </span>
                       <h3 className="text-base sm:text-lg font-bold text-slate-900 font-heading">
@@ -2172,8 +2172,8 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
 
                   {/* Group 1: INSTITUTION & CAMPUS PROFILE */}
                   <div className="space-y-2.5 pt-1">
-                    <span className="text-xs font-bold uppercase tracking-wider text-purple-700 flex items-center gap-1.5">
-                      <Building2 className="w-3.5 h-3.5 text-purple-600" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
+                      <Building2 className="w-3.5 h-3.5 text-emerald-600" />
                       <span>Institution & Campus Profile</span>
                     </span>
 
@@ -2191,7 +2191,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                             value={trialForm.instituteName}
                             onChange={(e) => setTrialForm({ ...trialForm, instituteName: e.target.value })}
                             placeholder="e.g. Apex High School & College / The Scholars Academy"
-                            className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm bg-[#f8fafc] border border-slate-200 text-slate-900 placeholder-slate-400 rounded-xl focus:outline-none focus:bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
+                            className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm bg-[#f8fafc] border border-slate-200 text-slate-900 placeholder-slate-400 rounded-xl focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                           />
                         </div>
                       </div>
@@ -2206,7 +2206,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                           <select
                             value={trialForm.wing}
                             onChange={(e) => setTrialForm({ ...trialForm, wing: e.target.value })}
-                            className="w-full pl-10 pr-8 py-2.5 text-xs sm:text-sm bg-[#f8fafc] border border-slate-200 text-slate-900 rounded-xl focus:outline-none focus:bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all cursor-pointer font-medium appearance-none"
+                            className="w-full pl-10 pr-8 py-2.5 text-xs sm:text-sm bg-[#f8fafc] border border-slate-200 text-slate-900 rounded-xl focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all cursor-pointer font-medium appearance-none"
                           >
                             <option value="school">School Wing (Primary to Matric / O-Levels)</option>
                             <option value="college">College Wing (F.Sc, ICS, FA, I.Com)</option>
@@ -2229,7 +2229,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                             value={trialForm.city}
                             onChange={(e) => setTrialForm({ ...trialForm, city: e.target.value })}
                             placeholder="e.g. Lahore, Karachi, Islamabad, Rawalpindi..."
-                            className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm bg-[#f8fafc] border border-slate-200 text-slate-900 placeholder-slate-400 rounded-xl focus:outline-none focus:bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
+                            className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm bg-[#f8fafc] border border-slate-200 text-slate-900 placeholder-slate-400 rounded-xl focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                           />
                         </div>
                       </div>
@@ -2247,7 +2247,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                             value={trialForm.adminName}
                             onChange={(e) => setTrialForm({ ...trialForm, adminName: e.target.value })}
                             placeholder="e.g. Prof. Tariq Mahmood"
-                            className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm bg-[#f8fafc] border border-slate-200 text-slate-900 placeholder-slate-400 rounded-xl focus:outline-none focus:bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
+                            className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm bg-[#f8fafc] border border-slate-200 text-slate-900 placeholder-slate-400 rounded-xl focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                           />
                         </div>
                       </div>
@@ -2256,8 +2256,8 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
 
                   {/* Group 2: ACCOUNT ACCESS & SECURITY */}
                   <div className="space-y-2.5 pt-1">
-                    <span className="text-xs font-bold uppercase tracking-wider text-purple-700 flex items-center gap-1.5">
-                      <Lock className="w-3.5 h-3.5 text-purple-600" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
+                      <Lock className="w-3.5 h-3.5 text-emerald-600" />
                       <span>Account Access & Security</span>
                     </span>
 
@@ -2275,7 +2275,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                             value={trialForm.email}
                             onChange={(e) => setTrialForm({ ...trialForm, email: e.target.value })}
                             placeholder="e.g. principal@institution.edu.pk"
-                            className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm bg-[#f8fafc] border border-slate-200 text-slate-900 placeholder-slate-400 rounded-xl focus:outline-none focus:bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
+                            className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm bg-[#f8fafc] border border-slate-200 text-slate-900 placeholder-slate-400 rounded-xl focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                           />
                         </div>
                       </div>
@@ -2293,7 +2293,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                             value={trialForm.phone}
                             onChange={(e) => setTrialForm({ ...trialForm, phone: e.target.value })}
                             placeholder="0300-1234567"
-                            className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm bg-[#f8fafc] border border-slate-200 text-slate-900 placeholder-slate-400 rounded-xl focus:outline-none focus:bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 font-mono transition-all"
+                            className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm bg-[#f8fafc] border border-slate-200 text-slate-900 placeholder-slate-400 rounded-xl focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 font-mono transition-all"
                           />
                         </div>
                       </div>
@@ -2311,7 +2311,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                             value={trialForm.adminPassword}
                             onChange={(e) => setTrialForm({ ...trialForm, adminPassword: e.target.value })}
                             placeholder="••••••••••••"
-                            className="w-full pl-10 pr-10 py-2.5 text-xs sm:text-sm bg-[#f8fafc] border border-slate-200 text-slate-900 placeholder-slate-400 rounded-xl focus:outline-none focus:bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 font-mono transition-all"
+                            className="w-full pl-10 pr-10 py-2.5 text-xs sm:text-sm bg-[#f8fafc] border border-slate-200 text-slate-900 placeholder-slate-400 rounded-xl focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 font-mono transition-all"
                           />
                           <button
                             type="button"
@@ -2347,7 +2347,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                             className={`w-full pl-10 pr-10 py-2.5 text-xs sm:text-sm bg-[#f8fafc] border rounded-xl focus:outline-none font-mono transition-all ${
                               trialForm.confirmPassword && trialForm.adminPassword !== trialForm.confirmPassword
                                 ? 'border-rose-300 text-slate-900 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20'
-                                : 'border-slate-200 text-slate-900 focus:bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20'
+                                : 'border-slate-200 text-slate-900 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20'
                             }`}
                           />
                           <button
@@ -2364,8 +2364,8 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                   </div>
 
                   {/* Plan Active Status Banner */}
-                  <div className="p-3.5 rounded-2xl bg-[#f5eeff]/70 border border-purple-200/80 flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                  <div className="p-3.5 rounded-2xl bg-[#f5eeff]/70 border border-emerald-200/80 flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
                       <Sparkles className="w-4 h-4" />
                     </div>
                     <div className="flex-1">
@@ -2393,7 +2393,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                       value={trialForm.notes}
                       onChange={(e) => setTrialForm({ ...trialForm, notes: e.target.value })}
                       placeholder="e.g. Multi-campus branch sync, biometric machine integration, custom fee voucher format, or specific BISE / HEC grading guidelines..."
-                      className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-[#f8fafc] border border-slate-200 text-slate-900 placeholder-slate-400 rounded-xl focus:outline-none focus:bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all resize-y"
+                      className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-[#f8fafc] border border-slate-200 text-slate-900 placeholder-slate-400 rounded-xl focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all resize-y"
                     />
                   </div>
 
@@ -2404,7 +2404,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                       id="termsAgreement"
                       checked={trialForm.agreedToTerms}
                       onChange={(e) => setTrialForm({ ...trialForm, agreedToTerms: e.target.checked })}
-                      className="mt-1 w-4 h-4 rounded text-purple-600 focus:ring-purple-500 border-slate-300 bg-white cursor-pointer accent-purple-600"
+                      className="mt-1 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 bg-white cursor-pointer accent-purple-600"
                     />
                     <label htmlFor="termsAgreement" className="text-xs cursor-pointer select-none">
                       <span className="font-bold text-slate-900 block">
@@ -2429,7 +2429,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                     <button
                       type="submit"
                       disabled={isSubmittingTrial}
-                      className="w-full sm:flex-1 py-3 px-6 rounded-xl bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs sm:text-sm shadow-md shadow-purple-600/20 transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
+                      className="w-full sm:flex-1 py-3 px-6 rounded-xl bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs sm:text-sm shadow-md shadow-emerald-600/20 transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
                     >
                       {isSubmittingTrial ? (
                         <div className="flex items-center gap-2">
@@ -2527,7 +2527,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
             <div className="w-full bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 sm:p-4 text-left text-xs space-y-2">
               <div className="flex items-center justify-between pb-2 border-b border-slate-200 text-slate-500 font-semibold text-[11px]">
                 <span>APPLICATION SUMMARY</span>
-                <span className="font-mono text-purple-700 bg-purple-100/70 px-2 py-0.5 rounded font-bold">
+                <span className="font-mono text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded font-bold">
                   {submittedSuccessData?.requestId || 'APPR-PENDING'}
                 </span>
               </div>
@@ -2544,7 +2544,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
 
               <div className="flex justify-between items-center text-slate-700">
                 <span className="text-slate-500">Selected Plan:</span>
-                <span className="font-bold text-purple-700">{submittedSuccessData?.planTier}</span>
+                <span className="font-bold text-emerald-800">{submittedSuccessData?.planTier}</span>
               </div>
 
               <div className="flex justify-between items-center text-slate-700">
@@ -2599,7 +2599,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
         <button
           type="button"
           onClick={scrollToTop}
-          className="fixed bottom-5 right-5 z-40 p-3 rounded-full bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-600/30 transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer flex items-center justify-center animate-in fade-in"
+          className="fixed bottom-5 right-5 z-40 p-3 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/30 transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer flex items-center justify-center animate-in fade-in"
           title="Back to Top"
           aria-label="Back to Top"
         >

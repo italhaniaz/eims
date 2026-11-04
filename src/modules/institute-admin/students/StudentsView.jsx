@@ -1302,8 +1302,8 @@ const validatePakistaniPhone = (phone) => {
         )
       case 'Transferred':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-200 whitespace-nowrap">
-            <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 whitespace-nowrap">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
             <span>Transferred</span>
           </span>
         )
@@ -2059,7 +2059,7 @@ const validatePakistaniPhone = (phone) => {
                                   }}
                                   className="w-full px-3 py-1.5 text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer font-medium"
                                 >
-                                  <FileCheck className="w-3.5 h-3.5 text-purple-600" />
+                                  <FileCheck className="w-3.5 h-3.5 text-emerald-600" />
                                   <span>Admission Slip</span>
                                 </button>
 
@@ -3448,7 +3448,7 @@ const validatePakistaniPhone = (phone) => {
 
                   {/* Previous Result Upload */}
                   <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
-                    <Award className="w-5 h-5 text-purple-600" />
+                    <Award className="w-5 h-5 text-emerald-600" />
                     <div>
                       <span className="text-xs font-bold text-slate-800 block">Previous Result Card</span>
                       <span className="text-[10px] text-slate-500 block">Marksheet / Transcript</span>
@@ -3760,7 +3760,7 @@ const validatePakistaniPhone = (phone) => {
                 <button
                   type="button"
                   onClick={() => setSelectedAdmissionSlip(selectedProfile)}
-                  className="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
                 >
                   <FileCheck className="w-4 h-4" />
                   <span>Admission Slip</span>
@@ -4193,7 +4193,7 @@ const validatePakistaniPhone = (phone) => {
                   window.print()
                   toast.success('Admission Slip printed.')
                 }}
-                className="px-4 py-2 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-lg cursor-pointer flex items-center gap-1.5"
+                className="px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg cursor-pointer flex items-center gap-1.5"
               >
                 <Printer className="w-3.5 h-3.5" />
                 <span>Print Official Slip</span>
@@ -4500,7 +4500,7 @@ const validatePakistaniPhone = (phone) => {
               <button
                 type="button"
                 onClick={handleBulkStatusChange}
-                className="px-4 py-2 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-lg cursor-pointer flex items-center gap-1"
+                className="px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg cursor-pointer flex items-center gap-1"
               >
                 <UserCheck className="w-3.5 h-3.5" />
                 <span>Apply Status Change</span>

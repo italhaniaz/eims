@@ -8,18 +8,21 @@ export default {
     extend: {
       colors: {
         brand: {
-          purple: '#8b5cf6',
-          purpleDark: '#7c3aed',
-          lilac: '#ede9fe',
-          lilacLight: '#f5f3ff',
-          canvas: '#f8fafc',
-          dark: '#161e31',
-          sidebar: '#1a233a',
-          sidebarHover: '#232e4a',
-          sidebarActive: '#2d3b5e',
-          primary: '#7c3aed',
-          secondary: '#8b5cf6',
-          accent: '#a78bfa',
+          purple: '#059669',
+          purpleDark: '#047857',
+          lilac: '#ecfdf5',
+          lilacLight: '#f4fbf7',
+          canvas: '#f4fbf7',
+          dark: '#064e3b',
+          sidebar: '#0f172a',
+          sidebarHover: '#1e293b',
+          sidebarActive: '#059669',
+          primary: '#059669',
+          secondary: '#10b981',
+          accent: '#34d399',
+          emerald: '#059669',
+          emeraldDark: '#047857',
+          emeraldLight: '#ecfdf5',
         }
       },
       spacing: {

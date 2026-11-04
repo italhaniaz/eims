@@ -784,7 +784,7 @@ export const TimetableView = ({ currentInstitute, onRouteChange }) => {
                                           {slot.subjectName}
                                         </strong>
                                         {slot.isDoublePeriod && (
-                                          <span className="px-1 py-0.2 rounded font-mono text-[9px] bg-purple-100 text-purple-700 font-bold">
+                                          <span className="px-1 py-0.2 rounded font-mono text-[9px] bg-emerald-100 text-emerald-800 font-bold">
                                             2×
                                           </span>
                                         )}

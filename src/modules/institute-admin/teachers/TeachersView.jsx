@@ -879,7 +879,7 @@ export const TeachersView = ({ currentInstitute, initialTab = "directory" }) => 
             onClick={() => setActiveTab('permissions')}
             className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
               activeTab === 'permissions'
-                ? 'bg-purple-600 text-white shadow-sm'
+                ? 'bg-emerald-600 text-white shadow-sm'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >

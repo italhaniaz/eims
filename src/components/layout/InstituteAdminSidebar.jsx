@@ -260,20 +260,20 @@ export const InstituteAdminSidebar = ({
         <div className="h-14 sm:h-16 min-h-[56px] sm:min-h-[64px] flex items-center justify-between px-4 sm:px-5 border-b border-slate-100 shrink-0">
           {(!collapsed || isMobileOpen) && (
             <div className="flex items-center gap-2.5 overflow-hidden">
-              <div className="w-9 h-9 rounded-xl bg-[#f5eeff] text-purple-700 border border-purple-100 flex items-center justify-center shrink-0 font-bold text-xs shadow-2xs">
+              <div className="w-9 h-9 rounded-xl bg-[#f5eeff] text-emerald-800 border border-emerald-100 flex items-center justify-center shrink-0 font-bold text-xs shadow-2xs">
                 {isCollege ? (
-                  <Building2 className="w-4 h-4 text-purple-600" />
+                  <Building2 className="w-4 h-4 text-emerald-600" />
                 ) : tierConfig.isUniversityOnly ? (
-                  <GraduationCap className="w-4 h-4 text-purple-600" />
+                  <GraduationCap className="w-4 h-4 text-emerald-600" />
                 ) : (
-                  <School className="w-4 h-4 text-purple-600" />
+                  <School className="w-4 h-4 text-emerald-600" />
                 )}
               </div>
               <div className="flex flex-col truncate">
                 <span className="text-sm font-extrabold text-slate-900 tracking-tight font-heading truncate">
                   {instituteName || (isCollege ? 'College Administration' : 'Campus Administration')}
                 </span>
-                <span className="text-[10px] text-purple-600 font-bold uppercase tracking-wider">
+                <span className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">
                   {user?.roleTitle || (isTeacher ? 'Faculty Portal' : isAccountant ? 'Accounts Officer' : isUniversity ? 'DEAN / REGISTRAR' : isCollege ? 'College Principal' : 'School Principal')}
                 </span>
               </div>
@@ -305,18 +305,18 @@ export const InstituteAdminSidebar = ({
           {/* 1. Campus Dashboard (Both) */}
           <div className="relative">
             {isRouteActive('inst-dashboard') && (
-              <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+              <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
             )}
             <button
               onClick={() => handleNavClick('inst-dashboard')}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                 isRouteActive('inst-dashboard')
-                  ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                  ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                   : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
               }`}
             >
               <LayoutDashboard className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                isRouteActive('inst-dashboard') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                isRouteActive('inst-dashboard') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
               }`} />
               {(!collapsed || isMobileOpen) && <span>{isUniversity ? 'Executive Dashboard' : 'Campus Dashboard'}</span>}
             </button>
@@ -325,19 +325,19 @@ export const InstituteAdminSidebar = ({
           {/* Quick Bridge: Student & Parent Portal */}
           <div className="relative">
             {isRouteActive('inst-student-portal') && (
-              <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+              <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
             )}
             <button
               onClick={() => handleNavClick('inst-student-portal')}
               className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                 isRouteActive('inst-student-portal')
-                  ? 'bg-purple-600 text-white font-semibold shadow-xs'
-                  : 'text-purple-700 bg-purple-50/70 hover:bg-purple-100/80 border border-purple-200/60'
+                  ? 'bg-emerald-600 text-white font-semibold shadow-xs'
+                  : 'text-emerald-800 bg-emerald-50/70 hover:bg-emerald-100/80 border border-emerald-200/60'
               }`}
             >
               <div className="flex items-center gap-3">
                 <GraduationCap className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                  isRouteActive('inst-student-portal') ? 'text-white' : 'text-purple-600'
+                  isRouteActive('inst-student-portal') ? 'text-white' : 'text-emerald-600'
                 }`} />
                 {(!collapsed || isMobileOpen) && (
                   <span className="font-bold text-xs truncate">Student & Parent Portal</span>
@@ -369,18 +369,18 @@ export const InstituteAdminSidebar = ({
               {canAccessRoute('inst-admissions') && (
                 <div className="relative">
                   {isRouteActive('inst-admissions') && (
-                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                   )}
                   <button
                     onClick={() => handleNavClick('inst-admissions')}
                     className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                       isRouteActive('inst-admissions')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                        ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                     }`}
                   >
                     <UserCheck className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                      isRouteActive('inst-admissions') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                      isRouteActive('inst-admissions') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                     }`} />
                     {(!collapsed || isMobileOpen) && <span>Admissions & Merit</span>}
                   </button>
@@ -391,18 +391,18 @@ export const InstituteAdminSidebar = ({
               {canAccessRoute('inst-students') && (
                 <div className="relative">
                   {isRouteActive('inst-students') && (
-                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                   )}
                   <button
                     onClick={() => handleNavClick('inst-students')}
                     className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                       isRouteActive('inst-students')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                        ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                     }`}
                   >
                     <GraduationCap className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                      isRouteActive('inst-students') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                      isRouteActive('inst-students') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                     }`} />
                     {(!collapsed || isMobileOpen) && <span>Students Directory</span>}
                   </button>
@@ -413,18 +413,18 @@ export const InstituteAdminSidebar = ({
               {canAccessRoute('inst-course-registration') && (
                 <div className="relative">
                   {isRouteActive('inst-course-registration') && (
-                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                   )}
                   <button
                     onClick={() => handleNavClick('inst-course-registration')}
                     className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                       isRouteActive('inst-course-registration')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                        ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                     }`}
                   >
                     <ClipboardList className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                      isRouteActive('inst-course-registration') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                      isRouteActive('inst-course-registration') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                     }`} />
                     {(!collapsed || isMobileOpen) && <span>Course Registration & Enrollment</span>}
                   </button>
@@ -441,13 +441,13 @@ export const InstituteAdminSidebar = ({
                     }}
                     className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-colors cursor-pointer group ${
                       isAcademicsRoute 
-                        ? 'text-purple-700 bg-[#f5eeff]/50 font-semibold' 
+                        ? 'text-emerald-800 bg-[#f5eeff]/50 font-semibold' 
                         : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/80'
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <BookOpen className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                        isAcademicsRoute ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                        isAcademicsRoute ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                       }`} />
                       {(!collapsed || isMobileOpen) && <span>Academics</span>}
                     </div>
@@ -469,17 +469,17 @@ export const InstituteAdminSidebar = ({
                         return (
                           <div key={item.route} className="relative">
                             {active && (
-                              <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                              <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                             )}
                             <button
                               onClick={() => handleNavClick(item.route)}
                               className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                                 active
-                                  ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                                  ? 'bg-[#f5eeff] text-emerald-800 font-semibold'
                                   : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                               }`}
                             >
-                              <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-purple-600' : 'text-slate-400'}`} />
+                              <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-emerald-600' : 'text-slate-400'}`} />
                               <span className="truncate">{item.label}</span>
                             </button>
                           </div>
@@ -494,18 +494,18 @@ export const InstituteAdminSidebar = ({
               {canAccessRoute('inst-attendance') && (
                 <div className="relative">
                   {isRouteActive('inst-attendance') && (
-                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                   )}
                   <button
                     onClick={() => handleNavClick('inst-attendance')}
                     className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                       isRouteActive('inst-attendance')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                        ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                     }`}
                   >
                     <CalendarCheck className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                      isRouteActive('inst-attendance') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                      isRouteActive('inst-attendance') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                     }`} />
                     {(!collapsed || isMobileOpen) && <span>Attendance</span>}
                   </button>
@@ -516,18 +516,18 @@ export const InstituteAdminSidebar = ({
               {canAccessRoute('inst-exams') && (
                 <div className="relative">
                   {isRouteActive('inst-exams') && (
-                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                   )}
                   <button
                     onClick={() => handleNavClick('inst-exams')}
                     className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                       isRouteActive('inst-exams')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                        ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                     }`}
                   >
                     <Award className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                      isRouteActive('inst-exams') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                      isRouteActive('inst-exams') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                     }`} />
                     {(!collapsed || isMobileOpen) && <span>Examinations & Results (GPA / CGPA)</span>}
                   </button>
@@ -538,18 +538,18 @@ export const InstituteAdminSidebar = ({
               {canAccessRoute('inst-certificates') && (
                 <div className="relative">
                   {isRouteActive('inst-certificates') && (
-                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                   )}
                   <button
                     onClick={() => handleNavClick('inst-certificates')}
                     className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                       isRouteActive('inst-certificates')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                        ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                     }`}
                   >
                     <FileBadge className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                      isRouteActive('inst-certificates') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                      isRouteActive('inst-certificates') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                     }`} />
                     {(!collapsed || isMobileOpen) && <span>Transcripts, Degrees & Certificates</span>}
                   </button>
@@ -566,18 +566,18 @@ export const InstituteAdminSidebar = ({
                     }}
                     className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-colors cursor-pointer group ${
                       isFacultyRoute 
-                        ? 'text-purple-700 bg-[#f5eeff]/50 font-semibold' 
+                        ? 'text-emerald-800 bg-[#f5eeff]/50 font-semibold' 
                         : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/80'
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <Users className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                        isFacultyRoute ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                        isFacultyRoute ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                       }`} />
                       {(!collapsed || isMobileOpen) && (
                         <div className="flex items-center gap-1.5">
                           <span>Faculty & HR</span>
-                          <span className="text-[10px] bg-purple-100 text-purple-700 font-bold px-1.5 py-0.2 rounded-md">
+                          <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.2 rounded-md">
                             Payroll
                           </span>
                         </div>
@@ -599,17 +599,17 @@ export const InstituteAdminSidebar = ({
                         return (
                           <div key={item.route} className="relative">
                             {active && (
-                              <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                              <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                             )}
                             <button
                               onClick={() => handleNavClick(item.route)}
                               className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                                 active
-                                  ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                                  ? 'bg-[#f5eeff] text-emerald-800 font-semibold'
                                   : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                               }`}
                             >
-                              <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-purple-600' : 'text-slate-400'}`} />
+                              <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-emerald-600' : 'text-slate-400'}`} />
                               <span className="truncate">{item.label}</span>
                             </button>
                           </div>
@@ -624,18 +624,18 @@ export const InstituteAdminSidebar = ({
               {canAccessRoute('inst-fees') && (
                 <div className="relative">
                   {isRouteActive('inst-fees') && (
-                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                   )}
                   <button
                     onClick={() => handleNavClick('inst-fees')}
                     className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                       isRouteActive('inst-fees')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                        ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                     }`}
                   >
                     <Receipt className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                      isRouteActive('inst-fees') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                      isRouteActive('inst-fees') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                     }`} />
                     {(!collapsed || isMobileOpen) && <span>Fees & Finance</span>}
                   </button>
@@ -646,18 +646,18 @@ export const InstituteAdminSidebar = ({
               {canAccessRoute('inst-accounts') && (
                 <div className="relative">
                   {isRouteActive('inst-accounts') && (
-                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                   )}
                   <button
                     onClick={() => handleNavClick('inst-accounts')}
                     className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                       isRouteActive('inst-accounts')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                        ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                     }`}
                   >
                     <Calculator className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                      isRouteActive('inst-accounts') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                      isRouteActive('inst-accounts') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                     }`} />
                     {(!collapsed || isMobileOpen) && <span>Accounts, Budget & Procurement</span>}
                   </button>
@@ -668,18 +668,18 @@ export const InstituteAdminSidebar = ({
               {canAccessRoute('inst-scholarships') && (
                 <div className="relative">
                   {isRouteActive('inst-scholarships') && (
-                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                   )}
                   <button
                     onClick={() => handleNavClick('inst-scholarships')}
                     className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                       isRouteActive('inst-scholarships')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                        ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                     }`}
                   >
                     <Sparkles className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                      isRouteActive('inst-scholarships') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                      isRouteActive('inst-scholarships') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                     }`} />
                     {(!collapsed || isMobileOpen) && <span>Scholarships & Financial Aid</span>}
                   </button>
@@ -690,18 +690,18 @@ export const InstituteAdminSidebar = ({
               {canAccessRoute('inst-research-fyp') && (
                 <div className="relative">
                   {isRouteActive('inst-research-fyp') && (
-                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                   )}
                   <button
                     onClick={() => handleNavClick('inst-research-fyp')}
                     className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                       isRouteActive('inst-research-fyp')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                        ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                     }`}
                   >
                     <FlaskConical className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                      isRouteActive('inst-research-fyp') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                      isRouteActive('inst-research-fyp') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                     }`} />
                     {(!collapsed || isMobileOpen) && <span>Research, FYP & Thesis (MS / PhD)</span>}
                   </button>
@@ -712,18 +712,18 @@ export const InstituteAdminSidebar = ({
               {canAccessRoute('inst-discipline') && (
                 <div className="relative">
                   {isRouteActive('inst-discipline') && (
-                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                   )}
                   <button
                     onClick={() => handleNavClick('inst-discipline')}
                     className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                       isRouteActive('inst-discipline')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                        ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                     }`}
                   >
                     <ShieldAlert className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                      isRouteActive('inst-discipline') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                      isRouteActive('inst-discipline') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                     }`} />
                     {(!collapsed || isMobileOpen) && <span>Student Affairs & Discipline</span>}
                   </button>
@@ -740,13 +740,13 @@ export const InstituteAdminSidebar = ({
                     }}
                     className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-colors cursor-pointer group ${
                       isServicesRoute 
-                        ? 'text-purple-700 bg-[#f5eeff]/50 font-semibold' 
+                        ? 'text-emerald-800 bg-[#f5eeff]/50 font-semibold' 
                         : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/80'
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <Building2 className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                        isServicesRoute ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                        isServicesRoute ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                       }`} />
                       {(!collapsed || isMobileOpen) && <span>Campus Services</span>}
                     </div>
@@ -769,17 +769,17 @@ export const InstituteAdminSidebar = ({
                         return (
                           <div key={item.route} className="relative">
                             {active && (
-                              <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                              <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                             )}
                             <button
                               onClick={() => handleNavClick(item.route)}
                               className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                                 active
-                                  ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                                  ? 'bg-[#f5eeff] text-emerald-800 font-semibold'
                                   : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                               }`}
                             >
-                              <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-purple-600' : 'text-slate-400'}`} />
+                              <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-emerald-600' : 'text-slate-400'}`} />
                               <span className="truncate">{item.label}</span>
                             </button>
                           </div>
@@ -794,18 +794,18 @@ export const InstituteAdminSidebar = ({
               {canAccessRoute('inst-learning') && (
               <div className="relative">
                 {isRouteActive('inst-learning') && (
-                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                 )}
                 <button
                   onClick={() => handleNavClick('inst-learning')}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                     isRouteActive('inst-learning')
-                      ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                      ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                       : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                   }`}
                 >
                   <Laptop className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                    isRouteActive('inst-learning') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                    isRouteActive('inst-learning') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                   }`} />
                   {(!collapsed || isMobileOpen) && <span>Learning Management (LMS)</span>}
                 </button>
@@ -816,18 +816,18 @@ export const InstituteAdminSidebar = ({
               {canAccessRoute('inst-career-alumni') && (
               <div className="relative">
                 {isRouteActive('inst-career-alumni') && (
-                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                 )}
                 <button
                   onClick={() => handleNavClick('inst-career-alumni')}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                     isRouteActive('inst-career-alumni')
-                      ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                      ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                       : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                   }`}
                 >
                   <Briefcase className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                    isRouteActive('inst-career-alumni') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                    isRouteActive('inst-career-alumni') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                   }`} />
                   {(!collapsed || isMobileOpen) && <span>Career, Placement & Alumni</span>}
                 </button>
@@ -838,18 +838,18 @@ export const InstituteAdminSidebar = ({
               {canAccessRoute('inst-notices') && (
               <div className="relative">
                 {isRouteActive('inst-notices') && (
-                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                 )}
                 <button
                   onClick={() => handleNavClick('inst-notices')}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                     isRouteActive('inst-notices')
-                      ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                      ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                       : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                   }`}
                 >
                   <Megaphone className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                    isRouteActive('inst-notices') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                    isRouteActive('inst-notices') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                   }`} />
                   {(!collapsed || isMobileOpen) && <span>Communication & Notices</span>}
                 </button>
@@ -860,18 +860,18 @@ export const InstituteAdminSidebar = ({
               {canAccessRoute('inst-events') && (
               <div className="relative">
                 {isRouteActive('inst-events') && (
-                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                 )}
                 <button
                   onClick={() => handleNavClick('inst-events')}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                     isRouteActive('inst-events')
-                      ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                      ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                       : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                   }`}
                 >
                   <Calendar className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                    isRouteActive('inst-events') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                    isRouteActive('inst-events') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                   }`} />
                   {(!collapsed || isMobileOpen) && <span>Events & Convocation</span>}
                 </button>
@@ -882,18 +882,18 @@ export const InstituteAdminSidebar = ({
               {canAccessRoute('inst-reports') && (
               <div className="relative">
                 {isRouteActive('inst-reports') && (
-                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                 )}
                 <button
                   onClick={() => handleNavClick('inst-reports')}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                     isRouteActive('inst-reports')
-                      ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                      ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                       : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                     }`}
                 >
                   <BarChart3 className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                    isRouteActive('inst-reports') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                    isRouteActive('inst-reports') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                   }`} />
                   {(!collapsed || isMobileOpen) && <span>Reports & HEC / QEC Compliance</span>}
                 </button>
@@ -904,18 +904,18 @@ export const InstituteAdminSidebar = ({
               {canAccessRoute('inst-users') && (
                 <div className="relative">
                   {isRouteActive('inst-users') && (
-                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                   )}
                   <button
                     onClick={() => handleNavClick('inst-users')}
                     className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                       isRouteActive('inst-users')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                        ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                     }`}
                   >
                     <ShieldCheck className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                      isRouteActive('inst-users') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                      isRouteActive('inst-users') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                     }`} />
                     {(!collapsed || isMobileOpen) && <span>Users, Roles & Workflow Approvals</span>}
                   </button>
@@ -926,18 +926,18 @@ export const InstituteAdminSidebar = ({
               {canAccessRoute('inst-settings') && (
                 <div className="relative">
                   {isRouteActive('inst-settings') && (
-                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                   )}
                   <button
                     onClick={() => handleNavClick('inst-settings')}
                     className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                       isRouteActive('inst-settings')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                        ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                     }`}
                   >
                     <Settings className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                      isRouteActive('inst-settings') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                      isRouteActive('inst-settings') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                     }`} />
                     {(!collapsed || isMobileOpen) && <span>Settings & Security</span>}
                   </button>
@@ -950,18 +950,18 @@ export const InstituteAdminSidebar = ({
               {isCampusAdmin && (
                 <div className="relative">
                   {isRouteActive('inst-admissions') && (
-                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                   )}
                   <button
                     onClick={() => handleNavClick('inst-admissions')}
                     className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                       isRouteActive('inst-admissions')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                        ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                     }`}
                   >
                     <UserCheck className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                      isRouteActive('inst-admissions') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                      isRouteActive('inst-admissions') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                     }`} />
                     {(!collapsed || isMobileOpen) && <span>Admissions & Merit</span>}
                   </button>
@@ -972,18 +972,18 @@ export const InstituteAdminSidebar = ({
               {(!isAccountant || isCampusAdmin) && (
                 <div className="relative">
                   {isRouteActive('inst-students') && (
-                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                   )}
                   <button
                     onClick={() => handleNavClick('inst-students')}
                     className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                       isRouteActive('inst-students')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                        ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                     }`}
                   >
                     <GraduationCap className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                      isRouteActive('inst-students') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                      isRouteActive('inst-students') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                     }`} />
                     {(!collapsed || isMobileOpen) && <span>Students Directory</span>}
                   </button>
@@ -1000,18 +1000,18 @@ export const InstituteAdminSidebar = ({
                     }}
                     className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-colors cursor-pointer group ${
                       isFacultyRoute 
-                        ? 'text-purple-700 bg-[#f5eeff]/50 font-semibold' 
+                        ? 'text-emerald-800 bg-[#f5eeff]/50 font-semibold' 
                         : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/80'
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <Users className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                        isFacultyRoute ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                        isFacultyRoute ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                       }`} />
                       {(!collapsed || isMobileOpen) && (
                         <div className="flex items-center gap-1.5">
                           <span>Faculty & Staff</span>
-                          <span className="text-[10px] bg-purple-100 text-purple-700 font-bold px-1.5 py-0.2 rounded-md">
+                          <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.2 rounded-md">
                             Payroll
                           </span>
                         </div>
@@ -1033,17 +1033,17 @@ export const InstituteAdminSidebar = ({
                         return (
                           <div key={item.route} className="relative">
                             {active && (
-                              <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                              <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                             )}
                             <button
                               onClick={() => handleNavClick(item.route)}
                               className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                                 active
-                                  ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                                  ? 'bg-[#f5eeff] text-emerald-800 font-semibold'
                                   : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                               }`}
                             >
-                              <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-purple-600' : 'text-slate-400'}`} />
+                              <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-emerald-600' : 'text-slate-400'}`} />
                               <span className="truncate">{item.label}</span>
                             </button>
                           </div>
@@ -1064,13 +1064,13 @@ export const InstituteAdminSidebar = ({
                     }}
                     className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-colors cursor-pointer group ${
                       isAcademicsRoute 
-                        ? 'text-purple-700 bg-[#f5eeff]/50 font-semibold' 
+                        ? 'text-emerald-800 bg-[#f5eeff]/50 font-semibold' 
                         : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/80'
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <BookOpen className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                        isAcademicsRoute ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                        isAcademicsRoute ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                       }`} />
                       {(!collapsed || isMobileOpen) && <span>Academics</span>}
                     </div>
@@ -1092,17 +1092,17 @@ export const InstituteAdminSidebar = ({
                         return (
                           <div key={item.route} className="relative">
                             {active && (
-                              <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                              <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                             )}
                             <button
                               onClick={() => handleNavClick(item.route)}
                               className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                                 active
-                                  ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                                  ? 'bg-[#f5eeff] text-emerald-800 font-semibold'
                                   : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                               }`}
                             >
-                              <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-purple-600' : 'text-slate-400'}`} />
+                              <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-emerald-600' : 'text-slate-400'}`} />
                               <span className="truncate">{item.label}</span>
                             </button>
                           </div>
@@ -1117,18 +1117,18 @@ export const InstituteAdminSidebar = ({
               {!isAccountant && (
                 <div className="relative">
                   {isRouteActive('inst-attendance') && (
-                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                   )}
                   <button
                     onClick={() => handleNavClick('inst-attendance')}
                     className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                       isRouteActive('inst-attendance')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                        ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                     }`}
                   >
                     <CalendarCheck className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                      isRouteActive('inst-attendance') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                      isRouteActive('inst-attendance') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                     }`} />
                     {(!collapsed || isMobileOpen) && <span>Attendance Register</span>}
                   </button>
@@ -1139,18 +1139,18 @@ export const InstituteAdminSidebar = ({
               {!isAccountant && (
                 <div className="relative">
                   {isRouteActive('inst-exams') && (
-                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                   )}
                   <button
                     onClick={() => handleNavClick('inst-exams')}
                     className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                       isRouteActive('inst-exams')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                        ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                     }`}
                   >
                     <Award className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                      isRouteActive('inst-exams') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                      isRouteActive('inst-exams') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                     }`} />
                     {(!collapsed || isMobileOpen) && <span>Examinations & Results (Internal)</span>}
                   </button>
@@ -1161,18 +1161,18 @@ export const InstituteAdminSidebar = ({
               {!isAccountant && (
                 <div className="relative">
                   {isRouteActive('inst-board-exams') && (
-                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                   )}
                   <button
                     onClick={() => handleNavClick('inst-board-exams')}
                     className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                       isRouteActive('inst-board-exams')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                        ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                     }`}
                   >
                     <FileCheck className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                      isRouteActive('inst-board-exams') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                      isRouteActive('inst-board-exams') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                     }`} />
                     {(!collapsed || isMobileOpen) && <span>Board Registration & Exams</span>}
                   </button>
@@ -1189,18 +1189,18 @@ export const InstituteAdminSidebar = ({
                     }}
                     className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-colors cursor-pointer group ${
                       isFinanceRoute 
-                        ? 'text-purple-700 bg-[#f5eeff]/50 font-semibold' 
+                        ? 'text-emerald-800 bg-[#f5eeff]/50 font-semibold' 
                         : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/80'
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <Receipt className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                        isFinanceRoute ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                        isFinanceRoute ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                       }`} />
                       {(!collapsed || isMobileOpen) && (
                         <div className="flex items-center gap-1.5">
                           <span>Fees & Finance</span>
-                          <span className="text-[10px] bg-purple-100 text-purple-700 font-bold px-1.5 py-0.2 rounded-md">
+                          <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.2 rounded-md">
                             Accounts
                           </span>
                         </div>
@@ -1222,17 +1222,17 @@ export const InstituteAdminSidebar = ({
                         return (
                           <div key={item.route} className="relative">
                             {active && (
-                              <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                              <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                             )}
                             <button
                               onClick={() => handleNavClick(item.route)}
                               className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                                 active
-                                  ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                                  ? 'bg-[#f5eeff] text-emerald-800 font-semibold'
                                   : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                               }`}
                             >
-                              <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-purple-600' : 'text-slate-400'}`} />
+                              <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-emerald-600' : 'text-slate-400'}`} />
                               <span className="truncate">{item.label}</span>
                             </button>
                           </div>
@@ -1247,18 +1247,18 @@ export const InstituteAdminSidebar = ({
               {!isTeacher && (
                 <div className="relative">
                   {isRouteActive('inst-scholarships') && (
-                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                   )}
                   <button
                     onClick={() => handleNavClick('inst-scholarships')}
                     className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                       isRouteActive('inst-scholarships')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                        ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                     }`}
                   >
                     <Sparkles className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                      isRouteActive('inst-scholarships') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                      isRouteActive('inst-scholarships') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                     }`} />
                     {(!collapsed || isMobileOpen) && <span>Scholarships</span>}
                   </button>
@@ -1269,18 +1269,18 @@ export const InstituteAdminSidebar = ({
               {!isAccountant && (
                 <div className="relative">
                   {isRouteActive('inst-certificates') && (
-                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                   )}
                   <button
                     onClick={() => handleNavClick('inst-certificates')}
                     className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                       isRouteActive('inst-certificates')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                        ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                     }`}
                   >
                     <FileBadge className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                      isRouteActive('inst-certificates') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                      isRouteActive('inst-certificates') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                     }`} />
                     {(!collapsed || isMobileOpen) && <span>Certificates (Provisional, Migration, CLC, DMC)</span>}
                   </button>
@@ -1291,18 +1291,18 @@ export const InstituteAdminSidebar = ({
               {canAccessRoute('inst-notices') && (
               <div className="relative">
                 {isRouteActive('inst-notices') && (
-                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                 )}
                 <button
                   onClick={() => handleNavClick('inst-notices')}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                     isRouteActive('inst-notices')
-                      ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                      ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                       : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                   }`}
                 >
                   <Megaphone className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                    isRouteActive('inst-notices') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                    isRouteActive('inst-notices') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                   }`} />
                   {(!collapsed || isMobileOpen) && <span>Communication & Notices</span>}
                 </button>
@@ -1313,18 +1313,18 @@ export const InstituteAdminSidebar = ({
               {!isAccountant && (
                 <div className="relative">
                   {isRouteActive('inst-discipline') && (
-                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                   )}
                   <button
                     onClick={() => handleNavClick('inst-discipline')}
                     className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                       isRouteActive('inst-discipline')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                        ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                     }`}
                   >
                     <ShieldAlert className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                      isRouteActive('inst-discipline') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                      isRouteActive('inst-discipline') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                     }`} />
                     {(!collapsed || isMobileOpen) && <span>Student Affairs & Discipline</span>}
                   </button>
@@ -1341,13 +1341,13 @@ export const InstituteAdminSidebar = ({
                     }}
                     className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-colors cursor-pointer group ${
                       isServicesRoute 
-                        ? 'text-purple-700 bg-[#f5eeff]/50 font-semibold' 
+                        ? 'text-emerald-800 bg-[#f5eeff]/50 font-semibold' 
                         : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/80'
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <Building2 className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                        isServicesRoute ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                        isServicesRoute ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                       }`} />
                       {(!collapsed || isMobileOpen) && <span>Campus Services</span>}
                     </div>
@@ -1369,17 +1369,17 @@ export const InstituteAdminSidebar = ({
                         return (
                           <div key={item.route} className="relative">
                             {active && (
-                              <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                              <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                             )}
                             <button
                               onClick={() => handleNavClick(item.route)}
                               className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                                 active
-                                  ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                                  ? 'bg-[#f5eeff] text-emerald-800 font-semibold'
                                   : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                               }`}
                             >
-                              <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-purple-600' : 'text-slate-400'}`} />
+                              <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-emerald-600' : 'text-slate-400'}`} />
                               <span className="truncate">{item.label}</span>
                             </button>
                           </div>
@@ -1394,18 +1394,18 @@ export const InstituteAdminSidebar = ({
               {canAccessRoute('inst-learning') && (
               <div className="relative">
                 {isRouteActive('inst-learning') && (
-                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                 )}
                 <button
                   onClick={() => handleNavClick('inst-learning')}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                     isRouteActive('inst-learning')
-                      ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                      ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                       : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                   }`}
                 >
                   <Laptop className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                    isRouteActive('inst-learning') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                    isRouteActive('inst-learning') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                   }`} />
                   {(!collapsed || isMobileOpen) && <span>Learning & Resources</span>}
                 </button>
@@ -1416,18 +1416,18 @@ export const InstituteAdminSidebar = ({
               {canAccessRoute('inst-events') && (
               <div className="relative">
                 {isRouteActive('inst-events') && (
-                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                 )}
                 <button
                   onClick={() => handleNavClick('inst-events')}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                     isRouteActive('inst-events')
-                      ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                      ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                       : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                   }`}
                 >
                   <Calendar className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                    isRouteActive('inst-events') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                    isRouteActive('inst-events') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                   }`} />
                   {(!collapsed || isMobileOpen) && <span>Events & Calendar</span>}
                 </button>
@@ -1438,18 +1438,18 @@ export const InstituteAdminSidebar = ({
               {canAccessRoute('inst-reports') && (
               <div className="relative">
                 {isRouteActive('inst-reports') && (
-                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                 )}
                 <button
                   onClick={() => handleNavClick('inst-reports')}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                     isRouteActive('inst-reports')
-                      ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                      ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                       : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                   }`}
                 >
                   <BarChart3 className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                    isRouteActive('inst-reports') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                    isRouteActive('inst-reports') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                   }`} />
                   {(!collapsed || isMobileOpen) && <span>Reports & Analytics</span>}
                 </button>
@@ -1466,13 +1466,13 @@ export const InstituteAdminSidebar = ({
                     }}
                     className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-colors cursor-pointer group ${
                       isUsersRoute 
-                        ? 'text-purple-700 bg-[#f5eeff]/50 font-semibold' 
+                        ? 'text-emerald-800 bg-[#f5eeff]/50 font-semibold' 
                         : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/80'
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <ShieldCheck className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                        isUsersRoute ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                        isUsersRoute ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                       }`} />
                       {(!collapsed || isMobileOpen) && <span>Users, Roles & Settings</span>}
                     </div>
@@ -1492,17 +1492,17 @@ export const InstituteAdminSidebar = ({
                         return (
                           <div key={item.route} className="relative">
                             {active && (
-                              <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                              <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                             )}
                             <button
                               onClick={() => handleNavClick(item.route)}
                               className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                                 active
-                                  ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                                  ? 'bg-[#f5eeff] text-emerald-800 font-semibold'
                                   : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                               }`}
                             >
-                              <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-purple-600' : 'text-slate-400'}`} />
+                              <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-emerald-600' : 'text-slate-400'}`} />
                               <span className="truncate">{item.label}</span>
                             </button>
                           </div>
@@ -1522,18 +1522,18 @@ export const InstituteAdminSidebar = ({
               {canAccessRoute('inst-admissions') && (
                 <div className="relative">
                   {isRouteActive('inst-admissions') && (
-                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                   )}
                   <button
                     onClick={() => handleNavClick('inst-admissions')}
                     className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                       isRouteActive('inst-admissions')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                        ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                     }`}
                   >
                     <UserCheck className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                      isRouteActive('inst-admissions') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                      isRouteActive('inst-admissions') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                     }`} />
                     {(!collapsed || isMobileOpen) && <span>Admissions & Leads</span>}
                   </button>
@@ -1544,18 +1544,18 @@ export const InstituteAdminSidebar = ({
               {canAccessRoute('inst-students') && (
                 <div className="relative">
                   {isRouteActive('inst-students') && (
-                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                   )}
                   <button
                     onClick={() => handleNavClick('inst-students')}
                     className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                       isRouteActive('inst-students')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                        ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                     }`}
                   >
                     <GraduationCap className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                      isRouteActive('inst-students') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                      isRouteActive('inst-students') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                     }`} />
                     {(!collapsed || isMobileOpen) && <span>Students Directory</span>}
                   </button>
@@ -1572,18 +1572,18 @@ export const InstituteAdminSidebar = ({
                     }}
                     className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-colors cursor-pointer group ${
                       isFacultyRoute 
-                        ? 'text-purple-700 bg-[#f5eeff]/50 font-semibold' 
+                        ? 'text-emerald-800 bg-[#f5eeff]/50 font-semibold' 
                         : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/80'
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <Users className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                        isFacultyRoute ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                        isFacultyRoute ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                       }`} />
                       {(!collapsed || isMobileOpen) && (
                         <div className="flex items-center gap-1.5">
                           <span>Staff & Faculty</span>
-                          <span className="text-[10px] bg-purple-100 text-purple-700 font-bold px-1.5 py-0.2 rounded-md">
+                          <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.2 rounded-md">
                             Payroll
                           </span>
                         </div>
@@ -1605,17 +1605,17 @@ export const InstituteAdminSidebar = ({
                         return (
                           <div key={item.route} className="relative">
                             {active && (
-                              <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                              <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                             )}
                             <button
                               onClick={() => handleNavClick(item.route)}
                               className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                                 active
-                                  ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                                  ? 'bg-[#f5eeff] text-emerald-800 font-semibold'
                                   : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                               }`}
                             >
-                              <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-purple-600' : 'text-slate-400'}`} />
+                              <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-emerald-600' : 'text-slate-400'}`} />
                               <span className="truncate">{item.label}</span>
                             </button>
                           </div>
@@ -1636,13 +1636,13 @@ export const InstituteAdminSidebar = ({
                     }}
                     className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-colors cursor-pointer group ${
                       isAcademicsRoute 
-                        ? 'text-purple-700 bg-[#f5eeff]/50 font-semibold' 
+                        ? 'text-emerald-800 bg-[#f5eeff]/50 font-semibold' 
                         : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/80'
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <BookOpen className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                        isAcademicsRoute ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                        isAcademicsRoute ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                       }`} />
                       {(!collapsed || isMobileOpen) && <span>Academics</span>}
                     </div>
@@ -1663,17 +1663,17 @@ export const InstituteAdminSidebar = ({
                         return (
                           <div key={item.route} className="relative">
                             {active && (
-                              <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                              <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                             )}
                             <button
                               onClick={() => handleNavClick(item.route)}
                               className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                                 active
-                                  ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                                  ? 'bg-[#f5eeff] text-emerald-800 font-semibold'
                                   : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                               }`}
                             >
-                              <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-purple-600' : 'text-slate-400'}`} />
+                              <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-emerald-600' : 'text-slate-400'}`} />
                               <span className="truncate">{item.label}</span>
                             </button>
                           </div>
@@ -1688,18 +1688,18 @@ export const InstituteAdminSidebar = ({
               {canAccessRoute('inst-attendance') && (
                 <div className="relative">
                   {isRouteActive('inst-attendance') && (
-                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                   )}
                   <button
                     onClick={() => handleNavClick('inst-attendance')}
                     className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                       isRouteActive('inst-attendance')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                        ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                     }`}
                   >
                     <CalendarCheck className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                      isRouteActive('inst-attendance') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                      isRouteActive('inst-attendance') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                     }`} />
                     {(!collapsed || isMobileOpen) && <span>Attendance Register</span>}
                   </button>
@@ -1710,18 +1710,18 @@ export const InstituteAdminSidebar = ({
               {canAccessRoute('inst-exams') && (
                 <div className="relative">
                   {isRouteActive('inst-exams') && (
-                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                   )}
                   <button
                     onClick={() => handleNavClick('inst-exams')}
                     className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                       isRouteActive('inst-exams')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                        ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                     }`}
                   >
                     <Award className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                      isRouteActive('inst-exams') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                      isRouteActive('inst-exams') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                     }`} />
                     {(!collapsed || isMobileOpen) && <span>Term Examinations & Marks</span>}
                   </button>
@@ -1738,18 +1738,18 @@ export const InstituteAdminSidebar = ({
                     }}
                     className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-colors cursor-pointer group ${
                       isFinanceRoute 
-                        ? 'text-purple-700 bg-[#f5eeff]/50 font-semibold' 
+                        ? 'text-emerald-800 bg-[#f5eeff]/50 font-semibold' 
                         : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/80'
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <Receipt className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                        isFinanceRoute ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                        isFinanceRoute ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                       }`} />
                       {(!collapsed || isMobileOpen) && (
                         <div className="flex items-center gap-1.5">
                           <span>Fees & Finance</span>
-                          <span className="text-[10px] bg-purple-100 text-purple-700 font-bold px-1.5 py-0.2 rounded-md">
+                          <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.2 rounded-md">
                             Accounts
                           </span>
                         </div>
@@ -1771,17 +1771,17 @@ export const InstituteAdminSidebar = ({
                         return (
                           <div key={item.route} className="relative">
                             {active && (
-                              <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                              <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                             )}
                             <button
                               onClick={() => handleNavClick(item.route)}
                               className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                                 active
-                                  ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                                  ? 'bg-[#f5eeff] text-emerald-800 font-semibold'
                                   : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                               }`}
                             >
-                              <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-purple-600' : 'text-slate-400'}`} />
+                              <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-emerald-600' : 'text-slate-400'}`} />
                               <span className="truncate">{item.label}</span>
                             </button>
                           </div>
@@ -1796,18 +1796,18 @@ export const InstituteAdminSidebar = ({
               {canAccessRoute('inst-notices') && (
               <div className="relative">
                 {isRouteActive('inst-notices') && (
-                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                 )}
                 <button
                   onClick={() => handleNavClick('inst-notices')}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                     isRouteActive('inst-notices')
-                      ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                      ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                       : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                   }`}
                 >
                   <Megaphone className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                    isRouteActive('inst-notices') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                    isRouteActive('inst-notices') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                   }`} />
                   {(!collapsed || isMobileOpen) && <span>Communication & Notices</span>}
                 </button>
@@ -1818,18 +1818,18 @@ export const InstituteAdminSidebar = ({
               {canAccessRoute('inst-learning') && (
               <div className="relative">
                 {isRouteActive('inst-learning') && (
-                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                 )}
                 <button
                   onClick={() => handleNavClick('inst-learning')}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                     isRouteActive('inst-learning')
-                      ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                      ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                       : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                   }`}
                 >
                   <Laptop className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                    isRouteActive('inst-learning') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                    isRouteActive('inst-learning') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                   }`} />
                   {(!collapsed || isMobileOpen) && <span>Homework & Learning Resources</span>}
                 </button>
@@ -1846,13 +1846,13 @@ export const InstituteAdminSidebar = ({
                     }}
                     className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-colors cursor-pointer group ${
                       isServicesRoute 
-                        ? 'text-purple-700 bg-[#f5eeff]/50 font-semibold' 
+                        ? 'text-emerald-800 bg-[#f5eeff]/50 font-semibold' 
                         : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/80'
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <Bus className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                        isServicesRoute ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                        isServicesRoute ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                       }`} />
                       {(!collapsed || isMobileOpen) && <span>Campus Services</span>}
                     </div>
@@ -1873,17 +1873,17 @@ export const InstituteAdminSidebar = ({
                         return (
                           <div key={item.route} className="relative">
                             {active && (
-                              <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                              <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                             )}
                             <button
                               onClick={() => handleNavClick(item.route)}
                               className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                                 active
-                                  ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                                  ? 'bg-[#f5eeff] text-emerald-800 font-semibold'
                                   : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                               }`}
                             >
-                              <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-purple-600' : 'text-slate-400'}`} />
+                              <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-emerald-600' : 'text-slate-400'}`} />
                               <span className="truncate">{item.label}</span>
                             </button>
                           </div>
@@ -1898,18 +1898,18 @@ export const InstituteAdminSidebar = ({
               {canAccessRoute('inst-certificates') && (
                 <div className="relative">
                   {isRouteActive('inst-certificates') && (
-                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                   )}
                   <button
                     onClick={() => handleNavClick('inst-certificates')}
                     className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                       isRouteActive('inst-certificates')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                        ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                     }`}
                   >
                     <FileBadge className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                      isRouteActive('inst-certificates') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                      isRouteActive('inst-certificates') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                     }`} />
                     {(!collapsed || isMobileOpen) && <span>School Leaving (SLC) & Certificates</span>}
                   </button>
@@ -1920,18 +1920,18 @@ export const InstituteAdminSidebar = ({
               {canAccessRoute('inst-events') && (
               <div className="relative">
                 {isRouteActive('inst-events') && (
-                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                 )}
                 <button
                   onClick={() => handleNavClick('inst-events')}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                     isRouteActive('inst-events')
-                      ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                      ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                       : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                   }`}
                 >
                   <Calendar className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                    isRouteActive('inst-events') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                    isRouteActive('inst-events') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                   }`} />
                   {(!collapsed || isMobileOpen) && <span>Events & Calendar</span>}
                 </button>
@@ -1942,18 +1942,18 @@ export const InstituteAdminSidebar = ({
               {canAccessRoute('inst-reports') && (
               <div className="relative">
                 {isRouteActive('inst-reports') && (
-                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                 )}
                 <button
                   onClick={() => handleNavClick('inst-reports')}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                     isRouteActive('inst-reports')
-                      ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                      ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                       : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                   }`}
                 >
                   <BarChart3 className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                    isRouteActive('inst-reports') ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                    isRouteActive('inst-reports') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                   }`} />
                   {(!collapsed || isMobileOpen) && <span>Reports & Analytics</span>}
                 </button>
@@ -1970,13 +1970,13 @@ export const InstituteAdminSidebar = ({
                     }}
                     className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-colors cursor-pointer group ${
                       isUsersRoute 
-                        ? 'text-purple-700 bg-[#f5eeff]/50 font-semibold' 
+                        ? 'text-emerald-800 bg-[#f5eeff]/50 font-semibold' 
                         : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/80'
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <ShieldCheck className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                        isUsersRoute ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600'
+                        isUsersRoute ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
                       }`} />
                       {(!collapsed || isMobileOpen) && <span>Users, Roles & Settings</span>}
                     </div>
@@ -1996,17 +1996,17 @@ export const InstituteAdminSidebar = ({
                         return (
                           <div key={item.route} className="relative">
                             {active && (
-                              <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                              <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                             )}
                             <button
                               onClick={() => handleNavClick(item.route)}
                               className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                                 active
-                                  ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                                  ? 'bg-[#f5eeff] text-emerald-800 font-semibold'
                                   : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                               }`}
                             >
-                              <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-purple-600' : 'text-slate-400'}`} />
+                              <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-emerald-600' : 'text-slate-400'}`} />
                               <span className="truncate">{item.label}</span>
                             </button>
                           </div>

@@ -361,10 +361,10 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
         tier: 'custom',
         tierLabel: 'Custom',
         icon: Sparkles,
-        bg: 'bg-purple-50',
-        text: 'text-purple-600',
-        border: 'border-purple-100/90',
-        badgeClass: 'bg-purple-100/80 text-purple-700',
+        bg: 'bg-emerald-50',
+        text: 'text-emerald-600',
+        border: 'border-emerald-100/90',
+        badgeClass: 'bg-emerald-100/80 text-emerald-800',
         logoUrl
       }
     }
@@ -1235,12 +1235,12 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
       )}
 
       {feedbackToast && (
-        <div className="bg-purple-50 border border-purple-200 text-purple-900 px-4 py-3 rounded-2xl flex items-center justify-between shadow-xs animate-in fade-in">
+        <div className="bg-emerald-50 border border-emerald-200 text-emerald-950 px-4 py-3 rounded-2xl flex items-center justify-between shadow-xs animate-in fade-in">
           <div className="flex items-center gap-2.5">
-            <CheckCircle className="w-5 h-5 text-purple-600" />
+            <CheckCircle className="w-5 h-5 text-emerald-600" />
             <span className="text-sm font-medium">{feedbackToast}</span>
           </div>
-          <button onClick={() => setFeedbackToast(null)} className="text-xs text-purple-700 underline font-semibold">
+          <button onClick={() => setFeedbackToast(null)} className="text-xs text-emerald-800 underline font-semibold">
             Dismiss
           </button>
         </div>
@@ -1250,8 +1250,8 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
-            <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#f5eeff] text-purple-700 border border-purple-100 inline-flex items-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
+            <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#f5eeff] text-emerald-800 border border-emerald-100 inline-flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
               <span>Multi-Campus Platform Governance</span>
             </span>
           </div>
@@ -1265,8 +1265,8 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           {/* Active Filter Indicator Pill - Minimalist */}
           {selectedTierFilter !== 'all' && (
             <div className="flex items-center gap-2 mt-2">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-800 border border-purple-200">
-                <Filter className="w-3 h-3 text-purple-600" />
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-900 border border-emerald-200">
+                <Filter className="w-3 h-3 text-emerald-600" />
                 <span>{currentFilterConfig.label}</span>
                 <button
                   type="button"
@@ -1274,7 +1274,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                   className="hover:bg-purple-200/80 p-0.5 rounded-full transition-colors cursor-pointer"
                   title="Clear filter"
                 >
-                  <X className="w-3.5 h-3.5 text-purple-700" />
+                  <X className="w-3.5 h-3.5 text-emerald-800" />
                 </button>
               </span>
             </div>
@@ -1290,23 +1290,23 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               onClick={() => setIsFilterDropdownOpen(prev => !prev)}
               className={`h-10 px-3.5 rounded-xl text-xs font-bold border transition-all duration-150 flex items-center gap-2 cursor-pointer shadow-2xs select-none whitespace-nowrap ${
                 selectedTierFilter !== 'all'
-                  ? 'bg-purple-50 border-purple-300 text-purple-700 ring-2 ring-purple-500/10'
+                  ? 'bg-emerald-50 border-emerald-300 text-emerald-800 ring-2 ring-emerald-500/10'
                   : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300'
               }`}
               title="Filter campuses by tier"
               aria-expanded={isFilterDropdownOpen}
               aria-haspopup="true"
             >
-              <Filter className={`w-3.5 h-3.5 shrink-0 ${selectedTierFilter !== 'all' ? 'text-purple-600' : 'text-slate-400'}`} />
+              <Filter className={`w-3.5 h-3.5 shrink-0 ${selectedTierFilter !== 'all' ? 'text-emerald-600' : 'text-slate-400'}`} />
               <span>{currentFilterConfig.label}</span>
-              <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0 ${isFilterDropdownOpen ? 'rotate-180 text-purple-600' : ''}`} />
+              <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0 ${isFilterDropdownOpen ? 'rotate-180 text-emerald-600' : ''}`} />
             </button>
 
             {/* Dropdown Popover Menu */}
             {isFilterDropdownOpen && (
               <div 
                 role="menu"
-                className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl border border-slate-200/90 shadow-xl shadow-purple-900/10 p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150 text-left"
+                className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl border border-slate-200/90 shadow-xl shadow-emerald-900/10 p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150 text-left"
               >
                 <div className="px-3 py-2 border-b border-slate-100 mb-1 flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-800">Filter by Tier</span>
@@ -1314,7 +1314,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                     <button
                       type="button"
                       onClick={() => handleSelectTierFilter('all')}
-                      className="text-[11px] font-semibold text-purple-600 hover:text-purple-800 transition-colors cursor-pointer"
+                      className="text-[11px] font-semibold text-emerald-600 hover:text-emerald-900 transition-colors cursor-pointer"
                     >
                       Clear
                     </button>
@@ -1334,15 +1334,15 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                         onClick={() => handleSelectTierFilter(option.id)}
                         className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left text-xs font-semibold transition-all cursor-pointer ${
                           isSelected
-                            ? 'bg-purple-50 text-purple-900 font-bold'
+                            ? 'bg-emerald-50 text-emerald-950 font-bold'
                             : 'hover:bg-slate-50 text-slate-700'
                         }`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <OptionIcon className={`w-4 h-4 shrink-0 ${isSelected ? 'text-purple-600' : 'text-slate-400'}`} />
+                          <OptionIcon className={`w-4 h-4 shrink-0 ${isSelected ? 'text-emerald-600' : 'text-slate-400'}`} />
                           <span className="truncate">{option.label}</span>
                         </div>
-                        {isSelected && <Check className="w-4 h-4 text-purple-600 stroke-[2.5] shrink-0" />}
+                        {isSelected && <Check className="w-4 h-4 text-emerald-600 stroke-[2.5] shrink-0" />}
                       </button>
                     )
                   })}
@@ -1355,7 +1355,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           <button
             type="button"
             onClick={handleOpenAddCampusModal}
-            className="h-10 px-3.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-semibold shadow-sm shadow-purple-600/25 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 whitespace-nowrap shrink-0"
+            className="h-10 px-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm shadow-emerald-600/25 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 whitespace-nowrap shrink-0"
             title="Register New Campus"
           >
             <Plus className="w-4 h-4 shrink-0" />
@@ -1366,10 +1366,10 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           <button
             type="button"
             onClick={() => setIsUserModalOpen(true)}
-            className="h-10 px-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 hover:text-purple-700 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs whitespace-nowrap shrink-0"
+            className="h-10 px-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 hover:text-emerald-800 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs whitespace-nowrap shrink-0"
             title="Create System User Account"
           >
-            <UserPlus className="w-4 h-4 text-purple-600 shrink-0" />
+            <UserPlus className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>+ User</span>
           </button>
 
@@ -1377,10 +1377,10 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           <button
             type="button"
             onClick={() => setIsBroadcastModalOpen(true)}
-            className="h-10 px-3 bg-white hover:bg-purple-50/60 border border-slate-200 text-slate-700 hover:text-purple-700 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs whitespace-nowrap shrink-0"
+            className="h-10 px-3 bg-white hover:bg-emerald-50/60 border border-slate-200 text-slate-700 hover:text-emerald-800 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs whitespace-nowrap shrink-0"
             title="Dispatch Broadcast to Active Sessions"
           >
-            <Radio className="w-4 h-4 text-purple-600 shrink-0" />
+            <Radio className="w-4 h-4 text-emerald-600 shrink-0" />
             <span className="hidden sm:inline">Broadcast</span>
           </button>
 
@@ -1399,10 +1399,10 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           <button
             type="button"
             onClick={() => onRouteChange('platform-modules')}
-            className="h-10 px-3 bg-white hover:bg-purple-50/60 border border-slate-200 text-slate-700 hover:text-purple-700 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs whitespace-nowrap shrink-0"
+            className="h-10 px-3 bg-white hover:bg-emerald-50/60 border border-slate-200 text-slate-700 hover:text-emerald-800 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs whitespace-nowrap shrink-0"
             title="Open Educational Wings Matrix"
           >
-            <Sliders className="w-4 h-4 text-purple-600 shrink-0" />
+            <Sliders className="w-4 h-4 text-emerald-600 shrink-0" />
             <span className="hidden lg:inline">Wings Matrix</span>
           </button>
         </div>
@@ -1414,27 +1414,27 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
         {/* Card 1: Campuses (Lavender) */}
         <div 
           onClick={() => onRouteChange('institutes')}
-          className="bg-[#f5eeff] border border-purple-100/90 rounded-2xl p-4 sm:p-5 transition-all duration-200 hover:shadow-md hover:border-purple-200 shadow-2xs flex flex-col justify-between h-full min-h-[148px] overflow-hidden cursor-pointer group"
+          className="bg-[#f5eeff] border border-emerald-100/90 rounded-2xl p-4 sm:p-5 transition-all duration-200 hover:shadow-md hover:border-emerald-200 shadow-2xs flex flex-col justify-between h-full min-h-[148px] overflow-hidden cursor-pointer group"
           title="Click to view and manage registered campuses"
         >
           {/* Top Row: Metric & Decorative Icon */}
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <span className="block text-xs font-semibold text-slate-500 mb-1 truncate group-hover:text-purple-800 transition-colors">
+              <span className="block text-xs font-semibold text-slate-500 mb-1 truncate group-hover:text-emerald-900 transition-colors">
                 {selectedTierFilter === 'all' ? 'Total Campuses' : `${currentFilterConfig.shortLabel} Campuses`}
               </span>
               <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading">
                 {displayTotalCampuses}
               </span>
             </div>
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white/80 text-purple-600 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white/80 text-emerald-600 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
               <School className="w-5 h-5 stroke-[1.8]" />
             </div>
           </div>
 
           {/* Bottom Row: Status Badge on Left, Non-clickable Manage Text + Dedicated Eye Button on Right */}
-          <div className="flex items-center justify-between gap-1.5 mt-4 pt-3 border-t border-purple-200/50">
-            <span className="text-[11px] font-bold text-purple-700 bg-purple-100/70 px-2 py-0.5 rounded-full whitespace-nowrap">
+          <div className="flex items-center justify-between gap-1.5 mt-4 pt-3 border-t border-emerald-200/50">
+            <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded-full whitespace-nowrap">
               {displayActiveCampuses} Active
             </span>
 
@@ -1445,11 +1445,11 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                   e.stopPropagation()
                   onRouteChange('institutes')
                 }}
-                className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-purple-700 cursor-pointer transition-colors group/btn"
+                className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-emerald-800 cursor-pointer transition-colors group/btn"
                 title="View Campuses Directory"
               >
                 <span className="group-hover/btn:underline">Manage</span>
-                <span className="w-7 h-7 rounded-full border border-purple-200 bg-white group-hover/btn:bg-purple-600 group-hover/btn:text-white text-purple-600 flex items-center justify-center transition-all shadow-2xs group-hover/btn:scale-105">
+                <span className="w-7 h-7 rounded-full border border-emerald-200 bg-white group-hover/btn:bg-emerald-600 group-hover/btn:text-white text-emerald-600 flex items-center justify-center transition-all shadow-2xs group-hover/btn:scale-105">
                   <Eye className="w-3.5 h-3.5 stroke-[2]" />
                 </span>
               </button>
@@ -1461,7 +1461,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                   e.stopPropagation()
                   handleDirectAddCampus()
                 }}
-                className="w-7 h-7 rounded-full bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center transition-all cursor-pointer shadow-xs shadow-purple-600/30 hover:scale-110 active:scale-95 shrink-0 ml-0.5"
+                className="w-7 h-7 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center transition-all cursor-pointer shadow-xs shadow-emerald-600/30 hover:scale-110 active:scale-95 shrink-0 ml-0.5"
                 title="Directly Add / Onboard New Campus"
                 aria-label="Add New Campus"
               >
@@ -1622,7 +1622,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
             {/* Row 1: Full-width Icon, Title & Live Indicator */}
             <div className="flex items-start sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3.5 min-w-0">
-                <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-purple-100 to-indigo-50 border border-purple-200/70 flex items-center justify-center text-purple-700 shrink-0 shadow-2xs">
+                <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-purple-100 to-indigo-50 border border-emerald-200/70 flex items-center justify-center text-emerald-800 shrink-0 shadow-2xs">
                   {executiveMetric === 'saas_revenue' ? (
                     <CreditCard className="w-5 h-5 stroke-[2.2]" />
                   ) : executiveMetric === 'campuses' ? (
@@ -1657,12 +1657,12 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 onClick={() => setExecutiveMetric('saas_revenue')}
                 className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
                   executiveMetric === 'saas_revenue'
-                    ? 'bg-white text-purple-900 shadow-xs font-extrabold border border-purple-200/50'
-                    : 'text-slate-600 hover:text-purple-700 hover:bg-white/60'
+                    ? 'bg-white text-emerald-950 shadow-xs font-extrabold border border-emerald-200/50'
+                    : 'text-slate-600 hover:text-emerald-800 hover:bg-white/60'
                 }`}
                 title="View Platform SaaS Recurring Cashflow in PKR"
               >
-                <CreditCard className={`w-3.5 h-3.5 ${executiveMetric === 'saas_revenue' ? 'text-purple-600' : 'text-slate-400'}`} />
+                <CreditCard className={`w-3.5 h-3.5 ${executiveMetric === 'saas_revenue' ? 'text-emerald-600' : 'text-slate-400'}`} />
                 <span>SaaS Cashflow</span>
               </button>
 
@@ -1671,12 +1671,12 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 onClick={() => setExecutiveMetric('campuses')}
                 className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
                   executiveMetric === 'campuses'
-                    ? 'bg-white text-purple-900 shadow-xs font-extrabold border border-purple-200/50'
-                    : 'text-slate-600 hover:text-purple-700 hover:bg-white/60'
+                    ? 'bg-white text-emerald-950 shadow-xs font-extrabold border border-emerald-200/50'
+                    : 'text-slate-600 hover:text-emerald-800 hover:bg-white/60'
                 }`}
                 title="View Campus Network Growth"
               >
-                <Building2 className={`w-3.5 h-3.5 ${executiveMetric === 'campuses' ? 'text-purple-600' : 'text-slate-400'}`} />
+                <Building2 className={`w-3.5 h-3.5 ${executiveMetric === 'campuses' ? 'text-emerald-600' : 'text-slate-400'}`} />
                 <span>Campuses</span>
               </button>
 
@@ -1685,12 +1685,12 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 onClick={() => setExecutiveMetric('students')}
                 className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
                   executiveMetric === 'students'
-                    ? 'bg-white text-purple-900 shadow-xs font-extrabold border border-purple-200/50'
-                    : 'text-slate-600 hover:text-purple-700 hover:bg-white/60'
+                    ? 'bg-white text-emerald-950 shadow-xs font-extrabold border border-emerald-200/50'
+                    : 'text-slate-600 hover:text-emerald-800 hover:bg-white/60'
                 }`}
                 title="View Total Student Body Capacity"
               >
-                <GraduationCap className={`w-3.5 h-3.5 ${executiveMetric === 'students' ? 'text-purple-600' : 'text-slate-400'}`} />
+                <GraduationCap className={`w-3.5 h-3.5 ${executiveMetric === 'students' ? 'text-emerald-600' : 'text-slate-400'}`} />
                 <span>Students</span>
               </button>
 
@@ -1699,12 +1699,12 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 onClick={() => setExecutiveMetric('vouchers')}
                 className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
                   executiveMetric === 'vouchers'
-                    ? 'bg-white text-purple-900 shadow-xs font-extrabold border border-purple-200/50'
-                    : 'text-slate-600 hover:text-purple-700 hover:bg-white/60'
+                    ? 'bg-white text-emerald-950 shadow-xs font-extrabold border border-emerald-200/50'
+                    : 'text-slate-600 hover:text-emerald-800 hover:bg-white/60'
                 }`}
                 title="View Digital 1Link & Challan Velocity"
               >
-                <Activity className={`w-3.5 h-3.5 ${executiveMetric === 'vouchers' ? 'text-purple-600' : 'text-slate-400'}`} />
+                <Activity className={`w-3.5 h-3.5 ${executiveMetric === 'vouchers' ? 'text-emerald-600' : 'text-slate-400'}`} />
                 <span>1Link Gateway</span>
               </button>
             </div>
@@ -1713,12 +1713,12 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           {/* 2. Executive Quick Stats Summary Bar */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 py-3.5">
             {/* Card 1: Projected Annual ARR */}
-            <div className="px-4 py-3.5 rounded-2xl bg-gradient-to-br from-purple-50/80 via-white to-purple-50/30 border border-purple-100/90 shadow-2xs hover:border-purple-200 transition-all flex flex-col justify-between">
+            <div className="px-4 py-3.5 rounded-2xl bg-gradient-to-br from-purple-50/80 via-white to-purple-50/30 border border-emerald-100/90 shadow-2xs hover:border-emerald-200 transition-all flex flex-col justify-between">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-purple-600 block">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 block">
                   {executiveChartData.summaryLabel}
                 </span>
-                <span className="w-6 h-6 rounded-lg bg-purple-100/80 text-purple-700 flex items-center justify-center text-xs shrink-0">
+                <span className="w-6 h-6 rounded-lg bg-emerald-100/80 text-emerald-800 flex items-center justify-center text-xs shrink-0">
                   <TrendingUp className="w-3.5 h-3.5" />
                 </span>
               </div>
@@ -1812,7 +1812,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                         onMouseLeave={() => setHoveredMonthIdx(null)}
                         onClick={() => setHoveredMonthIdx(prev => prev === idx ? null : idx)}
                         className={`flex-1 flex flex-col items-center justify-end h-full relative cursor-pointer group transition-all rounded-2xl py-1 px-0.5 ${
-                          isHovered ? 'bg-purple-100/50 shadow-2xs' : 'hover:bg-slate-50/80'
+                          isHovered ? 'bg-emerald-100/50 shadow-2xs' : 'hover:bg-slate-50/80'
                         }`}
                       >
                         {/* Peak indicator badge on top of May & Sep */}
@@ -1829,7 +1829,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                           <div
                             style={{ height: `${h1}%` }}
                             className={`w-2.5 sm:w-3.5 md:w-4 rounded-t-md sm:rounded-t-lg bg-gradient-to-t from-purple-700 via-purple-600 to-indigo-500 transition-all duration-300 shadow-2xs ${
-                              isHovered ? 'brightness-110 scale-y-105 shadow-purple-500/20' : ''
+                              isHovered ? 'brightness-110 scale-y-105 shadow-emerald-500/20' : ''
                             }`}
                           />
                           {/* Secondary Bar: Expansion or Secondary Tier */}
@@ -1845,9 +1845,9 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                         <div className="h-6 flex items-center justify-center w-full mt-1.5">
                           <span className={`text-[11px] font-bold transition-all select-none px-2 py-0.5 rounded-full ${
                             isHovered 
-                              ? 'text-purple-700 font-black bg-purple-100 shadow-2xs scale-105' 
+                              ? 'text-emerald-800 font-black bg-emerald-100 shadow-2xs scale-105' 
                               : item.isCurrent
-                                ? 'text-white font-black bg-purple-600 shadow-xs'
+                                ? 'text-white font-black bg-emerald-600 shadow-xs'
                                 : 'text-slate-500'
                           }`}>
                             {item.m}
@@ -1906,7 +1906,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           {/* 4. Bottom Legend & Real-Time SaaS Telemetry Indicator */}
           <div className="flex flex-wrap items-center justify-between gap-3 pt-3.5 mt-2 border-t border-slate-100/90 text-xs">
             <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs font-semibold">
-              <div className="flex items-center gap-2 px-3 py-1 rounded-xl bg-purple-50/60 border border-purple-100/80 text-slate-800">
+              <div className="flex items-center gap-2 px-3 py-1 rounded-xl bg-emerald-50/60 border border-emerald-100/80 text-slate-800">
                 <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-purple-700 to-indigo-500 shadow-2xs ring-2 ring-purple-200"></span>
                 <span className="font-extrabold">{executiveChartData.primaryLegend}</span>
               </div>
@@ -1923,14 +1923,14 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           </div>
 
           {/* 5. Executive Decision Banner (Actionable Insight Bar) */}
-          <div className="mt-3.5 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-purple-50/90 via-indigo-50/40 to-slate-50 border border-purple-200/80 flex flex-col md:flex-row md:items-center justify-between gap-3.5 shadow-2xs">
+          <div className="mt-3.5 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-purple-50/90 via-indigo-50/40 to-slate-50 border border-emerald-200/80 flex flex-col md:flex-row md:items-center justify-between gap-3.5 shadow-2xs">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white flex items-center justify-center shrink-0 shadow-xs">
                 <Sparkles className="w-4 h-4 fill-white/20" />
               </div>
               <div>
                 <div className="flex items-center gap-1.5 mb-0.5">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-purple-700 bg-purple-100/90 border border-purple-200 px-1.5 py-0.2 rounded">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 bg-emerald-100/90 border border-emerald-200 px-1.5 py-0.2 rounded">
                     ✦ Executive AI Insight
                   </span>
                 </div>
@@ -1942,7 +1942,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
             <button
               type="button"
               onClick={() => onRouteChange('platform-billing')}
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs font-bold transition-all flex items-center gap-2 shrink-0 cursor-pointer shadow-sm hover:shadow hover:scale-[1.02] active:scale-[0.98] self-start md:self-auto group"
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs font-bold transition-all flex items-center gap-2 shrink-0 cursor-pointer shadow-sm hover:shadow hover:scale-[1.02] active:scale-[0.98] self-start md:self-auto group"
             >
               <span>Manage Subscriptions</span>
               <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
@@ -1964,7 +1964,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               <button 
                 type="button"
                 onClick={() => onRouteChange('institutes')}
-                className="text-slate-400 hover:text-purple-600 p-1 rounded-lg transition-colors cursor-pointer"
+                className="text-slate-400 hover:text-emerald-600 p-1 rounded-lg transition-colors cursor-pointer"
                 title="View All Campuses Directory"
               >
                 <MoreVertical className="w-4 h-4" />
@@ -2084,19 +2084,19 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               </div>
 
               {/* Row 2: Evaluation Trials (Pipeline) */}
-              <div className="flex items-center justify-between p-2 rounded-xl bg-purple-50/40 border border-purple-100/60 hover:bg-purple-50/80 transition-colors">
+              <div className="flex items-center justify-between p-2 rounded-xl bg-emerald-50/40 border border-emerald-100/60 hover:bg-emerald-50/80 transition-colors">
                 <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-purple-600 shrink-0"></span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 shrink-0"></span>
                   <div>
                     <span className="text-xs font-bold text-slate-800 block leading-tight">14-Day Free Evaluation</span>
-                    <span className="text-[10px] text-purple-600 font-medium">{tenantHealthMatrix.trialCount} trial in progress</span>
+                    <span className="text-[10px] text-emerald-600 font-medium">{tenantHealthMatrix.trialCount} trial in progress</span>
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className="text-xs font-extrabold text-purple-700 font-mono block">
+                  <span className="text-xs font-extrabold text-emerald-800 font-mono block">
                     +{formatPKR(tenantHealthMatrix.trialPotentialMRR)}/mo
                   </span>
-                  <span className="text-[10px] font-bold text-purple-600 bg-purple-100 px-1.5 py-0.2 rounded">
+                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-100 px-1.5 py-0.2 rounded">
                     Lead Pipeline
                   </span>
                 </div>
@@ -2176,12 +2176,12 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                     Registered Campuses & Wings
                   </h2>
                   {selectedTierFilter !== 'all' && (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 border border-purple-200 inline-flex items-center gap-1">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 inline-flex items-center gap-1">
                       <span>{currentFilterConfig.label}</span>
                       <button
                         type="button"
                         onClick={() => handleSelectTierFilter('all')}
-                        className="hover:text-purple-900 ml-0.5 cursor-pointer"
+                        className="hover:text-emerald-950 ml-0.5 cursor-pointer"
                         title="Clear filter"
                       >
                         <X className="w-3 h-3" />
@@ -2205,7 +2205,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                     value={campusSearchQuery}
                     onChange={(e) => setCampusSearchQuery(e.target.value)}
                     placeholder="Search campus or code..."
-                    className="pl-8 pr-7 py-1.5 text-xs bg-slate-50 border border-slate-200/80 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 w-44 sm:w-52 transition-all placeholder:text-slate-400"
+                    className="pl-8 pr-7 py-1.5 text-xs bg-slate-50 border border-slate-200/80 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 w-44 sm:w-52 transition-all placeholder:text-slate-400"
                   />
                   {campusSearchQuery && (
                     <button
@@ -2221,7 +2221,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
 
                 <button 
                   onClick={() => onRouteChange('institutes')}
-                  className="text-xs font-semibold text-purple-600 hover:text-purple-700 hover:underline cursor-pointer shrink-0"
+                  className="text-xs font-semibold text-emerald-600 hover:text-emerald-800 hover:underline cursor-pointer shrink-0"
                 >
                   View All ({filteredInstitutes.length})
                 </button>
@@ -2254,11 +2254,11 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                           {/* Campus Avatar + Name */}
                           <td className="py-3 px-3">
                             <div className="flex items-center gap-2.5">
-                              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-100 to-indigo-100 text-purple-700 font-bold flex items-center justify-center text-xs shrink-0">
+                              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-100 to-indigo-100 text-emerald-800 font-bold flex items-center justify-center text-xs shrink-0">
                                 {inst.name.charAt(0)}
                               </div>
                               <div>
-                                <span className="font-semibold text-slate-900 group-hover:text-purple-700 transition-colors line-clamp-1">
+                                <span className="font-semibold text-slate-900 group-hover:text-emerald-800 transition-colors line-clamp-1">
                                   {inst.name}
                                 </span>
                                 <span className="text-[10px] text-slate-400">
@@ -2277,7 +2277,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                           <td className="py-3 px-3">
                             <div className="flex items-center gap-1 flex-wrap">
                               {wings.includes('school') && (
-                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700">
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-800">
                                   School
                                 </span>
                               )}
@@ -2361,7 +2361,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                                 <button
                                   type="button"
                                   onClick={handleOpenAddCampusModal}
-                                  className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg text-xs transition-colors cursor-pointer"
+                                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg text-xs transition-colors cursor-pointer"
                                 >
                                   + Add {currentFilterConfig.badge} Campus
                                 </button>
@@ -2412,7 +2412,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
 
               <button 
                 onClick={() => onRouteChange('institutes')}
-                className="text-purple-600 font-semibold hover:text-purple-700 hover:underline cursor-pointer flex items-center gap-1 ml-1"
+                className="text-emerald-600 font-semibold hover:text-emerald-800 hover:underline cursor-pointer flex items-center gap-1 ml-1"
               >
                 <span>Manage All</span>
                 <span>&rarr;</span>
@@ -2468,7 +2468,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                       {/* Activity Details with Educational Tier Badge Pill */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-1.5">
-                          <p className="text-xs font-semibold text-slate-800 line-clamp-1 group-hover:text-purple-900 transition-colors" title={act.text}>
+                          <p className="text-xs font-semibold text-slate-800 line-clamp-1 group-hover:text-emerald-950 transition-colors" title={act.text}>
                             {act.text}
                           </p>
                           <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${badgeConfig.badgeClass} shrink-0`}>
@@ -2494,7 +2494,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           <div className="pt-5 mt-4 border-t border-slate-100">
             <button
               onClick={() => onRouteChange('audit-logs')}
-              className="w-full py-2.5 rounded-xl bg-[#f5eeff] hover:bg-[#ede0fe] text-purple-700 font-semibold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+              className="w-full py-2.5 rounded-xl bg-[#f5eeff] hover:bg-[#ede0fe] text-emerald-800 font-semibold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <span>View All Platform Activity</span>
               <ChevronRight className="w-3.5 h-3.5" />
@@ -2532,7 +2532,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 setNewUserData({ ...newUserData, name: e.target.value })
                 if (userFormError) setUserFormError('')
               }}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm"
             />
           </div>
 
@@ -2547,7 +2547,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 setNewUserData({ ...newUserData, email: e.target.value })
                 if (userFormError) setUserFormError('')
               }}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm"
             />
           </div>
 
@@ -2557,7 +2557,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               <select
                 value={newUserData.role}
                 onChange={(e) => setNewUserData({ ...newUserData, role: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm bg-white font-medium"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm bg-white font-medium"
               >
                 <option value="institute_admin">Institute Administrator</option>
                 <option value="teacher">Faculty Member / Teacher</option>
@@ -2573,7 +2573,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 placeholder="+92 300 1234567"
                 value={newUserData.phone}
                 onChange={(e) => setNewUserData({ ...newUserData, phone: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm"
               />
             </div>
           </div>
@@ -2585,7 +2585,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               placeholder="Default: Password123!"
               value={newUserData.password || ''}
               onChange={(e) => setNewUserData({ ...newUserData, password: e.target.value })}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm font-mono"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm font-mono"
             />
             <p className="text-[10px] text-slate-400 mt-1">Leaves default 'Password123!' if empty. Automatically hashed with SHA-256 Web Crypto.</p>
           </div>
@@ -2596,7 +2596,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               <select
                 value={newUserData.institute}
                 onChange={(e) => setNewUserData({ ...newUserData, institute: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm bg-white"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm bg-white"
               >
                 <option value="">Select an Institute...</option>
                 {institutes.map(inst => (
@@ -2609,7 +2609,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 placeholder="Central Headquarters / Global"
                 value={newUserData.institute}
                 onChange={(e) => setNewUserData({ ...newUserData, institute: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm"
               />
             )}
           </div>
@@ -2627,7 +2627,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
             </button>
             <button
               type="submit"
-              className="px-5 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-xl shadow-sm transition-colors cursor-pointer"
+              className="px-5 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-sm transition-colors cursor-pointer"
             >
               Create User
             </button>
@@ -2663,7 +2663,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 setNewInstituteData({ ...newInstituteData, name: e.target.value })
                 if (instituteFormError) setInstituteFormError('')
               }}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm"
             />
           </div>
 
@@ -2679,7 +2679,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                   setNewInstituteData({ ...newInstituteData, code: e.target.value })
                   if (instituteFormError) setInstituteFormError('')
                 }}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm uppercase"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm uppercase"
               />
             </div>
             <div>
@@ -2690,7 +2690,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 placeholder="e.g. Lahore"
                 value={newInstituteData.city}
                 onChange={(e) => setNewInstituteData({ ...newInstituteData, city: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm"
               />
             </div>
           </div>
@@ -2702,7 +2702,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               placeholder="e.g. Sector H-12, Education Avenue"
               value={newInstituteData.address}
               onChange={(e) => setNewInstituteData({ ...newInstituteData, address: e.target.value })}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm"
             />
           </div>
 
@@ -2726,7 +2726,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                   enabledTiers: conf.enabledTiers
                 })
               }}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm bg-white"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm bg-white"
             >
               <option value="School Plan">School Plan (Primary & High School)</option>
               <option value="College Plan">College Plan (Intermediate / HSSC)</option>
@@ -2743,7 +2743,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 placeholder="admin@oxford.edu"
                 value={newInstituteData.email}
                 onChange={(e) => setNewInstituteData({ ...newInstituteData, email: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm"
               />
             </div>
             <div>
@@ -2753,14 +2753,14 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 placeholder="+92 300 9876543"
                 value={newInstituteData.phone}
                 onChange={(e) => setNewInstituteData({ ...newInstituteData, phone: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm"
               />
             </div>
           </div>
 
           <div className="pt-2 border-t border-slate-100">
             <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
               Campus Administrator Login Credentials
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -2771,7 +2771,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                   placeholder={newInstituteData.code ? `admin@${newInstituteData.code.toLowerCase().replace(/[^a-z0-9]/g, '')}.edu` : "admin@campus.edu"}
                   value={newInstituteData.adminEmail}
                   onChange={(e) => setNewInstituteData({ ...newInstituteData, adminEmail: e.target.value })}
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-xs"
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-xs"
                 />
                 <p className="text-[10px] text-slate-400 mt-0.5">Leave empty to auto-generate</p>
               </div>
@@ -2782,7 +2782,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                   placeholder="Password123!"
                   value={newInstituteData.adminPassword}
                   onChange={(e) => setNewInstituteData({ ...newInstituteData, adminPassword: e.target.value })}
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-xs font-mono"
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-xs font-mono"
                 />
                 <p className="text-[10px] text-slate-400 mt-0.5">Default: Password123!</p>
               </div>
@@ -2799,7 +2799,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
             </button>
             <button
               type="submit"
-              className="px-5 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-xl shadow-sm transition-colors cursor-pointer"
+              className="px-5 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-sm transition-colors cursor-pointer"
             >
               Register Institute
             </button>
@@ -2834,7 +2834,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               </div>
               <div className="flex justify-between items-center pb-2 border-b border-slate-200">
                 <span className="text-slate-500 font-medium">Login Email:</span>
-                <span className="font-mono font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-lg border border-purple-200">{newlyCreatedCreds.adminEmail}</span>
+                <span className="font-mono font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200">{newlyCreatedCreds.adminEmail}</span>
               </div>
               <div className="flex justify-between items-center pb-2 border-b border-slate-200">
                 <span className="text-slate-500 font-medium">Password:</span>
@@ -2875,7 +2875,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 triggerToast('Credentials copied to clipboard for client delivery!')
                 setTimeout(() => setCopiedCreds(false), 3000)
               }}
-              className="w-full py-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+              className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
             >
               {copiedCreds ? <Check className="w-4 h-4 text-emerald-300" /> : <Copy className="w-4 h-4" />}
               <span>{copiedCreds ? 'Copied to Clipboard!' : 'Copy Login Credentials for Client'}</span>
@@ -2901,8 +2901,8 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
         title="Broadcast Announcement to Active Sessions"
       >
         <form onSubmit={handleSendBroadcast} className="space-y-4">
-          <div className="p-3 bg-purple-50 border border-purple-200 rounded-xl flex items-center gap-2.5 text-xs text-purple-800">
-            <Radio className="w-4 h-4 text-purple-600 shrink-0 animate-pulse" />
+          <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2.5 text-xs text-emerald-900">
+            <Radio className="w-4 h-4 text-emerald-600 shrink-0 animate-pulse" />
             <span>This broadcast message will be dispatched immediately across active user sessions.</span>
           </div>
 
@@ -2912,7 +2912,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               <select
                 value={broadcastData.channel}
                 onChange={(e) => setBroadcastData({ ...broadcastData, channel: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm bg-white"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm bg-white"
               >
                 <option value="Portal Alert">In-App Alert</option>
                 <option value="SMS">SMS Gateway</option>
@@ -2925,7 +2925,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               <select
                 value={broadcastData.recipientGroup}
                 onChange={(e) => setBroadcastData({ ...broadcastData, recipientGroup: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm bg-white"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm bg-white"
               >
                 <option value="All Active Users">All Active Users</option>
                 <option value="Campus Administrators">Campus Administrators</option>
@@ -2937,7 +2937,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               <select
                 value={broadcastData.priority || 'Normal'}
                 onChange={(e) => setBroadcastData({ ...broadcastData, priority: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm bg-white font-medium"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm bg-white font-medium"
               >
                 <option value="Normal">Normal Alert</option>
                 <option value="High">High Priority</option>
@@ -2960,7 +2960,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               placeholder="e.g. System notice: Scheduled database optimization will take place tonight at 11:00 PM."
               value={broadcastData.message}
               onChange={(e) => setBroadcastData({ ...broadcastData, message: e.target.value })}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm"
             ></textarea>
           </div>
 
@@ -2974,7 +2974,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
             </button>
             <button
               type="submit"
-              className="px-5 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-xl shadow-sm transition-colors flex items-center gap-1.5 cursor-pointer"
+              className="px-5 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-sm transition-colors flex items-center gap-1.5 cursor-pointer"
             >
               <Send className="w-3.5 h-3.5" />
               <span>Send Broadcast</span>

@@ -11,7 +11,8 @@ import {
   Layers, 
   Settings, 
   User,
-  Key
+  Key,
+  UserCheck
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useAppData } from '../../context/AppDataContext'
@@ -227,12 +228,12 @@ export const InstituteAdminNavbar = ({
           onClick={() => onRouteChange && onRouteChange('inst-dashboard')}
           className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
             currentRoute !== 'inst-student-portal' && currentRoute !== 'inst-teachers'
-              ? 'bg-white text-purple-700 shadow-xs border border-purple-200/70 ring-1 ring-purple-500/10'
+              ? 'bg-white text-emerald-700 shadow-xs border border-emerald-200/70 ring-1 ring-emerald-500/10'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
           }`}
           title="Campus Operations & Management Desk"
         >
-          <Building2 className="w-3.5 h-3.5 text-purple-600" />
+          <Building2 className="w-3.5 h-3.5 text-emerald-600" />
           <span>Admin Desk</span>
         </button>
 
@@ -241,12 +242,12 @@ export const InstituteAdminNavbar = ({
           onClick={() => onRouteChange && onRouteChange('inst-teachers')}
           className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
             currentRoute === 'inst-teachers'
-              ? 'bg-white text-purple-700 shadow-xs border border-purple-200/70 ring-1 ring-purple-500/10'
+              ? 'bg-white text-emerald-700 shadow-xs border border-emerald-200/70 ring-1 ring-emerald-500/10'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
           }`}
           title="Teacher Operations & Delegated Permissions Matrix"
         >
-          <UserCheck className="w-3.5 h-3.5 text-purple-600" />
+          <UserCheck className="w-3.5 h-3.5 text-emerald-600" />
           <span>Teacher Desk</span>
         </button>
 
@@ -255,12 +256,12 @@ export const InstituteAdminNavbar = ({
           onClick={() => onRouteChange && onRouteChange('inst-student-portal')}
           className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
             currentRoute === 'inst-student-portal'
-              ? 'bg-purple-600 text-white shadow-xs'
-              : 'text-purple-700 hover:bg-purple-100/70 bg-[#f5eeff] border border-purple-200/70'
+              ? 'bg-emerald-600 text-white shadow-xs'
+              : 'text-emerald-700 hover:bg-emerald-100/70 bg-[#ecfdf5] border border-emerald-200/70'
           }`}
           title="Live Student & Parent Portal for this Campus"
         >
-          <GraduationCap className={`w-3.5 h-3.5 ${currentRoute === 'inst-student-portal' ? 'text-white' : 'text-purple-600'}`} />
+          <GraduationCap className={`w-3.5 h-3.5 ${currentRoute === 'inst-student-portal' ? 'text-white' : 'text-emerald-600'}`} />
           <span>Student & Parent Portal</span>
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
         </button>
@@ -280,7 +281,7 @@ export const InstituteAdminNavbar = ({
         <div className="relative" ref={profileRef}>
           <button 
             onClick={() => setShowProfileMenu(!showProfileMenu)}
-            className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-white cursor-pointer hover:ring-2 hover:ring-purple-300 transition-all shadow-sm focus:outline-none"
+            className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-white cursor-pointer hover:ring-2 hover:ring-emerald-300 transition-all shadow-sm focus:outline-none"
             title="Institute Admin Profile"
           >
             <User className="w-4 h-4 text-white" />
@@ -291,8 +292,8 @@ export const InstituteAdminNavbar = ({
               <div className="px-4 py-3 border-b border-slate-100">
                 <p className="text-xs font-bold text-slate-800">{user?.name || tierConfig.roleBadge}</p>
                 <p className="text-[11px] text-slate-400 mt-0.5 truncate">{user?.email || 'admin@campus.edu'}</p>
-                <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#f5eeff] text-purple-700 border border-purple-200">
-                  <ShieldCheck className="w-3 h-3 text-purple-600" />
+                <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#ecfdf5] text-emerald-800 border border-emerald-200">
+                  <ShieldCheck className="w-3 h-3 text-emerald-600" />
                   <span>{user?.roleTitle || tierConfig.roleBadge}</span>
                 </div>
               </div>
@@ -305,7 +306,7 @@ export const InstituteAdminNavbar = ({
                   }}
                   className="w-full text-left px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-medium"
                 >
-                  <Key className="w-3.5 h-3.5 text-purple-600" />
+                  <Key className="w-3.5 h-3.5 text-emerald-600" />
                   <span>Change Password & Security</span>
                 </button>
 
@@ -314,9 +315,9 @@ export const InstituteAdminNavbar = ({
                     setShowProfileMenu(false)
                     onRouteChange && onRouteChange('inst-student-portal')
                   }}
-                  className="w-full text-left px-4 py-2 text-xs text-purple-700 hover:bg-purple-50 flex items-center gap-2 font-bold"
+                  className="w-full text-left px-4 py-2 text-xs text-emerald-700 hover:bg-emerald-50 flex items-center gap-2 font-bold"
                 >
-                  <GraduationCap className="w-3.5 h-3.5 text-purple-600" />
+                  <GraduationCap className="w-3.5 h-3.5 text-emerald-600" />
                   <span>View Student & Parent Portal</span>
                 </button>
 

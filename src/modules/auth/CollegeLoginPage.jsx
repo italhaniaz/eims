@@ -187,11 +187,11 @@ export const CollegeLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier })
           <button
             type="button"
             onClick={() => onSwitchTier('university')}
-            className="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-white hover:bg-purple-50 text-slate-700 border border-slate-200 hover:border-purple-300 transition-all shadow-xs cursor-pointer flex items-center gap-2"
+            className="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-white hover:bg-emerald-50 text-slate-700 border border-slate-200 hover:border-emerald-300 transition-all shadow-xs cursor-pointer flex items-center gap-2"
           >
-            <GraduationCap className="w-4 h-4 text-purple-600" />
+            <GraduationCap className="w-4 h-4 text-emerald-600" />
             <span>🎓 University Portal Login</span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-purple-100 text-purple-800">
+            <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-emerald-100 text-emerald-900">
               HEC BS/MS
             </span>
           </button>
@@ -199,10 +199,10 @@ export const CollegeLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier })
           <button
             type="button"
             onClick={() => onSwitchTier('superadmin')}
-            className="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-purple-700 bg-white hover:bg-slate-50 border border-slate-200 transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
+            className="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-emerald-800 bg-white hover:bg-slate-50 border border-slate-200 transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
             title="Open Master Superadmin Control Plane"
           >
-            <Lock className="w-3.5 h-3.5 text-purple-600" />
+            <Lock className="w-3.5 h-3.5 text-emerald-600" />
             <span className="hidden sm:inline">Super Admin</span>
           </button>
         </div>

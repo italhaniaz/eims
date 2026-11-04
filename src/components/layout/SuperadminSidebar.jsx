@@ -203,15 +203,15 @@ export const SuperadminSidebar = ({
         {/* Top Brand Header */}
         <div className="h-14 sm:h-16 min-h-[56px] sm:min-h-[64px] flex items-center justify-between px-4 sm:px-5 border-b border-slate-100 shrink-0">
           <div className="flex items-center gap-2.5 overflow-hidden">
-            <div className="w-9 h-9 rounded-xl bg-[#f5eeff] text-purple-700 border border-purple-100 flex items-center justify-center shrink-0 font-bold text-xs shadow-2xs">
-              <ShieldCheck className="w-5 h-5 text-purple-600" />
+            <div className="w-9 h-9 rounded-xl bg-[#f5eeff] text-emerald-800 border border-emerald-100 flex items-center justify-center shrink-0 font-bold text-xs shadow-2xs">
+              <ShieldCheck className="w-5 h-5 text-emerald-600" />
             </div>
             {(!collapsed || isMobileOpen) && (
               <div className="flex flex-col truncate">
                 <span className="text-sm font-extrabold text-slate-900 tracking-tight font-heading leading-tight">
                   Super Admin
                 </span>
-                <span className="text-[10px] text-purple-600 font-bold uppercase tracking-wider">
+                <span className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">
                   Platform Console
                 </span>
               </div>
@@ -241,18 +241,18 @@ export const SuperadminSidebar = ({
           {/* 1. Dashboard */}
           <div className="relative">
             {isRouteActive('dashboard') && (
-              <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+              <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
             )}
             <button
               onClick={() => handleNavClick('dashboard')}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                 isRouteActive('dashboard')
-                  ? 'bg-[#f5eeff] text-purple-700 font-semibold shadow-2xs'
+                  ? 'bg-[#f5eeff] text-emerald-800 font-semibold shadow-2xs'
                   : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
               }`}
             >
               <Home className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                isRouteActive('dashboard') ? 'text-purple-600' : 'text-slate-400 group-hover:text-slate-600'
+                isRouteActive('dashboard') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-slate-600'
               }`} />
               {(!collapsed || isMobileOpen) && <span>Dashboard</span>}
             </button>
@@ -265,7 +265,7 @@ export const SuperadminSidebar = ({
               <button
                 type="button"
                 onClick={closeAllGroups}
-                className="hover:text-purple-600 transition-colors cursor-pointer lowercase font-medium"
+                className="hover:text-emerald-600 transition-colors cursor-pointer lowercase font-medium"
                 title="Collapse all sections"
               >
                 collapse all
@@ -283,7 +283,7 @@ export const SuperadminSidebar = ({
               className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-50/80 transition-colors cursor-pointer group"
             >
               <div className="flex items-center gap-3">
-                <School className="w-[18px] h-[18px] text-slate-400 group-hover:text-purple-600 transition-colors shrink-0" />
+                <School className="w-[18px] h-[18px] text-slate-400 group-hover:text-emerald-600 transition-colors shrink-0" />
                 {(!collapsed || isMobileOpen) && (
                   <span className="font-medium text-slate-600 group-hover:text-slate-900">
                     Campuses & Wings
@@ -299,18 +299,18 @@ export const SuperadminSidebar = ({
               <div className="mt-1 pl-3.5 space-y-1 border-l-2 border-slate-100 ml-5">
                 <div className="relative">
                   {isRouteActive('institutes') && (
-                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                   )}
                   <button
                     onClick={() => handleNavClick('institutes')}
                     className={`w-full flex items-center justify-between text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                       isRouteActive('institutes')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                        ? 'bg-[#f5eeff] text-emerald-800 font-semibold'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
-                      <Building2 className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('institutes') ? 'text-purple-600' : 'text-slate-400'}`} />
+                      <Building2 className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('institutes') ? 'text-emerald-600' : 'text-slate-400'}`} />
                       <span>All Campuses</span>
                     </div>
                     {campusesCount > 0 && (
@@ -323,18 +323,18 @@ export const SuperadminSidebar = ({
 
                 <div className="relative">
                   {isRouteActive('support-approvals') && (
-                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                   )}
                   <button
                     onClick={() => handleNavClick('support-approvals')}
                     className={`w-full flex items-center justify-between text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                       isRouteActive('support-approvals')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                        ? 'bg-[#f5eeff] text-emerald-800 font-semibold'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
-                      <CheckSquare className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('support-approvals') ? 'text-purple-600' : 'text-slate-400'}`} />
+                      <CheckSquare className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('support-approvals') ? 'text-emerald-600' : 'text-slate-400'}`} />
                       <span>Pending Approvals</span>
                     </div>
                     {pendingApprovalsCount > 0 && (
@@ -347,34 +347,34 @@ export const SuperadminSidebar = ({
 
                 <div className="relative">
                   {isRouteActive('platform-billing') && (
-                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                   )}
                   <button
                     onClick={() => handleNavClick('platform-billing')}
                     className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                       isRouteActive('platform-billing')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                        ? 'bg-[#f5eeff] text-emerald-800 font-semibold'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                     }`}
                   >
-                    <CreditCard className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('platform-billing') ? 'text-purple-600' : 'text-slate-400'}`} />
+                    <CreditCard className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('platform-billing') ? 'text-emerald-600' : 'text-slate-400'}`} />
                     <span>Subscriptions & Billing</span>
                   </button>
                 </div>
 
                 <div className="relative">
                   {isRouteActive('cross-institute-analytics') && (
-                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                   )}
                   <button
                     onClick={() => handleNavClick('cross-institute-analytics')}
                     className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                       isRouteActive('cross-institute-analytics')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                        ? 'bg-[#f5eeff] text-emerald-800 font-semibold'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                     }`}
                   >
-                    <BarChart3 className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('cross-institute-analytics') ? 'text-purple-600' : 'text-slate-400'}`} />
+                    <BarChart3 className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('cross-institute-analytics') ? 'text-emerald-600' : 'text-slate-400'}`} />
                     <span>Cross-Campus Analytics</span>
                   </button>
                 </div>
@@ -391,12 +391,12 @@ export const SuperadminSidebar = ({
               }}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors cursor-pointer group ${
                 isUserRoute 
-                  ? 'bg-purple-50/70 text-purple-900 font-semibold shadow-2xs' 
+                  ? 'bg-emerald-50/70 text-purple-900 font-semibold shadow-2xs' 
                   : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/80'
               }`}
             >
               <div className="flex items-center gap-3">
-                <Users className="w-[18px] h-[18px] text-slate-400 group-hover:text-purple-600 transition-colors shrink-0" />
+                <Users className="w-[18px] h-[18px] text-slate-400 group-hover:text-emerald-600 transition-colors shrink-0" />
                 {(!collapsed || isMobileOpen) && (
                   <span className="font-medium text-slate-600 group-hover:text-slate-900">
                     Users & Roles
@@ -412,18 +412,18 @@ export const SuperadminSidebar = ({
               <div className="mt-1 pl-3.5 space-y-1 border-l-2 border-slate-100 ml-5">
                 <div className="relative">
                   {isRouteActive('users-all') && (
-                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                   )}
                   <button
                     onClick={() => handleNavClick('users-all')}
                     className={`w-full flex items-center justify-between text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                       isRouteActive('users-all')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                        ? 'bg-[#f5eeff] text-emerald-800 font-semibold'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
-                      <Users className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('users-all') ? 'text-purple-600' : 'text-slate-400'}`} />
+                      <Users className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('users-all') ? 'text-emerald-600' : 'text-slate-400'}`} />
                       <span>All Users</span>
                     </div>
                     {usersCount > 0 && (
@@ -436,34 +436,34 @@ export const SuperadminSidebar = ({
 
                 <div className="relative">
                   {isRouteActive('users-roles') && (
-                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                   )}
                   <button
                     onClick={() => handleNavClick('users-roles')}
                     className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                       isRouteActive('users-roles')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                        ? 'bg-[#f5eeff] text-emerald-800 font-semibold'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                     }`}
                   >
-                    <ShieldCheck className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('users-roles') ? 'text-purple-600' : 'text-slate-400'}`} />
+                    <ShieldCheck className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('users-roles') ? 'text-emerald-600' : 'text-slate-400'}`} />
                     <span>Roles & Permissions</span>
                   </button>
                 </div>
 
                 <div className="relative">
                   {isRouteActive('security-center') && (
-                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                   )}
                   <button
                     onClick={() => handleNavClick('security-center')}
                     className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                       isRouteActive('security-center')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                        ? 'bg-[#f5eeff] text-emerald-800 font-semibold'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                     }`}
                   >
-                    <Lock className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('security-center') ? 'text-purple-600' : 'text-slate-400'}`} />
+                    <Lock className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('security-center') ? 'text-emerald-600' : 'text-slate-400'}`} />
                     <span>Security Center</span>
                   </button>
                 </div>
@@ -481,7 +481,7 @@ export const SuperadminSidebar = ({
               className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-50/80 transition-colors cursor-pointer group"
             >
               <div className="flex items-center gap-3">
-                <Database className="w-[18px] h-[18px] text-slate-400 group-hover:text-purple-600 transition-colors shrink-0" />
+                <Database className="w-[18px] h-[18px] text-slate-400 group-hover:text-emerald-600 transition-colors shrink-0" />
                 {(!collapsed || isMobileOpen) && (
                   <span className="font-medium text-slate-600 group-hover:text-slate-900">
                     Operations & Health
@@ -497,102 +497,102 @@ export const SuperadminSidebar = ({
               <div className="mt-1 pl-3.5 space-y-1 border-l-2 border-slate-100 ml-5">
                 <div className="relative">
                   {isRouteActive('system-health') && (
-                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                   )}
                   <button
                     onClick={() => handleNavClick('system-health')}
                     className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                       isRouteActive('system-health')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                        ? 'bg-[#f5eeff] text-emerald-800 font-semibold'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                     }`}
                   >
-                    <Activity className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('system-health') ? 'text-purple-600' : 'text-slate-400'}`} />
+                    <Activity className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('system-health') ? 'text-emerald-600' : 'text-slate-400'}`} />
                     <span>System Health</span>
                   </button>
                 </div>
 
                 <div className="relative">
                   {isRouteActive('audit-logs') && (
-                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                   )}
                   <button
                     onClick={() => handleNavClick('audit-logs')}
                     className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                       isRouteActive('audit-logs')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                        ? 'bg-[#f5eeff] text-emerald-800 font-semibold'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                     }`}
                   >
-                    <ShieldCheck className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('audit-logs') ? 'text-purple-600' : 'text-slate-400'}`} />
+                    <ShieldCheck className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('audit-logs') ? 'text-emerald-600' : 'text-slate-400'}`} />
                     <span>Audit Logs</span>
                   </button>
                 </div>
 
                 <div className="relative">
                   {isRouteActive('backup-data') && (
-                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                   )}
                   <button
                     onClick={() => handleNavClick('backup-data')}
                     className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                       isRouteActive('backup-data')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                        ? 'bg-[#f5eeff] text-emerald-800 font-semibold'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                     }`}
                   >
-                    <Database className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('backup-data') ? 'text-purple-600' : 'text-slate-400'}`} />
+                    <Database className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('backup-data') ? 'text-emerald-600' : 'text-slate-400'}`} />
                     <span>Backup & Data</span>
                   </button>
                 </div>
 
                 <div className="relative">
                   {isRouteActive('communication') && (
-                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                   )}
                   <button
                     onClick={() => handleNavClick('communication')}
                     className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                       isRouteActive('communication')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                        ? 'bg-[#f5eeff] text-emerald-800 font-semibold'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                     }`}
                   >
-                    <MessageSquare className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('communication') ? 'text-purple-600' : 'text-slate-400'}`} />
+                    <MessageSquare className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('communication') ? 'text-emerald-600' : 'text-slate-400'}`} />
                     <span>Gateway Alerts</span>
                   </button>
                 </div>
 
                 <div className="relative">
                   {isRouteActive('announcements') && (
-                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                   )}
                   <button
                     onClick={() => handleNavClick('announcements')}
                     className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                       isRouteActive('announcements')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                        ? 'bg-[#f5eeff] text-emerald-800 font-semibold'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                     }`}
                   >
-                    <Megaphone className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('announcements') ? 'text-purple-600' : 'text-slate-400'}`} />
+                    <Megaphone className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('announcements') ? 'text-emerald-600' : 'text-slate-400'}`} />
                     <span>Announcements & Broadcasts</span>
                   </button>
                 </div>
 
                 <div className="relative">
                   {isRouteActive('global-templates') && (
-                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                   )}
                   <button
                     onClick={() => handleNavClick('global-templates')}
                     className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                       isRouteActive('global-templates')
-                        ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                        ? 'bg-[#f5eeff] text-emerald-800 font-semibold'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                     }`}
                   >
-                    <FileSpreadsheet className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('global-templates') ? 'text-purple-600' : 'text-slate-400'}`} />
+                    <FileSpreadsheet className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('global-templates') ? 'text-emerald-600' : 'text-slate-400'}`} />
                     <span>Global Templates</span>
                   </button>
                 </div>
@@ -610,7 +610,7 @@ export const SuperadminSidebar = ({
               className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-50/80 transition-colors cursor-pointer group"
             >
               <div className="flex items-center gap-3">
-                <Megaphone className="w-[18px] h-[18px] text-slate-400 group-hover:text-purple-600 transition-colors shrink-0" />
+                <Megaphone className="w-[18px] h-[18px] text-slate-400 group-hover:text-emerald-600 transition-colors shrink-0" />
                 {(!collapsed || isMobileOpen) && (
                   <span className="font-medium text-slate-600 group-hover:text-slate-900">
                     Communication
@@ -636,18 +636,18 @@ export const SuperadminSidebar = ({
                   return (
                     <div key={item.route} className="relative">
                       {active && (
-                        <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                        <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                       )}
                       <button
                         onClick={() => handleNavClick(item.route)}
                         title={item.label}
                         className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                           active
-                            ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                            ? 'bg-[#f5eeff] text-emerald-800 font-semibold'
                             : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                         }`}
                       >
-                        <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-purple-600' : 'text-slate-400'}`} />
+                        <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-emerald-600' : 'text-slate-400'}`} />
                         <span className="truncate">{item.label}</span>
                       </button>
                     </div>
@@ -667,7 +667,7 @@ export const SuperadminSidebar = ({
               className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-50/80 transition-colors cursor-pointer group"
             >
               <div className="flex items-center gap-3">
-                <BarChart3 className="w-[18px] h-[18px] text-slate-400 group-hover:text-purple-600 transition-colors shrink-0" />
+                <BarChart3 className="w-[18px] h-[18px] text-slate-400 group-hover:text-emerald-600 transition-colors shrink-0" />
                 {(!collapsed || isMobileOpen) && (
                   <span className="font-medium text-slate-600 group-hover:text-slate-900">
                     Reports & Analytics
@@ -695,18 +695,18 @@ export const SuperadminSidebar = ({
                   return (
                     <div key={item.route} className="relative">
                       {active && (
-                        <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                        <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                       )}
                       <button
                         onClick={() => handleNavClick(item.route)}
                         title={item.label}
                         className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                           active
-                            ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                            ? 'bg-[#f5eeff] text-emerald-800 font-semibold'
                             : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                         }`}
                       >
-                        <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-purple-600' : 'text-slate-400'}`} />
+                        <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-emerald-600' : 'text-slate-400'}`} />
                         <span className="truncate">{item.label}</span>
                       </button>
                     </div>
@@ -726,7 +726,7 @@ export const SuperadminSidebar = ({
               className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-50/80 transition-colors cursor-pointer group"
             >
               <div className="flex items-center gap-3">
-                <ShieldCheck className="w-[18px] h-[18px] text-slate-400 group-hover:text-purple-600 transition-colors shrink-0" />
+                <ShieldCheck className="w-[18px] h-[18px] text-slate-400 group-hover:text-emerald-600 transition-colors shrink-0" />
                 {(!collapsed || isMobileOpen) && (
                   <span className="font-medium text-slate-600 group-hover:text-slate-900">
                     Policies & Guidelines
@@ -754,18 +754,18 @@ export const SuperadminSidebar = ({
                   return (
                     <div key={item.route} className="relative">
                       {active && (
-                        <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                        <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                       )}
                       <button
                         onClick={() => handleNavClick(item.route)}
                         title={item.label}
                         className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                           active
-                            ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                            ? 'bg-[#f5eeff] text-emerald-800 font-semibold'
                             : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                         }`}
                       >
-                        <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-purple-600' : 'text-slate-400'}`} />
+                        <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-emerald-600' : 'text-slate-400'}`} />
                         <span className="truncate">{item.label}</span>
                       </button>
                     </div>
@@ -785,7 +785,7 @@ export const SuperadminSidebar = ({
               className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-50/80 transition-colors cursor-pointer group"
             >
               <div className="flex items-center gap-3">
-                <Settings className="w-[18px] h-[18px] text-slate-400 group-hover:text-purple-600 transition-colors shrink-0" />
+                <Settings className="w-[18px] h-[18px] text-slate-400 group-hover:text-emerald-600 transition-colors shrink-0" />
                 {(!collapsed || isMobileOpen) && (
                   <span className="font-medium text-slate-600 group-hover:text-slate-900">
                     Platform Settings
@@ -815,18 +815,18 @@ export const SuperadminSidebar = ({
                   return (
                     <div key={item.route} className="relative">
                       {active && (
-                        <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                        <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
                       )}
                       <button
                         onClick={() => handleNavClick(item.route)}
                         title={item.label}
                         className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
                           active
-                            ? 'bg-[#f5eeff] text-purple-700 font-semibold'
+                            ? 'bg-[#f5eeff] text-emerald-800 font-semibold'
                             : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                         }`}
                       >
-                        <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-purple-600' : 'text-slate-400'}`} />
+                        <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-emerald-600' : 'text-slate-400'}`} />
                         <span className="truncate">{item.label}</span>
                       </button>
                     </div>
