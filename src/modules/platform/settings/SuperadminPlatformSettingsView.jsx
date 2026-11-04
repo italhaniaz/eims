@@ -71,6 +71,20 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
   // Maintenance mode
   const [maintenanceMode, setMaintenanceMode] = useState(false)
 
+  // Client Portal Isolation Switcher State
+  const [portalSwitcherEnabled, setPortalSwitcherEnabled] = useState(() => PlatformService.isPortalSwitcherEnabled());
+
+  const handleTogglePortalSwitcher = () => {
+    const nextVal = !portalSwitcherEnabled;
+    setPortalSwitcherEnabled(nextVal);
+    PlatformService.setPortalSwitcherEnabled(nextVal);
+    if (nextVal) {
+      toast?.info?.('Multi-Tier Portal Switcher is now ENABLED on login screens (Developer/Demo Mode).');
+    } else {
+      toast?.success?.('Client Portal Isolation is now ACTIVE. Top switcher bar is HIDDEN on client login screens.');
+    }
+  };
+
   // Pick 2: System & Emergency Session Backups State
   const [sessionBackups, setSessionBackups] = useState(() => {
     try { return OperationsService.getSessionBackups() } catch { return [] }
@@ -324,6 +338,54 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
             <h3 className="font-bold text-slate-900">Platform Feature Flags & Tier Capabilities</h3>
             <p className="text-xs text-slate-500">Dynamically enable or disable advanced capabilities across all active tenants</p>
           </div>
+
+          {/* Client Portal White-Labeling & Isolation Governance Card */}
+          <div className="p-5 bg-gradient-to-r from-purple-50 via-indigo-50/50 to-slate-50 border-b border-purple-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1.5 max-w-2xl">
+              <div className="flex flex-wrap items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-purple-600" />
+                <span className="font-bold text-slate-900 text-sm">Client Portal White-Labeling & Isolation Governance</span>
+                <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border ${
+                  portalSwitcherEnabled 
+                    ? 'bg-amber-100 text-amber-900 border-amber-300' 
+                    : 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                }`}>
+                  {portalSwitcherEnabled ? '⚠️ Developer Demo Switcher Active' : '🛡️ Strict Isolation Active (Production)'}
+                </span>
+              </div>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Controls whether the top multi-tier navigation bar (<span className="font-semibold text-slate-700">School • College • University • Super Admin</span>) appears on login screens.
+                When <strong className="text-slate-900">Disabled</strong> (Recommended for production deployments), individual school clients only see their own school login screen without cross-tier leakage or visible Super Admin access points.
+              </p>
+              <div className="flex items-center gap-3 pt-1 text-[11px] text-slate-500">
+                <span>Direct isolated URLs:</span>
+                <code className="px-1.5 py-0.5 rounded bg-white text-purple-700 font-mono border border-purple-200">#school-login</code>
+                <code className="px-1.5 py-0.5 rounded bg-white text-indigo-700 font-mono border border-indigo-200">#college-login</code>
+                <code className="px-1.5 py-0.5 rounded bg-white text-emerald-700 font-mono border border-emerald-200">#university-login</code>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 shrink-0 self-start md:self-center bg-white p-2.5 rounded-xl border border-purple-100 shadow-2xs">
+              <div className="text-right">
+                <span className="block text-xs font-bold text-slate-800">
+                  {portalSwitcherEnabled ? 'Demo Switcher ON' : 'Isolated Mode'}
+                </span>
+                <span className="text-[10px] text-slate-400">
+                  {portalSwitcherEnabled ? 'Visible to all' : 'Hidden from clients'}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={handleTogglePortalSwitcher}
+                className={`w-14 h-7 flex items-center rounded-full p-1 cursor-pointer transition-colors shadow-inner ${
+                  portalSwitcherEnabled ? 'bg-purple-600 justify-end' : 'bg-slate-300 justify-start'
+                }`}
+                title="Toggle Login Screen Multi-Tier Switcher Bar"
+              >
+                <div className="w-5 h-5 rounded-full bg-white shadow-md transform transition-transform"></div>
+              </button>
+            </div>
+          </div>
+
           <div className="divide-y divide-slate-100">
             {featureFlags.map(f => (
               <div key={f.id} className="p-4 sm:p-5 flex items-center justify-between gap-4">

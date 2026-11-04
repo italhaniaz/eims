@@ -3,6 +3,7 @@ import { SchoolLoginPage } from './SchoolLoginPage'
 import { CollegeLoginPage } from './CollegeLoginPage'
 import { UniversityLoginPage } from './UniversityLoginPage'
 import { SuperadminLoginPage } from './SuperadminLoginPage'
+import { PlatformService } from '../../services/platformService'
 
 const ALL_PORTAL_TIERS = ['school', 'college', 'university', 'superadmin']
 
@@ -48,6 +49,7 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial, defaultTier }) => {
   }
 
   const [portalTier, setPortalTier] = useState(getInitialTier)
+  const [showPortalSwitcher, setShowPortalSwitcher] = useState(() => PlatformService.isPortalSwitcherEnabled())
 
   // Listen to hash changes dynamically
   useEffect(() => {
@@ -67,7 +69,16 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial, defaultTier }) => {
     }
 
     window.addEventListener('hashchange', handleHashChange)
-    return () => window.removeEventListener('hashchange', handleHashChange)
+    const handleSettingsUpdated = () => {
+      setShowPortalSwitcher(PlatformService.isPortalSwitcherEnabled())
+    }
+    window.addEventListener('sms_platform_settings_updated', handleSettingsUpdated)
+    window.addEventListener('storage', handleSettingsUpdated)
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange)
+      window.removeEventListener('sms_platform_settings_updated', handleSettingsUpdated)
+      window.removeEventListener('storage', handleSettingsUpdated)
+    }
   }, [])
 
   // Auto-align active portal with selectedTiers if current tier is filtered out
@@ -117,7 +128,8 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial, defaultTier }) => {
     onOpenTrial,
     onSwitchTier: handleSwitchTier,
     selectedTiers,
-    onSetTiers: handleSetTiers
+    onSetTiers: handleSetTiers,
+    showPortalSwitcher
   }
 
   // Render dedicated isolated login page

@@ -875,6 +875,95 @@ export const PlatformService = {
       return null
     }
   }
-}
+,
 
-export default PlatformService
+  // --- Portal Switcher & White-Label Isolation ---
+  isPortalSwitcherEnabled() {
+    if (typeof window === 'undefined') return false;
+    try {
+      const search = window.location.search || '';
+      const hash = window.location.hash || '';
+      const params = new URLSearchParams(search);
+      
+      // Developer / Demonstration URL overrides
+      if (params.get('dev') === 'true' || params.get('switcher') === 'true' || params.get('demo') === 'true') {
+        return true;
+      }
+      if (hash.includes('switcher=true') || hash.includes('demo=true') || hash.includes('dev=true')) {
+        return true;
+      }
+
+      // Read Superadmin persisted configuration (default: false for isolated production)
+      if (typeof localStorage !== 'undefined') {
+        const stored = localStorage.getItem('sms_show_portal_switcher');
+        if (stored !== null) {
+          return stored === 'true';
+        }
+      }
+    } catch (e) {
+      // Local fallback safe
+    }
+    return false;
+  },
+
+  setPortalSwitcherEnabled(enabled) {
+    const val = !!enabled;
+    if (typeof localStorage !== 'undefined') {
+      try {
+        localStorage.setItem('sms_show_portal_switcher', val ? 'true' : 'false');
+      } catch (e) {
+        console.warn('Failed to save portal switcher state:', e);
+      }
+    }
+    if (typeof window !== 'undefined') {
+      try {
+        window.dispatchEvent(new CustomEvent('sms_platform_settings_updated', {
+          detail: { showPortalSwitcher: val }
+        }));
+        window.dispatchEvent(new Event('storage'));
+      } catch (e) {}
+    }
+    return val;
+  },
+
+  getDirectPortalHash(instituteOrTier) {
+    let tier = 'school';
+    if (typeof instituteOrTier === 'string') {
+      const s = instituteOrTier.toLowerCase();
+      if (s.includes('superadmin') || s.includes('hq')) return '#superadmin';
+      if (s.includes('uni') || s.includes('undergrad') || s.includes('hec')) return '#university-login';
+      if (s.includes('college') || s.includes('intermediate') || s.includes('inter')) return '#college-login';
+      return '#school-login';
+    }
+
+    if (instituteOrTier && typeof instituteOrTier === 'object') {
+      const type = (instituteOrTier.type || '').toLowerCase();
+      const tiers = Array.isArray(instituteOrTier.enabledTiers) ? instituteOrTier.enabledTiers : [];
+      if (type === 'university' || tiers.includes('undergraduate')) {
+        tier = 'university';
+      } else if (type === 'college' || tiers.includes('college')) {
+        tier = 'college';
+      } else {
+        tier = 'school';
+      }
+    }
+
+    return tier === 'university'
+      ? '#university-login'
+      : tier === 'college'
+        ? '#college-login'
+        : '#school-login';
+  },
+
+  getDirectPortalUrl(instituteOrTier) {
+    const hash = this.getDirectPortalHash(instituteOrTier);
+    if (typeof window !== 'undefined' && window.location) {
+      const origin = window.location.origin || '';
+      const pathname = window.location.pathname || '/';
+      return origin + pathname + hash;
+    }
+    return hash;
+  }
+};
+
+export default PlatformService;

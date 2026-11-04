@@ -22,7 +22,7 @@ import {
 import { useAuth } from '../../context/AuthContext'
 import { PortalFilterBar } from './PortalFilterBar'
 
-export const SuperadminLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier, selectedTiers, onSetTiers }) => {
+export const SuperadminLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier, selectedTiers, onSetTiers, showPortalSwitcher = false }) => {
   const { login } = useAuth()
 
   const [identifier, setIdentifier] = useState('')
@@ -82,13 +82,25 @@ export const SuperadminLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
       <div className="w-full max-w-[920px] z-10 flex flex-col items-center mt-12 sm:mt-0">
         
         {/* TOP SEGMENTED PORTAL SWITCHER & CHECKBOX FILTER BAR */}
-        <PortalFilterBar
-          activeTier="superadmin"
-          onSwitchTier={onSwitchTier}
-          selectedTiers={selectedTiers}
-          onSetTiers={onSetTiers}
-          isDark={true}
-        />
+        {showPortalSwitcher ? (
+          <PortalFilterBar
+            activeTier="superadmin"
+            onSwitchTier={onSwitchTier}
+            selectedTiers={selectedTiers}
+            onSetTiers={onSetTiers}
+            isDark={true}
+          />
+        ) : (
+          <div className="w-full flex items-center justify-center gap-2 mb-4 sm:mb-5">
+            <div className="px-4 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-slate-900/95 text-purple-300 border border-purple-500/40 shadow-lg shadow-purple-950/60 flex items-center gap-2">
+              <Lock className="w-3.5 h-3.5 text-purple-400" />
+              <span>🛡️ Super Administrator Root Console</span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-purple-500/20 text-purple-200 font-mono">
+                SECURE HQ
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Dual-Pane Card */}
         <div className="w-full rounded-3xl bg-slate-900/90 border border-slate-800 shadow-[0_20px_50px_rgba(0,0,0,0.6)] backdrop-blur-xl overflow-hidden grid grid-cols-1 md:grid-cols-12 relative">

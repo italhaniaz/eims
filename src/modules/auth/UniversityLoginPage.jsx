@@ -21,7 +21,7 @@ import {
 import { useAuth } from '../../context/AuthContext'
 import { PortalFilterBar } from './PortalFilterBar'
 
-export const UniversityLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier, selectedTiers, onSetTiers }) => {
+export const UniversityLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier, selectedTiers, onSetTiers, showPortalSwitcher = false }) => {
   const { login } = useAuth()
   const formRef = useRef(null)
 
@@ -210,12 +210,14 @@ export const UniversityLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
       <div className="w-full max-w-[960px] z-10 flex flex-col items-center mt-12 sm:mt-0">
         
         {/* TOP SEGMENTED PORTAL SWITCHER & CHECKBOX FILTER BAR */}
-        <PortalFilterBar
-          activeTier="university"
-          onSwitchTier={onSwitchTier}
-          selectedTiers={selectedTiers}
-          onSetTiers={onSetTiers}
-        />
+        {showPortalSwitcher && (
+          <PortalFilterBar
+            activeTier="university"
+            onSwitchTier={onSwitchTier}
+            selectedTiers={selectedTiers}
+            onSetTiers={onSetTiers}
+          />
+        )}
 
         {/* Dual-Pane Card */}
         <div className="w-full rounded-3xl bg-white border border-slate-200/90 shadow-[0_15px_45px_-5px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.02)] overflow-hidden grid grid-cols-1 md:grid-cols-12 relative">
@@ -536,6 +538,21 @@ export const UniversityLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
             </div>
           </div>
 
+        </div>
+
+        {/* Subtle Footer with Discreet HQ Link */}
+        <div className="w-full text-center mt-5 mb-2 text-xs text-slate-400 flex items-center justify-center gap-3">
+          <span>© {new Date().getFullYear()} Imperial University • HEC Academic & Faculty Portal</span>
+          <span>•</span>
+          <button
+            type="button"
+            onClick={() => onSwitchTier('superadmin')}
+            className="text-slate-400 hover:text-slate-600 text-[11px] font-medium inline-flex items-center gap-1 transition-colors cursor-pointer"
+            title="Headquarters Administrative Control"
+          >
+            <Lock className="w-3 h-3 text-slate-400" />
+            <span>System HQ</span>
+          </button>
         </div>
 
       </div>
