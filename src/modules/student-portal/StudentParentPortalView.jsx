@@ -1040,7 +1040,7 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
                     }`}>
                       {f.status}
                     </span>
-                    {f.status !== "Paid" && (
+                    {f.status !== "Paid" && campusGates.allowOnlineFeePayment && (
                       <button
                         type="button"
                         onClick={() => {
@@ -1131,6 +1131,12 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
         {/* TAB: RESULTS / TRANSCRIPT */}
         {activeTab === 'results' && (
           <div className="space-y-5">
+            {!campusGates.allowReportCardDownload && (
+              <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-center gap-2.5 shadow-2xs font-medium">
+                <Lock className="w-4 h-4 text-amber-600 shrink-0" />
+                <span>Official Report Card PDF downloads have been temporarily gated by campus administration. Online grade viewing remains active.</span>
+              </div>
+            )}
             <div className="bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 text-white p-6 rounded-2xl shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
                 <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded bg-white/20 text-purple-200">
@@ -1152,13 +1158,20 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
                     {isUniversity ? (studentProfile.cgpa || '3.72') : '440 / 450'}
                   </span>
                 </div>
-                <button
-                  onClick={() => toast.success('Official Result Transcript PDF downloaded successfully.')}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer"
-                >
-                  <Download className="w-4 h-4" />
-                  <span>Download Report</span>
-                </button>
+                {campusGates.allowReportCardDownload ? (
+                  <button
+                    onClick={() => toast.success('Official Result Transcript PDF downloaded successfully.')}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Download Report</span>
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-2 px-3.5 py-2.5 bg-white/10 backdrop-blur-md border border-white/20 text-purple-200 rounded-xl text-xs font-semibold">
+                    <Lock className="w-3.5 h-3.5 text-amber-300" />
+                    <span>Downloads Gated</span>
+                  </div>
+                )}
               </div>
             </div>
 

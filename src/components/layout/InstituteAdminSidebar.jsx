@@ -60,7 +60,7 @@ export const canRoleAccessRoute = (role, routeId) => {
   if (routeId === 'inst-student-portal') return true;
 
   const isAccountant = ['accountant', 'school_accountant', 'college_accountant', 'finance', 'uni_finance'].includes(userRole);
-  const isTeacher = ['teacher', 'faculty', 'school_teacher', 'college_faculty', 'uni_faculty'].includes(userRole);
+  const isTeacher = ['teacher', 'faculty', 'school_teacher', 'school_teacher_std', 'college_faculty', 'college_lecturer', 'uni_faculty', 'uni_lecturer'].includes(userRole);
   const isHod = ['hod', 'college_hod', 'dean', 'uni_dean'].includes(userRole);
   const isRegistrar = ['registrar', 'uni_registrar'].includes(userRole);
   const isController = ['controller', 'uni_controller'].includes(userRole);
@@ -78,18 +78,16 @@ export const canRoleAccessRoute = (role, routeId) => {
   }
 
   if (isTeacher) {
-    // Teacher & Faculty: Apni classes, attendance, marks entry, diary/lecture upload, timetable, leave apply, salary slip
+    // Teacher & Faculty: Apni classes, section students, attendance, marks entry, diary/lecture upload, timetable, learning
     return [
       'inst-dashboard',
+      'inst-students',
       'inst-classes',
       'inst-subjects',
       'inst-timetable',
       'inst-attendance',
       'inst-exams',
       'inst-learning',
-      'inst-teachers',
-      'inst-payroll',
-      'inst-research-fyp',
       'inst-discipline',
       'inst-notices'
     ].includes(routeId);

@@ -772,8 +772,8 @@ const validatePakistaniPhone = (phone) => {
 
   // Open Add Modal with Clean Defaults & Roll Number from 1
   const openAddModal = () => {
-    const hasConfiguredClasses = classes && classes.length > 0
-    const hasConfiguredSessions = sessionsList && sessionsList.length > 0
+    const hasConfiguredClasses = (classes && classes.length > 0) || (availableClasses && availableClasses.length > 0)
+    const hasConfiguredSessions = (sessionsList && sessionsList.length > 0) || Boolean(academicSession)
 
     if (!hasConfiguredClasses || !hasConfiguredSessions) {
       toast.warning('Pehle class aur session banayein.')
@@ -784,15 +784,31 @@ const validatePakistaniPhone = (phone) => {
     setEditingStudent(null)
     const generatedRoll = calculateNextRollNumber(currentLevelKey)
 
+    // Pre-populate class and section for Teacher In-Charge
+    let defaultClass = ''
+    let defaultSection = ''
+    if (user?.role === 'teacher') {
+      if (user.assignedClasses && user.assignedClasses.length > 0) {
+        const first = user.assignedClasses[0]
+        if (first.includes('-')) {
+          const parts = first.split('-')
+          defaultClass = parts[0].trim()
+          defaultSection = parts[1].replace(/section/i, '').trim()
+        } else {
+          defaultClass = first.trim()
+        }
+      }
+    }
+
     setFormData({
       ...initialFormState,
       rollNumber: generatedRoll,
       academicSession: academicSession || '2026-2027',
-      className: '', // Starts empty, required!
-      section: '',   // Starts empty, required!
-      bloodGroup: '', // Default "Select"
-      feeStatus: 'Pending', // Default "Pending"
-      vaccinationStatus: 'Unknown / Not provided' // Default Unknown
+      className: defaultClass,
+      section: defaultSection,
+      bloodGroup: '',
+      feeStatus: 'Pending',
+      vaccinationStatus: 'Unknown / Not provided'
     })
     setFormErrors({})
     setActiveStep(1)
@@ -2849,6 +2865,12 @@ const validatePakistaniPhone = (phone) => {
                 {currentLevelKey === 'school' && (
                   <div className="space-y-4 p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
                     <span className="text-xs font-bold text-slate-800 uppercase block">School Grade & Section Configuration</span>
+                    {user?.role === 'teacher' && (
+                      <div className="p-2.5 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800 flex items-center gap-2 font-medium">
+                        <UserCheck className="w-4 h-4 text-blue-600 shrink-0" />
+                        <span><strong>Class In-Charge Scope:</strong> Enrolling student for your assigned section ({formData.className || 'Assigned Class'} - Section {formData.section || 'Assigned Section'}).</span>
+                      </div>
+                    )}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div>
                         <label className="block text-xs font-bold text-slate-700 uppercase mb-1">

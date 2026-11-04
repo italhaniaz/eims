@@ -55,11 +55,20 @@ export const SchoolLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier }) 
     },
     {
       role: 'school_teacher',
-      name: 'Teacher Portal',
-      badge: 'Pick 1',
-      scope: 'Apni classes, attendance, marks entry, diary upload, timetable, leave apply',
+      name: 'Teacher In-Charge (Enrollment ON)',
+      badge: 'Enrollment ON',
+      scope: 'Sir Salman Ahmed: Grade 10 In-Charge with student enrollment permissions',
       email: 'teacher.school@cityschool.edu',
       iconEmoji: '👨‍🏫',
+      type: 'subportal'
+    },
+    {
+      role: 'school_teacher_std',
+      name: 'Regular Teacher (Standard - No Enrollment)',
+      badge: 'Enrollment OFF',
+      scope: 'Ms. Ayesha Siddiqui: Science teacher with standard view (enrollment hidden)',
+      email: 'ayesha.teacher@cityschool.edu',
+      iconEmoji: '👩‍🏫',
       type: 'subportal'
     },
     {

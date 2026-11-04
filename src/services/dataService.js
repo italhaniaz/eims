@@ -1,6 +1,217 @@
 import { supabase, isSupabaseConfigured } from './supabaseClient.js'
 
 export const defaultInitialTeachers = [
+  // 1. School Tier: City School Model Town Campus (inst-2)
+  {
+    id: 'tch-sch-1',
+    empId: 'STF-SCH-001',
+    name: 'Sir Salman Ahmed',
+    fatherHusbandName: 'Muhammad Ahmed',
+    gender: 'Male',
+    cnic: '35201-1122334-1',
+    phone: '0300-1122334',
+    email: 'teacher.school@cityschool.edu',
+    address: 'Model Town C Block, Lahore',
+    city: 'Lahore',
+    category: 'Teaching',
+    level: 'school',
+    department: 'Mathematics & Science',
+    designation: 'Senior Class Teacher & Grade 10 In-Charge',
+    role: 'Class In-Charge',
+    roleTitle: 'Class In-Charge (Grade 10)',
+    isClassIncharge: true,
+    isHod: false,
+    campus: 'City School Model Town Campus',
+    instituteId: 'inst-2',
+    status: 'Active',
+    employmentType: 'Permanent',
+    highestQualification: 'M.Sc Mathematics',
+    qualification: 'M.Sc Mathematics',
+    specialization: 'Advanced Algebra & Calculus',
+    experienceYears: '10',
+    salaryType: 'Monthly Fixed',
+    basicSalary: 95000,
+    grossSalary: 125000,
+    netSalary: 118000,
+    salary: 'PKR 125,000',
+    joiningDate: '2021-08-15'
+  },
+  {
+    id: 'tch-sch-2',
+    empId: 'STF-SCH-002',
+    name: 'Ms. Ayesha Siddiqui',
+    fatherHusbandName: 'Farooq Siddiqui',
+    gender: 'Female',
+    cnic: '35201-2233445-2',
+    phone: '0301-2233445',
+    email: 'ayesha.teacher@cityschool.edu',
+    address: 'Faisal Town, Lahore',
+    city: 'Lahore',
+    category: 'Teaching',
+    level: 'school',
+    department: 'General Science & Biology',
+    designation: 'General Science Teacher',
+    role: 'Subject Teacher',
+    roleTitle: 'Standard Teacher',
+    isClassIncharge: false,
+    isHod: false,
+    campus: 'City School Model Town Campus',
+    instituteId: 'inst-2',
+    status: 'Active',
+    employmentType: 'Permanent',
+    highestQualification: 'B.Sc / B.Ed',
+    qualification: 'B.Sc (Hons) Biological Sciences',
+    specialization: 'Cell Biology',
+    experienceYears: '4',
+    salaryType: 'Monthly Fixed',
+    basicSalary: 70000,
+    grossSalary: 90000,
+    netSalary: 85000,
+    salary: 'PKR 90,000',
+    joiningDate: '2023-01-10'
+  },
+
+  // 2. College Tier: Roots International College & Academy (inst-3)
+  {
+    id: 'tch-col-1',
+    empId: 'STF-COL-001',
+    name: 'Dr. Nadia Hashmi',
+    fatherHusbandName: 'Dr. Hashmi Raza',
+    gender: 'Female',
+    cnic: '35201-2567890-2',
+    phone: '0301-2233445',
+    email: 'faculty.college@roots.edu',
+    address: 'Harley Street, Rawalpindi',
+    city: 'Rawalpindi',
+    category: 'Teaching',
+    level: 'college',
+    department: 'Chemistry & Pre-Medical',
+    designation: 'Associate Professor & Pre-Med In-Charge',
+    role: 'Faculty Specialist / In-Charge',
+    roleTitle: 'Class In-Charge (Pre-Medical)',
+    isClassIncharge: true,
+    isHod: false,
+    campus: 'Roots International College & Academy',
+    instituteId: 'inst-3',
+    status: 'Active',
+    employmentType: 'Permanent',
+    highestQualification: 'Ph.D. Organic Chemistry',
+    qualification: 'Ph.D. Organic Chemistry',
+    specialization: 'Bio-Organic Synthesis',
+    experienceYears: '9',
+    salaryType: 'Monthly Fixed',
+    basicSalary: 125000,
+    grossSalary: 165000,
+    netSalary: 152000,
+    salary: 'PKR 165,000',
+    joiningDate: '2022-01-10'
+  },
+  {
+    id: 'tch-col-2',
+    empId: 'STF-COL-002',
+    name: 'Lecturer Bilal Zubair',
+    fatherHusbandName: 'Zubair Akhtar',
+    gender: 'Male',
+    cnic: '35201-6901234-6',
+    phone: '0312-6677889',
+    email: 'lecturer.college@roots.edu',
+    address: 'Saddar, Rawalpindi',
+    city: 'Rawalpindi',
+    category: 'Teaching',
+    level: 'college',
+    department: 'Physics',
+    designation: 'Lecturer in Physics',
+    role: 'Subject Lecturer',
+    roleTitle: 'Standard Lecturer',
+    isClassIncharge: false,
+    isHod: false,
+    campus: 'Roots International College & Academy',
+    instituteId: 'inst-3',
+    status: 'Active',
+    employmentType: 'Permanent',
+    highestQualification: 'M.Sc Physics',
+    qualification: 'M.Sc Physics',
+    specialization: 'Modern Electromagnetism',
+    experienceYears: '5',
+    salaryType: 'Monthly Fixed',
+    basicSalary: 85000,
+    grossSalary: 110000,
+    netSalary: 104000,
+    salary: 'PKR 110,000',
+    joiningDate: '2023-08-15'
+  },
+
+  // 3. University Tier: Institute of Applied Sciences & Undergraduates (inst-4)
+  {
+    id: 'tch-uni-1',
+    empId: 'STF-UNI-001',
+    name: 'Dr. Shahzad Rafiq',
+    fatherHusbandName: 'Rafiq Ahmed',
+    gender: 'Male',
+    cnic: '35201-7890123-5',
+    phone: '0333-8899001',
+    email: 'faculty.uni@ias.edu.pk',
+    address: 'Sector H-12, Islamabad',
+    city: 'Islamabad',
+    category: 'Teaching',
+    level: 'university',
+    department: 'Computer Science & AI',
+    designation: 'Assistant Professor & Program Coordinator',
+    role: 'Program Coordinator',
+    roleTitle: 'Coordinator / In-Charge',
+    isClassIncharge: true,
+    isHod: false,
+    campus: 'Institute of Applied Sciences & Undergraduates',
+    instituteId: 'inst-4',
+    status: 'Active',
+    employmentType: 'Permanent',
+    highestQualification: 'Ph.D. Computer Science',
+    qualification: 'Ph.D. Computer Science',
+    specialization: 'Machine Learning & Cloud Architecture',
+    experienceYears: '8',
+    salaryType: 'Monthly Fixed',
+    basicSalary: 160000,
+    grossSalary: 215000,
+    netSalary: 198000,
+    salary: 'PKR 215,000',
+    joiningDate: '2021-09-01'
+  },
+  {
+    id: 'tch-uni-2',
+    empId: 'STF-UNI-002',
+    name: 'Engr. Usman Ali',
+    fatherHusbandName: 'Ali Asghar',
+    gender: 'Male',
+    cnic: '35201-8901234-7',
+    phone: '0322-9900112',
+    email: 'lecturer.uni@ias.edu.pk',
+    address: 'Sector F-10, Islamabad',
+    city: 'Islamabad',
+    category: 'Teaching',
+    level: 'university',
+    department: 'Computer Science & AI',
+    designation: 'Lab Instructor & Junior Lecturer',
+    role: 'Teaching Assistant / Lab Instructor',
+    roleTitle: 'Standard Lab Instructor',
+    isClassIncharge: false,
+    isHod: false,
+    campus: 'Institute of Applied Sciences & Undergraduates',
+    instituteId: 'inst-4',
+    status: 'Active',
+    employmentType: 'Permanent',
+    highestQualification: 'BS Computer Engineering',
+    qualification: 'BS Computer Engineering',
+    specialization: 'Computer Networks & Operating Systems',
+    experienceYears: '3',
+    salaryType: 'Monthly Fixed',
+    basicSalary: 85000,
+    grossSalary: 115000,
+    netSalary: 108000,
+    salary: 'PKR 115,000',
+    joiningDate: '2023-02-01'
+  },
+
+  // Central / Beaconhouse Central High School (inst-1)
   {
     id: 'tch-1',
     empId: 'STF-001',
@@ -17,6 +228,8 @@ export const defaultInitialTeachers = [
     department: 'Mathematics',
     designation: 'Head of Mathematics Department',
     role: 'HOD / Senior Lecturer',
+    roleTitle: 'HOD / Senior Lecturer',
+    isClassIncharge: true,
     isHod: true,
     campus: 'Beaconhouse Central High School',
     instituteId: 'inst-1',
@@ -34,38 +247,6 @@ export const defaultInitialTeachers = [
     joiningDate: '2021-08-15'
   },
   {
-    id: 'tch-2',
-    empId: 'STF-002',
-    name: 'Dr. Nadia Hashmi',
-    fatherHusbandName: 'Dr. Hashmi Raza',
-    gender: 'Female',
-    cnic: '35201-2567890-2',
-    phone: '0301-2233445',
-    email: 'nadia.hashmi@cityschool.edu.pk',
-    address: 'Model Town, Lahore',
-    city: 'Lahore',
-    category: 'Teaching',
-    level: 'college',
-    department: 'Chemistry',
-    designation: 'Associate Professor of Chemistry',
-    role: 'Faculty Specialist',
-    isHod: false,
-    campus: 'City School Model Town Campus',
-    instituteId: 'inst-2',
-    status: 'Active',
-    employmentType: 'Permanent',
-    highestQualification: 'Ph.D. Organic Chemistry',
-    qualification: 'Ph.D. Organic Chemistry',
-    specialization: 'Bio-Organic Synthesis',
-    experienceYears: '9',
-    salaryType: 'Monthly Fixed',
-    basicSalary: 125000,
-    grossSalary: 165000,
-    netSalary: 152000,
-    salary: 'PKR 165,000',
-    joiningDate: '2022-01-10'
-  },
-  {
     id: 'tch-3',
     empId: 'STF-003',
     name: 'Syed Ali Raza',
@@ -81,6 +262,8 @@ export const defaultInitialTeachers = [
     department: 'Physics',
     designation: 'Senior Physics Instructor',
     role: 'Section Coordinator',
+    roleTitle: 'Section Coordinator',
+    isClassIncharge: false,
     isHod: false,
     campus: 'Beaconhouse Central High School',
     instituteId: 'inst-1',
@@ -98,40 +281,6 @@ export const defaultInitialTeachers = [
     joiningDate: '2023-02-01'
   },
   {
-    id: 'tch-4',
-    empId: 'STF-004',
-    name: 'Amina Batool',
-    fatherHusbandName: 'Muhammad Akram',
-    gender: 'Female',
-    cnic: '35201-4789012-4',
-    phone: '0333-4455667',
-    email: 'amina.batool@roots.edu.pk',
-    address: 'F-8/3, Islamabad',
-    city: 'Islamabad',
-    category: 'Teaching',
-    level: 'school',
-    department: 'English Literature',
-    designation: 'English Literature Lecturer',
-    role: 'Class Teacher',
-    isClassTeacher: true,
-    classTeacherClass: 'Grade 9',
-    classTeacherSection: 'A',
-    campus: 'Roots International College & Academy',
-    instituteId: 'inst-3',
-    status: 'On Leave',
-    employmentType: 'Permanent',
-    highestQualification: 'MA English',
-    qualification: 'MA English',
-    specialization: 'Post-Colonial British Literature',
-    experienceYears: '5',
-    salaryType: 'Monthly Fixed',
-    basicSalary: 75000,
-    grossSalary: 98000,
-    netSalary: 92000,
-    salary: 'PKR 98,000',
-    joiningDate: '2023-08-15'
-  },
-  {
     id: 'tch-5',
     empId: 'STF-005',
     name: 'Muhammad Waqas',
@@ -147,6 +296,8 @@ export const defaultInitialTeachers = [
     department: 'Accounts & Finance',
     designation: 'Chief Campus Bursar & Accountant',
     role: 'Senior Accountant',
+    roleTitle: 'Senior Accountant',
+    isClassIncharge: false,
     isHod: false,
     campus: 'Beaconhouse Central High School',
     instituteId: 'inst-1',
@@ -162,38 +313,6 @@ export const defaultInitialTeachers = [
     netSalary: 104000,
     salary: 'PKR 110,000',
     joiningDate: '2022-06-01'
-  },
-  {
-    id: 'tch-6',
-    empId: 'STF-006',
-    name: 'Engr. Bilal Zubair',
-    fatherHusbandName: 'Zubair Akhtar',
-    gender: 'Male',
-    cnic: '35201-6901234-6',
-    phone: '0312-6677889',
-    email: 'bilal.zubair@cias.edu.pk',
-    address: 'Sector H-12, Islamabad',
-    city: 'Islamabad',
-    category: 'Teaching',
-    level: 'university',
-    department: 'Computer Science & AI',
-    designation: 'Assistant Professor of Computing',
-    role: 'Lead Instructor',
-    isHod: false,
-    campus: 'Institute of Applied Sciences & Undergraduates',
-    instituteId: 'inst-4',
-    status: 'Active',
-    employmentType: 'Permanent',
-    highestQualification: 'MS Computer Science',
-    qualification: 'MS Computer Science',
-    specialization: 'Deep Learning & Distributed Systems',
-    experienceYears: '6',
-    salaryType: 'Monthly Fixed',
-    basicSalary: 130000,
-    grossSalary: 175000,
-    netSalary: 160000,
-    salary: 'PKR 175,000',
-    joiningDate: '2022-09-01'
   }
 ]
 
@@ -406,15 +525,157 @@ export const defaultInitialFeeSettings = [
   }
 ]
 
-export const defaultInitialStudents = [
-  { id: 'std-1', name: 'Abdullah Khan', rollNumber: 'BHS-2026-0001', campus: 'Beaconhouse Central High', instituteId: 'inst-1', wing: 'Middle Wing', className: 'Grade 8', section: 'A', status: 'Active', gender: 'Male', phone: '0300-1234567', bFormCnic: '35201-1122334-1', feeStatus: 'Paid', fatherName: 'Farooq Khan' },
-  { id: 'std-2', name: 'Zoya Fatima', rollNumber: 'BHS-2026-0002', campus: 'Beaconhouse Central High', instituteId: 'inst-1', wing: 'High School', className: 'Grade 10', section: 'B', status: 'Active', gender: 'Female', phone: '0301-9876543', bFormCnic: '35201-2233445-2', feeStatus: 'Paid', fatherName: 'Tariq Mehmood' },
-  { id: 'std-3', name: 'Ahmed Ali Raza', rollNumber: 'TCS-2026-0014', campus: 'The City School Senior Branch', instituteId: 'inst-2', wing: 'College Wing', className: 'FSc Pre-Medical', section: 'A', status: 'Active', gender: 'Male', phone: '0321-4567890', bFormCnic: '35201-3344556-3', feeStatus: 'Pending', fatherName: 'Ali Raza' },
-  { id: 'std-4', name: 'Hania Imran', rollNumber: 'LGS-2026-0088', campus: 'Lahore Grammar Model Town', instituteId: 'inst-3', wing: 'Primary Wing', className: 'Grade 4', section: 'A', status: 'Suspended', gender: 'Female', phone: '0333-7890123', bFormCnic: '35201-4455667-4', feeStatus: 'Paid', fatherName: 'Imran Bashir' },
-  { id: 'std-5', name: 'Rayyan Siddiqui', rollNumber: 'BHS-2026-0077', campus: 'Beaconhouse Central High', instituteId: 'inst-1', wing: 'Elementary Wing', className: 'Grade 2', section: 'A', status: 'Active', gender: 'Male', phone: '0345-6789012', bFormCnic: '35201-5566778-5', feeStatus: 'Paid', fatherName: 'Siddiqui Akhtar' },
-  { id: 'std-6', name: 'Mahnoor Tariq', rollNumber: 'TCS-2026-0029', campus: 'The City School Senior Branch', instituteId: 'inst-2', wing: 'High School', className: 'Grade 9', section: 'C', status: 'Active', gender: 'Female', phone: '0312-3456789', bFormCnic: '35201-6677889-6', feeStatus: 'Paid', fatherName: 'Tariq Javed' }
+export const defaultInitialClasses = [
+  // School Tier: City School Model Town Campus (inst-2)
+  {
+    id: 'cls-sch-1',
+    name: 'Grade 10',
+    programLevel: 'secondary',
+    academicSession: '2026-2027',
+    instituteId: 'inst-2',
+    section: 'A, B',
+    capacity: 70,
+    enrolled: 42,
+    roomNo: 'Room 201',
+    classTeacher: 'Sir Salman Ahmed',
+    sections: [
+      { id: 'sec-sch-1a', name: 'A', roomNo: 'Room 201', capacity: 35, enrolled: 22, classTeacher: 'Sir Salman Ahmed', shift: 'Morning', medium: 'English' },
+      { id: 'sec-sch-1b', name: 'B', roomNo: 'Room 202', capacity: 35, enrolled: 20, classTeacher: 'Ms. Ayesha Siddiqui', shift: 'Morning', medium: 'English' }
+    ]
+  },
+  {
+    id: 'cls-sch-2',
+    name: 'Grade 9',
+    programLevel: 'secondary',
+    academicSession: '2026-2027',
+    instituteId: 'inst-2',
+    section: 'A, B',
+    capacity: 70,
+    enrolled: 38,
+    roomNo: 'Room 105',
+    classTeacher: 'Sir Salman Ahmed',
+    sections: [
+      { id: 'sec-sch-2a', name: 'A', roomNo: 'Room 105', capacity: 35, enrolled: 20, classTeacher: '', shift: 'Morning', medium: 'English' },
+      { id: 'sec-sch-2b', name: 'B', roomNo: 'Room 106', capacity: 35, enrolled: 18, classTeacher: '', shift: 'Morning', medium: 'English' }
+    ]
+  },
+  {
+    id: 'cls-sch-3',
+    name: 'Grade 8',
+    programLevel: 'elementary',
+    academicSession: '2026-2027',
+    instituteId: 'inst-2',
+    section: 'A',
+    capacity: 35,
+    enrolled: 25,
+    roomNo: 'Room 102',
+    classTeacher: 'Ms. Ayesha Siddiqui',
+    sections: [
+      { id: 'sec-sch-3a', name: 'A', roomNo: 'Room 102', capacity: 35, enrolled: 25, classTeacher: 'Ms. Ayesha Siddiqui', shift: 'Morning', medium: 'English' }
+    ]
+  },
+
+  // College Tier: Roots International College (inst-3)
+  {
+    id: 'cls-col-1',
+    name: 'F.Sc Pre-Medical (Part II)',
+    programLevel: 'higher-secondary',
+    academicSession: '2026-2027',
+    instituteId: 'inst-3',
+    section: 'Pre-Med A, Pre-Med B',
+    capacity: 80,
+    enrolled: 54,
+    roomNo: 'Lecture Hall 1',
+    classTeacher: 'Dr. Nadia Hashmi',
+    sections: [
+      { id: 'sec-col-1a', name: 'Pre-Med A', roomNo: 'Lecture Hall 1', capacity: 40, enrolled: 30, classTeacher: 'Dr. Nadia Hashmi', shift: 'Morning', medium: 'English' },
+      { id: 'sec-col-1b', name: 'Pre-Med B', roomNo: 'Lecture Hall 2', capacity: 40, enrolled: 24, classTeacher: 'Lecturer Bilal Zubair', shift: 'Morning', medium: 'English' }
+    ]
+  },
+  {
+    id: 'cls-col-2',
+    name: 'ICS (Part I)',
+    programLevel: 'higher-secondary',
+    academicSession: '2026-2027',
+    instituteId: 'inst-3',
+    section: 'A',
+    capacity: 45,
+    enrolled: 32,
+    roomNo: 'CS Lab 2',
+    classTeacher: 'Dr. Nadia Hashmi',
+    sections: [
+      { id: 'sec-col-2a', name: 'A', roomNo: 'CS Lab 2', capacity: 45, enrolled: 32, classTeacher: '', shift: 'Morning', medium: 'English' }
+    ]
+  },
+
+  // University Tier: IAS (inst-4)
+  {
+    id: 'cls-uni-1',
+    name: 'BS Computer Science - Semester 6',
+    programLevel: 'university',
+    academicSession: '2026-2027',
+    instituteId: 'inst-4',
+    section: 'Cohort A',
+    capacity: 50,
+    enrolled: 38,
+    roomNo: 'Auditorium B',
+    classTeacher: 'Dr. Shahzad Rafiq',
+    sections: [
+      { id: 'sec-uni-1a', name: 'Cohort A', roomNo: 'Auditorium B', capacity: 50, enrolled: 38, classTeacher: 'Dr. Shahzad Rafiq', shift: 'Morning', medium: 'English' }
+    ]
+  },
+  {
+    id: 'cls-uni-2',
+    name: 'BS Computer Science - Semester 4',
+    programLevel: 'university',
+    academicSession: '2026-2027',
+    instituteId: 'inst-4',
+    section: 'Cohort A',
+    capacity: 50,
+    enrolled: 40,
+    roomNo: 'Lab 4',
+    classTeacher: 'Engr. Usman Ali',
+    sections: [
+      { id: 'sec-uni-2a', name: 'Cohort A', roomNo: 'Lab 4', capacity: 50, enrolled: 40, classTeacher: 'Engr. Usman Ali', shift: 'Morning', medium: 'English' }
+    ]
+  },
+
+  // Central / Beaconhouse (inst-1)
+  {
+    id: 'cls-bhs-1',
+    name: '10th Grade',
+    programLevel: 'secondary',
+    academicSession: '2026-2027',
+    instituteId: 'inst-1',
+    section: 'Super Section',
+    capacity: 40,
+    enrolled: 28,
+    roomNo: 'Room 301',
+    classTeacher: 'Prof. Tariq Jamil',
+    sections: [
+      { id: 'sec-bhs-1a', name: 'Super Section', roomNo: 'Room 301', capacity: 40, enrolled: 28, classTeacher: 'Prof. Tariq Jamil', shift: 'Morning', medium: 'English' }
+    ]
+  }
 ]
 
+export const defaultInitialStudents = [
+  // School Tier (inst-2)
+  { id: 'std-sch-1', name: 'Hamza Farooq', rollNumber: 'CSM-2026-104', campus: 'City School Model Town Campus', instituteId: 'inst-2', wing: 'High School', className: 'Grade 10', section: 'A', status: 'Active', gender: 'Male', phone: '0300-1234567', bFormCnic: '35201-7890123-1', feeStatus: 'Pending', fatherName: 'Farooq Ahmed' },
+  { id: 'std-sch-2', name: 'Ayesha Tariq', rollNumber: 'CSM-2026-105', campus: 'City School Model Town Campus', instituteId: 'inst-2', wing: 'High School', className: 'Grade 10', section: 'B', status: 'Active', gender: 'Female', phone: '0301-9876543', bFormCnic: '35201-8901234-2', feeStatus: 'Paid', fatherName: 'Tariq Mehmood' },
+  { id: 'std-sch-3', name: 'Bilal Khan', rollNumber: 'CSM-2026-106', campus: 'City School Model Town Campus', instituteId: 'inst-2', wing: 'High School', className: 'Grade 9', section: 'A', status: 'Active', gender: 'Male', phone: '0321-4567890', bFormCnic: '35201-9012345-3', feeStatus: 'Paid', fatherName: 'Aslam Khan' },
+
+  // College Tier (inst-3)
+  { id: 'std-col-1', name: 'Zainab Fatima', rollNumber: 'COL-24-101', campus: 'Roots International College & Academy', instituteId: 'inst-3', wing: 'College Wing', className: 'F.Sc Pre-Medical (Part II)', section: 'Pre-Med A', status: 'Active', gender: 'Female', phone: '0321-4455667', bFormCnic: '35201-4455667-4', feeStatus: 'Paid', fatherName: 'Tariq Sheikh' },
+  { id: 'std-col-2', name: 'Bilal Ahmed Raza', rollNumber: 'COL-24-102', campus: 'Roots International College & Academy', instituteId: 'inst-3', wing: 'College Wing', className: 'ICS (Part I)', section: 'A', status: 'Active', gender: 'Male', phone: '0333-8899001', bFormCnic: '35201-5566778-5', feeStatus: 'Pending', fatherName: 'Syed Ali Raza' },
+
+  // University Tier (inst-4)
+  { id: 'std-uni-1', name: 'Daniyal Qureshi', rollNumber: 'BSCS-F23-018', campus: 'Institute of Applied Sciences & Undergraduates', instituteId: 'inst-4', wing: 'Undergraduate Wing', className: 'BS Computer Science - Semester 6', section: 'Cohort A', status: 'Active', gender: 'Male', phone: '0312-3344556', bFormCnic: '35201-6677889-6', feeStatus: 'Paid', fatherName: 'Qureshi Nadeem', cgpa: '3.72' },
+  { id: 'std-uni-2', name: 'Sarah Khan', rollNumber: 'BSCS-F23-019', campus: 'Institute of Applied Sciences & Undergraduates', instituteId: 'inst-4', wing: 'Undergraduate Wing', className: 'BS Computer Science - Semester 4', section: 'Cohort A', status: 'Active', gender: 'Female', phone: '0345-6677889', bFormCnic: '35201-7788990-7', feeStatus: 'Pending', fatherName: 'Imran Khan', cgpa: '3.55' },
+
+  // Beaconhouse Central High (inst-1)
+  { id: 'std-1', name: 'Abdullah Khan', rollNumber: 'BHS-2026-0001', campus: 'Beaconhouse Central High School', instituteId: 'inst-1', wing: 'Middle Wing', className: 'Grade 8', section: 'A', status: 'Active', gender: 'Male', phone: '0300-1234567', bFormCnic: '35201-1122334-1', feeStatus: 'Paid', fatherName: 'Farooq Khan' },
+  { id: 'std-2', name: 'Zoya Fatima', rollNumber: 'BHS-2026-0002', campus: 'Beaconhouse Central High School', instituteId: 'inst-1', wing: 'High School', className: '10th Grade', section: 'Super Section', status: 'Active', gender: 'Female', phone: '0301-9876543', bFormCnic: '35201-2233445-2', feeStatus: 'Paid', fatherName: 'Tariq Mehmood' }
+]
 
 // Initial clean state with ZERO entries so user can enter all records themselves:
 const cleanZeroData = {
@@ -436,7 +697,7 @@ const cleanZeroData = {
   users: [],
   students: defaultInitialStudents,
   teachers: defaultInitialTeachers,
-  classes: [],
+  classes: defaultInitialClasses,
   fees: [],
   exams: [],
   notices: [],
@@ -764,6 +1025,12 @@ export const getStoredData = () => {
       if (!Array.isArray(parsed.students) || parsed.students.length === 0) {
         parsed.students = defaultInitialStudents
         try { localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed)) } catch {}
+      } else {
+        defaultInitialStudents.forEach(ds => {
+          if (!parsed.students.some(s => s.rollNumber === ds.rollNumber)) {
+            parsed.students.push(ds)
+          }
+        })
       }
       if (!Array.isArray(parsed.admissionsPipeline) || parsed.admissionsPipeline.length === 0) {
         parsed.admissionsPipeline = defaultInitialAdmissionsPipeline
@@ -772,9 +1039,22 @@ export const getStoredData = () => {
       if (!Array.isArray(parsed.teachers) || parsed.teachers.length === 0) {
         parsed.teachers = defaultInitialTeachers
         try { localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed)) } catch {}
+      } else {
+        defaultInitialTeachers.forEach(dt => {
+          if (!parsed.teachers.some(t => t.email === dt.email || t.id === dt.id)) {
+            parsed.teachers.push(dt)
+          }
+        })
       }
-      if (!Array.isArray(parsed.classes)) {
-        parsed.classes = []
+      if (!Array.isArray(parsed.classes) || parsed.classes.length === 0) {
+        parsed.classes = defaultInitialClasses
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed)) } catch {}
+      } else {
+        defaultInitialClasses.forEach(dc => {
+          if (!parsed.classes.some(c => c.name === dc.name && c.instituteId === dc.instituteId)) {
+            parsed.classes.push(dc)
+          }
+        })
       }
       // Live timetable store preserved
       if (!parsed.timetable || typeof parsed.timetable !== 'object') {
@@ -791,7 +1071,11 @@ export const getStoredData = () => {
   }
   
   // Default fresh zero state
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(cleanZeroData))
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cleanZeroData))
+    }
+  } catch (_) {}
   return cleanZeroData
 }
 
@@ -1295,10 +1579,18 @@ export const DataService = {
     if (!teacherId) return { canEnrollStudents: false, canPublishMarks: false, canBroadcastNotices: false, canEditAttendanceHistory: false, canManageClassDiary: true };
     const store = getStoredData();
     const perms = store.teacherPermissions || {};
+
+    // 1. Direct match by key
     if (perms[teacherId]) return perms[teacherId];
 
+    // 2. Cross-reference teacher by ID or Email
     const teacher = (store.teachers || []).find(t => t.id === teacherId || t.email === teacherId);
-    const roleStr = ((teacher?.roleTitle || '') + ' ' + (teacher?.designation || '')).toLowerCase();
+    if (teacher) {
+      if (perms[teacher.id]) return perms[teacher.id];
+      if (teacher.email && perms[teacher.email]) return perms[teacher.email];
+    }
+
+    const roleStr = ((teacher?.roleTitle || '') + ' ' + (teacher?.designation || '') + ' ' + (teacher?.role || '')).toLowerCase();
     const isHead = teacher && (
       roleStr.includes('in-charge') ||
       roleStr.includes('incharge') ||
@@ -1322,20 +1614,30 @@ export const DataService = {
     if (!teacherId) return null;
     const store = getStoredData();
     store.teacherPermissions = store.teacherPermissions || {};
-    store.teacherPermissions[teacherId] = {
-      ...this.getTeacherPermissions(teacherId),
+    const existing = this.getTeacherPermissions(teacherId);
+    const updated = {
+      ...existing,
       ...permissions
     };
+
+    store.teacherPermissions[teacherId] = updated;
+
+    const teacher = (store.teachers || []).find(t => t.id === teacherId || t.email === teacherId);
+    if (teacher) {
+      if (teacher.id) store.teacherPermissions[teacher.id] = updated;
+      if (teacher.email) store.teacherPermissions[teacher.email] = updated;
+    }
+
     saveStoredData(store);
 
     if (typeof window !== 'undefined') {
       try {
         window.dispatchEvent(new CustomEvent('sms_permissions_updated', {
-          detail: { teacherId, permissions: store.teacherPermissions[teacherId] }
+          detail: { teacherId, permissions: updated }
         }));
       } catch (_) {}
     }
-    return store.teacherPermissions[teacherId];
+    return updated;
   },
 
   // Campus Student & Parent Portal Feature Gates
