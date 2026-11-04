@@ -82,8 +82,14 @@ export const CollegeBoardExamsView = ({ currentInstitute }) => {
     } catch {}
   }, [batches, storageKey])
 
-  // Demo Roll Number Slips
-  const [rollNumberSlips, setRollNumberSlips] = useState([
+  const slipsStorageKey = `sms_college_board_slips_${currentInstitute?.id || 'default'}`
+  // Persistent Roll Number Slips
+  const [rollNumberSlips, setRollNumberSlips] = useState(() => {
+    try {
+      const saved = localStorage.getItem(slipsStorageKey)
+      if (saved) return JSON.parse(saved)
+    } catch {}
+    return [
     {
       id: 'SLIP-01',
       rollNo: '710429',
@@ -126,7 +132,13 @@ export const CollegeBoardExamsView = ({ currentInstitute }) => {
       attendancePercentage: 66,
       overrideReason: null
     }
-  ])
+  ]})
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(slipsStorageKey, JSON.stringify(rollNumberSlips))
+    } catch {}
+  }, [rollNumberSlips, slipsStorageKey])
 
   const handleApplyPrincipalOverride = (e) => {
     e.preventDefault()

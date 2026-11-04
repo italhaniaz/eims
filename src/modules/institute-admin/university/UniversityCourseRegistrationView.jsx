@@ -165,6 +165,10 @@ export const UniversityCourseRegistrationView = ({ currentInstitute }) => {
 
   const handleApprove = (id) => {
     const targetReq = registrationRequests.find(r => r.id === id)
+    if (targetReq?.financeStatus === 'Pending Dues') {
+      toast.error(`Finance Hold: "${targetReq.studentName}" has uncleared semester tuition dues. Clearance from Treasurer / Accounts Office is required before course enrollment approval.`)
+      return
+    }
     const hasUnmetPrereq = targetReq?.courses?.some(c => c.prereqMet === false)
     if (hasUnmetPrereq && !targetReq?.deanWaiver) {
       setDeanWaiverModalReq(targetReq)
@@ -450,16 +454,30 @@ export const UniversityCourseRegistrationView = ({ currentInstitute }) => {
                         <div className="text-[11px] text-slate-400">{req.advisorName}</div>
                       </td>
                       <td className="py-3.5 px-4">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
-                          req.status === 'Approved'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : req.status === 'Pending'
-                            ? 'bg-amber-100 text-amber-800'
-                            : 'bg-rose-100 text-rose-800'
-                        }`}>
-                          {req.status === 'Approved' ? <CheckCircle2 className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
-                          {req.status}
-                        </span>
+                        <div className="space-y-1">
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
+                            req.status === 'Approved'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : req.status === 'Pending'
+                              ? 'bg-amber-100 text-amber-800'
+                              : 'bg-rose-100 text-rose-800'
+                          }`}>
+                            {req.status === 'Approved' ? <CheckCircle2 className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
+                            {req.status}
+                          </span>
+                          <div>
+                            <span 
+                              onClick={() => {
+                                setRegistrationRequests(prev => prev.map(r => r.id === req.id ? { ...r, financeStatus: r.financeStatus === 'Pending Dues' ? 'Cleared' : 'Pending Dues' } : r))
+                                toast.success(`Finance status toggled for ${req.studentName}`)
+                              }}
+                              className={`text-[9px] font-bold px-1.5 py-0.5 rounded cursor-pointer border ${req.financeStatus === 'Pending Dues' ? 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100' : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'}`} 
+                              title="Click to toggle Finance Clearance"
+                            >
+                              {req.financeStatus === 'Pending Dues' ? 'Dues Pending ⚠️' : 'Tuition Cleared ✓'}
+                            </span>
+                          </div>
+                        </div>
                       </td>
                       <td className="py-3.5 px-4 text-right">
                         {req.status !== 'Approved' ? (

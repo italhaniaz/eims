@@ -238,36 +238,104 @@ export const StudentParentPortalView = () => {
     }
   }, [isSchool, isCollege])
 
-  // School Homework Diary Entries
-  const diaryEntries = [
-    { id: 'dia-1', date: '2026-10-31 (Today)', subject: 'Mathematics', teacher: 'Sir Salman Ahmed', task: 'Complete Exercise 4.2 Questions 5 through 12 in homework notebook.', status: 'Completed' },
-    { id: 'dia-2', date: '2026-10-31 (Today)', subject: 'Physics', teacher: 'Syed Ali Raza', task: 'Revise Snell’s Law and solve numerical problems 3 & 4 on page 112.', status: 'Pending' },
-    { id: 'dia-3', date: '2026-10-30', subject: 'English Literature', teacher: 'Ms. Amina Batool', task: 'Write an essay of 200 words on "Digital Technology in Everyday Life".', status: 'Checked by Teacher' }
-  ]
+  // 1. School Homework Diary Entries (Dynamically synchronized with Campus Learning Resources)
+  const diaryEntries = useMemo(() => {
+    try {
+      const instId = studentProfile?.instituteId || 'inst-1'
+      const raw = localStorage.getItem(`sms_campus_learning_${instId}`)
+      if (raw) {
+        const resources = JSON.parse(raw)
+        if (Array.isArray(resources) && resources.length > 0) {
+          return resources.map((r, i) => ({
+            id: r.id || `dia-${i}`,
+            date: r.dueDate || '2026-11-03 (Today)',
+            subject: r.subject || 'Core Curriculum',
+            teacher: r.instructor || 'Class Teacher',
+            task: r.title + (r.notes ? ` — ${r.notes}` : ''),
+            status: i % 2 === 0 ? 'Completed' : 'Pending'
+          }))
+        }
+      }
+    } catch {}
+    return [
+      { id: 'dia-1', date: '2026-10-31 (Today)', subject: 'Mathematics', teacher: 'Sir Salman Ahmed', task: 'Complete Exercise 4.2 Questions 5 through 12 in homework notebook.', status: 'Completed' },
+      { id: 'dia-2', date: '2026-10-31 (Today)', subject: 'Physics', teacher: 'Syed Ali Raza', task: 'Revise Snell’s Law and solve numerical problems 3 & 4 on page 112.', status: 'Pending' },
+      { id: 'dia-3', date: '2026-10-30', subject: 'English Literature', teacher: 'Ms. Amina Batool', task: 'Write an essay of 200 words on "Digital Technology in Everyday Life".', status: 'Checked by Teacher' }
+    ]
+  }, [studentProfile])
 
   // School PTM Appointments
   const ptmSlots = [
     { id: 'ptm-1', term: 'Mid-Term Parent-Teacher Meeting (PTM)', date: 'Saturday, Nov 15, 2026', timeSlot: '10:30 AM - 11:00 AM', teacher: 'Sir Salman Ahmed (Class Incharge)', venue: 'Room 14, Secondary Wing', status: 'Confirmed' }
   ]
 
-  // College BISE Board Slips & Registration (Dynamic per student profile)
-  const collegeBoardData = {
-    boardName: 'Board of Intermediate and Secondary Education (BISE) Lahore',
-    candidateName: studentProfile?.studentName || 'Zainab Fatima',
-    boardRollNo: studentProfile?.rollNumber ? (String(studentProfile.rollNumber).replace(/[^0-9]/g, '') || '710429') : '710429',
-    enrollmentNo: 'BISE-LHR-2024-HSSC-' + (studentProfile?.rollNumber ? String(studentProfile.rollNumber).replace(/[^0-9]/g, '').slice(-5) : '88190'),
-    centerName: 'Govt. Model College for Women, Hall A, Lahore',
-    practicalCenter: 'Govt. Model College Chemistry & Bio Labs',
-    status: 'Verified & Roll Number Slip Issued'
-  }
+  // 2. College BISE Board Slips & Registration (Dynamically bound to College Board Slips Repository)
+  const collegeBoardData = useMemo(() => {
+    try {
+      const instId = studentProfile?.instituteId || 'inst-2'
+      const raw = localStorage.getItem(`sms_college_board_slips_${instId}`)
+      if (raw) {
+        const slips = JSON.parse(raw)
+        const matched = slips.find(s => 
+          (studentProfile?.rollNumber && String(s.collegeRoll || '').toLowerCase() === String(studentProfile.rollNumber).toLowerCase()) ||
+          (studentProfile?.studentName && String(s.studentName || '').toLowerCase() === String(studentProfile.studentName).toLowerCase())
+        )
+        if (matched) {
+          return {
+            boardName: matched.board || 'BISE Lahore',
+            candidateName: matched.studentName || studentProfile?.studentName,
+            boardRollNo: matched.rollNo || '710429',
+            enrollmentNo: `BISE-REG-${matched.rollNo || '88190'}`,
+            centerName: matched.centerName || 'Govt. Model College Examination Hall A',
+            practicalCenter: matched.practicalCenter || 'Govt. Model College Science Labs',
+            status: matched.dispatchStatus || 'Verified & Roll Number Slip Issued'
+          }
+        }
+      }
+    } catch {}
+    return {
+      boardName: 'Board of Intermediate and Secondary Education (BISE) Lahore',
+      candidateName: studentProfile?.studentName || 'Zainab Fatima',
+      boardRollNo: studentProfile?.rollNumber ? (String(studentProfile.rollNumber).replace(/[^0-9]/g, '') || '710429') : '710429',
+      enrollmentNo: 'BISE-LHR-2024-HSSC-' + (studentProfile?.rollNumber ? String(studentProfile.rollNumber).replace(/[^0-9]/g, '').slice(-5) : '88190'),
+      centerName: 'Govt. Model College for Women, Hall A, Lahore',
+      practicalCenter: 'Govt. Model College Chemistry & Bio Labs',
+      status: 'Verified & Roll Number Slip Issued'
+    }
+  }, [studentProfile])
 
-  // University Course Registration Data
-  const uniCourses = [
-    { code: 'CS-301', title: 'Design & Analysis of Algorithms', cr: 3, section: 'A', instructor: 'Dr. Nadia Hashmi', venue: 'Lecture Hall 1', attendance: '92%' },
-    { code: 'CS-308', title: 'Artificial Intelligence & Neural Nets', cr: 4, section: 'A', instructor: 'Dr. Nadia Hashmi', venue: 'AI Lab Complex', attendance: '94%' },
-    { code: 'SE-302', title: 'Software Architecture & Design', cr: 3, section: 'B', instructor: 'Prof. Tariq Jamil', venue: 'Seminar Hall 2', attendance: '88%' },
-    { code: 'HU-201', title: 'Technical & Business Writing', cr: 3, section: 'C', instructor: 'Ms. Amina Batool', venue: 'Room 204', attendance: '96%' }
-  ]
+  // 3. University Registered Courses (Dynamically synchronized with University Registration Engine)
+  const uniCourses = useMemo(() => {
+    try {
+      const instId = studentProfile?.instituteId || 'inst-4'
+      const raw = localStorage.getItem(`sms_university_course_registrations_${instId}`)
+      if (raw) {
+        const requests = JSON.parse(raw)
+        const matched = requests.find(r => 
+          (studentProfile?.rollNumber && String(r.regNo || '').toLowerCase() === String(studentProfile.rollNumber).toLowerCase()) ||
+          (studentProfile?.studentName && String(r.studentName || '').toLowerCase() === String(studentProfile.studentName).toLowerCase()) ||
+          r.status === 'Approved'
+        )
+        if (matched && Array.isArray(matched.courses) && matched.courses.length > 0) {
+          return matched.courses.map(c => ({
+            code: c.code,
+            title: c.title,
+            cr: c.cr,
+            section: c.section || 'A',
+            instructor: c.instructor || 'Department Faculty',
+            venue: 'Department Complex',
+            attendance: '95%'
+          }))
+        }
+      }
+    } catch {}
+    return [
+      { code: 'CS-301', title: 'Design & Analysis of Algorithms', cr: 3, section: 'A', instructor: 'Dr. Nadia Hashmi', venue: 'Lecture Hall 1', attendance: '92%' },
+      { code: 'CS-308', title: 'Artificial Intelligence & Neural Nets', cr: 4, section: 'A', instructor: 'Dr. Nadia Hashmi', venue: 'AI Lab Complex', attendance: '94%' },
+      { code: 'SE-302', title: 'Software Architecture & Design', cr: 3, section: 'B', instructor: 'Prof. Tariq Jamil', venue: 'Seminar Hall 2', attendance: '88%' },
+      { code: 'HU-201', title: 'Technical & Business Writing', cr: 3, section: 'C', instructor: 'Ms. Amina Batool', venue: 'Room 204', attendance: '96%' }
+    ]
+  }, [studentProfile])
   const totalUniCredits = useMemo(() => uniCourses.reduce((sum, c) => sum + (c.cr || 0), 0), [uniCourses])
 
   // University Applicant Data
