@@ -2121,17 +2121,27 @@ export const InstitutesView = () => {
 
                   {/* Actions Bar */}
                   <div className="p-3 bg-slate-50/80 border-t border-slate-100 flex flex-col gap-2">
-                    {/* Primary Row: View Details */}
-                    <div>
+                    {/* Primary Row: View Details & Direct Launch */}
+                    <div className="grid grid-cols-2 gap-2">
                       <button
+                        type="button"
                         onClick={() => {
                           setViewingDetails(inst)
                           setDetailsTab('overview')
                         }}
-                        className="w-full flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-[#f5eeff] hover:bg-[#ede0fe] text-purple-700 hover:text-purple-800 text-xs font-bold transition-all cursor-pointer shadow-2xs hover:shadow-xs"
+                        className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all cursor-pointer shadow-2xs"
                       >
-                        <Eye className="w-4 h-4 stroke-[2.2]" />
-                        <span>View Details</span>
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Details</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleImpersonate(inst)}
+                        className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-all cursor-pointer shadow-2xs hover:shadow-xs active:scale-95"
+                        title={`Launch ${inst.name} Admin & Portals`}
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>Launch</span>
                       </button>
                     </div>
 
@@ -2331,6 +2341,18 @@ export const InstitutesView = () => {
                               >
                                 <Eye className="w-3.5 h-3.5" />
                                 <span>View Details</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleImpersonate(inst)
+                                }}
+                                className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs hover:shadow-xs active:scale-95"
+                                title={`Launch ${inst.name} Admin & Portals`}
+                              >
+                                <ExternalLink className="w-3.5 h-3.5" />
+                                <span>Launch</span>
                               </button>
                             </div>
                           </td>
@@ -3628,20 +3650,36 @@ export const InstitutesView = () => {
                 ))}
               </div>
 
-              {/* Direct Edit Button (Directly opens full edit modal) */}
-              <button
-                type="button"
-                onClick={() => {
-                  const targetInst = viewingDetails
-                  setViewingDetails(null)
-                  openEditModal(targetInst)
-                }}
-                className="px-3 py-1.5 rounded-lg font-bold text-xs text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200/90 transition-all flex items-center gap-1.5 shrink-0 cursor-pointer shadow-2xs hover:shadow-xs active:scale-95"
-                title="Edit this campus profile, location, contacts and quotas"
-              >
-                <Edit3 className="w-3.5 h-3.5 text-purple-600" />
-                <span>Edit Profile</span>
-              </button>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const targetInst = viewingDetails
+                    setViewingDetails(null)
+                    handleImpersonate(targetInst)
+                  }}
+                  className="px-3.5 py-1.5 rounded-lg font-bold text-xs text-white bg-purple-600 hover:bg-purple-700 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+                  title="Launch and enter this campus dashboard & portals"
+                >
+                  <ExternalLink className="w-3.5 h-3.5 text-white" />
+                  <span>Launch Campus</span>
+                </button>
+
+                {/* Direct Edit Button (Directly opens full edit modal) */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const targetInst = viewingDetails
+                    setViewingDetails(null)
+                    openEditModal(targetInst)
+                  }}
+                  className="px-3 py-1.5 rounded-lg font-bold text-xs text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200/90 transition-all flex items-center gap-1.5 shrink-0 cursor-pointer shadow-2xs hover:shadow-xs active:scale-95"
+                  title="Edit this campus profile, location, contacts and quotas"
+                >
+                  <Edit3 className="w-3.5 h-3.5 text-purple-600" />
+                  <span>Edit Profile</span>
+                </button>
+              </div>
             </div>
 
             {/* Tab 1: Overview (Read-Only) */}

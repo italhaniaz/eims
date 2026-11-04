@@ -339,6 +339,114 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
         </div>
       </div>
 
+      {/* Executive Multi-Portal Hub (Available across School, College, and University) */}
+      <div className="bg-white border border-purple-150 rounded-3xl p-5 sm:p-6 shadow-sm shadow-purple-900/5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white shadow-sm shadow-purple-500/20">
+              <Sparkles className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-bold text-sm sm:text-base text-slate-900">
+                  {currentInstitute?.name || 'Active Campus'} Sub-Portals Hub
+                </h3>
+                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  Live Synced
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Switch and preview all isolated operational portals configured for this campus.
+              </p>
+            </div>
+          </div>
+          <div className="text-xs text-purple-700 font-semibold bg-[#f5eeff] px-3 py-1 rounded-xl border border-purple-200/60 self-start sm:self-auto">
+            Active Tier: <span className="font-bold capitalize">{tierConfig.portalTypeLabel || 'Campus'}</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+          {/* Card 1: Teacher & Faculty Desk */}
+          <div className="p-4 rounded-2xl border border-slate-200/90 bg-gradient-to-b from-white to-slate-50/60 hover:border-purple-300 hover:shadow-sm transition-all flex flex-col justify-between group">
+            <div>
+              <div className="flex items-center justify-between mb-2.5">
+                <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200/80 text-emerald-700 flex items-center justify-center shadow-2xs">
+                  <UserCheck className="w-4.5 h-4.5" />
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                  Faculty Desk
+                </span>
+              </div>
+              <h4 className="font-bold text-sm text-slate-900 group-hover:text-purple-700 transition-colors">Teacher & Faculty Portal</h4>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                Period routine, daily attendance marking, homework diary upload, marks entry, and delegated permissions matrix.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => onRouteChange('inst-teachers')}
+              className="mt-4 w-full py-2.5 px-3 rounded-xl bg-white hover:bg-emerald-600 hover:text-white text-emerald-700 border border-emerald-200 hover:border-emerald-600 text-xs font-bold transition-all shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+            >
+              <span>Launch Teacher Desk →</span>
+            </button>
+          </div>
+
+          {/* Card 2: Parent & Guardian Portal */}
+          <div className="p-4 rounded-2xl border border-slate-200/90 bg-gradient-to-b from-white to-slate-50/60 hover:border-purple-300 hover:shadow-sm transition-all flex flex-col justify-between group">
+            <div>
+              <div className="flex items-center justify-between mb-2.5">
+                <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-200/80 text-indigo-700 flex items-center justify-center shadow-2xs">
+                  <Users className="w-4.5 h-4.5" />
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
+                  Guardian Portal
+                </span>
+              </div>
+              <h4 className="font-bold text-sm text-slate-900 group-hover:text-purple-700 transition-colors">Parent & Guardian Portal</h4>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                Live homework diary, 3-copy bank fee challan download, online fee payment upload, attendance alerts, and direct PTM booking.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => onRouteChange('inst-student-portal')}
+              className="mt-4 w-full py-2.5 px-3 rounded-xl bg-white hover:bg-indigo-600 hover:text-white text-indigo-700 border border-indigo-200 hover:border-indigo-600 text-xs font-bold transition-all shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+            >
+              <span>Launch Parent Portal →</span>
+            </button>
+          </div>
+
+          {/* Card 3: Student Academic Portal */}
+          <div className="p-4 rounded-2xl border border-slate-200/90 bg-gradient-to-b from-white to-slate-50/60 hover:border-purple-300 hover:shadow-sm transition-all flex flex-col justify-between group">
+            <div>
+              <div className="flex items-center justify-between mb-2.5">
+                <div className="w-9 h-9 rounded-xl bg-purple-50 border border-purple-200/80 text-purple-700 flex items-center justify-center shadow-2xs">
+                  <GraduationCap className="w-4.5 h-4.5" />
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800">
+                  Student Portal
+                </span>
+              </div>
+              <h4 className="font-bold text-sm text-slate-900 group-hover:text-purple-700 transition-colors">Student Academic Portal</h4>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                {tierConfig.isUniversityOnly 
+                  ? 'Course registration, prerequisites check, semester credit hours, GPA/CGPA & thesis status.' 
+                  : tierConfig.isCollegeOnly 
+                  ? 'BISE board roll number slips, attendance detention status, lab routine & timetable.' 
+                  : 'Weekly timetable schedule, class homework diary, terminal exam admit cards & report cards.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => onRouteChange('inst-student-portal')}
+              className="mt-4 w-full py-2.5 px-3 rounded-xl bg-white hover:bg-purple-600 hover:text-white text-purple-700 border border-purple-200 hover:border-purple-600 text-xs font-bold transition-all shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+            >
+              <span>Launch Student Portal →</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Role-Specific Interactive Workspaces */}
       {isFullAdmin && (
         <CampusSetupWizard currentInstitute={currentInstitute} onRouteChange={onRouteChange} />
