@@ -134,52 +134,79 @@ const AppContent = () => {
     'inst-certificates', 'inst-events', 'inst-reports', 'inst-users', 'inst-settings', 'inst-course-registration', 'inst-research-fyp', 'inst-career-alumni', 'inst-campus-it', 'inst-student-portal'
   ]
 
-  // Helpers to safely extract valid initial routes per portal role
-  const getInitialSuperadminRoute = () => {
-    if (typeof window !== 'undefined' && window.location.hash) {
-      const cleanHash = window.location.hash.replace(/^#\/?/, '')
-      if (VALID_SUPERADMIN_ROUTES.includes(cleanHash)) return cleanHash
+  // Helper to extract clean path from pathname or legacy hash fallback
+  const getCleanLocationPath = () => {
+    if (typeof window === 'undefined') return ''
+    const rawPath = (window.location.pathname || '').replace(/^\/+/, '').replace(/\/+$/, '')
+    const rawHash = (window.location.hash || '').replace(/^#\/?/, '').replace(/\/+$/, '')
+
+    // Normalize any legacy hash URLs like /#school-login to /school-login
+    if (rawHash && (!rawPath || rawPath === '')) {
+      try {
+        window.history.replaceState(null, '', `/${rawHash}`)
+      } catch (e) {}
+      return rawHash.toLowerCase()
     }
+    return (rawPath || rawHash).toLowerCase()
+  }
+
+  const navigateToPath = (routePath) => {
+    if (typeof window !== 'undefined') {
+      try {
+        const clean = routePath.startsWith('/') ? routePath : `/${routePath}`
+        if (window.location.pathname !== clean) {
+          window.history.pushState(null, '', clean)
+          window.dispatchEvent(new PopStateEvent('popstate'))
+        }
+      } catch (e) {
+        window.location.hash = `#${routePath.replace(/^\//, '')}`
+      }
+    }
+  }
+
+  const getInitialSuperadminRoute = () => {
+    const clean = getCleanLocationPath()
+    if (VALID_SUPERADMIN_ROUTES.includes(clean)) return clean
     return 'dashboard'
   }
 
   const getInitialInstituteRoute = () => {
-    if (typeof window !== 'undefined' && window.location.hash) {
-      const cleanHash = window.location.hash.replace(/^#\/?/, '')
-      if (VALID_INSTITUTE_ROUTES.includes(cleanHash)) return cleanHash
-    }
+    const clean = getCleanLocationPath()
+    if (VALID_INSTITUTE_ROUTES.includes(clean)) return clean
     return 'inst-dashboard'
   }
 
-  // Routing state synced with Browser History & Hash
+  const getInitialPublicView = () => {
+    const clean = getCleanLocationPath()
+    if (
+      clean.includes('login') || 
+      clean.includes('signin') || 
+      clean.includes('superadmin') || 
+      clean.includes('school') || 
+      clean.includes('college') || 
+      clean.includes('uni')
+    ) {
+      return 'login'
+    }
+    if (clean === 'demo' || clean === 'live-demo') return 'demo'
+    return 'landing'
+  }
+
+  // Routing state synced with Browser History (HTML5 Path Routing, NO hashes!)
   const [superadminRoute, setSuperadminRouteState] = useState(getInitialSuperadminRoute)
   const [instituteRoute, setInstituteRouteState] = useState(getInitialInstituteRoute)
+  const [publicView, setPublicView] = useState(getInitialPublicView)
 
-  // Public visitor routing (Landing Page vs Login Page)
-  const [publicView, setPublicView] = useState(() => {
-    if (typeof window !== 'undefined' && window.location.hash) {
-      const hash = window.location.hash.replace(/^#\/?/, '')
-      if (hash.includes('login') || hash.includes('signin') || hash.includes('superadmin') || hash.includes('school') || hash.includes('college') || hash.includes('uni')) return 'login'
-      if (hash === 'demo' || hash === 'live-demo') return 'demo'
-    }
-    return 'landing'
-  })
-
-  // Route setters that update the browser URL hash without full reload
   const setSuperadminRoute = (route) => {
     const valid = VALID_SUPERADMIN_ROUTES.includes(route) ? route : 'dashboard'
     setSuperadminRouteState(valid)
-    if (typeof window !== 'undefined') {
-      window.location.hash = `#${valid}`
-    }
+    navigateToPath(valid)
   }
 
   const setInstituteRoute = (route) => {
     const valid = VALID_INSTITUTE_ROUTES.includes(route) ? route : 'inst-dashboard'
     setInstituteRouteState(valid)
-    if (typeof window !== 'undefined') {
-      window.location.hash = `#${valid}`
-    }
+    navigateToPath(valid)
   }
 
   // Dedicated student/parent portal roles check
@@ -212,28 +239,35 @@ const AppContent = () => {
 
   // Synchronize on browser Back/Forward (popstate & hashchange)
   useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash.replace(/^#\/?/, '')
+    const handleLocationChange = () => {
+      const clean = getCleanLocationPath()
       if (!user) {
-        if (hash.includes('login') || hash.includes('signin') || hash.includes('superadmin') || hash.includes('school') || hash.includes('college') || hash.includes('uni')) {
+        if (
+          clean.includes('login') || 
+          clean.includes('signin') || 
+          clean.includes('superadmin') || 
+          clean.includes('school') || 
+          clean.includes('college') || 
+          clean.includes('uni')
+        ) {
           setPublicView('login')
-        } else if (hash === 'demo' || hash === 'live-demo') {
+        } else if (clean === 'demo' || clean === 'live-demo') {
           setPublicView('demo')
         } else {
           setPublicView('landing')
         }
         return
       }
-      if (hash) {
+      if (clean) {
         if (user?.role === 'superadmin') {
-          if (VALID_SUPERADMIN_ROUTES.includes(hash)) {
-            setSuperadminRouteState(hash)
+          if (VALID_SUPERADMIN_ROUTES.includes(clean)) {
+            setSuperadminRouteState(clean)
           } else {
             setSuperadminRoute('dashboard')
           }
         } else if (!isDedicatedPortalRole) {
-          if (VALID_INSTITUTE_ROUTES.includes(hash)) {
-            setInstituteRouteState(hash)
+          if (VALID_INSTITUTE_ROUTES.includes(clean)) {
+            setInstituteRouteState(clean)
           } else {
             setInstituteRoute('inst-dashboard')
           }
@@ -241,9 +275,13 @@ const AppContent = () => {
       }
     }
 
-    window.addEventListener('hashchange', handleHashChange)
-    return () => window.removeEventListener('hashchange', handleHashChange)
-  }, [user?.role])
+    window.addEventListener('popstate', handleLocationChange)
+    window.addEventListener('hashchange', handleLocationChange)
+    return () => {
+      window.removeEventListener('popstate', handleLocationChange)
+      window.removeEventListener('hashchange', handleLocationChange)
+    }
+  }, [user?.role, isDedicatedPortalRole])
   
   // Mobile drawer states
   const [superMobileOpen, setSuperMobileOpen] = useState(false)
@@ -284,15 +322,11 @@ const AppContent = () => {
         <LoginPage
           onBackToLanding={() => {
             setPublicView('landing')
-            if (typeof window !== 'undefined') {
-              window.location.hash = ''
-            }
+            navigateToPath('/')
           }}
           onOpenTrial={() => {
             setPublicView('landing')
-            if (typeof window !== 'undefined') {
-              window.location.hash = '#trial'
-            }
+            navigateToPath('/?trial=open')
           }}
         />
       )
@@ -302,24 +336,22 @@ const AppContent = () => {
         <DemoComingSoonPage
           onBackToLanding={() => {
             setPublicView('landing')
-            if (typeof window !== 'undefined') {
-              window.location.hash = ''
-            }
+            navigateToPath('/')
           }}
           onNavigateToLogin={(tier = 'school') => {
             setPublicView('login')
-            if (typeof window !== 'undefined') {
-              if (tier === 'superadmin') window.location.hash = '#superadmin'
-              else if (tier === 'college') window.location.hash = '#college-login'
-              else if (tier === 'university' || tier === 'uni') window.location.hash = '#university-login'
-              else window.location.hash = '#school-login'
-            }
+            const targetPath = tier === 'superadmin' 
+              ? '/superadmin' 
+              : tier === 'college' 
+                ? '/college-login' 
+                : (tier === 'university' || tier === 'uni') 
+                  ? '/university-login' 
+                  : '/school-login'
+            navigateToPath(targetPath)
           }}
           onOpenTrial={() => {
             setPublicView('landing')
-            if (typeof window !== 'undefined') {
-              window.location.hash = '#pricing'
-            }
+            navigateToPath('/?pricing=open')
           }}
         />
       )
@@ -328,19 +360,18 @@ const AppContent = () => {
       <LandingPage
         onNavigateToLogin={(tier = 'school') => {
           setPublicView('login')
-          if (typeof window !== 'undefined') {
-            if (tier === 'superadmin') window.location.hash = '#superadmin'
-            else if (tier === 'college') window.location.hash = '#college-login'
-            else if (tier === 'university' || tier === 'uni') window.location.hash = '#university-login'
-            else if (tier === 'school') window.location.hash = '#school-login'
-            else window.location.hash = '#school-login'
-          }
+          const targetPath = tier === 'superadmin' 
+            ? '/superadmin' 
+            : tier === 'college' 
+              ? '/college-login' 
+              : (tier === 'university' || tier === 'uni') 
+                ? '/university-login' 
+                : '/school-login'
+          navigateToPath(targetPath)
         }}
         onNavigateToDemo={() => {
           setPublicView('demo')
-          if (typeof window !== 'undefined') {
-            window.location.hash = '#demo'
-          }
+          navigateToPath('/demo')
         }}
       />
     )

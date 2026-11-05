@@ -16,31 +16,29 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial, defaultTier }) => {
         if (saved) {
           const parsed = JSON.parse(saved)
           if (Array.isArray(parsed) && parsed.length > 0) {
-            // Keep only valid recognized portal tiers
             const filtered = parsed.filter(t => ALL_PORTAL_TIERS.includes(t))
             if (filtered.length > 0) return filtered
           }
         }
       }
     } catch {
-      // Fallback on parse failure
+      // Fallback
     }
     return ALL_PORTAL_TIERS
   })
 
-  // 2. Determine initial tier based on URL hash, defaultTier prop, or first selected tier
+  // 2. Determine initial tier based on URL pathname (with hash & query fallback)
   const getInitialTier = () => {
     if (defaultTier && defaultTier !== 'school') return defaultTier
     if (typeof window !== 'undefined') {
-      const hash = window.location.hash.toLowerCase()
-      const search = window.location.search.toLowerCase()
-      if (hash.includes('superadmin') || hash.includes('admin-login') || search.includes('superadmin')) {
+      const fullUrl = (window.location.pathname + window.location.hash + window.location.search).toLowerCase()
+      if (fullUrl.includes('superadmin') || fullUrl.includes('admin-login')) {
         return 'superadmin'
       }
-      if (hash.includes('college') || search.includes('college')) {
+      if (fullUrl.includes('college')) {
         return 'college'
       }
-      if (hash.includes('uni') || search.includes('uni')) {
+      if (fullUrl.includes('uni')) {
         return 'university'
       }
       return 'school'
@@ -51,31 +49,36 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial, defaultTier }) => {
   const [portalTier, setPortalTier] = useState(getInitialTier)
   const [showPortalSwitcher, setShowPortalSwitcher] = useState(() => PlatformService.isPortalSwitcherEnabled())
 
-  // Listen to hash changes dynamically
+  // Listen to popstate and hashchange dynamically
   useEffect(() => {
-    const handleHashChange = () => {
+    const handleLocationChange = () => {
       if (typeof window !== 'undefined') {
-        const hash = window.location.hash.toLowerCase()
-        if (hash.includes('superadmin') || hash.includes('admin-login')) {
+        const fullUrl = (window.location.pathname + window.location.hash + window.location.search).toLowerCase()
+        if (fullUrl.includes('superadmin') || fullUrl.includes('admin-login')) {
           setPortalTier('superadmin')
-        } else if (hash.includes('college')) {
+        } else if (fullUrl.includes('college')) {
           setPortalTier('college')
-        } else if (hash.includes('uni')) {
+        } else if (fullUrl.includes('uni')) {
           setPortalTier('university')
         } else {
           setPortalTier('school')
         }
+        setShowPortalSwitcher(PlatformService.isPortalSwitcherEnabled())
       }
     }
 
-    window.addEventListener('hashchange', handleHashChange)
     const handleSettingsUpdated = () => {
       setShowPortalSwitcher(PlatformService.isPortalSwitcherEnabled())
     }
+
+    window.addEventListener('popstate', handleLocationChange)
+    window.addEventListener('hashchange', handleLocationChange)
     window.addEventListener('sms_platform_settings_updated', handleSettingsUpdated)
     window.addEventListener('storage', handleSettingsUpdated)
+
     return () => {
-      window.removeEventListener('hashchange', handleHashChange)
+      window.removeEventListener('popstate', handleLocationChange)
+      window.removeEventListener('hashchange', handleLocationChange)
       window.removeEventListener('sms_platform_settings_updated', handleSettingsUpdated)
       window.removeEventListener('storage', handleSettingsUpdated)
     }
@@ -100,29 +103,34 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial, defaultTier }) => {
       console.warn('Could not persist portal filter settings:', e)
     }
 
-    // If currently active tier was unchecked, immediately switch to the first remaining
     if (!newTiers.includes(portalTier)) {
       handleSwitchTier(newTiers[0])
     }
   }
 
-  // Switch tier and update URL hash cleanly
+  // Switch tier using clean HTML5 history (NO hashes!)
   const handleSwitchTier = (targetTier) => {
     setPortalTier(targetTier)
+    const targetPath = targetTier === 'superadmin'
+      ? '/superadmin'
+      : targetTier === 'college'
+        ? '/college-login'
+        : targetTier === 'university'
+          ? '/university-login'
+          : '/school-login'
+
     if (typeof window !== 'undefined') {
-      if (targetTier === 'superadmin') {
-        window.location.hash = '#superadmin'
-      } else if (targetTier === 'college') {
-        window.location.hash = '#college-login'
-      } else if (targetTier === 'university') {
-        window.location.hash = '#university-login'
-      } else {
-        window.location.hash = '#school-login'
+      try {
+        if (window.location.pathname !== targetPath) {
+          window.history.pushState(null, '', targetPath)
+          window.dispatchEvent(new PopStateEvent('popstate'))
+        }
+      } catch (e) {
+        window.location.hash = `#${targetTier}-login`
       }
     }
   }
 
-  // Common props passed to each dedicated login page
   const commonProps = {
     onBackToLanding,
     onOpenTrial,
@@ -132,7 +140,6 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial, defaultTier }) => {
     showPortalSwitcher
   }
 
-  // Render dedicated isolated login page
   if (portalTier === 'college') {
     return <CollegeLoginPage {...commonProps} />
   }
@@ -145,8 +152,7 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial, defaultTier }) => {
     return <SuperadminLoginPage {...commonProps} />
   }
 
-  // Primary Default: Dedicated School Login Page (City School Model Town Campus K-10)
   return <SchoolLoginPage {...commonProps} />
 }
 
-export default LoginPage
+export default LoginPage;

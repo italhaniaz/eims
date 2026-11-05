@@ -911,10 +911,10 @@ export const InstitutesView = () => {
   const handleCopyPortalUrl = (inst) => {
     if (!inst) return;
     const url = PlatformService.getDirectPortalUrl(inst);
-    const hash = PlatformService.getDirectPortalHash(inst);
+    const path = PlatformService.getDirectPortalPath(inst);
     if (navigator?.clipboard?.writeText) {
       navigator.clipboard.writeText(url);
-      toast.success(`Copied direct ${inst.type || 'Institute'} portal URL (${hash}) to clipboard!`);
+      toast.success(`Copied direct ${inst.type || 'Institute'} portal URL (${path}) to clipboard!`);
     } else {
       toast.info(`Portal Link: ${url}`);
     }

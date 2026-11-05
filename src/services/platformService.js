@@ -926,14 +926,14 @@ export const PlatformService = {
     return val;
   },
 
-  getDirectPortalHash(instituteOrTier) {
+  getDirectPortalPath(instituteOrTier) {
     let tier = 'school';
     if (typeof instituteOrTier === 'string') {
       const s = instituteOrTier.toLowerCase();
-      if (s.includes('superadmin') || s.includes('hq')) return '#superadmin';
-      if (s.includes('uni') || s.includes('undergrad') || s.includes('hec')) return '#university-login';
-      if (s.includes('college') || s.includes('intermediate') || s.includes('inter')) return '#college-login';
-      return '#school-login';
+      if (s.includes('superadmin') || s.includes('hq')) return '/superadmin';
+      if (s.includes('uni') || s.includes('undergrad') || s.includes('hec')) return '/university-login';
+      if (s.includes('college') || s.includes('intermediate') || s.includes('inter')) return '/college-login';
+      return '/school-login';
     }
 
     if (instituteOrTier && typeof instituteOrTier === 'object') {
@@ -949,20 +949,23 @@ export const PlatformService = {
     }
 
     return tier === 'university'
-      ? '#university-login'
+      ? '/university-login'
       : tier === 'college'
-        ? '#college-login'
-        : '#school-login';
+        ? '/college-login'
+        : '/school-login';
+  },
+
+  getDirectPortalHash(instituteOrTier) {
+    return this.getDirectPortalPath(instituteOrTier);
   },
 
   getDirectPortalUrl(instituteOrTier) {
-    const hash = this.getDirectPortalHash(instituteOrTier);
+    const path = this.getDirectPortalPath(instituteOrTier);
     if (typeof window !== 'undefined' && window.location) {
       const origin = window.location.origin || '';
-      const pathname = window.location.pathname || '/';
-      return origin + pathname + hash;
+      return `${origin}${path}`;
     }
-    return hash;
+    return path;
   }
 };
 

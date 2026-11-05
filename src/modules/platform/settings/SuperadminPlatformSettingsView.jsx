@@ -359,9 +359,9 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
               </p>
               <div className="flex items-center gap-3 pt-1 text-[11px] text-slate-500">
                 <span>Direct isolated URLs:</span>
-                <code className="px-1.5 py-0.5 rounded bg-white text-purple-700 font-mono border border-purple-200">#school-login</code>
-                <code className="px-1.5 py-0.5 rounded bg-white text-indigo-700 font-mono border border-indigo-200">#college-login</code>
-                <code className="px-1.5 py-0.5 rounded bg-white text-emerald-700 font-mono border border-emerald-200">#university-login</code>
+                <code className="px-1.5 py-0.5 rounded bg-white text-purple-700 font-mono border border-purple-200">/school-login</code>
+                <code className="px-1.5 py-0.5 rounded bg-white text-indigo-700 font-mono border border-indigo-200">/college-login</code>
+                <code className="px-1.5 py-0.5 rounded bg-white text-emerald-700 font-mono border border-emerald-200">/university-login</code>
               </div>
             </div>
             <div className="flex items-center gap-3 shrink-0 self-start md:self-center bg-white p-2.5 rounded-xl border border-purple-100 shadow-2xs">
