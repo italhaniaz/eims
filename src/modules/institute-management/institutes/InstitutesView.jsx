@@ -894,13 +894,13 @@ export const InstitutesView = () => {
       const tiers = inst.enabledTiers || []
       
       if (instId === 'inst-2' || instType === 'school' || (tiers.includes('school') && !tiers.includes('college'))) {
-        login('school_admin', 'admin.school@cityschool.edu')
+        login('school_admin', inst.adminEmail || inst.email || 'admin.school@cityschool.edu')
       } else if (instId === 'inst-3' || instType === 'college' || (tiers.includes('college') && !tiers.includes('undergraduate'))) {
-        login('college_admin', 'admin.college@roots.edu')
+        login('college_admin', inst.adminEmail || inst.email || 'admin@kp001.edu')
       } else if (instId === 'inst-4' || instType === 'university' || tiers.includes('undergraduate')) {
-        login('university_admin', 'admin.uni@ias.edu.pk')
+        login('university_admin', inst.adminEmail || inst.email || 'admin@pu.edu')
       } else {
-        login('institute_admin', `admin@${inst.slug || 'campus'}.edu`)
+        login('institute_admin', inst.adminEmail || inst.email || `admin@${inst.slug || 'campus'}.edu`)
       }
       toast.info(`Now impersonating "${inst.name}". A 60-minute delegation session is active.`)
     } catch (err) {
@@ -2101,7 +2101,7 @@ export const InstitutesView = () => {
                           className="font-mono text-[11px] text-emerald-800 bg-[#f5eeff] hover:bg-[#ede0fe] px-2 py-0.5 rounded font-semibold truncate max-w-[170px] cursor-pointer flex items-center gap-1"
                           title="Click to view full login password"
                         >
-                          <span>admin@{inst.slug || inst.code?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'campus'}.edu</span>
+                          <span>{inst.adminEmail || inst.email || `admin@${inst.slug || inst.code?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'campus'}.edu`}</span>
                         </button>
                       </div>
                       <div className="flex items-center justify-between">

@@ -1396,6 +1396,341 @@ export const computeRealStats = (data = {}) => {
   }
 }
 
+
+// -------------------------------------------------------------
+// Auto-Seeder & Dynamic Multi-Tier Hierarchy Verifier
+// Ensures School, College & University are always populated with live teachers,
+// permissions (HOD vs Regular), and enrolled students.
+// -------------------------------------------------------------
+export function ensureThreeTierHierarchy(parsed) {
+  if (!parsed || typeof parsed !== 'object') return false;
+  let modified = false;
+
+  if (!Array.isArray(parsed.institutes)) {
+    parsed.institutes = [];
+    modified = true;
+  }
+
+  // 1. Locate or dynamically register School
+  let schoolInst = parsed.institutes.find(i => 
+    (i.type || '').toLowerCase() === 'school' || 
+    (i.tier || '').toLowerCase() === 'school'
+  );
+
+  if (!schoolInst) {
+    schoolInst = {
+      id: 'inst-school-1',
+      name: 'City School Model Town Campus',
+      code: 'CSM-001',
+      type: 'School',
+      tier: 'school',
+      planType: 'SCHOOL',
+      planTier: 'School Plan',
+      enabledTiers: ['school'],
+      city: 'Lahore',
+      province: 'Punjab',
+      email: 'admin.school@cityschool.edu',
+      adminEmail: 'admin.school@cityschool.edu',
+      adminName: 'Mrs. Samina Khurram (Principal)',
+      phone: '+92 42 35889900',
+      address: 'Model Town C Block, Lahore',
+      affiliatedBoard: 'BISE Lahore',
+      status: 'Active',
+      principal: 'Mrs. Samina Khurram',
+      totalStudents: 4,
+      totalTeachers: 2,
+      wings: ['Primary Wing', 'Middle Wing', 'Matric Wing', 'Cambridge O-Level'],
+      enabledModules: ['academics', 'attendance', 'fees', 'daily_diary', 'slc_certificates', 'parent_sms', 'notice_broadcaster'],
+      createdAt: new Date().toISOString()
+    };
+    parsed.institutes.push(schoolInst);
+    modified = true;
+  }
+
+  // 2. Locate College (Kips College or any College)
+  let collegeInst = parsed.institutes.find(i => 
+    (i.type || '').toLowerCase() === 'college' || 
+    (i.tier || '').toLowerCase() === 'college' || 
+    (i.code || '').toLowerCase().includes('kp')
+  );
+
+  // 3. Locate University (Punjab University or any University)
+  let uniInst = parsed.institutes.find(i => 
+    (i.type || '').toLowerCase() === 'university' || 
+    (i.tier || '').toLowerCase() === 'university' || 
+    (i.code || '').toLowerCase().includes('pu')
+  );
+
+  // Ensure teachers array
+  if (!Array.isArray(parsed.teachers)) {
+    parsed.teachers = [];
+    modified = true;
+  }
+
+  // Teachers specification for all 3 tiers
+  const targetTeachers = [
+    // Tier 1: School Faculty
+    {
+      id: 'tch-school-salman',
+      name: 'Sir Salman Ahmed',
+      empId: 'TCH-SCH-01',
+      email: 'teacher.school@cityschool.edu',
+      designation: 'HOD / Grade 10 In-Charge',
+      roleTitle: 'Class In-Charge & Department Head',
+      isClassIncharge: true,
+      instituteId: schoolInst?.id || 'inst-school-1',
+      instituteCode: schoolInst?.code || 'CSM-001',
+      campus: schoolInst?.name || 'City School Model Town Campus',
+      department: 'Mathematics & Science',
+      status: 'Active',
+      joiningDate: '2022-08-15',
+      phone: '0300-8451234'
+    },
+    {
+      id: 'tch-school-ayesha',
+      name: 'Ms. Ayesha Siddiqui',
+      empId: 'TCH-SCH-02',
+      email: 'ayesha.teacher@cityschool.edu',
+      designation: 'Junior Science Teacher',
+      roleTitle: 'Subject Teacher',
+      isClassIncharge: false,
+      instituteId: schoolInst?.id || 'inst-school-1',
+      instituteCode: schoolInst?.code || 'CSM-001',
+      campus: schoolInst?.name || 'City School Model Town Campus',
+      department: 'General Science',
+      status: 'Active',
+      joiningDate: '2023-01-10',
+      phone: '0301-7654321'
+    }
+  ];
+
+  if (collegeInst) {
+    targetTeachers.push(
+      // Tier 2: College Faculty
+      {
+        id: 'tch-college-kamran',
+        name: 'Prof. Kamran Ahmed',
+        empId: 'TCH-COL-01',
+        email: 'kamran.hod@kp001.edu',
+        designation: 'HOD / Intermediate In-Charge',
+        roleTitle: 'Department HOD & In-Charge',
+        isClassIncharge: true,
+        instituteId: collegeInst.id,
+        instituteCode: collegeInst.code,
+        campus: collegeInst.name,
+        department: 'Physics & Pre-Engineering',
+        status: 'Active',
+        joiningDate: '2021-03-01',
+        phone: '0321-9876543'
+      },
+      {
+        id: 'tch-college-bilal',
+        name: 'Lecturer Bilal Hassan',
+        empId: 'TCH-COL-02',
+        email: 'bilal.chem@kp001.edu',
+        designation: 'Lecturer in Chemistry',
+        roleTitle: 'Lecturer',
+        isClassIncharge: false,
+        instituteId: collegeInst.id,
+        instituteCode: collegeInst.code,
+        campus: collegeInst.name,
+        department: 'Chemistry',
+        status: 'Active',
+        joiningDate: '2023-09-01',
+        phone: '0333-1234567'
+      }
+    );
+  }
+
+  if (uniInst) {
+    targetTeachers.push(
+      // Tier 3: University Faculty
+      {
+        id: 'tch-uni-sohail',
+        name: 'Dr. Sohail Akhtar',
+        empId: 'FAC-UNI-01',
+        email: 'dean.cs@pu.edu',
+        designation: 'Dean / Chairman Computer Science',
+        roleTitle: 'Dean & Program Coordinator',
+        isClassIncharge: true,
+        instituteId: uniInst.id,
+        instituteCode: uniInst.code,
+        campus: uniInst.name,
+        department: 'Computer Science & AI',
+        status: 'Active',
+        joiningDate: '2019-01-15',
+        phone: '0300-5551234'
+      },
+      {
+        id: 'tch-uni-usman',
+        name: 'Engr. Usman Riaz',
+        empId: 'FAC-UNI-02',
+        email: 'usman.lab@pu.edu',
+        designation: 'Lab Instructor & Lecturer',
+        roleTitle: 'Lab Instructor',
+        isClassIncharge: false,
+        instituteId: uniInst.id,
+        instituteCode: uniInst.code,
+        campus: uniInst.name,
+        department: 'Software Engineering',
+        status: 'Active',
+        joiningDate: '2023-02-01',
+        phone: '0345-9988776'
+      }
+    );
+  }
+
+  // Inject or link teachers
+  targetTeachers.forEach(tt => {
+    const existingIdx = parsed.teachers.findIndex(t => t.id === tt.id || t.email === tt.email);
+    if (existingIdx === -1) {
+      parsed.teachers.push(tt);
+      modified = true;
+    } else {
+      if (!parsed.teachers[existingIdx].instituteId) {
+        parsed.teachers[existingIdx].instituteId = tt.instituteId;
+        parsed.teachers[existingIdx].campus = tt.campus;
+        modified = true;
+      }
+    }
+  });
+
+  // Ensure Granular Teacher Permissions Matrix
+  if (!parsed.teacherPermissions || typeof parsed.teacherPermissions !== 'object') {
+    parsed.teacherPermissions = {};
+    modified = true;
+  }
+
+  const permSetups = [
+    // School: Sir Salman (HOD) = ON, Ms. Ayesha = OFF
+    { key: 'tch-school-salman', email: 'teacher.school@cityschool.edu', canEnroll: true },
+    { key: 'tch-school-ayesha', email: 'ayesha.teacher@cityschool.edu', canEnroll: false },
+    // College: Prof. Kamran (HOD) = ON, Lecturer Bilal = OFF
+    { key: 'tch-college-kamran', email: 'kamran.hod@kp001.edu', canEnroll: true },
+    { key: 'tch-college-bilal', email: 'bilal.chem@kp001.edu', canEnroll: false },
+    // University: Dr. Sohail (Dean/HOD) = ON, Engr. Usman = OFF
+    { key: 'tch-uni-sohail', email: 'dean.cs@pu.edu', canEnroll: true },
+    { key: 'tch-uni-usman', email: 'usman.lab@pu.edu', canEnroll: false }
+  ];
+
+  permSetups.forEach(({ key, email, canEnroll }) => {
+    const config = {
+      canEnrollStudents: canEnroll,
+      canPublishMarks: canEnroll,
+      canBroadcastNotices: canEnroll,
+      canEditAttendanceHistory: false,
+      canManageClassDiary: true
+    };
+    if (!parsed.teacherPermissions[key] || parsed.teacherPermissions[key].canEnrollStudents !== canEnroll) {
+      parsed.teacherPermissions[key] = config;
+      parsed.teacherPermissions[email] = config;
+      modified = true;
+    }
+  });
+
+  // Ensure students array
+  if (!Array.isArray(parsed.students)) {
+    parsed.students = [];
+    modified = true;
+  }
+
+  const targetStudents = [
+    // Tier 1: School Students
+    { id: 'std-sch-01', name: 'Muhammad Ali Khan', rollNumber: 'CSM-10A-01', className: 'Grade 10', section: 'Section A', wing: 'Matric Wing', instituteId: schoolInst?.id || 'inst-school-1', instituteCode: schoolInst?.code || 'CSM-001', campus: schoolInst?.name || 'City School Model Town Campus', gender: 'Male', phone: '0300-1112233', feeStatus: 'Paid', status: 'Active', fatherName: 'Tariq Khan' },
+    { id: 'std-sch-02', name: 'Zainab Fatima', rollNumber: 'CSM-10A-02', className: 'Grade 10', section: 'Section A', wing: 'Matric Wing', instituteId: schoolInst?.id || 'inst-school-1', instituteCode: schoolInst?.code || 'CSM-001', campus: schoolInst?.name || 'City School Model Town Campus', gender: 'Female', phone: '0300-2223344', feeStatus: 'Paid', status: 'Active', fatherName: 'Khurram Shah' },
+    { id: 'std-sch-03', name: 'Abdullah Tariq', rollNumber: 'CSM-9B-03', className: 'Grade 9', section: 'Section B', wing: 'Middle Wing', instituteId: schoolInst?.id || 'inst-school-1', instituteCode: schoolInst?.code || 'CSM-001', campus: schoolInst?.name || 'City School Model Town Campus', gender: 'Male', phone: '0300-3334455', feeStatus: 'Pending', status: 'Active', fatherName: 'Tariq Mehmood' },
+    { id: 'std-sch-04', name: 'Fatima Noor', rollNumber: 'CSM-8A-04', className: 'Grade 8', section: 'Section A', wing: 'Middle Wing', instituteId: schoolInst?.id || 'inst-school-1', instituteCode: schoolInst?.code || 'CSM-001', campus: schoolInst?.name || 'City School Model Town Campus', gender: 'Female', phone: '0300-4445566', feeStatus: 'Paid', status: 'Active', fatherName: 'Noor Muhammad' }
+  ];
+
+  if (collegeInst) {
+    targetStudents.push(
+      // Tier 2: College Students
+      { id: 'std-col-01', name: 'Hamza Farooq', rollNumber: 'KP-FSC-101', className: '11th Grade (FSc Pre-Medical)', section: 'Section Alpha', wing: 'Intermediate Wing', instituteId: collegeInst.id, instituteCode: collegeInst.code, campus: collegeInst.name, gender: 'Male', phone: '0321-1112233', feeStatus: 'Paid', status: 'Active', fatherName: 'Farooq Ahmed' },
+      { id: 'std-col-02', name: 'Daniyal Tariq', rollNumber: 'KP-ICS-102', className: '11th Grade (ICS)', section: 'Section Beta', wing: 'Intermediate Wing', instituteId: collegeInst.id, instituteCode: collegeInst.code, campus: collegeInst.name, gender: 'Male', phone: '0321-2223344', feeStatus: 'Paid', status: 'Active', fatherName: 'Tariq Aziz' },
+      { id: 'std-col-03', name: 'Ahmed Raza', rollNumber: 'KP-ENG-103', className: '12th Grade (FSc Pre-Engineering)', section: 'Section Gamma', wing: 'Intermediate Wing', instituteId: collegeInst.id, instituteCode: collegeInst.code, campus: collegeInst.name, gender: 'Male', phone: '0321-3334455', feeStatus: 'Pending', status: 'Active', fatherName: 'Raza Ali' },
+      { id: 'std-col-04', name: 'Maria Khan', rollNumber: 'KP-ICOM-104', className: '11th Grade (I.Com)', section: 'Section Delta', wing: 'Intermediate Wing', instituteId: collegeInst.id, instituteCode: collegeInst.code, campus: collegeInst.name, gender: 'Female', phone: '0321-4445566', feeStatus: 'Paid', status: 'Active', fatherName: 'Kamran Khan' }
+    );
+  }
+
+  if (uniInst) {
+    targetStudents.push(
+      // Tier 3: University Students
+      { id: 'std-uni-01', name: 'Bilal Ahmed Khan', rollNumber: 'PU-BSCS-01', className: 'BS Computer Science', section: 'Semester 6 (Morning)', wing: 'Undergraduate Wing', instituteId: uniInst.id, instituteCode: uniInst.code, campus: uniInst.name, gender: 'Male', phone: '0300-9998877', feeStatus: 'Paid', status: 'Active', fatherName: 'Ahmed Khan' },
+      { id: 'std-uni-02', name: 'Maham Tariq', rollNumber: 'PU-BSSE-02', className: 'BS Software Engineering', section: 'Semester 4 (Morning)', wing: 'Undergraduate Wing', instituteId: uniInst.id, instituteCode: uniInst.code, campus: uniInst.name, gender: 'Female', phone: '0300-8887766', feeStatus: 'Paid', status: 'Active', fatherName: 'Tariq Mehmood' },
+      { id: 'std-uni-03', name: 'Zubair Mehmood', rollNumber: 'PU-MSAI-03', className: 'MS Artificial Intelligence', section: 'Semester 2 (Evening)', wing: 'Postgraduate Wing', instituteId: uniInst.id, instituteCode: uniInst.code, campus: uniInst.name, gender: 'Male', phone: '0300-7776655', feeStatus: 'Paid', status: 'Active', fatherName: 'Mehmood Ali' },
+      { id: 'std-uni-04', name: 'Hira Shah', rollNumber: 'PU-BBA-04', className: 'BBA Honors', section: 'Semester 8 (Morning)', wing: 'Undergraduate Wing', instituteId: uniInst.id, instituteCode: uniInst.code, campus: uniInst.name, gender: 'Female', phone: '0300-6665544', feeStatus: 'Paid', status: 'Active', fatherName: 'Syed Shah' }
+    );
+  }
+
+  targetStudents.forEach(ts => {
+    const existingIdx = parsed.students.findIndex(s => s.id === ts.id || s.rollNumber === ts.rollNumber);
+    if (existingIdx === -1) {
+      parsed.students.push(ts);
+      modified = true;
+    } else {
+      if (!parsed.students[existingIdx].instituteId) {
+        parsed.students[existingIdx].instituteId = ts.instituteId;
+        parsed.students[existingIdx].campus = ts.campus;
+        modified = true;
+      }
+    }
+  });
+
+  // Ensure user login accounts
+  if (!Array.isArray(parsed.users)) {
+    parsed.users = [];
+    modified = true;
+  }
+
+  const targetUsers = [
+    { name: 'Mrs. Samina Khurram', email: 'admin.school@cityschool.edu', role: 'admin', instituteId: schoolInst?.id, campus: schoolInst?.name },
+    { name: 'Sir Salman Ahmed', email: 'teacher.school@cityschool.edu', role: 'teacher', instituteId: schoolInst?.id, campus: schoolInst?.name },
+    { name: 'Ms. Ayesha Siddiqui', email: 'ayesha.teacher@cityschool.edu', role: 'teacher', instituteId: schoolInst?.id, campus: schoolInst?.name }
+  ];
+  if (collegeInst) {
+    targetUsers.push(
+      { name: 'Prof. Jamil Asghar', email: 'admin@kp001.edu', role: 'admin', instituteId: collegeInst.id, campus: collegeInst.name },
+      { name: 'Prof. Kamran Ahmed', email: 'kamran.hod@kp001.edu', role: 'teacher', instituteId: collegeInst.id, campus: collegeInst.name },
+      { name: 'Lecturer Bilal Hassan', email: 'bilal.chem@kp001.edu', role: 'teacher', instituteId: collegeInst.id, campus: collegeInst.name }
+    );
+  }
+  if (uniInst) {
+    targetUsers.push(
+      { name: 'Dr. Sohail Akhtar', email: 'admin@pu.edu', role: 'admin', instituteId: uniInst.id, campus: uniInst.name },
+      { name: 'Dr. Sohail Akhtar', email: 'dean.cs@pu.edu', role: 'teacher', instituteId: uniInst.id, campus: uniInst.name },
+      { name: 'Engr. Usman Riaz', email: 'usman.lab@pu.edu', role: 'teacher', instituteId: uniInst.id, campus: uniInst.name }
+    );
+  }
+
+  targetUsers.forEach(tu => {
+    if (!parsed.users.some(u => u.email === tu.email)) {
+      parsed.users.push({
+        id: 'usr-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 4),
+        ...tu,
+        status: 'active',
+        createdAt: new Date().toISOString()
+      });
+      modified = true;
+    }
+  });
+
+  // Keep institute counts synced to real records
+  parsed.institutes.forEach(inst => {
+    const sCount = parsed.students.filter(s => s && (s.instituteId === inst.id || s.institute === inst.name || s.instituteCode === inst.code)).length;
+    const tCount = parsed.teachers.filter(t => t && (t.instituteId === inst.id || t.institute === inst.name || t.instituteCode === inst.code)).length;
+    inst.totalStudents = Math.max(sCount, Number(inst.totalStudents) || 0);
+    inst.totalTeachers = Math.max(tCount, Number(inst.totalTeachers) || 0);
+  });
+
+  if (modified && typeof localStorage !== 'undefined') {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+    } catch (e) {}
+  }
+
+  return modified;
+}
+
 export const getStoredData = () => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
@@ -1476,6 +1811,10 @@ export const getStoredData = () => {
       if (!parsed.timetable || typeof parsed.timetable !== 'object') {
         parsed.timetable = {}
       }
+
+      // Guarantee complete 3-tier hierarchy (School, College, University)
+      ensureThreeTierHierarchy(parsed)
+
       return {
         ...cleanZeroData,
         ...parsed,
