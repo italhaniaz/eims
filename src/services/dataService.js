@@ -2032,30 +2032,6 @@ export const DataService = {
         inst.teachersCount = inst.totalTeachers
       }
       try { window.dispatchEvent(new Event('sms_teachers_updated')) } catch {}
-      }
-
-      if (collectionName === 'institutes' && id) {
-        // Cascade delete child collections for this institute to prevent orphan ghost records
-        const cascadeCollections = ['students', 'teachers', 'fees', 'classes', 'subjects', 'exams', 'notices', 'admissionsPipeline']
-        cascadeCollections.forEach(col => {
-          if (Array.isArray(store[col])) {
-            store[col] = store[col].filter(item => item.instituteId !== id)
-          }
-        })
-        if (store.timetable && typeof store.timetable === 'object') {
-          Object.keys(store.timetable).forEach(k => {
-            if (k.startsWith(`${id}_`) || k.includes(`_${id}_`)) {
-              delete store.timetable[k]
-            }
-          })
-        }
-        try {
-          if (typeof localStorage !== 'undefined') {
-            localStorage.removeItem(`sms_timetables_${id}`)
-            localStorage.removeItem(`sms_bell_schedule_${id}`)
-            localStorage.removeItem(`sms_exam_grading_settings_${id}`)
-          }
-        } catch {}
     }
 
     const itemName = finalItem.name || finalItem.title || finalItem.studentName || finalItem.rollNumber || finalItem.id
@@ -2201,6 +2177,30 @@ export const DataService = {
           inst.teachersCount = inst.totalTeachers
         }
         try { window.dispatchEvent(new Event('sms_teachers_updated')) } catch {}
+      }
+
+      if (collectionName === 'institutes' && id) {
+        // Cascade delete child collections for this institute to prevent orphan ghost records
+        const cascadeCollections = ['students', 'teachers', 'fees', 'classes', 'subjects', 'exams', 'notices', 'admissionsPipeline']
+        cascadeCollections.forEach(col => {
+          if (Array.isArray(store[col])) {
+            store[col] = store[col].filter(item => item.instituteId !== id)
+          }
+        })
+        if (store.timetable && typeof store.timetable === 'object') {
+          Object.keys(store.timetable).forEach(k => {
+            if (k.startsWith(`${id}_`) || k.includes(`_${id}_`)) {
+              delete store.timetable[k]
+            }
+          })
+        }
+        try {
+          if (typeof localStorage !== 'undefined') {
+            localStorage.removeItem(`sms_timetables_${id}`)
+            localStorage.removeItem(`sms_bell_schedule_${id}`)
+            localStorage.removeItem(`sms_exam_grading_settings_${id}`)
+          }
+        } catch {}
       }
       const itemName = deletedItem?.name || deletedItem?.title || deletedItem?.studentName || id
       const userEmail = getActiveUserEmail()

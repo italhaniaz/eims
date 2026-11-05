@@ -557,7 +557,14 @@ const AppContent = () => {
 
   // 3. INSTITUTE ADMIN & FACULTY PORTAL (Dedicated Multi-Tenant Scoped Management)
   const allKnownInstitutes = [...(institutes || []), ...(sampleTemplateData?.institutes || [])]
-  const matchedInst = allKnownInstitutes.find(i => i.id === user?.instituteId)
+  const matchedInst = allKnownInstitutes.find(i => 
+    (user?.instituteId && i.id === user.instituteId) || 
+    (user?.email && (i.adminEmail === user.email || i.email === user.email)) ||
+    (user?.instituteName && (i.name || '').toLowerCase() === user.instituteName.toLowerCase()) ||
+    (user?.role === 'school_admin' && ((i.type || '').toLowerCase() === 'school' || (i.tier || '').toLowerCase() === 'school')) ||
+    (user?.role === 'college_admin' && ((i.type || '').toLowerCase() === 'college' || (i.tier || '').toLowerCase() === 'college')) ||
+    (user?.role === 'university_admin' && ((i.type || '').toLowerCase() === 'university' || (i.tier || '').toLowerCase() === 'university'))
+  )
 
   const rawScopedInstitute = matchedInst
     ? {

@@ -995,7 +995,7 @@ export const FeesView = ({ currentInstitute }) => {
                         <span>{f.className}</span>
                         <span>•</span>
                         <span className="font-mono text-[10px] text-indigo-700 bg-indigo-50 px-1.5 py-0.2 rounded border border-indigo-200 font-medium" title="1Link 1-Bill 18-digit Reference">
-                          1-Bill: {f.oneBillId || `100482${String(selectedInstitute?.code || '001').replace(/[^0-9]/g, '').padStart(4, '0')}${String(f.id).replace(/[^0-9]/g, '').slice(-8).padStart(8, '0')}`.slice(0, 18)}
+                          1-Bill: {f.oneBillId || `100482${String(currentInstitute?.code || '001').replace(/[^0-9]/g, '').padStart(4, '0')}${String(f.id).replace(/[^0-9]/g, '').slice(-8).padStart(8, '0')}`.slice(0, 18)}
                         </span>
                       </div>
                       {f.installmentInfo?.isInstallment && (
