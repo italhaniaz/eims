@@ -1136,10 +1136,19 @@ export const InstitutesView = () => {
 
   const handleEditTierChange = (selectedTier) => {
     const config = tierPlanMapping[selectedTier] || tierPlanMapping.School
+    const newTiers = selectedTier === 'University' 
+      ? ['undergraduate'] 
+      : selectedTier === 'College' 
+      ? ['college'] 
+      : selectedTier === 'Custom' 
+      ? (editFormData.enabledTiers?.length ? editFormData.enabledTiers : ['school', 'college']) 
+      : ['school']
+
     setEditFormData(prev => ({
       ...prev,
       type: selectedTier,
-      planTier: config.planName
+      planTier: config.planName,
+      enabledTiers: newTiers
     }))
   }
 
@@ -1162,11 +1171,21 @@ export const InstitutesView = () => {
       ? `${editFormData.phoneDialCode || '+92'} ${editFormData.phoneNumber.trim()}`
       : editFormData.phone || ''
 
+    const resolvedTiers = editFormData.enabledTiers?.length
+      ? editFormData.enabledTiers
+      : (
+        editFormData.type === 'University' ? ['undergraduate'] :
+        editFormData.type === 'College' ? ['college'] :
+        editFormData.type === 'Custom' ? (editingInstitute.enabledTiers || ['school', 'college']) :
+        ['school']
+      )
+
     const payload = {
       ...editingInstitute,
       ...editFormData,
       name: editFormData.name.trim(),
       code: editFormData.code.trim().toUpperCase(),
+      enabledTiers: resolvedTiers,
       phone: fullPhone,
       quotaStudents: Number(editFormData.quotaStudents) || 1500,
       quotaUsers: Number(editFormData.quotaUsers) || 50,
@@ -4247,6 +4266,50 @@ export const InstitutesView = () => {
                     </select>
                   </div>
                 </div>
+
+                {/* Custom Hybrid: Educational Wings Allocation */}
+                {editFormData.type === 'Custom' && (
+                  <div className="p-3 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
+                    <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
+                      Licensed Educational Wings for this Campus
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      {[
+                        { id: 'school', label: 'School Wing', desc: 'Grades 1-10', icon: School },
+                        { id: 'college', label: 'College Wing', desc: '11-12 & ADP', icon: Building2 },
+                        { id: 'undergraduate', label: 'University Wing', desc: 'BS / MS Semesters', icon: GraduationCap }
+                      ].map(wing => {
+                        const WingIcon = wing.icon
+                        const isChecked = (editFormData.enabledTiers || ['school', 'college']).includes(wing.id)
+                        return (
+                          <label key={wing.id} className="flex items-center gap-2 p-2 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-slate-300">
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => {
+                                const current = editFormData.enabledTiers || ['school', 'college']
+                                let updated
+                                if (current.includes(wing.id)) {
+                                  if (current.length > 1) updated = current.filter(t => t !== wing.id)
+                                  else updated = current
+                                } else {
+                                  updated = [...current, wing.id]
+                                }
+                                setEditFormData({ ...editFormData, enabledTiers: updated })
+                              }}
+                              className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500"
+                            />
+                            <WingIcon className="w-4 h-4 text-emerald-700 shrink-0" />
+                            <div>
+                              <span className="text-xs font-bold text-slate-800 block">{wing.label}</span>
+                              <span className="text-[10px] text-slate-400 block">{wing.desc}</span>
+                            </div>
+                          </label>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 uppercase mb-1 flex items-center gap-1">

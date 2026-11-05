@@ -20,9 +20,8 @@ import {
   Layers
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
-import { PortalFilterBar } from './PortalFilterBar'
 
-export const SuperadminLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier, selectedTiers, onSetTiers }) => {
+export const SuperadminLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier }) => {
   const { login } = useAuth()
 
   const [identifier, setIdentifier] = useState('')
@@ -79,17 +78,8 @@ export const SuperadminLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
       )}
 
       {/* Main Container */}
-      <div className="w-full max-w-[920px] z-10 flex flex-col items-center mt-12 sm:mt-0">
+      <div className="w-full max-w-[920px] z-10 flex flex-col items-center mt-14 sm:mt-0">
         
-        {/* TOP SEGMENTED PORTAL SWITCHER & CHECKBOX FILTER BAR */}
-        <PortalFilterBar
-          activeTier="superadmin"
-          onSwitchTier={onSwitchTier}
-          selectedTiers={selectedTiers}
-          onSetTiers={onSetTiers}
-          isDark={true}
-        />
-
         {/* Dual-Pane Card */}
         <div className="w-full rounded-3xl bg-slate-900/90 border border-slate-800 shadow-[0_20px_50px_rgba(0,0,0,0.6)] backdrop-blur-xl overflow-hidden grid grid-cols-1 md:grid-cols-12 relative">
           
@@ -117,12 +107,12 @@ export const SuperadminLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
                 </div>
               </div>
 
-              <p className="text-xs text-slate-300 leading-relaxed mb-6">
+              <p className="text-xs text-slate-300 leading-relaxed mb-4 md:mb-6">
                 Root level access for Multi-Tier Institutional Tenancy, Super Admin Approvals, School/College/University Provisioning, Global Audit Logs & System Telemetry.
               </p>
 
-              {/* Master Telemetry Highlights */}
-              <div className="space-y-2.5 pt-2">
+              {/* Master Telemetry Highlights (Visible on Desktop, hidden on compact mobile) */}
+              <div className="hidden md:block space-y-2.5 pt-2">
                 <div className="p-2.5 rounded-xl bg-slate-800/40 border border-slate-700/50 flex items-start gap-2.5">
                   <Server className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
                   <div className="text-xs">
@@ -149,7 +139,7 @@ export const SuperadminLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
               </div>
             </div>
 
-            <div className="relative z-10 pt-6 mt-6 border-t border-slate-800 text-[11px] text-slate-400 flex items-center justify-between">
+            <div className="hidden md:flex relative z-10 pt-6 mt-6 border-t border-slate-800 text-[11px] text-slate-400 items-center justify-between">
               <span>Root Node: <strong className="text-slate-300 font-mono">auth.apexed.io</strong></span>
               <span className="flex items-center gap-1.5 font-bold text-emerald-400">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>

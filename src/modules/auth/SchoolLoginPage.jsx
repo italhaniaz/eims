@@ -19,9 +19,8 @@ import {
   CheckCircle2
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
-import { PortalFilterBar } from './PortalFilterBar'
 
-export const SchoolLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier, selectedTiers, onSetTiers }) => {
+export const SchoolLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier }) => {
   const { login } = useAuth()
   const formRef = useRef(null)
 
@@ -160,16 +159,8 @@ export const SchoolLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier, se
       )}
 
       {/* Main Container */}
-      <div className="w-full max-w-[940px] z-10 flex flex-col items-center mt-12 sm:mt-0">
+      <div className="w-full max-w-[940px] z-10 flex flex-col items-center mt-14 sm:mt-0">
         
-        {/* TOP SEGMENTED PORTAL SWITCHER & CHECKBOX FILTER BAR */}
-        <PortalFilterBar
-          activeTier="school"
-          onSwitchTier={onSwitchTier}
-          selectedTiers={selectedTiers}
-          onSetTiers={onSetTiers}
-        />
-
         {/* Dual-Pane Card */}
         <div className="w-full rounded-3xl bg-white border border-slate-200/90 shadow-[0_15px_45px_-5px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.02)] overflow-hidden grid grid-cols-1 md:grid-cols-12 relative">
           
@@ -196,11 +187,12 @@ export const SchoolLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier, se
               <div className="mt-1 flex items-center gap-2">
                 <span className="text-xs font-bold text-slate-800">City School Model Town Campus</span>
               </div>
-              <p className="text-xs sm:text-sm text-slate-500 leading-relaxed mt-2 mb-5">
+              <p className="text-xs sm:text-sm text-slate-500 leading-relaxed mt-2 mb-4 md:mb-5">
                 Dedicated School Academic Operating System for Primary, Middle, Matriculation & Cambridge O-Level wings.
               </p>
 
-              <div className="space-y-2">
+              {/* Feature Highlights (Visible on Desktop / Tablets, Hidden on compact mobile to bring login form up) */}
+              <div className="hidden md:block space-y-2">
                 <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-white/90 border border-slate-100 shadow-2xs">
                   <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-emerald-50 text-emerald-700">
                     <CalendarCheck className="w-4 h-4" />
@@ -243,7 +235,7 @@ export const SchoolLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier, se
               </div>
             </div>
 
-            <div className="pt-4 mt-4 border-t border-slate-200/80 flex items-center justify-between text-[11px] text-slate-500">
+            <div className="hidden md:flex pt-4 mt-4 border-t border-slate-200/80 items-center justify-between text-[11px] text-slate-500">
               <span className="flex items-center gap-1.5 font-medium">
                 <span className="w-2 h-2 rounded-full animate-pulse bg-emerald-500"></span>
                 <span className="font-semibold text-slate-700">School Portal (K-10)</span>
