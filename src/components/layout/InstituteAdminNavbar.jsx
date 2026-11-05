@@ -229,52 +229,6 @@ export const InstituteAdminNavbar = ({
         </div>
       )}
 
-      {/* Multi-Portal Switcher (Admin Desk vs Teacher Desk vs Student & Parent Portal) */}
-      <div className="hidden lg:flex items-center bg-slate-100/90 p-1 rounded-xl border border-slate-200/80 shadow-2xs gap-1">
-        <button
-          type="button"
-          onClick={() => onRouteChange && onRouteChange('inst-dashboard')}
-          className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-            currentRoute !== 'inst-student-portal' && currentRoute !== 'inst-teachers'
-              ? 'bg-white text-emerald-800 shadow-xs border border-emerald-200/70 ring-1 ring-emerald-500/10'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-          }`}
-          title="Return to Campus Admin Dashboard"
-        >
-          <Building2 className={`w-3.5 h-3.5 ${currentRoute !== 'inst-student-portal' && currentRoute !== 'inst-teachers' ? 'text-emerald-700' : 'text-slate-500'}`} />
-          <span>Admin Desk</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => onRouteChange && onRouteChange('inst-teachers')}
-          className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-            currentRoute === 'inst-teachers'
-              ? 'bg-emerald-600 text-white shadow-xs'
-              : 'text-slate-600 hover:text-emerald-900 hover:bg-emerald-50'
-          }`}
-          title="Open Faculty & Teacher Desk"
-        >
-          <UserCheck className={`w-3.5 h-3.5 ${currentRoute === 'inst-teachers' ? 'text-white' : 'text-slate-500'}`} />
-          <span>Teacher Desk</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => onRouteChange && onRouteChange('inst-student-portal')}
-          className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-            currentRoute === 'inst-student-portal'
-              ? 'bg-emerald-600 text-white shadow-xs'
-              : 'text-slate-600 hover:text-emerald-900 hover:bg-emerald-50'
-          }`}
-          title="View Student & Parent Live Portal"
-        >
-          <GraduationCap className={`w-3.5 h-3.5 ${currentRoute === 'inst-student-portal' ? 'text-white' : 'text-slate-500'}`} />
-          <span>Student & Parent Portal</span>
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-        </button>
-      </div>
-
       {/* Right: Preview As Switcher, Settings, and User Menu */}
       <div className="flex items-center gap-2 sm:gap-3">
         {/* Discrete "Preview As" Role Switcher Dropdown */}
