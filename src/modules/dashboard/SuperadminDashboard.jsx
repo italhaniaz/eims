@@ -1622,7 +1622,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
             {/* Row 1: Full-width Icon, Title & Live Indicator */}
             <div className="flex items-start sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3.5 min-w-0">
-                <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-purple-100 to-indigo-50 border border-emerald-200/70 flex items-center justify-center text-emerald-800 shrink-0 shadow-2xs">
+                <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-emerald-100 to-teal-50 border border-emerald-200/70 flex items-center justify-center text-emerald-800 shrink-0 shadow-2xs">
                   {executiveMetric === 'saas_revenue' ? (
                     <CreditCard className="w-5 h-5 stroke-[2.2]" />
                   ) : executiveMetric === 'campuses' ? (
@@ -1713,7 +1713,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           {/* 2. Executive Quick Stats Summary Bar */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 py-3.5">
             {/* Card 1: Projected Annual ARR */}
-            <div className="px-4 py-3.5 rounded-2xl bg-gradient-to-br from-purple-50/80 via-white to-purple-50/30 border border-emerald-100/90 shadow-2xs hover:border-emerald-200 transition-all flex flex-col justify-between">
+            <div className="px-4 py-3.5 rounded-2xl bg-gradient-to-br from-emerald-50/80 via-white to-emerald-50/30 border border-emerald-100/90 shadow-2xs hover:border-emerald-200 transition-all flex flex-col justify-between">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 block">
                   {executiveChartData.summaryLabel}
@@ -1723,7 +1723,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 </span>
               </div>
               <div className="mt-1.5">
-                <span className="text-base sm:text-lg font-black text-purple-950 font-heading tracking-tight block">
+                <span className="text-base sm:text-lg font-black text-emerald-950 font-heading tracking-tight block">
                   {executiveChartData.summaryValue}
                 </span>
                 <span className="text-[10px] font-medium text-slate-400 block mt-0.5">
@@ -1825,17 +1825,17 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
 
                         {/* Dual Bar Graphic */}
                         <div className="w-full flex items-end justify-center gap-1 sm:gap-1.5 h-full pb-1.5">
-                          {/* Purple Bar: Primary Metric */}
+                          {/* Primary Bar: Primary Metric */}
                           <div
                             style={{ height: `${h1}%` }}
-                            className={`w-2.5 sm:w-3.5 md:w-4 rounded-t-md sm:rounded-t-lg bg-gradient-to-t from-purple-700 via-purple-600 to-indigo-500 transition-all duration-300 shadow-2xs ${
+                            className={`w-2.5 sm:w-3.5 md:w-4 rounded-t-md sm:rounded-t-lg bg-gradient-to-t from-emerald-800 via-emerald-700 to-teal-600 transition-all duration-300 shadow-2xs ${
                               isHovered ? 'brightness-110 scale-y-105 shadow-emerald-500/20' : ''
                             }`}
                           />
                           {/* Secondary Bar: Expansion or Secondary Tier */}
                           <div
                             style={{ height: `${h2}%` }}
-                            className={`w-2.5 sm:w-3.5 md:w-4 rounded-t-md sm:rounded-t-lg bg-gradient-to-t from-emerald-600 via-emerald-500 to-teal-400 transition-all duration-300 shadow-2xs ${
+                            className={`w-2.5 sm:w-3.5 md:w-4 rounded-t-md sm:rounded-t-lg bg-gradient-to-t from-emerald-500 via-emerald-400 to-teal-300 transition-all duration-300 shadow-2xs ${
                               isHovered ? 'brightness-110 scale-y-105 shadow-emerald-500/20' : ''
                             }`}
                           />
@@ -1863,7 +1863,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                           >
                             <div className="flex items-center justify-between pb-2 border-b border-slate-800 mb-2.5">
                               <span className="font-extrabold text-xs text-white flex items-center gap-1.5">
-                                <Calendar className="w-3.5 h-3.5 text-purple-400" />
+                                <Calendar className="w-3.5 h-3.5 text-emerald-400" />
                                 <span>{item.m} {new Date().getFullYear()} Cycle</span>
                               </span>
                               <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-500/30">
@@ -1874,7 +1874,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                             <div className="space-y-1.5 text-xs">
                               <div className="flex items-center justify-between">
                                 <span className="flex items-center gap-1.5 text-slate-300">
-                                  <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-purple-500 to-indigo-400 shrink-0"></span>
+                                  <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-emerald-600 to-teal-500 shrink-0"></span>
                                   <span>{executiveChartData.tipLabel1 || 'Contracted:'}</span>
                                 </span>
                                 <span className="font-bold text-white font-mono">{item.label1}</span>
@@ -1891,7 +1891,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
 
                             <div className="mt-2.5 pt-2 border-t border-slate-800/80 text-[10px] text-slate-400 flex items-center justify-between">
                               <span className="text-slate-500 font-semibold">Seasonal Factor:</span>
-                              <span className="text-purple-300 font-medium truncate max-w-[140px]">{item.note}</span>
+                              <span className="text-emerald-300 font-medium truncate max-w-[140px]">{item.note}</span>
                             </div>
                           </div>
                         )}
@@ -1907,7 +1907,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           <div className="flex flex-wrap items-center justify-between gap-3 pt-3.5 mt-2 border-t border-slate-100/90 text-xs">
             <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs font-semibold">
               <div className="flex items-center gap-2 px-3 py-1 rounded-xl bg-emerald-50/60 border border-emerald-100/80 text-slate-800">
-                <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-purple-700 to-indigo-500 shadow-2xs ring-2 ring-purple-200"></span>
+                <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-emerald-700 to-teal-500 shadow-2xs ring-2 ring-emerald-200"></span>
                 <span className="font-extrabold">{executiveChartData.primaryLegend}</span>
               </div>
               <div className="flex items-center gap-2 px-3 py-1 rounded-xl bg-emerald-50/60 border border-emerald-100/80 text-slate-800">
@@ -1923,7 +1923,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           </div>
 
           {/* 5. Executive Decision Banner (Actionable Insight Bar) */}
-          <div className="mt-3.5 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-purple-50/90 via-indigo-50/40 to-slate-50 border border-emerald-200/80 flex flex-col md:flex-row md:items-center justify-between gap-3.5 shadow-2xs">
+          <div className="mt-3.5 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-emerald-50/90 via-teal-50/40 to-slate-50 border border-emerald-200/80 flex flex-col md:flex-row md:items-center justify-between gap-3.5 shadow-2xs">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white flex items-center justify-center shrink-0 shadow-xs">
                 <Sparkles className="w-4 h-4 fill-white/20" />
@@ -1942,7 +1942,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
             <button
               type="button"
               onClick={() => onRouteChange('platform-billing')}
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs font-bold transition-all flex items-center gap-2 shrink-0 cursor-pointer shadow-sm hover:shadow hover:scale-[1.02] active:scale-[0.98] self-start md:self-auto group"
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold transition-all flex items-center gap-2 shrink-0 cursor-pointer shadow-sm hover:shadow hover:scale-[1.02] active:scale-[0.98] self-start md:self-auto group"
             >
               <span>Manage Subscriptions</span>
               <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />

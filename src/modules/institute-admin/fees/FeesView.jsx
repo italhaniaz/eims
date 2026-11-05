@@ -937,7 +937,8 @@ export const FeesView = ({ currentInstitute }) => {
           </span>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Desktop Table View */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-left text-sm min-w-[700px]">
             <thead className="bg-slate-50 text-slate-600 text-[11px] uppercase tracking-wider font-bold border-b border-slate-200 sticky top-0 z-10 shadow-2xs">
               <tr>
@@ -1100,6 +1101,83 @@ export const FeesView = ({ currentInstitute }) => {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile View: Clean Card Layout (<640px) */}
+        <div className="sm:hidden divide-y divide-slate-100">
+          {paginatedFees.length > 0 ? (
+            paginatedFees.map(f => (
+              <div key={f.id} className="p-3.5 space-y-2 bg-white">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <h4 className="font-bold text-slate-900 text-xs">{f.studentName}</h4>
+                    <div className="text-[11px] text-slate-500 font-medium">
+                      <span>{f.className}</span> • <span className="font-mono text-indigo-700">{f.rollNumber}</span>
+                    </div>
+                  </div>
+                  <div>
+                    {f.status === 'Paid' ? (
+                      <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-[10px] font-bold">
+                        Paid
+                      </span>
+                    ) : f.status === 'Partial' ? (
+                      <span className="px-2 py-0.5 bg-orange-50 text-orange-800 border border-orange-300 rounded-full text-[10px] font-bold">
+                        Partial
+                      </span>
+                    ) : isFeeOverdue(f) ? (
+                      <span className="px-2 py-0.5 bg-rose-50 text-rose-700 border border-rose-300 rounded-full text-[10px] font-bold">
+                        Overdue
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-[10px] font-bold">
+                        Pending
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-xs py-1 border-t border-slate-50">
+                  <span className="font-mono font-extrabold text-slate-900">
+                    Rs. {Number(f.amount).toLocaleString()}
+                  </span>
+                  <span className="text-[11px] text-slate-400">Due: {f.dueDate}</span>
+                </div>
+
+                <div className="flex items-center justify-end gap-1.5 pt-1 border-t border-slate-50 flex-wrap">
+                  {f.status !== 'Paid' && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => openPosCashier(f)}
+                        className="px-2 py-1 text-[11px] font-bold bg-indigo-50 text-indigo-700 rounded-md"
+                      >
+                        ⚡ POS
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => markPaid(f)}
+                        className="px-2 py-1 text-[11px] font-bold bg-emerald-50 text-emerald-700 rounded-md"
+                      >
+                        Mark Paid
+                      </button>
+                    </>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setSelectedVoucher(f)}
+                    className="px-2 py-1 text-[11px] font-semibold border border-slate-200 text-slate-600 rounded-md inline-flex items-center gap-1"
+                  >
+                    <Printer className="w-3 h-3" />
+                    <span>Challan</span>
+                  </button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-8 text-slate-400 text-xs">
+              No fee vouchers found matching criteria.
+            </div>
+          )}
         </div>
 
         {/* Pagination */}
