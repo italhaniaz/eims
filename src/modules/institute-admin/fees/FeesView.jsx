@@ -36,7 +36,7 @@ export const FeesView = ({ currentInstitute }) => {
   const { toast } = useToast()
   const instStudents = useMemo(() => {
     return students.filter(s => {
-      if (s.instituteId && currentInstitute?.id && s.instituteId !== currentInstitute?.id) return false
+      if (currentInstitute?.id && s.instituteId !== currentInstitute.id) return false
       return isClassAllowedForTier(s.className, currentInstitute)
     })
   }, [students, currentInstitute])

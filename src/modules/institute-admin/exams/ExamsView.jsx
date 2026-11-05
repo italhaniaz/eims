@@ -83,13 +83,13 @@ export const ExamsView = ({ currentInstitute }) => {
   // Scoped student & exam lists strictly gated by campus and tier
   const instStudents = useMemo(() => {
     return students.filter(s => {
-      if (s.instituteId && currentInstitute?.id && s.instituteId !== currentInstitute?.id) return false
+      if (currentInstitute?.id && s.instituteId !== currentInstitute.id) return false
       return isClassAllowedForTier(s.className, currentInstitute)
     })
   }, [students, currentInstitute])
 
   const instExams = useMemo(() => {
-    return exams.filter(e => !e.instituteId || !currentInstitute?.id || e.instituteId === currentInstitute.id)
+    return exams.filter(e => !currentInstitute?.id || e.instituteId === currentInstitute.id)
   }, [exams, currentInstitute])
 
   // Shared academic sessions list

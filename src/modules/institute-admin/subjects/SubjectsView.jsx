@@ -241,8 +241,9 @@ export const SubjectsView = ({ currentInstitute = null }) => {
 
   // Counts by Tier
   const tierCounts = useMemo(() => {
+    const activeTierName = (currentInstitute?.tier || currentInstitute?.type || 'school').toLowerCase()
     const list = currentInstitute?.id 
-      ? subjects.filter(s => !s.instituteId || s.instituteId === currentInstitute.id)
+      ? subjects.filter(s => s.instituteId === currentInstitute.id || (!s.instituteId && (s.tier || 'school') === activeTierName))
       : subjects
 
     return {

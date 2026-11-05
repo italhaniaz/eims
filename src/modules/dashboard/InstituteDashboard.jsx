@@ -80,13 +80,13 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
 
   const instStudents = useMemo(() => {
     return students.filter(s => {
-      if (s.instituteId && currentInstitute?.id && s.instituteId !== currentInstitute?.id) return false
+      if (currentInstitute?.id && s.instituteId !== currentInstitute.id) return false
       return isClassAllowedForTier(s.className, currentInstitute)
     })
   }, [students, currentInstitute])
 
-  const instTeachers = teachers.filter(t => !t.instituteId || t.instituteId === currentInstitute?.id)
-  const instFees = fees.filter(f => !f.instituteId || f.instituteId === currentInstitute?.id)
+  const instTeachers = teachers.filter(t => !currentInstitute?.id || t.instituteId === currentInstitute?.id)
+  const instFees = fees.filter(f => !currentInstitute?.id || f.instituteId === currentInstitute?.id)
 
   const displayedClasses = useMemo(() => {
     if (!activeProgramLevel || activeProgramLevel === 'all') return instClasses

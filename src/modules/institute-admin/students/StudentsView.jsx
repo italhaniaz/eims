@@ -361,7 +361,7 @@ export const StudentsView = ({ currentInstitute }) => {
 
     return students.filter(s => {
       if (legacyStaleRolls.includes(s.rollNumber)) return false
-      if (s.instituteId && currentInstitute?.id && s.instituteId !== currentInstitute?.id) return false
+      if (currentInstitute?.id && s.instituteId !== currentInstitute.id) return false
       return isClassAllowedForTier(s.className, currentInstitute)
     })
   }, [students, currentInstitute])
@@ -937,7 +937,7 @@ const validatePakistaniPhone = (phone) => {
     if (cleanBForm.length >= 9) {
       const duplicateBForm = students.find(s => {
         if (editingStudent && s.id === editingStudent.id) return false
-        if (s.instituteId && currentInstitute?.id && s.instituteId !== currentInstitute.id) return false
+        if (currentInstitute?.id && s.instituteId !== currentInstitute.id) return false
         const exClean = (s.bFormCnic || '').replace(/[^0-9]/g, '')
         return exClean && exClean === cleanBForm
       })
@@ -2531,7 +2531,7 @@ const validatePakistaniPhone = (phone) => {
                       if (clean.length >= 9) {
                         const matched = students.find(s => {
                           if (editingStudent && s.id === editingStudent.id) return false
-                          if (s.instituteId && currentInstitute?.id && s.instituteId !== currentInstitute.id) return false
+                          if (currentInstitute?.id && s.instituteId !== currentInstitute.id) return false
                           const ex = (s.bFormCnic || '').replace(/[^0-9]/g, '')
                           return ex && ex === clean
                         })
