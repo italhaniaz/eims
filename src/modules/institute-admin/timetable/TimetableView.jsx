@@ -79,7 +79,7 @@ export const TimetableView = ({ currentInstitute, onRouteChange }) => {
     return teachers.filter(t => {
       if (!t.instituteId) return true
       if (!currentInstitute?.id) return true
-      return t.instituteId === currentInstitute.id
+      return t.instituteId === currentInstitute?.id
     })
   }, [teachers, currentInstitute?.id])
 

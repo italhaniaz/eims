@@ -223,7 +223,7 @@ export const CampusInventoryView = ({ currentInstitute }) => {
         <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Asset Valuation</p>
-            <h3 className="text-2xl font-black text-slate-900 mt-1">PKR {(totalValuation / 1000000).toFixed(2)}M</h3>
+            <h3 className="text-2xl font-black text-slate-900 mt-1">PKR {(Number(totalValuation || 0) / 1000000).toFixed(2)}M</h3>
             <span className="text-[11px] text-emerald-600 font-medium">Capital asset book value</span>
           </div>
           <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">

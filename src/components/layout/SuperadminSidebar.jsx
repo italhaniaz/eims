@@ -42,6 +42,7 @@ import {
   Download
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { preloadRoute } from '../../utils/modulePreloader'
 
 export const SuperadminSidebar = ({ 
   currentRoute, 
@@ -175,6 +176,7 @@ export const SuperadminSidebar = ({
   const isRouteActive = (route) => currentRoute === route
 
   const handleNavClick = (route) => {
+    preloadRoute(route)
     onRouteChange(route)
     if (isMobileOpen) {
       onCloseMobile()

@@ -945,7 +945,7 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
         r.total,
         r.max,
         `${r.pct}%`,
-        r.gpa.toFixed(2),
+        (Number(r.gpa) || 0).toFixed(2),
         `"${r.grade}"`,
         r.position,
         `"${r.status}"`
@@ -2207,7 +2207,7 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
                   <div className="text-xs text-slate-500">{pos.campus}</div>
                   <div className="pt-2 border-t border-slate-200 flex justify-between font-mono text-xs">
                     <span className="text-purple-700 font-bold">{pos.total}/{pos.max} ({pos.pct}%)</span>
-                    <span className="text-emerald-700 font-bold">GPA: {pos.gpa.toFixed(2)}</span>
+                    <span className="text-emerald-700 font-bold">GPA: {(Number(pos.gpa) || 0).toFixed(2)}</span>
                   </div>
                 </div>
               ))}
@@ -2295,7 +2295,7 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
                         {rec.pct}%
                       </td>
                       <td className="py-2.5 px-3 text-center font-mono font-bold text-emerald-700">
-                        {rec.gpa.toFixed(2)}
+                        {(Number(rec.gpa) || 0).toFixed(2)}
                       </td>
                       <td className="py-2.5 px-3 text-center">
                         <span className="px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 font-mono font-bold text-[10px] border border-purple-200">
@@ -3148,7 +3148,7 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
                       <td className="py-2 px-3 border-r border-slate-200 text-slate-600">{r.wing}</td>
                       <td className="py-2 px-3 text-center font-mono border-r border-slate-200">{r.total}/{r.max}</td>
                       <td className="py-2 px-3 text-center font-mono font-bold border-r border-slate-200">{r.pct}%</td>
-                      <td className="py-2 px-3 text-center font-mono text-emerald-700 border-r border-slate-200">{r.gpa.toFixed(2)}</td>
+                      <td className="py-2 px-3 text-center font-mono text-emerald-700 border-r border-slate-200">{(Number(r.gpa) || 0).toFixed(2)}</td>
                       <td className="py-2 px-3 text-center font-bold text-purple-700 border-r border-slate-200">{r.grade}</td>
                       <td className="py-2 px-3 text-right font-bold text-emerald-700">{r.status}</td>
                     </tr>

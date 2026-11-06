@@ -64,9 +64,9 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
   } = useAppData()
 
   const effectiveTier = currentInstitute
-    ? (currentInstitute.type?.toLowerCase().includes('uni') || currentInstitute.id === 'inst-4'
+    ? (currentInstitute?.type?.toLowerCase().includes('uni') || currentInstitute?.id === 'inst-4'
         ? 'university'
-        : currentInstitute.type?.toLowerCase().includes('col') || currentInstitute.id === 'inst-3'
+        : currentInstitute?.type?.toLowerCase().includes('col') || currentInstitute?.id === 'inst-3'
         ? 'college'
         : 'school')
     : (user?.tier || (user?.instituteType?.toLowerCase() === 'university' ? 'university' : user?.instituteType?.toLowerCase() === 'college' ? 'college' : 'school'))

@@ -40,6 +40,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { getInstituteTierConfig } from '../../utils/tierGating'
+import { preloadRoute } from '../../utils/modulePreloader'
 
 
 export const canRoleAccessRoute = (role, routeId) => {
@@ -235,6 +236,7 @@ export const InstituteAdminSidebar = ({
   }, [currentRoute, isFacultyRoute, isAcademicsRoute, isFinanceRoute, isServicesRoute, isUsersRoute])
 
   const handleNavClick = (id) => {
+    preloadRoute(id)
     onRouteChange(id)
     if (isMobileOpen) {
       onCloseMobile()

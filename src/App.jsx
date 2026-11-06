@@ -86,17 +86,27 @@ const UniversityCampusItView = lazyWithRetry(() => import('./modules/institute-a
 
 const CampusAccountsView = lazyWithRetry(() => import('./modules/institute-admin/accounts/CampusAccountsView'), 'campus-accounts-view')
 
-// Executive Minimal Loading Fallback
-const ModuleLoader = () => (
-  <div className="flex flex-col items-center justify-center min-h-[380px] w-full p-8 text-center animate-in fade-in duration-200">
-    <div className="w-9 h-9 border-3 border-blue-600/30 border-t-blue-600 rounded-full animate-spin mb-3"></div>
-    <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Loading Module...</span>
-  </div>
-)
+// Executive Seamless Loading Fallback & Preloader
+import ModuleSkeletonLoader from './components/common/ModuleSkeletonLoader'
+import { 
+  preloadRoute, 
+  preloadInstituteCoreModules, 
+  preloadSuperadminCoreModules 
+} from './utils/modulePreloader'
 
 const AppContent = () => {
   const { user } = useAuth()
   const { institutes } = useAppData()
+
+  // Proactive background preloading to ensure instant (<5ms) navigation without delay
+  useEffect(() => {
+    if (!user) return
+    if (user.role === 'superadmin') {
+      preloadSuperadminCoreModules()
+    } else {
+      preloadInstituteCoreModules()
+    }
+  }, [user?.role])
 
   // Allowed route registry for strict portal isolation
   const VALID_SUPERADMIN_ROUTES = [
@@ -374,7 +384,7 @@ const AppContent = () => {
 
             <main className="flex-1 overflow-y-auto">
               <ErrorBoundary onNavigateHome={() => setSuperadminRoute('dashboard')}>
-                <Suspense fallback={<ModuleLoader />}>
+                <Suspense fallback={<ModuleSkeletonLoader />}>
                   {(!VALID_SUPERADMIN_ROUTES.includes(superadminRoute) || superadminRoute === 'dashboard') && (
                     <SuperadminDashboard
                       onRouteChange={setSuperadminRoute}
@@ -494,7 +504,7 @@ const AppContent = () => {
   if (isDedicatedPortalUser) {
     return (
       <ErrorBoundary onNavigateHome={() => window.location.reload()}>
-        <Suspense fallback={<ModuleLoader />}>
+        <Suspense fallback={<ModuleSkeletonLoader />}>
           <StudentParentPortalView />
         </Suspense>
       </ErrorBoundary>
@@ -598,7 +608,7 @@ const AppContent = () => {
 
           <main className="flex-1 overflow-y-auto">
             <ErrorBoundary onNavigateHome={() => setInstituteRoute('inst-dashboard')}>
-              <Suspense fallback={<ModuleLoader />}>
+              <Suspense fallback={<ModuleSkeletonLoader />}>
                 {(!VALID_INSTITUTE_ROUTES.includes(safeInstituteRoute) || safeInstituteRoute === 'inst-dashboard') && (
                   <InstituteDashboard
                     currentInstitute={activeCampus}

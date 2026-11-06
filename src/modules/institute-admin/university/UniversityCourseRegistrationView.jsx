@@ -440,7 +440,7 @@ export const UniversityCourseRegistrationView = ({ currentInstitute }) => {
                             <div className="text-[10px] flex items-center gap-1">
                               <span className="font-bold text-slate-600">HEC CGPA:</span>
                               <span className={`font-mono font-bold ${isAcademicProbation(req.cgpa) ? 'text-rose-700 bg-rose-50 px-1 rounded border border-rose-200' : 'text-slate-800'}`}>
-                                {req.cgpa.toFixed(2)}
+                                {(Number(req.cgpa) || 0).toFixed(2)}
                               </span>
                               {isAcademicProbation(req.cgpa) && (
                                 <span className="text-[9px] font-bold text-rose-700 bg-rose-100 px-1 rounded">Probation</span>
