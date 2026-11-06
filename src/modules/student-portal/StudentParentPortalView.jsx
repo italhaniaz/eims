@@ -272,6 +272,17 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
     ]
   }, [fees, studentProfile, user, isSchool, isCollege])
 
+  // Defaulter soft-gating: Check if current student has any pending fee voucher past due date
+  const hasOverdueFees = useMemo(() => {
+    const now = new Date()
+    return (studentFees || []).some(f => {
+      if (f.status === 'Paid') return false
+      if (!f.dueDate) return false
+      const due = new Date(f.dueDate + 'T23:59:59')
+      return due < now
+    })
+  }, [studentFees])
+
   // Attendance stats
   const attendanceStats = useMemo(() => {
     const totalDays = isSchool ? 50 : isCollege ? 46 : 42
@@ -920,18 +931,41 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
         {/* TAB: COLLEGE BOARD SLIPS */}
         {activeTab === 'board_slip' && (
           <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-2xs space-y-4">
+            {hasOverdueFees && (
+              <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-900 flex items-center justify-between gap-3 shadow-2xs font-medium">
+                <div className="flex items-center gap-2.5">
+                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                  <span><strong>Fee Clearance Pending:</strong> Roll number slip printout requires accounts clearance due to overdue fee vouchers. Daily diary, timetable & attendance remain accessible.</span>
+                </div>
+                <button onClick={() => setActiveTab('fees')} className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold shrink-0 cursor-pointer">
+                  View Dues
+                </button>
+              </div>
+            )}
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
                 <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">{collegeBoardData.boardName}</span>
                 <h3 className="text-lg font-black text-slate-800 mt-1">HSSC Annual Examination Roll Number Slip (Composite)</h3>
               </div>
-              <button
-                onClick={() => toast.success('BISE Roll Number slip printed.')}
-                className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold hover:bg-indigo-100 cursor-pointer"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                <span>Print Slip</span>
-              </button>
+              {hasOverdueFees ? (
+                <button
+                  type="button"
+                  onClick={() => toast.error('Fee clearance pending: Please settle overdue vouchers or contact the campus accounts office.')}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-slate-200 text-slate-500 rounded-lg text-xs font-bold cursor-not-allowed"
+                  title="Fee clearance pending"
+                >
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>Print Gated (Fee Due)</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => toast.success('BISE Roll Number slip printed.')}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold hover:bg-indigo-100 cursor-pointer"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span>Print Slip</span>
+                </button>
+              )}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
               <div className="bg-slate-50 p-4 rounded-xl space-y-2">
@@ -1171,7 +1205,19 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
         {activeTab === 'results' && (
           <div className="space-y-5">
 
-            {!campusGates.allowReportCardDownload && (
+            {hasOverdueFees && (
+              <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-900 flex items-center justify-between gap-3 shadow-2xs font-medium">
+                <div className="flex items-center gap-2.5">
+                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                  <span><strong>Fee Clearance Pending:</strong> Official report card transcript download is temporarily gated due to overdue fee vouchers. Online grades and lectures remain accessible.</span>
+                </div>
+                <button onClick={() => setActiveTab('fees')} className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold shrink-0 cursor-pointer">
+                  View Challans
+                </button>
+              </div>
+            )}
+
+            {!campusGates.allowReportCardDownload && !hasOverdueFees && (
               <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-center gap-2.5 shadow-2xs font-medium">
                 <Lock className="w-4 h-4 text-amber-600 shrink-0" />
                 <span>Official Report Card PDF downloads have been temporarily gated by campus administration. Online grade viewing remains active.</span>
@@ -1200,7 +1246,17 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
                   </span>
                 </div>
 
-                {campusGates.allowReportCardDownload ? (
+                {hasOverdueFees ? (
+                  <button
+                    type="button"
+                    onClick={() => toast.error('Fee clearance required: Please clear overdue vouchers before downloading official transcript.')}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-white/10 backdrop-blur-md border border-rose-300 text-rose-200 rounded-xl text-xs font-bold cursor-not-allowed"
+                    title="Fee clearance pending"
+                  >
+                    <Lock className="w-4 h-4 text-rose-300" />
+                    <span>Download Gated (Fee Due)</span>
+                  </button>
+                ) : campusGates.allowReportCardDownload ? (
                   <button
                     onClick={() => toast.success('Official Result Transcript PDF downloaded successfully.')}
                     className="flex items-center gap-2 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer"

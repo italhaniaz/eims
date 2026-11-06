@@ -42,7 +42,7 @@ export const AppDataProvider = ({ children }) => {
       }
     }
 
-    // 3. Instant local sync across tabs and window actions
+    // 3. Instant local sync across tabs and window actions (Storage, CustomEvent & BroadcastChannel)
     const handleStorageChange = (e) => {
       if (e.key === 'sms_database_v3_enterprise' || e.key === 'app-data-sync') {
         const fresh = getStoredData()
@@ -55,12 +55,30 @@ export const AppDataProvider = ({ children }) => {
       setData({ ...fresh })
     }
 
+    let syncChannel = null
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      try {
+        syncChannel = new BroadcastChannel('eims_sync_bus')
+        syncChannel.onmessage = (event) => {
+          if (event.data?.type === 'DATA_SYNC') {
+            const fresh = getStoredData()
+            setData({ ...fresh })
+          }
+        }
+      } catch (bcErr) {
+        console.warn('BroadcastChannel sync init notice:', bcErr)
+      }
+    }
+
     window.addEventListener('storage', handleStorageChange)
     window.addEventListener('app-data-sync', handleCustomSync)
 
     return () => {
       window.removeEventListener('storage', handleStorageChange)
       window.removeEventListener('app-data-sync', handleCustomSync)
+      if (syncChannel) {
+        try { syncChannel.close() } catch (_) {}
+      }
       if (channel && supabase) {
         supabase.removeChannel(channel)
       }

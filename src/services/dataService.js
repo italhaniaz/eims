@@ -1527,6 +1527,16 @@ export const saveStoredData = (data) => {
       try {
         window.dispatchEvent(new CustomEvent('app-data-sync', { detail: payload }))
       } catch (evtErr) {}
+
+      // Cross-tab zero-latency synchronization bus
+      if ('BroadcastChannel' in window) {
+        try {
+          if (!window.__eimsBroadcastChannel) {
+            window.__eimsBroadcastChannel = new BroadcastChannel('eims_sync_bus')
+          }
+          window.__eimsBroadcastChannel.postMessage({ type: 'DATA_SYNC', timestamp: Date.now() })
+        } catch (bcErr) {}
+      }
     }
     return payload
   } catch (e) {

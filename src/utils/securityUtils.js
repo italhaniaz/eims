@@ -263,3 +263,72 @@ export const generateCertVerificationToken = (studentId, certType = 'SLC', issue
   const hex = (hash >>> 0).toString(16).toUpperCase().padStart(8, '0')
   return `VRF-${hex.slice(0, 4)}-${hex.slice(4, 8)}`
 }
+
+/**
+ * Enterprise Password Strength & Entropy Evaluator
+ * Tests length, character classes, entropy points, and returns score, label, CSS color and actionable guidance.
+ * @param {string} password 
+ * @returns {{
+ *   score: number, // 0 to 4
+ *   label: 'Very Weak' | 'Weak' | 'Medium' | 'Strong' | 'Very Strong',
+ *   color: string,
+ *   feedback: string[],
+ *   hasMinLength: boolean,
+ *   hasUpper: boolean,
+ *   hasLower: boolean,
+ *   hasNumber: boolean,
+ *   hasSpecial: boolean,
+ *   isValid: boolean
+ * }}
+ */
+export const evaluatePasswordStrength = (password = '') => {
+  const pwd = String(password || '')
+  const hasMinLength = pwd.length >= 8
+  const hasUpper = /[A-Z]/.test(pwd)
+  const hasLower = /[a-z]/.test(pwd)
+  const hasNumber = /[0-9]/.test(pwd)
+  const hasSpecial = /[^A-Za-z0-9]/.test(pwd)
+
+  const feedback = []
+  if (!hasMinLength) feedback.push('Minimum 8 characters')
+  if (!hasUpper) feedback.push('At least one uppercase letter')
+  if (!hasLower) feedback.push('At least one lowercase letter')
+  if (!hasNumber) feedback.push('At least one number (0-9)')
+  if (!hasSpecial) feedback.push('At least one special symbol (!@#$%^&*)')
+
+  let points = 0
+  if (pwd.length >= 8) points++
+  if (pwd.length >= 12) points++
+  if (hasUpper && hasLower) points++
+  if (hasNumber) points++
+  if (hasSpecial) points++
+
+  let score = 0
+  if (points <= 1) score = 0
+  else if (points === 2) score = 1
+  else if (points === 3) score = 2
+  else if (points === 4) score = 3
+  else score = 4
+
+  const meta = [
+    { label: 'Very Weak', color: 'text-red-500 bg-red-500' },
+    { label: 'Weak', color: 'text-orange-500 bg-orange-500' },
+    { label: 'Medium', color: 'text-amber-500 bg-amber-500' },
+    { label: 'Strong', color: 'text-emerald-500 bg-emerald-500' },
+    { label: 'Very Strong', color: 'text-indigo-500 bg-indigo-500' }
+  ][score]
+
+  return {
+    score,
+    label: meta.label,
+    color: meta.color,
+    feedback,
+    hasMinLength,
+    hasUpper,
+    hasLower,
+    hasNumber,
+    hasSpecial,
+    isValid: hasMinLength && (hasUpper || hasLower) && hasNumber
+  }
+}
+
