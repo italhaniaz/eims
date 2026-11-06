@@ -186,6 +186,27 @@ export const UsersManagementView = ({ defaultTab = 'all', onRouteChange, current
   const [dropdownCoords, setDropdownCoords] = useState(null)
   const dropdownRef = useRef(null)
 
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    role: 'institute_admin',
+    institute: '',
+    phone: '',
+    status: 'Active',
+    password: ''
+  })
+
+  // Roles & Permissions matrix state (with local storage persistence & custom event broadcast)
+  const [permissions, setPermissions] = useState(() => {
+    try {
+      const saved = localStorage.getItem('edu_sms_rbac_permissions')
+      if (saved) return JSON.parse(saved)
+    } catch (e) {
+      console.error(e)
+    }
+    return DEFAULT_RBAC_PERMISSIONS
+  })
+
   // 1. User filtering logic (with campus branch filtering)
   const filtered = useMemo(() => {
     return (users || []).filter(u => {
@@ -548,16 +569,6 @@ export const UsersManagementView = ({ defaultTab = 'all', onRouteChange, current
     return TIER_ROLE_GROUPS
   }, [selectedInstTier])
 
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    role: 'institute_admin',
-    institute: '',
-    phone: '',
-    status: 'Active',
-    password: ''
-  })
-
   // Roles to display in Educational System Roles Directory (excluding superadmin card)
   const directoryRoles = useMemo(() => allRoles.filter(r => r.id !== 'superadmin'), [allRoles])
 
@@ -575,17 +586,6 @@ export const UsersManagementView = ({ defaultTab = 'all', onRouteChange, current
       setExpandedRoles(all)
     }
   }
-
-  // Roles & Permissions matrix state (with local storage persistence & custom event broadcast)
-  const [permissions, setPermissions] = useState(() => {
-    try {
-      const saved = localStorage.getItem('edu_sms_rbac_permissions')
-      if (saved) return JSON.parse(saved)
-    } catch (e) {
-      console.error(e)
-    }
-    return DEFAULT_RBAC_PERMISSIONS
-  })
 
   // Unique categories in RBAC matrix
   const rbacCategories = useMemo(() => {
