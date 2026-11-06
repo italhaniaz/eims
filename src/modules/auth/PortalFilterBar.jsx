@@ -21,10 +21,10 @@ export const PORTAL_DEFINITIONS = [
     subtitle: 'City School Model Town • Grades 1-10',
     icon: School,
     emoji: '🏫',
-    accentColor: 'emerald',
-    activeBg: 'bg-emerald-600 text-white shadow-emerald-600/30 ring-2 ring-emerald-500/40',
-    badgeClass: 'bg-emerald-100 text-emerald-800 border border-emerald-300',
-    iconColor: 'text-emerald-600'
+    accentColor: 'purple',
+    activeBg: 'bg-purple-600 text-white shadow-purple-600/30 ring-2 ring-purple-500/40',
+    badgeClass: 'bg-purple-100 text-purple-800 border border-purple-300',
+    iconColor: 'text-purple-600'
   },
   {
     id: 'college',
@@ -34,10 +34,10 @@ export const PORTAL_DEFINITIONS = [
     subtitle: 'Roots International College • Intermediate',
     icon: Building2,
     emoji: '🏛️',
-    accentColor: 'emerald',
-    activeBg: 'bg-emerald-600 text-white shadow-emerald-600/30 ring-2 ring-emerald-500/40',
-    badgeClass: 'bg-emerald-100 text-emerald-800 border border-emerald-300',
-    iconColor: 'text-emerald-600'
+    accentColor: 'purple',
+    activeBg: 'bg-purple-600 text-white shadow-purple-600/30 ring-2 ring-purple-500/40',
+    badgeClass: 'bg-purple-100 text-purple-800 border border-purple-300',
+    iconColor: 'text-purple-600'
   },
   {
     id: 'university',
@@ -47,10 +47,10 @@ export const PORTAL_DEFINITIONS = [
     subtitle: 'Institute of Applied Sciences • Undergrad/Grad',
     icon: GraduationCap,
     emoji: '🎓',
-    accentColor: 'emerald',
-    activeBg: 'bg-emerald-600 text-white shadow-emerald-600/30 ring-2 ring-emerald-500/40',
-    badgeClass: 'bg-emerald-100 text-emerald-800 border border-emerald-300',
-    iconColor: 'text-emerald-600'
+    accentColor: 'purple',
+    activeBg: 'bg-purple-600 text-white shadow-purple-600/30 ring-2 ring-purple-500/40',
+    badgeClass: 'bg-purple-100 text-purple-800 border border-purple-300',
+    iconColor: 'text-purple-600'
   },
   {
     id: 'superadmin',
@@ -61,7 +61,7 @@ export const PORTAL_DEFINITIONS = [
     icon: Lock,
     emoji: '🔒',
     accentColor: 'slate',
-    activeBg: 'bg-slate-900 text-white shadow-slate-900/30 ring-2 ring-emerald-500/40',
+    activeBg: 'bg-slate-900 text-white shadow-slate-900/30 ring-2 ring-purple-500/40',
     badgeClass: 'bg-slate-100 text-slate-800 border border-slate-300',
     iconColor: 'text-slate-600'
   }
@@ -136,19 +136,19 @@ export const PortalFilterBar = ({
           onClick={() => setIsOpen(!isOpen)}
           className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-xs flex items-center gap-2 cursor-pointer border ${
             isOpen
-              ? 'bg-emerald-600 text-white border-emerald-500 shadow-emerald-600/30 ring-2 ring-emerald-500/40'
+              ? 'bg-purple-600 text-white border-purple-500 shadow-purple-600/30 ring-2 ring-purple-500/40'
               : isDark
-              ? 'bg-slate-900/90 text-slate-200 border-slate-700 hover:border-emerald-500 hover:text-white'
-              : 'bg-white text-slate-800 border-slate-200 hover:border-emerald-400 hover:bg-emerald-50/40'
+              ? 'bg-slate-900/90 text-slate-200 border-slate-700 hover:border-purple-500 hover:text-white'
+              : 'bg-white text-slate-800 border-slate-200 hover:border-purple-300 hover:bg-purple-50/40'
           }`}
           title="Filter visible login portals using checkboxes"
         >
-          <SlidersHorizontal className="w-4 h-4 text-emerald-600 shrink-0" />
+          <SlidersHorizontal className="w-4 h-4 text-purple-600 shrink-0" />
           <span>Filter Portals</span>
           <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${
             isOpen
               ? 'bg-white/20 text-white'
-              : 'bg-emerald-100 text-emerald-800'
+              : 'bg-purple-100 text-purple-800'
           }`}>
             {selectedTiers.length}
           </span>
@@ -162,7 +162,7 @@ export const PortalFilterBar = ({
             <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
               <div>
                 <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 flex items-center gap-1.5">
-                  <Layers className="w-3.5 h-3.5 text-emerald-600" />
+                  <Layers className="w-3.5 h-3.5 text-purple-600" />
                   <span>Portal Display Filters</span>
                 </h4>
                 <p className="text-[11px] text-slate-500 mt-0.5 font-medium">
@@ -186,8 +186,8 @@ export const PortalFilterBar = ({
                 onClick={() => handleSelectOnly('school')}
                 className={`px-2 py-0.5 rounded-md font-bold transition-all cursor-pointer ${
                   selectedTiers.length === 1 && selectedTiers[0] === 'school'
-                    ? 'bg-emerald-600 text-white'
-                    : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200'
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-purple-50 text-purple-800 hover:bg-purple-100 border border-purple-200'
                 }`}
               >
                 Only School
@@ -197,8 +197,8 @@ export const PortalFilterBar = ({
                 onClick={() => handleSelectOnly('college')}
                 className={`px-2 py-0.5 rounded-md font-bold transition-all cursor-pointer ${
                   selectedTiers.length === 1 && selectedTiers[0] === 'college'
-                    ? 'bg-emerald-600 text-white'
-                    : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200'
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-purple-50 text-purple-800 hover:bg-purple-100 border border-purple-200'
                 }`}
               >
                 Only College
@@ -208,8 +208,8 @@ export const PortalFilterBar = ({
                 onClick={() => handleSelectOnly('university')}
                 className={`px-2 py-0.5 rounded-md font-bold transition-all cursor-pointer ${
                   selectedTiers.length === 1 && selectedTiers[0] === 'university'
-                    ? 'bg-emerald-600 text-white'
-                    : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200'
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-purple-50 text-purple-800 hover:bg-purple-100 border border-purple-200'
                 }`}
               >
                 Only Uni
@@ -233,7 +233,7 @@ export const PortalFilterBar = ({
                     key={item.id}
                     className={`flex items-start gap-2.5 p-2 rounded-xl border transition-all cursor-pointer select-none ${
                       isChecked
-                        ? 'bg-emerald-50/50 border-emerald-300 shadow-2xs'
+                        ? 'bg-purple-50/50 border-purple-300 shadow-2xs'
                         : 'bg-slate-50/60 border-slate-200 hover:border-slate-300 opacity-65'
                     }`}
                   >
@@ -241,7 +241,7 @@ export const PortalFilterBar = ({
                       type="checkbox"
                       checked={isChecked}
                       onChange={() => handleCheckboxToggle(item.id)}
-                      className="mt-0.5 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer accent-emerald-600"
+                      className="mt-0.5 w-4 h-4 rounded text-purple-600 focus:ring-purple-500 cursor-pointer accent-purple-600"
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-1">
@@ -265,7 +265,7 @@ export const PortalFilterBar = ({
             {/* Footer Hint */}
             <div className="pt-2.5 mt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400 font-medium">
               <span>Multiple can be selected</span>
-              <span className="text-emerald-700 font-bold">{selectedTiers.length} of 4 visible</span>
+              <span className="text-purple-700 font-bold">{selectedTiers.length} of 4 visible</span>
             </div>
           </div>
         )}
@@ -284,8 +284,8 @@ export const PortalFilterBar = ({
               isActive
                 ? portal.activeBg
                 : isDark
-                ? 'bg-slate-900/90 text-slate-300 border-slate-800 hover:border-emerald-600 hover:text-white'
-                : 'bg-white hover:bg-emerald-50/60 text-slate-700 border-slate-200 hover:border-emerald-300'
+                ? 'bg-slate-900/90 text-slate-300 border-slate-800 hover:border-purple-600 hover:text-white'
+                : 'bg-white hover:bg-purple-50/60 text-slate-700 border-slate-200 hover:border-purple-300'
             }`}
           >
             <Icon className={`w-4 h-4 ${isActive ? 'text-white' : portal.iconColor}`} />
