@@ -130,6 +130,15 @@
     padding: 0 !important;
     width: 100% !important;
   }
+
+  /* Enterprise Print Pagination & Table Break Protection */
+  tr, .print-card, .avoid-break {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  thead {
+    display: table-header-group !important;
+  }
 }
 
 /* Professional A4 Bank Challan Print Rules & Sticky Data Grid */

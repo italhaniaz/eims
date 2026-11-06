@@ -34,7 +34,8 @@ export const InstituteAdminNavbar = ({
   const { 
     institutes, 
     activeWing = 'all',
-    setActiveWing
+    setActiveWing,
+    isCloudSynced
   } = useAppData()
 
   const [dropdownOpen, setDropdownOpen] = useState(false)
@@ -228,6 +229,12 @@ export const InstituteAdminNavbar = ({
           <span>{tierConfig.portalTypeLabel}</span>
         </div>
       )}
+
+      {/* Sync Engine Status Indicator */}
+      <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200/70 text-[11px] font-semibold text-slate-600">
+        <span className={`w-2 h-2 rounded-full ${isCloudSynced ? 'bg-emerald-500 animate-pulse' : 'bg-emerald-600'}`}></span>
+        <span>{isCloudSynced ? 'Cloud Live' : 'Edge Mode'}</span>
+      </div>
 
       {/* Right: Preview As Switcher, Settings, and User Menu */}
       <div className="flex items-center gap-2 sm:gap-3">

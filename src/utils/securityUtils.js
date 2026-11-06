@@ -50,6 +50,53 @@ export const maskPhone = (phone, isRevealed = false) => {
 }
 
 /**
+ * Strict Pakistani CNIC format validator (e.g. 35201-1234567-1 or 13 digits)
+ * @param {string} cnic 
+ * @returns {boolean}
+ */
+export const validatePakistaniCnic = (cnic) => {
+  if (!cnic || typeof cnic !== 'string') return false
+  const clean = cnic.trim()
+  return /^\d{5}-\d{7}-\d{1}$/.test(clean) || /^\d{13}$/.test(clean)
+}
+
+/**
+ * Auto-format raw numbers into Pakistani CNIC structure (35201-1234567-1)
+ * @param {string} val
+ * @returns {string}
+ */
+export const formatPakistaniCnic = (val) => {
+  if (!val) return ''
+  const digits = String(val).replace(/\D/g, '').slice(0, 13)
+  if (digits.length <= 5) return digits
+  if (digits.length <= 12) return `${digits.slice(0, 5)}-${digits.slice(5)}`
+  return `${digits.slice(0, 5)}-${digits.slice(5, 12)}-${digits.slice(12, 13)}`
+}
+
+/**
+ * Strict Pakistani Mobile/Contact number validator (0300-1234567 or 03001234567)
+ * @param {string} phone 
+ * @returns {boolean}
+ */
+export const validatePakistaniPhone = (phone) => {
+  if (!phone || typeof phone !== 'string') return false
+  const clean = phone.trim()
+  return /^03\d{2}-?\d{7}$/.test(clean) || /^\+923\d{9}$/.test(clean)
+}
+
+/**
+ * Auto-format raw phone numbers into standard format (0300-1234567)
+ * @param {string} val 
+ * @returns {string}
+ */
+export const formatPakistaniPhone = (val) => {
+  if (!val) return ''
+  const digits = String(val).replace(/\D/g, '').slice(0, 11)
+  if (digits.length <= 4) return digits
+  return `${digits.slice(0, 4)}-${digits.slice(4)}`
+}
+
+/**
  * Basic defense-in-depth HTML text sanitizer to neutralize XSS payload injections
  * @param {string} dirtyStr 
  * @returns {string}

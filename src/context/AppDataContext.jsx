@@ -2,10 +2,13 @@ import React, { createContext, useContext, useState, useEffect } from 'react'
 import { DataService, getStoredData, computeRealStats } from '../services/dataService'
 import { PROGRAM_LEVELS } from '../constants/academicLevels'
 import { supabase, isSupabaseConfigured } from '../services/supabaseClient'
+import { useAuth } from './AuthContext'
 
 const AppDataContext = createContext(null)
 
 export const AppDataProvider = ({ children }) => {
+  const auth = useAuth()
+  const currentUser = auth?.user
   const [data, setData] = useState(() => getStoredData())
   const [loading, setLoading] = useState(false)
   const [activeProgramLevel, setActiveProgramLevel] = useState('all')
@@ -88,7 +91,12 @@ export const AppDataProvider = ({ children }) => {
 
   const addItem = async (collection, item) => {
     setLoading(true)
-    const created = await DataService.addItem(collection, item)
+    // Positive tenant isolation: automatically attach tenant ID if missing for non-superadmin users
+    const safeItem = { ...item }
+    if (currentUser?.instituteId && currentUser.role !== 'superadmin' && !safeItem.instituteId) {
+      safeItem.instituteId = currentUser.instituteId
+    }
+    const created = await DataService.addItem(collection, safeItem)
     const fresh = getStoredData()
     setData(prev => ({
       ...fresh,
@@ -96,6 +104,14 @@ export const AppDataProvider = ({ children }) => {
     }))
     setLoading(false)
     return created
+  }
+
+  // Tenant-aware scoped data getter
+  const getTenantData = (collectionName, explicitInstituteId = null) => {
+    const targetId = explicitInstituteId || currentUser?.instituteId
+    const rawList = data[collectionName] || []
+    if (!targetId || currentUser?.role === 'superadmin') return rawList
+    return rawList.filter(item => !item.instituteId || item.instituteId === targetId)
   }
 
   const updateItem = async (collection, id, updates) => {
@@ -304,7 +320,9 @@ export const AppDataProvider = ({ children }) => {
         getTimetable,
         logAuditEvent,
         generateReport,
-        sendCommunicationBlast
+        sendCommunicationBlast,
+        getTenantData,
+        isCloudSynced: Boolean(isSupabaseConfigured && supabase)
       }}
     >
       {children}
