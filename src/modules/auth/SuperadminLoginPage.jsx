@@ -55,10 +55,10 @@ export const SuperadminLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-[#070913] relative overflow-hidden px-4 py-8 sm:py-12 selection:bg-emerald-600 selection:text-white font-sans text-slate-100">
+    <div className="min-h-screen w-full flex items-center justify-center bg-[#070913] relative overflow-hidden px-4 py-8 sm:py-12 selection:bg-purple-600 selection:text-white font-sans text-slate-100">
       {/* Ambient Radial Background Accents */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-emerald-600/15 rounded-full blur-[140px]"></div>
+        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-purple-600/20 rounded-full blur-[140px]"></div>
         <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[140px]"></div>
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)]"></div>
       </div>
@@ -110,13 +110,13 @@ export const SuperadminLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(147,51,234,0.15),transparent_60%)]"></div>
 
             <div className="relative z-10">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/15 border border-purple-400/30 text-purple-300 text-xs font-semibold mb-5">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-500/20 border border-purple-400/30 text-purple-300 text-xs font-semibold mb-5">
                 <Terminal className="w-3.5 h-3.5 text-purple-400" />
                 <span>Master Governance Control Plane</span>
               </div>
 
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-600 flex items-center justify-center text-white shadow-lg shadow-emerald-500/30">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-700 via-purple-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-purple-500/30">
                   <ShieldCheck className="w-6 h-6 text-white" />
                 </div>
                 <div>
@@ -206,7 +206,7 @@ export const SuperadminLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
                       value={identifier}
                       onChange={(e) => setIdentifier(e.target.value)}
                       placeholder="admin@apexed.io"
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 text-xs sm:text-sm font-medium text-white placeholder:text-slate-500 outline-hidden transition-all bg-slate-800/80 focus:bg-slate-800"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-700 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 text-xs sm:text-sm font-medium text-white placeholder:text-slate-500 outline-hidden transition-all bg-slate-800/80 focus:bg-slate-800"
                     />
                   </div>
                 </div>
@@ -229,7 +229,7 @@ export const SuperadminLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Enter master root password"
-                      className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 text-xs sm:text-sm font-medium text-white placeholder:text-slate-500 outline-hidden transition-all bg-slate-800/80 focus:bg-slate-800"
+                      className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-700 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 text-xs sm:text-sm font-medium text-white placeholder:text-slate-500 outline-hidden transition-all bg-slate-800/80 focus:bg-slate-800"
                     />
                     <button
                       type="button"
@@ -247,7 +247,7 @@ export const SuperadminLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
                       type="checkbox"
                       checked={rememberMe}
                       onChange={(e) => setRememberMe(e.target.checked)}
-                      className="w-4 h-4 rounded-sm border-slate-700 bg-slate-800 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                      className="w-4 h-4 rounded-sm border-slate-700 bg-slate-800 text-purple-600 focus:ring-purple-500 cursor-pointer"
                     />
                     <span className="text-xs font-medium text-slate-300">Remember root session</span>
                   </label>
@@ -257,7 +257,7 @@ export const SuperadminLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm transition-all shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="w-full py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs sm:text-sm transition-all shadow-lg shadow-purple-600/30 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   {isLoading ? (
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -277,7 +277,7 @@ export const SuperadminLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
                     <KeyRound className="w-3.5 h-3.5 text-purple-400" />
                     <span>Instant Authority Sandbox</span>
                   </span>
-                  <span className="text-[10px] text-emerald-400 font-bold bg-emerald-950/60 border border-emerald-800/40 px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] text-purple-300 font-bold bg-purple-950/60 border border-purple-800/40 px-2 py-0.5 rounded-full">
                     Pre-Authorized
                   </span>
                 </div>
@@ -285,10 +285,10 @@ export const SuperadminLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
                 <button
                   type="button"
                   onClick={handleSuperadminDirect}
-                  className="w-full p-3 rounded-xl border border-emerald-500/40 bg-purple-950/30 hover:bg-purple-900/40 text-left transition-all cursor-pointer group shadow-md flex items-center justify-between"
+                  className="w-full p-3 rounded-xl border border-purple-500/40 bg-purple-950/30 hover:bg-purple-900/40 text-left transition-all cursor-pointer group shadow-md flex items-center justify-between"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-emerald-600/30 border border-purple-400/30 flex items-center justify-center text-purple-300">
+                    <div className="w-9 h-9 rounded-lg bg-purple-600/30 border border-purple-400/30 flex items-center justify-center text-purple-300">
                       <ShieldCheck className="w-5 h-5" />
                     </div>
                     <div>
@@ -317,9 +317,9 @@ export const SuperadminLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
                 <button
                   type="button"
                   onClick={() => onSwitchTier('school')}
-                  className="py-2 px-2 rounded-lg bg-slate-800 hover:bg-emerald-950/50 border border-slate-700 hover:border-emerald-700/50 text-slate-300 hover:text-emerald-300 text-[11px] font-bold transition-all text-center cursor-pointer flex items-center justify-center gap-1.5"
+                  className="py-2 px-2 rounded-lg bg-slate-800 hover:bg-purple-950/50 border border-slate-700 hover:border-purple-700/50 text-slate-300 hover:text-purple-300 text-[11px] font-bold transition-all text-center cursor-pointer flex items-center justify-center gap-1.5"
                 >
-                  <School className="w-3 h-3 text-emerald-400" />
+                  <School className="w-3 h-3 text-purple-400" />
                   <span>School (K-10)</span>
                 </button>
 

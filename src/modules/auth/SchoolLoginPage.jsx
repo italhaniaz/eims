@@ -121,11 +121,11 @@ export const SchoolLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier, se
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-b from-[#f4fbf7] via-[#ebf8f1] to-white relative overflow-hidden px-4 py-8 sm:py-12 selection:bg-emerald-500 selection:text-white font-sans">
+    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-b from-[#fcfaff] via-[#f7f1fe] to-white relative overflow-hidden px-4 py-8 sm:py-12 selection:bg-purple-600 selection:text-white font-sans">
       {/* Ambient Radial Background Accents */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 -left-20 w-[500px] h-[500px] bg-emerald-200/35 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 -right-20 w-[500px] h-[500px] bg-teal-200/30 rounded-full blur-3xl"></div>
+        <div className="absolute top-0 -left-20 w-[500px] h-[500px] bg-purple-200/35 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 -right-20 w-[500px] h-[500px] bg-indigo-200/30 rounded-full blur-3xl"></div>
       </div>
 
       {/* Top-Left: Back to Home Button */}
@@ -160,22 +160,22 @@ export const SchoolLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier, se
         <div className="w-full rounded-3xl bg-white border border-slate-200/90 shadow-[0_15px_45px_-5px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.02)] overflow-hidden grid grid-cols-1 md:grid-cols-12 relative">
           
           {/* LEFT PANE: Dedicated School Branding */}
-          <div className="md:col-span-5 p-6 sm:p-7 md:p-8 flex flex-col justify-between border-b md:border-b-0 md:border-r border-slate-100 bg-gradient-to-b from-[#f4fbf7] via-[#ebf7f0] to-[#e4f5ea] relative">
+          <div className="md:col-span-5 p-6 sm:p-7 md:p-8 flex flex-col justify-between border-b md:border-b-0 md:border-r border-slate-100 bg-gradient-to-b from-[#fcfaff] via-[#f7f0fe] to-[#f0e6fd] relative">
             <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border shadow-2xs mb-5 self-start bg-emerald-50 text-emerald-800 border-emerald-200">
-                <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border shadow-2xs mb-5 self-start bg-purple-50 text-purple-700 border-purple-200">
+                <Sparkles className="w-3.5 h-3.5 text-purple-600" />
                 <span>School Portal Access (K-10)</span>
               </div>
 
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-13 h-13 rounded-2xl flex items-center justify-center p-2.5 shadow-md bg-gradient-to-tr from-emerald-700 via-emerald-600 to-teal-600 text-white shadow-emerald-500/25">
+                <div className="w-13 h-13 rounded-2xl flex items-center justify-center p-2.5 shadow-md bg-gradient-to-tr from-purple-700 via-purple-600 to-indigo-600 text-white shadow-purple-500/25">
                   <School className="w-8 h-8 stroke-[2.2]" />
                 </div>
                 <div>
                   <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight font-heading leading-tight">
                     City School
                   </h1>
-                  <span className="text-xs font-semibold text-emerald-800">Model Town Campus</span>
+                  <span className="text-xs font-semibold text-purple-700">Model Town Campus</span>
                 </div>
               </div>
 
@@ -185,8 +185,8 @@ export const SchoolLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier, se
 
               {/* Security & Capability Trust Badges */}
               <div className="space-y-2.5">
-                <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/80 border border-emerald-100 shadow-2xs">
-                  <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-emerald-50 text-emerald-700">
+                <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/80 border border-purple-100 shadow-2xs">
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-purple-50 text-purple-700">
                     <ShieldCheck className="w-4 h-4" />
                   </div>
                   <div>
@@ -195,8 +195,8 @@ export const SchoolLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier, se
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/80 border border-emerald-100 shadow-2xs">
-                  <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-emerald-50 text-emerald-700">
+                <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/80 border border-purple-100 shadow-2xs">
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-purple-50 text-purple-700">
                     <Lock className="w-4 h-4" />
                   </div>
                   <div>
@@ -205,8 +205,8 @@ export const SchoolLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier, se
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/80 border border-emerald-100 shadow-2xs">
-                  <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-emerald-50 text-emerald-700">
+                <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/80 border border-purple-100 shadow-2xs">
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-purple-50 text-purple-700">
                     <Sparkles className="w-4 h-4" />
                   </div>
                   <div>
@@ -217,9 +217,9 @@ export const SchoolLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier, se
               </div>
             </div>
 
-            <div className="pt-4 mt-6 border-t border-emerald-200/60 flex items-center justify-between text-[11px] text-slate-500">
+            <div className="pt-4 mt-6 border-t border-purple-200/60 flex items-center justify-between text-[11px] text-slate-500">
               <span className="flex items-center gap-1.5 font-medium">
-                <span className="w-2 h-2 rounded-full animate-pulse bg-emerald-500"></span>
+                <span className="w-2 h-2 rounded-full animate-pulse bg-purple-500"></span>
                 <span>School Portal (K-10)</span>
               </span>
               <span className="font-mono text-[10px] text-slate-400">v2.5 Production</span>
@@ -234,7 +234,7 @@ export const SchoolLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier, se
                   <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight font-heading">
                     School Sign In
                   </h2>
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
                     <span>{activePortalMeta.iconEmoji}</span>
                     <span>{activePortalMeta.name}</span>
                   </span>
@@ -263,7 +263,7 @@ export const SchoolLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier, se
                       type="text"
                       value={identifier}
                       onChange={(e) => setIdentifier(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50/70 hover:bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 text-xs sm:text-sm focus:bg-white focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-medium"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50/70 hover:bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 text-xs sm:text-sm focus:bg-white focus:outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 transition-all font-medium"
                       placeholder="e.g. admin.school@cityschool.edu or staff id"
                     />
                   </div>
@@ -277,7 +277,7 @@ export const SchoolLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier, se
                     <button
                       type="button"
                       onClick={() => setPassword('password123')}
-                      className="text-xs font-bold text-emerald-700 hover:text-emerald-800 transition-colors cursor-pointer"
+                      className="text-xs font-bold text-purple-700 hover:text-purple-800 transition-colors cursor-pointer"
                     >
                       Use Demo Password
                     </button>
@@ -288,7 +288,7 @@ export const SchoolLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier, se
                       type={showPassword ? 'text' : 'password'}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-slate-50/70 hover:bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 text-xs sm:text-sm focus:bg-white focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all"
+                      className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-slate-50/70 hover:bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 text-xs sm:text-sm focus:bg-white focus:outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 transition-all"
                       placeholder="••••••••••••"
                     />
                     <button
@@ -308,7 +308,7 @@ export const SchoolLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier, se
                       type="checkbox"
                       checked={rememberMe}
                       onChange={(e) => setRememberMe(e.target.checked)}
-                      className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 accent-emerald-600 cursor-pointer"
+                      className="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500 accent-purple-600 cursor-pointer"
                     />
                     <span className="text-slate-700 font-medium">Remember this terminal</span>
                   </label>
@@ -318,7 +318,7 @@ export const SchoolLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier, se
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full py-3 rounded-xl font-bold text-xs sm:text-sm text-white bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-600/25 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] disabled:opacity-50"
+                  className="w-full py-3 rounded-xl font-bold text-xs sm:text-sm text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-md shadow-purple-600/25 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] disabled:opacity-50"
                 >
                   {isLoading ? (
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -335,7 +335,7 @@ export const SchoolLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier, se
               <div className="pt-4 mt-5 border-t border-slate-100">
                 <div className="flex items-center justify-between mb-2.5 px-0.5">
                   <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                    <Layers className="w-3.5 h-3.5 text-emerald-600" />
+                    <Layers className="w-3.5 h-3.5 text-purple-600" />
                     <span>Select Portal Role</span>
                   </span>
                   <span className="text-[10px] text-slate-400 font-medium">
@@ -353,8 +353,8 @@ export const SchoolLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier, se
                         onClick={() => handleSelectPortal(p)}
                         className={`p-2 rounded-xl text-left transition-all cursor-pointer border flex flex-col justify-between ${
                           isSelected 
-                            ? 'border-emerald-600 bg-emerald-50/90 ring-2 ring-emerald-500/20 shadow-xs' 
-                            : 'border-slate-200 hover:border-emerald-300 bg-white hover:bg-slate-50/80 shadow-2xs'
+                            ? 'border-purple-600 bg-purple-50/90 ring-2 ring-purple-500/20 shadow-xs' 
+                            : 'border-slate-200 hover:border-purple-300 bg-white hover:bg-slate-50/80 shadow-2xs'
                         }`}
                       >
                         <div className="flex items-center justify-between gap-1 mb-1">
@@ -363,7 +363,7 @@ export const SchoolLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier, se
                             <span className="truncate">{p.name}</span>
                           </span>
                           {isSelected && (
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                            <CheckCircle2 className="w-3.5 h-3.5 text-purple-600 shrink-0" />
                           )}
                         </div>
                         <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono truncate">
@@ -384,7 +384,7 @@ export const SchoolLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier, se
                   if (onOpenTrial) onOpenTrial()
                   else if (onBackToLanding) onBackToLanding()
                 }}
-                className="w-full py-2.5 rounded-xl border border-emerald-200 bg-emerald-50/60 hover:bg-emerald-100 text-emerald-800 text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs group"
+                className="w-full py-2.5 rounded-xl border border-purple-200 bg-purple-50/60 hover:bg-purple-100 text-purple-700 text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs group"
               >
                 <School className="w-4 h-4 group-hover:scale-110 transition-transform" />
                 <span>Register School / Start Free Trial</span>
