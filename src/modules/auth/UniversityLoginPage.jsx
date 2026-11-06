@@ -183,11 +183,11 @@ export const UniversityLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-b from-[#fbf8ff] via-[#f5edff] to-white relative overflow-hidden px-4 py-8 sm:py-12 selection:bg-emerald-600 selection:text-white font-sans">
+    <div className="min-h-screen w-full flex items-center justify-center bg-bg relative overflow-hidden px-4 py-8 sm:py-12 selection:bg-primary selection:text-white font-sans">
       {/* Ambient Radial Background Accents */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 -left-20 w-[500px] h-[500px] bg-purple-200/40 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 -right-20 w-[500px] h-[500px] bg-fuchsia-200/35 rounded-full blur-3xl"></div>
+        <div className="absolute top-0 -left-20 w-[500px] h-[500px] bg-primary/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 -right-20 w-[500px] h-[500px] bg-secondary/10 rounded-full blur-3xl"></div>
       </div>
 
       {/* Top-Left: Back to Home Button */}
@@ -196,7 +196,7 @@ export const UniversityLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
           <button
             type="button"
             onClick={onBackToLanding}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 hover:text-slate-900 bg-white/90 hover:bg-white border border-slate-200 shadow-2xs hover:shadow-xs transition-all backdrop-blur-xs group cursor-pointer"
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-white/90 dark:bg-slate-900/90 hover:bg-white dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 shadow-2xs hover:shadow-xs transition-all backdrop-blur-xs group cursor-pointer"
             title="Back to Landing Page"
           >
             <ArrowLeft className="w-4 h-4 text-slate-500 group-hover:-translate-x-0.5 transition-transform" />
@@ -209,85 +209,88 @@ export const UniversityLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
       <div className="w-full max-w-[960px] z-10 flex flex-col items-center mt-14 sm:mt-0">
         
         {/* Dual-Pane Card */}
-        <div className="w-full rounded-3xl bg-white border border-slate-200/90 shadow-[0_15px_45px_-5px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.02)] overflow-hidden grid grid-cols-1 md:grid-cols-12 relative">
+        <div className="w-full rounded-3xl bg-surface border border-border shadow-soft overflow-hidden grid grid-cols-1 md:grid-cols-12 relative">
           
           {/* LEFT PANE: Dedicated University Branding */}
-          <div className="md:col-span-5 p-5 sm:p-6 md:p-7 flex flex-col justify-between border-b md:border-b-0 md:border-r border-slate-100 bg-gradient-to-b from-[#fbf8ff] via-[#f4edff] to-[#ebe0fc] relative">
+          <div 
+            className="md:col-span-5 p-5 sm:p-6 md:p-7 flex flex-col justify-between border-b md:border-b-0 md:border-r border-slate-100 dark:border-slate-800 text-white relative overflow-hidden login-hero-pane"
+            style={{ background: 'var(--hero-gradient)' }}
+          >
             <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border shadow-2xs mb-5 self-start bg-emerald-50 text-emerald-950 border-emerald-200">
-                <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border shadow-2xs mb-5 self-start bg-white/20 text-white border-white/30 backdrop-blur-sm">
+                <Sparkles className="w-3.5 h-3.5 text-white" />
                 <span>University Portal Access (BS, MS & PhD)</span>
               </div>
 
               <div className="flex items-center gap-2.5 mb-4">
-                <div className="w-13 h-13 rounded-2xl flex items-center justify-center p-2.5 shadow-md bg-gradient-to-tr from-purple-800 via-purple-700 to-indigo-600 text-white shadow-emerald-600/25">
+                <div className="w-13 h-13 rounded-2xl flex items-center justify-center p-2.5 shadow-md bg-white/20 backdrop-blur-md border border-white/30 text-white">
                   <GraduationCap className="w-8 h-8 stroke-[2.2]" />
                 </div>
-                <div className="w-4 h-4 rounded-full border-2 border-slate-300 bg-white flex items-center justify-center shadow-xs">
-                  <div className="w-1.5 h-1.5 rounded-full animate-ping bg-emerald-600"></div>
+                <div className="w-4 h-4 rounded-full border-2 border-white/40 bg-white flex items-center justify-center shadow-xs">
+                  <div className="w-1.5 h-1.5 rounded-full animate-ping bg-amber-400"></div>
                 </div>
               </div>
 
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-heading">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-heading">
                 University Academic Portal
               </h1>
               <div className="mt-1 flex items-center gap-2">
-                <span className="text-xs font-bold text-slate-800">Institute of Applied Sciences & Undergraduates</span>
+                <span className="text-xs font-bold text-white/90">Institute of Applied Sciences & Undergraduates</span>
               </div>
-              <p className="text-xs sm:text-sm text-slate-500 leading-relaxed mt-2 mb-4 md:mb-5">
+              <p className="text-xs sm:text-sm text-white/85 leading-relaxed mt-2 mb-4 md:mb-5">
                 HEC-Compliant Enterprise Campus Management System with Semester Credit-Hour Registrations, CGPA Engine & Research Governance.
               </p>
 
-              {/* Feature Highlights (Visible on Desktop / Tablets, Hidden on compact mobile to bring login form up) */}
+              {/* Feature Highlights */}
               <div className="hidden md:block space-y-2">
-                <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-white/90 border border-slate-100 shadow-2xs">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-emerald-50 text-emerald-800">
+                <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 text-white shadow-2xs">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-white/20 text-white">
                     <BookOpen className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-slate-800">Credit Hour Course Registration</h4>
-                    <p className="text-[11px] text-slate-500 leading-tight">Add/drop, prerequisites check, elective cohort assignment & LMS.</p>
+                    <h4 className="text-xs font-bold text-white">Credit Hour Course Registration</h4>
+                    <p className="text-[11px] text-white/80 leading-tight">Add/drop, prerequisites check, elective cohort assignment & LMS.</p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-white/90 border border-slate-100 shadow-2xs">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-emerald-50 text-emerald-800">
+                <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 text-white shadow-2xs">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-white/20 text-white">
                     <Award className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-slate-800">Controller 4.00 CGPA & Transcripts</h4>
-                    <p className="text-[11px] text-slate-500 leading-tight">Official HEC semester GPA grading curves, official transcripts & degree.</p>
+                    <h4 className="text-xs font-bold text-white">Controller 4.00 CGPA & Transcripts</h4>
+                    <p className="text-[11px] text-white/80 leading-tight">Official HEC semester GPA grading curves, official transcripts & degree.</p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-white/90 border border-slate-100 shadow-2xs">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-emerald-50 text-emerald-800">
+                <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 text-white shadow-2xs">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-white/20 text-white">
                     <Scroll className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-slate-800">FYP & Research Thesis Governance</h4>
-                    <p className="text-[11px] text-slate-500 leading-tight">Supervisor allocations, proposal approvals, defense grading & Turnitin.</p>
+                    <h4 className="text-xs font-bold text-white">FYP & Research Thesis Governance</h4>
+                    <p className="text-[11px] text-white/80 leading-tight">Supervisor allocations, proposal approvals, defense grading & Turnitin.</p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-white/90 border border-slate-100 shadow-2xs">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-emerald-50 text-emerald-800">
+                <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 text-white shadow-2xs">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-white/20 text-white">
                     <Briefcase className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-slate-800">Career Placement & Alumni Network</h4>
-                    <p className="text-[11px] text-slate-500 leading-tight">Corporate internships, job board, degree verification & convocation.</p>
+                    <h4 className="text-xs font-bold text-white">Career Placement & Alumni Network</h4>
+                    <p className="text-[11px] text-white/80 leading-tight">Corporate internships, job board, degree verification & convocation.</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="hidden md:flex pt-4 mt-4 border-t border-slate-200/80 items-center justify-between text-[11px] text-slate-500">
+            <div className="hidden md:flex pt-4 mt-4 border-t border-white/20 items-center justify-between text-[11px] text-white/80">
               <span className="flex items-center gap-1.5 font-medium">
-                <span className="w-2 h-2 rounded-full animate-pulse bg-emerald-600"></span>
-                <span className="font-semibold text-slate-700">University Portal (HEC Scope)</span>
+                <span className="w-2 h-2 rounded-full animate-pulse bg-amber-400"></span>
+                <span className="font-semibold text-white/90">University Portal (HEC Scope)</span>
               </span>
-              <span className="font-mono text-slate-400">v2.5 Production</span>
+              <span className="font-mono text-white/80">v2.5 Production</span>
             </div>
           </div>
 

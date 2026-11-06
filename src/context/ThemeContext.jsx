@@ -209,24 +209,104 @@ export const ThemeProvider = ({ children }) => {
     root.setAttribute('dir', dir)
     root.setAttribute('lang', locale)
 
-    // 4. Custom Palette or Preset Overrides via CSS Variables
+    // 4. Forcefully apply CSS variables to root element so they take instant effect
+    let primary, primaryHover, primarySoft, primaryBorder, secondary, secondaryHover, secondarySoft, heroGradient, heroGradientHover
+
     if (preset === 'custom') {
       const shades = generateColorShades(customPrimary, isDark)
-      root.style.setProperty('--primary', shades.primary)
-      root.style.setProperty('--primary-hover', shades.primaryHover)
-      root.style.setProperty('--primary-soft', shades.primarySoft)
-      root.style.setProperty('--primary-border', shades.primaryBorder)
-      root.style.setProperty('--hero-gradient', shades.heroGradient)
-      root.style.setProperty('--hero-gradient-hover', shades.heroGradientHover)
+      primary = shades.primary
+      primaryHover = shades.primaryHover
+      primarySoft = shades.primarySoft
+      primaryBorder = shades.primaryBorder
+      secondary = isDark ? '#2DD4BF' : '#14B8A6'
+      secondaryHover = isDark ? '#14B8A6' : '#0D9488'
+      secondarySoft = isDark ? 'rgba(45, 212, 191, 0.18)' : '#CCFBF1'
+      heroGradient = shades.heroGradient
+      heroGradientHover = shades.heroGradientHover
+    } else if (preset === 'school') {
+      primary = isDark ? '#38BDF8' : '#0EA5E9'
+      primaryHover = isDark ? '#0EA5E9' : '#0284C7'
+      primarySoft = isDark ? 'rgba(56, 189, 248, 0.18)' : '#F0F9FF'
+      primaryBorder = isDark ? 'rgba(56, 189, 248, 0.35)' : 'rgba(14, 165, 233, 0.25)'
+      secondary = isDark ? '#FB923C' : '#F97316'
+      secondaryHover = isDark ? '#F97316' : '#EA580C'
+      secondarySoft = isDark ? 'rgba(251, 146, 60, 0.18)' : '#FFF7ED'
+      heroGradient = isDark 
+        ? 'linear-gradient(135deg, #0284C7, #0EA5E9 55%, #EA580C)' 
+        : 'linear-gradient(135deg, #0EA5E9, #38BDF8 55%, #F97316)'
+      heroGradientHover = 'linear-gradient(135deg, #0284C7, #0EA5E9 55%, #EA580C)'
+    } else if (preset === 'university') {
+      primary = isDark ? '#60A5FA' : '#1E3A8A'
+      primaryHover = isDark ? '#3B82F6' : '#172554'
+      primarySoft = isDark ? 'rgba(96, 165, 250, 0.18)' : '#EFF6FF'
+      primaryBorder = isDark ? 'rgba(96, 165, 250, 0.35)' : 'rgba(30, 58, 138, 0.25)'
+      secondary = isDark ? '#FACC15' : '#D4AF37'
+      secondaryHover = isDark ? '#EAB308' : '#B89628'
+      secondarySoft = isDark ? 'rgba(250, 204, 21, 0.18)' : '#FEFCE8'
+      heroGradient = isDark
+        ? 'linear-gradient(135deg, #1E40AF, #3730A3 55%, #EAB308)'
+        : 'linear-gradient(135deg, #1E3A8A, #312E81 55%, #D4AF37)'
+      heroGradientHover = 'linear-gradient(135deg, #172554, #1E1B4B 55%, #B89628)'
     } else {
-      // Remove inline style overrides so the CSS data-preset attributes take precedence
-      root.style.removeProperty('--primary')
-      root.style.removeProperty('--primary-hover')
-      root.style.removeProperty('--primary-soft')
-      root.style.removeProperty('--primary-border')
-      root.style.removeProperty('--hero-gradient')
-      root.style.removeProperty('--hero-gradient-hover')
+      // College (Default SaaS: #4F46E5 + #14B8A6)
+      primary = isDark ? '#818CF8' : '#4F46E5'
+      primaryHover = isDark ? '#6366F1' : '#4338CA'
+      primarySoft = isDark ? 'rgba(129, 140, 248, 0.18)' : '#EEF2FF'
+      primaryBorder = isDark ? 'rgba(129, 140, 248, 0.35)' : 'rgba(79, 70, 229, 0.25)'
+      secondary = isDark ? '#2DD4BF' : '#14B8A6'
+      secondaryHover = isDark ? '#14B8A6' : '#0D9488'
+      secondarySoft = isDark ? 'rgba(45, 212, 191, 0.18)' : '#CCFBF1'
+      heroGradient = isDark
+        ? 'linear-gradient(135deg, #6366F1, #8B5CF6 55%, #06B6D4)'
+        : 'linear-gradient(135deg, #4F46E5, #7C3AED 55%, #06B6D4)'
+      heroGradientHover = 'linear-gradient(135deg, #4338CA, #6D28D9 55%, #0891B2)'
     }
+
+    // Set Brand Tokens on root
+    root.style.setProperty('--primary', primary)
+    root.style.setProperty('--primary-hover', primaryHover)
+    root.style.setProperty('--primary-soft', primarySoft)
+    root.style.setProperty('--primary-border', primaryBorder)
+    root.style.setProperty('--secondary', secondary)
+    root.style.setProperty('--secondary-hover', secondaryHover)
+    root.style.setProperty('--secondary-soft', secondarySoft)
+    root.style.setProperty('--accent', '#F59E0B')
+    root.style.setProperty('--hero-gradient', heroGradient)
+    root.style.setProperty('--hero-gradient-text', heroGradient)
+    root.style.setProperty('--hero-gradient-hover', heroGradientHover)
+
+    // Base background and surface tokens
+    const bg = isDark ? '#0B1020' : '#F8FAFC'
+    const surface = isDark ? '#131A2E' : '#FFFFFF'
+    const surfaceRaised = isDark ? '#1A233D' : '#FFFFFF'
+    const border = isDark ? '#243049' : '#E2E8F0'
+    const borderSubtle = isDark ? '#1C263D' : '#F1F5F9'
+    const text = isDark ? '#E6EAF5' : '#0F172A'
+    const textMuted = isDark ? '#94A3B8' : '#64748B'
+    const textSubtle = isDark ? '#64748B' : '#94A3B8'
+
+    root.style.setProperty('--bg', bg)
+    root.style.setProperty('--surface', surface)
+    root.style.setProperty('--surface-raised', surfaceRaised)
+    root.style.setProperty('--border', border)
+    root.style.setProperty('--border-subtle', borderSubtle)
+    root.style.setProperty('--text', text)
+    root.style.setProperty('--text-muted', textMuted)
+    root.style.setProperty('--text-subtle', textSubtle)
+
+    // Status colors
+    root.style.setProperty('--success', '#22C55E')
+    root.style.setProperty('--warning', '#F59E0B')
+    root.style.setProperty('--error', '#EF4444')
+    root.style.setProperty('--info', isDark ? '#38BDF8' : '#0EA5E9')
+
+    // Chart palette tokens
+    root.style.setProperty('--chart-1', '#4F46E5')
+    root.style.setProperty('--chart-2', '#14B8A6')
+    root.style.setProperty('--chart-3', '#F59E0B')
+    root.style.setProperty('--chart-4', '#EC4899')
+    root.style.setProperty('--chart-5', '#0EA5E9')
+    root.style.setProperty('--chart-6', '#8B5CF6')
 
     // 5. Update browser meta theme-color
     const activePrimary = preset === 'custom' 

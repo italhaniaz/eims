@@ -83,8 +83,11 @@ export const SuperadminLoginPage = ({ onBackToLanding, onOpenTrial, onSwitchTier
         {/* Dual-Pane Card */}
         <div className="w-full rounded-3xl bg-slate-900/90 border border-slate-800 shadow-[0_20px_50px_rgba(0,0,0,0.6)] backdrop-blur-xl overflow-hidden grid grid-cols-1 md:grid-cols-12 relative">
           
-          {/* LEFT PANE: Superadmin System Branding */}
-          <div className="md:col-span-5 bg-gradient-to-br from-[#0c0d1c] via-[#15122b] to-[#0a0718] p-4 sm:p-6 md:p-7 flex flex-col justify-between relative overflow-hidden border-b md:border-b-0 md:border-r border-slate-800/80">
+          {/* LEFT PANE: Superadmin System Branding with Hero Gradient */}
+          <div 
+            className="md:col-span-5 p-4 sm:p-6 md:p-7 flex flex-col justify-between relative overflow-hidden border-b md:border-b-0 md:border-r border-slate-800/80 login-hero-pane text-white"
+            style={{ background: 'var(--hero-gradient)' }}
+          >
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(147,51,234,0.15),transparent_60%)]"></div>
 
             <div className="relative z-10">

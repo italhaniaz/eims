@@ -403,6 +403,245 @@
 }
 
 /* =========================================================================
+   UNIVERSAL THEME ENGINE & TOKEN BRIDGE
+   Seamlessly maps brand, surfaces, borders, and buttons to active theme tokens
+   so presets (School/College/University/Custom) and Dark Mode apply everywhere.
+   ========================================================================= */
+
+/* 1. Primary Action Buttons & Interactive Accents */
+.bg-primary,
+.bg-theme-primary,
+button.bg-emerald-600,
+button.bg-emerald-700,
+button.bg-indigo-600,
+button.bg-indigo-700,
+button.bg-purple-600,
+button.bg-purple-700,
+button.bg-blue-600,
+button.bg-blue-700,
+a.bg-emerald-600,
+a.bg-indigo-600,
+a.bg-purple-600,
+.bg-emerald-600.text-white,
+.bg-indigo-600.text-white,
+.bg-purple-600.text-white,
+.bg-blue-600.text-white {
+  background-color: var(--primary) !important;
+  color: #FFFFFF !important;
+}
+
+/* Primary Button Hover */
+button.bg-emerald-600:hover,
+button.bg-emerald-700:hover,
+button.bg-indigo-600:hover,
+button.bg-indigo-700:hover,
+button.bg-purple-600:hover,
+button.bg-purple-700:hover,
+button.bg-blue-600:hover,
+button.bg-blue-700:hover,
+.hover\:bg-emerald-700:hover,
+.hover\:bg-emerald-500:hover,
+.hover\:bg-indigo-700:hover,
+.hover\:bg-indigo-500:hover,
+.hover\:bg-purple-700:hover,
+.hover\:bg-purple-500:hover,
+.hover\:bg-blue-700:hover,
+.hover\:bg-blue-500:hover {
+  background-color: var(--primary-hover) !important;
+}
+
+/* 2. Soft Brand Backgrounds & Badges */
+.bg-primary-soft,
+.bg-theme-primary-soft,
+.bg-emerald-50,
+.bg-indigo-50,
+.bg-purple-50,
+.bg-blue-50,
+.bg-\[\#f5eeff\],
+.bg-\[\#ecfdf5\],
+.bg-\[\#f0fdf4\],
+.bg-\[\#eef2ff\],
+.bg-\[\#eff6ff\] {
+  background-color: var(--primary-soft) !important;
+}
+
+/* 3. Primary Text & Active Brand Icons */
+.text-primary,
+.text-theme-primary,
+.text-emerald-600,
+.text-emerald-700,
+.text-emerald-800,
+.text-indigo-600,
+.text-indigo-700,
+.text-purple-600,
+.text-purple-700,
+.text-blue-600 {
+  color: var(--primary) !important;
+}
+
+/* 4. Primary Borders */
+.border-primary,
+.border-theme-primary,
+.border-emerald-200,
+.border-emerald-300,
+.border-indigo-200,
+.border-indigo-300,
+.border-purple-200,
+.border-purple-300,
+.border-blue-200 {
+  border-color: var(--primary-border) !important;
+}
+
+/* 5. Hero Gradient Universal Applicator */
+.bg-hero-gradient,
+.login-hero-pane,
+.login-header-banner,
+.dashboard-hero-banner {
+  background: var(--hero-gradient) !important;
+}
+
+/* 6. Form focus rings & check boxes */
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px var(--primary-border) !important;
+}
+
+/* 7. Status Pill Protection (Preserve success, warning, error, info) */
+.badge-paid,
+.badge-active,
+.status-paid,
+.status-active,
+.text-green-600,
+.text-green-700,
+.bg-green-50,
+.bg-green-100 {
+  background-color: var(--success-soft) !important;
+  color: var(--success) !important;
+}
+
+.text-amber-600,
+.text-amber-700,
+.text-yellow-600,
+.bg-amber-50,
+.bg-amber-100,
+.bg-yellow-50 {
+  background-color: var(--warning-soft) !important;
+  color: var(--warning) !important;
+}
+
+.text-rose-600,
+.text-rose-700,
+.text-red-600,
+.text-red-700,
+.bg-rose-50,
+.bg-rose-100,
+.bg-red-50 {
+  background-color: var(--error-soft) !important;
+  color: var(--error) !important;
+}
+
+/* 8. DARK MODE UNIVERSAL SURFACE & TEXT INVERSION */
+[data-theme="dark"],
+.dark {
+  /* Surfaces & Cards */
+  .bg-white,
+  .bg-white\/90,
+  .bg-white\/95,
+  .bg-white\/80 {
+    background-color: var(--surface) !important;
+  }
+
+  /* Canvases & Page Backgrounds */
+  .bg-slate-50,
+  .bg-slate-100,
+  .bg-gray-50,
+  .bg-gray-100,
+  .bg-\[\#f8fafc\],
+  .bg-\[\#f4f7fb\],
+  .bg-\[\#f4fbf7\],
+  .bg-\[\#f5f6ff\],
+  .bg-\[\#ebf8f1\],
+  .bg-\[\#eef0ff\],
+  .bg-\[\#fbf8ff\],
+  .bg-\[\#f5edff\],
+  .bg-\[\#fcfaff\] {
+    background-color: var(--bg) !important;
+  }
+
+  /* Borders & Dividers */
+  .border-slate-100,
+  .border-slate-200,
+  .border-slate-300,
+  .border-gray-100,
+  .border-gray-200,
+  .border-gray-300,
+  .border-emerald-100,
+  .border-emerald-200 {
+    border-color: var(--border) !important;
+  }
+
+  /* Headings & High-contrast Text */
+  .text-slate-900,
+  .text-slate-800,
+  .text-slate-700,
+  .text-gray-900,
+  .text-gray-800,
+  .text-gray-700 {
+    color: var(--text) !important;
+  }
+
+  /* Secondary & Muted Text */
+  .text-slate-600,
+  .text-slate-500,
+  .text-gray-600,
+  .text-gray-500 {
+    color: var(--text-muted) !important;
+  }
+
+  .text-slate-400,
+  .text-gray-400 {
+    color: var(--text-subtle) !important;
+  }
+
+  /* Form Controls */
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    background-color: var(--surface) !important;
+    color: var(--text) !important;
+    border-color: var(--border) !important;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--text-subtle) !important;
+  }
+
+  /* Table styling in Dark Mode */
+  table th {
+    background-color: var(--surface-raised) !important;
+    color: var(--text-muted) !important;
+    border-color: var(--border) !important;
+  }
+
+  table td {
+    border-color: var(--border-subtle) !important;
+    color: var(--text) !important;
+  }
+
+  table tr:hover td {
+    background-color: var(--primary-soft) !important;
+  }
+
+  /* Ensure text-white on primary badges and buttons stays crisp */
+  .text-white {
+    color: #FFFFFF !important;
+  }
+}
+
+/* =========================================================================
    DARK NAVY SIDEBAR STYLING (With Light/Dark Content Area)
    ========================================================================= */
 .sidebar-navy {

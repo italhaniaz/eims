@@ -30,10 +30,15 @@ import {
   MapPin,
   User,
   ArrowLeft,
-  Gift
+  Gift,
+  Moon,
+  Sun,
+  Palette
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
+import { useTheme } from '../../context/ThemeContext'
+import ThemeCustomizerModal from '../../components/common/ThemeCustomizerModal'
 import { getStoredData, saveStoredData } from '../../services/dataService'
 import AnnouncementService from '../../services/announcementService'
 
@@ -121,6 +126,8 @@ const PLAN_CONFIGS = {
 export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
   const { login } = useAuth()
   const { showToast } = useToast()
+  const { isDark, toggleThemeMode, preset, activeThemeConfig } = useTheme()
+  const [isThemeModalOpen, setIsThemeModalOpen] = useState(false)
 
   // State
   const [landingBanner, setLandingBanner] = useState(() => AnnouncementService.getLandingBannerConfig())
@@ -737,17 +744,40 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
             })}
           </nav>
 
-          {/* Right Action Controls: Desktop Direct Portal Sign In & Mobile Toggle */}
+          {/* Right Action Controls: Theme Studio, Dark Mode & Portal Sign In */}
           <div className="flex items-center gap-2 sm:gap-3">
             <button
               type="button"
+              onClick={() => setIsThemeModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-white/90 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 shadow-2xs hover:shadow-xs transition-all backdrop-blur-md cursor-pointer hover:scale-105 active:scale-95"
+              title="Theme Studio: Customize Design Tokens & Presets"
+            >
+              <span
+                className="w-2.5 h-2.5 rounded-full inline-block shadow-2xs"
+                style={{ backgroundColor: activeThemeConfig?.primary || 'var(--primary)' }}
+              />
+              <Palette className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+              <span className="capitalize hidden sm:inline">{preset}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={toggleThemeMode}
+              className="p-2 rounded-xl text-slate-700 dark:text-slate-200 bg-white/90 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 shadow-2xs hover:shadow-xs transition-all backdrop-blur-md cursor-pointer hover:scale-105 active:scale-95"
+              title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            >
+              {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-600" />}
+            </button>
+
+            <button
+              type="button"
               onClick={() => onNavigateToLogin('school')}
-              className="hidden lg:inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-50 hover:bg-[#f5eeff] text-emerald-800 hover:text-emerald-950 border border-emerald-200 hover:border-purple-400 text-xs font-bold shadow-2xs hover:shadow-xs transition-all cursor-pointer group"
+              className="btn-hero-gradient hidden lg:inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold shadow-sm hover:shadow transition-all cursor-pointer group"
               title="Sign in to your Institutional Portal"
             >
-              <Lock className="w-3.5 h-3.5 text-emerald-600 group-hover:scale-110 transition-transform" />
+              <Lock className="w-3.5 h-3.5 text-white group-hover:scale-110 transition-transform" />
               <span>Portal Sign In</span>
-              <ArrowRight className="w-3.5 h-3.5 text-purple-400 group-hover:translate-x-0.5 transition-transform" />
+              <ArrowRight className="w-3.5 h-3.5 text-white/80 group-hover:translate-x-0.5 transition-transform" />
             </button>
 
             {/* Mobile Hamburger Menu Toggle Button */}
@@ -873,7 +903,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
           {/* Hero Headline */}
           <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 font-heading tracking-tight max-w-3xl mx-auto leading-tight">
             One Intelligent Platform to Run <br className="hidden sm:inline" />
-            <span className="bg-gradient-to-r from-purple-700 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+            <span className="text-hero-gradient font-black">
               Schools, Colleges & Universities
             </span>
           </h1>
@@ -887,9 +917,9 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
             <button
               onClick={() => setIsTrialModalOpen(true)}
-              className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md shadow-emerald-600/25 hover:shadow-lg transition-all hover:scale-[1.02] active:scale-95 cursor-pointer flex items-center justify-center gap-2"
+              className="btn-hero-gradient w-full sm:w-auto px-6 py-3.5 rounded-xl text-white font-bold text-sm shadow-md transition-all hover:scale-[1.02] active:scale-95 cursor-pointer flex items-center justify-center gap-2"
             >
-              <Sparkles className="w-4 h-4 text-purple-200" />
+              <Sparkles className="w-4 h-4 text-white/80" />
               <span>Start 14-Day Free Trial (₨ 0)</span>
             </button>
 
@@ -2606,6 +2636,12 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
           <ArrowUp className="w-4 h-4 stroke-[2.5]" />
         </button>
       )}
+
+      {/* Theme Studio & Design Tokens Customizer Modal */}
+      <ThemeCustomizerModal
+        isOpen={isThemeModalOpen}
+        onClose={() => setIsThemeModalOpen(false)}
+      />
 
     </div>
   )
