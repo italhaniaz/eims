@@ -1246,43 +1246,46 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
         </div>
       )}
 
-      {/* 1. Header Row */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div>
+      {/* 1. Header Row - Premium SaaS Hero Header Banner */}
+      <div 
+        className="rounded-2xl p-6 sm:p-7 text-white shadow-xl flex flex-col lg:flex-row lg:items-center justify-between gap-4 transition-all duration-200 relative overflow-hidden border border-white/20"
+        style={{ background: 'var(--hero-gradient)' }}
+      >
+        <div className="relative z-10">
           <div className="flex items-center gap-2 mb-1.5">
-            <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#f5eeff] text-emerald-800 border border-emerald-100 inline-flex items-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+            <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-white/20 text-white border border-white/30 inline-flex items-center gap-1.5 backdrop-blur-xs">
+              <ShieldCheck className="w-3.5 h-3.5 text-white" />
               <span>Multi-Campus Platform Governance</span>
             </span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight font-heading">
+          <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight font-heading">
             Super Admin Dashboard
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1 font-sans">
+          <p className="text-xs sm:text-sm text-white/85 mt-1 font-sans">
             Multi-Campus Educational Wings Governance & Real-Time Performance Matrix
           </p>
 
-          {/* Active Filter Indicator Pill - Minimalist */}
+          {/* Active Filter Indicator Pill */}
           {selectedTierFilter !== 'all' && (
             <div className="flex items-center gap-2 mt-2">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-900 border border-emerald-200">
-                <Filter className="w-3 h-3 text-emerald-600" />
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-white/20 text-white border border-white/30 backdrop-blur-xs">
+                <Filter className="w-3 h-3 text-white" />
                 <span>{currentFilterConfig.label}</span>
                 <button
                   type="button"
                   onClick={() => handleSelectTierFilter('all')}
-                  className="hover:bg-purple-200/80 p-0.5 rounded-full transition-colors cursor-pointer"
+                  className="hover:bg-white/30 p-0.5 rounded-full transition-colors cursor-pointer"
                   title="Clear filter"
                 >
-                  <X className="w-3.5 h-3.5 text-emerald-800" />
+                  <X className="w-3.5 h-3.5 text-white" />
                 </button>
               </span>
             </div>
           )}
         </div>
 
-        {/* Action Shortcuts & Educational Tier Filter - Fully responsive & feature complete */}
-        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 flex-wrap sm:flex-nowrap overflow-x-auto py-1 max-w-full">
+        {/* Action Shortcuts & Educational Tier Filter */}
+        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 flex-wrap sm:flex-nowrap overflow-x-auto py-1 max-w-full relative z-10">
           {/* Clean Educational Tier Dropdown Filter */}
           <div className="relative" ref={filterDropdownRef}>
             <button

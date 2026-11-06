@@ -261,8 +261,11 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
         </div>
       )}
 
-      {/* Dynamic Campus & Academic Tier Header Banner */}
-      <div className="bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 border border-purple-800/40 rounded-3xl p-6 sm:p-7 text-white shadow-xl shadow-purple-950/10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-all duration-200 relative overflow-hidden">
+      {/* Dynamic Campus & Academic Tier Header Banner with Hero Gradient */}
+      <div 
+        className="rounded-2xl p-6 sm:p-7 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-all duration-200 relative overflow-hidden border border-white/20"
+        style={{ background: 'var(--hero-gradient)' }}
+      >
         <div className="relative z-10">
           <div className="flex items-center gap-2">
             <span className={`text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 ${banner.iconColor}`}>

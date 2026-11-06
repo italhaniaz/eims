@@ -14,10 +14,14 @@ import {
   Key,
   UserCheck,
   Eye,
-  Check
+  Check,
+  Palette,
+  Moon,
+  Sun
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useAppData } from '../../context/AppDataContext'
+import { useTheme } from '../../context/ThemeContext'
 import ChangePasswordModal from '../common/ChangePasswordModal'
 import { getInstituteTierConfig } from '../../utils/tierGating'
 
@@ -28,9 +32,11 @@ export const InstituteAdminNavbar = ({
   onOpenSettings,
   onOpenMobileMenu,
   onOpenCommandPalette,
-  onRouteChange
+  onRouteChange,
+  onOpenThemeModal
 }) => {
   const { user, logout } = useAuth()
+  const { isDark, toggleThemeMode, preset, activeThemeConfig } = useTheme()
   const { 
     institutes, 
     activeWing = 'all',
@@ -124,7 +130,7 @@ export const InstituteAdminNavbar = ({
   }
 
   return (
-    <header className="h-14 sm:h-16 min-h-[56px] sm:min-h-[64px] bg-white border-b border-slate-100 px-3.5 sm:px-6 md:px-8 flex items-center justify-between sticky top-0 z-30 shrink-0 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+    <header className="h-14 sm:h-16 min-h-[56px] sm:min-h-[64px] bg-[var(--surface)] border-b border-[var(--border)] text-[var(--text)] px-3.5 sm:px-6 md:px-8 flex items-center justify-between sticky top-0 z-30 shrink-0 shadow-soft transition-colors duration-200">
       {/* Left: Mobile Hamburger, Campus Switcher, & Route Breadcrumb */}
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         {/* Mobile Hamburger */}
@@ -369,6 +375,31 @@ export const InstituteAdminNavbar = ({
             </div>
           )}
         </div>
+        {/* Theme Studio & Preset Trigger */}
+        <button
+          type="button"
+          onClick={onOpenThemeModal}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] hover:border-[var(--primary)] shadow-2xs transition-all cursor-pointer"
+          title="Theme Studio: Presets & Dark Mode"
+        >
+          <Palette className="w-3.5 h-3.5 text-[var(--primary)]" />
+          <span className="hidden sm:inline capitalize font-bold">{preset}</span>
+          <span 
+            className="w-2.5 h-2.5 rounded-full shadow-2xs" 
+            style={{ backgroundColor: activeThemeConfig?.primary || 'var(--primary)' }} 
+          />
+        </button>
+
+        {/* Quick Dark Mode Toggle */}
+        <button
+          type="button"
+          onClick={toggleThemeMode}
+          className="p-2 text-[var(--text-muted)] hover:text-[var(--text)] rounded-xl hover:bg-[var(--primary-soft)] transition-colors cursor-pointer"
+          title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+        >
+          {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-600" />}
+        </button>
+
         <button 
           onClick={onOpenSettings}
           className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-50 transition-colors"

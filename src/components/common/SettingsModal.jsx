@@ -29,11 +29,23 @@ import { isSupabaseConfigured, getSupabaseStatus, supabase } from '../../service
 import { DataService, getStoredData } from '../../services/dataService'
 import { useAppData } from '../../context/AppDataContext'
 import { useToast } from '../../context/ToastContext'
+import { useTheme } from '../../context/ThemeContext'
 import { SecurityService } from '../../services/securityService'
 
-export const SettingsModal = ({ isOpen, onClose }) => {
+export const SettingsModal = ({ isOpen, onClose, onOpenThemeModal }) => {
   const { resetToZero, loadSampleTemplate, importData, refreshData } = useAppData()
   const { toast } = useToast()
+  const { 
+    isDark, 
+    toggleThemeMode, 
+    preset, 
+    setPreset, 
+    customPrimary, 
+    setCustomPrimary, 
+    dir, 
+    toggleDir,
+    activeThemeConfig 
+  } = useTheme()
   const status = getSupabaseStatus()
   const fileInputRef = useRef(null)
 
@@ -294,6 +306,7 @@ export const SettingsModal = ({ isOpen, onClose }) => {
         <div className="flex items-center gap-1 border-b border-slate-200 pb-2 text-xs overflow-x-auto">
           {[
             { key: 'general', label: 'General', icon: Sliders },
+            { key: 'theme', label: 'Theme Studio', icon: Palette },
             { key: 'localization', label: 'Languages & RTL', icon: Globe },
             { key: 'smtp', label: 'Email / SMTP', icon: Mail },
             { key: 'sms', label: 'SMS & WhatsApp', icon: MessageSquare },
@@ -435,6 +448,120 @@ export const SettingsModal = ({ isOpen, onClose }) => {
               </button>
             </div>
           </form>
+        )}
+
+        {/* ---------------------------------------------------- */}
+        {/* TAB: THEME STUDIO & MULTI-CAMPUS DESIGN TOKENS */}
+        {/* ---------------------------------------------------- */}
+        {activeTab === 'theme' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-slate-900 text-sm">Theme Studio & Design Tokens</h3>
+                <p className="text-xs text-slate-500">
+                  CSS variables for colors, dark mode, institutional presets and custom brand palettes.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={onOpenThemeModal}
+                className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors flex items-center gap-1.5 cursor-pointer"
+              >
+                <Palette className="w-3.5 h-3.5" />
+                <span>Open Full Studio</span>
+              </button>
+            </div>
+
+            {/* Display Mode & Direction */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-slate-800 block">Dark / Light Mode</span>
+                  <span className="text-[11px] text-slate-500">{isDark ? 'Dark Theme Active' : 'Light Theme Active'}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={toggleThemeMode}
+                  className="px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                >
+                  {isDark ? '☀️ Switch Light' : '🌙 Switch Dark'}
+                </button>
+              </div>
+
+              <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-slate-800 block">Urdu RTL Alignment</span>
+                  <span className="text-[11px] text-slate-500">{dir === 'rtl' ? 'Right-to-Left (اردو)' : 'Left-to-Right'}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={toggleDir}
+                  className="px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                >
+                  {dir === 'rtl' ? 'English LTR' : 'اردو RTL'}
+                </button>
+              </div>
+            </div>
+
+            {/* Presets Grid */}
+            <div className="space-y-2">
+              <label className="block text-xs font-bold text-slate-600 uppercase">Institutional Preset</label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                {[
+                  { id: 'school', title: 'School', colors: '#0EA5E9 + #F97316', desc: 'K-10 / Matric' },
+                  { id: 'college', title: 'College', colors: '#4F46E5 + #14B8A6', desc: 'Intermediate / F.Sc' },
+                  { id: 'university', title: 'University', colors: '#1E3A8A + #D4AF37', desc: 'HEC BS / Honors' }
+                ].map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => setPreset(p.id)}
+                    className={`p-3 rounded-xl border-2 text-left transition-all cursor-pointer ${
+                      preset === p.id 
+                        ? 'border-indigo-600 bg-indigo-50/50 shadow-xs' 
+                        : 'border-slate-200 bg-white hover:border-slate-300'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-xs text-slate-900">{p.title}</span>
+                      {preset === p.id && <span className="text-[10px] font-bold text-indigo-600">✓ Active</span>}
+                    </div>
+                    <span className="text-[10px] font-mono text-slate-500 block mt-0.5">{p.colors}</span>
+                    <span className="text-[10px] text-slate-400 block mt-1">{p.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Custom Brand Color */}
+            <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-slate-800 block">Custom Primary Brand Color</span>
+                  <span className="text-[11px] text-slate-500">Pick any custom hex; all shades and hero gradient are auto-generated.</span>
+                </div>
+                {preset === 'custom' && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">Custom Active</span>
+                )}
+              </div>
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  value={customPrimary}
+                  onChange={(e) => setCustomPrimary(e.target.value)}
+                  className="w-8 h-8 rounded border-0 cursor-pointer p-0 bg-transparent"
+                />
+                <input
+                  type="text"
+                  value={customPrimary}
+                  onChange={(e) => setCustomPrimary(e.target.value)}
+                  className="w-24 px-2 py-1 text-xs font-mono font-bold uppercase rounded border border-slate-300 bg-white"
+                  maxLength={7}
+                />
+                <span className="text-xs text-slate-400">Current: {activeThemeConfig.primary}</span>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* ---------------------------------------------------- */}

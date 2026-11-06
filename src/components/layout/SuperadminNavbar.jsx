@@ -13,10 +13,14 @@ import {
   School,
   CheckCircle2,
   Sparkles,
-  ArrowRight
+  ArrowRight,
+  Palette,
+  Moon,
+  Sun
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useAppData } from '../../context/AppDataContext'
+import { useTheme } from '../../context/ThemeContext'
 import ChangePasswordModal from '../common/ChangePasswordModal'
 import CloudSyncBadge from '../common/CloudSyncBadge'
 import AnnouncementService from '../../services/announcementService'
@@ -26,10 +30,12 @@ export const SuperadminNavbar = ({
   onRouteChange, 
   onOpenSettings,
   onOpenMobileMenu,
-  onOpenCommandPalette
+  onOpenCommandPalette,
+  onOpenThemeModal
 }) => {
   const { user, logout } = useAuth()
   const { notices = [], recentActivity = [] } = useAppData()
+  const { isDark, toggleThemeMode, preset, activeThemeConfig } = useTheme()
   const [showNotifications, setShowNotifications] = useState(false)
   const [showProfileMenu, setShowProfileMenu] = useState(false)
   const [showPasswordModal, setShowPasswordModal] = useState(false)
@@ -112,7 +118,7 @@ export const SuperadminNavbar = ({
   }
 
   return (
-    <header className="h-14 sm:h-16 min-h-[56px] sm:min-h-[64px] bg-white border-b border-slate-100 px-3.5 sm:px-6 md:px-8 flex items-center justify-between sticky top-0 z-30 shrink-0 shadow-[0_1px_4px_rgba(0,0,0,0.02)]">
+    <header className="h-14 sm:h-16 min-h-[56px] sm:min-h-[64px] bg-[var(--surface)] border-b border-[var(--border)] text-[var(--text)] px-3.5 sm:px-6 md:px-8 flex items-center justify-between sticky top-0 z-30 shrink-0 shadow-soft transition-colors duration-200">
       {/* Left: Mobile Menu & Wide Pill Search Bar */}
       <div className="flex items-center gap-3 flex-1 max-w-xl">
         {/* Mobile Hamburger Button */}
@@ -135,12 +141,12 @@ export const SuperadminNavbar = ({
             value={searchValue}
             onClick={onOpenCommandPalette}
             placeholder="What do you want to find?"
-            className="w-full pl-5 pr-11 py-2.5 rounded-full bg-[#f8fafc] hover:bg-slate-100/80 border border-slate-200/70 text-slate-800 placeholder-slate-400 text-xs sm:text-sm font-sans focus:outline-none transition-all cursor-pointer shadow-2xs"
+            className="w-full pl-5 pr-11 py-2.5 rounded-full bg-[var(--bg)] hover:bg-[var(--primary-soft)] border border-[var(--border)] text-[var(--text)] placeholder:text-[var(--text-muted)] text-xs sm:text-sm font-sans focus:outline-none transition-all cursor-pointer shadow-2xs"
           />
           <button 
             type="button"
             onClick={onOpenCommandPalette}
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-emerald-600 hover:text-emerald-800 transition-colors cursor-pointer"
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-[var(--primary)] hover:opacity-80 transition-opacity cursor-pointer"
             title="Search"
           >
             <Search className="w-4 h-4 stroke-[2.2]" />
@@ -149,7 +155,31 @@ export const SuperadminNavbar = ({
       </div>
 
       {/* Right Side Icons & Profile Info */}
-      <div className="flex items-center gap-2 sm:gap-3.5 shrink-0">
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        {/* Theme Studio & Preset Trigger */}
+        <button
+          type="button"
+          onClick={onOpenThemeModal}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] hover:border-[var(--primary)] shadow-2xs transition-all cursor-pointer"
+          title="Theme Studio: Switch School / College / University Presets or Custom"
+        >
+          <Palette className="w-3.5 h-3.5 text-[var(--primary)]" />
+          <span className="hidden sm:inline capitalize font-bold">{preset}</span>
+          <span 
+            className="w-2.5 h-2.5 rounded-full shadow-2xs" 
+            style={{ backgroundColor: activeThemeConfig?.primary || 'var(--primary)' }} 
+          />
+        </button>
+
+        {/* Quick Dark / Light Mode Toggle */}
+        <button
+          type="button"
+          onClick={toggleThemeMode}
+          className="p-2 text-[var(--text-muted)] hover:text-[var(--text)] rounded-xl hover:bg-[var(--primary-soft)] transition-colors cursor-pointer"
+          title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+        >
+          {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-600" />}
+        </button>
         {/* 1. Announcements & Broadcast Navbar Control */}
         <div className="relative" ref={announcementsRef}>
           <button

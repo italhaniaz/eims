@@ -30,11 +30,15 @@ import {
   Copy,
   CheckCircle,
   MapPin,
-  Sparkles
+  Sparkles,
+  Palette,
+  Moon,
+  Sun
 } from 'lucide-react'
 import { useToast } from '../../../context/ToastContext'
 import { useAppData } from '../../../context/AppDataContext'
 import { useAuth } from '../../../context/AuthContext'
+import { useTheme } from '../../../context/ThemeContext'
 import { PlatformService } from '../../../services/platformService'
 import { OperationsService } from '../../../services/operationsService'
 
@@ -42,6 +46,18 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
   const { toast } = useToast()
   const { institutes = [] } = useAppData()
   const { user, login } = useAuth()
+  const { 
+    isDark, 
+    toggleThemeMode, 
+    preset, 
+    setPreset, 
+    customPrimary, 
+    setCustomPrimary, 
+    dir, 
+    toggleDir,
+    activeThemeConfig,
+    chartPalette 
+  } = useTheme()
   const [currentTab, setCurrentTab] = useState(activeTab)
   const effectiveTab = currentTab || activeTab || 'general'
 
@@ -315,6 +331,154 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
             </button>
           </div>
         </form>
+      )}
+
+      {/* Tab 2: Branding & Multi-Campus Design Tokens */}
+      {effectiveTab === 'branding' && (
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+            <div>
+              <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
+                <Palette className="w-5 h-5 text-indigo-600" />
+                <span>Multi-Campus Theme Presets & SaaS Design Tokens</span>
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Universal CSS design tokens for primary, secondary, backgrounds, dark mode and custom hex branding.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={toggleThemeMode}
+                className="px-3.5 py-2 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 transition-colors flex items-center gap-2 cursor-pointer"
+              >
+                {isDark ? <Sun className="w-4 h-4 text-amber-500" /> : <Moon className="w-4 h-4 text-slate-600" />}
+                <span>{isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Institutional Presets */}
+          <div>
+            <label className="block text-xs font-bold text-slate-600 uppercase mb-2">
+              System Theme Preset
+            </label>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[
+                { 
+                  id: 'school', 
+                  title: 'School Portal', 
+                  primaryHex: '#0EA5E9', 
+                  secHex: '#F97316', 
+                  desc: 'Sky Blue + Sunset Orange for K-10 & Matric' 
+                },
+                { 
+                  id: 'college', 
+                  title: 'College & HSSC', 
+                  primaryHex: '#4F46E5', 
+                  secHex: '#14B8A6', 
+                  desc: 'Modern Indigo SaaS + Teal for Intermediate' 
+                },
+                { 
+                  id: 'university', 
+                  title: 'University & Research', 
+                  primaryHex: '#1E3A8A', 
+                  secHex: '#D4AF37', 
+                  desc: 'Deep Royal Navy + Academic Gold for BS/Honors' 
+                }
+              ].map(p => (
+                <div
+                  key={p.id}
+                  onClick={() => {
+                    setPreset(p.id)
+                    toast.success(`Switched to ${p.title} design tokens!`)
+                  }}
+                  className={`p-4 rounded-xl border-2 transition-all cursor-pointer ${
+                    preset === p.id 
+                      ? 'border-indigo-600 bg-indigo-50/40 shadow-xs' 
+                      : 'border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-bold text-sm text-slate-900">{p.title}</span>
+                    {preset === p.id && <span className="text-xs font-bold text-indigo-600">✓ Active</span>}
+                  </div>
+                  <p className="text-xs text-slate-500 mb-3">{p.desc}</p>
+                  <div className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-md shadow-2xs border border-black/10" style={{ backgroundColor: p.primaryHex }} />
+                    <span className="w-6 h-6 rounded-md shadow-2xs border border-black/10" style={{ backgroundColor: p.secHex }} />
+                    <span className="text-xs font-mono font-bold text-slate-600 ml-auto">{p.primaryHex}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Custom Brand Engine */}
+          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-xs font-bold text-slate-900 block">Custom Brand Palette Generator</span>
+                <span className="text-[11px] text-slate-500">Pick any primary color; all shades, hover states and hero gradients are generated automatically.</span>
+              </div>
+              {preset === 'custom' && (
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700">Custom Active</span>
+              )}
+            </div>
+            <div className="flex items-center gap-3">
+              <input
+                type="color"
+                value={customPrimary}
+                onChange={e => setCustomPrimary(e.target.value)}
+                className="w-10 h-10 rounded-lg cursor-pointer border-0 bg-transparent p-0"
+              />
+              <input
+                type="text"
+                value={customPrimary}
+                onChange={e => setCustomPrimary(e.target.value)}
+                className="w-28 px-3 py-1.5 text-xs font-mono font-bold uppercase rounded-lg border border-slate-300 bg-white"
+                maxLength={7}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setCustomPrimary('#4F46E5')
+                  setPreset('college')
+                  toast.info('Reset to College SaaS default tokens.')
+                }}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
+              >
+                Reset Default
+              </button>
+            </div>
+          </div>
+
+          {/* Live Preview Card */}
+          <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-3">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Live UI Element Preview</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="p-4 rounded-xl border border-slate-100 shadow-soft space-y-2">
+                <span className="text-xs font-bold text-slate-700">Hero Gradient Button</span>
+                <button
+                  type="button"
+                  className="btn-hero-gradient w-full py-2.5 px-4 text-xs font-bold"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Interactive Primary Action</span>
+                </button>
+              </div>
+
+              <div className="p-4 rounded-xl border border-slate-100 shadow-soft space-y-2">
+                <span className="text-xs font-bold text-slate-700">Chart Palette Tokens</span>
+                <div className="flex items-center gap-1.5 pt-1">
+                  {chartPalette.map(c => (
+                    <div key={c} className="flex-1 h-6 rounded-md shadow-2xs" style={{ backgroundColor: c }} title={c} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Tab 3: Feature Flags */}

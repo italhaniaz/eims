@@ -1,4 +1,5 @@
 import React, { useState, useEffect, Suspense } from 'react'
+import { ThemeProvider } from './context/ThemeContext'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { AppDataProvider, useAppData } from './context/AppDataContext'
 import { ToastProvider, useToast } from './context/ToastContext'
@@ -12,6 +13,7 @@ import InstituteAdminSidebar, { canRoleAccessRoute } from './components/layout/I
 import InstituteAdminNavbar from './components/layout/InstituteAdminNavbar'
 import SettingsModal from './components/common/SettingsModal'
 import CommandPaletteModal from './components/common/CommandPaletteModal'
+import ThemeCustomizerModal from './components/common/ThemeCustomizerModal'
 import ImpersonationBanner from './components/common/ImpersonationBanner'
 import ErrorBoundary from './components/common/ErrorBoundary'
 
@@ -262,9 +264,10 @@ const AppContent = () => {
   // Selected campus for Institute Admin
   const [selectedInstitute, setSelectedInstitute] = useState(() => institutes[0] || null)
   
-  // Settings modal & Global Spotlight Command Palette
+  // Settings modal, Theme Studio & Global Spotlight Command Palette
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isPaletteOpen, setIsPaletteOpen] = useState(false)
+  const [isThemeModalOpen, setIsThemeModalOpen] = useState(false)
 
   // Global Keyboard Shortcut Listener for Ctrl+K / Cmd+K
   useEffect(() => {
@@ -380,6 +383,7 @@ const AppContent = () => {
               onOpenSettings={() => setIsSettingsOpen(true)}
               onOpenMobileMenu={() => setSuperMobileOpen(true)}
               onOpenCommandPalette={() => setIsPaletteOpen(true)}
+              onOpenThemeModal={() => setIsThemeModalOpen(true)}
             />
 
             <main className="flex-1 overflow-y-auto">
@@ -604,6 +608,7 @@ const AppContent = () => {
             onOpenMobileMenu={() => setInstMobileOpen(true)}
             onOpenCommandPalette={() => setIsPaletteOpen(true)}
             onRouteChange={setInstituteRoute}
+            onOpenThemeModal={() => setIsThemeModalOpen(true)}
           />
 
           <main className="flex-1 overflow-y-auto">
@@ -737,6 +742,12 @@ const AppContent = () => {
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
+        onOpenThemeModal={() => setIsThemeModalOpen(true)}
+      />
+
+      <ThemeCustomizerModal
+        isOpen={isThemeModalOpen}
+        onClose={() => setIsThemeModalOpen(false)}
       />
 
       <CommandPaletteModal
@@ -752,13 +763,15 @@ const AppContent = () => {
 function App() {
   return (
     <ErrorBoundary onNavigateHome={() => window.location.reload()}>
-      <AuthProvider>
-        <AppDataProvider>
-          <ToastProvider>
-            <AppContent />
-          </ToastProvider>
-        </AppDataProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <AppDataProvider>
+            <ToastProvider>
+              <AppContent />
+            </ToastProvider>
+          </AppDataProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   )
 }
