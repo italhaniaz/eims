@@ -68,6 +68,7 @@ import {
   isClassAllowedForTier,
   filterClassesByInstituteTier 
 } from '../../../utils/tierGating'
+import { compressImageFile } from '../../../utils/securityUtils'
 import PrintableStudentIdCardModal from '../../../components/common/PrintableStudentIdCardModal'
 import PrintableExamAdmitCardModal from '../../../components/common/PrintableExamAdmitCardModal'
 
@@ -532,8 +533,8 @@ const validatePakistaniPhone = (phone) => {
     return value
   }
 
-  // Photo Upload Handler with Crop / Framing & 2MB Limit
-  const handlePhotoUpload = (e) => {
+  // Photo Upload Handler with Automatic Canvas Compression (Prevents QuotaExceededError)
+  const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
 
@@ -541,18 +542,27 @@ const validatePakistaniPhone = (phone) => {
       toast.error('Invalid image type. Please select a genuine JPG, PNG or WEBP photograph.')
       return
     }
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error('Photo file size exceeds 2MB limit. Please upload a compressed image.')
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Photo file size exceeds 5MB limit. Please upload a smaller image.')
       return
     }
 
-    const reader = new FileReader()
-    reader.onload = (event) => {
-      setFormData(prev => ({ ...prev, photoUrl: event.target?.result }))
+    try {
+      // Downscale and compress into lightweight JPEG (~25KB)
+      const compressed = await compressImageFile(file, 300, 300, 0.75)
+      setFormData(prev => ({ ...prev, photoUrl: compressed }))
       setIsFormDirty(true)
-      toast.success('Passport size ID photo attached successfully.')
+      toast.success('Passport size ID photo compressed and attached successfully.')
+    } catch (err) {
+      console.warn('Canvas compression fallback:', err)
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        setFormData(prev => ({ ...prev, photoUrl: event.target?.result }))
+        setIsFormDirty(true)
+        toast.success('Passport size ID photo attached.')
+      }
+      reader.readAsDataURL(file)
     }
-    reader.readAsDataURL(file)
   }
 
   const removePhoto = () => {

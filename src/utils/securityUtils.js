@@ -97,6 +97,62 @@ export const formatPakistaniPhone = (val) => {
 }
 
 /**
+ * Compresses and downscales image uploads client-side before base64 persistence
+ * Prevents localStorage QuotaExceededError crashes (scales down to max 320x320 @ ~25KB JPEG).
+ * @param {File|Blob} file 
+ * @param {number} maxWidth 
+ * @param {number} maxHeight 
+ * @param {number} quality 
+ * @returns {Promise<string>}
+ */
+export const compressImageFile = (file, maxWidth = 320, maxHeight = 320, quality = 0.75) => {
+  return new Promise((resolve, reject) => {
+    if (!file || !file.type.startsWith('image/')) {
+      return reject(new Error('Selected file is not an image'))
+    }
+
+    const reader = new FileReader()
+    reader.onerror = () => reject(new Error('Failed to read image file'))
+    reader.onload = (e) => {
+      const img = new Image()
+      img.onerror = () => reject(new Error('Failed to load image element'))
+      img.onload = () => {
+        let width = img.width
+        let height = img.height
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width)
+            width = maxWidth
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height)
+            height = maxHeight
+          }
+        }
+
+        const canvas = document.createElement('canvas')
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')
+        if (!ctx) {
+          return resolve(e.target.result)
+        }
+
+        ctx.fillStyle = '#ffffff'
+        ctx.fillRect(0, 0, width, height)
+        ctx.drawImage(img, 0, 0, width, height)
+        const compressedBase64 = canvas.toDataURL('image/jpeg', quality)
+        resolve(compressedBase64)
+      }
+      img.src = e.target.result
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
+/**
  * Basic defense-in-depth HTML text sanitizer to neutralize XSS payload injections
  * @param {string} dirtyStr 
  * @returns {string}

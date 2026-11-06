@@ -47,7 +47,7 @@ import {
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
-import { hashPassword } from '../../../context/AuthContext'
+import { hashPassword, useAuth } from '../../../context/AuthContext'
 import Modal from '../../../components/common/Modal'
 import { recordCampusLedgerTransaction } from '../accounts/CampusAccountsView'
 import { getInstituteTierConfig, filterClassesByInstituteTier } from '../../../utils/tierGating'
@@ -63,6 +63,14 @@ export const TeachersView = ({ currentInstitute, initialTab = "directory" }) => 
   const tierConfig = getInstituteTierConfig(currentInstitute)
   const { teachers = [], classes = [], institutes = [], users = [], addItem, updateItem, deleteItem } = useAppData()
   const { toast } = useToast()
+  const { user } = useAuth()
+  
+  // Security RBAC: Only Administrative and Finance accounts can view sensitive payroll figures
+  const canViewSalaries = user?.role === 'superadmin' || 
+    user?.role?.includes('admin') || 
+    user?.role?.includes('accountant') || 
+    user?.role?.includes('finance') || 
+    user?.role === 'principal'
 
   // Active Main Tab
   const [maskCnic, setMaskCnic] = useState(true)
@@ -528,12 +536,12 @@ export const TeachersView = ({ currentInstitute, initialTab = "directory" }) => 
       `"${s.email || ''}"`,
       `"${s.cnic || ''}"`,
       `"${s.gender || ''}"`,
-      `"${s.basicSalary || 0}"`,
-      `"${s.allowance || 0}"`,
-      `"${s.deductions || 0}"`,
-      `"${(Number(s.basicSalary || 0) + Number(s.allowance || 0) - Number(s.deductions || 0))}"`,
+      `"${canViewSalaries ? (s.basicSalary || 0) : 'CONFIDENTIAL'}"`,
+      `"${canViewSalaries ? (s.allowance || 0) : 'CONFIDENTIAL'}"`,
+      `"${canViewSalaries ? (s.deductions || 0) : 'CONFIDENTIAL'}"`,
+      `"${canViewSalaries ? (Number(s.basicSalary || 0) + Number(s.allowance || 0) - Number(s.deductions || 0)) : 'CONFIDENTIAL'}"`,
       `"${s.isClassTeacher ? `Class ${s.classTeacherClass}-${s.classTeacherSection || 'A'}` : 'No'}"`,
-      `"${s.bankAccount || ''}"`
+      `"${canViewSalaries ? (s.bankAccount || '') : 'CONFIDENTIAL'}"`
     ])
 
     const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
