@@ -1060,16 +1060,26 @@ const validatePakistaniPhone = (phone) => {
     setSelectedForStatusChange(null)
   }
 
-  // Bulk Actions
+  // Bulk Actions with Academic Enrollment History Preservation
   const handleBulkPromote = async () => {
     if (selectedIds.length === 0 || !bulkTargetClass) return
     for (const id of selectedIds) {
+      const targetStudent = (students || []).find(s => s.id === id)
+      const priorHistory = targetStudent?.enrollmentHistory || []
+      const historyEntry = {
+        className: targetStudent?.className || 'Previous Grade',
+        section: targetStudent?.section || 'A',
+        promotedTo: bulkTargetClass,
+        promotedDate: new Date().toISOString().split('T')[0],
+        academicSession: targetStudent?.session || '2025-2026'
+      }
       await updateItem('students', id, {
         className: bulkTargetClass,
-        promotedDate: new Date().toISOString().split('T')[0]
+        promotedDate: new Date().toISOString().split('T')[0],
+        enrollmentHistory: [historyEntry, ...priorHistory]
       })
     }
-    toast.success(`Promoted ${selectedIds.length} students to ${bulkTargetClass}!`)
+    toast.success(`Promoted ${selectedIds.length} students to ${bulkTargetClass} with academic history trail preserved!`)
     setIsBulkPromoteOpen(false)
     setSelectedIds([])
   }

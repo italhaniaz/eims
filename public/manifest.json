@@ -1,0 +1,17 @@
+{
+  "short_name": "EIMS Portal",
+  "name": "Educational Institute Management System (School, College, University)",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192 512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#ffffff",
+  "theme_color": "#059669",
+  "display": "standalone",
+  "orientation": "any"
+}

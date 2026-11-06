@@ -244,3 +244,22 @@ export const formatCurrency = (amount) => {
   if (isNaN(num)) return `₨ 0`
   return `₨ ${num.toLocaleString('en-PK')}`
 }
+
+/**
+ * Generates an institutional anti-tamper verification hash token for certificates & transcripts
+ * Combines student registration, issue date, and an institutional salt into a verifiable checksum.
+ * @param {string} studentId 
+ * @param {string} certType 
+ * @param {string} issueDate 
+ * @returns {string} e.g. "VRF-9B4E-7C12"
+ */
+export const generateCertVerificationToken = (studentId, certType = 'SLC', issueDate = '') => {
+  const seed = `${studentId || 'STD'}::${certType}::${issueDate || '2026'}::eims_tamper_guard`
+  let hash = 0x811c9dc5
+  for (let i = 0; i < seed.length; i++) {
+    hash ^= seed.charCodeAt(i)
+    hash = Math.imul(hash, 0x01000193)
+  }
+  const hex = (hash >>> 0).toString(16).toUpperCase().padStart(8, '0')
+  return `VRF-${hex.slice(0, 4)}-${hex.slice(4, 8)}`
+}

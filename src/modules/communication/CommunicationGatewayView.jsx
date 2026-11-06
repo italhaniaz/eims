@@ -72,10 +72,12 @@ export const CommunicationGatewayView = () => {
     }
   }, [recipientGroup, targetClass, customNumbers, students, teachers.length, fees])
 
-  // SMS Characters & Page Estimation (Standard 160 GSM-7 characters per SMS page)
+  // SMS Characters & Page Estimation (Standard 160 GSM-7 vs 70 Unicode Urdu/Arabic characters per SMS page)
+  const isUrduUnicode = /[\u0600-\u06FF]/.test(message)
+  const maxCharsPerPage = isUrduUnicode ? 70 : 160
   const charCount = message.length
-  const smsPages = Math.max(1, Math.ceil(charCount / 160))
-  const remainingInCurrentPage = charCount === 0 ? 160 : (160 - (charCount % 160 || 160))
+  const smsPages = Math.max(1, Math.ceil(charCount / maxCharsPerPage))
+  const remainingInCurrentPage = charCount === 0 ? maxCharsPerPage : (maxCharsPerPage - (charCount % maxCharsPerPage || maxCharsPerPage))
   const totalCreditsRequired = estimatedRecipients * smsPages
 
   const handleApplyTemplate = (tpl) => {
@@ -264,7 +266,12 @@ export const CommunicationGatewayView = () => {
               <div className="flex items-center justify-between mb-1.5">
                 <label className="block text-xs font-semibold text-slate-600 uppercase">Message Text</label>
                 <div className="text-[11px] font-mono text-slate-500 flex items-center gap-2">
-                  <span className={charCount > 160 ? 'text-amber-600 font-bold' : ''}>
+                  {isUrduUnicode && (
+                    <span className="text-[10px] bg-amber-100 text-amber-900 font-sans font-bold px-1.5 py-0.5 rounded border border-amber-200">
+                      Urdu Unicode (70 chars/page)
+                    </span>
+                  )}
+                  <span className={charCount > maxCharsPerPage ? 'text-amber-600 font-bold' : ''}>
                     {charCount} chars
                   </span>
                   <span className="text-slate-300">•</span>
