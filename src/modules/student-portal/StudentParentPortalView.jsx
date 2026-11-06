@@ -244,33 +244,18 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
         challanNo: f.challanNo || f.oneBillId || `CH-${String(f.id || '').slice(-6)}`,
         month: f.feeTitle || f.month || 'Current Session Fee',
         title: f.feeTitle || 'Tuition Fee Challan',
-        amount: Number(f.amount || 15000),
-        netPayable: Number(f.amount || 15000),
+        amount: Number(f.amount || 0),
+        netPayable: Number(f.amount || 0),
         concession: f.discountAmount ? `PKR ${f.discountAmount}` : 'Nil',
-        dueDate: f.dueDate || '2026-11-10',
+        dueDate: f.dueDate || '',
         status: f.status || 'Pending',
         paymentDate: f.paymentDate || null,
         paidVia: f.paidVia || (f.status === 'Paid' ? 'Online 1Link' : null)
       }))
     }
 
-    if (isSchool) {
-      return [
-        { id: 'fee-sch-1', challanNo: 'CSM-OCT-892', month: 'October 2026', title: 'Monthly Tuition & Computer Lab Fee', amount: 16500, dueDate: '2026-10-25', status: 'Paid', paymentDate: '2026-10-18', paidVia: '1Link Online' },
-        { id: 'fee-sch-2', challanNo: 'CSM-NOV-914', month: 'November 2026', title: 'Monthly Tuition & Sports Activity', amount: 16500, dueDate: '2026-11-10', status: 'Pending', paymentDate: null, paidVia: null }
-      ]
-    }
-    if (isCollege) {
-      return [
-        { id: 'fee-col-1', challanNo: 'RIA-OCT-441', month: 'October 2026', title: 'Intermediate Tuition & BISE Practical Fund', amount: 24000, concession: 'PKR 4,000 (Merit Waiver)', netPayable: 20000, dueDate: '2026-10-25', status: 'Paid', paymentDate: '2026-10-20', paidVia: 'Bank Alfalah Challan' },
-        { id: 'fee-col-2', challanNo: 'RIA-NOV-509', month: 'November 2026', title: 'Intermediate Tuition & Science Apparatus', amount: 24000, concession: 'PKR 4,000 (Merit Waiver)', netPayable: 20000, dueDate: '2026-11-10', status: 'Pending', paymentDate: null, paidVia: null }
-      ]
-    }
-    return [
-      { id: 'fee-uni-1', challanNo: '1LINK-IAS-2026-08', month: 'Fall 2026 Semester', title: 'Undergraduate Semester Tuition (18 Cr. Hrs)', amount: 98000, concession: 'PKR 15,000 (Dean’s Honor List)', netPayable: 83000, dueDate: '2026-10-15', status: 'Paid', paymentDate: '2026-10-10', paidVia: '1-Bill Sub-50ms KuickPay' },
-      { id: 'fee-uni-2', challanNo: '1LINK-IAS-2027-01', month: 'Spring 2027 Semester', title: 'Semester Advance Registration Deposit', amount: 25000, concession: 'Nil', netPayable: 25000, dueDate: '2026-12-15', status: 'Pending', paymentDate: null, paidVia: null }
-    ]
-  }, [fees, studentProfile, user, isSchool, isCollege])
+    return []
+  }, [fees, studentProfile, user])
 
   // Defaulter soft-gating: Check if current student has any pending fee voucher past due date
   const hasOverdueFees = useMemo(() => {
@@ -317,17 +302,11 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
         }
       }
     } catch {}
-    return [
-      { id: 'dia-1', date: '2026-10-31 (Today)', subject: 'Mathematics', teacher: 'Sir Salman Ahmed', task: 'Complete Exercise 4.2 Questions 5 through 12 in homework notebook.', status: 'Completed' },
-      { id: 'dia-2', date: '2026-10-31 (Today)', subject: 'Physics', teacher: 'Syed Ali Raza', task: 'Revise Snell’s Law and solve numerical problems 3 & 4 on page 112.', status: 'Pending' },
-      { id: 'dia-3', date: '2026-10-30', subject: 'English Literature', teacher: 'Ms. Amina Batool', task: 'Write an essay of 200 words on "Digital Technology in Everyday Life".', status: 'Checked by Teacher' }
-    ]
+    return []
   }, [studentProfile])
 
   // School PTM Appointments
-  const ptmSlots = [
-    { id: 'ptm-1', term: 'Mid-Term Parent-Teacher Meeting (PTM)', date: 'Saturday, Nov 15, 2026', timeSlot: '10:30 AM - 11:00 AM', teacher: 'Sir Salman Ahmed (Class Incharge)', venue: 'Room 14, Secondary Wing', status: 'Confirmed' }
-  ]
+  const ptmSlots = []
 
   // 2. College BISE Board Slips & Registration (Dynamically bound to College Board Slips Repository)
   const collegeBoardData = useMemo(() => {
@@ -353,15 +332,7 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
         }
       }
     } catch {}
-    return {
-      boardName: 'Board of Intermediate and Secondary Education (BISE) Lahore',
-      candidateName: studentProfile?.studentName || 'Zainab Fatima',
-      boardRollNo: studentProfile?.rollNumber ? (String(studentProfile.rollNumber).replace(/[^0-9]/g, '') || '710429') : '710429',
-      enrollmentNo: 'BISE-LHR-2024-HSSC-' + (studentProfile?.rollNumber ? String(studentProfile.rollNumber).replace(/[^0-9]/g, '').slice(-5) : '88190'),
-      centerName: 'Govt. Model College for Women, Hall A, Lahore',
-      practicalCenter: 'Govt. Model College Chemistry & Bio Labs',
-      status: 'Verified & Roll Number Slip Issued'
-    }
+    return null
   }, [studentProfile])
 
   // 3. University Registered Courses (Dynamically synchronized with University Registration Engine)
@@ -389,85 +360,32 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
         }
       }
     } catch {}
-    return [
-      { code: 'CS-301', title: 'Design & Analysis of Algorithms', cr: 3, section: 'A', instructor: 'Dr. Nadia Hashmi', venue: 'Lecture Hall 1', attendance: '92%' },
-      { code: 'CS-308', title: 'Artificial Intelligence & Neural Nets', cr: 4, section: 'A', instructor: 'Dr. Nadia Hashmi', venue: 'AI Lab Complex', attendance: '94%' },
-      { code: 'SE-302', title: 'Software Architecture & Design', cr: 3, section: 'B', instructor: 'Prof. Tariq Jamil', venue: 'Seminar Hall 2', attendance: '88%' },
-      { code: 'HU-201', title: 'Technical & Business Writing', cr: 3, section: 'C', instructor: 'Ms. Amina Batool', venue: 'Room 204', attendance: '96%' }
-    ]
+    return []
   }, [studentProfile])
   const totalUniCredits = useMemo(() => uniCourses.reduce((sum, c) => sum + (c.cr || 0), 0), [uniCourses])
 
-  // University Applicant Data
-  const applicantData = {
-    appId: 'APP-2026-892',
-    name: 'Sarah Khan',
-    program: 'BS Artificial Intelligence (4-Year HEC Accredited)',
-    matricScore: '1042 / 1100 (94.7%)',
-    interScore: '478 / 520 (91.9%)',
-    entryTestScore: '84 / 100',
-    aggregate: '88.24%',
-    meritRank: '#14 in Open Merit',
-    meritStatus: 'Selected in 1st Merit List (Offer Issued)',
-    feeChallanNo: 'ADM-IAS-88192',
-    feeAmount: 85000,
-    feeDeadline: 'November 10, 2026',
-    feeStatus: 'Pending Payment'
-  }
-
-  // University Alumni Data
-  const alumniData = {
-    name: 'Farhan Zaidi',
-    degree: 'BS Computer Science (Class of 2024)',
-    cgpa: '3.84 (Gold Medalist)',
-    currentCompany: 'Amazon Web Services (AWS)',
-    position: 'Cloud Support Engineer (Dubai, UAE)',
-    mentorStatus: 'Active Mentor (3 Undergraduates Mentees Assigned)',
-    transcriptStatus: 'Official HEC Attestation Dispatched via DHL'
-  }
-
-
   // Additional comprehensive Portal Datasets
-  const resultsData = [
-    { subject: isUniversity ? 'Design & Analysis of Algorithms (CS-301)' : isCollege ? 'Physics Part-II (Theory & Practical)' : 'Mathematics (General / Science)', total: 100, obtained: 92, grade: 'A+', gpa: '4.00', remarks: 'Exceptional Performance' },
-    { subject: isUniversity ? 'Artificial Intelligence & Neural Nets (CS-308)' : isCollege ? 'Chemistry Part-II (Theory & Practical)' : 'Physics (SSC)', total: 100, obtained: 88, grade: 'A', gpa: '3.70', remarks: 'Very Good' },
-    { subject: isUniversity ? 'Software Architecture & Design (SE-302)' : isCollege ? 'Computer Science / Biology' : 'English Literature', total: 100, obtained: 85, grade: 'A', gpa: '3.70', remarks: 'Strong Analytical Concept' },
-    { subject: isUniversity ? 'Technical & Business Writing (HU-201)' : isCollege ? 'English Compulsory' : 'Urdu Compulsory', total: 100, obtained: 79, grade: 'B+', gpa: '3.30', remarks: 'Good Effort' },
-    { subject: isUniversity ? 'Probability & Statistics (MT-202)' : isCollege ? 'Pakistan Studies & Islamic Edu' : 'Islamiat & Pak Studies', total: 50, obtained: 46, grade: 'A+', gpa: '4.00', remarks: 'Outstanding Score' }
-  ]
+  const resultsData = []
 
-  const timetableSchedule = [
-    { time: '08:30 - 09:15 AM', period: 'Period 1', subject: isUniversity ? 'CS-301 Algorithms' : isCollege ? 'Physics Part-II' : 'Mathematics', teacher: 'Sir Salman Ahmed', venue: isUniversity ? 'Lecture Hall 1' : isCollege ? 'Hall B-2' : 'Room 14' },
-    { time: '09:15 - 10:00 AM', period: 'Period 2', subject: isUniversity ? 'CS-308 AI & Neural Nets' : isCollege ? 'Chemistry Part-II' : 'Physics', teacher: 'Dr. Nadia Hashmi', venue: isUniversity ? 'AI Lab 3' : isCollege ? 'Chem Lab 1' : 'Room 14' },
-    { time: '10:00 - 10:30 AM', period: 'Morning Break', subject: 'Break & Refreshment', teacher: 'Campus Cafeteria', venue: 'Student Center' },
-    { time: '10:30 - 11:15 AM', period: 'Period 3', subject: isUniversity ? 'SE-302 Architecture' : isCollege ? 'Biology / Computer' : 'English Literature', teacher: 'Ms. Amina Batool', venue: isUniversity ? 'Seminar Hall 2' : isCollege ? 'Bio Lab' : 'Room 14' },
-    { time: '11:15 - 12:00 PM', period: 'Period 4', subject: isUniversity ? 'HU-201 Tech Writing' : isCollege ? 'Urdu Literature' : 'Pakistan Studies', teacher: 'Syed Ali Raza', venue: isUniversity ? 'Room 204' : isCollege ? 'Room 108' : 'Room 14' }
-  ]
+  const timetableSchedule = useMemo(() => {
+    try {
+      const classKey = studentProfile?.className || ''
+      const store = DataService.getTimetable(classKey)
+      if (Array.isArray(store) && store.length > 0) return store
+    } catch {}
+    return []
+  }, [studentProfile])
 
   const lmsMaterials = useMemo(() => {
-    if (isSchool) {
-      return [
-        { title: 'Mathematics (Class 10): Chapter 4 Quadratic Equations Formulas & Solved Examples', course: 'Matric Mathematics', file: 'math_ch4_quadratics.pdf', size: '2.1 MB', date: 'Oct 28, 2026', downloaded: true },
-        { title: 'Physics SSC-II: Chapter 14 Current Electricity Numerical Solved Guide', course: 'Matric Physics', file: 'physics_ch14_solved.pdf', size: '3.4 MB', date: 'Oct 26, 2026', downloaded: true },
-        { title: 'English Literature: Model Essays, Idioms & Comprehension Worksheets', course: 'English Compulsory', file: 'english_essays_model.pdf', size: '1.5 MB', date: 'Oct 24, 2026', downloaded: false },
-        { title: 'Pakistan Studies: Short Questions & Historical Dates Summary Sheet', course: 'Pakistan Studies', file: 'pakstudies_short_qa.pdf', size: '1.2 MB', date: 'Oct 20, 2026', downloaded: false }
-      ]
-    }
-    if (isCollege) {
-      return [
-        { title: 'F.Sc Physics Part-II: Practical Manual, Circuit Diagrams & Viva Questions', course: 'Physics Intermediate', file: 'fsc_physics_practical_manual.pdf', size: '4.1 MB', date: 'Oct 29, 2026', downloaded: true },
-        { title: 'Chemistry Part-II: Organic Reaction Mechanisms & Synthesis Flowchart', course: 'Chemistry Intermediate', file: 'organic_chemistry_reactions.pdf', size: '2.8 MB', date: 'Oct 27, 2026', downloaded: true },
-        { title: 'Biology Part-II: Genetics & Biotechnology Key Concepts Lecture Slides', course: 'Biology Pre-Medical', file: 'bio_genetics_slides.pdf', size: '3.6 MB', date: 'Oct 23, 2026', downloaded: false },
-        { title: 'Intermediate English: Comprehension Passages & Official Letter Formats', course: 'English Compulsory', file: 'inter_english_letters.pdf', size: '1.8 MB', date: 'Oct 19, 2026', downloaded: false }
-      ]
-    }
-    return [
-      { title: 'Lecture 12: Dynamic Programming & Bellman-Ford Shortest Path Algorithm', course: 'CS-301 Algorithms', file: 'lecture_12_dp.pdf', size: '3.4 MB', date: 'Oct 28, 2026', downloaded: true },
-      { title: 'Lab Handout 5: Convolutional Neural Networks with PyTorch & GPU Acceleration', course: 'CS-308 AI & Neural Nets', file: 'lab5_cnn.ipynb', size: '1.8 MB', date: 'Oct 25, 2026', downloaded: false },
-      { title: 'Reading Assignment: Microservices vs Monolith Architectural Tradeoffs Case Study', course: 'SE-302 Software Arch', file: 'reading_assignment_2.pdf', size: '2.1 MB', date: 'Oct 20, 2026', downloaded: false },
-      { title: 'Technical Writing: IEEE Standard Format Manuscript Template', course: 'HU-201 Tech Writing', file: 'ieee_template_latex.zip', size: '2.5 MB', date: 'Oct 18, 2026', downloaded: true }
-    ]
-  }, [isSchool, isCollege])
+    try {
+      const raw = localStorage.getItem(`sms_learning_resources_${studentProfile?.className || 'default'}`)
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed
+      }
+    } catch {}
+    return []
+  }, [studentProfile])
 
   return (
     <div className="flex flex-col h-screen w-full bg-[#f8fafc] overflow-y-auto">
@@ -897,136 +815,152 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-slate-800 text-base">Daily Homework Diary & Class Notes</h3>
-
               <span className="text-xs text-emerald-800 font-bold bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-
-                City School Academic Diary
+                Academic Diary
               </span>
             </div>
             <div className="space-y-3">
-              {diaryEntries.map((d) => (
-                <div key={d.id} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-
-                      <span className="font-bold text-emerald-800 text-sm">{d.subject}</span>
-
-                      <span className="text-xs text-slate-400">• {d.date}</span>
-                      <span className="text-xs text-slate-500">({d.teacher})</span>
-                    </div>
-                    <p className="text-xs text-slate-700 font-medium">{d.task}</p>
-                  </div>
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-bold shrink-0 self-start md:self-auto ${
-                    d.status === 'Completed' ? 'bg-emerald-100 text-emerald-800' :
-                    d.status === 'Checked by Teacher' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'
-                  }`}>
-                    {d.status}
-                  </span>
+              {diaryEntries.length === 0 ? (
+                <div className="bg-white p-12 text-center rounded-2xl border border-slate-100 shadow-2xs">
+                  <BookOpen className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                  <h3 className="font-bold text-slate-700 text-sm">No Homework or Diary Tasks</h3>
+                  <p className="text-xs text-slate-400 mt-1">Class diary and daily homework assignments will appear here once posted by the subject teacher.</p>
                 </div>
-              ))}
+              ) : (
+                diaryEntries.map((d) => (
+                  <div key={d.id} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-emerald-800 text-sm">{d.subject}</span>
+                        <span className="text-xs text-slate-400">• {d.date}</span>
+                        <span className="text-xs text-slate-500">({d.teacher})</span>
+                      </div>
+                      <p className="text-xs text-slate-700 font-medium">{d.task}</p>
+                    </div>
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold shrink-0 self-start md:self-auto ${
+                      d.status === 'Completed' ? 'bg-emerald-100 text-emerald-800' :
+                      d.status === 'Checked by Teacher' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'
+                    }`}>
+                      {d.status}
+                    </span>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         )}
 
         {/* TAB: COLLEGE BOARD SLIPS */}
         {activeTab === 'board_slip' && (
-          <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-2xs space-y-4">
-            {hasOverdueFees && (
-              <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-900 flex items-center justify-between gap-3 shadow-2xs font-medium">
-                <div className="flex items-center gap-2.5">
-                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-                  <span><strong>Fee Clearance Pending:</strong> Roll number slip printout requires accounts clearance due to overdue fee vouchers. Daily diary, timetable & attendance remain accessible.</span>
+          collegeBoardData ? (
+            <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-2xs space-y-4">
+              {hasOverdueFees && (
+                <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-900 flex items-center justify-between gap-3 shadow-2xs font-medium">
+                  <div className="flex items-center gap-2.5">
+                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                    <span><strong>Fee Clearance Pending:</strong> Roll number slip printout requires accounts clearance due to overdue fee vouchers. Daily diary, timetable & attendance remain accessible.</span>
+                  </div>
+                  <button onClick={() => setActiveTab('fees')} className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold shrink-0 cursor-pointer">
+                    View Dues
+                  </button>
                 </div>
-                <button onClick={() => setActiveTab('fees')} className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold shrink-0 cursor-pointer">
-                  View Dues
-                </button>
-              </div>
-            )}
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <div>
-                <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">{collegeBoardData.boardName}</span>
-                <h3 className="text-lg font-black text-slate-800 mt-1">HSSC Annual Examination Roll Number Slip (Composite)</h3>
-              </div>
-              {hasOverdueFees ? (
-                <button
-                  type="button"
-                  onClick={() => toast.error('Fee clearance pending: Please settle overdue vouchers or contact the campus accounts office.')}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-slate-200 text-slate-500 rounded-lg text-xs font-bold cursor-not-allowed"
-                  title="Fee clearance pending"
-                >
-                  <Lock className="w-3.5 h-3.5" />
-                  <span>Print Gated (Fee Due)</span>
-                </button>
-              ) : (
-                <button
-                  onClick={() => toast.success('BISE Roll Number slip printed.')}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold hover:bg-indigo-100 cursor-pointer"
-                >
-                  <Printer className="w-3.5 h-3.5" />
-                  <span>Print Slip</span>
-                </button>
               )}
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-              <div className="bg-slate-50 p-4 rounded-xl space-y-2">
-                <div><span className="font-bold text-slate-500">Candidate Name:</span> <span className="font-bold text-slate-800">{collegeBoardData.candidateName}</span></div>
-                <div><span className="font-bold text-slate-500">Board Roll No:</span> <span className="font-mono font-bold text-indigo-700">{collegeBoardData.boardRollNo}</span></div>
-                <div><span className="font-bold text-slate-500">BISE Registration:</span> <span className="font-mono text-slate-700">{collegeBoardData.enrollmentNo}</span></div>
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                <div>
+                  <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">{collegeBoardData.boardName}</span>
+                  <h3 className="text-lg font-black text-slate-800 mt-1">HSSC Annual Examination Roll Number Slip (Composite)</h3>
+                </div>
+                {hasOverdueFees ? (
+                  <button
+                    type="button"
+                    onClick={() => toast.error('Fee clearance pending: Please settle overdue vouchers or contact the campus accounts office.')}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-slate-200 text-slate-500 rounded-lg text-xs font-bold cursor-not-allowed"
+                    title="Fee clearance pending"
+                  >
+                    <Lock className="w-3.5 h-3.5" />
+                    <span>Print Gated (Fee Due)</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => toast.success('BISE Roll Number slip printed.')}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold hover:bg-indigo-100 cursor-pointer"
+                  >
+                    <Printer className="w-3.5 h-3.5" />
+                    <span>Print Slip</span>
+                  </button>
+                )}
               </div>
-              <div className="bg-slate-50 p-4 rounded-xl space-y-2">
-                <div><span className="font-bold text-slate-500">Theory Center:</span> <span className="text-slate-800 font-semibold">{collegeBoardData.centerName}</span></div>
-                <div><span className="font-bold text-slate-500">Practical Center:</span> <span className="text-slate-800 font-semibold">{collegeBoardData.practicalCenter}</span></div>
-                <div><span className="font-bold text-slate-500">Status:</span> <span className="text-emerald-700 font-bold">{collegeBoardData.status}</span></div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                <div className="bg-slate-50 p-4 rounded-xl space-y-2">
+                  <div><span className="font-bold text-slate-500">Candidate Name:</span> <span className="font-bold text-slate-800">{collegeBoardData.candidateName}</span></div>
+                  <div><span className="font-bold text-slate-500">Board Roll No:</span> <span className="font-mono font-bold text-indigo-700">{collegeBoardData.boardRollNo}</span></div>
+                  <div><span className="font-bold text-slate-500">BISE Registration:</span> <span className="font-mono text-slate-700">{collegeBoardData.enrollmentNo}</span></div>
+                </div>
+                <div className="bg-slate-50 p-4 rounded-xl space-y-2">
+                  <div><span className="font-bold text-slate-500">Theory Center:</span> <span className="text-slate-800 font-semibold">{collegeBoardData.centerName}</span></div>
+                  <div><span className="font-bold text-slate-500">Practical Center:</span> <span className="text-slate-800 font-semibold">{collegeBoardData.practicalCenter}</span></div>
+                  <div><span className="font-bold text-slate-500">Status:</span> <span className="text-emerald-700 font-bold">{collegeBoardData.status}</span></div>
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="bg-white p-12 text-center rounded-2xl border border-slate-100 shadow-2xs">
+              <FileCheck className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+              <h3 className="font-bold text-slate-700 text-sm">No Board Examination Roll Number Slip Issued</h3>
+              <p className="text-xs text-slate-400 mt-1">Official BISE / FBISE roll number slips will appear here once finalized by the campus examination branch.</p>
+            </div>
+          )
         )}
 
         {/* TAB: UNIVERSITY REGISTERED COURSES */}
         {activeTab === 'registration' && (
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-2xs overflow-hidden">
-            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="font-bold text-slate-800 text-sm">Fall 2026 Undergraduate Registered Courses</h3>
-
-              <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full">
-
-                Total: {totalUniCredits} Credit Hours
-              </span>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs sm:text-sm">
-                <thead className="bg-slate-50 border-b border-slate-100 text-slate-500 font-bold uppercase text-[11px]">
-                  <tr>
-                    <th className="py-3 px-4">Course</th>
-                    <th className="py-3 px-4">Credits</th>
-                    <th className="py-3 px-4">Instructor</th>
-                    <th className="py-3 px-4">Venue</th>
-                    <th className="py-3 px-4 text-right">Attendance</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
-                  {uniCourses.map((c) => (
-
-                    <tr key={c.code} className="hover:bg-emerald-50/20">
-                      <td className="py-3 px-4">
-                        <div className="font-bold text-slate-900">{c.title}</div>
-                        <div className="text-[11px] font-mono text-emerald-800 font-bold">{c.code}</div>
-
-                      </td>
-                      <td className="py-3 px-4 font-bold">{c.cr} Cr. Hrs</td>
-                      <td className="py-3 px-4">{c.instructor}</td>
-                      <td className="py-3 px-4 text-slate-500">{c.venue}</td>
-                      <td className="py-3 px-4 text-right">
-                        <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
-                          {c.attendance}
-                        </span>
-                      </td>
+          uniCourses.length > 0 ? (
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-2xs overflow-hidden">
+              <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+                <h3 className="font-bold text-slate-800 text-sm">Fall 2026 Undergraduate Registered Courses</h3>
+                <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full">
+                  Total: {totalUniCredits} Credit Hours
+                </span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs sm:text-sm">
+                  <thead className="bg-slate-50 border-b border-slate-100 text-slate-500 font-bold uppercase text-[11px]">
+                    <tr>
+                      <th className="py-3 px-4">Course</th>
+                      <th className="py-3 px-4">Credits</th>
+                      <th className="py-3 px-4">Instructor</th>
+                      <th className="py-3 px-4">Venue</th>
+                      <th className="py-3 px-4 text-right">Attendance</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
+                    {uniCourses.map((c) => (
+                      <tr key={c.code} className="hover:bg-emerald-50/20">
+                        <td className="py-3 px-4">
+                          <div className="font-bold text-slate-900">{c.title}</div>
+                          <div className="text-[11px] font-mono text-emerald-800 font-bold">{c.code}</div>
+                        </td>
+                        <td className="py-3 px-4 font-bold">{c.cr} Cr. Hrs</td>
+                        <td className="py-3 px-4">{c.instructor}</td>
+                        <td className="py-3 px-4 text-slate-500">{c.venue}</td>
+                        <td className="py-3 px-4 text-right">
+                          <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+                            {c.attendance}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="bg-white p-12 text-center rounded-2xl border border-slate-100 shadow-2xs">
+              <Laptop className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+              <h3 className="font-bold text-slate-700 text-sm">No Registered University Courses</h3>
+              <p className="text-xs text-slate-400 mt-1">Undergraduate course registrations will appear here once finalized by the department coordinator.</p>
+            </div>
+          )
         )}
 
         {/* TAB: ATTENDANCE */}
@@ -1077,59 +1011,64 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
               <span className="text-xs font-bold text-slate-500">1Link Computerized Barcoded</span>
             </div>
             <div className="space-y-3">
-              {studentFees.map((f) => (
-                <div key={f.id} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-slate-900 text-sm">{f.title}</span>
-                      <span className="text-xs text-slate-400">({f.month})</span>
+              {studentFees.length > 0 ? (
+                studentFees.map((f) => (
+                  <div key={f.id} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-slate-900 text-sm">{f.title}</span>
+                        <span className="text-xs text-slate-400">({f.month})</span>
+                      </div>
+
+                      <div className="text-xs font-mono text-emerald-800 font-bold">Challan: {f.challanNo}</div>
+
+                      {f.concession && (
+                        <div className="text-xs text-emerald-600 font-semibold">Scholarship / Concession: {f.concession}</div>
+                      )}
                     </div>
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <div className="text-base font-black text-slate-900">PKR {(f.netPayable || f.amount).toLocaleString()}</div>
+                        <div className="text-[11px] text-slate-400">Due: {f.dueDate}</div>
+                      </div>
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                        f.status === 'Paid' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                      }`}>
+                        {f.status}
+                      </span>
 
-                    <div className="text-xs font-mono text-emerald-800 font-bold">Challan: {f.challanNo}</div>
-
-                    {f.concession && (
-                      <div className="text-xs text-emerald-600 font-semibold">Scholarship / Concession: {f.concession}</div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <div className="text-base font-black text-slate-900">PKR {(f.netPayable || f.amount).toLocaleString()}</div>
-                      <div className="text-[11px] text-slate-400">Due: {f.dueDate}</div>
-                    </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                      f.status === 'Paid' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
-                    }`}>
-                      {f.status}
-                    </span>
-
-                    {f.status !== "Paid" && campusGates.allowOnlineFeePayment && (
-
+                      {f.status !== "Paid" && campusGates.allowOnlineFeePayment && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedFeeForUpload(f)
+                            setSlipUploadForm({ ...slipUploadForm, amount: f.netPayable || f.amount || 15000 })
+                            setIsSlipUploadModalOpen(true)
+                          }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                          title="Upload photo of stamped bank challan"
+                        >
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>{uploadedSlips[f.id] ? "Slip Uploaded" : "Upload Slip"}</span>
+                        </button>
+                      )}
                       <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedFeeForUpload(f)
-                          setSlipUploadForm({ ...slipUploadForm, amount: f.netPayable || f.amount || 15000 })
-                          setIsSlipUploadModalOpen(true)
-                        }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg text-xs font-bold transition-all cursor-pointer"
-                        title="Upload photo of stamped bank challan"
+                        onClick={() => toast.success(`Downloaded bank voucher for ${f.challanNo}`)}
+                        className="p-2 bg-slate-100 hover:bg-emerald-100 hover:text-emerald-800 text-slate-700 rounded-lg cursor-pointer transition-colors"
+                        title="Download PDF Challan"
                       >
-                        <Upload className="w-3.5 h-3.5" />
-                        <span>{uploadedSlips[f.id] ? "Slip Uploaded" : "Upload Slip"}</span>
+                        <Download className="w-4 h-4" />
                       </button>
-                    )}
-                    <button
-                      onClick={() => toast.success(`Downloaded bank voucher for ${f.challanNo}`)}
-
-                      className="p-2 bg-slate-100 hover:bg-emerald-100 hover:text-emerald-800 text-slate-700 rounded-lg cursor-pointer transition-colors"
-
-                      title="Download PDF Challan"
-                    >
-                      <Download className="w-4 h-4" />
-                    </button>
+                    </div>
                   </div>
+                ))
+              ) : (
+                <div className="bg-white p-12 text-center rounded-2xl border border-slate-100 shadow-2xs">
+                  <Receipt className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                  <h3 className="font-bold text-slate-700 text-sm">No Fee Vouchers Issued</h3>
+                  <p className="text-xs text-slate-400 mt-1">All dues are settled or no fee challans have been generated for this academic term.</p>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         )}
@@ -1183,20 +1122,25 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
         {activeTab === 'notices' && (
           <div className="space-y-3">
             <h3 className="font-bold text-slate-800 text-sm">Official Institutional Circulars</h3>
-            <div className="space-y-3">
-              {[
-                { id: '1', title: 'Winter Timetable & Session Break Notice', date: 'Oct 28, 2026', body: 'Please note the revised winter morning class timings effective from Monday.' },
-                { id: '2', title: 'Library Book Returns & Clearance Notice', date: 'Oct 22, 2026', body: 'All students are requested to clear issued textbooks before mid-term exams.' }
-              ].map(n => (
-                <div key={n.id} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-2xs space-y-1">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-bold text-slate-900 text-sm">{n.title}</h4>
-                    <span className="text-xs text-slate-400">{n.date}</span>
+            {notices && notices.length > 0 ? (
+              <div className="space-y-3">
+                {notices.map(n => (
+                  <div key={n.id} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-2xs space-y-1">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-bold text-slate-900 text-sm">{n.title}</h4>
+                      <span className="text-xs text-slate-400">{n.date}</span>
+                    </div>
+                    <p className="text-xs text-slate-600">{n.body || n.content || n.message}</p>
                   </div>
-                  <p className="text-xs text-slate-600">{n.body}</p>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-white p-12 text-center rounded-2xl border border-slate-100 shadow-2xs">
+                <Megaphone className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                <h3 className="font-bold text-slate-700 text-sm">No Active Circulars</h3>
+                <p className="text-xs text-slate-400 mt-1">Official circulars and announcements will appear here when issued by campus management.</p>
+              </div>
+            )}
           </div>
         )}
 
@@ -1242,7 +1186,7 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
                     {isUniversity ? 'Current CGPA' : 'Total Marks'}
                   </span>
                   <span className="text-xl font-black text-white">
-                    {isUniversity ? (studentProfile.cgpa || '3.72') : '440 / 450'}
+                    {isUniversity ? (studentProfile.cgpa || 'N/A') : (resultsData.length > 0 ? `${resultsData.reduce((s, r) => s + (Number(r.obtained) || 0), 0)} / ${resultsData.reduce((s, r) => s + (Number(r.total) || 0), 0)}` : 'N/A')}
                   </span>
                 </div>
 
@@ -1277,43 +1221,51 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
             <div className="bg-white rounded-2xl border border-slate-100 shadow-2xs overflow-hidden">
               <div className="p-4 border-b border-slate-100 flex items-center justify-between">
                 <h4 className="font-bold text-slate-800 text-sm">Subject-wise Marks & Grade Breakdown</h4>
-                <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
-                  Status: Passed with Distinction
+                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${resultsData.length > 0 ? 'text-emerald-700 bg-emerald-50' : 'text-slate-500 bg-slate-100'}`}>
+                  {resultsData.length > 0 ? 'Status: Published' : 'Status: No Marks Entered'}
                 </span>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs sm:text-sm">
-                  <thead className="bg-slate-50 border-b border-slate-100 text-slate-500 font-bold uppercase text-[11px]">
-                    <tr>
-                      <th className="py-3 px-4">Subject</th>
-                      <th className="py-3 px-4 text-center">Total Marks</th>
-                      <th className="py-3 px-4 text-center">Obtained Marks</th>
-                      <th className="py-3 px-4 text-center">Grade</th>
-                      {isUniversity && <th className="py-3 px-4 text-center">GPA</th>}
-                      <th className="py-3 px-4 text-right">Remarks</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
-                    {resultsData.map((r, i) => (
-                      <tr key={i} className="hover:bg-slate-50/50">
-                        <td className="py-3 px-4 font-bold text-slate-900">{r.subject}</td>
-                        <td className="py-3 px-4 text-center text-slate-500">{r.total}</td>
-
-                        <td className="py-3 px-4 text-center font-bold text-emerald-800">{r.obtained}</td>
-
-                        <td className="py-3 px-4 text-center">
-                          <span className="px-2 py-0.5 rounded-full font-black text-xs bg-emerald-100 text-emerald-800">
-                            {r.grade}
-                          </span>
-                        </td>
-                        {isUniversity && (
-                          <td className="py-3 px-4 text-center font-mono font-bold text-slate-800">{r.gpa}</td>
-                        )}
-                        <td className="py-3 px-4 text-right text-xs text-slate-600">{r.remarks}</td>
+                {resultsData.length > 0 ? (
+                  <table className="w-full text-left text-xs sm:text-sm">
+                    <thead className="bg-slate-50 border-b border-slate-100 text-slate-500 font-bold uppercase text-[11px]">
+                      <tr>
+                        <th className="py-3 px-4">Subject</th>
+                        <th className="py-3 px-4 text-center">Total Marks</th>
+                        <th className="py-3 px-4 text-center">Obtained Marks</th>
+                        <th className="py-3 px-4 text-center">Grade</th>
+                        {isUniversity && <th className="py-3 px-4 text-center">GPA</th>}
+                        <th className="py-3 px-4 text-right">Remarks</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
+                      {resultsData.map((r, i) => (
+                        <tr key={i} className="hover:bg-slate-50/50">
+                          <td className="py-3 px-4 font-bold text-slate-900">{r.subject}</td>
+                          <td className="py-3 px-4 text-center text-slate-500">{r.total}</td>
+
+                          <td className="py-3 px-4 text-center font-bold text-emerald-800">{r.obtained}</td>
+
+                          <td className="py-3 px-4 text-center">
+                            <span className="px-2 py-0.5 rounded-full font-black text-xs bg-emerald-100 text-emerald-800">
+                              {r.grade}
+                            </span>
+                          </td>
+                          {isUniversity && (
+                            <td className="py-3 px-4 text-center font-mono font-bold text-slate-800">{r.gpa}</td>
+                          )}
+                          <td className="py-3 px-4 text-right text-xs text-slate-600">{r.remarks}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div className="p-12 text-center">
+                    <Award className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                    <h4 className="font-bold text-slate-700 text-sm">No Examination Records Available</h4>
+                    <p className="text-xs text-slate-400 mt-1">Official examination transcripts and subject marks will be published here upon semester/term evaluation.</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1338,31 +1290,39 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
 
             <div className="bg-white rounded-2xl border border-slate-100 shadow-2xs overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs sm:text-sm">
-                  <thead className="bg-slate-50 border-b border-slate-100 text-slate-500 font-bold uppercase text-[11px]">
-                    <tr>
-                      <th className="py-3 px-4">Period & Timing</th>
-                      <th className="py-3 px-4">Subject</th>
-                      <th className="py-3 px-4">Instructor</th>
-                      <th className="py-3 px-4 text-right">Room / Lab</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
-                    {timetableSchedule.map((t, i) => (
-                      <tr key={i} className={t.subject.includes('Break') ? 'bg-amber-50/40 text-amber-900' : 'hover:bg-slate-50/50'}>
-                        <td className="py-3.5 px-4 font-mono font-bold text-slate-700">
-                          <div>{t.time}</div>
-                          <span className="text-[10px] text-slate-400 uppercase font-sans">{t.period}</span>
-                        </td>
-                        <td className="py-3.5 px-4 font-bold text-slate-900">{t.subject}</td>
-                        <td className="py-3.5 px-4 text-slate-600">{t.teacher}</td>
-
-                        <td className="py-3.5 px-4 text-right font-semibold text-emerald-800">{t.venue}</td>
-
+                {timetableSchedule.length > 0 ? (
+                  <table className="w-full text-left text-xs sm:text-sm">
+                    <thead className="bg-slate-50 border-b border-slate-100 text-slate-500 font-bold uppercase text-[11px]">
+                      <tr>
+                        <th className="py-3 px-4">Period & Timing</th>
+                        <th className="py-3 px-4">Subject</th>
+                        <th className="py-3 px-4">Instructor</th>
+                        <th className="py-3 px-4 text-right">Room / Lab</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
+                      {timetableSchedule.map((t, i) => (
+                        <tr key={i} className={t.subject.includes('Break') ? 'bg-amber-50/40 text-amber-900' : 'hover:bg-slate-50/50'}>
+                          <td className="py-3.5 px-4 font-mono font-bold text-slate-700">
+                            <div>{t.time}</div>
+                            <span className="text-[10px] text-slate-400 uppercase font-sans">{t.period}</span>
+                          </td>
+                          <td className="py-3.5 px-4 font-bold text-slate-900">{t.subject}</td>
+                          <td className="py-3.5 px-4 text-slate-600">{t.teacher}</td>
+
+                          <td className="py-3.5 px-4 text-right font-semibold text-emerald-800">{t.venue}</td>
+
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div className="p-12 text-center">
+                    <Calendar className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                    <h4 className="font-bold text-slate-700 text-sm">No Timetable Periods Configured</h4>
+                    <p className="text-xs text-slate-400 mt-1">Classroom lecture timetable will appear here once scheduled by the academic branch.</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1395,42 +1355,48 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
             </div>
 
             <div className="space-y-3">
-              {ptmSlots.map((slot) => (
-                <div key={slot.id} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="space-y-1.5">
-                    <div className="flex items-center gap-2">
-                      <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
-                        {slot.status}
-                      </span>
-                      <h4 className="font-bold text-slate-900 text-sm">{slot.term}</h4>
+              {ptmSlots.length > 0 ? (
+                ptmSlots.map((slot) => (
+                  <div key={slot.id} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
+                          {slot.status}
+                        </span>
+                        <h4 className="font-bold text-slate-900 text-sm">{slot.term}</h4>
+                      </div>
+                      <div className="text-xs text-slate-600 flex items-center gap-3">
+                        <span><strong>Date:</strong> {slot.date}</span>
+                        <span>•</span>
+                        <span><strong>Slot:</strong> {slot.timeSlot}</span>
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        In-charge: <strong>{slot.teacher}</strong> • Venue: {slot.venue}
+                      </div>
                     </div>
-                    <div className="text-xs text-slate-600 flex items-center gap-3">
-                      <span><strong>Date:</strong> {slot.date}</span>
-                      <span>•</span>
-                      <span><strong>Slot:</strong> {slot.timeSlot}</span>
-                    </div>
-                    <div className="text-xs text-slate-500">
-                      In-charge: <strong>{slot.teacher}</strong> • Venue: {slot.venue}
+                    <div className="flex items-center gap-2.5 shrink-0">
+                      <button
+                        onClick={() => toast.success('PTM Appointment slip downloaded.')}
+                        className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                      >
+                        Download Pass
+                      </button>
+                      <button
+                        onClick={() => toast.info('PTM slot change request submitted to school administration.')}
+                        className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm"
+                      >
+                        Request Reschedule
+                      </button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2.5 shrink-0">
-                    <button
-                      onClick={() => toast.success('PTM Appointment slip downloaded.')}
-                      className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer"
-                    >
-                      Download Pass
-                    </button>
-                    <button
-                      onClick={() => toast.info('PTM slot change request submitted to school administration.')}
-
-                      className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm"
-
-                    >
-                      Request Reschedule
-                    </button>
-                  </div>
+                ))
+              ) : (
+                <div className="bg-white p-12 text-center rounded-2xl border border-slate-100 shadow-2xs">
+                  <CalendarCheck className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                  <h3 className="font-bold text-slate-700 text-sm">No PTM Appointments Scheduled</h3>
+                  <p className="text-xs text-slate-400 mt-1">Parent-Teacher Meeting slots will appear here when scheduled by the campus administration.</p>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         )}
@@ -1455,31 +1421,35 @@ export const StudentParentPortalView = ({ currentInstitute = null, onBackToAdmin
             </div>
 
             <div className="space-y-3">
-              {lmsMaterials.map((mat, i) => (
-                <div key={i} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-
-                      <span className="font-mono text-xs font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded">
-
-                        {mat.course}
-                      </span>
-                      <span className="text-xs text-slate-400">• Uploaded {mat.date}</span>
+              {lmsMaterials.length > 0 ? (
+                lmsMaterials.map((mat, i) => (
+                  <div key={i} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded">
+                          {mat.course}
+                        </span>
+                        <span className="text-xs text-slate-400">• Uploaded {mat.date}</span>
+                      </div>
+                      <h4 className="font-bold text-slate-900 text-sm">{mat.title}</h4>
+                      <p className="text-xs text-slate-500">{mat.file} • Size: {mat.size}</p>
                     </div>
-                    <h4 className="font-bold text-slate-900 text-sm">{mat.title}</h4>
-                    <p className="text-xs text-slate-500">{mat.file} • Size: {mat.size}</p>
+                    <button
+                      onClick={() => toast.success(`Downloaded ${mat.file}`)}
+                      className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-100 hover:bg-emerald-100 hover:text-emerald-800 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer self-start md:self-auto"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Download File</span>
+                    </button>
                   </div>
-                  <button
-                    onClick={() => toast.success(`Downloaded ${mat.file}`)}
-
-                    className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-100 hover:bg-emerald-100 hover:text-emerald-800 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer self-start md:self-auto"
-
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    <span>Download File</span>
-                  </button>
+                ))
+              ) : (
+                <div className="bg-white p-12 text-center rounded-2xl border border-slate-100 shadow-2xs">
+                  <BookOpen className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                  <h3 className="font-bold text-slate-700 text-sm">No LMS Materials Uploaded</h3>
+                  <p className="text-xs text-slate-400 mt-1">Lecture slides, course outlines, and laboratory handouts will appear here once uploaded by teachers.</p>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         )}
