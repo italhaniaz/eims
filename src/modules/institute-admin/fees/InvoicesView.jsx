@@ -40,6 +40,7 @@ const MONTHS = [
 ]
 const SHORT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 const FEE_HEADS = [
+  'Registration fee',
   'Tuition Fee',
   'Admission Fee',
   'Exam Fee',
@@ -638,57 +639,63 @@ export const InvoicesView = ({
     }
   }
 
-  // Individual Invoice Modal State
+  // Individual Invoice Modal State matching Pick 4
   const [indivModalOpen, setIndivModalOpen] = useState(false)
   const [indivForm, setIndivForm] = useState({
     className: '',
     studentId: '',
-    feeHead: 'Tuition Fee',
-    feeTitle: 'Tuition Fee',
-    schedule: 'Monthly',
-    kind: 'Regular',
-    grossAmount: '2000',
-    discount: '0',
-    discountReason: '',
-    dueDate: `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-10`,
-    status: 'Pending'
+    feeHead: 'Registration fee',
+    grossAmount: '',
+    dueDate: '',
+    lateFine: '0',
+    status: 'Pending',
+    notes: '',
+    notifySms: true
   })
 
   const indivStudentsInClass = useMemo(() => {
-    if (!indivForm.className) return instStudents
+    if (!indivForm.className) return []
     return instStudents.filter((s) => (s.className || '') === indivForm.className)
   }, [instStudents, indivForm.className])
 
+  const selectedIndivStudent = useMemo(
+    () => (indivForm.studentId ? studentById.get(indivForm.studentId) || null : null),
+    [indivForm.studentId, studentById]
+  )
+
   const openIndividualModal = () => {
-    const first = instStudents[0] || null
     setIndivForm({
-      className: first?.className || '',
-      studentId: first?.id || '',
-      feeHead: 'Tuition Fee',
-      feeTitle: 'Tuition Fee',
-      schedule: 'Monthly',
-      kind: 'Regular',
-      grossAmount: String(first?.monthlyFee || first?.tuitionFee || 2000),
-      discount: '0',
-      discountReason: '',
-      dueDate: `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-10`,
-      status: 'Pending'
+      className: '',
+      studentId: '',
+      feeHead: 'Registration fee',
+      grossAmount: '',
+      dueDate: '',
+      lateFine: '0',
+      status: 'Pending',
+      notes: '',
+      notifySms: true
     })
     setIndivModalOpen(true)
   }
 
   const handleGenerateIndividualInvoice = async (e) => {
     e.preventDefault()
+    if (!indivForm.className) {
+      toast('Please select a class first.', 'warning')
+      return
+    }
     const st = studentById.get(indivForm.studentId)
     if (!st) {
-      toast('Select a student first.', 'warning')
+      toast('Please select a student.', 'warning')
       return
     }
     const gross = Math.max(0, Number(indivForm.grossAmount || 0))
-    const disc = Math.min(gross, Math.max(0, Number(indivForm.discount || 0)))
+    const fineVal = Math.max(0, Number(indivForm.lateFine || 0))
     const receiptNo = String(Math.floor(1000000 + Math.random() * 8999999))
     const isPaid = indivForm.status === 'Paid'
     const feeMonth = `${SHORT_MONTHS[now.getMonth()]} ${now.getFullYear()}`
+    const parentPhoneRaw = st.parentPhone || st.phone || st.guardianPhone || ''
+    const hasPhone = String(parentPhoneRaw).replace(/[^0-9]/g, '').length >= 7
 
     try {
       await addItem('fees', {
@@ -701,23 +708,40 @@ export const InvoicesView = ({
         invoiceType: 'Individual',
         feeHead: indivForm.feeHead,
         feeType: indivForm.feeHead,
-        feeTitle: indivForm.feeTitle.trim() || indivForm.feeHead,
-        schedule: indivForm.schedule,
-        frequency: indivForm.schedule,
-        kind: indivForm.kind,
+        feeTitle: indivForm.feeHead,
+        schedule: 'One-Time',
+        frequency: 'One-Time',
+        kind: 'Regular',
         feeMonth,
         receiptNo,
         amount: gross,
         grossAmount: gross,
-        discount: disc,
-        discountReason: indivForm.discountReason.trim(),
-        paidAmount: isPaid ? Math.max(0, gross - disc) : 0,
+        fine: fineVal,
+        lateFine: fineVal,
+        discount: 0,
+        notes: indivForm.notes.trim(),
+        paidAmount: isPaid ? gross + fineVal : 0,
         paidAt: isPaid ? new Date().toISOString() : null,
-        dueDate: indivForm.dueDate,
+        dueDate: indivForm.dueDate || todayIso,
         createdAt: new Date().toISOString(),
         status: indivForm.status,
+        smsSent: indivForm.notifySms && hasPhone,
         instituteId: instId
       })
+
+      if (indivForm.notifySms && hasPhone && sendCommunicationBlast) {
+        try {
+          await sendCommunicationBlast({
+            channel: 'SMS',
+            recipientGroup: `${st.fullName || st.name} (${parentPhoneRaw})`,
+            message: `Dear Parent, an invoice for ${indivForm.feeHead} of PKR ${gross.toLocaleString()} has been generated for ${st.fullName || st.name}.`,
+            recipientsCount: 1
+          })
+        } catch {
+          // non-blocking SMS dispatch
+        }
+      }
+
       logAuditEvent?.(`Individual invoice generated for ${st.fullName || st.name}`, currentInstitute?.name || 'Admin', 'Success')
       toast(`Invoice created for ${st.fullName || st.name}.`, 'success')
       setIndivModalOpen(false)
@@ -1674,161 +1698,201 @@ export const InvoicesView = ({
         </div>
       )}
 
-      {/* Modal 2: Individual Invoice Generator */}
+      {/* Modal 2: Individual Invoice Generator matching Pick 4 */}
       {indivModalOpen && (
         <div className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-[1px] flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200">
-            <div className="bg-indigo-600 px-5 py-3.5 flex items-center justify-between text-white">
-              <div className="flex items-center gap-2 font-bold text-sm">
-                <User className="w-4 h-4" />
-                <span>Generate Individual Invoice</span>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden border border-slate-200">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                  <User className="w-4 h-4" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-bold text-slate-900">Generate individual invoice</h2>
+                  <p className="text-[11px] text-slate-500">Single-student charges (admission, exam, stock, other).</p>
+                </div>
               </div>
-              <button type="button" onClick={() => setIndivModalOpen(false)} className="text-white/80 hover:text-white cursor-pointer">
+              <button
+                type="button"
+                onClick={() => setIndivModalOpen(false)}
+                className="text-slate-400 hover:text-slate-700 p-1 rounded-lg cursor-pointer"
+              >
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <form onSubmit={handleGenerateIndividualInvoice} className="p-5 space-y-3 text-xs">
-              <div className="grid grid-cols-2 gap-3">
+
+            <form onSubmit={handleGenerateIndividualInvoice} className="p-6 space-y-4 text-xs">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Invoice Details</p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Class</label>
+                  <label className="block font-bold text-slate-800 mb-1">Class</label>
                   <select
                     value={indivForm.className}
                     onChange={(e) => {
                       const cls = e.target.value
-                      const firstInCls = instStudents.find((s) => !cls || s.className === cls)
                       setIndivForm((p) => ({
                         ...p,
                         className: cls,
-                        studentId: firstInCls?.id || '',
-                        grossAmount: String(firstInCls?.monthlyFee || firstInCls?.tuitionFee || p.grossAmount)
+                        studentId: ''
                       }))
                     }}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    required
                   >
-                    <option value="">All Classes</option>
+                    <option value="">Select class first</option>
                     {availableClasses.map((c) => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
+
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Student *</label>
+                  <label className="block font-bold text-slate-800 mb-1">Student</label>
                   <select
                     value={indivForm.studentId}
+                    disabled={!indivForm.className}
                     onChange={(e) => {
                       const st = studentById.get(e.target.value)
                       setIndivForm((p) => ({
                         ...p,
                         studentId: e.target.value,
-                        grossAmount: String(st?.monthlyFee || st?.tuitionFee || p.grossAmount)
+                        grossAmount: p.grossAmount || (st?.monthlyFee ? String(st.monthlyFee) : '')
                       }))
                     }}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white font-semibold"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 font-medium disabled:bg-slate-100 disabled:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                     required
                   >
-                    <option value="">Select student...</option>
-                    {indivStudentsInClass.map((s) => (
-                      <option key={s.id} value={s.id}>{s.fullName || s.name} · Roll {s.rollNumber || 'N/A'}</option>
-                    ))}
+                    {!indivForm.className ? (
+                      <option value="">Please select class first</option>
+                    ) : (
+                      <>
+                        <option value="">Select student...</option>
+                        {indivStudentsInClass.map((s) => (
+                          <option key={s.id} value={s.id}>{s.fullName || s.name} · Roll {s.rollNumber || 'N/A'}</option>
+                        ))}
+                      </>
+                    )}
                   </select>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Fee Head / Type *</label>
+                  <label className="block font-bold text-slate-800 mb-1">Fee type</label>
                   <select
                     value={indivForm.feeHead}
-                    onChange={(e) => setIndivForm((p) => ({ ...p, feeHead: e.target.value, feeTitle: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white font-semibold"
+                    onChange={(e) => setIndivForm((p) => ({ ...p, feeHead: e.target.value }))}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   >
                     {FEE_HEADS.map((h) => <option key={h} value={h}>{h}</option>)}
                   </select>
                 </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Invoice Title *</label>
-                  <input
-                    type="text"
-                    value={indivForm.feeTitle}
-                    onChange={(e) => setIndivForm((p) => ({ ...p, feeTitle: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 font-semibold"
-                    required
-                  />
-                </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Schedule</label>
-                  <select
-                    value={indivForm.schedule}
-                    onChange={(e) => setIndivForm((p) => ({ ...p, schedule: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white"
-                  >
-                    {SCHEDULES.map((s) => <option key={s} value={s}>{s}</option>)}
-                  </select>
+                  <label className="block font-bold text-slate-800 mb-1">Amount</label>
+                  <div className="flex items-stretch rounded-lg border border-slate-200 overflow-hidden focus-within:ring-2 focus-within:ring-blue-500/20">
+                    <span className="px-2.5 py-2 bg-slate-100 text-slate-500 font-bold border-r border-slate-200 flex items-center">
+                      PKR
+                    </span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={indivForm.grossAmount}
+                      onChange={(e) => setIndivForm((p) => ({ ...p, grossAmount: e.target.value }))}
+                      className="flex-1 min-w-0 px-2.5 py-2 text-slate-800 font-semibold focus:outline-none"
+                      required
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Kind</label>
-                  <select
-                    value={indivForm.kind}
-                    onChange={(e) => setIndivForm((p) => ({ ...p, kind: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white"
-                  >
-                    {INVOICE_KINDS.map((k) => <option key={k} value={k}>{k}</option>)}
-                  </select>
-                </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Amount (PKR) *</label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={indivForm.grossAmount}
-                    onChange={(e) => setIndivForm((p) => ({ ...p, grossAmount: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 font-bold"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Waiver / Discount (PKR)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={indivForm.discount}
-                    onChange={(e) => setIndivForm((p) => ({ ...p, discount: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Due Date *</label>
+                  <label className="block font-bold text-slate-800 mb-1">Due date</label>
                   <input
                     type="date"
                     value={indivForm.dueDate}
                     onChange={(e) => setIndivForm((p) => ({ ...p, dueDate: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200"
-                    required
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Status</label>
-                  <select
-                    value={indivForm.status}
-                    onChange={(e) => setIndivForm((p) => ({ ...p, status: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white font-semibold"
-                  >
-                    <option value="Pending">Pending</option>
-                    <option value="Paid">Paid</option>
-                  </select>
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
-                <button type="button" onClick={() => setIndivModalOpen(false)} className="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 font-semibold cursor-pointer">Cancel</button>
-                <button type="submit" className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold cursor-pointer">Create Invoice</button>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                <div>
+                  <label className="block font-bold text-slate-800 mb-1">Late fine (PKR)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={indivForm.lateFine}
+                    onChange={(e) => setIndivForm((p) => ({ ...p, lateFine: e.target.value }))}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-800 mb-1">Status</label>
+                  <select
+                    value={indivForm.status}
+                    onChange={(e) => setIndivForm((p) => ({ ...p, status: e.target.value }))}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  >
+                    <option value="Pending">Pending</option>
+                    <option value="Paid">Paid</option>
+                    <option value="Partial">Partial</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">
+                    Notes <span className="font-normal text-slate-400">(optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Optional — staff or parents"
+                    value={indivForm.notes}
+                    onChange={(e) => setIndivForm((p) => ({ ...p, notes: e.target.value }))}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  />
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <label className="inline-flex items-center gap-2 font-bold text-slate-800 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={indivForm.notifySms}
+                      onChange={(e) => setIndivForm((p) => ({ ...p, notifySms: e.target.checked }))}
+                      className="rounded border-slate-300 text-blue-600"
+                    />
+                    <span>Notify parent (SMS)</span>
+                  </label>
+                  <p className="text-[10px] text-slate-400 mt-0.5">
+                    {!selectedIndivStudent
+                      ? 'Select a student to check parent phone on file.'
+                      : (selectedIndivStudent.parentPhone || selectedIndivStudent.phone || selectedIndivStudent.guardianPhone)
+                        ? `Parent phone on file: ${selectedIndivStudent.parentPhone || selectedIndivStudent.phone || selectedIndivStudent.guardianPhone}`
+                        : 'No parent phone on file — SMS will be skipped.'}
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setIndivModalOpen(false)}
+                    className="px-4 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold inline-flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Create Invoice</span>
+                  </button>
+                </div>
               </div>
             </form>
           </div>

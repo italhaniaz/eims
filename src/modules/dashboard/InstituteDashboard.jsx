@@ -688,7 +688,10 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange, onOpenQuic
 
       {/* 4 Financial KPI Cards with Stylized Gradient Medallions & Detail Eye Buttons */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5 shadow-soft flex flex-col justify-between gap-3">
+        <div
+          onClick={() => onRouteChange?.('inst-fees')}
+          className="bg-[var(--surface)] border border-[var(--border)] hover:border-cyan-300 rounded-2xl p-5 shadow-soft flex flex-col justify-between gap-3 cursor-pointer transition-colors"
+        >
           <div className="flex items-start gap-3.5">
             <StylizedKpiMedallion
               icon={Receipt}
@@ -706,7 +709,10 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange, onOpenQuic
             <p className="text-[11px] text-[var(--text-muted)]">Invoices generated in selected period</p>
             <button
               type="button"
-              onClick={() => onRouteChange?.('inst-fees')}
+              onClick={(e) => {
+                e.stopPropagation()
+                onRouteChange?.('inst-fees')
+              }}
               title="View Billed Invoices"
               aria-label="View Billed Invoices"
               className="p-1.5 rounded-xl bg-slate-50 hover:bg-cyan-50 text-slate-400 hover:text-cyan-600 border border-slate-200/80 hover:border-cyan-300 transition-all cursor-pointer shadow-2xs flex items-center justify-center shrink-0 group/eye"
