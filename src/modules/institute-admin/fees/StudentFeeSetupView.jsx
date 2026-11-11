@@ -22,7 +22,8 @@ import {
   Filter,
   Download,
   GraduationCap,
-  ChevronDown
+  ChevronDown,
+  Send
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
@@ -189,6 +190,7 @@ export const StudentFeeSetupView = ({
   const [editItems, setEditItems] = useState([{ feeType: 'Tuition Fee', amount: '0', routeId: '' }])
   const [editReferral, setEditReferral] = useState('')
   const [editNotes, setEditNotes] = useState('')
+  const [feeSetupSubmitted, setFeeSetupSubmitted] = useState(false)
 
   useEffect(() => {
     setEditFeeType(resolvedSetup.feeType)
@@ -203,6 +205,10 @@ export const StudentFeeSetupView = ({
     setEditReferral(resolvedSetup.referralSource)
     setEditNotes(resolvedSetup.notes)
   }, [activeStudent?.id, resolvedSetup])
+
+  useEffect(() => {
+    setFeeSetupSubmitted(false)
+  }, [activeStudent?.id, viewMode])
 
   const editTuitionSum = useMemo(
     () => editItems.reduce((sum, it) => sum + Math.max(0, Number(it.amount) || 0), 0),
@@ -389,7 +395,7 @@ export const StudentFeeSetupView = ({
   }
 
   const handleAddFeeItem = () => {
-    setEditItems((prev) => [...prev, { feeType: 'Tuition Fee', amount: '0', routeId: '' }])
+    setEditItems((prev) => [...prev, { feeType: '', amount: '', routeId: '' }])
   }
 
   const handleRemoveFeeItem = (idx) => {
@@ -407,13 +413,19 @@ export const StudentFeeSetupView = ({
     e.preventDefault()
     if (!activeStudent || saving) return
 
+    const hasMissingType = editItems.some((it) => !it.feeType && Number(it.amount) > 0)
+    if (hasMissingType) {
+      toast?.error?.('Please select a Fee / Charge Type for each fee amount entered.')
+      return
+    }
+
     const cleanedItems = editItems
+      .filter((it) => it.feeType)
       .map((it) => ({
-        feeType: it.feeType || 'Tuition Fee',
+        feeType: it.feeType,
         amount: Math.max(0, Number(it.amount) || 0),
         routeId: it.routeId || ''
       }))
-      .filter((it) => it.feeType || it.amount > 0)
 
     const nowIso = new Date().toISOString()
     const payload = {
@@ -444,8 +456,12 @@ export const StudentFeeSetupView = ({
         'Student Fee Setup',
         'Success'
       )
-      toast?.success?.(`Fee setup updated for ${activeStudent.fullName || activeStudent.name}.`)
-      setViewMode('details')
+      toast?.success?.('Submitted successfully')
+      if (!feeSetupSubmitted) {
+        setFeeSetupSubmitted(true)
+      } else {
+        setViewMode('details')
+      }
     } catch {
       toast?.error?.('Unable to update fee setup. Please try again.')
     } finally {
@@ -819,6 +835,7 @@ export const StudentFeeSetupView = ({
                               onChange={(e) => handleUpdateFeeItem(idx, { feeType: e.target.value, routeId: '' })}
                               className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-sky-500/20"
                             >
+                              <option value="">Select...</option>
                               {CHARGE_TYPES.map((ct) => (
                                 <option key={ct} value={ct}>
                                   {ct}
@@ -839,7 +856,8 @@ export const StudentFeeSetupView = ({
                               step="1"
                               value={item.amount}
                               onChange={(e) => handleUpdateFeeItem(idx, { amount: e.target.value })}
-                              className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+                              placeholder="e.g. 15000"
+                              className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 placeholder:text-slate-400 font-semibold focus:outline-none focus:ring-2 focus:ring-sky-500/20"
                             />
                           </div>
 
@@ -924,15 +942,30 @@ export const StudentFeeSetupView = ({
               </div>
             </div>
 
-            {/* Footer Update Button */}
-            <div className="flex justify-end pt-1">
+            {/* Footer Update / Submit Form Bar */}
+            <div className="flex flex-wrap items-center justify-end gap-3 pt-1">
+              {feeSetupSubmitted && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 font-semibold text-xs">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Submitted successfully</span>
+                </span>
+              )}
               <button
                 type="submit"
                 disabled={saving}
                 className="px-5 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-bold text-xs inline-flex items-center gap-1.5 shadow-sm disabled:opacity-50 cursor-pointer transition-colors"
               >
-                <Check className="w-4 h-4" />
-                <span>{saving ? 'Updating...' : 'Update fee setup'}</span>
+                {feeSetupSubmitted ? (
+                  <>
+                    <span>{saving ? 'Submitting...' : 'Submit Form'}</span>
+                    <Send className="w-3.5 h-3.5" />
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-4 h-4" />
+                    <span>{saving ? 'Updating...' : 'Update fee setup'}</span>
+                  </>
+                )}
               </button>
             </div>
           </form>
