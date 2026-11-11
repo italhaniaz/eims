@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import {
   School,
-  ShieldCheck,
   Lock,
   Mail,
   Eye,
@@ -14,7 +13,6 @@ import {
   BookOpen,
   Receipt,
   Award,
-  CheckCircle2,
   Moon,
   Sun,
   Palette
@@ -23,69 +21,36 @@ import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
 import ThemeCustomizerModal from '../../components/common/ThemeCustomizerModal'
 
-const UNIFIED_PORTALS = [
-  {
-    id: 'school_admin',
-    name: 'School Admin (Principal)',
-    subtitle: 'School Dashboard, Students, Staff, Attendance, Fees & Exams',
-    email: 'admin.school@cityschool.edu',
-    badge: 'School Campus',
-    icon: School
-  },
-  {
-    id: 'superadmin',
-    name: 'Super Admin (Platform HQ)',
-    subtitle: 'Manage Registered Schools, Subscriptions, Security & Settings',
-    email: 'admin@schoolms.com',
-    badge: 'Headquarters',
-    icon: ShieldCheck
-  }
-]
-
 export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
-  const { login } = useAuth()
+  const { authenticateCredentials } = useAuth()
   const { isDark, toggleThemeMode, preset, activeThemeConfig } = useTheme()
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false)
 
-  const [selectedPortal, setSelectedPortal] = useState('school_admin')
-  const [identifier, setIdentifier] = useState('admin.school@cityschool.edu')
-  const [password, setPassword] = useState('password123')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [rememberMe, setRememberMe] = useState(true)
   const [authError, setAuthError] = useState('')
 
-  const activePortalMeta = UNIFIED_PORTALS.find(p => p.id === selectedPortal) || UNIFIED_PORTALS[0]
-
-  const handleSelectPortal = (portal) => {
-    setSelectedPortal(portal.id)
-    setIdentifier(portal.email)
-    setPassword('password123')
-    setAuthError('')
-  }
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setAuthError('')
-    const id = (identifier || '').trim().toLowerCase()
-    const pass = (password || '').trim()
 
-    if (!id || !pass) {
+    if (!email.trim() || !password.trim()) {
       setAuthError('Please enter both your email address and password.')
       return
     }
 
     setIsLoading(true)
-    setTimeout(() => {
-      const isSuperadminEmail =
-        id === 'admin@schoolms.com' ||
-        id === 'admin@apexed.io' ||
-        id === 'superadmin'
-
-      const targetRole = isSuperadminEmail ? 'superadmin' : selectedPortal
-      login(targetRole, id, rememberMe)
+    try {
+      const result = await authenticateCredentials(email, password, rememberMe)
+      if (!result?.success) {
+        setAuthError(result?.message || 'Invalid email or password.')
+      }
+    } finally {
       setIsLoading(false)
-    }, 300)
+    }
   }
 
   return (
@@ -138,7 +103,7 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
       </div>
 
       {/* Main Container */}
-      <div className="w-full max-w-[920px] z-10 flex flex-col items-center mt-14 sm:mt-0">
+      <div className="w-full max-w-[900px] z-10 flex flex-col items-center mt-14 sm:mt-0">
         {/* Dual-Pane Card */}
         <div className="w-full rounded-3xl bg-surface border border-border shadow-soft overflow-hidden grid grid-cols-1 md:grid-cols-12 relative">
           
@@ -150,7 +115,7 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
             <div>
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border shadow-2xs mb-5 self-start bg-white/20 text-white border-white/30 backdrop-blur-sm">
                 <Sparkles className="w-3.5 h-3.5 text-white" />
-                <span>Unified School Portal (K-10)</span>
+                <span>Unified School Portal</span>
               </div>
 
               <div className="flex items-center gap-2.5 mb-4">
@@ -166,10 +131,10 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
                 School Management Portal
               </h1>
               <div className="mt-1 flex items-center gap-2">
-                <span className="text-xs font-bold text-white/90">Single Sign-In for School & Platform Admins</span>
+                <span className="text-xs font-bold text-white/90">Single Sign-In Portal</span>
               </div>
               <p className="text-xs sm:text-sm text-white/85 leading-relaxed mt-2 mb-4 md:mb-5">
-                Complete School Academic Operating System for Primary, Middle, Matriculation & Cambridge O-Level institutions.
+                Complete School Academic Operating System for Primary, Middle, Matriculation &amp; Cambridge O-Level institutions.
               </p>
 
               {/* Feature Highlights */}
@@ -179,8 +144,8 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
                     <CalendarCheck className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-white">Daily Attendance & Absentee Alerts</h4>
-                    <p className="text-[11px] text-white/80 leading-tight">1-click daily roll call & parent SMS notifications.</p>
+                    <h4 className="text-xs font-bold text-white">Daily Attendance &amp; Absentee Alerts</h4>
+                    <p className="text-[11px] text-white/80 leading-tight">1-click daily roll call &amp; parent SMS notifications.</p>
                   </div>
                 </div>
 
@@ -189,8 +154,8 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
                     <BookOpen className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-white">Classes, Syllabus & Timetable</h4>
-                    <p className="text-[11px] text-white/80 leading-tight">Manage Playgroup to Grade 10 sections, teachers & exams.</p>
+                    <h4 className="text-xs font-bold text-white">Classes, Syllabus &amp; Timetable</h4>
+                    <p className="text-[11px] text-white/80 leading-tight">Manage Playgroup to Grade 10 sections, teachers &amp; exams.</p>
                   </div>
                 </div>
 
@@ -199,8 +164,8 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
                     <Receipt className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-white">3-Part Bank Challan & Fee Accounts</h4>
-                    <p className="text-[11px] text-white/80 leading-tight">Monthly fee vouchers, reconciliations & campus ledgers.</p>
+                    <h4 className="text-xs font-bold text-white">3-Part Bank Challan &amp; Fee Accounts</h4>
+                    <p className="text-[11px] text-white/80 leading-tight">Monthly fee vouchers, reconciliations &amp; campus ledgers.</p>
                   </div>
                 </div>
 
@@ -210,7 +175,7 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
                   </div>
                   <div>
                     <h4 className="text-xs font-bold text-white">School Leaving Certificates (SLC)</h4>
-                    <p className="text-[11px] text-white/80 leading-tight">Instant printable SLC, ID cards & report cards.</p>
+                    <p className="text-[11px] text-white/80 leading-tight">Instant printable SLC, ID cards &amp; report cards.</p>
                   </div>
                 </div>
               </div>
@@ -225,105 +190,70 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
             </div>
           </div>
 
-          {/* RIGHT PANE: Unified Sign In Form */}
-          <div className="md:col-span-7 p-5 sm:p-8 flex flex-col justify-between bg-surface text-text">
+          {/* RIGHT PANE: Pure Single Email + Password Login Form */}
+          <div className="md:col-span-7 p-6 sm:p-9 flex flex-col justify-center bg-surface text-text">
             <div>
-              {/* Header */}
-              <div className="mb-5">
+              <div className="mb-6">
                 <div className="flex items-center justify-between">
                   <h2 className="text-xl sm:text-2xl font-bold text-text tracking-tight">
                     Sign In to EIMS
                   </h2>
                   <span className="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full border bg-primary-soft text-primary border-primary/20">
-                    Unified Login
+                    Unified Access
                   </span>
                 </div>
-                <p className="text-xs text-muted mt-1">
-                  Enter your administrator credentials or select an access profile below.
+                <p className="text-xs sm:text-sm text-muted mt-1.5">
+                  Enter your email address and password to sign in to your assigned portal.
                 </p>
               </div>
 
-              {/* Quick Account Selector: School Admin vs Super Admin */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-5">
-                {UNIFIED_PORTALS.map((portal) => {
-                  const Icon = portal.icon
-                  const isSelected = selectedPortal === portal.id
-                  return (
-                    <button
-                      key={portal.id}
-                      type="button"
-                      onClick={() => handleSelectPortal(portal)}
-                      className={`p-3 rounded-xl text-left transition-all cursor-pointer border flex flex-col justify-between ${
-                        isSelected
-                          ? 'border-primary bg-primary-soft/70 ring-2 ring-primary/25 shadow-xs'
-                          : 'border-border hover:border-primary/40 bg-bg/50 hover:bg-primary-soft/30'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-bold text-text flex items-center gap-1.5">
-                          <Icon className="w-4 h-4 text-primary" />
-                          <span>{portal.name}</span>
-                        </span>
-                        {isSelected && <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />}
-                      </div>
-                      <p className="text-[10px] text-muted leading-tight line-clamp-2">
-                        {portal.subtitle}
-                      </p>
-                      <div className="mt-2 pt-1.5 border-t border-border/60 flex items-center justify-between text-[10px]">
-                        <span className="font-mono text-muted truncate">{portal.email}</span>
-                        <span className="font-bold text-primary shrink-0 ml-1">{portal.badge}</span>
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
-
               {authError && (
-                <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 flex items-start gap-2.5 text-rose-800 text-xs">
-                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
+                <div className="mb-5 p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 flex items-start gap-2.5 text-rose-800 dark:text-rose-200 text-xs font-medium">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600 dark:text-rose-400" />
                   <span>{authError}</span>
                 </div>
               )}
 
-              {/* Credentials Form */}
-              <form onSubmit={handleSubmit} className="space-y-3.5">
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-[11px] font-bold text-muted uppercase tracking-wider mb-1">
-                    Email or Username
+                  <label className="block text-[11px] font-bold text-muted uppercase tracking-wider mb-1.5">
+                    Email Address
                   </label>
                   <div className="relative">
                     <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
                     <input
                       type="text"
-                      value={identifier}
-                      onChange={(e) => setIdentifier(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-bg border border-border text-text placeholder-muted text-xs sm:text-sm focus:outline-none focus:ring-4 focus:ring-primary/15 focus:border-primary transition-all font-medium"
-                      placeholder="admin.school@cityschool.edu or admin@schoolms.com"
+                      required
+                      autoFocus
+                      autoComplete="email"
+                      value={email}
+                      onChange={(e) => {
+                        setEmail(e.target.value)
+                        if (authError) setAuthError('')
+                      }}
+                      className="w-full pl-10 pr-4 py-3 rounded-xl bg-bg border border-border text-text placeholder-muted text-xs sm:text-sm focus:outline-none focus:ring-4 focus:ring-primary/15 focus:border-primary transition-all font-medium"
+                      placeholder="Enter your email address"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="block text-[11px] font-bold text-muted uppercase tracking-wider">
-                      Password
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => setPassword('password123')}
-                      className="text-xs font-bold text-primary hover:underline transition-colors cursor-pointer"
-                    >
-                      Fill Demo Password
-                    </button>
-                  </div>
+                  <label className="block text-[11px] font-bold text-muted uppercase tracking-wider mb-1.5">
+                    Password
+                  </label>
                   <div className="relative">
                     <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
                     <input
                       type={showPassword ? 'text' : 'password'}
+                      required
+                      autoComplete="current-password"
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-bg border border-border text-text placeholder-muted text-xs sm:text-sm focus:outline-none focus:ring-4 focus:ring-primary/15 focus:border-primary transition-all"
-                      placeholder="••••••••••••"
+                      onChange={(e) => {
+                        setPassword(e.target.value)
+                        if (authError) setAuthError('')
+                      }}
+                      className="w-full pl-10 pr-10 py-3 rounded-xl bg-bg border border-border text-text placeholder-muted text-xs sm:text-sm focus:outline-none focus:ring-4 focus:ring-primary/15 focus:border-primary transition-all"
+                      placeholder="Enter your password"
                     />
                     <button
                       type="button"
@@ -352,13 +282,13 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="btn-hero-gradient w-full py-3 rounded-xl font-bold text-xs sm:text-sm text-white shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] disabled:opacity-50"
+                  className="btn-hero-gradient w-full py-3.5 rounded-xl font-bold text-xs sm:text-sm text-white shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] disabled:opacity-50"
                 >
                   {isLoading ? (
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                   ) : (
                     <>
-                      <span>Sign In as {activePortalMeta.name}</span>
+                      <span>Sign In</span>
                       <ArrowRight className="w-4 h-4" />
                     </>
                   )}
@@ -367,7 +297,7 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
             </div>
 
             {/* Bottom Registration & Trial Row */}
-            <div className="pt-4 mt-5 border-t border-border">
+            <div className="pt-5 mt-6 border-t border-border">
               <button
                 type="button"
                 onClick={() => {

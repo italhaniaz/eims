@@ -230,6 +230,98 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
+  // Unified Credential Authentication: Verifies email & password and routes to Super Admin or School Admin
+  const authenticateCredentials = async (identifierInput = '', passwordInput = '', remember = false) => {
+    const mail = String(identifierInput || '').trim().toLowerCase()
+    const pass = String(passwordInput || '').trim()
+
+    if (!mail || !pass) {
+      return { success: false, message: 'Please enter both your email address and password.' }
+    }
+
+    let db = { users: [], institutes: [] }
+    try {
+      const rawDb = localStorage.getItem('sms_database_v3_enterprise')
+      if (rawDb) db = JSON.parse(rawDb)
+    } catch (_) {}
+
+    const dbUsers = Array.isArray(db.users) ? db.users : []
+    const dbInstitutes = Array.isArray(db.institutes) ? db.institutes : []
+
+    const storedCustomHash = localStorage.getItem(`sms_pwd_hash_${mail}`)
+    const inputHash = await hashPassword(pass)
+    const isDefaultDemoPass = ['password123', 'admin123', 'admin', 'Password@123'].includes(pass)
+
+    // 1. Check registered user account in local database
+    const matchedDbUser = dbUsers.find(u => (u.email || '').trim().toLowerCase() === mail)
+    if (matchedDbUser) {
+      if (matchedDbUser.status === 'Suspended' || matchedDbUser.status === 'Disabled') {
+        return { success: false, message: 'This account is suspended. Please contact your Super Administrator.' }
+      }
+
+      const isPasswordValid = storedCustomHash
+        ? inputHash === storedCustomHash
+        : matchedDbUser.passwordHash
+          ? (inputHash === matchedDbUser.passwordHash || matchedDbUser.password === pass)
+          : matchedDbUser.password
+            ? matchedDbUser.password === pass
+            : isDefaultDemoPass
+
+      if (!isPasswordValid) {
+        return { success: false, message: 'Invalid email or password. Please check your credentials and try again.' }
+      }
+
+      const targetRole = matchedDbUser.role === 'superadmin' ? 'superadmin' : 'institute_admin'
+      login(targetRole, matchedDbUser.email || mail, remember)
+      return { success: true, role: targetRole }
+    }
+
+    // 2. Check registered school adminEmail/email on institutes list
+    const matchedInst = dbInstitutes.find(
+      i => (i.adminEmail || '').trim().toLowerCase() === mail || (i.email || '').trim().toLowerCase() === mail
+    )
+    if (matchedInst) {
+      if ((matchedInst.status || matchedInst.lifecycleStatus) === 'Suspended') {
+        return { success: false, message: 'This school portal is currently suspended.' }
+      }
+
+      const isPasswordValid = storedCustomHash
+        ? inputHash === storedCustomHash
+        : matchedInst.adminPassword
+          ? matchedInst.adminPassword === pass
+          : isDefaultDemoPass
+
+      if (!isPasswordValid) {
+        return { success: false, message: 'Invalid email or password. Please check your credentials and try again.' }
+      }
+
+      login('institute_admin', mail, remember)
+      return { success: true, role: 'institute_admin' }
+    }
+
+    // 3. Check built-in Super Admin accounts
+    if (mail === 'admin@schoolms.com' || mail === 'admin@apexed.io' || mail === 'superadmin') {
+      const isPasswordValid = storedCustomHash ? inputHash === storedCustomHash : isDefaultDemoPass
+      if (!isPasswordValid) {
+        return { success: false, message: 'Invalid email or password. Please check your credentials and try again.' }
+      }
+      login('superadmin', mail === 'superadmin' ? 'admin@schoolms.com' : mail, remember)
+      return { success: true, role: 'superadmin' }
+    }
+
+    // 4. Check built-in School Admin demo accounts
+    if (mail === 'admin.school@cityschool.edu' || mail === 'admin.beacon@sms.edu') {
+      const isPasswordValid = storedCustomHash ? inputHash === storedCustomHash : isDefaultDemoPass
+      if (!isPasswordValid) {
+        return { success: false, message: 'Invalid email or password. Please check your credentials and try again.' }
+      }
+      login('institute_admin', mail, remember)
+      return { success: true, role: 'institute_admin' }
+    }
+
+    return { success: false, message: 'No active account found with this email address.' }
+  }
+
   const logout = () => {
     setUser(null)
     try {
@@ -314,6 +406,7 @@ export const AuthProvider = ({ children }) => {
     <AuthContext.Provider value={{ 
       user, 
       login, 
+      authenticateCredentials,
       logout, 
       switchRole, 
       updatePassword, 

@@ -35,7 +35,6 @@ import {
   Sun,
   Palette
 } from 'lucide-react'
-import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { useTheme } from '../../context/ThemeContext'
 import ThemeCustomizerModal from '../../components/common/ThemeCustomizerModal'
@@ -109,7 +108,6 @@ const PLAN_CONFIGS = {
 }
 
 export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
-  const { login } = useAuth()
   const { showToast } = useToast()
   const { isDark, toggleThemeMode, preset, activeThemeConfig } = useTheme()
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false)
@@ -286,17 +284,6 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
       top: 0,
       behavior: 'smooth'
     })
-  }
-
-  // Direct 1-Click Demo Login Handlers
-  const handleQuickDemo = (role = 'superadmin') => {
-    if (role === 'superadmin') {
-      login('superadmin', 'admin@schoolms.com', true)
-      showToast('Welcome to Super Admin Headquarters Demo!')
-    } else {
-      login('institute_admin', 'admin.beacon@sms.edu', true)
-      showToast('Welcome to Beaconhouse Campus Admin Demo!')
-    }
   }
 
   // Smart Plan Modal Opener: Dynamically configures modal title, badge, icon, and default tier
@@ -618,7 +605,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                   if (landingBanner.ctaAction === 'trial_modal') {
                     setIsTrialModalOpen(true)
                   } else if (landingBanner.ctaAction === 'login') {
-                    onNavigateToLogin('school')
+                    onNavigateToLogin()
                   } else if (landingBanner.ctaAction === 'pricing') {
                     scrollToSection(e, 'pricing')
                   } else if (landingBanner.ctaLink) {
@@ -742,7 +729,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
 
             <button
               type="button"
-              onClick={() => onNavigateToLogin('school')}
+              onClick={() => onNavigateToLogin()}
               className="btn-hero-gradient hidden lg:inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold shadow-sm hover:shadow transition-all cursor-pointer group"
               title="Sign in to your Institutional Portal"
             >
@@ -814,44 +801,13 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                 type="button"
                 onClick={() => {
                   setIsMobileMenuOpen(false)
-                  onNavigateToLogin('school')
+                  onNavigateToLogin()
                 }}
                 className="w-full py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs sm:text-sm border border-emerald-200 transition-colors flex items-center justify-center gap-2"
               >
                 <Lock className="w-4 h-4" />
                 <span>Portal Sign In</span>
               </button>
-            </div>
-
-            {/* Direct 1-Click Interactive Demos in Mobile Drawer */}
-            <div className="pt-2 border-t border-emerald-100">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
-                Instant 1-Click Demo Evaluation:
-              </span>
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMobileMenuOpen(false)
-                    handleQuickDemo('superadmin')
-                  }}
-                  className="py-2 px-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-200 text-slate-700 hover:text-emerald-800 font-semibold text-center transition-colors flex items-center justify-center gap-1"
-                >
-                  <Laptop className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Super Admin</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMobileMenuOpen(false)
-                    handleQuickDemo('institute')
-                  }}
-                  className="py-2 px-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-200 text-slate-700 hover:text-emerald-800 font-semibold text-center transition-colors flex items-center justify-center gap-1"
-                >
-                  <Building2 className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Campus Admin</span>
-                </button>
-              </div>
             </div>
           </div>
         )}
@@ -896,7 +852,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
 
             <button
               type="button"
-              onClick={() => onNavigateToLogin('school')}
+              onClick={() => onNavigateToLogin()}
               className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-emerald-50 hover:bg-[#f5eeff] text-emerald-800 hover:text-emerald-950 border-2 border-emerald-300 hover:border-emerald-500 font-extrabold text-sm shadow-xs hover:shadow-md transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer flex items-center justify-center gap-2 group whitespace-nowrap"
               title="Sign in to your Educational Portal"
             >
@@ -1272,7 +1228,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
 
                 <div className="flex items-center gap-2 shrink-0">
                   <button
-                    onClick={() => handleQuickDemo(activeTab === 'custom' ? 'superadmin' : 'institute')}
+                    onClick={() => onNavigateToLogin()}
                     className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs"
                   >
                     Open Live Portal
@@ -1660,7 +1616,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                 <span>Launch 14-Day Free Trial (₨ 0)</span>
               </button>
               <button
-                onClick={() => onNavigateToLogin('school')}
+                onClick={() => onNavigateToLogin()}
                 className="w-full sm:w-auto px-5 py-3 rounded-xl bg-purple-800/80 hover:bg-purple-800 text-white border border-purple-400/40 font-semibold text-xs sm:text-sm transition-all cursor-pointer flex items-center justify-center gap-2"
               >
                 <Lock className="w-3.5 h-3.5" />
