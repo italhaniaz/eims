@@ -50,6 +50,7 @@ import {
   recordMyTimeOut
 } from '../institute-admin/attendance/MyAttendanceView'
 import TeacherStudentsView from './TeacherStudentsView'
+import TeacherMyAttendanceView from './TeacherMyAttendanceView'
 
 export default function TeacherPortalView() {
   const { user, logout } = useAuth()
@@ -358,10 +359,16 @@ export default function TeacherPortalView() {
           <div>
             <button
               onClick={() => toggleGroup('attendance')}
-              className="w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer group"
+              className={`w-full flex items-center justify-between px-3.5 py-2 rounded-xl transition-colors cursor-pointer group ${
+                activeRoute === 'my-attendance'
+                  ? 'bg-slate-800/80 text-white font-bold'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+              }`}
             >
               <div className="flex items-center gap-3 min-w-0">
-                <CheckCircle2 className="w-4 h-4 text-slate-400 group-hover:text-purple-400 shrink-0" />
+                <CheckCircle2 className={`w-4 h-4 shrink-0 transition-colors ${
+                  activeRoute === 'my-attendance' ? 'text-purple-400' : 'text-slate-400 group-hover:text-purple-400'
+                }`} />
                 {!isSidebarCollapsed && <span className="truncate">Attendance</span>}
               </div>
               {!isSidebarCollapsed && (
@@ -369,24 +376,43 @@ export default function TeacherPortalView() {
               )}
             </button>
             {openSidebarGroups.attendance && !isSidebarCollapsed && (
-              <div className="mt-1 pl-4 space-y-1 border-l border-slate-800 ml-5 text-xs text-slate-400">
+              <div className="mt-1 pl-3 space-y-1 border-l border-slate-800 ml-5 text-xs">
                 <button
                   onClick={() => {
-                    setActiveModal('attendance')
+                    setActiveRoute('my-attendance')
                     setIsMobileMenuOpen(false)
                   }}
-                  className="w-full text-left py-1.5 px-2 rounded-lg hover:text-white hover:bg-slate-800/50"
+                  className={`w-full flex items-center gap-2 py-1.5 px-2.5 rounded-lg transition-colors cursor-pointer ${
+                    activeRoute === 'my-attendance'
+                      ? 'bg-gradient-to-r from-purple-600/30 to-indigo-600/30 text-purple-200 font-bold border border-purple-500/40 shadow-xs'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                  }`}
                 >
-                  My Punch Card
+                  <Clock className="w-3.5 h-3.5 text-purple-400" />
+                  <span>My Attendance</span>
                 </button>
                 <button
                   onClick={() => {
                     setActiveModal('mark-attendance')
                     setIsMobileMenuOpen(false)
                   }}
-                  className="w-full text-left py-1.5 px-2 rounded-lg hover:text-white hover:bg-slate-800/50"
+                  className="w-full flex items-center gap-2 text-left py-1.5 px-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 cursor-pointer"
                 >
-                  Mark Class Roll-Call
+                  <CheckSquare className="w-3.5 h-3.5 text-slate-400" />
+                  <span>Mark Attendance</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveModal('attendance')
+                    setIsMobileMenuOpen(false)
+                  }}
+                  className="w-full flex items-center justify-between text-left py-1.5 px-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 cursor-pointer"
+                >
+                  <div className="flex items-center gap-2">
+                    <FileSpreadsheet className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Reports</span>
+                  </div>
+                  <ChevronRight className="w-3 h-3 text-slate-500" />
                 </button>
               </div>
             )}
@@ -636,10 +662,16 @@ export default function TeacherPortalView() {
         </header>
 
         {/* ========================================================= */}
-        {/* 2. BODY CONTENT (STUDENTS vs DASHBOARD) */}
+        {/* 2. BODY CONTENT (STUDENTS vs MY-ATTENDANCE vs DASHBOARD) */}
         {/* ========================================================= */}
         {activeRoute === 'students' ? (
           <TeacherStudentsView
+            onBack={() => setActiveRoute('dashboard')}
+            onOpenModal={(modalName) => setActiveModal(modalName)}
+            teacherName={teacherName}
+          />
+        ) : activeRoute === 'my-attendance' ? (
+          <TeacherMyAttendanceView
             onBack={() => setActiveRoute('dashboard')}
             onOpenModal={(modalName) => setActiveModal(modalName)}
             teacherName={teacherName}
@@ -717,22 +749,46 @@ export default function TeacherPortalView() {
               </p>
               <div className="pt-1">
                 {punchStatus === 'NOT_CHECKED_IN' && (
-                  <span className="inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full border border-slate-200 dark:border-slate-700">
-                    <Clock className="w-3.5 h-3.5 text-slate-400" />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
+                      setActiveRoute('my-attendance')
+                    }}
+                    className="inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full border border-slate-200 dark:border-slate-700 hover:border-purple-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors cursor-pointer group"
+                    title="Click to view My Attendance"
+                  >
+                    <Clock className="w-3.5 h-3.5 text-slate-400 group-hover:text-purple-500" />
                     <span>Not checked in today</span>
-                  </span>
+                  </button>
                 )}
                 {punchStatus === 'CHECKED_IN' && (
-                  <span className="inline-flex items-center gap-1.5 text-xs text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1 rounded-full border border-emerald-200 dark:border-emerald-800 font-semibold">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
+                      setActiveRoute('my-attendance')
+                    }}
+                    className="inline-flex items-center gap-1.5 text-xs text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1 rounded-full border border-emerald-200 dark:border-emerald-800 font-semibold hover:border-emerald-400 transition-colors cursor-pointer group"
+                    title="Click to view My Attendance"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />
                     <span>Checked in at {todayLog?.timeIn}</span>
-                  </span>
+                  </button>
                 )}
                 {punchStatus === 'CHECKED_OUT' && (
-                  <span className="inline-flex items-center gap-1.5 text-xs text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 px-3 py-1 rounded-full border border-blue-200 dark:border-blue-800 font-semibold">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
+                      setActiveRoute('my-attendance')
+                    }}
+                    className="inline-flex items-center gap-1.5 text-xs text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 px-3 py-1 rounded-full border border-blue-200 dark:border-blue-800 font-semibold hover:border-blue-400 transition-colors cursor-pointer group"
+                    title="Click to view My Attendance"
+                  >
                     <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />
                     <span>Checked out at {todayLog?.timeOut} (In: {todayLog?.timeIn})</span>
-                  </span>
+                  </button>
                 )}
               </div>
             </div>
@@ -762,7 +818,10 @@ export default function TeacherPortalView() {
 
               <button
                 type="button"
-                onClick={() => setActiveModal('attendance')}
+                onClick={() => {
+                  setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
+                  setActiveRoute('my-attendance')
+                }}
                 className="px-4 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs sm:text-sm font-semibold transition-colors cursor-pointer"
               >
                 My Attendance
@@ -906,7 +965,10 @@ export default function TeacherPortalView() {
               {/* Button 1: My Attendance (Purple Filled) */}
               <button
                 type="button"
-                onClick={() => setActiveModal('attendance')}
+                onClick={() => {
+                  setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
+                  setActiveRoute('my-attendance')
+                }}
                 className="p-3.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs flex flex-col items-center justify-center gap-2 shadow-sm transition-all cursor-pointer group"
               >
                 <Clock className="w-5 h-5 group-hover:scale-110 transition-transform" />
