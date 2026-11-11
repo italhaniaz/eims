@@ -58,7 +58,7 @@ import ExamGradingSettingsModal from './ExamGradingSettingsModal'
 import ExamResultNotificationModal from './ExamResultNotificationModal'
 import { getInstituteTierConfig, getDistinctInstituteClassNames, isClassAllowedForTier } from '../../../utils/tierGating'
 
-export const ExamsView = ({ currentInstitute }) => {
+export const ExamsView = ({ currentInstitute, initialTab = 'results', initialAction = null }) => {
   const tierConfig = getInstituteTierConfig(currentInstitute)
   const { 
     exams = [], 
@@ -130,7 +130,19 @@ export const ExamsView = ({ currentInstitute }) => {
   const [notificationMarksheet, setNotificationMarksheet] = useState(null)
 
   // Active Main Tabs: 'results' | 'datesheet'
-  const [activeViewTab, setActiveViewTab] = useState('results')
+  const [activeViewTab, setActiveViewTab] = useState(initialTab || 'results')
+
+  useEffect(() => {
+    if (initialTab) setActiveViewTab(initialTab)
+  }, [initialTab])
+
+  useEffect(() => {
+    if (!initialAction) return
+    if (initialAction === 'new-marksheet') setIsNewMarksheetOpen(true)
+    else if (initialAction === 'gazette') setIsGazetteModalOpen(true)
+    else if (initialAction === 'settings') setIsSettingsModalOpen(true)
+    else if (initialAction === 'tabulation') setIsTabulationModalOpen(true)
+  }, [initialAction])
   const [searchTerm, setSearchTerm] = useState('')
   const [filterClass, setFilterClass] = useState('All')
   const [filterTerm, setFilterTerm] = useState('All')

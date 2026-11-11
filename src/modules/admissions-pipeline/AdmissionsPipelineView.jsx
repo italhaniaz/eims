@@ -95,7 +95,7 @@ export const SIDE_STAGES = [
 
 export const ALL_STAGES = [...PRIMARY_STAGES, ...SIDE_STAGES]
 
-export const AdmissionsPipelineView = ({ currentInstitute }) => {
+export const AdmissionsPipelineView = ({ currentInstitute, initialView = 'table', initialSourceFilter = 'ALL' }) => {
   const { 
     admissionsPipeline = [], 
     students = [], 
@@ -165,14 +165,22 @@ export const AdmissionsPipelineView = ({ currentInstitute }) => {
   }, [selectedSession])
 
   // View Mode: Table View vs Kanban Board View
-  const [viewMode, setViewMode] = useState('table') // 'table' | 'kanban'
+  const [viewMode, setViewMode] = useState(initialView) // 'table' | 'kanban'
 
   // Filters State (All default to 'ALL')
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedLevelFilter, setSelectedLevelFilter] = useState('ALL')
   const [selectedClassFilter, setSelectedClassFilter] = useState('ALL')
   const [selectedStageFilter, setSelectedStageFilter] = useState('ALL')
-  const [selectedSourceFilter, setSelectedSourceFilter] = useState('ALL')
+  const [selectedSourceFilter, setSelectedSourceFilter] = useState(initialSourceFilter)
+
+  useEffect(() => {
+    if (initialView) setViewMode(initialView)
+  }, [initialView])
+
+  useEffect(() => {
+    if (initialSourceFilter) setSelectedSourceFilter(initialSourceFilter)
+  }, [initialSourceFilter])
   const [selectedCounselorFilter, setSelectedCounselorFilter] = useState('ALL')
   const [selectedPriorityFilter, setSelectedPriorityFilter] = useState('ALL')
   const [selectedDateRange, setSelectedDateRange] = useState('ALL') // 'ALL' | 'today' | 'this_week' | 'this_month'

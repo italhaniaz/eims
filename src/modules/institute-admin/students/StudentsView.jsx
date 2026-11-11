@@ -72,7 +72,7 @@ import { compressImageFile } from '../../../utils/securityUtils'
 import PrintableStudentIdCardModal from '../../../components/common/PrintableStudentIdCardModal'
 import PrintableExamAdmitCardModal from '../../../components/common/PrintableExamAdmitCardModal'
 
-export const StudentsView = ({ currentInstitute }) => {
+export const StudentsView = ({ currentInstitute, initialAction = null }) => {
   const tierConfig = getInstituteTierConfig(currentInstitute)
   const { user } = useAuth()
   const isSuperOrInstituteAdmin = ['superadmin', 'admin', 'institute_admin', 'registrar', 'principal'].includes(user?.role) || !user?.role
@@ -279,6 +279,14 @@ export const StudentsView = ({ currentInstitute }) => {
 
   // CSV Validation Error Report Modal
   const [csvErrorModal, setCsvErrorModal] = useState(null)
+
+  useEffect(() => {
+    if (!initialAction) return
+    if (initialAction === 'enroll') setIsModalOpen(true)
+    else if (initialAction === 'promote') setIsBulkPromoteOpen(true)
+    else if (initialAction === 'status') setIsBulkStatusOpen(true)
+    else if (initialAction === 'idcards') setIsIdCardEngineOpen(true)
+  }, [initialAction])
 
   // Initial Form Data State with Clean Production Defaults
   const initialFormState = {
@@ -1419,6 +1427,66 @@ const validatePakistaniPhone = (phone) => {
           )}
         </div>
       </div>
+
+      {/* Quick Action Banner for Bulk Import or Guardians Mode */}
+      {initialAction === 'import' && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-bold text-emerald-950">Bulk Student CSV Import</h3>
+            <p className="text-xs text-emerald-800 mt-0.5">Download the standard CSV template, fill student rows, and upload to bulk enroll.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={handleDownloadTemplate} className="px-3 py-2 rounded-xl bg-white border border-emerald-300 text-emerald-800 text-xs font-bold cursor-pointer">
+              Download CSV Template
+            </button>
+            <button type="button" onClick={() => csvInputRef.current?.click()} className="px-3.5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold cursor-pointer">
+              Choose CSV File
+            </button>
+          </div>
+        </div>
+      )}
+
+      {initialAction === 'guardians' && (
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">Parents &amp; Guardians Directory</h3>
+              <p className="text-xs text-slate-500">Family contacts, father/mother details, and emergency phone numbers for enrolled students.</p>
+            </div>
+            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
+              {filteredAndSorted.length} Family Records
+            </span>
+          </div>
+          <div className="overflow-x-auto max-h-72 overflow-y-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 border-b text-[11px] uppercase text-slate-500">
+                <tr>
+                  <th className="py-2.5 px-3">Student</th>
+                  <th className="py-2.5 px-3">Class</th>
+                  <th className="py-2.5 px-3">Father / Guardian</th>
+                  <th className="py-2.5 px-3">Mother</th>
+                  <th className="py-2.5 px-3">Guardian Phone</th>
+                  <th className="py-2.5 px-3">WhatsApp / Emergency</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredAndSorted.length === 0 ? (
+                  <tr><td colSpan="6" className="py-6 text-center text-slate-400">No guardian contacts found. Enroll students to build family contacts.</td></tr>
+                ) : filteredAndSorted.map(s => (
+                  <tr key={s.id} className="hover:bg-slate-50">
+                    <td className="py-2 px-3 font-semibold text-slate-900">{s.name}</td>
+                    <td className="py-2 px-3">{s.className || '—'}</td>
+                    <td className="py-2 px-3">{s.fatherName || '—'}</td>
+                    <td className="py-2 px-3">{s.motherName || '—'}</td>
+                    <td className="py-2 px-3 font-mono">{s.guardianPhone || s.phone || '—'}</td>
+                    <td className="py-2 px-3 font-mono">{s.guardianWhatsapp || s.emergencyContact || '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Executive Analytics KPI Cards - 100% Calculated from Real Filtered Data */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">

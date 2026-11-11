@@ -26,7 +26,7 @@ import {
 } from 'lucide-react'
 import { useToast } from '../../../context/ToastContext'
 
-export const LearningResourcesView = ({ currentInstitute }) => {
+export const LearningResourcesView = ({ currentInstitute, initialTab = 'notes' }) => {
   const { toast } = useToast()
   const campusName = currentInstitute?.name || 'Main Campus'
   const storageKey = `sms_campus_learning_${currentInstitute?.id || 'default'}`
@@ -116,7 +116,10 @@ export const LearningResourcesView = ({ currentInstitute }) => {
     }
   }, [resources, storageKey])
 
-  const [activeTab, setActiveTab] = useState('notes') // 'notes' | 'videos' | 'syllabus' | 'pastpapers'
+  const [activeTab, setActiveTab] = useState(initialTab) // 'notes' | 'videos' | 'assignments' | 'syllabus' | 'pastpapers'
+  useEffect(() => {
+    if (initialTab) setActiveTab(initialTab)
+  }, [initialTab])
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedSubject, setSelectedSubject] = useState('ALL')
   const [selectedClass, setSelectedClass] = useState('ALL')
@@ -147,6 +150,7 @@ export const LearningResourcesView = ({ currentInstitute }) => {
       let matchesTab = true
       if (activeTab === 'notes') matchesTab = res.type === 'PDF Notes' || res.type === 'Presentation Slides'
       else if (activeTab === 'videos') matchesTab = res.type === 'Video Lecture'
+      else if (activeTab === 'assignments') matchesTab = res.type === 'Homework / Assignment'
       else if (activeTab === 'syllabus') matchesTab = res.type === 'Syllabus & Guide'
       else if (activeTab === 'pastpapers') matchesTab = res.type === 'Past Paper'
 
@@ -277,7 +281,18 @@ export const LearningResourcesView = ({ currentInstitute }) => {
           }`}
         >
           <Video className="w-4 h-4" />
-          <span>Video Lectures & Online Classes</span>
+          <span>Recorded Lectures &amp; Videos</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('assignments')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+            activeTab === 'assignments'
+              ? 'bg-[#111c30] text-white shadow-xs'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+          }`}
+        >
+          <BookMarked className="w-4 h-4" />
+          <span>Assignments</span>
         </button>
         <button
           onClick={() => setActiveTab('syllabus')}
@@ -490,6 +505,7 @@ export const LearningResourcesView = ({ currentInstitute }) => {
                   >
                     <option value="PDF Notes">PDF Notes / Document</option>
                     <option value="Video Lecture">Video Lecture / Zoom Link</option>
+                    <option value="Homework / Assignment">Homework / Assignment</option>
                     <option value="Presentation Slides">Presentation Slides (PPT)</option>
                     <option value="Past Paper">Past Paper / Solved Paper</option>
                     <option value="Syllabus & Guide">Syllabus & Curriculum Guide</option>

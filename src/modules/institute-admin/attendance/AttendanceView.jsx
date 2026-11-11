@@ -72,10 +72,11 @@ import StudentLeaveModal from './StudentLeaveModal'
 import UnlockSheetModal from './UnlockSheetModal'
 import AttendanceAuditHistoryModal from './AttendanceAuditHistoryModal'
 
-export const AttendanceView = ({ currentInstitute, onRouteChange }) => {
+export const AttendanceView = ({ currentInstitute, onRouteChange, initialTab = 'daily', initialAction = null }) => {
   const { toast } = useToast()
   const { 
     students = [], 
+    teachers = [],
     classes = [], 
     institutes = [], 
     activeProgramLevel = 'all',
@@ -224,8 +225,31 @@ export const AttendanceView = ({ currentInstitute, onRouteChange }) => {
   const isActiveDateWorkingDay = useMemo(() => isDateWorkingDay(date, settings.workingDays), [date, settings.workingDays])
   const isDateBlocked = !!activeDateHoliday || !isActiveDateWorkingDay || date > todayIso
 
-  // Active View Tab: 'daily' | 'monthly' | 'analytics'
-  const [activeTab, setActiveTab] = useState('daily')
+  // Active View Tab: 'daily' | 'monthly' | 'analytics' | 'my-attendance' | 'staff'
+  const [activeTab, setActiveTab] = useState(initialTab || 'daily')
+
+  const instTeachers = useMemo(
+    () => teachers.filter(t => !currentInstitute?.id || !t.instituteId || t.instituteId === currentInstitute.id),
+    [teachers, currentInstitute?.id]
+  )
+
+  const myAttKey = `eims_my_attendance_${currentInstitute?.id || 'default'}_${user?.email || 'admin'}`
+  const [myAttLogs, setMyAttLogs] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(myAttKey) || '[]') } catch { return [] }
+  })
+
+  const staffAttKey = `eims_staff_attendance_${currentInstitute?.id || 'default'}`
+  const [staffAttMap, setStaffAttMap] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(staffAttKey) || '{}') } catch { return {} }
+  })
+
+  useEffect(() => {
+    if (initialTab) setActiveTab(initialTab)
+  }, [initialTab])
+
+  useEffect(() => {
+    if (initialAction === 'settings') setIsSettingsOpen(true)
+  }, [initialAction])
 
   // Search query (disabled until class and section are picked)
   const [searchQuery, setSearchQuery] = useState('')
@@ -844,12 +868,32 @@ export const AttendanceView = ({ currentInstitute, onRouteChange }) => {
 
         <button
           onClick={() => setActiveTab('analytics')}
-          className={`pb-3 px-3.5 border-b-2 transition-all flex items-center gap-1.5 ${
+          className={`pb-3 px-3.5 border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap ${
             activeTab === 'analytics' ? 'border-emerald-600 text-emerald-800' : 'border-transparent hover:text-slate-900'
           }`}
         >
           <TrendingDown className="w-4 h-4" />
           <span>Short Attendance &amp; Defaulters (&lt;{settings.defaulterThreshold}%)</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('staff')}
+          className={`pb-3 px-3.5 border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap ${
+            activeTab === 'staff' ? 'border-emerald-600 text-emerald-800' : 'border-transparent hover:text-slate-900'
+          }`}
+        >
+          <Users className="w-4 h-4" />
+          <span>Staff Attendance</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('my-attendance')}
+          className={`pb-3 px-3.5 border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap ${
+            activeTab === 'my-attendance' ? 'border-emerald-600 text-emerald-800' : 'border-transparent hover:text-slate-900'
+          }`}
+        >
+          <Clock className="w-4 h-4" />
+          <span>My Attendance</span>
         </button>
       </div>
 
@@ -1603,6 +1647,139 @@ export const AttendanceView = ({ currentInstitute, onRouteChange }) => {
             </div>
           )}
         </>
+      )}
+
+      {/* TAB: STAFF ATTENDANCE */}
+      {activeTab === 'staff' && (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-5 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="text-base font-bold text-slate-900">Staff Daily Attendance Register ({formatDateDDMMYYYY(date)})</h3>
+              <p className="text-xs text-slate-500">Mark daily Present, Absent, Late, or Leave status for school teaching &amp; admin staff.</p>
+            </div>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-mono"
+            />
+          </div>
+          {instTeachers.length === 0 ? (
+            <p className="text-xs text-slate-400 text-center py-8">No staff members registered in this school yet.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 border-b text-[11px] uppercase text-slate-600">
+                  <tr>
+                    <th className="p-3">Staff Member</th>
+                    <th className="p-3">Role / Subject</th>
+                    <th className="p-3">Status ({date})</th>
+                    <th className="p-3 text-right">Mark Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {instTeachers.map(t => {
+                    const dayRecord = staffAttMap[date]?.[t.id] || 'Not Marked'
+                    const markStaff = (st) => {
+                      const next = { ...staffAttMap, [date]: { ...(staffAttMap[date] || {}), [t.id]: st } }
+                      setStaffAttMap(next)
+                      try { localStorage.setItem(staffAttKey, JSON.stringify(next)) } catch (_) {}
+                      toast.success(`${t.name} marked ${st} for ${date}.`)
+                    }
+                    return (
+                      <tr key={t.id} className="hover:bg-slate-50/70">
+                        <td className="p-3 font-semibold text-slate-900">{t.name}</td>
+                        <td className="p-3 text-slate-500">{t.designation || t.subject || 'Faculty'}</td>
+                        <td className="p-3 font-bold text-slate-700">{dayRecord}</td>
+                        <td className="p-3 text-right space-x-1.5">
+                          {['Present', 'Absent', 'Late', 'Leave'].map(st => (
+                            <button
+                              key={st}
+                              type="button"
+                              onClick={() => markStaff(st)}
+                              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold cursor-pointer ${
+                                dayRecord === st ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                              }`}
+                            >
+                              {st}
+                            </button>
+                          ))}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB: MY ATTENDANCE */}
+      {activeTab === 'my-attendance' && (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-5 space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="text-base font-bold text-slate-900">My Daily Time-In &amp; Attendance</h3>
+              <p className="text-xs text-slate-500">Logged in as {user?.name || 'Administrator'} ({user?.email})</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const now = new Date()
+                  const todayEntry = myAttLogs.find(l => l.date === todayIso)
+                  if (todayEntry && todayEntry.timeIn && !todayEntry.timeOut) {
+                    toast.info('Already checked in today. Click Time Out when leaving.')
+                    return
+                  }
+                  const entry = { id: `myatt-${Date.now()}`, date: todayIso, timeIn: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), timeOut: '', status: 'Present' }
+                  const next = [entry, ...myAttLogs.filter(l => l.date !== todayIso)]
+                  setMyAttLogs(next)
+                  try { localStorage.setItem(myAttKey, JSON.stringify(next)) } catch (_) {}
+                  toast.success(`Checked in at ${entry.timeIn}`)
+                }}
+                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold cursor-pointer"
+              >
+                My Time In
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const todayEntry = myAttLogs.find(l => l.date === todayIso)
+                  if (!todayEntry) { toast.error('Check in first before recording Time Out.'); return }
+                  const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                  const next = myAttLogs.map(l => l.date === todayIso ? { ...l, timeOut: now } : l)
+                  setMyAttLogs(next)
+                  try { localStorage.setItem(myAttKey, JSON.stringify(next)) } catch (_) {}
+                  toast.success(`Checked out at ${now}`)
+                }}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold cursor-pointer"
+              >
+                Time Out
+              </button>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 border-b text-[11px] uppercase text-slate-600">
+                <tr><th className="p-3">Date</th><th className="p-3">Time In</th><th className="p-3">Time Out</th><th className="p-3">Status</th></tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {myAttLogs.length === 0 ? (
+                  <tr><td colSpan="4" className="p-8 text-center text-slate-400">No personal check-ins recorded yet. Click "My Time In" to log today.</td></tr>
+                ) : myAttLogs.map(l => (
+                  <tr key={l.id}>
+                    <td className="p-3 font-mono font-semibold">{l.date}</td>
+                    <td className="p-3 text-emerald-700 font-bold">{l.timeIn}</td>
+                    <td className="p-3 text-slate-600">{l.timeOut || '—'}</td>
+                    <td className="p-3"><span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold">{l.status}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       )}
 
       {/* MODALS */}

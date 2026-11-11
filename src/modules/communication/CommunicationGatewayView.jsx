@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { 
   MessageSquare, 
   Send, 
@@ -16,11 +16,27 @@ import {
 import { useAppData } from '../../context/AppDataContext'
 import { useToast } from '../../context/ToastContext'
 
-export const CommunicationGatewayView = () => {
+export const CommunicationGatewayView = ({ initialTab = 'compose', initialChannel = 'SMS' }) => {
   const { communicationLogs = [], sendCommunicationBlast, students = [], teachers = [], fees = [] } = useAppData()
   const { toast } = useToast()
 
-  const [channel, setChannel] = useState('SMS')
+  const [activeTab, setActiveTab] = useState(initialTab || 'compose') // 'compose' | 'inbox' | 'notifications' | 'settings'
+  const [channel, setChannel] = useState(initialChannel || 'SMS')
+  const [smsConfig, setSmsConfig] = useState(() => {
+    try {
+      const saved = localStorage.getItem('eims_sms_gateway_config')
+      if (saved) return JSON.parse(saved)
+    } catch (_) {}
+    return { senderId: 'SCHOOL-PORTAL', provider: 'Jazz/Telenor Corporate Masking', apiKey: '', autoAbsentAlert: true, autoFeeReminder: true }
+  })
+
+  useEffect(() => {
+    if (initialTab) setActiveTab(initialTab)
+  }, [initialTab])
+
+  useEffect(() => {
+    if (initialChannel) setChannel(initialChannel)
+  }, [initialChannel])
   const [recipientGroup, setRecipientGroup] = useState('All Parents & Guardians')
   const [targetClass, setTargetClass] = useState('10th Grade')
   const [customNumbers, setCustomNumbers] = useState('')
@@ -170,7 +186,95 @@ export const CommunicationGatewayView = () => {
         </div>
       </div>
 
+      {/* Mode Tabs */}
+      <div className="bg-white rounded-2xl p-1.5 border border-slate-200 shadow-xs flex flex-wrap gap-1">
+        {[
+          { id: 'compose', label: 'Compose / WhatsApp & SMS' },
+          { id: 'inbox', label: 'Inbox & Dispatches' },
+          { id: 'notifications', label: 'Alert Notifications' },
+          { id: 'settings', label: 'SMS Settings' }
+        ].map(tab => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => setActiveTab(tab.id)}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
+              activeTab === tab.id ? 'bg-purple-600 text-white' : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === 'inbox' && (
+        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-3">
+          <h2 className="text-base font-bold text-slate-900">Communication Inbox &amp; Sent Logs</h2>
+          {communicationLogs.length === 0 ? (
+            <p className="text-xs text-slate-400 py-8 text-center">No communication dispatches recorded yet.</p>
+          ) : communicationLogs.map((log, i) => (
+            <div key={log.id || i} className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-start justify-between gap-3">
+              <div>
+                <span className="text-xs font-bold text-slate-800">{log.channel} • {log.audience || log.recipientGroup}</span>
+                <p className="text-xs text-slate-600 mt-1">{log.message || log.messagePreview}</p>
+              </div>
+              <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full shrink-0">{log.status || 'Delivered'}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {activeTab === 'notifications' && (
+        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-3">
+          <h2 className="text-base font-bold text-slate-900">Automated School Notifications</h2>
+          <p className="text-xs text-slate-500">System alerts triggered for guardian absentees, fee vouchers, and exam updates.</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/70">
+              <p className="text-xs font-bold text-slate-800">Daily Absentee Guardian Alert</p>
+              <p className="text-[11px] text-slate-500 mt-1">Status: {smsConfig.autoAbsentAlert ? 'Enabled' : 'Paused'} • Channel: {channel}</p>
+            </div>
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/70">
+              <p className="text-xs font-bold text-slate-800">Fee Invoice Due Reminder</p>
+              <p className="text-[11px] text-slate-500 mt-1">Status: {smsConfig.autoFeeReminder ? 'Enabled' : 'Paused'} • Channel: {channel}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'settings' && (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            try { localStorage.setItem('eims_sms_gateway_config', JSON.stringify(smsConfig)) } catch (_) {}
+            toast.success('SMS & Masking gateway settings saved.')
+          }}
+          className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4 max-w-2xl"
+        >
+          <h2 className="text-base font-bold text-slate-900">SMS Gateway &amp; Masking Settings</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Sender ID / Mask</label>
+              <input type="text" value={smsConfig.senderId} onChange={(e) => setSmsConfig({ ...smsConfig, senderId: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Telecom Aggregator</label>
+              <input type="text" value={smsConfig.provider} onChange={(e) => setSmsConfig({ ...smsConfig, provider: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs" />
+            </div>
+          </div>
+          <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
+            <input type="checkbox" checked={smsConfig.autoAbsentAlert} onChange={(e) => setSmsConfig({ ...smsConfig, autoAbsentAlert: e.target.checked })} />
+            <span>Auto-send SMS on Student Absence Marking</span>
+          </label>
+          <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
+            <input type="checkbox" checked={smsConfig.autoFeeReminder} onChange={(e) => setSmsConfig({ ...smsConfig, autoFeeReminder: e.target.checked })} />
+            <span>Auto-send Fee Challan Reminders</span>
+          </label>
+          <button type="submit" className="px-4 py-2 rounded-xl bg-purple-600 text-white text-xs font-bold cursor-pointer">Save SMS Settings</button>
+        </form>
+      )}
+
       {/* Main Two Columns: Composer & Quick Templates */}
+      {activeTab === 'compose' && (
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Composer Form */}
         <div className="lg:col-span-7 bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
@@ -373,6 +477,7 @@ export const CommunicationGatewayView = () => {
           </div>
         </div>
       </div>
+      )}
     </div>
   )
 }

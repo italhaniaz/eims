@@ -54,10 +54,20 @@ export const recordCampusLedgerTransaction = (instituteId, txn) => {
   }
 }
 
-export const CampusAccountsView = ({ currentInstitute }) => {
+export const CampusAccountsView = ({ currentInstitute, initialTab = 'ledger', initialFilter = 'All' }) => {
   const { toast } = useToast()
   const instituteId = currentInstitute?.id || 'inst-1'
   const storageKey = `sms_campus_accounts_${instituteId}`
+  const expCatKey = `sms_campus_exp_categories_${instituteId}`
+
+  const [expenseCategories, setExpenseCategories] = useState(() => {
+    try {
+      const saved = localStorage.getItem(expCatKey)
+      if (saved) return JSON.parse(saved)
+    } catch (_) {}
+    return ['Staff Payroll', 'Utilities', 'Academic Supplies', 'Transport Operations', 'Library Acquisitions', 'Campus Maintenance']
+  })
+  const [newExpCat, setNewExpCat] = useState('')
 
   const [transactions, setTransactions] = useState(() => {
     try {
@@ -68,7 +78,10 @@ export const CampusAccountsView = ({ currentInstitute }) => {
     }
   })
 
-  const [activeTab, setActiveTab] = useState('ledger') // 'ledger' | 'statement' | 'chart'
+  const [activeTab, setActiveTab] = useState(initialTab || 'ledger') // 'ledger' | 'statement' | 'categories'
+  useEffect(() => {
+    if (initialTab) setActiveTab(initialTab)
+  }, [initialTab])
 
   // Live listener for fee receipts and payroll disbursements
   useEffect(() => {
@@ -84,7 +97,10 @@ export const CampusAccountsView = ({ currentInstitute }) => {
     return () => window.removeEventListener('campus-ledger-updated', handleLedgerUpdate)
   }, [instituteId, storageKey])
   const [searchQuery, setSearchQuery] = useState('')
-  const [filterType, setFilterType] = useState('All')
+  const [filterType, setFilterType] = useState(initialFilter || 'All')
+  useEffect(() => {
+    if (initialFilter) setFilterType(initialFilter)
+  }, [initialFilter])
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   const [formData, setFormData] = useState({
@@ -315,6 +331,15 @@ export const CampusAccountsView = ({ currentInstitute }) => {
           <TrendingUp className="w-4 h-4" />
           <span>Income & Expense Statement</span>
         </button>
+        <button
+          onClick={() => setActiveTab('categories')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            activeTab === 'categories' ? 'bg-purple-600 text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+          }`}
+        >
+          <Tag className="w-4 h-4" />
+          <span>Expense Categories</span>
+        </button>
       </div>
 
       {/* Tab: General Ledger */}
@@ -466,6 +491,67 @@ export const CampusAccountsView = ({ currentInstitute }) => {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tab: Expense Categories */}
+      {activeTab === 'categories' && (
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="font-bold text-slate-900 text-sm">Expense Categories</h3>
+              <p className="text-xs text-slate-500">Organize school operational expenditure heads and track category totals.</p>
+            </div>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                const clean = newExpCat.trim()
+                if (!clean || expenseCategories.includes(clean)) return
+                const next = [...expenseCategories, clean]
+                setExpenseCategories(next)
+                try { localStorage.setItem(expCatKey, JSON.stringify(next)) } catch (_) {}
+                setNewExpCat('')
+                toast.success(`Expense category "${clean}" added.`)
+              }}
+              className="flex gap-2"
+            >
+              <input
+                type="text"
+                placeholder="New expense category..."
+                value={newExpCat}
+                onChange={(e) => setNewExpCat(e.target.value)}
+                className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs"
+              />
+              <button type="submit" className="px-4 py-2 rounded-xl bg-purple-600 text-white text-xs font-bold cursor-pointer">
+                + Add
+              </button>
+            </form>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {expenseCategories.map(cat => {
+              const catTotal = transactions.filter(t => t.type === 'Expense' && t.category === cat && t.status !== 'Voided').reduce((s, t) => s + Number(t.debit || 0), 0)
+              return (
+                <div key={cat} className="p-4 rounded-xl bg-slate-50 border border-slate-200/70 flex items-center justify-between">
+                  <div>
+                    <p className="font-bold text-xs text-slate-900">{cat}</p>
+                    <p className="text-[11px] font-mono text-rose-600 mt-1">PKR {catTotal.toLocaleString()}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = expenseCategories.filter(c => c !== cat)
+                      setExpenseCategories(next)
+                      try { localStorage.setItem(expCatKey, JSON.stringify(next)) } catch (_) {}
+                    }}
+                    className="p-1.5 text-slate-400 hover:text-rose-600 cursor-pointer"
+                    title="Delete category"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )
+            })}
           </div>
         </div>
       )}

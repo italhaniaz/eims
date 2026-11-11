@@ -98,6 +98,23 @@ export const TeachersView = ({ currentInstitute, initialTab = "directory" }) => 
   // Leave & Proxy Modal
   const [selectedLeaveStaff, setSelectedLeaveStaff] = useState(null)
   const [leaveDutyOrder, setLeaveDutyOrder] = useState(null)
+
+  // Staff Loans & Fines Store (scoped per institute)
+  const hrExtrasKey = `eims_staff_hr_extras_${currentInstitute?.id || 'default'}`
+  const [hrExtras, setHrExtras] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(hrExtrasKey) || '{}')
+      return { loans: Array.isArray(saved.loans) ? saved.loans : [], fines: Array.isArray(saved.fines) ? saved.fines : [] }
+    } catch {
+      return { loans: [], fines: [] }
+    }
+  })
+  const [loanForm, setLoanForm] = useState({ staffId: '', amount: '', installmentMonthly: '', reason: 'Personal / Salary Advance' })
+  const [fineForm, setFineForm] = useState({ staffId: '', amount: '', reason: 'Late Arrival / Policy Deduction', date: new Date().toISOString().split('T')[0] })
+  const saveHrExtras = (next) => {
+    setHrExtras(next)
+    try { localStorage.setItem(hrExtrasKey, JSON.stringify(next)) } catch (_) {}
+  }
   const [leaveFormData, setLeaveFormData] = useState({
     leaveType: 'Casual Leave',
     startDate: new Date().toISOString().split('T')[0],
@@ -893,6 +910,42 @@ export const TeachersView = ({ currentInstitute, initialTab = "directory" }) => 
           >
             <ShieldCheck className="w-3.5 h-3.5" />
             <span>Roles & Permissions Matrix</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('loans')}
+            className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+              activeTab === 'loans'
+                ? 'bg-emerald-600 text-white shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <CreditCard className="w-3.5 h-3.5" />
+            <span>Loans &amp; Advances</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('fines')}
+            className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+              activeTab === 'fines'
+                ? 'bg-emerald-600 text-white shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <AlertTriangle className="w-3.5 h-3.5" />
+            <span>Staff Fines</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('documents')}
+            className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+              activeTab === 'documents'
+                ? 'bg-emerald-600 text-white shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <FileText className="w-3.5 h-3.5" />
+            <span>Documents &amp; Letters</span>
           </button>
         </div>
 
@@ -1799,6 +1852,187 @@ export const TeachersView = ({ currentInstitute, initialTab = "directory" }) => 
           currentInstitute={currentInstitute} 
           teachers={teachers} 
         />
+      )}
+
+      {/* TAB: LOANS & ADVANCES */}
+      {activeTab === 'loans' && (
+        <div className="space-y-4">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              const staff = instituteStaff.find(t => t.id === loanForm.staffId)
+              if (!staff || !Number(loanForm.amount)) { toast.error('Select staff member and valid loan amount.'); return }
+              const nextLoan = { id: `LN-${Date.now()}`, staffId: staff.id, staffName: staff.name, amount: Number(loanForm.amount), installmentMonthly: Number(loanForm.installmentMonthly) || Number(loanForm.amount), reason: loanForm.reason, date: new Date().toISOString().split('T')[0], status: 'Active' }
+              saveHrExtras({ ...hrExtras, loans: [nextLoan, ...hrExtras.loans] })
+              setLoanForm({ staffId: '', amount: '', installmentMonthly: '', reason: 'Personal / Salary Advance' })
+              toast.success(`Loan recorded for ${staff.name}.`)
+            }}
+            className="bg-white p-4 rounded-2xl border border-slate-200 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end text-xs"
+          >
+            <div>
+              <label className="block font-bold text-slate-600 mb-1">Staff Member *</label>
+              <select required value={loanForm.staffId} onChange={(e) => setLoanForm({ ...loanForm, staffId: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-xl">
+                <option value="">Select Staff</option>
+                {instituteStaff.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block font-bold text-slate-600 mb-1">Advance Amount (PKR) *</label>
+              <input type="number" min="100" required value={loanForm.amount} onChange={(e) => setLoanForm({ ...loanForm, amount: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-xl" />
+            </div>
+            <div>
+              <label className="block font-bold text-slate-600 mb-1">Monthly Deduction</label>
+              <input type="number" min="0" value={loanForm.installmentMonthly} onChange={(e) => setLoanForm({ ...loanForm, installmentMonthly: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-xl" />
+            </div>
+            <div>
+              <label className="block font-bold text-slate-600 mb-1">Purpose</label>
+              <input type="text" value={loanForm.reason} onChange={(e) => setLoanForm({ ...loanForm, reason: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-xl" />
+            </div>
+            <button type="submit" className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer">+ Issue Advance</button>
+          </form>
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 border-b text-[11px] uppercase text-slate-600">
+                <tr><th className="p-3">Staff</th><th className="p-3">Amount</th><th className="p-3">Monthly Cut</th><th className="p-3">Reason</th><th className="p-3">Status</th><th className="p-3 text-right">Action</th></tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {hrExtras.loans.length === 0 ? (
+                  <tr><td colSpan="6" className="p-8 text-center text-slate-400">No staff loans or salary advances recorded.</td></tr>
+                ) : hrExtras.loans.map(l => (
+                  <tr key={l.id}>
+                    <td className="p-3 font-bold text-slate-900">{l.staffName}</td>
+                    <td className="p-3 font-mono font-bold">PKR {l.amount.toLocaleString()}</td>
+                    <td className="p-3 font-mono">PKR {l.installmentMonthly.toLocaleString()}</td>
+                    <td className="p-3">{l.reason}</td>
+                    <td className="p-3"><span className={`px-2 py-0.5 rounded-full font-bold ${l.status === 'Settled' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>{l.status}</span></td>
+                    <td className="p-3 text-right space-x-2">
+                      {l.status !== 'Settled' && (
+                        <button type="button" onClick={() => saveHrExtras({ ...hrExtras, loans: hrExtras.loans.map(x => x.id === l.id ? { ...x, status: 'Settled' } : x) })} className="text-emerald-700 font-bold hover:underline cursor-pointer">Mark Settled</button>
+                      )}
+                      <button type="button" onClick={() => saveHrExtras({ ...hrExtras, loans: hrExtras.loans.filter(x => x.id !== l.id) })} className="text-rose-600 font-bold hover:underline cursor-pointer">Delete</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* TAB: STAFF FINES */}
+      {activeTab === 'fines' && (
+        <div className="space-y-4">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              const staff = instituteStaff.find(t => t.id === fineForm.staffId)
+              if (!staff || !Number(fineForm.amount)) { toast.error('Select staff member and valid fine amount.'); return }
+              const nextFine = { id: `FN-${Date.now()}`, staffId: staff.id, staffName: staff.name, amount: Number(fineForm.amount), reason: fineForm.reason, date: fineForm.date, status: 'Pending' }
+              saveHrExtras({ ...hrExtras, fines: [nextFine, ...hrExtras.fines] })
+              setFineForm({ staffId: '', amount: '', reason: 'Late Arrival / Policy Deduction', date: new Date().toISOString().split('T')[0] })
+              toast.success(`Staff fine recorded for ${staff.name}.`)
+            }}
+            className="bg-white p-4 rounded-2xl border border-slate-200 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end text-xs"
+          >
+            <div>
+              <label className="block font-bold text-slate-600 mb-1">Staff Member *</label>
+              <select required value={fineForm.staffId} onChange={(e) => setFineForm({ ...fineForm, staffId: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-xl">
+                <option value="">Select Staff</option>
+                {instituteStaff.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block font-bold text-slate-600 mb-1">Fine Amount (PKR) *</label>
+              <input type="number" min="50" required value={fineForm.amount} onChange={(e) => setFineForm({ ...fineForm, amount: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-xl" />
+            </div>
+            <div>
+              <label className="block font-bold text-slate-600 mb-1">Date</label>
+              <input type="date" value={fineForm.date} onChange={(e) => setFineForm({ ...fineForm, date: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-xl" />
+            </div>
+            <div>
+              <label className="block font-bold text-slate-600 mb-1">Reason</label>
+              <input type="text" value={fineForm.reason} onChange={(e) => setFineForm({ ...fineForm, reason: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-xl" />
+            </div>
+            <button type="submit" className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold cursor-pointer">+ Record Fine</button>
+          </form>
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 border-b text-[11px] uppercase text-slate-600">
+                <tr><th className="p-3">Date</th><th className="p-3">Staff</th><th className="p-3">Amount</th><th className="p-3">Reason</th><th className="p-3">Status</th><th className="p-3 text-right">Action</th></tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {hrExtras.fines.length === 0 ? (
+                  <tr><td colSpan="6" className="p-8 text-center text-slate-400">No staff fines recorded.</td></tr>
+                ) : hrExtras.fines.map(f => (
+                  <tr key={f.id}>
+                    <td className="p-3 font-mono">{f.date}</td>
+                    <td className="p-3 font-bold text-slate-900">{f.staffName}</td>
+                    <td className="p-3 font-mono font-bold text-rose-600">PKR {f.amount.toLocaleString()}</td>
+                    <td className="p-3">{f.reason}</td>
+                    <td className="p-3"><span className={`px-2 py-0.5 rounded-full font-bold ${f.status === 'Deducted' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>{f.status}</span></td>
+                    <td className="p-3 text-right space-x-2">
+                      {f.status !== 'Deducted' && (
+                        <button type="button" onClick={() => saveHrExtras({ ...hrExtras, fines: hrExtras.fines.map(x => x.id === f.id ? { ...x, status: 'Deducted' } : x) })} className="text-emerald-700 font-bold hover:underline cursor-pointer">Mark Deducted</button>
+                      )}
+                      <button type="button" onClick={() => saveHrExtras({ ...hrExtras, fines: hrExtras.fines.filter(x => x.id !== f.id) })} className="text-rose-600 font-bold hover:underline cursor-pointer">Delete</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* TAB: STAFF DOCUMENTS, APPOINTMENT LETTERS & ID CARDS */}
+      {activeTab === 'documents' && (
+        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
+          <div className="p-4 border-b border-slate-100">
+            <h3 className="text-sm font-bold text-slate-900">Staff Documents, Appointment Letters &amp; ID Cards</h3>
+            <p className="text-xs text-slate-500">Generate printable official appointment letters, employee ID cards, and review dossier documents.</p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 border-b text-[11px] uppercase text-slate-600">
+                <tr><th className="p-3">Staff Member</th><th className="p-3">Designation</th><th className="p-3">CNIC / Phone</th><th className="p-3 text-right">Generate Documents</th></tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {instituteStaff.length === 0 ? (
+                  <tr><td colSpan="4" className="p-8 text-center text-slate-400">No staff members registered yet.</td></tr>
+                ) : instituteStaff.map(t => (
+                  <tr key={t.id} className="hover:bg-slate-50/70">
+                    <td className="p-3 font-bold text-slate-900">{t.name}</td>
+                    <td className="p-3">{t.designation || t.subject || 'Faculty Member'}</td>
+                    <td className="p-3 font-mono text-slate-500">{t.phone || '—'}</td>
+                    <td className="p-3 text-right space-x-2">
+                      <button
+                        type="button"
+                        onClick={() => { setAppointmentLetterStaff(t); setIsAppointmentLetterOpen(true) }}
+                        className="px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold cursor-pointer"
+                      >
+                        Appointment Letter
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setIdCardStaff(t); setIsIdCardOpen(true) }}
+                        className="px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold cursor-pointer"
+                      >
+                        Print ID Card
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDrawerStaff(t)}
+                        className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold cursor-pointer"
+                      >
+                        Dossier
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       )}
 
       {/* Leave & Proxy Assignment Modal */}

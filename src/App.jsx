@@ -136,11 +136,28 @@ const AppContent = () => {
   ]
 
   const VALID_INSTITUTE_ROUTES = [
-    'inst-dashboard', 'inst-admissions', 'inst-students', 'inst-teachers', 'inst-payroll',
-    'inst-classes', 'inst-subjects', 'inst-timetable', 'inst-program-levels', 'inst-attendance', 'inst-exams',
-    'inst-fees', 'inst-accounts', 'inst-notices', 'inst-communication',
-    'inst-learning', 'inst-transport', 'inst-hostels', 'inst-library', 'inst-inventory',
-    'inst-certificates', 'inst-events', 'inst-reports', 'inst-policies',
+    'inst-dashboard',
+    'inst-admissions', 'inst-admissions-online', 'inst-admissions-enroll', 'inst-admissions-import',
+    'inst-students', 'inst-students-guardians', 'inst-students-promote', 'inst-students-status', 'inst-students-idcards',
+    'inst-reports-students', 'inst-certificates',
+    'inst-attendance', 'inst-attendance-my', 'inst-attendance-student-report', 'inst-attendance-staff-report',
+    'inst-attendance-consecutive', 'inst-attendance-low', 'inst-attendance-unmarked', 'inst-attendance-settings',
+    'inst-fees', 'inst-fees-history', 'inst-fees-family', 'inst-fees-approvals',
+    'inst-fees-outstanding', 'inst-fees-fines', 'inst-fees-setup', 'inst-fees-settings',
+    'inst-classes', 'inst-subjects', 'inst-timetable', 'inst-assignments',
+    'inst-learning', 'inst-learning-handouts', 'inst-learning-lectures', 'inst-events', 'inst-makeup-sessions',
+    'inst-program-levels',
+    'inst-exams', 'inst-exams-schedule', 'inst-exams-assessments', 'inst-exams-marks',
+    'inst-exams-result-summary', 'inst-exams-report-cards', 'inst-exams-grades', 'inst-exams-settings',
+    'inst-accounts', 'inst-accounts-collection', 'inst-accounts-income', 'inst-accounts-expenses', 'inst-accounts-categories',
+    'inst-teachers', 'inst-payroll', 'inst-staff-loans', 'inst-staff-fines',
+    'inst-staff-docs', 'inst-staff-letters', 'inst-staff-idcards', 'inst-staff-reports',
+    'inst-communication', 'inst-communication-inbox', 'inst-notices', 'inst-communication-notifications',
+    'inst-communication-whatsapp', 'inst-communication-sms',
+    'inst-inventory', 'inst-inventory-categories', 'inst-inventory-receive', 'inst-inventory-issue', 'inst-inventory-reports',
+    'inst-library', 'inst-library-issue',
+    'inst-transport', 'inst-hostels',
+    'inst-reports', 'inst-policies',
     'inst-users', 'inst-settings', 'inst-subscription', 'inst-training',
     'inst-my-transactions', 'inst-my-account'
   ]
@@ -577,41 +594,108 @@ const AppContent = () => {
                     onRouteChange={setInstituteRoute}
                   />
                 )}
-                {safeInstituteRoute === 'inst-admissions' && (
-                  <AdmissionsPipelineView currentInstitute={activeCampus} />
+                {['inst-admissions', 'inst-admissions-online'].includes(safeInstituteRoute) && (
+                  <AdmissionsPipelineView
+                    currentInstitute={activeCampus}
+                    initialSourceFilter={safeInstituteRoute === 'inst-admissions-online' ? 'Website / Online' : 'ALL'}
+                  />
                 )}
-                {safeInstituteRoute === 'inst-students' && (
-                  <StudentsView currentInstitute={activeCampus} />
+                {['inst-students', 'inst-admissions-enroll', 'inst-admissions-import', 'inst-students-guardians', 'inst-students-promote', 'inst-students-status', 'inst-students-idcards'].includes(safeInstituteRoute) && (
+                  <StudentsView
+                    currentInstitute={activeCampus}
+                    initialAction={
+                      safeInstituteRoute === 'inst-admissions-enroll' ? 'enroll'
+                        : safeInstituteRoute === 'inst-admissions-import' ? 'import'
+                          : safeInstituteRoute === 'inst-students-guardians' ? 'guardians'
+                            : safeInstituteRoute === 'inst-students-promote' ? 'promote'
+                              : safeInstituteRoute === 'inst-students-status' ? 'status'
+                                : safeInstituteRoute === 'inst-students-idcards' ? 'idcards'
+                                  : null
+                    }
+                  />
                 )}
-                {(safeInstituteRoute === 'inst-teachers' || safeInstituteRoute === 'inst-payroll') && (
-                  <TeachersView 
-                    currentInstitute={activeCampus} 
-                    initialTab={safeInstituteRoute === 'inst-payroll' ? 'payroll' : 'directory'}
+                {['inst-teachers', 'inst-payroll', 'inst-staff-loans', 'inst-staff-fines', 'inst-staff-docs', 'inst-staff-letters', 'inst-staff-idcards', 'inst-staff-reports'].includes(safeInstituteRoute) && (
+                  <TeachersView
+                    currentInstitute={activeCampus}
+                    initialTab={
+                      safeInstituteRoute === 'inst-payroll' ? 'payroll'
+                        : safeInstituteRoute === 'inst-staff-loans' ? 'loans'
+                          : safeInstituteRoute === 'inst-staff-fines' ? 'fines'
+                            : ['inst-staff-docs', 'inst-staff-letters', 'inst-staff-idcards'].includes(safeInstituteRoute) ? 'documents'
+                              : safeInstituteRoute === 'inst-staff-reports' ? 'workload'
+                                : 'directory'
+                    }
                   />
                 )}
                 {safeInstituteRoute === 'inst-classes' && (
                   <ClassesView currentInstitute={activeCampus} />
                 )}
-                {safeInstituteRoute === 'inst-timetable' && (
-                  <TimetableView 
-                    currentInstitute={activeCampus} 
+                {['inst-timetable', 'inst-makeup-sessions'].includes(safeInstituteRoute) && (
+                  <TimetableView
+                    currentInstitute={activeCampus}
                     onRouteChange={setInstituteRoute}
+                    initialTab={safeInstituteRoute === 'inst-makeup-sessions' ? 'makeup' : 'class'}
                   />
                 )}
-                {safeInstituteRoute === 'inst-attendance' && (
-                  <AttendanceView 
-                    currentInstitute={activeCampus} 
+                {['inst-attendance', 'inst-attendance-my', 'inst-attendance-student-report', 'inst-attendance-staff-report', 'inst-attendance-consecutive', 'inst-attendance-low', 'inst-attendance-unmarked', 'inst-attendance-settings'].includes(safeInstituteRoute) && (
+                  <AttendanceView
+                    currentInstitute={activeCampus}
                     onRouteChange={setInstituteRoute}
+                    initialTab={
+                      safeInstituteRoute === 'inst-attendance-my' ? 'my-attendance'
+                        : safeInstituteRoute === 'inst-attendance-staff-report' ? 'staff'
+                          : safeInstituteRoute === 'inst-attendance-student-report' ? 'monthly'
+                            : ['inst-attendance-consecutive', 'inst-attendance-low', 'inst-attendance-unmarked'].includes(safeInstituteRoute) ? 'analytics'
+                              : 'daily'
+                    }
+                    initialAction={safeInstituteRoute === 'inst-attendance-settings' ? 'settings' : null}
                   />
                 )}
-                {safeInstituteRoute === 'inst-exams' && (
-                  <ExamsView currentInstitute={activeCampus} />
+                {['inst-exams', 'inst-exams-schedule', 'inst-exams-assessments', 'inst-exams-marks', 'inst-exams-result-summary', 'inst-exams-report-cards', 'inst-exams-grades', 'inst-exams-settings'].includes(safeInstituteRoute) && (
+                  <ExamsView
+                    currentInstitute={activeCampus}
+                    initialTab={safeInstituteRoute === 'inst-exams-schedule' ? 'datesheet' : 'results'}
+                    initialAction={
+                      safeInstituteRoute === 'inst-exams-marks' ? 'new-marksheet'
+                        : safeInstituteRoute === 'inst-exams-report-cards' ? 'gazette'
+                          : ['inst-exams-grades', 'inst-exams-settings'].includes(safeInstituteRoute) ? 'settings'
+                            : safeInstituteRoute === 'inst-exams-assessments' ? 'tabulation'
+                              : null
+                    }
+                  />
                 )}
-                {safeInstituteRoute === 'inst-fees' && (
-                  <FeesView currentInstitute={activeCampus} />
+                {['inst-fees', 'inst-fees-history', 'inst-fees-family', 'inst-fees-approvals', 'inst-fees-outstanding', 'inst-fees-fines', 'inst-fees-setup', 'inst-fees-settings'].includes(safeInstituteRoute) && (
+                  <FeesView
+                    currentInstitute={activeCampus}
+                    initialFilter={
+                      safeInstituteRoute === 'inst-fees-history' ? 'paid'
+                        : safeInstituteRoute === 'inst-fees-approvals' ? 'pending'
+                          : safeInstituteRoute === 'inst-fees-outstanding' ? 'overdue'
+                            : 'all'
+                    }
+                    initialAction={
+                      safeInstituteRoute === 'inst-fees-family' ? 'split'
+                        : safeInstituteRoute === 'inst-fees-fines' ? 'pos'
+                          : safeInstituteRoute === 'inst-fees-setup' ? 'batch'
+                            : safeInstituteRoute === 'inst-fees-settings' ? 'new'
+                              : null
+                    }
+                  />
                 )}
-                {safeInstituteRoute === 'inst-accounts' && (
-                  <CampusAccountsView currentInstitute={activeCampus} />
+                {['inst-accounts', 'inst-accounts-collection', 'inst-accounts-income', 'inst-accounts-expenses', 'inst-accounts-categories'].includes(safeInstituteRoute) && (
+                  <CampusAccountsView
+                    currentInstitute={activeCampus}
+                    initialTab={
+                      safeInstituteRoute === 'inst-accounts' || safeInstituteRoute === 'inst-accounts-collection' ? 'statement'
+                        : safeInstituteRoute === 'inst-accounts-categories' ? 'categories'
+                          : 'ledger'
+                    }
+                    initialFilter={
+                      safeInstituteRoute === 'inst-accounts-income' ? 'Income'
+                        : safeInstituteRoute === 'inst-accounts-expenses' ? 'Expense'
+                          : 'All'
+                    }
+                  />
                 )}
                 {safeInstituteRoute === 'inst-subjects' && (
                   <SubjectsView currentInstitute={activeCampus} />
@@ -619,17 +703,36 @@ const AppContent = () => {
                 {safeInstituteRoute === 'inst-notices' && (
                   <NoticeBoardView currentInstitute={activeCampus} />
                 )}
-                {safeInstituteRoute === 'inst-learning' && (
-                  <LearningResourcesView currentInstitute={activeCampus} />
+                {['inst-learning', 'inst-assignments', 'inst-learning-handouts', 'inst-learning-lectures'].includes(safeInstituteRoute) && (
+                  <LearningResourcesView
+                    currentInstitute={activeCampus}
+                    initialTab={
+                      safeInstituteRoute === 'inst-assignments' ? 'assignments'
+                        : safeInstituteRoute === 'inst-learning-lectures' ? 'videos'
+                          : 'notes'
+                    }
+                  />
                 )}
                 {safeInstituteRoute === 'inst-transport' && (
                   <TransportView currentInstitute={activeCampus} />
                 )}
-                {safeInstituteRoute === 'inst-library' && (
-                  <LibraryView currentInstitute={activeCampus} />
+                {['inst-library', 'inst-library-issue'].includes(safeInstituteRoute) && (
+                  <LibraryView
+                    currentInstitute={activeCampus}
+                    initialTab={safeInstituteRoute === 'inst-library-issue' ? 'issued' : 'catalog'}
+                  />
                 )}
-                {safeInstituteRoute === 'inst-inventory' && (
-                  <CampusInventoryView currentInstitute={activeCampus} />
+                {['inst-inventory', 'inst-inventory-categories', 'inst-inventory-receive', 'inst-inventory-issue', 'inst-inventory-reports'].includes(safeInstituteRoute) && (
+                  <CampusInventoryView
+                    currentInstitute={activeCampus}
+                    initialTab={
+                      safeInstituteRoute === 'inst-inventory-categories' ? 'categories'
+                        : safeInstituteRoute === 'inst-inventory-receive' ? 'receive'
+                          : safeInstituteRoute === 'inst-inventory-issue' ? 'issue'
+                            : safeInstituteRoute === 'inst-inventory-reports' ? 'reports'
+                              : 'items'
+                    }
+                  />
                 )}
                 {safeInstituteRoute === 'inst-certificates' && (
                   <CertificatesView currentInstitute={activeCampus} />
@@ -637,7 +740,7 @@ const AppContent = () => {
                 {safeInstituteRoute === 'inst-events' && (
                   <CampusEventsCalendarView currentInstitute={activeCampus} />
                 )}
-                {safeInstituteRoute === 'inst-reports' && (
+                {['inst-reports', 'inst-reports-students'].includes(safeInstituteRoute) && (
                   <CampusReportsAnalyticsView currentInstitute={activeCampus} />
                 )}
                 {safeInstituteRoute === 'inst-users' && (
@@ -653,8 +756,16 @@ const AppContent = () => {
                     onRouteChange={setInstituteRoute}
                   />
                 )}
-                {safeInstituteRoute === 'inst-communication' && (
-                  <CommunicationGatewayView />
+                {['inst-communication', 'inst-communication-inbox', 'inst-communication-notifications', 'inst-communication-whatsapp', 'inst-communication-sms'].includes(safeInstituteRoute) && (
+                  <CommunicationGatewayView
+                    initialTab={
+                      safeInstituteRoute === 'inst-communication-inbox' ? 'inbox'
+                        : safeInstituteRoute === 'inst-communication-notifications' ? 'notifications'
+                          : safeInstituteRoute === 'inst-communication-sms' ? 'settings'
+                            : 'compose'
+                    }
+                    initialChannel={safeInstituteRoute === 'inst-communication-whatsapp' ? 'WhatsApp' : 'SMS'}
+                  />
                 )}
                 {safeInstituteRoute === 'inst-hostels' && (
                   <HostelsView currentInstitute={activeCampus} />

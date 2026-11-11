@@ -31,6 +31,9 @@ const ROUTE_LOADERS = {
   'inst-certificates': () => import('../modules/institute-admin/certificates/CertificatesView'),
   'inst-events': () => import('../modules/institute-admin/events/CampusEventsCalendarView'),
   'inst-reports': () => import('../modules/institute-admin/reports/CampusReportsAnalyticsView'),
+  'inst-reports-students': () => import('../modules/institute-admin/reports/CampusReportsAnalyticsView'),
+  'inst-assignments': () => import('../modules/institute-admin/learning/LearningResourcesView'),
+  'inst-makeup-sessions': () => import('../modules/institute-admin/timetable/TimetableView'),
   'inst-users': () => import('../modules/users-management/UsersManagementView'),
   'inst-settings': () => import('../modules/institute-admin/settings/CampusSettingsView'),
   'inst-program-levels': () => import('../modules/academics/ProgramLevelsView'),
@@ -76,7 +79,18 @@ const PREFIX_LOADERS = [
   { prefix: 'sa-comm-', loader: () => import('../modules/platform/communication/SuperadminCommunicationView') },
   { prefix: 'sa-reports-', loader: () => import('../modules/platform/reports/SuperadminReportsAnalyticsView') },
   { prefix: 'sa-policies-', loader: () => import('../modules/platform/policies/SuperadminPoliciesView') },
-  { prefix: 'sa-settings-', loader: () => import('../modules/platform/settings/SuperadminPlatformSettingsView') }
+  { prefix: 'sa-settings-', loader: () => import('../modules/platform/settings/SuperadminPlatformSettingsView') },
+  { prefix: 'inst-admissions-', loader: () => import('../modules/admissions-pipeline/AdmissionsPipelineView') },
+  { prefix: 'inst-students-', loader: () => import('../modules/institute-admin/students/StudentsView') },
+  { prefix: 'inst-attendance-', loader: () => import('../modules/institute-admin/attendance/AttendanceView') },
+  { prefix: 'inst-fees-', loader: () => import('../modules/institute-admin/fees/FeesView') },
+  { prefix: 'inst-exams-', loader: () => import('../modules/institute-admin/exams/ExamsView') },
+  { prefix: 'inst-accounts-', loader: () => import('../modules/institute-admin/accounts/CampusAccountsView') },
+  { prefix: 'inst-staff-', loader: () => import('../modules/institute-admin/teachers/TeachersView') },
+  { prefix: 'inst-communication-', loader: () => import('../modules/communication/CommunicationGatewayView') },
+  { prefix: 'inst-inventory-', loader: () => import('../modules/institute-admin/inventory/CampusInventoryView') },
+  { prefix: 'inst-learning-', loader: () => import('../modules/institute-admin/learning/LearningResourcesView') },
+  { prefix: 'inst-library-', loader: () => import('../modules/library/LibraryView') }
 ]
 
 /**

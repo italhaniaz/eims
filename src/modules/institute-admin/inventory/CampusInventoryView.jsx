@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { 
   Boxes, 
   Plus, 
@@ -19,6 +19,7 @@ import {
   RotateCcw,
   Printer
 } from 'lucide-react'
+import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
 
 const INITIAL_INVENTORY = [
@@ -32,10 +33,49 @@ const INITIAL_INVENTORY = [
   { id: 'INV-108', name: 'A4 Printing Paper & Examination Answer Sheets', category: 'Consumables & Stationery', room: 'Central Store', quantity: 250, unitCost: 1800, condition: 'New', status: 'In Stock', purchaseDate: '2026-02-10', custodian: 'Store Keeper' }
 ]
 
-export const CampusInventoryView = ({ currentInstitute }) => {
+export const CampusInventoryView = ({ currentInstitute, initialTab = 'items' }) => {
+  const { students = [] } = useAppData()
   const { toast } = useToast()
   const instituteId = currentInstitute?.id || 'inst-1'
   const storageKey = `sms_campus_inventory_${instituteId}`
+  const catStorageKey = `sms_campus_inv_categories_${instituteId}`
+  const ledgerStorageKey = `sms_campus_inv_ledger_${instituteId}`
+
+  const [activeTab, setActiveTab] = useState(initialTab || 'items') // 'categories' | 'items' | 'receive' | 'issue' | 'reports'
+  useEffect(() => {
+    if (initialTab) setActiveTab(initialTab)
+  }, [initialTab])
+
+  const [customCategories, setCustomCategories] = useState(() => {
+    try {
+      const saved = localStorage.getItem(catStorageKey)
+      if (saved) return JSON.parse(saved)
+    } catch (_) {}
+    return [
+      { id: 'CAT-1', name: 'IT & Lab Equipment', description: 'Computers, projectors & digital equipment' },
+      { id: 'CAT-2', name: 'Science & Biology Labs', description: 'Microscopes, glassware & lab chemicals' },
+      { id: 'CAT-3', name: 'Classroom Furniture', description: 'Student desks, chairs & whiteboards' },
+      { id: 'CAT-4', name: 'Office Equipment', description: 'Printers, photocopiers & admin hardware' },
+      { id: 'CAT-5', name: 'Sports & Physical', description: 'Cricket, football & PT equipment kits' },
+      { id: 'CAT-6', name: 'Consumables & Stationery', description: 'Paper, notebooks, diaries & uniforms' }
+    ]
+  })
+  const [newCatForm, setNewCatForm] = useState({ name: '', description: '' })
+
+  const [stockTransactions, setStockTransactions] = useState(() => {
+    try {
+      const saved = localStorage.getItem(ledgerStorageKey)
+      return saved ? JSON.parse(saved) : []
+    } catch (_) { return [] }
+  })
+
+  const [receiveForm, setReceiveForm] = useState({ itemId: '', quantity: 10, supplier: '', refNo: '', date: new Date().toISOString().split('T')[0] })
+  const [issueForm, setIssueForm] = useState({ itemId: '', studentId: '', quantity: 1, remarks: '' })
+
+  const campusStudents = useMemo(
+    () => students.filter(s => !s.instituteId || s.instituteId === instituteId),
+    [students, instituteId]
+  )
 
   const [items, setItems] = useState(() => {
     try {
@@ -73,7 +113,53 @@ export const CampusInventoryView = ({ currentInstitute }) => {
     }
   }
 
-  const categories = ['All', 'IT & Lab Equipment', 'Science & Biology Labs', 'Classroom Furniture', 'Office Equipment', 'Sports & Physical', 'Consumables & Stationery']
+  const categories = useMemo(
+    () => ['All', ...customCategories.map(c => c.name)],
+    [customCategories]
+  )
+
+  const saveCategories = (next) => {
+    setCustomCategories(next)
+    try { localStorage.setItem(catStorageKey, JSON.stringify(next)) } catch (_) {}
+  }
+
+  const saveStockTxn = (next) => {
+    setStockTransactions(next)
+    try { localStorage.setItem(ledgerStorageKey, JSON.stringify(next)) } catch (_) {}
+  }
+
+  const handleAddCategory = (e) => {
+    e.preventDefault()
+    if (!newCatForm.name.trim()) return
+    const next = [...customCategories, { id: `CAT-${Date.now()}`, name: newCatForm.name.trim(), description: newCatForm.description.trim() || 'School store category' }]
+    saveCategories(next)
+    setNewCatForm({ name: '', description: '' })
+    toast?.success?.('Inventory category added.')
+  }
+
+  const handleReceiveStock = (e) => {
+    e.preventDefault()
+    const qty = Math.max(1, Number(receiveForm.quantity) || 0)
+    const target = items.find(i => i.id === receiveForm.itemId)
+    if (!target) { toast?.error?.('Select an inventory item.'); return }
+    saveItems(items.map(i => i.id === target.id ? { ...i, quantity: Number(i.quantity || 0) + qty } : i))
+    saveStockTxn([{ id: `GRN-${Date.now()}`, type: 'RECEIVE', itemId: target.id, itemName: target.name, quantity: qty, party: receiveForm.supplier || 'Vendor Supply', refNo: receiveForm.refNo || 'GRN', date: receiveForm.date }, ...stockTransactions])
+    toast?.success?.(`Received +${qty} units of ${target.name}.`)
+    setReceiveForm({ itemId: '', quantity: 10, supplier: '', refNo: '', date: new Date().toISOString().split('T')[0] })
+  }
+
+  const handleIssueToStudent = (e) => {
+    e.preventDefault()
+    const qty = Math.max(1, Number(issueForm.quantity) || 0)
+    const target = items.find(i => i.id === issueForm.itemId)
+    const student = campusStudents.find(s => s.id === issueForm.studentId)
+    if (!target || !student) { toast?.error?.('Select both an item and an enrolled student.'); return }
+    if (Number(target.quantity || 0) < qty) { toast?.error?.(`Only ${target.quantity} units available in stock.`); return }
+    saveItems(items.map(i => i.id === target.id ? { ...i, quantity: Number(i.quantity || 0) - qty } : i))
+    saveStockTxn([{ id: `ISS-${Date.now()}`, type: 'ISSUE', itemId: target.id, itemName: target.name, quantity: qty, party: `${student.name} (${student.className || 'Student'})`, refNo: issueForm.remarks || 'Student Issue', date: new Date().toISOString().split('T')[0] }, ...stockTransactions])
+    toast?.success?.(`Issued ${qty}x ${target.name} to ${student.name}.`)
+    setIssueForm({ itemId: '', studentId: '', quantity: 1, remarks: '' })
+  }
 
   const filteredItems = useMemo(() => {
     return items.filter(item => {
@@ -254,7 +340,217 @@ export const CampusInventoryView = ({ currentInstitute }) => {
         </div>
       </div>
 
+      {/* Module Tabs */}
+      <div className="bg-white rounded-2xl p-1.5 border border-slate-200/80 shadow-2xs flex flex-wrap items-center gap-1">
+        {[
+          { id: 'categories', label: 'Categories' },
+          { id: 'items', label: 'Items' },
+          { id: 'receive', label: 'Receive Stock' },
+          { id: 'issue', label: 'Issue to Students' },
+          { id: 'reports', label: 'Inventory Reports' }
+        ].map(tab => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => setActiveTab(tab.id)}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
+              activeTab === tab.id ? 'bg-purple-600 text-white shadow-2xs' : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Categories Tab */}
+      {activeTab === 'categories' && (
+        <div className="space-y-4">
+          <form onSubmit={handleAddCategory} className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <input
+              type="text"
+              required
+              placeholder="New Category Name (e.g. Uniforms)"
+              value={newCatForm.name}
+              onChange={(e) => setNewCatForm({ ...newCatForm, name: e.target.value })}
+              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs"
+            />
+            <input
+              type="text"
+              placeholder="Category Description"
+              value={newCatForm.description}
+              onChange={(e) => setNewCatForm({ ...newCatForm, description: e.target.value })}
+              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs"
+            />
+            <button type="submit" className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold cursor-pointer">
+              + Add Category
+            </button>
+          </form>
+          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 border-b text-[11px] uppercase text-slate-600">
+                <tr>
+                  <th className="py-3 px-4">S/N</th>
+                  <th className="py-3 px-4">Name</th>
+                  <th className="py-3 px-4">Description</th>
+                  <th className="py-3 px-4">Items Count</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {customCategories.map((cat, idx) => (
+                  <tr key={cat.id} className="hover:bg-slate-50/70">
+                    <td className="py-3 px-4 text-slate-500">{idx + 1}</td>
+                    <td className="py-3 px-4 font-bold text-slate-900">{cat.name}</td>
+                    <td className="py-3 px-4 text-slate-600">{cat.description}</td>
+                    <td className="py-3 px-4">
+                      <span className="px-2 py-0.5 rounded bg-sky-100 text-sky-800 font-bold text-[11px]">
+                        {items.filter(i => i.category === cat.name).length}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      <button
+                        type="button"
+                        onClick={() => saveCategories(customCategories.filter(c => c.id !== cat.id))}
+                        className="p-1.5 text-slate-400 hover:text-rose-600 cursor-pointer"
+                        title="Delete category"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Receive Stock Tab */}
+      {activeTab === 'receive' && (
+        <div className="space-y-4">
+          <form onSubmit={handleReceiveStock} className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
+            <div>
+              <label className="block text-[11px] font-bold text-slate-600 mb-1">Inventory Item *</label>
+              <select required value={receiveForm.itemId} onChange={(e) => setReceiveForm({ ...receiveForm, itemId: e.target.value })} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+                <option value="">Select Item</option>
+                {items.map(i => <option key={i.id} value={i.id}>{i.name} (Stock: {i.quantity})</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-slate-600 mb-1">Quantity Received *</label>
+              <input type="number" min="1" required value={receiveForm.quantity} onChange={(e) => setReceiveForm({ ...receiveForm, quantity: e.target.value })} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs" />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-slate-600 mb-1">Vendor / Supplier</label>
+              <input type="text" placeholder="Supplier name" value={receiveForm.supplier} onChange={(e) => setReceiveForm({ ...receiveForm, supplier: e.target.value })} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs" />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-slate-600 mb-1">GRN / Invoice Ref</label>
+              <input type="text" placeholder="GRN-2026-01" value={receiveForm.refNo} onChange={(e) => setReceiveForm({ ...receiveForm, refNo: e.target.value })} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs" />
+            </div>
+            <button type="submit" className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold cursor-pointer">
+              Receive Stock
+            </button>
+          </form>
+          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 border-b text-[11px] uppercase text-slate-600">
+                <tr><th className="py-3 px-4">Date</th><th className="py-3 px-4">Item</th><th className="py-3 px-4">Qty</th><th className="py-3 px-4">Supplier</th><th className="py-3 px-4">Ref</th></tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {stockTransactions.filter(t => t.type === 'RECEIVE').length === 0 ? (
+                  <tr><td colSpan="5" className="py-8 text-center text-slate-400">No stock intake entries recorded yet.</td></tr>
+                ) : stockTransactions.filter(t => t.type === 'RECEIVE').map(t => (
+                  <tr key={t.id}><td className="py-2.5 px-4">{t.date}</td><td className="py-2.5 px-4 font-semibold">{t.itemName}</td><td className="py-2.5 px-4 text-emerald-700 font-bold">+{t.quantity}</td><td className="py-2.5 px-4">{t.party}</td><td className="py-2.5 px-4 font-mono">{t.refNo}</td></tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Issue to Students Tab */}
+      {activeTab === 'issue' && (
+        <div className="space-y-4">
+          <form onSubmit={handleIssueToStudent} className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
+            <div>
+              <label className="block text-[11px] font-bold text-slate-600 mb-1">Student *</label>
+              <select required value={issueForm.studentId} onChange={(e) => setIssueForm({ ...issueForm, studentId: e.target.value })} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+                <option value="">Select Student</option>
+                {campusStudents.map(s => <option key={s.id} value={s.id}>{s.name} ({s.className || 'Enrolled'})</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-slate-600 mb-1">Inventory Item *</label>
+              <select required value={issueForm.itemId} onChange={(e) => setIssueForm({ ...issueForm, itemId: e.target.value })} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+                <option value="">Select Item</option>
+                {items.map(i => <option key={i.id} value={i.id}>{i.name} (Avail: {i.quantity})</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-slate-600 mb-1">Quantity *</label>
+              <input type="number" min="1" required value={issueForm.quantity} onChange={(e) => setIssueForm({ ...issueForm, quantity: e.target.value })} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs" />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-slate-600 mb-1">Remarks</label>
+              <input type="text" placeholder="Uniform / Stationery" value={issueForm.remarks} onChange={(e) => setIssueForm({ ...issueForm, remarks: e.target.value })} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs" />
+            </div>
+            <button type="submit" className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold cursor-pointer">
+              Issue Stock
+            </button>
+          </form>
+          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 border-b text-[11px] uppercase text-slate-600">
+                <tr><th className="py-3 px-4">Date</th><th className="py-3 px-4">Student</th><th className="py-3 px-4">Item</th><th className="py-3 px-4">Qty</th><th className="py-3 px-4">Notes</th></tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {stockTransactions.filter(t => t.type === 'ISSUE').length === 0 ? (
+                  <tr><td colSpan="5" className="py-8 text-center text-slate-400">No items issued to students yet.</td></tr>
+                ) : stockTransactions.filter(t => t.type === 'ISSUE').map(t => (
+                  <tr key={t.id}><td className="py-2.5 px-4">{t.date}</td><td className="py-2.5 px-4 font-semibold">{t.party}</td><td className="py-2.5 px-4">{t.itemName}</td><td className="py-2.5 px-4 text-rose-600 font-bold">-{t.quantity}</td><td className="py-2.5 px-4">{t.refNo}</td></tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Inventory Reports Tab */}
+      {activeTab === 'reports' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
+            <h3 className="text-sm font-bold text-slate-900">Valuation by Category</h3>
+            {customCategories.map(cat => {
+              const catItems = items.filter(i => i.category === cat.name)
+              const catVal = catItems.reduce((s, i) => s + Number(i.quantity || 0) * Number(i.unitCost || 0), 0)
+              return (
+                <div key={cat.id} className="flex items-center justify-between py-2 border-b border-slate-100 text-xs">
+                  <span className="font-semibold text-slate-700">{cat.name} ({catItems.length})</span>
+                  <span className="font-mono font-bold text-slate-900">PKR {catVal.toLocaleString()}</span>
+                </div>
+              )
+            })}
+          </div>
+          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
+            <h3 className="text-sm font-bold text-slate-900">Low Stock &amp; Maintenance Alerts</h3>
+            {items.filter(i => Number(i.quantity) < 10 || i.status === 'Maintenance').length === 0 ? (
+              <p className="text-xs text-slate-400 py-4">All inventory stock levels and asset conditions are healthy.</p>
+            ) : items.filter(i => Number(i.quantity) < 10 || i.status === 'Maintenance').map(i => (
+              <div key={i.id} className="flex items-center justify-between py-2 border-b border-slate-100 text-xs">
+                <div>
+                  <span className="font-semibold text-slate-800">{i.name}</span>
+                  <span className="block text-[11px] text-slate-400">{i.room}</span>
+                </div>
+                <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-700 font-bold">Qty: {i.quantity} • {i.status}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Filter and Search Bar */}
+      {activeTab === 'items' && (<>
       <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
         <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
           <div className="relative flex-1 max-w-md">
@@ -394,6 +690,7 @@ export const CampusInventoryView = ({ currentInstitute }) => {
           </table>
         </div>
       </div>
+      </>)}
 
       {/* Modal: Add / Edit Asset */}
       {isModalOpen && (

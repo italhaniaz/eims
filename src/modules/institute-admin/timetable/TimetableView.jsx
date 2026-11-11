@@ -55,7 +55,7 @@ import SubstituteTeacherModal from './SubstituteTeacherModal'
 import TimetableVersionsModal from './TimetableVersionsModal'
 import TimetablePrintModal from './TimetablePrintModal'
 
-export const TimetableView = ({ currentInstitute, onRouteChange }) => {
+export const TimetableView = ({ currentInstitute, onRouteChange, initialTab = 'class' }) => {
   const { toast } = useToast()
   const { 
     classes = [], 
@@ -102,7 +102,16 @@ export const TimetableView = ({ currentInstitute, onRouteChange }) => {
   const [selectedSession, setSelectedSession] = useState(currentSession)
 
   // View Tabs: 'class' | 'teacher' | 'room' | 'whole-school'
-  const [activeViewTab, setActiveViewTab] = useState('class')
+  const [activeViewTab, setActiveViewTab] = useState(initialTab || 'class')
+  const makeupStorageKey = `eims_makeup_sessions_${currentInstitute?.id || 'default'}`
+  const [makeupSessions, setMakeupSessions] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(makeupStorageKey) || '[]') } catch { return [] }
+  })
+  const [makeupForm, setMakeupForm] = useState({ className: '', subjectName: '', teacherName: '', date: new Date().toISOString().split('T')[0], timeSlot: '02:00 PM - 02:45 PM', reason: '' })
+
+  useEffect(() => {
+    if (initialTab) setActiveViewTab(initialTab)
+  }, [initialTab])
 
   // Class and Section selectors start EMPTY (Select class / Select section)
   const [selectedClassName, setSelectedClassName] = useState('')
@@ -521,6 +530,16 @@ export const TimetableView = ({ currentInstitute, onRouteChange }) => {
         >
           <LayoutGrid className="w-4 h-4" />
           <span>Whole-School Master Overview</span>
+        </button>
+
+        <button
+          onClick={() => setActiveViewTab('makeup')}
+          className={`pb-3 px-3.5 border-b-2 transition-all flex items-center gap-1.5 ${
+            activeViewTab === 'makeup' ? 'border-emerald-600 text-emerald-800' : 'border-transparent hover:text-slate-900'
+          }`}
+        >
+          <Calendar className="w-4 h-4" />
+          <span>Make-up Sessions</span>
         </button>
       </div>
 
@@ -1106,6 +1125,84 @@ export const TimetableView = ({ currentInstitute, onRouteChange }) => {
                 </tbody>
               </table>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 5: MAKE-UP SESSIONS */}
+      {activeViewTab === 'makeup' && (
+        <div className="space-y-4">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              if (!makeupForm.className.trim() || !makeupForm.subjectName.trim()) return
+              const entry = { id: `MKP-${Date.now()}`, ...makeupForm, status: 'Scheduled' }
+              const next = [entry, ...makeupSessions]
+              setMakeupSessions(next)
+              try { localStorage.setItem(makeupStorageKey, JSON.stringify(next)) } catch (_) {}
+              setMakeupForm({ className: '', subjectName: '', teacherName: '', date: new Date().toISOString().split('T')[0], timeSlot: '02:00 PM - 02:45 PM', reason: '' })
+              triggerToast('Make-up class session scheduled.')
+            }}
+            className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 items-end text-xs"
+          >
+            <div>
+              <label className="block font-bold text-slate-600 mb-1">Class *</label>
+              <input type="text" required placeholder="e.g. Grade 10-A" value={makeupForm.className} onChange={(e) => setMakeupForm({ ...makeupForm, className: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-xl" />
+            </div>
+            <div>
+              <label className="block font-bold text-slate-600 mb-1">Subject *</label>
+              <input type="text" required placeholder="e.g. Mathematics" value={makeupForm.subjectName} onChange={(e) => setMakeupForm({ ...makeupForm, subjectName: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-xl" />
+            </div>
+            <div>
+              <label className="block font-bold text-slate-600 mb-1">Teacher</label>
+              <input type="text" placeholder="Faculty name" value={makeupForm.teacherName} onChange={(e) => setMakeupForm({ ...makeupForm, teacherName: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-xl" />
+            </div>
+            <div>
+              <label className="block font-bold text-slate-600 mb-1">Date</label>
+              <input type="date" value={makeupForm.date} onChange={(e) => setMakeupForm({ ...makeupForm, date: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-xl" />
+            </div>
+            <div>
+              <label className="block font-bold text-slate-600 mb-1">Time Slot</label>
+              <input type="text" value={makeupForm.timeSlot} onChange={(e) => setMakeupForm({ ...makeupForm, timeSlot: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-xl" />
+            </div>
+            <button type="submit" className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer">
+              + Schedule Make-up
+            </button>
+          </form>
+
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 border-b text-[11px] uppercase text-slate-600">
+                <tr><th className="p-3">Date &amp; Time</th><th className="p-3">Class</th><th className="p-3">Subject</th><th className="p-3">Teacher</th><th className="p-3">Status</th><th className="p-3 text-right">Action</th></tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {makeupSessions.length === 0 ? (
+                  <tr><td colSpan="6" className="p-8 text-center text-slate-400">No make-up classes scheduled yet.</td></tr>
+                ) : makeupSessions.map(m => (
+                  <tr key={m.id}>
+                    <td className="p-3 font-mono">{m.date} • {m.timeSlot}</td>
+                    <td className="p-3 font-bold text-slate-900">{m.className}</td>
+                    <td className="p-3">{m.subjectName}</td>
+                    <td className="p-3">{m.teacherName || 'Assigned Faculty'}</td>
+                    <td className="p-3"><span className={`px-2 py-0.5 rounded-full font-bold ${m.status === 'Completed' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>{m.status}</span></td>
+                    <td className="p-3 text-right space-x-2">
+                      {m.status !== 'Completed' && (
+                        <button type="button" onClick={() => {
+                          const next = makeupSessions.map(x => x.id === m.id ? { ...x, status: 'Completed' } : x)
+                          setMakeupSessions(next)
+                          try { localStorage.setItem(makeupStorageKey, JSON.stringify(next)) } catch (_) {}
+                        }} className="text-emerald-700 font-bold hover:underline cursor-pointer">Mark Done</button>
+                      )}
+                      <button type="button" onClick={() => {
+                        const next = makeupSessions.filter(x => x.id !== m.id)
+                        setMakeupSessions(next)
+                        try { localStorage.setItem(makeupStorageKey, JSON.stringify(next)) } catch (_) {}
+                      }} className="text-rose-600 font-bold hover:underline cursor-pointer">Remove</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}

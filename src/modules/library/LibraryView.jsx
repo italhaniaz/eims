@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { 
   BookMarked, 
   Plus, 
@@ -30,7 +30,7 @@ import { useAppData } from '../../context/AppDataContext'
 import { useToast } from '../../context/ToastContext'
 import Modal from '../../components/common/Modal'
 
-export const LibraryView = ({ currentInstitute }) => {
+export const LibraryView = ({ currentInstitute, initialTab = 'catalog' }) => {
   const { library = [], bookIssues = [], students = [], institutes = [], addItem, updateItem, deleteItem } = useAppData()
   const { toast } = useToast()
 
@@ -51,7 +51,10 @@ export const LibraryView = ({ currentInstitute }) => {
     return bookIssues.filter(i => !i.instituteId || i.instituteId === currentInstitute.id)
   }, [bookIssues, currentInstitute?.id])
 
-  const [activeTab, setActiveTab] = useState('catalog') // 'catalog' | 'issued' | 'overdue'
+  const [activeTab, setActiveTab] = useState(initialTab) // 'catalog' | 'issued' | 'overdue'
+  useEffect(() => {
+    if (initialTab) setActiveTab(initialTab)
+  }, [initialTab])
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('ALL')
   const [isModalOpen, setIsModalOpen] = useState(false)

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { 
   Receipt, 
   Plus, 
@@ -31,7 +31,7 @@ import { recordCampusLedgerTransaction } from '../accounts/CampusAccountsView'
 import PrintableFeeChallanModal from '../../../components/common/PrintableFeeChallanModal'
 import { getDistinctInstituteClassNames, isClassAllowedForTier } from '../../../utils/tierGating'
 
-export const FeesView = ({ currentInstitute }) => {
+export const FeesView = ({ currentInstitute, initialFilter = 'all', initialAction = null }) => {
   const { fees = [], students = [], classes = [], addItem, updateItem, deleteItem, logAuditEvent } = useAppData()
   const { toast } = useToast()
   const instStudents = useMemo(() => {
@@ -74,7 +74,22 @@ export const FeesView = ({ currentInstitute }) => {
   })
 
   // Fee Status Filter Tab & Overdue Defaulters
-  const [feeFilterTab, setFeeFilterTab] = useState('all') // 'all' | 'pending' | 'partial' | 'overdue' | 'paid'
+  const [feeFilterTab, setFeeFilterTab] = useState(initialFilter || 'all') // 'all' | 'pending' | 'partial' | 'overdue' | 'paid'
+
+  useEffect(() => {
+    if (initialFilter) {
+      setFeeFilterTab(initialFilter)
+      setCurrentPage(1)
+    }
+  }, [initialFilter])
+
+  useEffect(() => {
+    if (!initialAction) return
+    if (initialAction === 'split') setIsSplitModalOpen(true)
+    else if (initialAction === 'batch') setIsBatchModalOpen(true)
+    else if (initialAction === 'pos') setIsPosModalOpen(true)
+    else if (initialAction === 'new') setIsModalOpen(true)
+  }, [initialAction])
 
   const isFeeOverdue = (fee) => {
     if (!fee || fee.status === 'Paid') return false

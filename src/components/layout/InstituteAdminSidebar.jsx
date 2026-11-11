@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import {
   LayoutDashboard,
   GraduationCap,
@@ -11,7 +11,6 @@ import {
   Megaphone,
   ChevronLeft,
   ChevronRight,
-  ChevronDown,
   LogOut,
   School,
   X,
@@ -33,9 +32,26 @@ import {
   ArrowLeftRight,
   User,
   MessageSquare,
-  Wallet
+  Wallet,
+  Upload,
+  UserPlus,
+  History,
+  AlertTriangle,
+  SlidersHorizontal,
+  Video,
+  ClipboardList,
+  Inbox,
+  Bell,
+  Phone,
+  PackageCheck,
+  RotateCcw,
+  IdCard,
+  TrendingUp,
+  ArrowUpRight,
+  TrendingDown
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { useAppData } from '../../context/AppDataContext'
 import { preloadRoute } from '../../utils/modulePreloader'
 
 export const canRoleAccessRoute = (role, routeId) => {
@@ -46,15 +62,17 @@ export const canRoleAccessRoute = (role, routeId) => {
   return routeId === 'inst-dashboard'
 }
 
-const MENU_ITEMS = [
+const buildMenuItems = (studentsCount) => [
   { id: 'inst-dashboard', label: 'Dashboard', icon: LayoutDashboard },
   {
     id: 'grp-admissions',
     label: 'Admissions',
     icon: UserCheck,
     children: [
-      { id: 'inst-admissions', label: 'Inquiries & Applications', icon: UserCheck },
-      { id: 'inst-certificates', label: 'SLC & Certificates', icon: FileBadge }
+      { id: 'inst-admissions', label: 'Admission Inquiries', icon: ClipboardList },
+      { id: 'inst-admissions-online', label: 'Online Applications', icon: Laptop },
+      { id: 'inst-admissions-enroll', label: 'Enroll Student', icon: UserPlus },
+      { id: 'inst-admissions-import', label: 'Bulk Import', icon: Upload }
     ]
   },
   {
@@ -62,8 +80,20 @@ const MENU_ITEMS = [
     label: 'Students',
     icon: GraduationCap,
     children: [
-      { id: 'inst-students', label: 'Students Directory', icon: GraduationCap },
-      { id: 'inst-learning', label: 'Homework & Learning', icon: Laptop }
+      { id: 'inst-students', label: 'All Students', icon: Users, badge: studentsCount },
+      { id: 'inst-students-guardians', label: 'Parents & Guardians', icon: Users },
+      {
+        id: 'grp-students-promotion',
+        label: 'Promotion & Status',
+        icon: ArrowUpRight,
+        children: [
+          { id: 'inst-students-promote', label: 'Promote Students', icon: TrendingUp },
+          { id: 'inst-students-status', label: 'Status & Transfers', icon: RotateCcw }
+        ]
+      },
+      { id: 'inst-reports-students', label: 'Performance Reports', icon: BarChart3 },
+      { id: 'inst-students-idcards', label: 'ID Cards', icon: IdCard },
+      { id: 'inst-certificates', label: 'Certificates', icon: FileBadge }
     ]
   },
   {
@@ -71,7 +101,21 @@ const MENU_ITEMS = [
     label: 'Attendance',
     icon: CalendarCheck,
     children: [
-      { id: 'inst-attendance', label: 'Daily Attendance Register', icon: CalendarCheck }
+      { id: 'inst-attendance-my', label: 'My Attendance', icon: Clock },
+      { id: 'inst-attendance', label: 'Mark Attendance', icon: CalendarCheck },
+      {
+        id: 'grp-attendance-reports',
+        label: 'Reports',
+        icon: BarChart3,
+        children: [
+          { id: 'inst-attendance-student-report', label: 'Student Attendance', icon: GraduationCap },
+          { id: 'inst-attendance-staff-report', label: 'Staff Attendance', icon: Users },
+          { id: 'inst-attendance-consecutive', label: 'Consecutive Absences', icon: AlertTriangle },
+          { id: 'inst-attendance-low', label: 'Low Attendance', icon: TrendingDown },
+          { id: 'inst-attendance-unmarked', label: 'Unmarked Classes', icon: ClipboardList }
+        ]
+      },
+      { id: 'inst-attendance-settings', label: 'Attendance Settings', icon: Settings }
     ]
   },
   {
@@ -79,7 +123,14 @@ const MENU_ITEMS = [
     label: 'Billing & Fees',
     icon: Receipt,
     children: [
-      { id: 'inst-fees', label: 'Fee Invoices & Challans', icon: Receipt }
+      { id: 'inst-fees', label: 'Invoices', icon: Receipt },
+      { id: 'inst-fees-history', label: 'Billing History', icon: History },
+      { id: 'inst-fees-family', label: 'Family Vouchers', icon: Users },
+      { id: 'inst-fees-approvals', label: 'Payment Approvals', icon: UserCheck },
+      { id: 'inst-fees-outstanding', label: 'Outstanding Fees', icon: AlertTriangle },
+      { id: 'inst-fees-fines', label: 'Fines', icon: Receipt },
+      { id: 'inst-fees-setup', label: 'Student Fee Setup', icon: SlidersHorizontal },
+      { id: 'inst-fees-settings', label: 'Fee Settings', icon: Settings }
     ]
   },
   {
@@ -88,9 +139,20 @@ const MENU_ITEMS = [
     icon: BookOpen,
     children: [
       { id: 'inst-classes', label: 'Classes & Sections', icon: BookOpen },
-      { id: 'inst-subjects', label: 'Curriculum & Subjects', icon: BookMarked },
-      { id: 'inst-timetable', label: 'Class Timetable', icon: Clock },
-      { id: 'inst-program-levels', label: 'Grade Levels', icon: GraduationCap }
+      { id: 'inst-subjects', label: 'Subjects', icon: BookMarked },
+      { id: 'inst-timetable', label: 'Timetable', icon: Clock },
+      { id: 'inst-assignments', label: 'Assignments', icon: ClipboardList },
+      {
+        id: 'grp-class-resources',
+        label: 'Class Resources',
+        icon: Laptop,
+        children: [
+          { id: 'inst-learning-handouts', label: 'Handouts', icon: FileText },
+          { id: 'inst-learning-lectures', label: 'Recorded Lectures', icon: Video }
+        ]
+      },
+      { id: 'inst-events', label: 'Academic Calendar', icon: Calendar },
+      { id: 'inst-makeup-sessions', label: 'Make-up Sessions', icon: Clock }
     ]
   },
   {
@@ -98,7 +160,21 @@ const MENU_ITEMS = [
     label: 'Exams & Results',
     icon: Award,
     children: [
-      { id: 'inst-exams', label: 'Examinations & Marks', icon: Award }
+      { id: 'inst-exams', label: 'Exams', icon: Award },
+      { id: 'inst-exams-schedule', label: 'Exam Schedule', icon: Calendar },
+      { id: 'inst-exams-assessments', label: 'Assessments', icon: ClipboardList },
+      { id: 'inst-exams-marks', label: 'Marks Entry', icon: FileText },
+      {
+        id: 'grp-exams-results',
+        label: 'Results',
+        icon: BarChart3,
+        children: [
+          { id: 'inst-exams-result-summary', label: 'Result Summary', icon: BarChart3 },
+          { id: 'inst-exams-report-cards', label: 'Report Cards', icon: FileBadge },
+          { id: 'inst-exams-grades', label: 'Grades', icon: Award }
+        ]
+      },
+      { id: 'inst-exams-settings', label: 'Exam Settings', icon: Settings }
     ]
   },
   {
@@ -106,7 +182,18 @@ const MENU_ITEMS = [
     label: 'Finance & Accounts',
     icon: Calculator,
     children: [
-      { id: 'inst-accounts', label: 'Campus Accounts & Ledger', icon: Calculator }
+      { id: 'inst-accounts', label: 'Financial Dashboard', icon: BarChart3 },
+      { id: 'inst-accounts-collection', label: 'Fee Collection Report', icon: Receipt },
+      { id: 'inst-accounts-income', label: 'Other Income', icon: TrendingUp },
+      {
+        id: 'grp-finance-expenses',
+        label: 'Expenses',
+        icon: TrendingDown,
+        children: [
+          { id: 'inst-accounts-expenses', label: 'All Expenses', icon: ClipboardList },
+          { id: 'inst-accounts-categories', label: 'Expense Categories', icon: SlidersHorizontal }
+        ]
+      }
     ]
   },
   {
@@ -114,8 +201,21 @@ const MENU_ITEMS = [
     label: 'Staff & Payroll',
     icon: Users,
     children: [
-      { id: 'inst-teachers', label: 'Faculty & Staff Roster', icon: Users },
-      { id: 'inst-payroll', label: 'Payroll & Compensation', icon: CreditCard }
+      { id: 'inst-teachers', label: 'All Staff', icon: Users },
+      { id: 'inst-payroll', label: 'Payroll', icon: CreditCard },
+      { id: 'inst-staff-loans', label: 'Loans & Advances', icon: Wallet },
+      { id: 'inst-staff-fines', label: 'Staff Fines', icon: AlertTriangle },
+      {
+        id: 'grp-staff-documents',
+        label: 'Staff Documents',
+        icon: FileText,
+        children: [
+          { id: 'inst-staff-docs', label: 'Documents', icon: FileText },
+          { id: 'inst-staff-letters', label: 'Appointment Letters', icon: FileBadge },
+          { id: 'inst-staff-idcards', label: 'ID Cards', icon: IdCard }
+        ]
+      },
+      { id: 'inst-staff-reports', label: 'HR Reports', icon: BarChart3 }
     ]
   },
   {
@@ -123,13 +223,34 @@ const MENU_ITEMS = [
     label: 'Communication',
     icon: MessageSquare,
     children: [
-      { id: 'inst-notices', label: 'Notices & Circulars', icon: Megaphone },
-      { id: 'inst-events', label: 'Events & Calendar', icon: Calendar },
-      { id: 'inst-communication', label: 'SMS & Email Gateway', icon: MessageSquare }
+      { id: 'inst-communication-inbox', label: 'Inbox', icon: Inbox },
+      { id: 'inst-notices', label: 'Announcements', icon: Megaphone },
+      { id: 'inst-communication-notifications', label: 'Notifications', icon: Bell },
+      { id: 'inst-communication-whatsapp', label: 'WhatsApp', icon: MessageSquare },
+      { id: 'inst-communication-sms', label: 'SMS Settings', icon: Phone }
     ]
   },
-  { id: 'inst-inventory', label: 'Inventory', icon: Boxes },
-  { id: 'inst-library', label: 'Library', icon: BookMarked },
+  {
+    id: 'grp-inventory',
+    label: 'Inventory',
+    icon: Boxes,
+    children: [
+      { id: 'inst-inventory-categories', label: 'Categories', icon: SlidersHorizontal },
+      { id: 'inst-inventory', label: 'Items', icon: Boxes },
+      { id: 'inst-inventory-receive', label: 'Receive Stock', icon: PackageCheck },
+      { id: 'inst-inventory-issue', label: 'Issue to Students', icon: UserPlus },
+      { id: 'inst-inventory-reports', label: 'Inventory Reports', icon: BarChart3 }
+    ]
+  },
+  {
+    id: 'grp-library',
+    label: 'Library',
+    icon: BookMarked,
+    children: [
+      { id: 'inst-library', label: 'Books', icon: BookOpen },
+      { id: 'inst-library-issue', label: 'Issue & Return', icon: RotateCcw }
+    ]
+  },
   {
     id: 'grp-transport-hostels',
     label: 'Transport & Hostels',
@@ -163,33 +284,62 @@ const MENU_ITEMS = [
   { id: 'inst-my-account', label: 'My Account', icon: User }
 ]
 
+const collectAncestorGroupIds = (items, targetRoute, ancestors = []) => {
+  for (const item of items) {
+    if (item.id === targetRoute && !item.children) {
+      return ancestors
+    }
+    if (item.children) {
+      const found = collectAncestorGroupIds(item.children, targetRoute, [...ancestors, item.id])
+      if (found) return found
+    }
+  }
+  return null
+}
+
+const hasActiveDescendant = (item, targetRoute) => {
+  if (!item.children) return item.id === targetRoute
+  return item.children.some(child => hasActiveDescendant(child, targetRoute))
+}
+
 export const InstituteAdminSidebar = ({
   currentRoute,
   onRouteChange,
+  currentInstitute,
   instituteName,
   isMobileOpen = false,
   onCloseMobile = () => {}
 }) => {
   const { user, logout } = useAuth()
+  const { students = [] } = useAppData()
   const [collapsed, setCollapsed] = useState(false)
+
+  const instStudentsCount = useMemo(() => {
+    const instId = currentInstitute?.id
+    if (!instId) return students.length
+    return students.filter(s => !s.instituteId || s.instituteId === instId).length
+  }, [students, currentInstitute?.id])
+
+  const menuItems = useMemo(() => buildMenuItems(instStudentsCount), [instStudentsCount])
 
   const userRole = user?.role || 'institute_admin'
   const canAccessRoute = (routeId) => canRoleAccessRoute(userRole, routeId)
 
-  const findGroupForRoute = (routeId) =>
-    MENU_ITEMS.find(item => item.children?.some(child => child.id === routeId))?.id || null
-
   const [openGroups, setOpenGroups] = useState(() => {
-    const activeGroup = findGroupForRoute(currentRoute)
-    return activeGroup ? { [activeGroup]: true } : {}
+    const ancestors = collectAncestorGroupIds(menuItems, currentRoute) || []
+    return ancestors.reduce((acc, id) => ({ ...acc, [id]: true }), {})
   })
 
   useEffect(() => {
-    const activeGroup = findGroupForRoute(currentRoute)
-    if (activeGroup) {
-      setOpenGroups(prev => (prev[activeGroup] ? prev : { ...prev, [activeGroup]: true }))
+    const ancestors = collectAncestorGroupIds(menuItems, currentRoute)
+    if (ancestors && ancestors.length > 0) {
+      setOpenGroups(prev => {
+        const next = { ...prev }
+        ancestors.forEach(id => { next[id] = true })
+        return next
+      })
     }
-  }, [currentRoute])
+  }, [currentRoute, menuItems])
 
   const handleNavClick = (id) => {
     preloadRoute(id)
@@ -203,6 +353,92 @@ export const InstituteAdminSidebar = ({
     if (collapsed) setCollapsed(false)
     setOpenGroups(prev => ({ ...prev, [groupId]: !prev[groupId] }))
   }
+
+  const renderMenuNodes = (nodes, depth = 0) =>
+    nodes.map(item => {
+      const Icon = item.icon
+
+      if (!item.children) {
+        if (!canAccessRoute(item.id)) return null
+        const active = currentRoute === item.id
+        return (
+          <div key={item.id} className="relative">
+            {active && (
+              <div
+                className={`absolute ${depth === 0 ? 'left-0' : '-left-[14px]'} top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10`}
+              />
+            )}
+            <button
+              type="button"
+              onClick={() => handleNavClick(item.id)}
+              onMouseEnter={() => preloadRoute(item.id)}
+              className={`w-full flex items-center justify-between gap-2 text-left transition-all cursor-pointer group ${
+                depth === 0 ? 'px-3.5 py-2.5 rounded-xl' : 'px-2.5 py-2 rounded-lg text-[13px]'
+              } ${
+                active
+                  ? 'bg-[#ecfdf5] text-emerald-800 font-semibold shadow-2xs'
+                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
+              }`}
+            >
+              <span className="flex items-center gap-2.5 min-w-0">
+                <Icon
+                  className={`${depth === 0 ? 'w-[18px] h-[18px]' : 'w-3.5 h-3.5'} shrink-0 transition-colors ${
+                    active ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
+                  }`}
+                />
+                {(!collapsed || isMobileOpen) && <span className="truncate">{item.label}</span>}
+              </span>
+              {(!collapsed || isMobileOpen) && typeof item.badge === 'number' && (
+                <span className="px-2 py-0.5 rounded-full bg-sky-500 text-white text-[10px] font-bold font-mono shrink-0">
+                  {item.badge}
+                </span>
+              )}
+            </button>
+          </div>
+        )
+      }
+
+      const groupActive = hasActiveDescendant(item, currentRoute)
+      const isOpen = Boolean(openGroups[item.id])
+
+      return (
+        <div key={item.id}>
+          <button
+            type="button"
+            onClick={() => toggleGroup(item.id)}
+            className={`w-full flex items-center justify-between transition-colors cursor-pointer group ${
+              depth === 0 ? 'px-3.5 py-2.5 rounded-xl' : 'px-2.5 py-2 rounded-lg text-[13px]'
+            } ${
+              groupActive
+                ? 'text-emerald-800 bg-[#ecfdf5]/60 font-semibold'
+                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
+            }`}
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <Icon
+                className={`${depth === 0 ? 'w-[18px] h-[18px]' : 'w-3.5 h-3.5'} shrink-0 transition-colors ${
+                  groupActive ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
+                }`}
+              />
+              {(!collapsed || isMobileOpen) && <span className="truncate">{item.label}</span>}
+            </div>
+            {(!collapsed || isMobileOpen) && (
+              <ChevronRight
+                className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform ${
+                  isOpen ? 'rotate-90 text-emerald-600' : ''
+                }`}
+              />
+            )}
+          </button>
+
+          {(!collapsed || isMobileOpen) && isOpen && (
+            <div className="mt-1 pl-3 space-y-1 border-l-2 border-slate-100 ml-4">
+              {renderMenuNodes(item.children, depth + 1)}
+            </div>
+          )}
+        </div>
+      )
+    })
 
   return (
     <>
@@ -259,105 +495,7 @@ export const InstituteAdminSidebar = ({
 
         {/* Navigation Menu */}
         <nav className="flex-1 py-3 px-3 space-y-1 overflow-y-auto dark-scroll text-[13.5px]">
-          {MENU_ITEMS.map(item => {
-            const Icon = item.icon
-
-            if (!item.children) {
-              if (!canAccessRoute(item.id)) return null
-              const active = currentRoute === item.id
-              return (
-                <div key={item.id} className="relative">
-                  {active && (
-                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10" />
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => handleNavClick(item.id)}
-                    onMouseEnter={() => preloadRoute(item.id)}
-                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
-                      active
-                        ? 'bg-[#ecfdf5] text-emerald-800 font-semibold shadow-2xs'
-                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
-                    }`}
-                  >
-                    <Icon
-                      className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                        active ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
-                      }`}
-                    />
-                    {(!collapsed || isMobileOpen) && <span className="truncate">{item.label}</span>}
-                  </button>
-                </div>
-              )
-            }
-
-            const allowedChildren = item.children.filter(child => canAccessRoute(child.id))
-            if (allowedChildren.length === 0) return null
-
-            const isGroupActive = allowedChildren.some(child => child.id === currentRoute)
-            const isOpen = Boolean(openGroups[item.id])
-
-            return (
-              <div key={item.id}>
-                <button
-                  type="button"
-                  onClick={() => toggleGroup(item.id)}
-                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-colors cursor-pointer group ${
-                    isGroupActive
-                      ? 'text-emerald-800 bg-[#ecfdf5]/60 font-semibold'
-                      : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
-                  }`}
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <Icon
-                      className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                        isGroupActive ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
-                      }`}
-                    />
-                    {(!collapsed || isMobileOpen) && <span className="truncate">{item.label}</span>}
-                  </div>
-                  {(!collapsed || isMobileOpen) && (
-                    <ChevronRight
-                      className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform ${
-                        isOpen ? 'rotate-90 text-emerald-600' : ''
-                      }`}
-                    />
-                  )}
-                </button>
-
-                {(!collapsed || isMobileOpen) && isOpen && (
-                  <div className="mt-1 pl-3.5 space-y-1 border-l-2 border-slate-100 ml-5">
-                    {allowedChildren.map(child => {
-                      const ChildIcon = child.icon
-                      const active = currentRoute === child.id
-                      return (
-                        <div key={child.id} className="relative">
-                          {active && (
-                            <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10" />
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => handleNavClick(child.id)}
-                            onMouseEnter={() => preloadRoute(child.id)}
-                            className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
-                              active
-                                ? 'bg-[#ecfdf5] text-emerald-800 font-semibold'
-                                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
-                            }`}
-                          >
-                            <ChildIcon
-                              className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-emerald-600' : 'text-slate-400'}`}
-                            />
-                            <span className="truncate">{child.label}</span>
-                          </button>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-            )
-          })}
+          {renderMenuNodes(menuItems, 0)}
         </nav>
 
         {/* Sign Out Footer */}
