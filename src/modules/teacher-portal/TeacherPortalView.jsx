@@ -49,6 +49,7 @@ import {
   recordMyTimeIn,
   recordMyTimeOut
 } from '../institute-admin/attendance/MyAttendanceView'
+import TeacherStudentsView from './TeacherStudentsView'
 
 export default function TeacherPortalView() {
   const { user, logout } = useAuth()
@@ -60,6 +61,38 @@ export default function TeacherPortalView() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+
+  // Student Count for Teacher Portal (reactive to local roster)
+  const [portalStudentsCount, setPortalStudentsCount] = useState(() => {
+    try {
+      const saved = localStorage.getItem('teacher_portal_students')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (Array.isArray(parsed)) return parsed.length
+      }
+    } catch {}
+    return 0
+  })
+
+  useEffect(() => {
+    const handleCountUpdate = () => {
+      try {
+        const saved = localStorage.getItem('teacher_portal_students')
+        if (saved) {
+          const parsed = JSON.parse(saved)
+          if (Array.isArray(parsed)) setPortalStudentsCount(parsed.length)
+        } else {
+          setPortalStudentsCount(0)
+        }
+      } catch {}
+    }
+    window.addEventListener('storage', handleCountUpdate)
+    const timer = setInterval(handleCountUpdate, 1500)
+    return () => {
+      window.removeEventListener('storage', handleCountUpdate)
+      clearInterval(timer)
+    }
+  }, [])
 
   // Accordion Sidebar Groups
   const [openSidebarGroups, setOpenSidebarGroups] = useState({
@@ -273,11 +306,19 @@ export default function TeacherPortalView() {
           {/* 2. Students (Dropdown) */}
           <div>
             <button
-              onClick={() => toggleGroup('students')}
-              className="w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer group"
+              onClick={() => {
+                toggleGroup('students')
+              }}
+              className={`w-full flex items-center justify-between px-3.5 py-2 rounded-xl transition-colors cursor-pointer group ${
+                activeRoute === 'students'
+                  ? 'bg-slate-800/80 text-white font-bold'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+              }`}
             >
               <div className="flex items-center gap-3 min-w-0">
-                <Users className="w-4 h-4 text-slate-400 group-hover:text-purple-400 shrink-0" />
+                <Users className={`w-4 h-4 shrink-0 transition-colors ${
+                  activeRoute === 'students' ? 'text-purple-400' : 'text-slate-400 group-hover:text-purple-400'
+                }`} />
                 {!isSidebarCollapsed && <span className="truncate">Students</span>}
               </div>
               {!isSidebarCollapsed && (
@@ -285,15 +326,29 @@ export default function TeacherPortalView() {
               )}
             </button>
             {openSidebarGroups.students && !isSidebarCollapsed && (
-              <div className="mt-1 pl-4 space-y-1 border-l border-slate-800 ml-5 text-xs text-slate-400">
+              <div className="mt-1 pl-3 space-y-1 border-l border-slate-800 ml-5 text-xs">
                 <button
                   onClick={() => {
-                    setActiveModal('mark-attendance')
+                    setActiveRoute('students')
                     setIsMobileMenuOpen(false)
                   }}
-                  className="w-full text-left py-1.5 px-2 rounded-lg hover:text-white hover:bg-slate-800/50"
+                  className={`w-full flex items-center justify-between py-1.5 px-2.5 rounded-lg transition-colors cursor-pointer ${
+                    activeRoute === 'students'
+                      ? 'bg-gradient-to-r from-purple-600/30 to-indigo-600/30 text-purple-200 font-bold border border-purple-500/40 shadow-xs'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                  }`}
                 >
-                  My Student Roster
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+                    <span>All Students</span>
+                  </div>
+                  <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${
+                    activeRoute === 'students'
+                      ? 'bg-sky-500 text-white shadow-2xs'
+                      : 'bg-slate-800 text-slate-400'
+                  }`}>
+                    {portalStudentsCount}
+                  </span>
                 </button>
               </div>
             )}
@@ -580,59 +635,70 @@ export default function TeacherPortalView() {
           </div>
         </header>
 
-        {/* Sub-Header / Quick Action Bar matching screenshot */}
-        <div className="bg-white dark:bg-slate-900 border-b border-slate-200/90 dark:border-slate-800 px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 shrink-0">
-          <div className="flex items-center gap-2 font-bold text-sm text-slate-800 dark:text-white">
-            <BookOpen className="w-4 h-4 text-blue-600" />
-            <span>My Dashboard</span>
-          </div>
+        {/* ========================================================= */}
+        {/* 2. BODY CONTENT (STUDENTS vs DASHBOARD) */}
+        {/* ========================================================= */}
+        {activeRoute === 'students' ? (
+          <TeacherStudentsView
+            onBack={() => setActiveRoute('dashboard')}
+            onOpenModal={(modalName) => setActiveModal(modalName)}
+            teacherName={teacherName}
+          />
+        ) : (
+          <>
+            {/* Sub-Header / Quick Action Bar matching screenshot */}
+            <div className="bg-white dark:bg-slate-900 border-b border-slate-200/90 dark:border-slate-800 px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 shrink-0">
+              <div className="flex items-center gap-2 font-bold text-sm text-slate-800 dark:text-white">
+                <BookOpen className="w-4 h-4 text-blue-600" />
+                <span>My Dashboard</span>
+              </div>
 
-          {/* Top Quick Links Bar from screenshot */}
-          <div className="hidden lg:flex items-center gap-4 text-xs font-semibold text-slate-600 dark:text-slate-300">
-            <button
-              onClick={() => setActiveModal('assignments')}
-              className="flex items-center gap-1.5 hover:text-purple-600 dark:hover:text-purple-400 transition-colors cursor-pointer"
-            >
-              <BookMarked className="w-3.5 h-3.5" />
-              <span>Assignments</span>
-            </button>
-            <button
-              onClick={() => setActiveModal('announcements')}
-              className="flex items-center gap-1.5 hover:text-purple-600 dark:hover:text-purple-400 transition-colors cursor-pointer"
-            >
-              <Megaphone className="w-3.5 h-3.5" />
-              <span>Announcements</span>
-            </button>
-            <button
-              onClick={() => setActiveModal('mark-attendance')}
-              className="flex items-center gap-1.5 hover:text-purple-600 dark:hover:text-purple-400 transition-colors cursor-pointer"
-            >
-              <CheckSquare className="w-3.5 h-3.5" />
-              <span>Mark Attendance</span>
-            </button>
-            <button
-              onClick={() => setActiveModal('marks-entry')}
-              className="flex items-center gap-1.5 hover:text-purple-600 dark:hover:text-purple-400 transition-colors cursor-pointer"
-            >
-              <FileEdit className="w-3.5 h-3.5" />
-              <span>Marks Entry</span>
-            </button>
-            <button
-              onClick={() => setActiveModal('timetable')}
-              className="flex items-center gap-1.5 hover:text-purple-600 dark:hover:text-purple-400 transition-colors cursor-pointer"
-            >
-              <Calendar className="w-3.5 h-3.5" />
-              <span>Timetables & Exam Schedules</span>
-            </button>
-            <button
-              onClick={() => setActiveModal('salary')}
-              className="flex items-center gap-1.5 hover:text-purple-600 dark:hover:text-purple-400 transition-colors cursor-pointer"
-            >
-              <Wallet className="w-3.5 h-3.5" />
-              <span>My Salary</span>
-            </button>
-          </div>
-        </div>
+              {/* Top Quick Links Bar from screenshot */}
+              <div className="hidden lg:flex items-center gap-4 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                <button
+                  onClick={() => setActiveModal('assignments')}
+                  className="flex items-center gap-1.5 hover:text-purple-600 dark:hover:text-purple-400 transition-colors cursor-pointer"
+                >
+                  <BookMarked className="w-3.5 h-3.5" />
+                  <span>Assignments</span>
+                </button>
+                <button
+                  onClick={() => setActiveModal('announcements')}
+                  className="flex items-center gap-1.5 hover:text-purple-600 dark:hover:text-purple-400 transition-colors cursor-pointer"
+                >
+                  <Megaphone className="w-3.5 h-3.5" />
+                  <span>Announcements</span>
+                </button>
+                <button
+                  onClick={() => setActiveModal('mark-attendance')}
+                  className="flex items-center gap-1.5 hover:text-purple-600 dark:hover:text-purple-400 transition-colors cursor-pointer"
+                >
+                  <CheckSquare className="w-3.5 h-3.5" />
+                  <span>Mark Attendance</span>
+                </button>
+                <button
+                  onClick={() => setActiveModal('marks-entry')}
+                  className="flex items-center gap-1.5 hover:text-purple-600 dark:hover:text-purple-400 transition-colors cursor-pointer"
+                >
+                  <FileEdit className="w-3.5 h-3.5" />
+                  <span>Marks Entry</span>
+                </button>
+                <button
+                  onClick={() => setActiveModal('timetable')}
+                  className="flex items-center gap-1.5 hover:text-purple-600 dark:hover:text-purple-400 transition-colors cursor-pointer"
+                >
+                  <Calendar className="w-3.5 h-3.5" />
+                  <span>Timetables & Exam Schedules</span>
+                </button>
+                <button
+                  onClick={() => setActiveModal('salary')}
+                  className="flex items-center gap-1.5 hover:text-purple-600 dark:hover:text-purple-400 transition-colors cursor-pointer"
+                >
+                  <Wallet className="w-3.5 h-3.5" />
+                  <span>My Salary</span>
+                </button>
+              </div>
+            </div>
 
         {/* ========================================================= */}
         {/* 3. MAIN DASHBOARD SCROLL CONTENT */}
@@ -805,8 +871,14 @@ export default function TeacherPortalView() {
             </div>
 
             {/* 4. Students */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold shrink-0">
+            <div
+              onClick={() => {
+                setOpenSidebarGroups((prev) => ({ ...prev, students: true }))
+                setActiveRoute('students')
+              }}
+              className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs flex items-center gap-4 cursor-pointer hover:border-emerald-400/80 hover:shadow-md transition-all group"
+            >
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold shrink-0 group-hover:scale-105 transition-transform">
                 <Users className="w-5 h-5" />
               </div>
               <div className="min-w-0">
@@ -814,7 +886,7 @@ export default function TeacherPortalView() {
                   Students
                 </span>
                 <span className="text-2xl font-black text-slate-900 dark:text-white leading-none block my-1">
-                  0
+                  {portalStudentsCount}
                 </span>
                 <span className="text-[11px] text-slate-400 dark:text-slate-500">
                   In your classes
@@ -983,6 +1055,8 @@ export default function TeacherPortalView() {
             </div>
           </div>
         </main>
+      </>
+    )}
       </div>
 
       {/* ========================================================= */}
