@@ -115,7 +115,7 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
             <div>
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border shadow-2xs mb-5 self-start bg-white/20 text-white border-white/30 backdrop-blur-sm">
                 <Sparkles className="w-3.5 h-3.5 text-white" />
-                <span>Unified School Portal</span>
+                <span>Unified Access Gateway</span>
               </div>
 
               <div className="flex items-center gap-2.5 mb-4">
@@ -128,13 +128,13 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
               </div>
 
               <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-heading">
-                School Management Portal
+                EIMS Account Login
               </h1>
               <div className="mt-1 flex items-center gap-2">
-                <span className="text-xs font-bold text-white/90">Single Sign-In Portal</span>
+                <span className="text-xs font-bold text-white/90">Single Sign-In for All Portals</span>
               </div>
               <p className="text-xs sm:text-sm text-white/85 leading-relaxed mt-2 mb-4 md:mb-5">
-                Complete School Academic Operating System for Primary, Middle, Matriculation &amp; Cambridge O-Level institutions.
+                Sign in with your email and password. Your account automatically routes you to the right dashboard.
               </p>
 
               {/* Feature Highlights */}
