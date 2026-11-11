@@ -32,6 +32,7 @@ import {
   HelpCircle
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
+import { useAuth } from '../../../context/AuthContext'
 import { useToast } from '../../../context/ToastContext'
 import { PrintableFeeChallanModal } from '../../../components/common/PrintableFeeChallanModal'
 import { BANK_PRESETS, QrCodeSvg } from '../../../components/common/PrintHelpers'
@@ -72,6 +73,49 @@ const getInvoiceRemaining = (fee) => {
   return Math.max(0, getInvoiceTotal(fee) - getInvoicePaid(fee) - getInvoiceWaiver(fee))
 }
 
+const formatTxnDateTime = (val) => {
+  if (!val) return '—'
+  const dt = new Date(val)
+  if (Number.isNaN(dt.getTime())) return String(val).slice(0, 16)
+  const datePart = dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+  const timePart = dt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })
+  return `${datePart}, ${timePart}`
+}
+
+const getInvoiceTransactions = (fee, defaultBy = 'Admin') => {
+  if (!fee) return []
+  if (Array.isArray(fee.transactions) && fee.transactions.length > 0) {
+    return fee.transactions
+  }
+  const rows = []
+  const total = getInvoiceTotal(fee)
+  const paid = getInvoicePaid(fee)
+  const waived = getInvoiceWaiver(fee)
+  if (paid > 0) {
+    rows.push({
+      id: `${fee.id}-cash`,
+      date: fee.paidAt || fee.createdAt || fee.dueDate,
+      type: 'Cash',
+      amount: paid,
+      balanceAfter: Math.max(0, total - paid - waived),
+      by: fee.collectedBy || defaultBy,
+      reason: '—'
+    })
+  }
+  if (waived > 0) {
+    rows.push({
+      id: `${fee.id}-waiver`,
+      date: fee.waivedAt || fee.paidAt || fee.createdAt || fee.dueDate,
+      type: 'Waiver / discount',
+      amount: waived,
+      balanceAfter: null,
+      by: fee.waivedBy || defaultBy,
+      reason: fee.discountReason || 'Management approval'
+    })
+  }
+  return rows
+}
+
 export const StudentBillingHistoryView = ({
   studentId = null,
   currentInstitute,
@@ -92,9 +136,11 @@ export const StudentBillingHistoryView = ({
     sendCommunicationBlast,
     logAuditEvent
   } = useAppData()
+  const { user: authUser } = useAuth() || {}
   const { toast } = useToast()
 
   const instId = currentInstitute?.id || 'default'
+  const actorName = authUser?.name || currentInstitute?.adminName || 'Admin'
 
   const instituteStudents = useMemo(() => {
     if (!currentInstitute?.id) return students
@@ -543,8 +589,22 @@ export const StudentBillingHistoryView = ({
 
     setProcessingId(fee.id)
     try {
+      const nowIso = new Date().toISOString()
       const newPaid = getInvoicePaid(fee) + appliedCash
       const nextStatus = nextRemaining <= 0 ? 'Paid' : 'Partial'
+      const prevTxns = getInvoiceTransactions(fee, actorName)
+      const nextTxns = [
+        ...prevTxns,
+        {
+          id: `txn-pay-${Date.now()}`,
+          date: nowIso,
+          type: paymentMethod || 'Cash',
+          amount: appliedCash,
+          balanceAfter: nextRemaining,
+          by: actorName,
+          reason: waiveFineChecked ? (waiveFineReasons[fee.id] || 'Late fee waived') : '—'
+        }
+      ]
 
       await updateItem('fees', fee.id, {
         paidAmount: newPaid,
@@ -553,8 +613,10 @@ export const StudentBillingHistoryView = ({
         waiveFineReason: waiveFineChecked ? (waiveFineReasons[fee.id] || 'Late fee waived') : fee.waiveFineReason,
         status: nextStatus,
         paymentMethod,
-        paidAt: new Date().toISOString(),
-        smsSent: smsChecks[fee.id] !== false
+        collectedBy: actorName,
+        paidAt: nowIso,
+        smsSent: smsChecks[fee.id] !== false,
+        transactions: nextTxns
       })
 
       if (appliedCash > 0) {
@@ -632,14 +694,30 @@ export const StudentBillingHistoryView = ({
       return
     }
     try {
+      const nowIso = new Date().toISOString()
       const nextWaiver = getInvoiceWaiver(waiverModalFee) + amt
       const nextRem = Math.max(0, rem - amt)
       const reason = waiverReasonInput.trim()
+      const prevTxns = getInvoiceTransactions(waiverModalFee, actorName)
+      const nextTxns = [
+        ...prevTxns,
+        {
+          id: `txn-waiver-${Date.now()}`,
+          date: nowIso,
+          type: 'Waiver / discount',
+          amount: amt,
+          balanceAfter: nextRem,
+          by: actorName,
+          reason
+        }
+      ]
       await updateItem('fees', waiverModalFee.id, {
         discount: nextWaiver,
         discountReason: reason,
-        waivedAt: new Date().toISOString(),
-        status: nextRem <= 0 ? 'Paid' : waiverModalFee.status
+        waivedBy: actorName,
+        waivedAt: nowIso,
+        status: nextRem <= 0 ? 'Paid' : waiverModalFee.status,
+        transactions: nextTxns
       })
       logAuditEvent?.(
         `Applied Waiver (${formatMoney(amt)}) for ${activeStudent?.fullName || activeStudent?.name} — ${reason}`,
@@ -666,48 +744,109 @@ export const StudentBillingHistoryView = ({
     }
   }
 
+  const executeReversePayment = async (fee) => {
+    try {
+      const nowIso = new Date().toISOString()
+      const paidNow = getInvoicePaid(fee)
+      const prevTxns = getInvoiceTransactions(fee, actorName)
+      const baseAmount = Math.max(0, Number(fee.amount || 0))
+      const nextTxns = [
+        ...prevTxns,
+        {
+          id: `txn-rev-pay-${Date.now()}`,
+          date: nowIso,
+          type: 'Payment reversal',
+          amount: -paidNow,
+          balanceAfter: baseAmount,
+          by: actorName,
+          reason: 'Payment reversed by admin'
+        }
+      ]
+      await updateItem('fees', fee.id, {
+        paidAmount: 0,
+        finalPaid: 0,
+        discount: 0,
+        discountAmount: 0,
+        waiver: 0,
+        waivedLateFee: 0,
+        fine: 0,
+        lateFine: 0,
+        discountReason: '',
+        paidAt: null,
+        waivedAt: null,
+        status: 'Pending',
+        transactions: nextTxns
+      })
+      if (paidNow > 0) {
+        recordCampusLedgerTransaction(instId, {
+          id: `VCH-REV-${fee.id}-${Date.now()}`,
+          date: nowIso.split('T')[0],
+          type: 'Expense',
+          category: 'Fee Payment Reversal',
+          debit: paidNow,
+          credit: 0,
+          account: fee.paymentMethod || 'Cash',
+          status: 'Cleared',
+          description: `Payment reversal for ${activeStudent?.fullName || activeStudent?.name} (${fee.feeMonth || fee.title || 'Fee'})`,
+          ref: `REV-${fee.id}-${Date.now()}`
+        })
+      }
+      logAuditEvent?.(
+        `Reversed payment (${formatMoney(paidNow)}) for ${activeStudent?.fullName || activeStudent?.name}`,
+        currentInstitute?.name || 'School Admin',
+        'Success'
+      )
+      toast(`Reversed payment (${formatMoney(paidNow)}). Invoice returned to unpaid.`, 'info')
+    } catch (err) {
+      toast(err?.message || 'Reversal failed.', 'error')
+    }
+  }
+
+  const handleReversePaymentPrompt = (fee) => {
+    const paidNow = getInvoicePaid(fee)
+    const ok = window.confirm(
+      `Reverse this payment?\n\nStudent: ${activeStudent?.fullName || activeStudent?.name}\nInvoice: ${fee.title || fee.feeName || fee.feeMonth || 'Monthly'}\nCash to reverse: ${formatMoney(paidNow)}\n\nThis clears cash paid, waivers, receipts, and late fine. The invoice returns to unpaid. This cannot be undone.`
+    )
+    if (ok) {
+      executeReversePayment(fee)
+    }
+  }
+
   const handleConfirmReverse = async () => {
     if (!reverseConfirm?.fee) return
     const { type, fee } = reverseConfirm
     try {
+      const nowIso = new Date().toISOString()
       const paidNow = getInvoicePaid(fee)
       const waivedNow = getInvoiceWaiver(fee)
       if (type === 'waiver') {
         const nextRemaining = Math.max(0, Number(fee.amount || 0) + Number(fee.fine || fee.lateFine || 0) - paidNow)
+        const prevTxns = getInvoiceTransactions(fee, actorName)
+        const nextTxns = [
+          ...prevTxns,
+          {
+            id: `txn-rev-waiver-${Date.now()}`,
+            date: nowIso,
+            type: 'Waiver reversal',
+            amount: -waivedNow,
+            balanceAfter: null,
+            by: actorName,
+            reason: 'Waiver reversed by admin'
+          }
+        ]
         await updateItem('fees', fee.id, {
           discount: 0,
           discountAmount: 0,
           waiver: 0,
           waivedLateFee: 0,
           discountReason: '',
-          status: nextRemaining <= 0 ? 'Paid' : paidNow > 0 ? 'Partial' : 'Pending'
+          status: nextRemaining <= 0 ? 'Paid' : paidNow > 0 ? 'Partial' : 'Pending',
+          transactions: nextTxns
         })
         logAuditEvent?.(`Reversed waiver (${formatMoney(waivedNow)}) for ${activeStudent?.fullName || activeStudent?.name}`, currentInstitute?.name || 'School Admin', 'Success')
         toast(`Reversed waiver of ${formatMoney(waivedNow)}.`, 'info')
       } else {
-        const nextRemaining = Math.max(0, getInvoiceTotal(fee) - waivedNow)
-        await updateItem('fees', fee.id, {
-          paidAmount: 0,
-          finalPaid: 0,
-          paidAt: null,
-          status: nextRemaining <= 0 ? 'Paid' : 'Pending'
-        })
-        if (paidNow > 0) {
-          recordCampusLedgerTransaction(instId, {
-            id: `VCH-REV-${fee.id}-${Date.now()}`,
-            date: new Date().toISOString().split('T')[0],
-            type: 'Expense',
-            category: 'Fee Payment Reversal',
-            debit: paidNow,
-            credit: 0,
-            account: fee.paymentMethod || 'Cash',
-            status: 'Cleared',
-            description: `Payment reversal for ${activeStudent?.fullName || activeStudent?.name} (${fee.feeMonth || fee.title || 'Fee'})`,
-            ref: `REV-${fee.id}-${Date.now()}`
-          })
-        }
-        logAuditEvent?.(`Reversed payment (${formatMoney(paidNow)}) for ${activeStudent?.fullName || activeStudent?.name}`, currentInstitute?.name || 'School Admin', 'Success')
-        toast(`Reversed cash payment of ${formatMoney(paidNow)}.`, 'info')
+        await executeReversePayment(fee)
       }
       setReverseConfirm(null)
     } catch (err) {
@@ -1260,7 +1399,7 @@ export const StudentBillingHistoryView = ({
                               <span>Reverse Waiver</span>
                             </button>
                           )}
-                          {(paid > 0 || waived > 0) && (
+                          {(paid > 0 || waived > 0 || (Array.isArray(fee.transactions) && fee.transactions.length > 0)) && (
                             <button
                               type="button"
                               onClick={() => setTransactionsModalFee(fee)}
@@ -1273,7 +1412,7 @@ export const StudentBillingHistoryView = ({
                           {paid > 0 && (
                             <button
                               type="button"
-                              onClick={() => setReverseConfirm({ type: 'payment', fee })}
+                              onClick={() => handleReversePaymentPrompt(fee)}
                               className="px-3 py-1.5 rounded-lg border border-rose-300 text-rose-600 hover:bg-rose-50 text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer"
                             >
                               <RotateCcw className="w-3.5 h-3.5" />
@@ -1722,52 +1861,110 @@ export const StudentBillingHistoryView = ({
         </div>
       )}
 
-      {/* Invoice Transactions History Modal */}
-      {transactionsModalFee && (
-        <div className="fixed inset-0 z-[110] bg-slate-900/50 backdrop-blur-[1px] flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200">
-            <div className="bg-slate-800 px-5 py-3.5 flex items-center justify-between text-white">
-              <div className="flex items-center gap-2 text-sm font-bold">
-                <History className="w-4 h-4 text-sky-400" />
-                <span>Invoice Transactions — #{transactionsModalFee.receiptNo || String(transactionsModalFee.id).slice(-7)}</span>
-              </div>
-              <button type="button" onClick={() => setTransactionsModalFee(null)} className="text-white/80 hover:text-white cursor-pointer">✕</button>
-            </div>
-            <div className="p-5 space-y-3 text-xs">
-              <div className="border border-slate-200 rounded-xl divide-y divide-slate-100">
-                <div className="px-4 py-2.5 flex items-center justify-between">
-                  <div>
-                    <p className="font-bold text-slate-800">Invoice Created</p>
-                    <p className="text-[10px] text-slate-400">{transactionsModalFee.feeMonth || transactionsModalFee.title || 'Tuition Fee'}</p>
-                  </div>
-                  <span className="font-bold text-slate-900">{formatMoney(getInvoiceTotal(transactionsModalFee))}</span>
+      {/* Invoice Transaction History Modal (Pick 2) */}
+      {transactionsModalFee && (() => {
+        const txnRows = getInvoiceTransactions(transactionsModalFee, actorName)
+        const typeBadgeClass = (typeStr) => {
+          const lower = String(typeStr || '').toLowerCase()
+          if (lower.includes('waiver reversal')) return 'bg-orange-500 text-white'
+          if (lower.includes('payment reversal') || lower.includes('reversal')) return 'bg-rose-500 text-white'
+          if (lower.includes('waiver')) return 'bg-cyan-500 text-white'
+          return 'bg-emerald-500 text-white'
+        }
+        const amountClass = (txn) => {
+          if (Number(txn.amount) < 0) return 'text-rose-500 font-bold'
+          if (String(txn.type || '').toLowerCase().includes('waiver')) return 'text-cyan-600 font-bold'
+          return 'text-emerald-600 font-bold'
+        }
+        return (
+          <div className="fixed inset-0 z-[110] bg-slate-900/50 backdrop-blur-[1px] flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl overflow-hidden border border-slate-200">
+              <div className="px-6 pt-5 pb-2 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-base font-bold text-slate-800">
+                  <History className="w-4 h-4 text-slate-600" />
+                  <span>Transaction History</span>
                 </div>
-                {getInvoicePaid(transactionsModalFee) > 0 && (
-                  <div className="px-4 py-2.5 flex items-center justify-between bg-emerald-50/40">
-                    <div>
-                      <p className="font-bold text-emerald-700">Cash Payment Received ({transactionsModalFee.paymentMethod || 'Cash'})</p>
-                      <p className="text-[10px] text-slate-500">{String(transactionsModalFee.paidAt || transactionsModalFee.dueDate || 'Recorded').slice(0, 10)}</p>
-                    </div>
-                    <span className="font-extrabold text-emerald-700">+ {formatMoney(getInvoicePaid(transactionsModalFee))}</span>
-                  </div>
-                )}
-                {getInvoiceWaiver(transactionsModalFee) > 0 && (
-                  <div className="px-4 py-2.5 flex items-center justify-between bg-cyan-50/40">
-                    <div>
-                      <p className="font-bold text-cyan-700">Waiver / Discount Granted</p>
-                      <p className="text-[10px] text-slate-500">{transactionsModalFee.discountReason || 'Management approval'}</p>
-                    </div>
-                    <span className="font-extrabold text-cyan-700">{formatMoney(getInvoiceWaiver(transactionsModalFee))}</span>
-                  </div>
-                )}
+                <button
+                  type="button"
+                  onClick={() => setTransactionsModalFee(null)}
+                  className="text-slate-400 hover:text-slate-600 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
-              <div className="flex justify-end">
-                <button type="button" onClick={() => setTransactionsModalFee(null)} className="px-4 py-1.5 rounded-lg bg-slate-800 text-white font-semibold cursor-pointer">Close</button>
+              <div className="px-6 pb-5 space-y-4">
+                <p className="text-xs text-slate-500">
+                  {transactionsModalFee.title || transactionsModalFee.feeName || 'Tuition'} —{' '}
+                  {transactionsModalFee.feeMonth || 'Monthly'}
+                </p>
+
+                <div className="overflow-x-auto border border-slate-200 rounded-lg">
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-700 font-semibold">
+                      <tr>
+                        <th className="py-2.5 px-3 w-10">#</th>
+                        <th className="py-2.5 px-3">Date &amp; time</th>
+                        <th className="py-2.5 px-3">Type</th>
+                        <th className="py-2.5 px-3 text-right">Amount</th>
+                        <th className="py-2.5 px-3 text-right">Balance after</th>
+                        <th className="py-2.5 px-3">By</th>
+                        <th className="py-2.5 px-3">Reason</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {txnRows.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="py-6 text-center text-slate-400">
+                            No transactions recorded for this invoice yet.
+                          </td>
+                        </tr>
+                      ) : (
+                        txnRows.map((txn, idx) => (
+                          <tr key={txn.id || idx} className="hover:bg-slate-50/60">
+                            <td className="py-2.5 px-3 text-slate-600">{idx + 1}</td>
+                            <td className="py-2.5 px-3 text-slate-700 whitespace-nowrap">
+                              {formatTxnDateTime(txn.date)}
+                            </td>
+                            <td className="py-2.5 px-3">
+                              <span className={`inline-block px-2 py-0.5 rounded text-[11px] font-bold whitespace-nowrap ${typeBadgeClass(txn.type)}`}>
+                                {txn.type}
+                              </span>
+                            </td>
+                            <td className={`py-2.5 px-3 text-right whitespace-nowrap ${amountClass(txn)}`}>
+                              {Number(txn.amount) < 0
+                                ? `-${formatMoney(Math.abs(txn.amount))}`
+                                : formatMoney(txn.amount)}
+                            </td>
+                            <td className="py-2.5 px-3 text-right text-slate-600 whitespace-nowrap">
+                              {txn.balanceAfter != null ? formatMoney(txn.balanceAfter) : '—'}
+                            </td>
+                            <td className="py-2.5 px-3 text-slate-700 whitespace-nowrap">
+                              {txn.by || actorName}
+                            </td>
+                            <td className="py-2.5 px-3 text-slate-500">
+                              {txn.reason || '—'}
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setTransactionsModalFee(null)}
+                    className="px-4 py-2 rounded-lg bg-slate-500 hover:bg-slate-600 text-white text-xs font-semibold cursor-pointer"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
 
       {/* Cash Receipt Slip Viewer & Print Modal */}
       {receiptSlipFee && (
