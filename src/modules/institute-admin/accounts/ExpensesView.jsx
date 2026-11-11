@@ -23,7 +23,8 @@ import {
   CreditCard,
   FileSpreadsheet,
   Table,
-  Send
+  Send,
+  Printer
 } from 'lucide-react'
 import { useToast } from '../../../context/ToastContext'
 import { recordCampusLedgerTransaction } from './CampusAccountsView'
@@ -389,8 +390,13 @@ export const ExpensesView = ({
     return () => document.removeEventListener('mousedown', fn)
   }, [])
 
-  // Modals: View Details | Add Payment | Edit Expense | Vendor History
-  const [detailsExpense, setDetailsExpense] = useState(null)
+  // Detail Page & Modals: View Details | Add Payment | Edit Expense | Vendor History | Receipt Preview
+  const [detailsExpenseId, setDetailsExpenseId] = useState(null)
+  const detailsExpense = useMemo(
+    () => expenses.find((e) => e.id === detailsExpenseId) || null,
+    [expenses, detailsExpenseId]
+  )
+  const [receiptExpense, setReceiptExpense] = useState(null)
   const [paymentExpense, setPaymentExpense] = useState(null)
   const [payAmount, setPayAmount] = useState('')
   const [payMethod, setPayMethod] = useState('Cash')
@@ -662,8 +668,99 @@ export const ExpensesView = ({
   const handleDeleteExpense = (id) => {
     setExpenses((prev) => prev.filter((item) => item.id !== id))
     setEditExpense(null)
-    setDetailsExpense(null)
+    setDetailsExpenseId(null)
     toast('Expense record removed.', 'info')
+  }
+
+  const getReceiptCode = (exp) => {
+    if (!exp) return 'EXP-000001'
+    if (exp.receiptNo) return exp.receiptNo
+    const num = String(exp.id || '').replace(/[^0-9]/g, '').slice(-6) || '000001'
+    return `EXP-${num.padStart(6, '0')}`
+  }
+
+  const buildReceiptDocumentHtml = (exp) => {
+    const instName = String(currentInstitute?.name || 'School Portal').replace(/</g, '&lt;')
+    const instPhone = String(currentInstitute?.phone || 'N/A').replace(/</g, '&lt;')
+    const bill = Number(exp.billAmount || 0)
+    const paid = Math.min(bill, getPaidAmount(exp))
+    const rem = Math.max(0, bill - paid)
+    const receiptCode = getReceiptCode(exp)
+    const yr = new Date().getFullYear()
+    const acadYear = `${yr - 1}-${yr}`
+    return `<!doctype html><html><head><meta charset="utf-8" /><title>Expense Receipt - ${receiptCode}</title>
+      <style>
+        body { font-family: Arial, Helvetica, sans-serif; color: #1e293b; padding: 32px; max-width: 720px; margin: 0 auto; }
+        .top { text-align: center; border-bottom: 2px solid #dc2626; padding-bottom: 14px; margin-bottom: 18px; }
+        .inst { color: #dc2626; font-size: 20px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; margin: 0; }
+        .phone { font-size: 11px; color: #475569; margin-top: 4px; }
+        .title { text-align: center; color: #dc2626; font-size: 18px; font-weight: 800; letter-spacing: 1px; margin: 14px 0 18px; }
+        .meta { background: #f8fafc; border-left: 4px solid #dc2626; padding: 12px 16px; margin-bottom: 18px; font-size: 12px; }
+        .meta-row { margin-bottom: 8px; }
+        .meta-label { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; }
+        .meta-val { font-size: 13px; font-weight: 800; color: #dc2626; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 18px; }
+        th, td { border: 1px solid #cbd5e1; padding: 9px 12px; text-align: left; }
+        th { background: #f8fafc; width: 32%; font-weight: 700; color: #334155; }
+        .total-box { background: #fef2f2; border-left: 4px solid #dc2626; padding: 12px 16px; font-size: 14px; font-weight: 800; margin-bottom: 36px; }
+        .total-amt { color: #dc2626; }
+        .sig { margin-top: 32px; border-top: 1px solid #334155; width: 240px; padding-top: 6px; text-align: center; font-size: 11px; font-weight: 600; color: #334155; }
+        .footer { background: #f8fafc; padding: 10px; text-align: center; font-size: 10px; color: #64748b; margin-top: 28px; }
+      </style></head><body>
+      <div class="top">
+        <p class="inst">${instName}</p>
+        <p class="phone">Phone: ${instPhone}</p>
+      </div>
+      <div class="title">EXPENSE RECEIPT</div>
+      <div class="meta">
+        <div class="meta-row"><div class="meta-label">Receipt ID</div><div class="meta-val">${receiptCode}</div></div>
+        <div class="meta-row"><div class="meta-label">Expense Date</div><div class="meta-val">${formatDisplayDate(exp.expenseDate)}</div></div>
+        <div><div class="meta-label">Created Date</div><div class="meta-val">${formatDisplayDate(exp.expenseDate)}</div></div>
+      </div>
+      <table>
+        <tr><th>Expense Name</th><td><strong>${String(exp.title || '').replace(/</g, '&lt;')}</strong></td></tr>
+        <tr><th>Expense Type</th><td>${String(exp.category || 'General').replace(/</g, '&lt;')}</td></tr>
+        <tr><th>Payment Method</th><td>${String(exp.paymentMethod || 'Cash').replace(/</g, '&lt;')}</td></tr>
+        <tr><th>Vendor</th><td>${String(exp.vendor || '—').replace(/</g, '&lt;')}</td></tr>
+        <tr><th>Academic Year</th><td>${acadYear}</td></tr>
+        <tr><th>Description</th><td>${String(exp.notes || '—').replace(/</g, '&lt;')}</td></tr>
+      </table>
+      <div class="total-box">
+        Total Expense Amount: <span class="total-amt">PKR ${bill.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+        ${rem > 0 ? `<div style="font-size:11px;font-weight:600;color:#475569;margin-top:4px;">Paid: PKR ${paid.toLocaleString()} · Remaining: PKR ${rem.toLocaleString()}</div>` : ''}
+      </div>
+      <div class="sig">Authorized Signature</div>
+      <div class="sig">Accountant Signature</div>
+      <div class="footer">
+        <strong style="color:#dc2626;">Note:</strong> This is a computer-generated receipt. No signature is required for digital receipts.<br/>
+        Generated on ${new Date().toLocaleString()} | Powered by ${instName}
+      </div>
+      </body></html>`
+  }
+
+  const handleDownloadReceiptFile = (exp) => {
+    const html = buildReceiptDocumentHtml(exp)
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `expense_receipt_${getReceiptCode(exp)}.html`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+    toast(`Downloaded receipt ${getReceiptCode(exp)}.`, 'success')
+  }
+
+  const handlePrintReceiptPdf = (exp) => {
+    const html = buildReceiptDocumentHtml(exp)
+    const win = window.open('', '_blank', 'width=820,height=780')
+    if (!win) {
+      window.print()
+      return
+    }
+    win.document.write(html.replace('</body>', '<script>window.onload=function(){window.print();};</script></body>'))
+    win.document.close()
   }
 
   const vendorBills = useMemo(() => {
@@ -680,11 +777,13 @@ export const ExpensesView = ({
         <div>
           <div className="flex items-center gap-2 text-slate-900">
             <FileText className="w-5 h-5 text-slate-600" />
-            <h1 className="text-lg font-bold tracking-tight">Expenses</h1>
+            <h1 className="text-lg font-bold tracking-tight">
+              {detailsExpense ? `Expense Details - ${detailsExpense.title}` : 'Expenses'}
+            </h1>
           </div>
           <button
             type="button"
-            onClick={() => onRouteChange?.('inst-dashboard')}
+            onClick={() => (detailsExpense ? setDetailsExpenseId(null) : onRouteChange?.('inst-dashboard'))}
             className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-800 mt-0.5 cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
@@ -719,7 +818,7 @@ export const ExpensesView = ({
           </button>
           <button
             type="button"
-            onClick={() => setActiveTab('create')}
+            onClick={() => { setDetailsExpenseId(null); setActiveTab('create') }}
             className="px-3.5 py-2 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 text-xs font-semibold flex items-center gap-1.5 shadow-2xs cursor-pointer transition-colors"
           >
             <ArrowDown className="w-3.5 h-3.5" />
@@ -736,6 +835,208 @@ export const ExpensesView = ({
         </div>
       </div>
 
+      {detailsExpense ? (
+        /* Full-Page Expense Details View (Picks 2 & 3) */
+        (() => {
+          const bill = Number(detailsExpense.billAmount || 0)
+          const paid = Math.min(bill, getPaidAmount(detailsExpense))
+          const rem = Math.max(0, bill - paid)
+          const pct = bill > 0 ? Math.round((paid / bill) * 100) : 0
+          const st = getExpenseStatus(detailsExpense)
+          const instList = detailsExpense.installments || []
+          let runningPaid = 0
+
+          return (
+            <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-2xs space-y-5">
+              {/* Sub-header row */}
+              <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2 text-slate-800 text-xs font-bold">
+                  <Eye className="w-4 h-4 text-slate-500" />
+                  <span>Expense Details</span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  {rem > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => openPaymentModal(detailsExpense)}
+                      className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Payment</span>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setReceiptExpense(detailsExpense)}
+                    className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>Receipt</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openEditModal(detailsExpense)}
+                    className="px-3.5 py-1.5 rounded-lg border border-blue-400 text-blue-600 hover:bg-blue-50 text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                    <span>Edit</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDetailsExpenseId(null)}
+                    className="px-3.5 py-1.5 rounded-lg bg-slate-600 hover:bg-slate-700 text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>Back</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Expense Identity */}
+              <div>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Expense</p>
+                <div className="flex flex-wrap items-center gap-2 mt-1">
+                  <h2 className="text-base font-extrabold text-slate-900">{detailsExpense.title}</h2>
+                  {detailsExpense.category && (
+                    <span className="px-2 py-0.5 rounded bg-cyan-500 text-white text-[10px] font-bold">
+                      {detailsExpense.category}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Payment Summary Box */}
+              <div className="rounded-xl border border-slate-200 p-4 space-y-3 bg-slate-50/40">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Payment Summary</span>
+                  <span
+                    className={`px-2.5 py-0.5 rounded text-[10px] font-bold text-white ${
+                      st === 'Paid' ? 'bg-emerald-500' : st === 'Partially Paid' ? 'bg-amber-500' : 'bg-rose-500'
+                    }`}
+                  >
+                    {st}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="bg-white rounded-lg border border-slate-200 p-3">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase">Total</p>
+                    <p className="text-sm font-extrabold text-rose-600 mt-0.5">{formatPkr(bill)}</p>
+                  </div>
+                  <div className="bg-white rounded-lg border border-slate-200 p-3">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase">Paid</p>
+                    <p className="text-sm font-extrabold text-emerald-600 mt-0.5">{formatPkr(paid)}</p>
+                  </div>
+                  <div className="bg-white rounded-lg border border-slate-200 p-3">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase">Remaining</p>
+                    <p className="text-sm font-extrabold text-slate-900 mt-0.5">{formatPkr(rem)}</p>
+                  </div>
+                  <div className="bg-white rounded-lg border border-slate-200 p-3">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase">Progress</p>
+                    <p className="text-sm font-extrabold text-slate-900 mt-0.5">{pct}%</p>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="h-2 w-full rounded-full bg-slate-200 overflow-hidden">
+                    <div className="h-full bg-emerald-500 transition-all" style={{ width: `${pct}%` }} />
+                  </div>
+                  <div className="flex items-center justify-between text-[10px] text-slate-400 mt-1">
+                    <span>{formatPkr(paid)} paid</span>
+                    <span>{formatPkr(rem)} left</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Payment Method & Expense Date */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-3 border-y border-slate-100 text-xs">
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Payment Method</p>
+                  <span className="inline-block px-2 py-0.5 rounded bg-slate-500 text-white text-[10px] font-bold">
+                    {detailsExpense.paymentMethod || 'Cash'}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Expense Date</p>
+                  <p className="font-bold text-slate-800">{formatDisplayDate(detailsExpense.expenseDate)}</p>
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className="text-xs pb-2 border-b border-slate-100">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Description</p>
+                <p className="text-slate-700 font-medium">{detailsExpense.notes || '—'}</p>
+              </div>
+
+              {/* This bill — payments (installments ledger) */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <h3 className="text-xs font-bold text-slate-800">This bill — payments</h3>
+                    <p className="text-[10px] text-slate-400">Installments paid against {detailsExpense.title} only</p>
+                  </div>
+                  {rem > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => openPaymentModal(detailsExpense)}
+                      className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold inline-flex items-center gap-1 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Payment</span>
+                    </button>
+                  )}
+                </div>
+
+                <div className="overflow-x-auto border border-slate-100 rounded-xl">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold">
+                      <tr>
+                        <th className="py-2.5 px-3 w-10">#</th>
+                        <th className="py-2.5 px-3">Date</th>
+                        <th className="py-2.5 px-3">Amount</th>
+                        <th className="py-2.5 px-3">Remaining after</th>
+                        <th className="py-2.5 px-3">Method</th>
+                        <th className="py-2.5 px-3">Note</th>
+                        <th className="py-2.5 px-3">By</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {instList.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="py-6 text-center text-slate-400">
+                            No installment payments recorded yet.
+                          </td>
+                        </tr>
+                      ) : (
+                        instList.map((inst, i) => {
+                          runningPaid += Number(inst.amount || 0)
+                          const remAfter = Math.max(0, bill - runningPaid)
+                          return (
+                            <tr key={inst.id || i} className="hover:bg-slate-50/70">
+                              <td className="py-2.5 px-3 text-slate-500 font-semibold">{i + 1}</td>
+                              <td className="py-2.5 px-3">
+                                <div className="font-semibold text-slate-800">{formatDisplayDate(inst.date)}</div>
+                                <div className="text-[10px] text-slate-400">recorded {formatShortDayMonth(inst.date)}</div>
+                              </td>
+                              <td className="py-2.5 px-3 font-extrabold text-slate-900">{formatPkr(inst.amount)}</td>
+                              <td className="py-2.5 px-3 font-semibold text-slate-700">{formatPkr(remAfter)}</td>
+                              <td className="py-2.5 px-3 text-slate-600">{inst.method || 'Cash'}</td>
+                              <td className="py-2.5 px-3 text-slate-600">{inst.note || '—'}</td>
+                              <td className="py-2.5 px-3 text-slate-600">{inst.recordedBy || 'School Admin'}</td>
+                            </tr>
+                          )
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )
+        })()
+      ) : (
+      <>
       {/* 4 KPI Summary Cards (Picks 1 & 2) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
         <div className="bg-white rounded-xl border border-slate-200 p-4 flex items-center justify-between shadow-2xs relative">
@@ -1037,7 +1338,7 @@ export const ExpensesView = ({
                             {instCount > 0 && (
                               <button
                                 type="button"
-                                onClick={() => setDetailsExpense(exp)}
+                                onClick={() => setDetailsExpenseId(exp.id)}
                                 className="inline-flex items-center gap-1 text-[10px] font-semibold text-blue-600 hover:underline mt-0.5 cursor-pointer"
                               >
                                 <List className="w-3 h-3" />
@@ -1089,7 +1390,7 @@ export const ExpensesView = ({
                               <div className="absolute right-3 top-10 w-44 rounded-xl bg-white border border-slate-200 shadow-xl py-1.5 z-40 text-left">
                                 <button
                                   type="button"
-                                  onClick={() => { setOpenMenuId(null); setDetailsExpense(exp) }}
+                                  onClick={() => { setOpenMenuId(null); setDetailsExpenseId(exp.id) }}
                                   className="w-full px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 cursor-pointer"
                                 >
                                   <Eye className="w-3.5 h-3.5 text-sky-600" />
@@ -1307,178 +1608,243 @@ export const ExpensesView = ({
           </form>
         )}
       </div>
-
-      {/* Modal 1: View Details & Installment History */}
-      {detailsExpense && (
-        <div className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-[1px] flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200">
-            <div className="bg-slate-900 px-5 py-3.5 flex items-center justify-between text-white">
-              <div className="flex items-center gap-2 text-sm font-bold">
-                <Eye className="w-4 h-4 text-sky-400" />
-                <span>Expense Details — {detailsExpense.title}</span>
-              </div>
-              <button type="button" onClick={() => setDetailsExpense(null)} className="text-white/75 hover:text-white cursor-pointer">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="p-5 space-y-4 text-xs">
-              <div className="grid grid-cols-3 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-100">
-                <div>
-                  <p className="text-[10px] text-slate-400 uppercase font-bold">Total Bill</p>
-                  <p className="text-sm font-extrabold text-rose-600">{formatPkr(detailsExpense.billAmount)}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] text-slate-400 uppercase font-bold">Paid</p>
-                  <p className="text-sm font-extrabold text-emerald-600">{formatPkr(getPaidAmount(detailsExpense))}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] text-slate-400 uppercase font-bold">Remaining</p>
-                  <p className="text-sm font-extrabold text-amber-600">
-                    {formatPkr(Math.max(0, Number(detailsExpense.billAmount || 0) - getPaidAmount(detailsExpense)))}
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div><span className="text-slate-400">Category:</span> <strong>{detailsExpense.category || '—'}</strong></div>
-                <div><span className="text-slate-400">Vendor:</span> <strong>{detailsExpense.vendor || '—'}</strong></div>
-                <div><span className="text-slate-400">Expense Date:</span> <strong>{formatDisplayDate(detailsExpense.expenseDate)}</strong></div>
-                <div><span className="text-slate-400">Status:</span> <strong>{getExpenseStatus(detailsExpense)}</strong></div>
-              </div>
-
-              {detailsExpense.notes && (
-                <div className="p-2.5 rounded-lg bg-slate-50 text-slate-600">
-                  <strong>Notes:</strong> {detailsExpense.notes}
-                </div>
-              )}
-
-              <div>
-                <p className="font-bold text-slate-800 mb-2">Payment Installments ({(detailsExpense.installments || []).length})</p>
-                {(detailsExpense.installments || []).length === 0 ? (
-                  <p className="text-slate-400 py-2">No payment installments recorded yet.</p>
-                ) : (
-                  <div className="border border-slate-200 rounded-lg divide-y divide-slate-100 max-h-44 overflow-y-auto">
-                    {(detailsExpense.installments || []).map((inst, i) => (
-                      <div key={inst.id || i} className="px-3 py-2 flex items-center justify-between">
-                        <div>
-                          <div className="font-bold text-slate-800">{formatPkr(inst.amount)} · {inst.method}</div>
-                          <div className="text-[10px] text-slate-400">{inst.note}</div>
-                        </div>
-                        <span className="text-[11px] font-semibold text-slate-500">{formatDisplayDate(inst.date)}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="flex justify-between items-center pt-2 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => handleDeleteExpense(detailsExpense.id)}
-                  className="px-3 py-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 font-semibold inline-flex items-center gap-1 cursor-pointer"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>Delete</span>
-                </button>
-                <div className="flex gap-2">
-                  {Math.max(0, Number(detailsExpense.billAmount || 0) - getPaidAmount(detailsExpense)) > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const target = detailsExpense
-                        setDetailsExpense(null)
-                        openPaymentModal(target)
-                      }}
-                      className="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer"
-                    >
-                      + Add Payment
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => setDetailsExpense(null)}
-                    className="px-4 py-1.5 rounded-lg bg-slate-800 text-white font-semibold cursor-pointer"
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      </>
       )}
 
-      {/* Modal 2: Add Expense Payment */}
-      {paymentExpense && (
-        <div className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-[1px] flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200">
-            <div className="bg-emerald-600 px-5 py-3.5 flex items-center justify-between text-white">
-              <div className="flex items-center gap-2 text-sm font-bold">
-                <CreditCard className="w-4 h-4" />
-                <span>Add Payment — {paymentExpense.title}</span>
+      {/* Modal 5: In-App Expense Receipt Viewer & Download/Print (Pick 5) */}
+      {receiptExpense && (
+        (() => {
+          const rBill = Number(receiptExpense.billAmount || 0)
+          const rPaid = Math.min(rBill, getPaidAmount(receiptExpense))
+          const rRem = Math.max(0, rBill - rPaid)
+          const rCode = getReceiptCode(receiptExpense)
+          const yr = new Date().getFullYear()
+          const acadYear = `${yr - 1}-${yr}`
+
+          return (
+            <div className="fixed inset-0 z-[110] bg-slate-900/60 backdrop-blur-[1px] flex items-center justify-center p-4">
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-200">
+                <div className="px-5 py-3 bg-slate-900 text-white flex flex-wrap items-center justify-between gap-2 shrink-0">
+                  <div className="flex items-center gap-2 text-sm font-bold">
+                    <FileText className="w-4 h-4 text-emerald-400" />
+                    <span>Expense Receipt Preview — {rCode}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleDownloadReceiptFile(receiptExpense)}
+                      className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Download</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handlePrintReceiptPdf(receiptExpense)}
+                      className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Printer className="w-3.5 h-3.5" />
+                      <span>Print / Save PDF</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setReceiptExpense(null)}
+                      className="p-1 text-white/75 hover:text-white cursor-pointer"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Visual Receipt Sheet matching Pick 5 */}
+                <div className="p-6 sm:p-8 overflow-y-auto bg-white space-y-5 text-xs text-slate-800">
+                  <div className="text-center border-b-2 border-red-600 pb-4">
+                    <h2 className="text-lg font-extrabold text-red-600 tracking-wide uppercase">
+                      {currentInstitute?.name || 'School Portal'}
+                    </h2>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      Phone: {currentInstitute?.phone || 'N/A'}
+                    </p>
+                  </div>
+
+                  <h3 className="text-center text-base font-extrabold text-red-600 tracking-wider uppercase">
+                    EXPENSE RECEIPT
+                  </h3>
+
+                  <div className="bg-slate-50 border-l-4 border-red-600 p-3.5 space-y-2">
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase">Receipt ID</p>
+                      <p className="text-xs font-extrabold text-red-600">{rCode}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase">Expense Date</p>
+                      <p className="text-xs font-extrabold text-red-600">{formatDisplayDate(receiptExpense.expenseDate)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase">Created Date</p>
+                      <p className="text-xs font-extrabold text-red-600">{formatDisplayDate(receiptExpense.expenseDate)}</p>
+                    </div>
+                  </div>
+
+                  <table className="w-full border-collapse border border-slate-300 text-xs">
+                    <tbody>
+                      <tr>
+                        <th className="border border-slate-300 bg-slate-50 px-3 py-2 text-left font-bold text-slate-700 w-1/3">Expense Name</th>
+                        <td className="border border-slate-300 px-3 py-2 font-bold text-slate-900">{receiptExpense.title}</td>
+                      </tr>
+                      <tr>
+                        <th className="border border-slate-300 bg-slate-50 px-3 py-2 text-left font-bold text-slate-700">Expense Type</th>
+                        <td className="border border-slate-300 px-3 py-2">{receiptExpense.category || 'General'}</td>
+                      </tr>
+                      <tr>
+                        <th className="border border-slate-300 bg-slate-50 px-3 py-2 text-left font-bold text-slate-700">Payment Method</th>
+                        <td className="border border-slate-300 px-3 py-2">{receiptExpense.paymentMethod || 'Cash'}</td>
+                      </tr>
+                      <tr>
+                        <th className="border border-slate-300 bg-slate-50 px-3 py-2 text-left font-bold text-slate-700">Vendor</th>
+                        <td className="border border-slate-300 px-3 py-2">{receiptExpense.vendor || '—'}</td>
+                      </tr>
+                      <tr>
+                        <th className="border border-slate-300 bg-slate-50 px-3 py-2 text-left font-bold text-slate-700">Academic Year</th>
+                        <td className="border border-slate-300 px-3 py-2">{acadYear}</td>
+                      </tr>
+                      <tr>
+                        <th className="border border-slate-300 bg-slate-50 px-3 py-2 text-left font-bold text-slate-700">Description</th>
+                        <td className="border border-slate-300 px-3 py-2">{receiptExpense.notes || '—'}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+                  <div className="bg-red-50/70 border-l-4 border-red-600 px-4 py-3">
+                    <p className="text-sm font-extrabold text-slate-800">
+                      Total Expense Amount:{' '}
+                      <span className="text-red-600">
+                        PKR {rBill.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                    </p>
+                    {rRem > 0 && (
+                      <p className="text-[11px] text-slate-600 mt-0.5">
+                        Paid: <strong>{formatPkr(rPaid)}</strong> · Remaining: <strong className="text-rose-600">{formatPkr(rRem)}</strong>
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="pt-8 space-y-8">
+                    <div className="w-60 border-t border-slate-800 pt-1 text-center text-[11px] font-semibold">
+                      Authorized Signature
+                    </div>
+                    <div className="w-60 border-t border-slate-800 pt-1 text-center text-[11px] font-semibold">
+                      Accountant Signature
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-50 p-3 text-center text-[10px] text-slate-500">
+                    <strong className="text-red-600">Note:</strong> This is a computer-generated receipt. No signature is required for digital receipts.
+                    <br />
+                    Generated on {new Date().toLocaleString()} | Powered by <span className="text-red-600 font-semibold">{currentInstitute?.name || 'School Portal'}</span>
+                  </div>
+                </div>
               </div>
-              <button type="button" onClick={() => setPaymentExpense(null)} className="text-white/80 hover:text-white cursor-pointer">
-                <X className="w-4 h-4" />
-              </button>
             </div>
-            <form onSubmit={handleSavePayment} className="p-5 space-y-3 text-xs">
-              <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between">
-                <span className="text-slate-600 font-semibold">Remaining Payable</span>
-                <span className="text-rose-600 font-extrabold text-sm">
-                  {formatPkr(Math.max(0, Number(paymentExpense.billAmount || 0) - getPaidAmount(paymentExpense)))}
-                </span>
-              </div>
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Payment Amount (PKR) *</label>
-                <input
-                  type="number"
-                  min="1"
-                  max={Math.max(1, Number(paymentExpense.billAmount || 0) - getPaidAmount(paymentExpense))}
-                  value={payAmount}
-                  onChange={(e) => setPayAmount(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 font-bold"
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Paid via *</label>
-                  <select
-                    value={payMethod}
-                    onChange={(e) => setPayMethod(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white font-semibold"
-                  >
-                    {PAYMENT_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
-                  </select>
+          )
+        })()
+      )}
+
+      {/* Modal 2: Add Expense Payment matching Pick 4 */}
+      {paymentExpense && (
+        (() => {
+          const remVal = Math.max(0, Number(paymentExpense.billAmount || 0) - getPaidAmount(paymentExpense))
+          return (
+            <div className="fixed inset-0 z-[110] bg-slate-900/50 backdrop-blur-[1px] flex items-center justify-center p-4">
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200">
+                <div className="px-5 py-3.5 border-b border-slate-100 flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-1.5 text-sm font-bold text-slate-900">
+                      <Plus className="w-4 h-4 text-slate-700" />
+                      <span>Add Payment</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-0.5">{paymentExpense.title}</p>
+                  </div>
+                  <button type="button" onClick={() => setPaymentExpense(null)} className="text-slate-400 hover:text-slate-700 cursor-pointer">
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Payment Date *</label>
-                  <input
-                    type="date"
-                    value={payDate}
-                    onChange={(e) => setPayDate(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200"
-                    required
-                  />
-                </div>
+
+                <form onSubmit={handleSavePayment} className="p-5 space-y-3.5 text-xs">
+                  <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 max-w-[210px]">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">This Bill</p>
+                    <p className="text-base font-extrabold text-rose-600 mt-0.5">{formatPkr(remVal)}</p>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">
+                      Amount (PKR) <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max={Math.max(1, remVal)}
+                      value={payAmount}
+                      onChange={(e) => setPayAmount(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setPayAmount(String(remVal))}
+                      className="mt-2 px-2.5 py-1 rounded border border-slate-200 bg-slate-50 hover:bg-slate-100 text-[11px] font-semibold text-slate-700 cursor-pointer"
+                    >
+                      This bill · {formatPkr(remVal)}
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">Paid via</label>
+                      <select
+                        value={payMethod}
+                        onChange={(e) => setPayMethod(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white font-semibold"
+                      >
+                        {PAYMENT_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">Date</label>
+                      <input
+                        type="date"
+                        value={payDate}
+                        onChange={(e) => setPayDate(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">Note</label>
+                    <textarea
+                      rows={2}
+                      placeholder="Optional"
+                      value={payNote}
+                      onChange={(e) => setPayNote(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 placeholder:text-slate-400"
+                    />
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-2">
+                    <button type="button" onClick={() => setPaymentExpense(null)} className="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 font-semibold cursor-pointer">
+                      Cancel
+                    </button>
+                    <button type="submit" className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold cursor-pointer">
+                      Save Payment
+                    </button>
+                  </div>
+                </form>
               </div>
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Note / Reference</label>
-                <input
-                  type="text"
-                  placeholder="Cheque # / transfer ref / remarks"
-                  value={payNote}
-                  onChange={(e) => setPayNote(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200"
-                />
-              </div>
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
-                <button type="button" onClick={() => setPaymentExpense(null)} className="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 font-semibold cursor-pointer">Cancel</button>
-                <button type="submit" className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer">Save Payment</button>
-              </div>
-            </form>
-          </div>
-        </div>
+            </div>
+          )
+        })()
       )}
 
       {/* Modal 3: Edit Expense */}
