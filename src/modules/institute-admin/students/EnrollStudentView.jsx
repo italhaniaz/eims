@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react'
+import React, { useState, useMemo, useRef, useEffect } from 'react'
 import {
   FileText,
   ArrowLeft,
@@ -9,6 +9,7 @@ import {
   MessageSquare,
   Check,
   Edit3,
+  Pencil,
   User,
   Users,
   Plus,
@@ -42,11 +43,25 @@ const DEFAULT_STATES_AND_CITIES = {
 const DEFAULT_BOARDS = ['BISE Lahore', 'BISE Rawalpindi', 'FBISE Islamabad', 'Cambridge O-Level', 'Govt / District Board', 'Private / Independent']
 const DEFAULT_FEE_TYPES = ['Tuition Fee', 'Admission Fee', 'Transport Fee', 'Hostel / Boarding Fee', 'Exam Fee', 'Lab / Library Fee', 'Stationery / Books']
 
-export const EnrollStudentView = ({ currentInstitute, onRouteChange, onOpenQuickPayment, onOpenSendSms }) => {
-  const { students = [], classes = [], addItem, logAuditEvent } = useAppData()
+export const EnrollStudentView = ({
+  currentInstitute,
+  onRouteChange,
+  onOpenQuickPayment,
+  onOpenSendSms,
+  editingStudentId = null,
+  onCancelEdit,
+  onSavedEdit
+}) => {
+  const { students = [], classes = [], fees = [], addItem, updateItem, logAuditEvent } = useAppData()
   const { toast } = useToast()
   const photoInputRef = useRef(null)
   const instId = currentInstitute?.id || 'default'
+
+  const editingStudent = useMemo(
+    () => (editingStudentId ? students.find((s) => s.id === editingStudentId) || null : null),
+    [editingStudentId, students]
+  )
+  const isEditMode = Boolean(editingStudent)
 
   const [step, setStep] = useState(1)
   const [submitting, setSubmitting] = useState(false)
@@ -113,6 +128,85 @@ export const EnrollStudentView = ({ currentInstitute, onRouteChange, onOpenQuick
     referralSource: '',
     additionalNotes: ''
   })
+
+  useEffect(() => {
+    if (!editingStudent) return
+    setStep(1)
+    const savedSetup = editingStudent.feeSetup || {}
+    const latestStudentFee = fees.find((f) => f.studentId === editingStudent.id && Number(f.amount || 0) > 0)
+    const fallbackTuition = Number(
+      editingStudent.monthlyFee ?? editingStudent.tuitionFee ?? savedSetup.tuitionTotal ?? latestStudentFee?.amount ?? 0
+    )
+    const prefilledFeeItems =
+      Array.isArray(savedSetup.items) && savedSetup.items.length > 0
+        ? savedSetup.items.map((it, idx) => ({
+            id: `fi-edit-${idx + 1}`,
+            feeType: it.feeType || 'Tuition Fee',
+            amount: String(it.amount ?? 0)
+          }))
+        : fallbackTuition > 0
+          ? [{ id: 'fi-edit-1', feeType: 'Tuition Fee', amount: String(fallbackTuition) }]
+          : [{ id: 'fi-1', feeType: '', amount: '' }]
+
+    const savedComm = editingStudent.communicationPreferences || {}
+    const clsVal = editingStudent.className
+      ? `${editingStudent.className}|||${editingStudent.section || 'A'}`
+      : ''
+
+    if (editingStudent.province && !statesMap[editingStudent.province]) {
+      setStatesMap((prev) => ({
+        ...prev,
+        [editingStudent.province]: editingStudent.city ? [editingStudent.city] : []
+      }))
+    } else if (editingStudent.province && editingStudent.city && !statesMap[editingStudent.province]?.includes(editingStudent.city)) {
+      setStatesMap((prev) => ({
+        ...prev,
+        [editingStudent.province]: [...(prev[editingStudent.province] || []), editingStudent.city]
+      }))
+    }
+
+    setForm({
+      fullName: editingStudent.fullName || editingStudent.name || '',
+      gender: editingStudent.gender || 'Male',
+      studentEmail: editingStudent.email || '',
+      studentPassword: '',
+      nationalId: editingStudent.bFormCnic || '',
+      nationality: editingStudent.nationality || 'Pakistani',
+      stateProvince: editingStudent.province || 'Punjab',
+      cityDistrict: editingStudent.city || '',
+      address: editingStudent.address || '',
+      dob: editingStudent.dob || '',
+      bloodGroup: editingStudent.bloodGroup || '',
+      caste: editingStudent.caste || '',
+      medicalNotes: editingStudent.medicalNotes || '',
+      photoUrl: editingStudent.photoUrl || editingStudent.photo || null,
+      photoFileName: '',
+      fatherName: editingStudent.fatherName || editingStudent.guardianName || '',
+      parentEmail: editingStudent.parentEmail || '',
+      parentPassword: '',
+      parentNationalId: editingStudent.fatherCnic || editingStudent.parentCnic || '',
+      motherName: editingStudent.motherName || '',
+      motherNationalId: editingStudent.motherCnic || '',
+      commRows: {
+        studentMobile: savedComm.studentMobile || { label: 'Student mobile', number: editingStudent.phone || '', placeholder: '03078888888', whatsapp: false, sms: false },
+        studentOther: savedComm.studentOther || { label: 'Student other number', number: editingStudent.altPhone || '', placeholder: '042-1234567', whatsapp: false, sms: false },
+        parentMobile: savedComm.parentMobile || { label: 'Parent mobile', number: editingStudent.guardianPhone || editingStudent.parentPhone || '', placeholder: '03078888888', whatsapp: false, sms: true },
+        parentOther: savedComm.parentOther || { label: 'Parent other number', number: '', placeholder: '042-1234567', whatsapp: false, sms: false }
+      },
+      classSection: clsVal,
+      educationBoard: editingStudent.educationBoard || '',
+      customRegNo: editingStudent.customRegNo || editingStudent.rollNumber || '',
+      admissionDate: editingStudent.admissionDate || new Date().toISOString().split('T')[0],
+      hostelId: editingStudent.hostelId || '',
+      roomBedNumber: editingStudent.roomBedNumber || '',
+      sportHouse: editingStudent.sportHouse || '',
+      voucherDuration: savedSetup.feeType || editingStudent.feeType || 'Monthly',
+      feeItems: prefilledFeeItems,
+      discountAmount: Number(savedSetup.discount ?? editingStudent.discount ?? 0),
+      referralSource: savedSetup.referralSource ?? editingStudent.referralSource ?? '',
+      additionalNotes: savedSetup.notes ?? editingStudent.notes ?? ''
+    })
+  }, [editingStudent?.id])
 
   const instStudents = useMemo(
     () => students.filter(s => !currentInstitute?.id || s.instituteId === currentInstitute.id),
@@ -229,12 +323,12 @@ export const EnrollStudentView = ({ currentInstitute, onRouteChange, onOpenQuick
         toast?.error?.('Please select Gender.')
         return
       }
-      if (!form.nationality.trim() || !form.stateProvince || !form.cityDistrict) {
+      if (!isEditMode && (!form.nationality.trim() || !form.stateProvince || !form.cityDistrict)) {
         toast?.error?.('Nationality, State / Province, and City / District are required.')
         return
       }
     }
-    if (step === 4) {
+    if (step === 4 && !isEditMode) {
       if (!form.classSection && classSectionOptions.length > 0) {
         toast?.error?.('Please choose a Class & Section.')
         return
@@ -255,18 +349,23 @@ export const EnrollStudentView = ({ currentInstitute, onRouteChange, onOpenQuick
       const [classNamePart, sectionPart] = (form.classSection || 'General|||A').split('|||')
       const year = new Date().getFullYear()
       const seqNum = String(instStudents.length + 1).padStart(4, '0')
-      const admissionNo = `ED-${year}-${seqNum}`
+      const admissionNo = editingStudent?.systemAdmissionNo || editingStudent?.admissionNo || `ED-${year}-${seqNum}`
 
       const primaryStudentPhone = form.commRows.studentMobile.number.trim() || form.commRows.studentOther.number.trim()
       const primaryParentPhone = form.commRows.parentMobile.number.trim() || form.commRows.parentOther.number.trim() || primaryStudentPhone
       const whatsappNum = Object.values(form.commRows).find(r => r.whatsapp && r.number.trim())?.number.trim() || primaryParentPhone
 
       const selectedRoom = hostelsList.find(r => r.id === form.hostelId)
+      const nowIso = new Date().toISOString()
+      const cleanedFeeItems = form.feeItems
+        .filter((fi) => fi.feeType || Number(fi.amount) > 0)
+        .map((fi) => ({ feeType: fi.feeType || 'Tuition Fee', amount: Math.max(0, Number(fi.amount) || 0), routeId: '' }))
 
-      const newStudent = await addItem('students', {
-        instituteId: currentInstitute?.id || 'inst-1',
+      const studentPayload = {
+        instituteId: currentInstitute?.id || editingStudent?.instituteId || 'inst-1',
         name: form.fullName.trim(),
-        rollNumber: form.customRegNo.trim() || admissionNo,
+        fullName: form.fullName.trim(),
+        rollNumber: form.customRegNo.trim() || editingStudent?.rollNumber || admissionNo,
         systemAdmissionNo: admissionNo,
         customRegNo: form.customRegNo.trim(),
         gender: form.gender || 'Male',
@@ -290,15 +389,46 @@ export const EnrollStudentView = ({ currentInstitute, onRouteChange, onOpenQuick
         guardianPhone: primaryParentPhone,
         guardianWhatsapp: whatsappNum,
         communicationPreferences: form.commRows,
-        className: classNamePart,
-        section: sectionPart || 'A',
+        className: form.classSection ? classNamePart : (editingStudent?.className || classNamePart),
+        section: form.classSection ? (sectionPart || 'A') : (editingStudent?.section || 'A'),
         educationBoard: form.educationBoard,
         admissionDate: form.admissionDate,
-        hostelName: selectedRoom ? `${selectedRoom.hostelName} - Room ${selectedRoom.roomNumber}` : '',
+        hostelName: selectedRoom ? `${selectedRoom.hostelName} - Room ${selectedRoom.roomNumber}` : (editingStudent?.hostelName || ''),
         roomBedNumber: form.roomBedNumber.trim(),
         sportHouse: form.sportHouse.trim(),
         referralSource: form.referralSource.trim(),
         notes: form.additionalNotes.trim(),
+        monthlyFee: feeSummary.net,
+        tuitionFee: feeSummary.gross,
+        discount: feeSummary.discount,
+        feeSetup: {
+          feeType: form.voucherDuration,
+          tuitionTotal: feeSummary.gross,
+          discount: feeSummary.discount,
+          finalAmount: feeSummary.net,
+          items: cleanedFeeItems.length > 0 ? cleanedFeeItems : [{ feeType: 'Tuition Fee', amount: 0, routeId: '' }],
+          referralSource: form.referralSource.trim(),
+          notes: form.additionalNotes.trim(),
+          createdAt: editingStudent?.feeSetup?.createdAt || editingStudent?.createdAt || nowIso,
+          updatedAt: nowIso
+        },
+        updatedAt: nowIso
+      }
+
+      if (isEditMode) {
+        await updateItem('students', editingStudent.id, studentPayload)
+        logAuditEvent?.(`Updated student profile ${form.fullName.trim()} (${admissionNo})`, 'Students', 'Success')
+        toast?.success?.(`Student "${form.fullName.trim()}" updated successfully!`)
+        if (onSavedEdit) {
+          onSavedEdit(editingStudent.id)
+        } else {
+          onRouteChange?.('inst-students')
+        }
+        return
+      }
+
+      const newStudent = await addItem('students', {
+        ...studentPayload,
         feeStatus: feeSummary.net > 0 ? 'Pending' : 'Paid',
         status: 'Active',
         academicSession: '2026-2027'
@@ -334,7 +464,7 @@ export const EnrollStudentView = ({ currentInstitute, onRouteChange, onOpenQuick
       toast?.success?.(`Student "${form.fullName.trim()}" enrolled successfully (${admissionNo})!`)
       onRouteChange?.('inst-students')
     } catch (err) {
-      toast?.error?.('Unable to complete enrollment. Please try again.')
+      toast?.error?.(isEditMode ? 'Unable to update student. Please try again.' : 'Unable to complete enrollment. Please try again.')
     } finally {
       setSubmitting(false)
     }
@@ -347,11 +477,13 @@ export const EnrollStudentView = ({ currentInstitute, onRouteChange, onOpenQuick
         <div>
           <div className="flex items-center gap-2">
             <FileText className="w-5 h-5 text-[var(--text-muted)]" />
-            <h1 className="text-lg sm:text-xl font-bold text-[var(--text)]">Enroll Student</h1>
+            <h1 className="text-lg sm:text-xl font-bold text-[var(--text)]">
+              {isEditMode ? 'Edit Student' : 'Enroll Student'}
+            </h1>
           </div>
           <button
             type="button"
-            onClick={() => onRouteChange?.('inst-dashboard')}
+            onClick={() => (isEditMode && onCancelEdit ? onCancelEdit() : onRouteChange?.('inst-dashboard'))}
             className="text-xs font-medium text-[var(--text-muted)] hover:text-[var(--text)] flex items-center gap-1 mt-1 cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
@@ -408,6 +540,12 @@ export const EnrollStudentView = ({ currentInstitute, onRouteChange, onOpenQuick
         onSubmit={handleSubmitForm}
         className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5 sm:p-8 shadow-soft space-y-8"
       >
+        {isEditMode && (
+          <div className="flex items-center gap-2 pb-4 border-b border-[var(--border)] text-sm font-bold text-[var(--text)]">
+            <Pencil className="w-4 h-4 text-[var(--text-muted)]" />
+            <span>Edit {editingStudent.fullName || editingStudent.name}</span>
+          </div>
+        )}
         {/* Stepper Header */}
         <div className="relative flex items-start justify-between gap-2 overflow-x-auto pb-2">
           {STEPS.map((s, idx) => {
@@ -424,13 +562,15 @@ export const EnrollStudentView = ({ currentInstitute, onRouteChange, onOpenQuick
                 )}
                 <button
                   type="button"
-                  onClick={() => { if (s.id < step) setStep(s.id) }}
+                  onClick={() => { if (isEditMode || s.id < step) setStep(s.id) }}
                   className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all ${
                     isCompleted
                       ? 'bg-cyan-500 border-cyan-500 text-white cursor-pointer'
                       : isCurrent
                         ? 'bg-white border-cyan-500 text-cyan-600 shadow-sm'
-                        : 'bg-white border-slate-300 text-slate-400 cursor-default'
+                        : isEditMode
+                          ? 'bg-white border-slate-300 text-slate-600 hover:border-cyan-400 cursor-pointer'
+                          : 'bg-white border-slate-300 text-slate-400 cursor-default'
                   }`}
                 >
                   {isCompleted ? <Check className="w-4 h-4" /> : isCurrent ? <Edit3 className="w-3.5 h-3.5" /> : s.id}
@@ -1234,7 +1374,7 @@ export const EnrollStudentView = ({ currentInstitute, onRouteChange, onOpenQuick
               disabled={submitting}
               className="px-5 py-2 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-50"
             >
-              <span>{submitting ? 'Submitting...' : 'Submit form'}</span>
+              <span>{submitting ? (isEditMode ? 'Updating...' : 'Submitting...') : (isEditMode ? 'Update student' : 'Submit form')}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           )}
