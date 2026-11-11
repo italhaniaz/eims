@@ -37,37 +37,37 @@ export default function TeacherPortalView() {
   ]
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-slate-50 dark:bg-slate-950 font-sans">
+    <div className="flex h-screen w-full overflow-hidden bg-[#f8fafc] dark:bg-[#0B1020] text-slate-800 dark:text-slate-100 font-sans">
       {/* Mobile Backdrop */}
       {isMobileMenuOpen && (
         <div
           onClick={() => setIsMobileMenuOpen(false)}
-          className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-40 lg:hidden"
+          className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs z-40 lg:hidden"
         />
       )}
 
       {/* ========================================================= */}
-      {/* LEFT SIDEBAR: TEACHER CONSOLE */}
+      {/* LEFT SIDEBAR: DARK NAVY THEME (100% SYSTEM CONSISTENT) */}
       {/* ========================================================= */}
       <aside
         className={`
           fixed lg:static top-0 bottom-0 left-0 z-50
           ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-          w-64 sm:w-72 h-full max-h-screen bg-[#08201D] text-slate-200 border-r border-emerald-950 flex flex-col
+          w-64 sm:w-72 h-full max-h-screen sidebar-navy bg-[#0B1120] text-slate-300 border-r border-slate-800/80 flex flex-col
           transition-all duration-300 shrink-0 select-none shadow-xl
         `}
       >
         {/* Brand Header */}
-        <div className="h-16 flex items-center justify-between px-5 border-b border-emerald-900/60 bg-[#061A17] shrink-0">
+        <div className="h-16 min-h-[64px] flex items-center justify-between px-5 border-b border-slate-800/80 bg-[#0B1120] shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-xs shadow-xs">
-              <BookOpen className="w-5 h-5 text-emerald-400" />
+            <div className="w-9 h-9 rounded-xl bg-purple-500/15 text-purple-400 border border-purple-500/30 flex items-center justify-center font-bold text-xs shadow-2xs">
+              <BookOpen className="w-5 h-5 text-purple-400" />
             </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-extrabold text-white tracking-tight leading-tight">
+            <div className="flex flex-col min-w-0">
+              <span className="text-sm font-extrabold text-white tracking-tight leading-tight truncate">
                 Teacher Portal
               </span>
-              <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">
+              <span className="text-[10px] text-purple-400 font-bold uppercase tracking-wider truncate">
                 Academic Faculty
               </span>
             </div>
@@ -81,7 +81,7 @@ export default function TeacherPortalView() {
         </div>
 
         {/* Navigation Items */}
-        <nav className="flex-1 py-4 px-3 space-y-1.5 overflow-y-auto">
+        <nav className="flex-1 py-4 px-3 space-y-1.5 overflow-y-auto dark-scroll text-[13.5px]">
           {navItems.map((item) => {
             const Icon = item.icon
             const isActive = activeTab === item.id
@@ -95,16 +95,16 @@ export default function TeacherPortalView() {
                 }}
                 className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-left text-xs sm:text-sm font-medium transition-all cursor-pointer ${
                   isActive
-                    ? 'bg-emerald-600 text-white font-bold shadow-md shadow-emerald-900/40'
-                    : 'text-slate-300 hover:text-white hover:bg-emerald-900/40'
+                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold shadow-md shadow-purple-600/30'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
                 }`}
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-emerald-400'}`} />
+                  <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-400'}`} />
                   <span className="truncate">{item.label}</span>
                 </div>
                 {item.status !== 'Active' ? (
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-950/80 text-emerald-300 border border-emerald-800/60">
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
                     {item.status}
                   </span>
                 ) : (
@@ -116,10 +116,10 @@ export default function TeacherPortalView() {
         </nav>
 
         {/* Sign Out Footer */}
-        <div className="p-3 border-t border-emerald-900/60 bg-[#061A17]">
+        <div className="p-3 border-t border-slate-800/80 bg-[#0B1120]">
           <button
             onClick={logout}
-            className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-rose-950/30 transition-all text-xs font-semibold cursor-pointer group"
+            className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 transition-all text-xs font-semibold cursor-pointer group"
           >
             <LogOut className="w-4 h-4 shrink-0 text-slate-400 group-hover:text-rose-400 transition-colors" />
             <span>Sign Out</span>
@@ -136,12 +136,12 @@ export default function TeacherPortalView() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsMobileMenuOpen(true)}
-              className="lg:hidden p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="lg:hidden p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
             >
               <Menu className="w-5 h-5" />
             </button>
-            <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200">
-              <School className="w-4 h-4 text-emerald-600" />
+            <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
+              <School className="w-4 h-4 text-purple-600 dark:text-purple-400" />
               <span>{schoolName}</span>
             </div>
           </div>
@@ -149,14 +149,14 @@ export default function TeacherPortalView() {
           {/* Right User Badge */}
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-full bg-emerald-100 dark:bg-emerald-950 border border-emerald-300 dark:border-emerald-800 flex items-center justify-center font-bold text-xs text-emerald-800 dark:text-emerald-300">
+              <div className="w-9 h-9 rounded-full bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 flex items-center justify-center font-bold text-xs text-purple-700 dark:text-purple-300">
                 TM
               </div>
               <div className="hidden sm:flex flex-col text-left">
                 <span className="text-xs font-bold text-slate-900 dark:text-white leading-tight">
                   {teacherName}
                 </span>
-                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+                <span className="text-[10px] text-purple-600 dark:text-purple-400 font-medium">
                   {teacherRole}
                 </span>
               </div>
@@ -175,16 +175,16 @@ export default function TeacherPortalView() {
         {/* Main Body (Scaffold Ready for Screenshots) */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6">
           {/* Welcome Banner Card */}
-          <div className="rounded-2xl bg-gradient-to-r from-emerald-700 via-teal-700 to-cyan-800 text-white p-6 sm:p-8 shadow-sm relative overflow-hidden">
+          <div className="rounded-2xl bg-gradient-to-r from-purple-700 via-indigo-700 to-blue-700 text-white p-6 sm:p-8 shadow-sm relative overflow-hidden">
             <div className="relative z-10 space-y-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 text-emerald-100 text-xs font-semibold backdrop-blur-xs">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 text-purple-100 text-xs font-semibold backdrop-blur-xs">
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Teacher Portal — Ready for Customization</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
                 Welcome, {teacherName}
               </h1>
-              <p className="text-emerald-100 text-xs sm:text-sm max-w-2xl leading-relaxed">
+              <p className="text-purple-100 text-xs sm:text-sm max-w-2xl leading-relaxed">
                 Your dedicated Teacher Portal shell and authentication are 100% active and connected. You can log in, switch tabs, and explore the layout.
               </p>
             </div>
@@ -218,7 +218,7 @@ export default function TeacherPortalView() {
               <div className="text-xl font-bold text-slate-900 dark:text-white">
                 Ready for UI
               </div>
-              <span className="text-[11px] text-emerald-600 mt-1 block">Awaiting screenshots</span>
+              <span className="text-[11px] text-purple-600 dark:text-purple-400 mt-1 block">Awaiting screenshots</span>
             </div>
 
             <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-2xs">
@@ -228,7 +228,7 @@ export default function TeacherPortalView() {
               <div className="text-xl font-bold text-slate-900 dark:text-white">
                 Ready for UI
               </div>
-              <span className="text-[11px] text-emerald-600 mt-1 block">Awaiting screenshots</span>
+              <span className="text-[11px] text-purple-600 dark:text-purple-400 mt-1 block">Awaiting screenshots</span>
             </div>
 
             <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-2xs">
@@ -238,7 +238,7 @@ export default function TeacherPortalView() {
               <div className="text-xl font-bold text-slate-900 dark:text-white">
                 Ready for UI
               </div>
-              <span className="text-[11px] text-emerald-600 mt-1 block">Awaiting screenshots</span>
+              <span className="text-[11px] text-purple-600 dark:text-purple-400 mt-1 block">Awaiting screenshots</span>
             </div>
 
             <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-2xs">
@@ -248,13 +248,13 @@ export default function TeacherPortalView() {
               <div className="text-xl font-bold text-slate-900 dark:text-white">
                 Ready for UI
               </div>
-              <span className="text-[11px] text-emerald-600 mt-1 block">Awaiting screenshots</span>
+              <span className="text-[11px] text-purple-600 dark:text-purple-400 mt-1 block">Awaiting screenshots</span>
             </div>
           </div>
 
           {/* Empty Workspace Canvas */}
-          <div className="rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-800 p-12 text-center flex flex-col items-center justify-center bg-slate-50/50 dark:bg-slate-900/30">
-            <div className="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center text-emerald-600 mb-3">
+          <div className="rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-800 p-12 text-center flex flex-col items-center justify-center bg-white/50 dark:bg-slate-900/30">
+            <div className="w-14 h-14 rounded-2xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 flex items-center justify-center text-purple-600 mb-3">
               <Layers className="w-7 h-7" />
             </div>
             <h3 className="text-base font-bold text-slate-800 dark:text-white mb-1">
