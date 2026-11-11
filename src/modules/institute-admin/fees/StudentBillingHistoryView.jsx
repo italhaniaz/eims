@@ -170,7 +170,6 @@ export const StudentBillingHistoryView = ({
   const [waiverInput, setWaiverInput] = useState('')
   const [waiverReasonInput, setWaiverReasonInput] = useState('')
 
-  const [deleteTargetFee, setDeleteTargetFee] = useState(null)
   const [printModalFee, setPrintModalFee] = useState(null)
   const [transactionsModalFee, setTransactionsModalFee] = useState(null)
   const [receiptSlipFee, setReceiptSlipFee] = useState(null)
@@ -732,12 +731,22 @@ export const StudentBillingHistoryView = ({
     }
   }
 
-  const handleConfirmDeleteInvoice = async () => {
-    if (!deleteTargetFee) return
+  const handleDeleteInvoicePrompt = async (fee) => {
+    if (!fee) return
+    const studentLabel = activeStudent?.fullName || activeStudent?.name || 'Student'
+    const feeLabel = fee.title || fee.feeName || fee.feeMonth || 'Tuition Fee'
+    const ok = window.confirm(
+      `Delete this unpaid invoice for ${studentLabel}?\n\n${feeLabel}\n\nAll related records for this student line will be permanently removed. This cannot be undone.`
+    )
+    if (!ok) return
     try {
-      await deleteItem('fees', deleteTargetFee.id)
+      await deleteItem('fees', fee.id)
+      logAuditEvent?.(
+        `Deleted unpaid invoice (${feeLabel}) for ${studentLabel}`,
+        currentInstitute?.name || 'School Admin',
+        'Success'
+      )
       toast('Invoice deleted.', 'info')
-      setDeleteTargetFee(null)
     } catch (err) {
       toast(err?.message || 'Could not delete invoice.', 'error')
     }
@@ -1431,7 +1440,8 @@ export const StudentBillingHistoryView = ({
                           {paid === 0 && (
                             <button
                               type="button"
-                              onClick={() => setDeleteTargetFee(fee)}
+                              title="Delete unpaid invoice"
+                              onClick={() => handleDeleteInvoicePrompt(fee)}
                               className="px-3 py-1.5 rounded-lg border border-rose-300 text-rose-600 hover:bg-rose-50 text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -1786,22 +1796,6 @@ export const StudentBillingHistoryView = ({
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Invoice Confirmation Modal */}
-      {deleteTargetFee && (
-        <div className="fixed inset-0 z-[110] bg-slate-900/50 backdrop-blur-[1px] flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm p-5 space-y-4 border border-slate-200">
-            <h3 className="text-sm font-bold text-slate-900">Delete Invoice?</h3>
-            <p className="text-xs text-slate-600">
-              Remove invoice <strong>#{deleteTargetFee.receiptNo || deleteTargetFee.invoiceNo || String(deleteTargetFee.id).slice(-7)}</strong> ({deleteTargetFee.feeMonth || 'Monthly'})? This cannot be undone.
-            </p>
-            <div className="flex justify-end gap-2">
-              <button type="button" onClick={() => setDeleteTargetFee(null)} className="px-3.5 py-2 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 cursor-pointer">Cancel</button>
-              <button type="button" onClick={handleConfirmDeleteInvoice} className="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold cursor-pointer">Delete Invoice</button>
-            </div>
           </div>
         </div>
       )}
