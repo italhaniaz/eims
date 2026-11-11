@@ -231,14 +231,17 @@ export const StudentBillingHistoryView = ({
       })
 
       if (appliedCash > 0) {
-        recordCampusLedgerTransaction({
-          instituteId: instId,
-          type: 'income',
+        recordCampusLedgerTransaction(instId, {
+          id: `VCH-FEE-${fee.id}-${Date.now()}`,
+          date: new Date().toISOString().split('T')[0],
+          type: 'Income',
           category: 'Student Fee Payment',
-          amount: appliedCash,
-          method: 'Cash',
-          reference: `${activeStudent?.fullName || activeStudent?.name} — ${fee.feeMonth || fee.title || 'Fee'}`,
-          note: waiveFineChecked ? `Late fine PKR ${fineReduction} waived` : ''
+          debit: 0,
+          credit: appliedCash,
+          account: 'Cash',
+          status: 'Cleared',
+          description: `${activeStudent?.fullName || activeStudent?.name} — ${fee.feeMonth || fee.title || 'Fee'}${waiveFineChecked ? ` (Late fine PKR ${fineReduction} waived)` : ''}`,
+          ref: `PAY-${fee.id}-${Date.now()}`
         })
       }
 
@@ -337,14 +340,17 @@ export const StudentBillingHistoryView = ({
       return
     }
     updateFamilyCreditBalance(instId, parentCnic, amt)
-    recordCampusLedgerTransaction({
-      instituteId: instId,
-      type: 'income',
+    recordCampusLedgerTransaction(instId, {
+      id: `VCH-FC-${Date.now()}`,
+      date: new Date().toISOString().split('T')[0],
+      type: 'Income',
       category: 'Family Credit Advance',
-      amount: amt,
-      method: 'Cash',
-      reference: `Family CNIC ${parentCnic} (${parentName})`,
-      note: 'Advance credit added'
+      debit: 0,
+      credit: amt,
+      account: 'Cash',
+      status: 'Cleared',
+      description: `Family CNIC ${parentCnic} (${parentName}) — Advance credit added`,
+      ref: `FC-${Date.now()}`
     })
     setCreditDepositAmount('')
     setCreditTick((c) => c + 1)
@@ -397,7 +403,7 @@ export const StudentBillingHistoryView = ({
           </button>
           <button
             type="button"
-            onClick={() => onRouteChange?.('inst-accounts')}
+            onClick={() => onRouteChange?.('inst-accounts-expenses')}
             className="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold flex items-center gap-1.5 shadow-2xs cursor-pointer transition-colors"
           >
             <ArrowDownCircle className="w-3.5 h-3.5 text-slate-500" />

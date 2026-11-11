@@ -73,6 +73,7 @@ const EnrollStudentView = lazyWithRetry(() => import('./modules/institute-admin/
 const QuickPaymentModal = lazyWithRetry(() => import('./components/common/QuickPaymentModal'), 'quick-payment-modal')
 const StudentBillingHistoryView = lazyWithRetry(() => import('./modules/institute-admin/fees/StudentBillingHistoryView'), 'student-billing-history')
 const InvoicesView = lazyWithRetry(() => import('./modules/institute-admin/fees/InvoicesView'), 'invoices-view')
+const ExpensesView = lazyWithRetry(() => import('./modules/institute-admin/accounts/ExpensesView'), 'expenses-view')
 
 // Executive Seamless Loading Fallback & Preloader
 import ModuleSkeletonLoader from './components/common/ModuleSkeletonLoader'
@@ -703,7 +704,14 @@ const AppContent = () => {
                     }
                   />
                 )}
-                {['inst-accounts', 'inst-accounts-collection', 'inst-accounts-income', 'inst-accounts-expenses', 'inst-accounts-categories'].includes(safeInstituteRoute) && (
+                {safeInstituteRoute === 'inst-accounts-expenses' && (
+                  <ExpensesView
+                    currentInstitute={activeCampus}
+                    onRouteChange={setInstituteRoute}
+                    onOpenQuickPayment={(sid) => openQuickPayment(sid)}
+                  />
+                )}
+                {['inst-accounts', 'inst-accounts-collection', 'inst-accounts-income', 'inst-accounts-categories'].includes(safeInstituteRoute) && (
                   <CampusAccountsView
                     currentInstitute={activeCampus}
                     initialTab={
