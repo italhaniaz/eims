@@ -76,6 +76,7 @@ const EnrollStudentView = lazyWithRetry(() => import('./modules/institute-admin/
 const QuickPaymentModal = lazyWithRetry(() => import('./components/common/QuickPaymentModal'), 'quick-payment-modal')
 const SendSmsModal = lazyWithRetry(() => import('./components/common/SendSmsModal'), 'send-sms-modal')
 const StudentBillingHistoryView = lazyWithRetry(() => import('./modules/institute-admin/fees/StudentBillingHistoryView'), 'student-billing-history')
+const StudentFeeSetupView = lazyWithRetry(() => import('./modules/institute-admin/fees/StudentFeeSetupView'), 'student-fee-setup')
 const InvoicesView = lazyWithRetry(() => import('./modules/institute-admin/fees/InvoicesView'), 'invoices-view')
 const ExpensesView = lazyWithRetry(() => import('./modules/institute-admin/accounts/ExpensesView'), 'expenses-view')
 const FeeCollectionReportView = lazyWithRetry(() => import('./modules/institute-admin/accounts/FeeCollectionReportView'), 'fee-collection-report-view')
@@ -726,7 +727,18 @@ const AppContent = () => {
                     }}
                   />
                 )}
-                {['inst-fees-family', 'inst-fees-approvals', 'inst-fees-outstanding', 'inst-fees-fines', 'inst-fees-setup', 'inst-fees-settings'].includes(safeInstituteRoute) && (
+                {safeInstituteRoute === 'inst-fees-setup' && (
+                  <StudentFeeSetupView
+                    currentInstitute={activeCampus}
+                    studentId={billingHistoryStudentId}
+                    initialMode={billingHistoryStudentId ? 'details' : 'list'}
+                    onSelectStudent={setBillingHistoryStudentId}
+                    onRouteChange={setInstituteRoute}
+                    onOpenQuickPayment={(sid) => openQuickPayment(sid)}
+                    onOpenSendSms={() => setIsSendSmsOpen(true)}
+                  />
+                )}
+                {['inst-fees-family', 'inst-fees-approvals', 'inst-fees-outstanding', 'inst-fees-fines', 'inst-fees-settings'].includes(safeInstituteRoute) && (
                   <FeesView
                     currentInstitute={activeCampus}
                     initialFilter={
@@ -737,9 +749,8 @@ const AppContent = () => {
                     initialAction={
                       safeInstituteRoute === 'inst-fees-family' ? 'split'
                         : safeInstituteRoute === 'inst-fees-fines' ? 'pos'
-                          : safeInstituteRoute === 'inst-fees-setup' ? 'batch'
-                            : safeInstituteRoute === 'inst-fees-settings' ? 'new'
-                              : null
+                          : safeInstituteRoute === 'inst-fees-settings' ? 'new'
+                            : null
                     }
                   />
                 )}
