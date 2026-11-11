@@ -136,6 +136,7 @@ let systemGeneralSettings = {
   dateFormat: 'DD/MM/YYYY',
   primaryLanguage: 'en',
   enableUrduRTL: false,
+  schoolInquiryEnabled: true,
   maintenanceMode: false,
   maintenanceMessage: 'System undergoing scheduled database optimization. Services will resume in 15 minutes.'
 }
@@ -1360,6 +1361,150 @@ app.post('/api/approvals/:id/reject', (req, res) => {
   }
   res.status(404).json({ error: 'Request not found' })
 })
+
+// =========================================================================
+// 13.5. School Inquiries API
+// =========================================================================
+let schoolInquiries = [
+  {
+    id: 'inq-1001',
+    schoolName: 'Beaconhouse Al-Falah Campus',
+    schoolCodePrefix: 'BAFC',
+    contactPerson: 'Dr. Shahzad Rafique',
+    email: 'principal.alfalah@beaconhouse.edu.pk',
+    phone: '+92 300 8472910',
+    city: 'Lahore',
+    province: 'Punjab',
+    address: 'Plot 42, Block C, Al-Falah Housing Society, Lahore',
+    planTier: 'Enterprise',
+    status: 'Pending',
+    submissionDate: new Date(Date.now() - 3600000 * 5).toISOString(),
+    adminPassword: 'Password@123',
+    notes: 'Require computerized 1Link fee challan integration for 1,200 students and multi-wing portal access.',
+    wingsCount: 3,
+    campusesCount: 1,
+    rejectionReason: null,
+    approvedAt: null,
+    approvedInstituteId: null,
+    assignedSchoolCode: null
+  },
+  {
+    id: 'inq-1002',
+    schoolName: 'The City School Capital Branch',
+    schoolCodePrefix: 'TCS',
+    contactPerson: 'Mrs. Saima Noor',
+    email: 'saima.capital@cityschool.edu.pk',
+    phone: '+92 321 4590123',
+    city: 'Islamabad',
+    province: 'Federal',
+    address: 'Sector F-8/3, Street 19, Islamabad',
+    planTier: 'Pro',
+    status: 'Pending',
+    submissionDate: new Date(Date.now() - 3600000 * 22).toISOString(),
+    adminPassword: 'Password@123',
+    notes: 'Requesting 14-day evaluation for Primary and Middle wings with digital attendance SMS.',
+    wingsCount: 2,
+    campusesCount: 1,
+    rejectionReason: null,
+    approvedAt: null,
+    approvedInstituteId: null,
+    assignedSchoolCode: null
+  },
+  {
+    id: 'inq-1003',
+    schoolName: 'Al-Huda International School',
+    schoolCodePrefix: 'AHIS',
+    contactPerson: 'Muhammad Tariq',
+    email: 'info@alhuda-edu.com',
+    phone: '+92 333 9928174',
+    city: 'Karachi',
+    province: 'Sindh',
+    address: 'Gulshan-e-Iqbal, Block 6, Karachi',
+    planTier: 'Standard',
+    status: 'Rejected',
+    submissionDate: new Date(Date.now() - 3600000 * 72).toISOString(),
+    adminPassword: 'Password@123',
+    notes: 'Campus registration application.',
+    wingsCount: 1,
+    campusesCount: 1,
+    rejectionReason: 'Invalid contact verification. School official email and physical address could not be verified.',
+    rejectedAt: new Date(Date.now() - 3600000 * 48).toISOString(),
+    approvedAt: null,
+    approvedInstituteId: null,
+    assignedSchoolCode: null
+  }
+];
+
+app.get('/api/school-inquiries', (req, res) => {
+  const { filter } = req.query;
+  if (filter && filter.toUpperCase() !== 'ALL') {
+    return res.json(schoolInquiries.filter(i => (i.status || '').toUpperCase() === filter.toUpperCase()));
+  }
+  res.json(schoolInquiries);
+});
+
+app.post('/api/school-inquiries', (req, res) => {
+  const inquiry = {
+    ...req.body,
+    id: req.body.id || `inq-${Date.now().toString().slice(-6)}`,
+    status: req.body.status || 'Pending',
+    submissionDate: req.body.submissionDate || new Date().toISOString()
+  };
+  schoolInquiries.unshift(inquiry);
+  res.json({ success: true, inquiry });
+});
+
+app.get('/api/school-inquiries/:id', (req, res) => {
+  const inquiry = schoolInquiries.find(i => i.id === req.params.id);
+  if (!inquiry) return res.status(404).json({ error: 'Inquiry not found' });
+  res.json(inquiry);
+});
+
+app.put('/api/school-inquiries/:id', (req, res) => {
+  const idx = schoolInquiries.findIndex(i => i.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Inquiry not found' });
+  schoolInquiries[idx] = { ...schoolInquiries[idx], ...req.body, updatedAt: new Date().toISOString() };
+  res.json({ success: true, inquiry: schoolInquiries[idx] });
+});
+
+app.post('/api/school-inquiries/:id/approve', (req, res) => {
+  const inquiry = schoolInquiries.find(i => i.id === req.params.id);
+  if (!inquiry) return res.status(404).json({ error: 'Inquiry not found' });
+  if (inquiry.status === 'Approved') {
+    return res.json({ success: true, message: 'Already approved', inquiry });
+  }
+  inquiry.status = 'Approved';
+  inquiry.approvedAt = new Date().toISOString();
+  inquiry.approvedInstituteId = req.body.approvedInstituteId || inquiry.approvedInstituteId;
+  inquiry.assignedSchoolCode = req.body.assignedSchoolCode || inquiry.assignedSchoolCode;
+  if (req.body.schoolCodePrefix) inquiry.schoolCodePrefix = req.body.schoolCodePrefix;
+  res.json({ success: true, message: `Inquiry "${inquiry.schoolName}" approved successfully.`, inquiry });
+});
+
+app.post('/api/school-inquiries/:id/reject', (req, res) => {
+  const inquiry = schoolInquiries.find(i => i.id === req.params.id);
+  if (!inquiry) return res.status(404).json({ error: 'Inquiry not found' });
+  inquiry.status = 'Rejected';
+  inquiry.rejectionReason = req.body.reason || 'Application rejected by Super Administrator';
+  inquiry.rejectedAt = new Date().toISOString();
+  res.json({ success: true, message: `Inquiry "${inquiry.schoolName}" rejected.`, inquiry });
+});
+
+app.delete('/api/school-inquiries/:id', (req, res) => {
+  schoolInquiries = schoolInquiries.filter(i => i.id !== req.params.id);
+  res.json({ success: true, message: 'Inquiry deleted' });
+});
+
+app.post('/api/school-inquiries/bulk-delete', (req, res) => {
+  const { ids } = req.body;
+  if (Array.isArray(ids)) {
+    const idSet = new Set(ids);
+    schoolInquiries = schoolInquiries.filter(i => !idSet.has(i.id));
+    return res.json({ success: true, count: ids.length });
+  }
+  res.status(400).json({ error: 'Invalid ids array' });
+});
+
 
 // =========================================================================
 // 14. Platform Content CMS Endpoints

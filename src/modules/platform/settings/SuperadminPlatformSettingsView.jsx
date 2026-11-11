@@ -33,7 +33,10 @@ import {
   Sparkles,
   Palette,
   Moon,
-  Sun
+  Sun,
+  Server,
+  ShieldAlert,
+  ClipboardList
 } from 'lucide-react'
 import { useToast } from '../../../context/ToastContext'
 import { useAppData } from '../../../context/AppDataContext'
@@ -41,6 +44,7 @@ import { useAuth } from '../../../context/AuthContext'
 import { useTheme } from '../../../context/ThemeContext'
 import { PlatformService } from '../../../services/platformService'
 import { OperationsService } from '../../../services/operationsService'
+import { SchoolInquiryService } from '../../../services/schoolInquiryService'
 
 export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabChange = () => {} }) => {
   const { toast } = useToast()
@@ -75,6 +79,22 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
     academicYearFormat: 'YYYY-YYYY (August - June)',
     supportEmail: 'admin@eims-edu.pk'
   })
+
+  // School Inquiries Setting (ON = approval required, OFF = direct registration)
+  const [schoolInquiryEnabled, setSchoolInquiryEnabled] = useState(() => {
+    return SchoolInquiryService.isSchoolInquiryEnabled()
+  })
+
+  const handleToggleSchoolInquiry = async () => {
+    const nextState = !schoolInquiryEnabled
+    setSchoolInquiryEnabled(nextState)
+    await SchoolInquiryService.setSchoolInquirySetting(nextState)
+    if (nextState) {
+      toast?.success?.('School Inquiry Gate is now ON: Registrations require Super Admin review and approval before campus provisioning.')
+    } else {
+      toast?.info?.('School Inquiry Gate is now OFF: Schools register directly with instant tenant provisioning.')
+    }
+  }
 
   // Feature flags state
   const [featureFlags, setFeatureFlags] = useState([
@@ -193,9 +213,14 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
     }))
   }
 
-  const handleSaveGeneral = (e) => {
+  const handleSaveGeneral = async (e) => {
     e.preventDefault()
-    toast?.success?.('Platform global settings saved successfully.')
+    try {
+      await SchoolInquiryService.setSchoolInquirySetting(schoolInquiryEnabled)
+      toast?.success?.('Platform global settings & security workflow saved successfully.')
+    } catch (err) {
+      toast?.error?.('Failed to save settings: ' + err.message)
+    }
   }
 
   
@@ -309,6 +334,82 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
               />
             </div>
           </div>
+
+          {/* Security & Server: School Registration & Inquiries Policy */}
+          <div className="pt-6 border-t border-slate-100">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+                    <Server className="w-4 h-4" />
+                  </div>
+                  <h4 className="font-bold text-slate-900 text-sm sm:text-base">
+                    Security & Server: School Registration & Inquiries Policy
+                  </h4>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">
+                  Configure admission gating policy for public school registrations and self-service campus sign-ups.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${
+                  schoolInquiryEnabled 
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                    : 'bg-amber-50 text-amber-700 border-amber-200'
+                }`}>
+                  <span className={`w-2 h-2 rounded-full ${schoolInquiryEnabled ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`}></span>
+                  <span>{schoolInquiryEnabled ? 'Inquiry Gate ON' : 'Direct Sign-up OFF'}</span>
+                </span>
+              </div>
+            </div>
+
+            <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200/90 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="space-y-1.5 max-w-2xl">
+                <div className="flex items-center gap-2 font-bold text-slate-900 text-sm">
+                  <ShieldCheck className="w-4 h-4 text-purple-600" />
+                  <span>Super Admin School Inquiries Approval Requirement</span>
+                </div>
+                <div className="text-xs text-slate-600 leading-relaxed">
+                  {schoolInquiryEnabled ? (
+                    <span className="text-slate-700 font-medium">
+                      <strong>ON (Approval Required):</strong> Public school registrations are saved as inquiries with <code className="bg-amber-100 text-amber-900 px-1 py-0.5 rounded text-[11px] font-bold">Pending</code> status in the inquiries queue. No active institute, database tenant, or administrator account is provisioned until Super Admin explicitly reviews and approves the application.
+                    </span>
+                  ) : (
+                    <span className="text-slate-700 font-medium">
+                      <strong>OFF (Direct Registration):</strong> Schools are provisioned directly using the existing institute creation workflow. The campus, active tenant, and initial administrator account are created immediately without saving an inquiry.
+                    </span>
+                  )}
+                </div>
+                <div className="text-[11px] text-slate-400">
+                  Setting is persisted in the database and enforced on the backend across all registration channels.
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleToggleSchoolInquiry}
+                  className={`relative inline-flex h-7 w-13 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-2 ${
+                    schoolInquiryEnabled ? 'bg-purple-600' : 'bg-slate-300'
+                  }`}
+                  role="switch"
+                  aria-checked={schoolInquiryEnabled}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                      schoolInquiryEnabled ? 'translate-x-6' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+                <span className="text-xs font-bold text-slate-700 w-10">
+                  {schoolInquiryEnabled ? 'ON' : 'OFF'}
+                </span>
+              </div>
+            </div>
+          </div>
+
           <div className="pt-2 flex justify-end">
             <button 
               type="submit"

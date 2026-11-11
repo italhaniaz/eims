@@ -40,6 +40,7 @@ import { useTheme } from '../../context/ThemeContext'
 import ThemeCustomizerModal from '../../components/common/ThemeCustomizerModal'
 import { getStoredData, saveStoredData } from '../../services/dataService'
 import AnnouncementService from '../../services/announcementService'
+import { SchoolInquiryService } from '../../services/schoolInquiryService'
 
 // 26-point refined serrated starburst sticker geometry (Compact Awwwards-style Action Badge)
 const STARBURST_POINTS = (() => {
@@ -337,11 +338,9 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
 
     setIsSubmittingTrial(true)
 
-    setTimeout(() => {
+    setTimeout(async () => {
       try {
         const fullPhone = trialForm.phone.trim().startsWith('+') ? trialForm.phone.trim() : `+92 ${trialForm.phone.trim().replace(/^0+/, '')}`
-        const newInstId = `inst-trial-${Date.now().toString().slice(-4)}`
-        const approvalId = `appr-reg-${Date.now().toString().slice(-6)}`
         const instCode = trialForm.instituteName.replace(/[^A-Za-z0-9]/g, '').slice(0, 4).toUpperCase() || 'SCHL'
 
         const currentPlanConfig = PLAN_CONFIGS[activeModalPlan] || PLAN_CONFIGS.trial
@@ -354,124 +353,154 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
           planPrice = billingCycle === 'annual' ? 38250 : 45000
         }
 
-        // 1. Create School Entry in storedData
-        const newInstitute = {
-          id: newInstId,
-          name: trialForm.instituteName.trim(),
-          code: instCode,
-          contactPerson: trialForm.adminName.trim() || 'School Principal',
-          email: trialForm.email.trim(),
-          phone: fullPhone,
-          address: `${trialForm.city || 'Lahore'}, Pakistan`,
-          city: trialForm.city || 'Lahore',
-          country: 'Pakistan',
-          planTier: planTierName,
-          planType: 'SCHOOL',
-          type: 'School',
-          subscriptionStatus: 'PENDING_APPROVAL',
-          lifecycleStatus: 'Pending',
-          trialEndsAt: new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
-          enabledTiers: ['school'],
-          createdAt: new Date().toISOString().slice(0, 10),
-          status: 'Pending Approval',
-          wingsCount: 1,
-          campusesCount: trialForm.wing === 'multi-campus' ? 3 : 1,
-          studentCount: 0,
-          facultyCount: 0,
-          adminPassword: trialForm.adminPassword,
-          notes: trialForm.notes.trim()
-        }
+        const isInquirySettingOn = SchoolInquiryService.isSchoolInquiryEnabled()
 
-        const currentData = getStoredData()
-        const updatedInstitutes = [newInstitute, ...(currentData.institutes || [])]
-        saveStoredData({ ...currentData, institutes: updatedInstitutes })
-
-        // 2. Register in billing subscriptions as pending approval
-        const trialSub = {
-          id: `sub-reg-${Date.now().toString().slice(-4)}`,
-          instituteId: newInstId,
-          instituteName: trialForm.instituteName.trim(),
-          planId: `plan-${activeModalPlan}`,
-          planName: planTierName,
-          enabledTiers: ['school'],
-          status: 'PENDING_APPROVAL',
-          billingCycle: activeModalPlan === 'trial' ? '14-day trial' : billingCycle,
-          pricePKR: planPrice,
-          startDate: new Date().toISOString().slice(0, 10),
-          renewalDate: new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
-          trialEndsAt: new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
-          autoRenew: false,
-          isWaived: activeModalPlan === 'trial',
-          waiveReason: activeModalPlan === 'trial' ? '14-Day Free Evaluation' : 'Standard Evaluation'
-        }
-
-        const localSubs = localStorage.getItem('sms_institute_subscriptions')
-        let subsList = []
-        if (localSubs) {
-          try { subsList = JSON.parse(localSubs) } catch {}
-        }
-        subsList.unshift(trialSub)
-        localStorage.setItem('sms_institute_subscriptions', JSON.stringify(subsList))
-
-        // 3. Push official approval petition to sms_approval_requests for Super Admin
-        const localApprovals = localStorage.getItem('sms_approval_requests')
-        let approvalsList = []
-        if (localApprovals) {
-          try { approvalsList = JSON.parse(localApprovals) } catch {}
-        }
-        const approvalEntry = {
-          id: approvalId,
-          requestType: 'INSTITUTE_ONBOARDING',
-          instituteId: newInstId,
-          instituteName: trialForm.instituteName.trim(),
-          title: `New Onboarding Petition: ${trialForm.instituteName.trim()} (${planTierName})`,
-          details: {
-            instituteName: trialForm.instituteName.trim(),
-            campusCode: instCode,
+        if (isInquirySettingOn) {
+          // =========================================================================
+          // WORKFLOW A (SETTING ON - REQUIREMENT 1 & 5):
+          // School registrations are saved as inquiries with 'Pending' status.
+          // NO institute or tenant is created until Super Admin approval.
+          // =========================================================================
+          const newInquiry = await SchoolInquiryService.createInquiry({
+            schoolName: trialForm.instituteName.trim(),
+            schoolCodePrefix: instCode,
             contactPerson: trialForm.adminName.trim() || 'Principal Administrator',
             email: trialForm.email.trim(),
             phone: fullPhone,
             city: trialForm.city || 'Lahore',
-            wing: trialForm.wing,
-            wingType: wingType,
+            address: `${trialForm.city || 'Lahore'}, Pakistan`,
             planTier: planTierName,
-            planPrice: planPrice,
-            billingCycle: billingCycle,
             adminPassword: trialForm.adminPassword,
-            notes: trialForm.notes.trim() || 'Awaiting Super Admin credential review and activation.',
-            agreedToTerms: true,
-            submittedAt: new Date().toISOString()
-          },
-          status: 'PENDING',
-          reviewerNotes: null,
-          createdAt: new Date().toISOString()
+            notes: trialForm.notes.trim() || 'Application received via self-service portal registration.',
+            wingsCount: trialForm.wing === 'multi-campus' ? 3 : 1
+          })
+
+          // Save submitted details for the Animated Green Success Popup
+          setSubmittedSuccessData({
+            requestId: newInquiry.id,
+            instituteName: trialForm.instituteName.trim(),
+            adminName: trialForm.adminName.trim() || 'Principal Administrator',
+            email: trialForm.email.trim(),
+            phone: fullPhone,
+            city: trialForm.city || 'Lahore',
+            tierName: wingType,
+            planTier: planTierName,
+            adminPassword: trialForm.adminPassword,
+            isInquiryPending: true
+          })
+
+          setIsSubmittingTrial(false)
+          setIsTrialModalOpen(false)
+          setIsSuccessModalOpen(true)
+          showToast('Registration inquiry submitted for Super Admin review!')
+        } else {
+          // =========================================================================
+          // WORKFLOW B (SETTING OFF - REQUIREMENT 1):
+          // Schools are registered directly using the existing institute creation workflow.
+          // NO inquiry is saved. Institute is active and ready immediately.
+          // =========================================================================
+          const newInstId = `inst-reg-${Date.now().toString().slice(-4)}`
+          const newInstitute = {
+            id: newInstId,
+            name: trialForm.instituteName.trim(),
+            code: instCode,
+            contactPerson: trialForm.adminName.trim() || 'School Principal',
+            email: trialForm.email.trim(),
+            phone: fullPhone,
+            address: `${trialForm.city || 'Lahore'}, Pakistan`,
+            city: trialForm.city || 'Lahore',
+            country: 'Pakistan',
+            planTier: planTierName,
+            planType: 'SCHOOL',
+            type: 'School',
+            subscriptionStatus: 'ACTIVE',
+            lifecycleStatus: 'Active',
+            trialEndsAt: new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
+            enabledTiers: ['school'],
+            createdAt: new Date().toISOString().slice(0, 10),
+            status: 'Active',
+            wingsCount: 1,
+            campusesCount: trialForm.wing === 'multi-campus' ? 3 : 1,
+            studentCount: 0,
+            facultyCount: 0,
+            adminPassword: trialForm.adminPassword,
+            notes: trialForm.notes.trim()
+          }
+
+          const currentData = getStoredData()
+          const updatedInstitutes = [newInstitute, ...(currentData.institutes || [])]
+
+          // Add active administrator account so they can sign in immediately
+          currentData.users = currentData.users || []
+          const adminUser = {
+            id: `usr-${Date.now().toString().slice(-4)}`,
+            name: trialForm.adminName.trim() || `${trialForm.instituteName.trim()} Administrator`,
+            email: trialForm.email.trim().toLowerCase(),
+            password: trialForm.adminPassword,
+            role: 'institute_admin',
+            roleTitle: 'Institute Administrator',
+            instituteId: newInstId,
+            institute: trialForm.instituteName.trim(),
+            phone: fullPhone,
+            status: 'Active',
+            lastLogin: 'Never',
+            createdAt: new Date().toISOString()
+          }
+          currentData.users.unshift(adminUser)
+          saveStoredData({ ...currentData, institutes: updatedInstitutes })
+
+          // Active subscription record
+          const trialSub = {
+            id: `sub-reg-${Date.now().toString().slice(-4)}`,
+            instituteId: newInstId,
+            instituteName: trialForm.instituteName.trim(),
+            planId: `plan-${activeModalPlan}`,
+            planName: planTierName,
+            enabledTiers: ['school'],
+            status: 'ACTIVE',
+            billingCycle: activeModalPlan === 'trial' ? '14-day trial' : billingCycle,
+            pricePKR: planPrice,
+            startDate: new Date().toISOString().slice(0, 10),
+            renewalDate: new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
+            trialEndsAt: new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
+            autoRenew: false,
+            isWaived: activeModalPlan === 'trial',
+            waiveReason: activeModalPlan === 'trial' ? '14-Day Free Evaluation' : 'Standard Evaluation'
+          }
+
+          const localSubs = localStorage.getItem('sms_institute_subscriptions')
+          let subsList = []
+          if (localSubs) {
+            try { subsList = JSON.parse(localSubs) } catch {}
+          }
+          subsList.unshift(trialSub)
+          localStorage.setItem('sms_institute_subscriptions', JSON.stringify(subsList))
+
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new Event('sms_institutes_updated'))
+            window.dispatchEvent(new Event('sms_users_updated'))
+            window.dispatchEvent(new Event('storage'))
+          }
+
+          // Save submitted details for the Animated Green Success Popup
+          setSubmittedSuccessData({
+            requestId: newInstId,
+            instituteName: trialForm.instituteName.trim(),
+            adminName: trialForm.adminName.trim() || 'Principal Administrator',
+            email: trialForm.email.trim(),
+            phone: fullPhone,
+            city: trialForm.city || 'Lahore',
+            tierName: wingType,
+            planTier: planTierName,
+            adminPassword: trialForm.adminPassword,
+            isInquiryPending: false
+          })
+
+          setIsSubmittingTrial(false)
+          setIsTrialModalOpen(false)
+          setIsSuccessModalOpen(true)
+          showToast('School registered and provisioned successfully!')
         }
-        approvalsList.unshift(approvalEntry)
-        localStorage.setItem('sms_approval_requests', JSON.stringify(approvalsList))
-
-        // 4. Dispatch storage and custom events for real-time reactivity across Super Admin views
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new Event('sms_approval_created'))
-          window.dispatchEvent(new Event('storage'))
-        }
-
-        // 5. Save submitted details for the Animated Green Success Popup
-        setSubmittedSuccessData({
-          requestId: approvalEntry.id,
-          instituteName: trialForm.instituteName.trim(),
-          adminName: trialForm.adminName.trim() || 'Principal Administrator',
-          email: trialForm.email.trim(),
-          phone: fullPhone,
-          city: trialForm.city || 'Lahore',
-          tierName: wingType,
-          planTier: planTierName,
-          adminPassword: trialForm.adminPassword
-        })
-
-        setIsSubmittingTrial(false)
-        setIsTrialModalOpen(false)
-        setIsSuccessModalOpen(true)
-        showToast('Registration submitted successfully for Super Admin approval!')
       } catch (err) {
         setIsSubmittingTrial(false)
         showToast('Submission error: ' + err.message)
@@ -2367,22 +2396,39 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
             </div>
 
             {/* Status Pill */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60 mb-2 mt-1">
-              <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 animate-spin" style={{ animationDuration: '6s' }} />
-              <span>Submitted · Awaiting Super Admin Approval</span>
+            <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold mb-2 mt-1 border ${
+              submittedSuccessData?.isInquiryPending !== false
+                ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-200/80 dark:border-amber-800/60'
+                : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800/60'
+            }`}>
+              {submittedSuccessData?.isInquiryPending !== false ? (
+                <>
+                  <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 animate-spin" style={{ animationDuration: '6s' }} />
+                  <span>Inquiry Submitted · Awaiting Super Admin Review</span>
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>Active · Direct Registration Provisioned</span>
+                </>
+              )}
             </div>
 
             {/* Main Headline */}
             <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight font-heading">
-              Request Submitted Successfully!
+              {submittedSuccessData?.isInquiryPending !== false ? 'Inquiry Submitted Successfully!' : 'School Registered & Ready!'}
             </h3>
 
             {/* Narrative Explanation */}
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-2 leading-relaxed max-w-md">
-              Your evaluation request for <span className="font-bold text-slate-900 dark:text-white">{submittedSuccessData?.instituteName || 'your institution'}</span> has been forwarded to Super Admin headquarters for verification.
+              {submittedSuccessData?.isInquiryPending !== false ? (
+                <>Your application for <span className="font-bold text-slate-900 dark:text-white">{submittedSuccessData?.instituteName || 'your institution'}</span> has been forwarded to Super Admin School Inquiries for verification and provisioning.</>
+              ) : (
+                <>Your school campus <span className="font-bold text-slate-900 dark:text-white">{submittedSuccessData?.instituteName}</span> has been provisioned directly and is active. You can log in immediately.</>
+              )}
             </p>
 
-            {/* Credentials Delivery Notice */}
+            {/* Credentials Notice */}
             <div className="w-full bg-purple-50/70 dark:bg-purple-950/30 border border-purple-200/80 dark:border-purple-800/60 rounded-2xl p-3.5 sm:p-4 my-4 text-left">
               <div className="flex items-start gap-2.5">
                 <div className="w-7 h-7 rounded-xl bg-purple-600 text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5">
@@ -2390,10 +2436,14 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                 </div>
                 <div>
                   <div className="text-xs font-bold text-purple-950 dark:text-purple-200">
-                    How will you receive your credentials?
+                    {submittedSuccessData?.isInquiryPending !== false ? 'How will you receive your credentials?' : 'Your Administrator Credentials'}
                   </div>
                   <div className="text-[11px] sm:text-xs text-purple-900/85 dark:text-purple-300 mt-1 leading-relaxed">
-                    Once the Super Administrator reviews and approves your request, your official <strong className="text-purple-950 dark:text-purple-100">Portal Login ID</strong> and <strong className="text-purple-950 dark:text-purple-100">Password</strong> will be dispatched to your registered email and WhatsApp/SMS.
+                    {submittedSuccessData?.isInquiryPending !== false ? (
+                      <>Once the Super Administrator reviews and approves your inquiry, your official <strong className="text-purple-950 dark:text-purple-100">Portal Login ID</strong> and <strong className="text-purple-950 dark:text-purple-100">Password</strong> will be activated and dispatched.</>
+                    ) : (
+                      <>Your administrator account has been created with email <strong className="text-purple-950 dark:text-purple-100 font-mono">{submittedSuccessData?.email}</strong>. Use your chosen password to sign in.</>
+                    )}
                   </div>
                 </div>
               </div>
@@ -2442,15 +2492,33 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
               </div>
             </div>
 
-            {/* Back to Home / Got it Button */}
-            <div className="w-full mt-3">
+            {/* Action Buttons */}
+            <div className="w-full mt-3 space-y-2">
+              {submittedSuccessData?.isInquiryPending === false ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsSuccessModalOpen(false)
+                    if (onNavigateToLogin) onNavigateToLogin()
+                  }}
+                  className="w-full py-3 sm:py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-emerald-600/20 transition-all hover:scale-[1.01] active:scale-98 cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <ArrowRight className="w-4 h-4 text-emerald-200" />
+                  <span>Proceed to School Portal Sign In</span>
+                </button>
+              ) : null}
+
               <button
                 type="button"
                 onClick={() => setIsSuccessModalOpen(false)}
-                className="w-full py-3 sm:py-3.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-purple-600/20 transition-all hover:scale-[1.01] active:scale-98 cursor-pointer flex items-center justify-center gap-2"
+                className={`w-full py-3 sm:py-3.5 rounded-xl font-bold text-xs sm:text-sm transition-all hover:scale-[1.01] active:scale-98 cursor-pointer flex items-center justify-center gap-2 ${
+                  submittedSuccessData?.isInquiryPending === false
+                    ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200'
+                    : 'bg-purple-600 hover:bg-purple-700 text-white shadow-md shadow-purple-600/20'
+                }`}
               >
-                <CheckCircle2 className="w-4 h-4 text-purple-200" />
-                <span>Got it, Return to Portal Home</span>
+                <CheckCircle2 className="w-4 h-4" />
+                <span>{submittedSuccessData?.isInquiryPending === false ? 'Dismiss' : 'Got it, Return to Portal Home'}</span>
               </button>
             </div>
           </div>

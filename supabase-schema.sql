@@ -319,3 +319,44 @@ CREATE POLICY "Users: Superadmin full access"
 CREATE POLICY "Users: View self profile"
   ON user_profiles FOR SELECT
   USING (id = auth.uid());
+
+
+-- =========================================================================
+-- 21. SCHOOL INQUIRIES & REGISTRATION APPLICATIONS
+-- =========================================================================
+CREATE TABLE IF NOT EXISTS school_inquiries (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    school_name VARCHAR(200) NOT NULL,
+    school_code_prefix VARCHAR(30) DEFAULT 'SCHL',
+    contact_person VARCHAR(150) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    phone VARCHAR(50),
+    city VARCHAR(100),
+    province VARCHAR(100) DEFAULT 'Punjab',
+    address TEXT,
+    plan_tier VARCHAR(50) DEFAULT 'Standard',
+    status VARCHAR(30) DEFAULT 'Pending', -- 'Pending', 'Approved', 'Rejected'
+    rejection_reason TEXT,
+    notes TEXT,
+    wings_count INT DEFAULT 1,
+    campuses_count INT DEFAULT 1,
+    admin_password TEXT,
+    approved_at TIMESTAMP WITH TIME ZONE,
+    rejected_at TIMESTAMP WITH TIME ZONE,
+    approved_institute_id VARCHAR(100),
+    assigned_school_code VARCHAR(50),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Inquiries RLS Policies: Restricted strictly to Superadmin
+ALTER TABLE school_inquiries ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "School Inquiries: Superadmin full access"
+  ON school_inquiries FOR ALL
+  USING (is_superadmin())
+  WITH CHECK (is_superadmin());
+
+CREATE POLICY "School Inquiries: Public insert"
+  ON school_inquiries FOR INSERT
+  WITH CHECK (true);
