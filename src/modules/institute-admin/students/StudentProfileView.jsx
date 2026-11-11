@@ -26,7 +26,11 @@ import {
   Mail,
   Info,
   BarChart3,
-  Link2
+  Link2,
+  History,
+  Wallet,
+  Check,
+  X
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
@@ -88,6 +92,7 @@ export const StudentProfileView = ({
   const [subView, setSubView] = useState('profile') // 'profile' | 'transport' | 'edit' | 'welcome'
   const [editInitialStep, setEditInitialStep] = useState(1)
   const [activeTab, setActiveTab] = useState('overview') // 'overview' | 'results' | 'guardian' | 'attendance' | 'fees'
+  const [txnModalFee, setTxnModalFee] = useState(null)
   const [saving, setSaving] = useState(false)
 
   // Route Edit Form
@@ -124,16 +129,69 @@ export const StudentProfileView = ({
   const feeSummary = useMemo(() => {
     let pendingDues = 0
     let totalPaid = 0
+    let totalWaivers = 0
+    let pendingLinesCount = 0
+    let paidLinesCount = 0
+    const recentTxns = []
+
+    const formatTxnDate = (dStr) => {
+      if (!dStr) return '—'
+      const dt = new Date(dStr)
+      if (Number.isNaN(dt.getTime())) return String(dStr).slice(0, 16)
+      const d = dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+      const t = dt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+      return `${d}, ${t}`
+    }
+
     studentFees.forEach((f) => {
       const billed = Number(f.amount || 0) + Number(f.fine || f.lateFine || 0)
       const paid = Number(f.paidAmount || 0)
       const waiver = Number(f.discount || f.waiver || 0)
+      const remaining = Math.max(0, billed - paid - waiver)
+      const refNum = f.receiptNo || f.invoiceNo || String(f.id).slice(-8)
+      const invTitle = f.title || f.feeType || 'Tuition'
+      const freq = f.frequency || f.duration || 'Monthly'
+      const invLabel = `Invoice #${refNum} — ${invTitle} — ${freq}`
+
       totalPaid += paid
-      if (f.status !== 'Paid') {
-        pendingDues += Math.max(0, billed - paid - waiver)
+      totalWaivers += waiver
+      if (f.status === 'Paid' || remaining <= 0) {
+        paidLinesCount += 1
+      } else {
+        pendingLinesCount += 1
+        pendingDues += remaining
+      }
+
+      if (paid > 0) {
+        const dtIso = f.paidAt || f.updatedAt || f.createdAt || f.dueDate || ''
+        recentTxns.push({
+          id: `${f.id}-cash`,
+          sortDate: String(dtIso),
+          dateLabel: formatTxnDate(dtIso),
+          invoiceLabel: invLabel,
+          type: 'Cash',
+          amount: paid,
+          by: f.recordedBy || f.collectedBy || 'Admin',
+          reason: f.notes || '—'
+        })
+      }
+      if (waiver > 0) {
+        const dtIso = f.waivedAt || f.paidAt || f.updatedAt || f.createdAt || f.dueDate || ''
+        recentTxns.push({
+          id: `${f.id}-waiver`,
+          sortDate: String(dtIso),
+          dateLabel: formatTxnDate(dtIso),
+          invoiceLabel: invLabel,
+          type: 'Waiver',
+          amount: waiver,
+          by: f.waivedBy || f.recordedBy || 'Admin',
+          reason: f.discountReason || 'Concession'
+        })
       }
     })
-    return { pendingDues, totalPaid }
+
+    recentTxns.sort((a, b) => b.sortDate.localeCompare(a.sortDate))
+    return { pendingDues, totalPaid, totalWaivers, pendingLinesCount, paidLinesCount, recentTxns }
   }, [studentFees])
 
   const monthlyAttendance = useMemo(() => {
@@ -1238,60 +1296,294 @@ export const StudentProfileView = ({
         )
       })()}
 
-      {/* Tab 5: Fee & Payments */}
+      {/* Tab 5: Fee & Payments (Picks 1 & 2) */}
       {activeTab === 'fees' && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-5 text-xs space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h3 className="text-sm font-bold text-slate-800">Invoices &amp; Payments ({studentFees.length})</h3>
+        <div className="space-y-5 text-xs">
+          {/* Top Helper & Open Billing & Pay Button */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-[11px] text-slate-400 flex items-center gap-1.5">
+              <Info className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <span>Cash collected and waivers/discounts across class invoices and individual charges.</span>
+            </p>
             <button
               type="button"
               onClick={() => onOpenBillingHistory?.(student.id)}
-              className="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold cursor-pointer"
+              className="px-4 py-2 rounded-lg bg-sky-500 hover:bg-sky-600 text-white font-bold inline-flex items-center gap-1.5 shadow-xs cursor-pointer transition-colors"
             >
-              Open Full Billing History
+              <Wallet className="w-3.5 h-3.5" />
+              <span>Open billing &amp; pay</span>
             </button>
           </div>
-          {studentFees.length === 0 ? (
-            <p className="text-slate-400 py-6 text-center">No fee invoices recorded for {studentName}.</p>
-          ) : (
+
+          {/* 3 Colored Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="rounded-xl border border-amber-200 bg-amber-50/75 p-4 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-extrabold text-amber-700 uppercase tracking-wider">TOTAL PENDING</p>
+                <p className="text-xl font-extrabold text-amber-700 mt-1">{formatMoney(feeSummary.pendingDues)}</p>
+                <p className="text-[11px] text-slate-500 mt-0.5">{feeSummary.pendingLinesCount} pending invoice line(s)</p>
+              </div>
+              <AlertTriangle className="w-7 h-7 text-amber-300 shrink-0" />
+            </div>
+
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50/75 p-4 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-extrabold text-emerald-700 uppercase tracking-wider">CASH RECEIVED</p>
+                <p className="text-xl font-extrabold text-emerald-700 mt-1">{formatMoney(feeSummary.totalPaid)}</p>
+                <p className="text-[11px] text-slate-500 mt-0.5">{feeSummary.paidLinesCount} paid line(s)</p>
+              </div>
+              <Check className="w-7 h-7 text-emerald-300 shrink-0" />
+            </div>
+
+            <div className="rounded-xl border border-sky-200 bg-sky-50/75 p-4 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-extrabold text-sky-700 uppercase tracking-wider">REGULAR VOUCHER</p>
+                <p className="text-xl font-extrabold text-sky-700 mt-1">{formatMoney(resolvedSetup.finalAmount)}</p>
+                <p className="text-[11px] text-slate-500 mt-0.5">Fee setup · {resolvedSetup.feeType}</p>
+              </div>
+              <CreditCard className="w-7 h-7 text-sky-300 shrink-0" />
+            </div>
+          </div>
+
+          {/* Recent Transactions Card */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
+            <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
+              <span className="font-bold text-indigo-700 text-sm inline-flex items-center gap-2">
+                <History className="w-4 h-4" />
+                <span>Recent transactions</span>
+              </span>
+              <span className="text-[11px] text-slate-400 font-medium">{feeSummary.recentTxns.length} record(s)</span>
+            </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left">
-                <thead className="bg-slate-50 border-b text-[10px] uppercase text-slate-500">
+                <thead className="bg-slate-50/70 border-b border-slate-200 text-[10px] uppercase tracking-wider text-slate-500">
                   <tr>
-                    <th className="py-2.5 px-3">Invoice</th>
-                    <th className="py-2.5 px-3 text-right">Billed</th>
-                    <th className="py-2.5 px-3 text-right">Paid</th>
-                    <th className="py-2.5 px-3 text-right">Waived</th>
-                    <th className="py-2.5 px-3 text-right">Status</th>
+                    <th className="py-2.5 px-4">DATE</th>
+                    <th className="py-2.5 px-4">INVOICE</th>
+                    <th className="py-2.5 px-4">TYPE</th>
+                    <th className="py-2.5 px-4 text-right">AMOUNT</th>
+                    <th className="py-2.5 px-4">BY</th>
+                    <th className="py-2.5 px-4">REASON</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {studentFees.map((f) => (
-                    <tr key={f.id}>
-                      <td className="py-2 px-3 font-semibold text-slate-800">
-                        {f.feeMonth || f.title || 'Monthly Fee'}
-                      </td>
-                      <td className="py-2 px-3 text-right">{formatMoney(Number(f.amount || 0) + Number(f.fine || f.lateFine || 0))}</td>
-                      <td className="py-2 px-3 text-right text-emerald-700 font-semibold">{formatMoney(f.paidAmount || 0)}</td>
-                      <td className="py-2 px-3 text-right text-cyan-700">{formatMoney(f.discount || f.waiver || 0)}</td>
-                      <td className="py-2 px-3 text-right">
-                        <span
-                          className={`px-2 py-0.5 rounded font-bold text-[10px] ${
-                            f.status === 'Paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
-                          }`}
-                        >
-                          {f.status || 'Pending'}
-                        </span>
+                  {feeSummary.recentTxns.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-6 text-center text-slate-400">
+                        No payment or waiver transactions recorded yet.
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    feeSummary.recentTxns.map((txn) => (
+                      <tr key={txn.id} className="hover:bg-slate-50/70">
+                        <td className="py-2.5 px-4 text-slate-600 whitespace-nowrap">{txn.dateLabel}</td>
+                        <td className="py-2.5 px-4 font-semibold text-slate-800">{txn.invoiceLabel}</td>
+                        <td className="py-2.5 px-4">
+                          <span
+                            className={`inline-block px-2 py-0.5 rounded font-bold text-[10px] text-white ${
+                              txn.type === 'Cash' ? 'bg-emerald-600' : 'bg-sky-500'
+                            }`}
+                          >
+                            {txn.type}
+                          </span>
+                        </td>
+                        <td
+                          className={`py-2.5 px-4 text-right font-bold ${
+                            txn.type === 'Cash' ? 'text-emerald-600' : 'text-sky-600'
+                          }`}
+                        >
+                          {formatMoney(txn.amount)}
+                        </td>
+                        <td className="py-2.5 px-4 text-slate-600">{txn.by}</td>
+                        <td className="py-2.5 px-4 text-slate-500">{txn.reason}</td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
-          )}
+          </div>
+
+          {/* Regular Fee Invoices Card */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
+            <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
+              <span className="font-bold text-indigo-700 text-sm inline-flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                <span>Regular fee invoices</span>
+              </span>
+              <span className="text-[11px] text-slate-400 font-medium">{studentFees.length} line(s)</span>
+            </div>
+            {studentFees.length === 0 ? (
+              <p className="text-slate-400 py-8 text-center">No regular fee invoices recorded for {studentName}.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead className="bg-slate-50/70 border-b border-slate-200 text-[10px] uppercase tracking-wider text-slate-500">
+                    <tr>
+                      <th className="py-2.5 px-4">#</th>
+                      <th className="py-2.5 px-4">INVOICE</th>
+                      <th className="py-2.5 px-4 text-right">DUE / BILLED</th>
+                      <th className="py-2.5 px-4 text-right">CASH RECEIVED</th>
+                      <th className="py-2.5 px-4 text-right">WAIVER</th>
+                      <th className="py-2.5 px-4 text-center">DUE DATE</th>
+                      <th className="py-2.5 px-4 text-center">STATUS</th>
+                      <th className="py-2.5 px-4 text-right" />
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {studentFees.map((f, idx) => {
+                      const billed = Number(f.amount || 0) + Number(f.fine || f.lateFine || 0)
+                      const paid = Number(f.paidAmount || 0)
+                      const waiver = Number(f.discount || f.waiver || 0)
+                      const rem = f.status === 'Paid' ? 0 : Math.max(0, billed - paid - waiver)
+                      const refNum = f.receiptNo || f.invoiceNo || String(f.id).slice(-8)
+                      const freq = f.frequency || f.duration || 'Monthly'
+                      const st = f.status === 'Paid' || rem <= 0 ? 'Paid' : paid > 0 || waiver > 0 ? 'Partial' : 'Pending'
+                      const formattedDue = f.dueDate
+                        ? new Date(`${String(f.dueDate).slice(0, 10)}T12:00:00`).toLocaleDateString('en-GB', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric'
+                          })
+                        : '—'
+
+                      return (
+                        <tr key={f.id} className="hover:bg-slate-50/60">
+                          <td className="py-3 px-4 text-slate-500 font-medium">{idx + 1}</td>
+                          <td className="py-3 px-4">
+                            <div className="font-bold text-slate-900">{f.feeMonth || f.title || 'Tuition Fee'}</div>
+                            <div className="text-[10px] text-slate-400">
+                              #{refNum} · {freq}
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            {st === 'Paid' ? (
+                              <span className="font-bold text-slate-900">{formatMoney(billed)}</span>
+                            ) : (
+                              <div>
+                                <div className="font-bold text-rose-600">{formatMoney(rem)}</div>
+                                {st === 'Partial' && (
+                                  <div className="text-[10px] text-slate-400">of {formatMoney(billed)}</div>
+                                )}
+                              </div>
+                            )}
+                          </td>
+                          <td className="py-3 px-4 text-right font-semibold text-slate-700">
+                            {paid > 0 ? formatMoney(paid) : '—'}
+                          </td>
+                          <td className="py-3 px-4 text-right font-semibold text-slate-700">
+                            {waiver > 0 ? formatMoney(waiver) : '—'}
+                          </td>
+                          <td className="py-3 px-4 text-center text-slate-600 whitespace-nowrap">{formattedDue}</td>
+                          <td className="py-3 px-4 text-center">
+                            <span
+                              className={`inline-block px-2 py-0.5 rounded font-bold text-[10px] text-white ${
+                                st === 'Paid' ? 'bg-emerald-600' : st === 'Partial' ? 'bg-orange-500' : 'bg-amber-400 text-slate-900'
+                              }`}
+                            >
+                              {st}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            {(paid > 0 || waiver > 0) && (
+                              <button
+                                type="button"
+                                onClick={() => setTxnModalFee(f)}
+                                className="px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold inline-flex items-center gap-1 cursor-pointer"
+                              >
+                                <History className="w-3 h-3" />
+                                <span>Transactions</span>
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                  <tfoot className="bg-slate-50/60 border-t border-slate-200 text-xs">
+                    <tr>
+                      <td colSpan={2} className="py-2.5 px-4 text-right font-bold text-slate-700">
+                        Class invoices — outstanding:
+                      </td>
+                      <td colSpan={6} className="py-2.5 px-4 font-extrabold text-rose-600">
+                        {formatMoney(feeSummary.pendingDues)}
+                      </td>
+                    </tr>
+                    <tr className="border-t border-slate-100">
+                      <td colSpan={2} className="py-2.5 px-4 text-right font-bold text-slate-700">
+                        Class invoices — waivers:
+                      </td>
+                      <td colSpan={6} className="py-2.5 px-4 font-extrabold text-cyan-600">
+                        {formatMoney(feeSummary.totalWaivers)}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
+      {/* Invoice Transactions Breakdown Modal */}
+      {txnModalFee && (
+        <div className="fixed inset-0 z-[115] bg-slate-900/50 backdrop-blur-[1px] flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden text-xs">
+            <div className="bg-indigo-600 text-white px-5 py-3.5 flex items-center justify-between">
+              <span className="font-bold text-sm inline-flex items-center gap-2">
+                <History className="w-4 h-4" />
+                <span>Invoice Transactions</span>
+              </span>
+              <button type="button" onClick={() => setTxnModalFee(null)} className="text-white/80 hover:text-white cursor-pointer">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-5 space-y-3">
+              <div className="flex justify-between font-bold text-slate-800 border-b border-slate-100 pb-2">
+                <span>{txnModalFee.feeMonth || txnModalFee.title || 'Tuition Fee'}</span>
+                <span>{formatMoney(Number(txnModalFee.amount || 0) + Number(txnModalFee.fine || txnModalFee.lateFine || 0))}</span>
+              </div>
+              {Number(txnModalFee.paidAmount || 0) > 0 && (
+                <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 flex justify-between items-center">
+                  <div>
+                    <p className="font-bold text-emerald-800">Cash Payment ({txnModalFee.paymentMethod || 'Cash'})</p>
+                    <p className="text-[10px] text-emerald-700">{String(txnModalFee.paidAt || txnModalFee.dueDate || 'Recorded').slice(0, 10)}</p>
+                  </div>
+                  <span className="font-extrabold text-emerald-700">{formatMoney(txnModalFee.paidAmount)}</span>
+                </div>
+              )}
+              {Number(txnModalFee.discount || txnModalFee.waiver || 0) > 0 && (
+                <div className="p-3 rounded-lg bg-cyan-50 border border-cyan-200 flex justify-between items-center">
+                  <div>
+                    <p className="font-bold text-cyan-800">Waiver / Discount</p>
+                    <p className="text-[10px] text-cyan-700">{txnModalFee.discountReason || 'Concession'}</p>
+                  </div>
+                  <span className="font-extrabold text-cyan-700">{formatMoney(txnModalFee.discount || txnModalFee.waiver)}</span>
+                </div>
+              )}
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTxnModalFee(null)
+                    onOpenBillingHistory?.(student.id)
+                  }}
+                  className="px-3.5 py-1.5 rounded-lg bg-sky-500 text-white font-bold cursor-pointer"
+                >
+                  Open Billing History
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTxnModalFee(null)}
+                  className="px-3.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 font-semibold cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
