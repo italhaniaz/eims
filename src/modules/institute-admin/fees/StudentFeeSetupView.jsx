@@ -54,7 +54,7 @@ const formatSetupDateTime = (val) => {
   return `${datePart}, ${timePart}`
 }
 
-const resolveStudentFeeSetup = (student, classes = [], fees = []) => {
+export const resolveStudentFeeSetup = (student, classes = [], fees = []) => {
   if (!student) {
     return {
       feeType: 'Monthly',

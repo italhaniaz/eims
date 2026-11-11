@@ -78,7 +78,8 @@ export const StudentBillingHistoryView = ({
   onOpenQuickPayment,
   onOpenSendSms,
   onSelectStudent,
-  onOpenFeeSetup
+  onOpenFeeSetup,
+  onOpenViewProfile
 }) => {
   const {
     students = [],
@@ -955,7 +956,13 @@ export const StudentBillingHistoryView = ({
               </button>
               <button
                 type="button"
-                onClick={() => setProfileModalOpen(true)}
+                onClick={() => {
+                  if (onOpenViewProfile) {
+                    onOpenViewProfile(activeStudent.id)
+                  } else {
+                    setProfileModalOpen(true)
+                  }
+                }}
                 className="px-3.5 py-2 rounded-lg bg-white/15 hover:bg-white/25 border border-white/25 text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
               >
                 <User className="w-3.5 h-3.5" />

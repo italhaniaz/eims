@@ -77,6 +77,7 @@ const QuickPaymentModal = lazyWithRetry(() => import('./components/common/QuickP
 const SendSmsModal = lazyWithRetry(() => import('./components/common/SendSmsModal'), 'send-sms-modal')
 const StudentBillingHistoryView = lazyWithRetry(() => import('./modules/institute-admin/fees/StudentBillingHistoryView'), 'student-billing-history')
 const StudentFeeSetupView = lazyWithRetry(() => import('./modules/institute-admin/fees/StudentFeeSetupView'), 'student-fee-setup')
+const StudentProfileView = lazyWithRetry(() => import('./modules/institute-admin/students/StudentProfileView'), 'student-profile-view')
 const InvoicesView = lazyWithRetry(() => import('./modules/institute-admin/fees/InvoicesView'), 'invoices-view')
 const ExpensesView = lazyWithRetry(() => import('./modules/institute-admin/accounts/ExpensesView'), 'expenses-view')
 const FeeCollectionReportView = lazyWithRetry(() => import('./modules/institute-admin/accounts/FeeCollectionReportView'), 'fee-collection-report-view')
@@ -187,6 +188,8 @@ const AppContent = () => {
   const [quickPayStudentId, setQuickPayStudentId] = useState(null)
   const [billingHistoryStudentId, setBillingHistoryStudentId] = useState(null)
   const [feeSetupTargetStudentId, setFeeSetupTargetStudentId] = useState(null)
+  const [feeSetupInitialMode, setFeeSetupInitialMode] = useState('details')
+  const [studentProfileTargetId, setStudentProfileTargetId] = useState(null)
   const [isSendSmsOpen, setIsSendSmsOpen] = useState(false)
   const openQuickPayment = (studentId = null) => {
     setQuickPayStudentId(studentId)
@@ -255,6 +258,10 @@ const AppContent = () => {
     const valid = VALID_INSTITUTE_ROUTES.includes(route) ? route : 'inst-dashboard'
     if (valid === 'inst-fees-setup' && !options?.preserveFeeSetupStudent) {
       setFeeSetupTargetStudentId(null)
+      setFeeSetupInitialMode('list')
+    }
+    if (valid === 'inst-students' && !options?.preserveStudentProfile) {
+      setStudentProfileTargetId(null)
     }
     setInstituteRouteState(valid)
     if (typeof window !== 'undefined') {
@@ -638,7 +645,29 @@ const AppContent = () => {
                     onOpenSendSms={() => setIsSendSmsOpen(true)}
                   />
                 )}
-                {['inst-students', 'inst-admissions-import', 'inst-students-guardians', 'inst-students-promote', 'inst-students-status', 'inst-students-idcards'].includes(safeInstituteRoute) && (
+                {safeInstituteRoute === 'inst-students' && studentProfileTargetId ? (
+                  <StudentProfileView
+                    currentInstitute={activeCampus}
+                    studentId={studentProfileTargetId}
+                    onRouteChange={setInstituteRoute}
+                    onOpenQuickPayment={(sid) => openQuickPayment(sid)}
+                    onOpenSendSms={() => setIsSendSmsOpen(true)}
+                    onBackToList={() => setStudentProfileTargetId(null)}
+                    onBack={() => {
+                      setStudentProfileTargetId(null)
+                      setInstituteRoute('inst-fees-history')
+                    }}
+                    onOpenFeeSetup={(sid, mode = 'details') => {
+                      setFeeSetupTargetStudentId(sid)
+                      setFeeSetupInitialMode(mode)
+                      setInstituteRoute('inst-fees-setup', { preserveFeeSetupStudent: true })
+                    }}
+                    onOpenBillingHistory={(sid) => {
+                      setBillingHistoryStudentId(sid)
+                      setInstituteRoute('inst-fees-history')
+                    }}
+                  />
+                ) : ['inst-students', 'inst-admissions-import', 'inst-students-guardians', 'inst-students-promote', 'inst-students-status', 'inst-students-idcards'].includes(safeInstituteRoute) && (
                   <StudentsView
                     currentInstitute={activeCampus}
                     initialAction={
@@ -719,7 +748,12 @@ const AppContent = () => {
                     onOpenSendSms={() => setIsSendSmsOpen(true)}
                     onOpenFeeSetup={(sid) => {
                       setFeeSetupTargetStudentId(sid)
+                      setFeeSetupInitialMode('details')
                       setInstituteRoute('inst-fees-setup', { preserveFeeSetupStudent: true })
+                    }}
+                    onOpenViewProfile={(sid) => {
+                      setStudentProfileTargetId(sid)
+                      setInstituteRoute('inst-students', { preserveStudentProfile: true })
                     }}
                   />
                 )}
@@ -739,7 +773,7 @@ const AppContent = () => {
                   <StudentFeeSetupView
                     currentInstitute={activeCampus}
                     studentId={feeSetupTargetStudentId}
-                    initialMode={feeSetupTargetStudentId ? 'details' : 'list'}
+                    initialMode={feeSetupTargetStudentId ? feeSetupInitialMode : 'list'}
                     onSelectStudent={setFeeSetupTargetStudentId}
                     onRouteChange={setInstituteRoute}
                     onOpenQuickPayment={(sid) => openQuickPayment(sid)}
