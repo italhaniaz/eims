@@ -52,6 +52,65 @@ const getInvoiceOutstanding = (fee) => {
   return Math.max(0, base - paid - waiver)
 }
 
+/** Distributes cash, waiver, and family credit across unpaid invoices via manual splits or FIFO order. */
+export const applyPaymentDistributionToInvoices = async ({
+  unpaidInvoices = [],
+  cashVal = 0,
+  waiverVal = 0,
+  creditApplied = 0,
+  cashSplits = {},
+  waiverSplits = {},
+  discountReason = '',
+  paymentMethod = 'Cash',
+  extraNote = '',
+  updateItem
+}) => {
+  let remCash = Math.max(0, Number(cashVal) || 0)
+  let remWaiver = Math.max(0, Number(waiverVal) || 0)
+  let remCredit = Math.max(0, Number(creditApplied) || 0)
+
+  const hasManualCashSplit = Object.values(cashSplits).some((v) => Number(v) > 0)
+  const hasManualWaiverSplit = Object.values(waiverSplits).some((v) => Number(v) > 0)
+
+  for (const inv of unpaidInvoices) {
+    const due = getInvoiceOutstanding(inv)
+    if (due <= 0) continue
+
+    const applyWaiver = hasManualWaiverSplit
+      ? Math.min(due, Math.max(0, Number(waiverSplits[inv.id]) || 0))
+      : Math.min(due, remWaiver)
+    if (!hasManualWaiverSplit) remWaiver -= applyWaiver
+
+    const dueAfterWaiver = Math.max(0, due - applyWaiver)
+    const applyCredit = Math.min(dueAfterWaiver, remCredit)
+    remCredit -= applyCredit
+
+    const dueAfterCredit = Math.max(0, dueAfterWaiver - applyCredit)
+    const applyCash = hasManualCashSplit
+      ? Math.min(dueAfterCredit, Math.max(0, Number(cashSplits[inv.id]) || 0))
+      : Math.min(dueAfterCredit, remCash)
+    if (!hasManualCashSplit) remCash -= applyCash
+
+    if (applyCash + applyCredit + applyWaiver <= 0) continue
+
+    const newPaid = Number(inv.paidAmount || 0) + applyCash + applyCredit
+    const newDiscount = Number(inv.discount || inv.waiver || 0) + applyWaiver
+    const base = Number(inv.amount || 0) + Number(inv.fine || inv.lateFine || 0)
+    const nextRemaining = Math.max(0, base - newPaid - newDiscount)
+    const nextStatus = nextRemaining <= 0 ? 'Paid' : 'Partial'
+
+    await updateItem('fees', inv.id, {
+      paidAmount: newPaid,
+      discount: newDiscount,
+      discountReason: discountReason.trim() || inv.discountReason || '',
+      paymentMethod,
+      paidAt: new Date().toISOString().split('T')[0],
+      status: nextStatus,
+      notes: extraNote.trim() || inv.notes || ''
+    })
+  }
+}
+
 export const QuickPaymentModal = ({
   isOpen,
   onClose,
@@ -267,47 +326,18 @@ export const QuickPaymentModal = ({
 
     setIsSaving(true)
     try {
-      let remCash = cashVal
-      let remWaiver = waiverVal
-      let remCredit = creditApplied
-
-      const hasManualCashSplit = Object.values(cashSplits).some(v => Number(v) > 0)
-      const hasManualWaiverSplit = Object.values(waiverSplits).some(v => Number(v) > 0)
-
-      for (const inv of unpaidInvoices) {
-        const due = getInvoiceOutstanding(inv)
-        if (due <= 0) continue
-
-        let applyWaiver = hasManualWaiverSplit ? Math.min(due, Math.max(0, Number(waiverSplits[inv.id]) || 0)) : Math.min(due, remWaiver)
-        if (!hasManualWaiverSplit) remWaiver -= applyWaiver
-
-        const dueAfterWaiver = Math.max(0, due - applyWaiver)
-        let applyCredit = Math.min(dueAfterWaiver, remCredit)
-        remCredit -= applyCredit
-
-        const dueAfterCredit = Math.max(0, dueAfterWaiver - applyCredit)
-        let applyCash = hasManualCashSplit ? Math.min(dueAfterCredit, Math.max(0, Number(cashSplits[inv.id]) || 0)) : Math.min(dueAfterCredit, remCash)
-        if (!hasManualCashSplit) remCash -= applyCash
-
-        const totalDelta = applyCash + applyCredit + applyWaiver
-        if (totalDelta <= 0) continue
-
-        const newPaid = Number(inv.paidAmount || 0) + applyCash + applyCredit
-        const newDiscount = Number(inv.discount || inv.waiver || 0) + applyWaiver
-        const base = Number(inv.amount || 0) + Number(inv.fine || inv.lateFine || 0)
-        const nextRemaining = Math.max(0, base - newPaid - newDiscount)
-        const nextStatus = nextRemaining <= 0 ? 'Paid' : 'Partial'
-
-        await updateItem('fees', inv.id, {
-          paidAmount: newPaid,
-          discount: newDiscount,
-          discountReason: discountReason.trim() || inv.discountReason || '',
-          paymentMethod,
-          paidAt: new Date().toISOString().split('T')[0],
-          status: nextStatus,
-          notes: extraNote.trim() || inv.notes || ''
-        })
-      }
+      await applyPaymentDistributionToInvoices({
+        unpaidInvoices,
+        cashVal,
+        waiverVal,
+        creditApplied,
+        cashSplits,
+        waiverSplits,
+        discountReason,
+        paymentMethod,
+        extraNote,
+        updateItem
+      })
 
       if (creditApplied > 0 && familyCnic) {
         updateFamilyCreditBalance(instId, familyCnic, -creditApplied)

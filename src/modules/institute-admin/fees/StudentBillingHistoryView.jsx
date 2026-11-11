@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useRef, useEffect } from 'react'
 import {
   ArrowLeft,
   UserPlus,
@@ -19,18 +19,25 @@ import {
   Calendar,
   Send,
   Plus,
+  PlusCircle,
   Sliders,
   User,
   Receipt,
   RotateCcw,
-  History
+  History,
+  Edit2,
+  Users,
+  X,
+  Check
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
 import { PrintableFeeChallanModal } from '../../../components/common/PrintableFeeChallanModal'
+import { BANK_PRESETS } from '../../../components/common/PrintHelpers'
 import {
   getFamilyCreditBalance,
-  updateFamilyCreditBalance
+  updateFamilyCreditBalance,
+  applyPaymentDistributionToInvoices
 } from '../../../components/common/QuickPaymentModal'
 import { recordCampusLedgerTransaction } from '../accounts/CampusAccountsView'
 
@@ -105,6 +112,41 @@ export const StudentBillingHistoryView = ({
   const [creditDepositAmount, setCreditDepositAmount] = useState('')
   const [creditTick, setCreditTick] = useState(0)
 
+  // Generate Voucher Dropdown & Combined Family Voucher Modal
+  const [voucherMenuOpen, setVoucherMenuOpen] = useState(false)
+  const voucherMenuRef = useRef(null)
+  const [familyVoucherOpen, setFamilyVoucherOpen] = useState(false)
+  const [familyVoucherBankId, setFamilyVoucherBankId] = useState('hbl')
+  const [familyVoucherDueDate, setFamilyVoucherDueDate] = useState(() => {
+    const d = new Date()
+    d.setDate(d.getDate() + 10)
+    return d.toISOString().split('T')[0]
+  })
+
+  // Student Banner Dedicated Add Payment Modal + Split Allocation
+  const [isBannerPayOpen, setIsBannerPayOpen] = useState(false)
+  const [bpCash, setBpCash] = useState('0')
+  const [bpWaiver, setBpWaiver] = useState('0')
+  const [bpDiscountReason, setBpDiscountReason] = useState('')
+  const [bpMethod, setBpMethod] = useState('')
+  const [bpNote, setBpNote] = useState('')
+  const [bpSendSms, setBpSendSms] = useState(true)
+  const [bpSaving, setBpSaving] = useState(false)
+  const [bpAllocateType, setBpAllocateType] = useState(null) // 'cash' | 'waiver' | null
+  const [bpCashSplits, setBpCashSplits] = useState({})
+  const [bpWaiverSplits, setBpWaiverSplits] = useState({})
+
+  useEffect(() => {
+    if (!voucherMenuOpen) return undefined
+    const handleOutsideClick = (event) => {
+      if (voucherMenuRef.current && !voucherMenuRef.current.contains(event.target)) {
+        setVoucherMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleOutsideClick)
+    return () => document.removeEventListener('mousedown', handleOutsideClick)
+  }, [voucherMenuOpen])
+
   const studentFees = useMemo(() => {
     if (!activeStudent) return []
     return fees
@@ -158,6 +200,156 @@ export const StudentBillingHistoryView = ({
       (s) => normalizeCnic(s.parentCnic || s.fatherCnic || s.cnic || '') === norm
     )
   }, [instituteStudents, parentCnic, activeStudent])
+
+  // Combined Family Voucher aggregation across all linked siblings
+  const familyVoucherData = useMemo(() => {
+    const siblingList = familySiblings.length > 0 ? familySiblings : activeStudent ? [activeStudent] : []
+    const rows = siblingList.map((st) => {
+      const pending = fees.filter(
+        (f) =>
+          (!currentInstitute?.id || f.instituteId === currentInstitute.id || !f.instituteId) &&
+          f.status !== 'Paid' &&
+          ((f.studentId && f.studentId === st.id) ||
+            (f.studentName || '').toLowerCase().trim() === (st.fullName || st.name || '').toLowerCase().trim()) &&
+          getInvoiceRemaining(f) > 0
+      )
+      const subtotal = pending.reduce((sum, f) => sum + getInvoiceRemaining(f), 0)
+      return { student: st, pendingInvoices: pending, subtotal }
+    })
+    const grandTotal = rows.reduce((sum, r) => sum + r.subtotal, 0)
+    const activeBank = BANK_PRESETS.find((b) => b.id === familyVoucherBankId) || BANK_PRESETS[0]
+    return { rows, grandTotal, activeBank }
+  }, [familySiblings, activeStudent, fees, currentInstitute?.id, familyVoucherBankId])
+
+  const bpCashVal = Math.max(0, Number(bpCash) || 0)
+  const bpWaiverVal = Math.max(0, Number(bpWaiver) || 0)
+  const bpTotalApplied = bpCashVal + bpWaiverVal
+  const bpRemainingBalance = Math.max(0, summary.outstanding - bpTotalApplied)
+  const bpHasValidAmount = bpTotalApplied > 0
+  const bpSplitSum =
+    bpAllocateType === 'cash'
+      ? pendingInvoices.reduce((s, inv) => s + Math.max(0, Number(bpCashSplits[inv.id]) || 0), 0)
+      : pendingInvoices.reduce((s, inv) => s + Math.max(0, Number(bpWaiverSplits[inv.id]) || 0), 0)
+
+  const openBannerPaymentModal = () => {
+    setBpCash('0')
+    setBpWaiver('0')
+    setBpDiscountReason('')
+    setBpMethod('')
+    setBpNote('')
+    setBpSendSms(true)
+    setBpAllocateType(null)
+    setBpCashSplits({})
+    setBpWaiverSplits({})
+    setIsBannerPayOpen(true)
+  }
+
+  const openBpAllocateModal = (type) => {
+    if (pendingInvoices.length === 0) {
+      toast?.info?.('No unpaid invoices available to allocate for this student.')
+      return
+    }
+    const init = {}
+    const source = type === 'cash' ? bpCashSplits : bpWaiverSplits
+    pendingInvoices.forEach((inv) => {
+      init[inv.id] = source[inv.id] !== undefined ? String(source[inv.id]) : '0'
+    })
+    if (type === 'cash') setBpCashSplits(init)
+    else setBpWaiverSplits(init)
+    setBpAllocateType(type)
+  }
+
+  const applyBpAllocationSplit = () => {
+    if (bpAllocateType === 'cash') {
+      const sum = pendingInvoices.reduce((s, inv) => s + Math.max(0, Number(bpCashSplits[inv.id]) || 0), 0)
+      setBpCash(String(sum))
+    } else if (bpAllocateType === 'waiver') {
+      const sum = pendingInvoices.reduce((s, inv) => s + Math.max(0, Number(bpWaiverSplits[inv.id]) || 0), 0)
+      setBpWaiver(String(sum))
+    }
+    setBpAllocateType(null)
+  }
+
+  const handleSaveBannerPayment = async (e) => {
+    e.preventDefault()
+    if (!activeStudent) return
+    if (!bpHasValidAmount) {
+      toast?.error?.('Enter cash collected and/or waiver greater than zero.')
+      return
+    }
+    if (!bpMethod) {
+      toast?.error?.('Please select a Payment Method.')
+      return
+    }
+    if (pendingInvoices.length === 0) {
+      toast?.error?.('No pending invoices available for this student.')
+      return
+    }
+
+    setBpSaving(true)
+    try {
+      const fifoInvoices = [...pendingInvoices].sort((a, b) =>
+        String(a.createdAt || a.dueDate || '').localeCompare(String(b.createdAt || b.dueDate || ''))
+      )
+      await applyPaymentDistributionToInvoices({
+        unpaidInvoices: fifoInvoices,
+        cashVal: bpCashVal,
+        waiverVal: bpWaiverVal,
+        creditApplied: 0,
+        cashSplits: bpCashSplits,
+        waiverSplits: bpWaiverSplits,
+        discountReason: bpDiscountReason,
+        paymentMethod: bpMethod,
+        extraNote: bpNote,
+        updateItem
+      })
+
+      if (bpRemainingBalance <= 0) {
+        await updateItem('students', activeStudent.id, { feeStatus: 'Paid' })
+      }
+
+      if (bpCashVal > 0) {
+        const studentLabel = activeStudent.fullName || activeStudent.name
+        recordCampusLedgerTransaction(currentInstitute?.id, {
+          id: `VCH-BP-${Date.now()}`,
+          date: new Date().toISOString().split('T')[0],
+          description: `Fee Payment (${bpMethod}) — ${studentLabel}`,
+          type: 'Income',
+          category: 'Tuition Revenues',
+          debit: 0,
+          credit: bpCashVal,
+          account: bpMethod,
+          status: 'Cleared',
+          ref: `BP-${Date.now()}`
+        })
+      }
+
+      if (bpSendSms && parentPhone && parentPhone !== 'N/A' && sendCommunicationBlast) {
+        const studentLabel = activeStudent.fullName || activeStudent.name
+        sendCommunicationBlast({
+          channel: 'SMS',
+          recipientGroup: `${parentName} (${parentPhone})`,
+          message: `Dear ${parentName}, payment of ${formatMoney(bpCashVal)}${bpWaiverVal > 0 ? ` (waiver ${formatMoney(bpWaiverVal)})` : ''} received via ${bpMethod} for ${studentLabel}. Remaining balance: ${formatMoney(bpRemainingBalance)}.`,
+          recipientsCount: 1
+        })
+      }
+
+      if (logAuditEvent) {
+        logAuditEvent(
+          `Recorded payment ${formatMoney(bpCashVal)} (waiver ${formatMoney(bpWaiverVal)}) via ${bpMethod} for ${activeStudent.fullName || activeStudent.name}`,
+          'Billing History',
+          'Success'
+        )
+      }
+
+      toast?.success?.(`Payment saved for ${activeStudent.fullName || activeStudent.name}. Remaining: ${formatMoney(bpRemainingBalance)}.`)
+      setIsBannerPayOpen(false)
+    } catch {
+      toast?.error?.('Unable to save payment. Please try again.')
+    } finally {
+      setBpSaving(false)
+    }
+  }
 
   // Ledger entries ordered chronologically
   const ledgerRows = useMemo(() => {
@@ -603,20 +795,55 @@ export const StudentBillingHistoryView = ({
             <div className="flex flex-wrap items-center gap-2 shrink-0">
               <button
                 type="button"
-                onClick={() => onOpenQuickPayment?.(activeStudent.id)}
+                onClick={openBannerPaymentModal}
                 className="px-3.5 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-colors"
               >
-                <Plus className="w-3.5 h-3.5" />
+                <PlusCircle className="w-3.5 h-3.5" />
                 <span>Add Payment</span>
               </button>
-              <button
-                type="button"
-                onClick={() => setPrintModalFee(pendingInvoices[0] || studentFees[0] || { studentId: activeStudent.id, studentName: activeStudent.fullName || activeStudent.name, className: activeStudent.className })}
-                className="px-3.5 py-2 rounded-lg bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-colors"
-              >
-                <FileText className="w-3.5 h-3.5 text-slate-600" />
-                <span>Generate Voucher</span>
-              </button>
+              <div className="relative" ref={voucherMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => setVoucherMenuOpen((v) => !v)}
+                  className="px-3.5 py-2 rounded-lg bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-colors"
+                >
+                  <FileText className="w-3.5 h-3.5 text-slate-600" />
+                  <span>Generate Voucher</span>
+                </button>
+                {voucherMenuOpen && (
+                  <div className="absolute left-0 sm:left-auto sm:right-0 mt-1.5 w-56 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-40 text-left">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setVoucherMenuOpen(false)
+                        setPrintModalFee(
+                          pendingInvoices[0] ||
+                            studentFees[0] || {
+                              studentId: activeStudent.id,
+                              studentName: activeStudent.fullName || activeStudent.name,
+                              className: activeStudent.className
+                            }
+                        )
+                      }}
+                      className="w-full px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 cursor-pointer transition-colors"
+                    >
+                      <FileText className="w-4 h-4 text-sky-600 shrink-0" />
+                      <span>Student Voucher</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setVoucherMenuOpen(false)
+                        setFamilyVoucherOpen(true)
+                      }}
+                      className="w-full px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 cursor-pointer transition-colors"
+                    >
+                      <Users className="w-4 h-4 text-sky-600 shrink-0" />
+                      <span>Combined Family Voucher</span>
+                    </button>
+                  </div>
+                )}
+              </div>
               <button
                 type="button"
                 onClick={() => onRouteChange?.('inst-fees')}
@@ -1330,6 +1557,460 @@ export const StudentBillingHistoryView = ({
           currentInstitute={currentInstitute}
           defaultClass={activeStudent?.className || ''}
         />
+      )}
+
+      {/* Student Banner Dedicated Add Payment Modal (Green Header) */}
+      {isBannerPayOpen && activeStudent && (
+        <div className="fixed inset-0 z-[115] bg-slate-900/50 backdrop-blur-[1px] flex items-center justify-center p-4">
+          <div className="w-full max-w-xl bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200 relative">
+            {/* Green Header matching Pick 2 */}
+            <div className="bg-emerald-500 text-white px-5 py-3.5 flex items-center justify-between">
+              <div className="flex items-center gap-2 font-bold text-sm sm:text-base">
+                <PlusCircle className="w-4 h-4" />
+                <span>Add Payment</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsBannerPayOpen(false)}
+                className="text-white/90 hover:text-white cursor-pointer"
+                aria-label="Close Add Payment modal"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveBannerPayment} className="p-5 space-y-4 text-xs">
+              {/* Row 1: Cash collected | Waiver / discount | Remaining balance */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+                <div>
+                  <label className={`block font-bold mb-1 ${!bpHasValidAmount ? 'text-rose-600' : 'text-slate-700'}`}>
+                    Cash collected <span className="font-normal text-slate-400">(PKR)</span>
+                  </label>
+                  <div className="flex items-stretch">
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={bpCash}
+                      onChange={(e) => {
+                        setBpCash(e.target.value)
+                        if (Object.keys(bpCashSplits).length > 0) setBpCashSplits({})
+                      }}
+                      className={`w-full px-3 py-2 rounded-l-lg border text-right font-semibold focus:outline-none ${
+                        !bpHasValidAmount
+                          ? 'border-rose-300 bg-rose-50/40 text-slate-800'
+                          : 'border-slate-200 bg-white text-slate-900'
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => openBpAllocateModal('cash')}
+                      title="Allocate cash to specific invoices"
+                      className="px-2.5 border border-l-0 border-slate-200 rounded-r-lg bg-slate-50 hover:bg-slate-100 text-slate-600 cursor-pointer"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">
+                    Waiver / discount <span className="font-normal text-slate-400">(PKR)</span>
+                  </label>
+                  <div className="flex items-stretch">
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={bpWaiver}
+                      onChange={(e) => {
+                        setBpWaiver(e.target.value)
+                        if (Object.keys(bpWaiverSplits).length > 0) setBpWaiverSplits({})
+                      }}
+                      className="w-full px-3 py-2 rounded-l-lg border border-slate-200 bg-white text-right font-semibold text-slate-900 focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => openBpAllocateModal('waiver')}
+                      title="Allocate waiver / discount to specific invoices"
+                      className="px-2.5 border border-l-0 border-slate-200 rounded-r-lg bg-slate-50 hover:bg-slate-100 text-slate-600 cursor-pointer"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Remaining balance</label>
+                  <div className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-slate-100 text-right font-extrabold text-slate-900">
+                    {formatMoney(bpRemainingBalance)}
+                  </div>
+                </div>
+              </div>
+
+              {/* Validation Alert Banner when Cash + Waiver <= 0 */}
+              {!bpHasValidAmount && (
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-rose-50 border border-rose-200 text-rose-600 text-[11px] font-medium">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span>Enter cash, family credit, and/or waiver — at least one must be greater than zero.</span>
+                </div>
+              )}
+
+              {/* Row 2: Reason of Discount | Payment Method * */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Reason of Discount</label>
+                  <input
+                    type="text"
+                    value={bpDiscountReason}
+                    onChange={(e) => setBpDiscountReason(e.target.value)}
+                    placeholder="e.g. Management approval, hardship case..."
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">
+                    Payment Method <span className="text-rose-500">*</span>
+                  </label>
+                  <select
+                    value={bpMethod}
+                    onChange={(e) => setBpMethod(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  >
+                    <option value="">Select Method</option>
+                    <option value="Cash">Cash</option>
+                    <option value="Bank Transfer">Bank Transfer</option>
+                    <option value="Online Transfer">Online Transfer</option>
+                    <option value="Cheque">Cheque</option>
+                    <option value="EasyPaisa">EasyPaisa</option>
+                    <option value="JazzCash">JazzCash</option>
+                    <option value="Credit Card">Credit Card</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Row 3: Note (optional) */}
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  Note <span className="font-normal text-slate-400">(optional)</span>
+                </label>
+                <textarea
+                  rows={2}
+                  value={bpNote}
+                  onChange={(e) => setBpNote(e.target.value)}
+                  placeholder="Additional notes..."
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 resize-y"
+                />
+              </div>
+
+              {/* Row 4: Send SMS Checkbox */}
+              <label className="inline-flex items-center gap-2 text-slate-700 font-medium cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={bpSendSms}
+                  onChange={(e) => setBpSendSms(e.target.checked)}
+                  className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                />
+                <span>Send SMS to Parent</span>
+              </label>
+
+              {/* Footer Buttons */}
+              <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsBannerPayOpen(false)}
+                  className="px-4 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={bpSaving || !bpHasValidAmount || !bpMethod}
+                  className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-bold inline-flex items-center gap-1.5 disabled:opacity-50 cursor-pointer shadow-xs"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>{bpSaving ? 'Saving...' : 'Save payment'}</span>
+                </button>
+              </div>
+            </form>
+
+            {/* Nested Split Allocation Modal: Allocate cash OR Allocate waiver / discount */}
+            {bpAllocateType && (
+              <div className="absolute inset-0 z-20 bg-slate-900/45 backdrop-blur-xs flex items-center justify-center p-4">
+                <div className="w-full max-w-lg bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden text-xs">
+                  <div className="bg-emerald-500 text-white px-4 py-3 flex items-center justify-between font-bold">
+                    <span className="flex items-center gap-1.5">
+                      <DollarSign className="w-4 h-4" />
+                      <span>{bpAllocateType === 'cash' ? 'Allocate cash' : 'Allocate waiver / discount'}</span>
+                    </span>
+                    <button type="button" onClick={() => setBpAllocateType(null)} className="text-white/90 hover:text-white cursor-pointer">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <div className="p-4 space-y-3">
+                    <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-900 text-[11px]">
+                      {bpAllocateType === 'cash'
+                        ? 'Enter cash amount for each unpaid invoice. Click Apply to update Cash collected.'
+                        : 'Enter waiver / discount amount for each unpaid invoice. Click Apply to update Waiver / discount.'}
+                    </div>
+
+                    <div className="max-h-56 overflow-y-auto border border-slate-200 rounded-lg">
+                      <table className="w-full text-left">
+                        <thead className="bg-slate-50 border-b text-[10px] uppercase text-slate-500">
+                          <tr>
+                            <th className="py-2 px-3">Invoice</th>
+                            <th className="py-2 px-3 text-right">Outstanding (PKR)</th>
+                            <th className="py-2 px-3 text-right">{bpAllocateType === 'cash' ? 'Cash (PKR)' : 'Waiver (PKR)'}</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {pendingInvoices.map((inv) => {
+                            const due = getInvoiceRemaining(inv)
+                            const val =
+                              bpAllocateType === 'cash' ? (bpCashSplits[inv.id] ?? '0') : (bpWaiverSplits[inv.id] ?? '0')
+                            return (
+                              <tr key={inv.id}>
+                                <td className="py-2 px-3">
+                                  <div className="font-bold text-slate-800">{inv.feeMonth || inv.title || 'Monthly Fee'}</div>
+                                  <div className="text-[10px] text-slate-400">
+                                    #{inv.receiptNo || String(inv.id).slice(-7)} · {inv.feeType || 'Tuition'}
+                                  </div>
+                                </td>
+                                <td className="py-2 px-3 text-right font-mono">{due.toLocaleString()}</td>
+                                <td className="py-2 px-3 text-right">
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    max={due}
+                                    value={val}
+                                    onChange={(e) => {
+                                      const raw = e.target.value
+                                      if (bpAllocateType === 'cash') {
+                                        setBpCashSplits((prev) => ({ ...prev, [inv.id]: raw }))
+                                      } else {
+                                        setBpWaiverSplits((prev) => ({ ...prev, [inv.id]: raw }))
+                                      }
+                                    }}
+                                    className="w-24 px-2 py-1 rounded border border-slate-200 text-right font-mono"
+                                  />
+                                </td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div className="flex items-center justify-between font-bold px-2.5 py-1.5 bg-slate-50 rounded-lg">
+                      <span>{bpAllocateType === 'cash' ? 'Total allocated cash' : 'Total allocated waiver'}</span>
+                      <span className="text-emerald-600 font-mono text-sm">{formatMoney(bpSplitSum)}</span>
+                    </div>
+
+                    <div className="flex justify-end gap-2 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setBpAllocateType(null)}
+                        className="px-3.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 font-semibold cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={applyBpAllocationSplit}
+                        className="px-4 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-semibold cursor-pointer"
+                      >
+                        Apply
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Combined Family Fee Voucher Modal */}
+      {familyVoucherOpen && activeStudent && (
+        <div className="fixed inset-0 z-[115] bg-slate-900/55 backdrop-blur-[1px] flex items-center justify-center p-4 overflow-y-auto print:bg-white print:p-0 print:static">
+          <div className="w-full max-w-3xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-auto print:shadow-none print:border-0">
+            {/* Modal Control Header (Hidden on Print) */}
+            <div className="bg-indigo-600 text-white px-5 py-3.5 flex flex-wrap items-center justify-between gap-2 print:hidden">
+              <div className="flex items-center gap-2 font-bold text-sm">
+                <Users className="w-4 h-4" />
+                <span>Combined Family Fee Voucher</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <select
+                  value={familyVoucherBankId}
+                  onChange={(e) => setFamilyVoucherBankId(e.target.value)}
+                  className="px-2.5 py-1.5 rounded-lg bg-white/15 border border-white/25 text-white text-xs font-semibold focus:outline-none [&>option]:text-slate-900"
+                >
+                  {BANK_PRESETS.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="date"
+                  value={familyVoucherDueDate}
+                  onChange={(e) => setFamilyVoucherDueDate(e.target.value)}
+                  className="px-2.5 py-1 rounded-lg bg-white/15 border border-white/25 text-white text-xs font-semibold focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="px-3.5 py-1.5 rounded-lg bg-white text-indigo-700 hover:bg-indigo-50 text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span>Print Voucher</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFamilyVoucherOpen(false)}
+                  className="p-1 rounded-lg text-white/85 hover:text-white hover:bg-white/15 cursor-pointer"
+                  aria-label="Close Combined Family Voucher"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Printable Family Voucher Content */}
+            <div className="p-6 space-y-5 text-xs text-slate-800 max-h-[82vh] overflow-y-auto print:max-h-none print:overflow-visible">
+              {/* Institute & Bank Banner */}
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-4 border-b-2 border-slate-200">
+                <div>
+                  <h3 className="text-lg font-extrabold text-slate-900 uppercase tracking-tight">
+                    {currentInstitute?.name || 'Institute Management Portal'}
+                  </h3>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    {currentInstitute?.address || 'Campus Billing Office'} · Combined Family Fee Challan
+                  </p>
+                  <p className="text-[11px] font-semibold text-indigo-700 mt-1">
+                    Voucher #: FAM-{normalizeCnic(parentCnic).slice(-6) || String(activeStudent.id).slice(-6).toUpperCase()}
+                  </p>
+                </div>
+                <div className="sm:text-right space-y-0.5">
+                  <p className="font-bold text-slate-800">{familyVoucherData.activeBank.name}</p>
+                  <p className="text-[11px] text-slate-500">A/C: {familyVoucherData.activeBank.accountNumber || 'Ask Accounts Desk'}</p>
+                  <p className="text-[11px] text-slate-600">
+                    Issue Date: <strong>{new Date().toISOString().split('T')[0]}</strong> · Due Date:{' '}
+                    <strong className="text-rose-600">{familyVoucherDueDate}</strong>
+                  </p>
+                </div>
+              </div>
+
+              {/* Guardian Metadata Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 border border-slate-200 rounded-xl p-3">
+                <div>
+                  <p className="text-[10px] font-bold uppercase text-slate-400">Father / Guardian</p>
+                  <p className="font-bold text-slate-900 mt-0.5">{parentName}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase text-slate-400">Parent CNIC</p>
+                  <p className="font-mono font-bold text-slate-800 mt-0.5">{parentCnic || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase text-slate-400">Contact Phone</p>
+                  <p className="font-bold text-slate-800 mt-0.5">{parentPhone}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase text-slate-400">Linked Children</p>
+                  <p className="font-bold text-indigo-700 mt-0.5">{familyVoucherData.rows.length} Student(s)</p>
+                </div>
+              </div>
+
+              {/* Per-Student Unpaid Fee Breakdown */}
+              <div className="space-y-3">
+                {familyVoucherData.rows.map(({ student: st, pendingInvoices: stPending, subtotal }) => (
+                  <div key={st.id} className="border border-slate-200 rounded-xl overflow-hidden">
+                    <div className="bg-slate-100/80 px-4 py-2 flex flex-wrap items-center justify-between gap-2 border-b border-slate-200">
+                      <div className="font-bold text-slate-900">
+                        {st.fullName || st.name}{' '}
+                        <span className="font-normal text-slate-500">
+                          · {st.className || st.course || 'Class'} · Roll {st.rollNumber || 'N/A'}
+                        </span>
+                      </div>
+                      <span className="font-extrabold text-slate-900">Subtotal: {formatMoney(subtotal)}</span>
+                    </div>
+                    {stPending.length === 0 ? (
+                      <div className="px-4 py-2.5 text-slate-400 italic">No pending invoices for this student.</div>
+                    ) : (
+                      <table className="w-full text-left">
+                        <thead className="bg-white border-b border-slate-100 text-[10px] uppercase text-slate-400">
+                          <tr>
+                            <th className="py-2 px-4">Fee Title / Period</th>
+                            <th className="py-2 px-4 text-right">Billed</th>
+                            <th className="py-2 px-4 text-right">Paid / Waived</th>
+                            <th className="py-2 px-4 text-right">Remaining</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {stPending.map((inv) => {
+                            const billed = getInvoiceTotal(inv)
+                            const settled = getInvoicePaid(inv) + getInvoiceWaiver(inv)
+                            const rem = getInvoiceRemaining(inv)
+                            return (
+                              <tr key={inv.id}>
+                                <td className="py-2 px-4 font-semibold text-slate-800">
+                                  {inv.feeMonth || inv.title || 'Monthly Fee'}{' '}
+                                  <span className="text-[10px] font-normal text-slate-400">
+                                    (#{inv.receiptNo || String(inv.id).slice(-6)})
+                                  </span>
+                                </td>
+                                <td className="py-2 px-4 text-right text-slate-600">{formatMoney(billed)}</td>
+                                <td className="py-2 px-4 text-right text-emerald-600">{formatMoney(settled)}</td>
+                                <td className="py-2 px-4 text-right font-bold text-slate-900">{formatMoney(rem)}</td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Combined Family Totals Footer */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-indigo-50 border border-indigo-200 rounded-xl p-4">
+                <div className="space-y-0.5">
+                  <p className="font-extrabold text-indigo-950 text-sm">Combined Family Payable Amount</p>
+                  {familyCreditBalance > 0 && (
+                    <p className="text-[11px] text-emerald-700 font-semibold">
+                      Available Family Credit Balance: {formatMoney(familyCreditBalance)}
+                    </p>
+                  )}
+                </div>
+                <div className="sm:text-right">
+                  <p className="text-xl font-extrabold text-indigo-700">{formatMoney(familyVoucherData.grandTotal)}</p>
+                  <p className="text-[10px] text-slate-500">Payable on or before {familyVoucherDueDate}</p>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 print:hidden">
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold inline-flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span>Print Combined Voucher</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFamilyVoucherOpen(false)}
+                  className="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 font-semibold cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
