@@ -11,35 +11,15 @@ import {
   LogOut, 
   X, 
   Megaphone, 
-  MessageSquare, 
   ShieldCheck, 
-  Sliders, 
   BarChart3, 
   CreditCard, 
   FileSpreadsheet, 
   Database, 
   Activity,
   Lock,
-  ArrowLeftRight,
-  ShieldAlert,
-  Calendar,
-  Layers,
-  DollarSign,
-  TrendingUp,
-  FileText,
   CheckSquare,
-  BookOpen,
-  Clock,
-  AlertTriangle,
-  UserCheck,
-  Mail,
-  AlertOctagon,
-  History,
-  Share2,
-  Settings,
-  Globe,
-  Key,
-  Download
+  Settings
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { preloadRoute } from '../../utils/modulePreloader'
@@ -50,19 +30,19 @@ export const SuperadminSidebar = ({
   isMobileOpen = false, 
   onCloseMobile = () => {} 
 }) => {
-  const { user, logout } = useAuth()
+  const { logout } = useAuth()
   const [collapsed, setCollapsed] = useState(false)
-  
-  const isAcademicGovRoute = ["sa-students", "sa-staff", "sa-academics", "sa-admissions", "sa-exams", "sa-fees", "sa-attendance", "sa-accounts", "sa-services", "sa-certificates", "sa-learning"].includes(currentRoute)
-  const isPlatformRoute = ['institutes', 'support-approvals', 'platform-billing', 'platform-modules', 'cross-institute-analytics'].includes(currentRoute)
-  const isUserRoute = ['users-all', 'users-roles', 'security-center'].includes(currentRoute)
-  const isOperationsRoute = ['system-health', 'audit-logs', 'backup-data', 'communication', 'announcements', 'global-templates'].includes(currentRoute)
-  const isCommunicationRoute = typeof currentRoute === 'string' && currentRoute.startsWith('sa-comm-')
-  const isReportsRoute = typeof currentRoute === 'string' && currentRoute.startsWith('sa-reports-')
-  const isPoliciesRoute = typeof currentRoute === 'string' && currentRoute.startsWith('sa-policies-')
-  const isSettingsRoute = typeof currentRoute === 'string' && currentRoute.startsWith('sa-settings-')
 
-  // Dynamic pending approval count synced in real-time
+  // Route group classifications
+  const isCampusesRoute = ['institutes', 'support-approvals', 'platform-billing'].includes(currentRoute)
+  const isAccessRoute = ['users-all', 'users-roles', 'security-center'].includes(currentRoute)
+  const isStandardsRoute = ['global-templates', 'compliance-policies', 'sa-policies'].includes(currentRoute) || 
+    (typeof currentRoute === 'string' && currentRoute.startsWith('sa-policies-'))
+  const isIntelRoute = ['cross-institute-analytics', 'platform-analytics', 'announcements', 'system-broadcasts'].includes(currentRoute)
+  const isGovernanceRoute = ['system-health', 'audit-logs', 'backup-data', 'platform-settings', 'sa-settings'].includes(currentRoute) || 
+    (typeof currentRoute === 'string' && currentRoute.startsWith('sa-settings-'))
+
+  // Real-time dynamic counts
   const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0)
   const [campusesCount, setCampusesCount] = useState(0)
   const [usersCount, setUsersCount] = useState(0)
@@ -141,39 +121,30 @@ export const SuperadminSidebar = ({
     }
   }, [])
 
-  // Accordion states with smart auto-open for active routes
-  const [platformOpen, setPlatformOpen] = useState(true)
-  const [academicGovOpen, setAcademicGovOpen] = useState(true)
-  const [usersOpen, setUsersOpen] = useState(isUserRoute)
-  const [operationsOpen, setOperationsOpen] = useState(isOperationsRoute)
-  const [communicationOpen, setCommunicationOpen] = useState(isCommunicationRoute)
-  const [reportsOpen, setReportsOpen] = useState(isReportsRoute)
-  const [policiesOpen, setPoliciesOpen] = useState(isPoliciesRoute)
-  const [settingsOpen, setSettingsOpen] = useState(isSettingsRoute)
+  // Collapsible section states with smart initial expansion
+  const [campusesOpen, setCampusesOpen] = useState(true)
+  const [accessOpen, setAccessOpen] = useState(isAccessRoute)
+  const [standardsOpen, setStandardsOpen] = useState(isStandardsRoute)
+  const [intelOpen, setIntelOpen] = useState(isIntelRoute)
+  const [governanceOpen, setGovernanceOpen] = useState(isGovernanceRoute)
 
-  const closeAllGroups = () => {
-    setPlatformOpen(false)
-    setAcademicGovOpen(false)
-    setUsersOpen(false)
-    setOperationsOpen(false)
-    setCommunicationOpen(false)
-    setReportsOpen(false)
-    setPoliciesOpen(false)
-    setSettingsOpen(false)
-  }
-
-  // Auto-expand active group and collapse inactive groups on route navigation
+  // Auto-expand active group on route change
   useEffect(() => {
-    if (isPlatformRoute) { closeAllGroups(); setPlatformOpen(true); return; }
-    if (isUserRoute) { closeAllGroups(); setUsersOpen(true); return; }
-    if (isOperationsRoute) { closeAllGroups(); setOperationsOpen(true); return; }
-    if (isCommunicationRoute) { closeAllGroups(); setCommunicationOpen(true); return; }
-    if (isReportsRoute) { closeAllGroups(); setReportsOpen(true); return; }
-    if (isPoliciesRoute) { closeAllGroups(); setPoliciesOpen(true); return; }
-    if (isSettingsRoute) { closeAllGroups(); setSettingsOpen(true); return; }
-  }, [currentRoute, isPlatformRoute, isUserRoute, isOperationsRoute, isCommunicationRoute, isReportsRoute, isPoliciesRoute, isSettingsRoute])
+    if (isCampusesRoute) setCampusesOpen(true)
+    if (isAccessRoute) setAccessOpen(true)
+    if (isStandardsRoute) setStandardsOpen(true)
+    if (isIntelRoute) setIntelOpen(true)
+    if (isGovernanceRoute) setGovernanceOpen(true)
+  }, [currentRoute, isCampusesRoute, isAccessRoute, isStandardsRoute, isIntelRoute, isGovernanceRoute])
 
-  const isRouteActive = (route) => currentRoute === route
+  const isRouteActive = (route) => {
+    if (currentRoute === route) return true
+    if (route === 'compliance-policies' && (currentRoute === 'sa-policies' || (typeof currentRoute === 'string' && currentRoute.startsWith('sa-policies-')))) return true
+    if (route === 'cross-institute-analytics' && currentRoute === 'platform-analytics') return true
+    if (route === 'announcements' && currentRoute === 'system-broadcasts') return true
+    if (route === 'sa-settings' && (currentRoute === 'platform-settings' || (typeof currentRoute === 'string' && currentRoute.startsWith('sa-settings-')))) return true
+    return false
+  }
 
   const handleNavClick = (route) => {
     preloadRoute(route)
@@ -239,14 +210,15 @@ export const SuperadminSidebar = ({
         </div>
 
         {/* Navigation Menu */}
-        <div className="flex-1 py-4 px-3 space-y-1 overflow-y-auto dark-scroll text-[13.5px]">
-          {/* 1. Dashboard */}
+        <div className="flex-1 py-4 px-3 space-y-1.5 overflow-y-auto dark-scroll text-[13.5px]">
+          {/* Dashboard Item */}
           <div className="relative">
             {isRouteActive('dashboard') && (
               <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
             )}
             <button
               onClick={() => handleNavClick('dashboard')}
+              title={collapsed ? "Dashboard" : undefined}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
                 isRouteActive('dashboard')
                   ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold shadow-md shadow-purple-600/20'
@@ -260,30 +232,34 @@ export const SuperadminSidebar = ({
             </button>
           </div>
 
-          {/* 2. Group: Campuses & Wings */}
+          {/* 1. Group: Campuses & Tenancy */}
           <div className="pt-1">
             <button
               onClick={() => {
                 if (collapsed) setCollapsed(false)
-                setPlatformOpen(!platformOpen)
+                setCampusesOpen(!campusesOpen)
               }}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-50/80 transition-colors cursor-pointer group"
+              title={collapsed ? "Campuses & Tenancy" : undefined}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors cursor-pointer group ${
+                isCampusesRoute ? 'text-purple-700 font-semibold' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/80'
+              }`}
             >
               <div className="flex items-center gap-3">
                 <School className="w-[18px] h-[18px] text-slate-400 group-hover:text-purple-600 transition-colors shrink-0" />
                 {(!collapsed || isMobileOpen) && (
                   <span className="font-medium text-slate-600 group-hover:text-slate-900">
-                    Campuses & Wings
+                    Campuses & Tenancy
                   </span>
                 )}
               </div>
               {(!collapsed || isMobileOpen) && (
-                platformOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                campusesOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
               )}
             </button>
 
-            {(!collapsed || isMobileOpen) && platformOpen && (
+            {(!collapsed || isMobileOpen) && campusesOpen && (
               <div className="mt-1 pl-3.5 space-y-1 border-l-2 border-slate-100 ml-5">
+                {/* All Campuses */}
                 <div className="relative">
                   {isRouteActive('institutes') && (
                     <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
@@ -308,6 +284,7 @@ export const SuperadminSidebar = ({
                   </button>
                 </div>
 
+                {/* Pending Approvals */}
                 <div className="relative">
                   {isRouteActive('support-approvals') && (
                     <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
@@ -332,6 +309,7 @@ export const SuperadminSidebar = ({
                   </button>
                 </div>
 
+                {/* Subscriptions & Billing */}
                 <div className="relative">
                   {isRouteActive('platform-billing') && (
                     <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
@@ -348,55 +326,38 @@ export const SuperadminSidebar = ({
                     <span>Subscriptions & Billing</span>
                   </button>
                 </div>
-
-                <div className="relative">
-                  {isRouteActive('cross-institute-analytics') && (
-                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
-                  )}
-                  <button
-                    onClick={() => handleNavClick('cross-institute-analytics')}
-                    className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
-                      isRouteActive('cross-institute-analytics')
-                        ? 'bg-purple-50 text-purple-700 font-semibold'
-                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
-                    }`}
-                  >
-                    <BarChart3 className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('cross-institute-analytics') ? 'text-purple-600' : 'text-slate-400'}`} />
-                    <span>Cross-Campus Analytics</span>
-                  </button>
-                </div>
               </div>
             )}
           </div>
 
-          {/* 3. Group: Users & Roles */}
-          <div className="pt-2">
+          {/* 2. Group: Platform Access & Security */}
+          <div className="pt-1">
             <button
               onClick={() => {
                 if (collapsed) setCollapsed(false)
-                setUsersOpen(!usersOpen)
+                setAccessOpen(!accessOpen)
               }}
+              title={collapsed ? "Platform Access & Security" : undefined}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors cursor-pointer group ${
-                isUserRoute 
-                  ? 'bg-emerald-50/70 text-purple-900 font-semibold shadow-2xs' 
-                  : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/80'
+                isAccessRoute ? 'text-purple-700 font-semibold' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/80'
               }`}
             >
               <div className="flex items-center gap-3">
                 <Users className="w-[18px] h-[18px] text-slate-400 group-hover:text-purple-600 transition-colors shrink-0" />
                 {(!collapsed || isMobileOpen) && (
                   <span className="font-medium text-slate-600 group-hover:text-slate-900">
-                    Users & Roles
+                    Platform Access & Security
                   </span>
                 )}
               </div>
               {(!collapsed || isMobileOpen) && (
-                usersOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                accessOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
               )}
             </button>
 
-            {(!collapsed || isMobileOpen) && usersOpen && (
+            {(!collapsed || isMobileOpen) && accessOpen && (
               <div className="mt-1 pl-3.5 space-y-1 border-l-2 border-slate-100 ml-5">
+                {/* Platform Staff (HQ) */}
                 <div className="relative">
                   {isRouteActive('users-all') && (
                     <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
@@ -411,7 +372,7 @@ export const SuperadminSidebar = ({
                   >
                     <div className="flex items-center gap-2.5">
                       <Users className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('users-all') ? 'text-purple-600' : 'text-slate-400'}`} />
-                      <span>All Users</span>
+                      <span>Platform Staff (HQ)</span>
                     </div>
                     {usersCount > 0 && (
                       <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-slate-100 text-slate-600">
@@ -421,6 +382,7 @@ export const SuperadminSidebar = ({
                   </button>
                 </div>
 
+                {/* Roles & Permissions */}
                 <div className="relative">
                   {isRouteActive('users-roles') && (
                     <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
@@ -438,6 +400,7 @@ export const SuperadminSidebar = ({
                   </button>
                 </div>
 
+                {/* Security & Sessions */}
                 <div className="relative">
                   {isRouteActive('security-center') && (
                     <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
@@ -451,37 +414,173 @@ export const SuperadminSidebar = ({
                     }`}
                   >
                     <Lock className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('security-center') ? 'text-purple-600' : 'text-slate-400'}`} />
-                    <span>Security Center</span>
+                    <span>Security & Sessions</span>
                   </button>
                 </div>
               </div>
             )}
           </div>
 
-          {/* 4. Group: Operations & System Health */}
-          <div className="pt-2">
+          {/* 3. Group: Academic Standards (HQ) */}
+          <div className="pt-1">
             <button
               onClick={() => {
                 if (collapsed) setCollapsed(false)
-                setOperationsOpen(!operationsOpen)
+                setStandardsOpen(!standardsOpen)
               }}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-50/80 transition-colors cursor-pointer group"
+              title={collapsed ? "Academic Standards (HQ)" : undefined}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors cursor-pointer group ${
+                isStandardsRoute ? 'text-purple-700 font-semibold' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/80'
+              }`}
             >
               <div className="flex items-center gap-3">
-                <Database className="w-[18px] h-[18px] text-slate-400 group-hover:text-purple-600 transition-colors shrink-0" />
+                <FileSpreadsheet className="w-[18px] h-[18px] text-slate-400 group-hover:text-purple-600 transition-colors shrink-0" />
                 {(!collapsed || isMobileOpen) && (
                   <span className="font-medium text-slate-600 group-hover:text-slate-900">
-                    Operations & Health
+                    Academic Standards (HQ)
                   </span>
                 )}
               </div>
               {(!collapsed || isMobileOpen) && (
-                operationsOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                standardsOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
               )}
             </button>
 
-            {(!collapsed || isMobileOpen) && operationsOpen && (
+            {(!collapsed || isMobileOpen) && standardsOpen && (
               <div className="mt-1 pl-3.5 space-y-1 border-l-2 border-slate-100 ml-5">
+                {/* Global Templates */}
+                <div className="relative">
+                  {isRouteActive('global-templates') && (
+                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                  )}
+                  <button
+                    onClick={() => handleNavClick('global-templates')}
+                    className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
+                      isRouteActive('global-templates')
+                        ? 'bg-purple-50 text-purple-700 font-semibold'
+                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                    }`}
+                  >
+                    <FileSpreadsheet className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('global-templates') ? 'text-purple-600' : 'text-slate-400'}`} />
+                    <span>Global Templates</span>
+                  </button>
+                </div>
+
+                {/* Compliance Policies */}
+                <div className="relative">
+                  {isRouteActive('compliance-policies') && (
+                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                  )}
+                  <button
+                    onClick={() => handleNavClick('compliance-policies')}
+                    className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
+                      isRouteActive('compliance-policies')
+                        ? 'bg-purple-50 text-purple-700 font-semibold'
+                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                    }`}
+                  >
+                    <ShieldCheck className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('compliance-policies') ? 'text-purple-600' : 'text-slate-400'}`} />
+                    <span>Compliance Policies</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 4. Group: Intelligence & Broadcasts */}
+          <div className="pt-1">
+            <button
+              onClick={() => {
+                if (collapsed) setCollapsed(false)
+                setIntelOpen(!intelOpen)
+              }}
+              title={collapsed ? "Intelligence & Broadcasts" : undefined}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors cursor-pointer group ${
+                isIntelRoute ? 'text-purple-700 font-semibold' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/80'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <BarChart3 className="w-[18px] h-[18px] text-slate-400 group-hover:text-purple-600 transition-colors shrink-0" />
+                {(!collapsed || isMobileOpen) && (
+                  <span className="font-medium text-slate-600 group-hover:text-slate-900">
+                    Intelligence & Broadcasts
+                  </span>
+                )}
+              </div>
+              {(!collapsed || isMobileOpen) && (
+                intelOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+              )}
+            </button>
+
+            {(!collapsed || isMobileOpen) && intelOpen && (
+              <div className="mt-1 pl-3.5 space-y-1 border-l-2 border-slate-100 ml-5">
+                {/* Platform Analytics */}
+                <div className="relative">
+                  {isRouteActive('cross-institute-analytics') && (
+                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                  )}
+                  <button
+                    onClick={() => handleNavClick('cross-institute-analytics')}
+                    className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
+                      isRouteActive('cross-institute-analytics')
+                        ? 'bg-purple-50 text-purple-700 font-semibold'
+                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                    }`}
+                  >
+                    <BarChart3 className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('cross-institute-analytics') ? 'text-purple-600' : 'text-slate-400'}`} />
+                    <span>Platform Analytics</span>
+                  </button>
+                </div>
+
+                {/* System Broadcasts */}
+                <div className="relative">
+                  {isRouteActive('announcements') && (
+                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
+                  )}
+                  <button
+                    onClick={() => handleNavClick('announcements')}
+                    className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
+                      isRouteActive('announcements')
+                        ? 'bg-purple-50 text-purple-700 font-semibold'
+                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                    }`}
+                  >
+                    <Megaphone className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('announcements') ? 'text-purple-600' : 'text-slate-400'}`} />
+                    <span>System Broadcasts</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 5. Group: System Governance */}
+          <div className="pt-1">
+            <button
+              onClick={() => {
+                if (collapsed) setCollapsed(false)
+                setGovernanceOpen(!governanceOpen)
+              }}
+              title={collapsed ? "System Governance" : undefined}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors cursor-pointer group ${
+                isGovernanceRoute ? 'text-purple-700 font-semibold' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/80'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Settings className="w-[18px] h-[18px] text-slate-400 group-hover:text-purple-600 transition-colors shrink-0" />
+                {(!collapsed || isMobileOpen) && (
+                  <span className="font-medium text-slate-600 group-hover:text-slate-900">
+                    System Governance
+                  </span>
+                )}
+              </div>
+              {(!collapsed || isMobileOpen) && (
+                governanceOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+              )}
+            </button>
+
+            {(!collapsed || isMobileOpen) && governanceOpen && (
+              <div className="mt-1 pl-3.5 space-y-1 border-l-2 border-slate-100 ml-5">
+                {/* System Health */}
                 <div className="relative">
                   {isRouteActive('system-health') && (
                     <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
@@ -495,10 +594,11 @@ export const SuperadminSidebar = ({
                     }`}
                   >
                     <Activity className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('system-health') ? 'text-purple-600' : 'text-slate-400'}`} />
-                    <span>System Health</span>
+                    <span>System Health & Telemetry</span>
                   </button>
                 </div>
 
+                {/* Audit Logs */}
                 <div className="relative">
                   {isRouteActive('audit-logs') && (
                     <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
@@ -516,6 +616,7 @@ export const SuperadminSidebar = ({
                   </button>
                 </div>
 
+                {/* Backup & Disaster Recovery */}
                 <div className="relative">
                   {isRouteActive('backup-data') && (
                     <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
@@ -529,296 +630,27 @@ export const SuperadminSidebar = ({
                     }`}
                   >
                     <Database className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('backup-data') ? 'text-purple-600' : 'text-slate-400'}`} />
-                    <span>Backup & Data</span>
+                    <span>Backups & Recovery</span>
                   </button>
                 </div>
 
+                {/* Platform Settings */}
                 <div className="relative">
-                  {isRouteActive('communication') && (
+                  {isRouteActive('sa-settings') && (
                     <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
                   )}
                   <button
-                    onClick={() => handleNavClick('communication')}
+                    onClick={() => handleNavClick('sa-settings')}
                     className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
-                      isRouteActive('communication')
+                      isRouteActive('sa-settings')
                         ? 'bg-purple-50 text-purple-700 font-semibold'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                     }`}
                   >
-                    <MessageSquare className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('communication') ? 'text-purple-600' : 'text-slate-400'}`} />
-                    <span>Gateway Alerts</span>
+                    <Settings className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('sa-settings') ? 'text-purple-600' : 'text-slate-400'}`} />
+                    <span>Platform Settings</span>
                   </button>
                 </div>
-
-                <div className="relative">
-                  {isRouteActive('announcements') && (
-                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
-                  )}
-                  <button
-                    onClick={() => handleNavClick('announcements')}
-                    className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
-                      isRouteActive('announcements')
-                        ? 'bg-purple-50 text-purple-700 font-semibold'
-                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
-                    }`}
-                  >
-                    <Megaphone className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('announcements') ? 'text-purple-600' : 'text-slate-400'}`} />
-                    <span>Announcements & Broadcasts</span>
-                  </button>
-                </div>
-
-                <div className="relative">
-                  {isRouteActive('global-templates') && (
-                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
-                  )}
-                  <button
-                    onClick={() => handleNavClick('global-templates')}
-                    className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
-                      isRouteActive('global-templates')
-                        ? 'bg-purple-50 text-purple-700 font-semibold'
-                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
-                    }`}
-                  >
-                    <FileSpreadsheet className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('global-templates') ? 'text-purple-600' : 'text-slate-400'}`} />
-                    <span>Global Templates</span>
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* 5. Group: Communication Hub */}
-          <div className="pt-2">
-            <button
-              onClick={() => {
-                if (collapsed) setCollapsed(false)
-                setCommunicationOpen(!communicationOpen)
-              }}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-50/80 transition-colors cursor-pointer group"
-            >
-              <div className="flex items-center gap-3">
-                <Megaphone className="w-[18px] h-[18px] text-slate-400 group-hover:text-purple-600 transition-colors shrink-0" />
-                {(!collapsed || isMobileOpen) && (
-                  <span className="font-medium text-slate-600 group-hover:text-slate-900">
-                    Communication
-                  </span>
-                )}
-              </div>
-              {(!collapsed || isMobileOpen) && (
-                communicationOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-              )}
-            </button>
-
-            {(!collapsed || isMobileOpen) && communicationOpen && (
-              <div className="mt-1 pl-3.5 space-y-1 border-l-2 border-slate-100 ml-5">
-                {[
-                  { route: 'sa-comm-announcements', label: 'Platform Announcements', icon: Megaphone },
-                  { route: 'sa-comm-templates', label: 'Notification Templates (Email/SMS/WhatsApp)', icon: Mail },
-                  { route: 'sa-comm-circulars', label: 'Circulars & Event Calendar', icon: Calendar },
-                  { route: 'sa-comm-broadcast', label: 'Emergency Broadcast', icon: AlertOctagon },
-                  { route: 'sa-comm-logs', label: 'Communication Logs', icon: History }
-                ].map(item => {
-                  const ItemIcon = item.icon
-                  const active = isRouteActive(item.route)
-                  return (
-                    <div key={item.route} className="relative">
-                      {active && (
-                        <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
-                      )}
-                      <button
-                        onClick={() => handleNavClick(item.route)}
-                        title={item.label}
-                        className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
-                          active
-                            ? 'bg-purple-50 text-purple-700 font-semibold'
-                            : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
-                        }`}
-                      >
-                        <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-purple-600' : 'text-slate-400'}`} />
-                        <span className="truncate">{item.label}</span>
-                      </button>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* 6. Group: Reports & Analytics */}
-          <div className="pt-2">
-            <button
-              onClick={() => {
-                if (collapsed) setCollapsed(false)
-                setReportsOpen(!reportsOpen)
-              }}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-50/80 transition-colors cursor-pointer group"
-            >
-              <div className="flex items-center gap-3">
-                <BarChart3 className="w-[18px] h-[18px] text-slate-400 group-hover:text-purple-600 transition-colors shrink-0" />
-                {(!collapsed || isMobileOpen) && (
-                  <span className="font-medium text-slate-600 group-hover:text-slate-900">
-                    Reports & Analytics
-                  </span>
-                )}
-              </div>
-              {(!collapsed || isMobileOpen) && (
-                reportsOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-              )}
-            </button>
-
-            {(!collapsed || isMobileOpen) && reportsOpen && (
-              <div className="mt-1 pl-3.5 space-y-1 border-l-2 border-slate-100 ml-5">
-                {[
-                  { route: 'sa-reports-trends', label: 'Enrollment & Dropout Trends', icon: TrendingUp },
-                  { route: 'sa-reports-performance', label: 'Performance Analysis', icon: BarChart3 },
-                  { route: 'sa-reports-collection', label: 'Fee Collection vs Outstanding', icon: DollarSign },
-                  { route: 'sa-reports-comparison', label: 'Campus Comparison', icon: Building2 },
-                  { route: 'sa-reports-builder', label: 'Custom Report Builder', icon: Sliders },
-                  { route: 'sa-reports-scheduled', label: 'Scheduled Reports', icon: Calendar },
-                  { route: 'sa-reports-export', label: 'Export Center (PDF / Excel / CSV)', icon: Download }
-                ].map(item => {
-                  const ItemIcon = item.icon
-                  const active = isRouteActive(item.route)
-                  return (
-                    <div key={item.route} className="relative">
-                      {active && (
-                        <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
-                      )}
-                      <button
-                        onClick={() => handleNavClick(item.route)}
-                        title={item.label}
-                        className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
-                          active
-                            ? 'bg-purple-50 text-purple-700 font-semibold'
-                            : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
-                        }`}
-                      >
-                        <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-purple-600' : 'text-slate-400'}`} />
-                        <span className="truncate">{item.label}</span>
-                      </button>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* 7. Group: Policies & Guidelines */}
-          <div className="pt-2">
-            <button
-              onClick={() => {
-                if (collapsed) setCollapsed(false)
-                setPoliciesOpen(!policiesOpen)
-              }}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-50/80 transition-colors cursor-pointer group"
-            >
-              <div className="flex items-center gap-3">
-                <ShieldCheck className="w-[18px] h-[18px] text-slate-400 group-hover:text-purple-600 transition-colors shrink-0" />
-                {(!collapsed || isMobileOpen) && (
-                  <span className="font-medium text-slate-600 group-hover:text-slate-900">
-                    Policies & Guidelines
-                  </span>
-                )}
-              </div>
-              {(!collapsed || isMobileOpen) && (
-                policiesOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-              )}
-            </button>
-
-            {(!collapsed || isMobileOpen) && policiesOpen && (
-              <div className="mt-1 pl-3.5 space-y-1 border-l-2 border-slate-100 ml-5">
-                {[
-                  { route: 'sa-policies-academic', label: 'Academic Policies', icon: FileText },
-                  { route: 'sa-policies-fees', label: 'Fee & Refund Policies', icon: DollarSign },
-                  { route: 'sa-policies-attendance', label: 'Attendance & Leave Policies', icon: Clock },
-                  { route: 'sa-policies-discipline', label: 'Discipline & Code of Conduct', icon: AlertTriangle },
-                  { route: 'sa-policies-privacy', label: 'Data Privacy & Child Safety', icon: Lock },
-                  { route: 'sa-policies-publish', label: 'Policy Versions & Publish (Campus / Wing-wise)', icon: Share2 },
-                  { route: 'sa-policies-acknowledgment', label: 'Staff / Student Acknowledgment Tracking', icon: Users }
-                ].map(item => {
-                  const ItemIcon = item.icon
-                  const active = isRouteActive(item.route)
-                  return (
-                    <div key={item.route} className="relative">
-                      {active && (
-                        <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
-                      )}
-                      <button
-                        onClick={() => handleNavClick(item.route)}
-                        title={item.label}
-                        className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
-                          active
-                            ? 'bg-purple-50 text-purple-700 font-semibold'
-                            : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
-                        }`}
-                      >
-                        <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-purple-600' : 'text-slate-400'}`} />
-                        <span className="truncate">{item.label}</span>
-                      </button>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* 8. Group: Platform Settings */}
-          <div className="pt-2">
-            <button
-              onClick={() => {
-                if (collapsed) setCollapsed(false)
-                setSettingsOpen(!settingsOpen)
-              }}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-50/80 transition-colors cursor-pointer group"
-            >
-              <div className="flex items-center gap-3">
-                <Settings className="w-[18px] h-[18px] text-slate-400 group-hover:text-purple-600 transition-colors shrink-0" />
-                {(!collapsed || isMobileOpen) && (
-                  <span className="font-medium text-slate-600 group-hover:text-slate-900">
-                    Platform Settings
-                  </span>
-                )}
-              </div>
-              {(!collapsed || isMobileOpen) && (
-                settingsOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-              )}
-            </button>
-
-            {(!collapsed || isMobileOpen) && settingsOpen && (
-              <div className="mt-1 pl-3.5 space-y-1 border-l-2 border-slate-100 ml-5">
-                {[
-                  { route: 'sa-settings-general', label: 'General (Language, PKR, Time Zone)', icon: Settings },
-                  { route: 'sa-settings-branding', label: 'Branding & Custom Domains', icon: Globe },
-                  { route: 'sa-settings-flags', label: 'Feature Flags (Tier-wise)', icon: Sliders },
-                  { route: 'sa-settings-integrations', label: 'Integrations & Webhooks (SSO, SMS, API)', icon: Key },
-                  { route: 'sa-settings-compliance', label: 'Compliance & Data Retention', icon: ShieldCheck },
-                  { route: 'sa-settings-legal', label: 'Legal Documents (Terms, Privacy)', icon: FileText },
-                  { route: 'sa-settings-maintenance', label: 'Maintenance Mode & Release Notes', icon: AlertTriangle },
-                  { route: 'sa-settings-impersonate', label: 'Switch to Campus View (Impersonation)', icon: UserCheck },
-                  { route: 'sa-settings-backups', label: 'System & Session Backups', icon: Database }
-                ].map(item => {
-                  const ItemIcon = item.icon
-                  const active = isRouteActive(item.route)
-                  return (
-                    <div key={item.route} className="relative">
-                      {active && (
-                        <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-600 rounded-full z-10"></div>
-                      )}
-                      <button
-                        onClick={() => handleNavClick(item.route)}
-                        title={item.label}
-                        className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
-                          active
-                            ? 'bg-purple-50 text-purple-700 font-semibold'
-                            : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
-                        }`}
-                      >
-                        <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-purple-600' : 'text-slate-400'}`} />
-                        <span className="truncate">{item.label}</span>
-                      </button>
-                    </div>
-                  )
-                })}
               </div>
             )}
           </div>
