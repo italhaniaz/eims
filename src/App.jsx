@@ -82,6 +82,7 @@ const InvoicesView = lazyWithRetry(() => import('./modules/institute-admin/fees/
 const ExpensesView = lazyWithRetry(() => import('./modules/institute-admin/accounts/ExpensesView'), 'expenses-view')
 const FeeCollectionReportView = lazyWithRetry(() => import('./modules/institute-admin/accounts/FeeCollectionReportView'), 'fee-collection-report-view')
 const MyAttendanceView = lazyWithRetry(() => import('./modules/institute-admin/attendance/MyAttendanceView'), 'my-attendance-view')
+const StudentAttendanceReportView = lazyWithRetry(() => import('./modules/institute-admin/attendance/StudentAttendanceReportView'), 'student-attendance-report-view')
 
 // Executive Seamless Loading Fallback & Preloader
 import ModuleSkeletonLoader from './components/common/ModuleSkeletonLoader'
@@ -191,6 +192,8 @@ const AppContent = () => {
   const [feeSetupInitialMode, setFeeSetupInitialMode] = useState('details')
   const [studentProfileTargetId, setStudentProfileTargetId] = useState(null)
   const [studentsInitialClass, setStudentsInitialClass] = useState('ALL')
+  const [attendanceReportClass, setAttendanceReportClass] = useState('')
+  const [attendanceReportReturnRoute, setAttendanceReportReturnRoute] = useState('inst-attendance')
   const [isSendSmsOpen, setIsSendSmsOpen] = useState(false)
   const openQuickPayment = (studentId = null) => {
     setQuickPayStudentId(studentId)
@@ -264,6 +267,10 @@ const AppContent = () => {
     if (valid === 'inst-students' && !options?.preserveStudentProfile) {
       setStudentProfileTargetId(null)
       setStudentsInitialClass('ALL')
+    }
+    if (valid === 'inst-attendance-student-report' && !options?.preserveAttendanceReport) {
+      setAttendanceReportClass('')
+      setAttendanceReportReturnRoute('inst-attendance')
     }
     setInstituteRouteState(valid)
     if (typeof window !== 'undefined') {
@@ -671,6 +678,14 @@ const AppContent = () => {
                       setBillingHistoryStudentId(sid)
                       setInstituteRoute('inst-fees-history')
                     }}
+                    onOpenAttendanceReport={(cls) => {
+                      setAttendanceReportClass(cls || '')
+                      setAttendanceReportReturnRoute('inst-students')
+                      setInstituteRoute('inst-attendance-student-report', {
+                        preserveStudentProfile: true,
+                        preserveAttendanceReport: true
+                      })
+                    }}
                   />
                 ) : ['inst-students', 'inst-admissions-import', 'inst-students-guardians', 'inst-students-promote', 'inst-students-status', 'inst-students-idcards'].includes(safeInstituteRoute) && (
                   <StudentsView
@@ -717,16 +732,29 @@ const AppContent = () => {
                     onOpenSendSms={() => setIsSendSmsOpen(true)}
                   />
                 )}
-                {['inst-attendance', 'inst-attendance-student-report', 'inst-attendance-staff-report', 'inst-attendance-consecutive', 'inst-attendance-low', 'inst-attendance-unmarked', 'inst-attendance-settings'].includes(safeInstituteRoute) && (
+                {safeInstituteRoute === 'inst-attendance-student-report' && (
+                  <StudentAttendanceReportView
+                    currentInstitute={activeCampus}
+                    initialClassFilter={attendanceReportClass}
+                    onRouteChange={setInstituteRoute}
+                    onOpenQuickPayment={(sid) => openQuickPayment(sid)}
+                    onOpenSendSms={() => setIsSendSmsOpen(true)}
+                    onBack={() =>
+                      setInstituteRoute(attendanceReportReturnRoute, {
+                        preserveStudentProfile: attendanceReportReturnRoute === 'inst-students'
+                      })
+                    }
+                  />
+                )}
+                {['inst-attendance', 'inst-attendance-staff-report', 'inst-attendance-consecutive', 'inst-attendance-low', 'inst-attendance-unmarked', 'inst-attendance-settings'].includes(safeInstituteRoute) && (
                   <AttendanceView
                     currentInstitute={activeCampus}
                     onRouteChange={setInstituteRoute}
                     initialTab={
                       safeInstituteRoute === 'inst-attendance-my' ? 'my-attendance'
                         : safeInstituteRoute === 'inst-attendance-staff-report' ? 'staff'
-                          : safeInstituteRoute === 'inst-attendance-student-report' ? 'monthly'
-                            : ['inst-attendance-consecutive', 'inst-attendance-low', 'inst-attendance-unmarked'].includes(safeInstituteRoute) ? 'analytics'
-                              : 'daily'
+                          : ['inst-attendance-consecutive', 'inst-attendance-low', 'inst-attendance-unmarked'].includes(safeInstituteRoute) ? 'analytics'
+                            : 'daily'
                     }
                     initialAction={safeInstituteRoute === 'inst-attendance-settings' ? 'settings' : null}
                   />

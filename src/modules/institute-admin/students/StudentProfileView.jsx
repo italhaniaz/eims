@@ -52,7 +52,8 @@ export const StudentProfileView = ({
   onBackToList,
   onBack,
   onOpenFeeSetup,
-  onOpenBillingHistory
+  onOpenBillingHistory,
+  onOpenAttendanceReport
 }) => {
   const {
     students = [],
@@ -1218,7 +1219,13 @@ export const StudentProfileView = ({
                 <div className="p-5">
                   <button
                     type="button"
-                    onClick={() => onRouteChange?.('inst-attendance-student-report')}
+                    onClick={() => {
+                      if (onOpenAttendanceReport) {
+                        onOpenAttendanceReport(student.className || 'All Classes')
+                      } else {
+                        onRouteChange?.('inst-attendance-student-report')
+                      }
+                    }}
                     className="w-full py-2.5 px-4 rounded-lg bg-sky-500 hover:bg-sky-600 text-white font-bold inline-flex items-center justify-center gap-2 shadow-xs cursor-pointer transition-colors"
                   >
                     <Calendar className="w-4 h-4" />
