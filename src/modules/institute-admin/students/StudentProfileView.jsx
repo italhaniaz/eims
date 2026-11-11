@@ -80,9 +80,9 @@ export const StudentProfileView = ({
     return transport.filter((t) => t.instituteId === currentInstitute.id || !t.instituteId)
   }, [transport, currentInstitute?.id])
 
+  const [subView, setSubView] = useState('profile') // 'profile' | 'transport'
   const [activeTab, setActiveTab] = useState('overview') // 'overview' | 'results' | 'guardian' | 'attendance' | 'fees'
   const [editModalOpen, setEditModalOpen] = useState(false)
-  const [routeModalOpen, setRouteModalOpen] = useState(false)
   const [welcomeCardOpen, setWelcomeCardOpen] = useState(false)
   const [saving, setSaving] = useState(false)
 
@@ -112,6 +112,7 @@ export const StudentProfileView = ({
   })
 
   // Route Edit Form
+  const [usesTransport, setUsesTransport] = useState(false)
   const [selectedRouteId, setSelectedRouteId] = useState('')
   const [pickupPoint, setPickupPoint] = useState('')
 
@@ -142,7 +143,12 @@ export const StudentProfileView = ({
     })
     setSelectedRouteId(student.transportRouteId || '')
     setPickupPoint(student.pickupPoint || '')
+    setUsesTransport(Boolean(student.transportRouteId || student.transportRouteName || student.pickupPoint))
   }, [student])
+
+  useEffect(() => {
+    setSubView('profile')
+  }, [studentId])
 
   const resolvedSetup = useMemo(
     () => resolveStudentFeeSetup(student, classes, fees),
@@ -266,18 +272,34 @@ export const StudentProfileView = ({
     if (!student || saving) return
     setSaving(true)
     try {
-      const rt = instituteRoutes.find((r) => String(r.id) === String(selectedRouteId))
+      const rt = usesTransport ? instituteRoutes.find((r) => String(r.id) === String(selectedRouteId)) : null
       await updateItem('students', student.id, {
-        transportRouteId: selectedRouteId,
-        transportRouteName: rt ? rt.routeName || rt.name : '',
-        pickupPoint: pickupPoint.trim()
+        transportRouteId: usesTransport ? selectedRouteId : '',
+        transportRouteName: usesTransport && rt ? rt.routeName || rt.name : '',
+        pickupPoint: usesTransport ? pickupPoint.trim() : ''
       })
-      toast?.success?.('Transport route updated for student.')
-      setRouteModalOpen(false)
+      logAuditEvent?.(
+        usesTransport
+          ? `Updated transport route for ${student.fullName || student.name}`
+          : `Cleared transport route assignment for ${student.fullName || student.name}`,
+        'Student Transport',
+        'Success'
+      )
+      toast?.success?.('Route details saved successfully.')
     } catch {
       toast?.error?.('Unable to update transport route.')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handlePrintProfile = () => {
+    setSubView('profile')
+    if (activeTab !== 'overview') {
+      setActiveTab('overview')
+      setTimeout(() => window.print(), 80)
+    } else {
+      window.print()
     }
   }
 
@@ -305,8 +327,185 @@ export const StudentProfileView = ({
     String(student.id || '').slice(-8).toUpperCase()
   const portalUsername = student.portalUsername || admissionNo
 
+  const quickActionsToolbar = (
+    <div className="flex flex-wrap items-center gap-2">
+      <button
+        type="button"
+        onClick={() => onRouteChange?.('inst-admissions-enroll')}
+        className="px-3.5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-2xs cursor-pointer transition-colors"
+      >
+        <UserPlus className="w-3.5 h-3.5" />
+        <span>New Enrollment</span>
+      </button>
+      <button
+        type="button"
+        onClick={() => onOpenQuickPayment?.(student.id)}
+        className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold flex items-center gap-1.5 shadow-2xs cursor-pointer transition-colors"
+      >
+        <DollarSign className="w-3.5 h-3.5" />
+        <span>Add Payment</span>
+      </button>
+      <button
+        type="button"
+        onClick={() => onRouteChange?.('inst-fees')}
+        className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-2xs cursor-pointer transition-colors"
+      >
+        <FileText className="w-3.5 h-3.5" />
+        <span>Generate Invoice</span>
+      </button>
+      <button
+        type="button"
+        onClick={() => onRouteChange?.('inst-accounts-expenses')}
+        className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-xs font-semibold flex items-center gap-1.5 shadow-2xs cursor-pointer transition-colors"
+      >
+        <ArrowDownCircle className="w-3.5 h-3.5 text-slate-500" />
+        <span>Manage Expense</span>
+      </button>
+      <button
+        type="button"
+        onClick={() => onOpenSendSms?.()}
+        className="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold flex items-center gap-1.5 shadow-2xs cursor-pointer transition-colors"
+      >
+        <MessageSquare className="w-3.5 h-3.5 text-slate-500" />
+        <span>Send SMS</span>
+      </button>
+    </div>
+  )
+
+  if (subView === 'transport') {
+    return (
+      <div className="p-4 sm:p-6 space-y-5 max-w-[1440px] mx-auto">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <FileText className="w-5 h-5 text-slate-600" />
+              <h1 className="text-lg sm:text-xl font-bold text-slate-900">Institute transport — {studentName}</h1>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSubView('profile')}
+              className="text-xs font-medium text-slate-500 hover:text-slate-800 flex items-center gap-1 mt-1 cursor-pointer"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Back</span>
+            </button>
+          </div>
+          {quickActionsToolbar}
+        </div>
+
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
+          <div className="bg-sky-500 text-white px-6 py-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2 text-sm font-bold">
+                <Bus className="w-4 h-4" />
+                <span>Institute transport</span>
+              </div>
+              <p className="text-[11px] text-white/90 mt-0.5">{studentName} · Route &amp; pickup only</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSubView('profile')}
+              className="px-3.5 py-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold shadow-xs cursor-pointer transition-colors"
+            >
+              Back to profile
+            </button>
+          </div>
+
+          <form onSubmit={handleSaveRoute} className="p-6 space-y-5 text-xs">
+            <div className="rounded-xl border border-cyan-300 bg-cyan-50/70 px-4 py-3 text-cyan-900 leading-relaxed">
+              This page is for <strong className="font-bold">route &amp; pickup</strong> only. Transport fee is part of{' '}
+              <strong className="font-bold">Fee Setup</strong> (fee item &ldquo;Transport Fee&rdquo;) and is billed with the regular voucher.
+            </div>
+
+            <div className="rounded-xl border border-slate-200 p-4 flex flex-wrap items-center justify-between gap-3 bg-white">
+              <div className="space-y-1">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">TRANSPORT FEE (FROM FEE SETUP)</p>
+                {assignedTransportRoute.feeAmount > 0 ? (
+                  <p className="text-base font-extrabold text-slate-900">{formatMoney(assignedTransportRoute.feeAmount)}</p>
+                ) : (
+                  <>
+                    <p className="text-base font-medium text-slate-400">Not set</p>
+                    <p className="text-[11px] text-slate-400">Add a Transport Fee item in Fee Setup to bill transport.</p>
+                  </>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => onOpenFeeSetup?.(student.id, 'edit')}
+                className="px-3.5 py-1.5 rounded-lg border border-sky-400 text-sky-600 hover:bg-sky-50 font-semibold inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+                <span>Edit in Fee Setup</span>
+              </button>
+            </div>
+
+            <div className="space-y-4 pt-1">
+              <label className="inline-flex items-center gap-2 font-bold text-slate-800 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={usesTransport}
+                  onChange={(e) => setUsesTransport(e.target.checked)}
+                  className="rounded border-slate-300 text-sky-600 focus:ring-sky-500 cursor-pointer"
+                />
+                <span>Student uses school transport (assign route)</span>
+              </label>
+
+              {usesTransport && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 border border-slate-200 rounded-xl p-4">
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">Transport Route</label>
+                    <select
+                      value={selectedRouteId}
+                      onChange={(e) => setSelectedRouteId(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white font-medium"
+                    >
+                      <option value="">Select route...</option>
+                      {instituteRoutes.map((rt) => (
+                        <option key={rt.id} value={rt.id}>
+                          {rt.routeName || rt.name || `Route ${rt.id}`}
+                          {rt.monthlyFee || rt.fee ? ` (${formatMoney(rt.monthlyFee || rt.fee)})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">Pickup Point / Stop</label>
+                    <input
+                      type="text"
+                      value={pickupPoint}
+                      onChange={(e) => setPickupPoint(e.target.value)}
+                      placeholder="e.g. Main Gate Stop"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="px-4 py-2 rounded-lg bg-sky-500 hover:bg-sky-600 text-white font-bold shadow-xs disabled:opacity-50 cursor-pointer transition-colors"
+                >
+                  {saving ? 'Saving...' : 'Save route details'}
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="p-4 sm:p-6 space-y-5 max-w-[1440px] mx-auto">
+    <div className="p-4 sm:p-6 space-y-5 max-w-[1440px] mx-auto print:p-0 print:space-y-4">
+      {/* Print-Only Formal Header matching Picks 2 & 3 */}
+      <div className="hidden print:flex items-center justify-between text-[11px] text-slate-700 border-b border-slate-200 pb-2">
+        <span>{new Date().toLocaleDateString('en-GB')}, {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
+        <span className="font-semibold">Student Profile - {studentName} | {currentInstitute?.name || 'EduDigize Demo'}</span>
+        <span />
+      </div>
+
       {/* Top Header & Quick Toolbar */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 print:hidden">
         <div>
@@ -323,49 +522,7 @@ export const StudentProfileView = ({
             <span>Back</span>
           </button>
         </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => onRouteChange?.('inst-admissions-enroll')}
-            className="px-3.5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-2xs cursor-pointer transition-colors"
-          >
-            <UserPlus className="w-3.5 h-3.5" />
-            <span>New Enrollment</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => onOpenQuickPayment?.(student.id)}
-            className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold flex items-center gap-1.5 shadow-2xs cursor-pointer transition-colors"
-          >
-            <DollarSign className="w-3.5 h-3.5" />
-            <span>Add Payment</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => onRouteChange?.('inst-fees')}
-            className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-2xs cursor-pointer transition-colors"
-          >
-            <FileText className="w-3.5 h-3.5" />
-            <span>Generate Invoice</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => onRouteChange?.('inst-accounts-expenses')}
-            className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-xs font-semibold flex items-center gap-1.5 shadow-2xs cursor-pointer transition-colors"
-          >
-            <ArrowDownCircle className="w-3.5 h-3.5 text-slate-500" />
-            <span>Manage Expense</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => onOpenSendSms?.()}
-            className="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold flex items-center gap-1.5 shadow-2xs cursor-pointer transition-colors"
-          >
-            <MessageSquare className="w-3.5 h-3.5 text-slate-500" />
-            <span>Send SMS</span>
-          </button>
-        </div>
+        {quickActionsToolbar}
       </div>
 
       {/* Deep Indigo Profile Banner (Pick 2) */}
@@ -407,7 +564,7 @@ export const StudentProfileView = ({
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={() => window.print()}
+              onClick={handlePrintProfile}
               className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/30 text-white text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer transition-colors"
             >
               <Printer className="w-3.5 h-3.5" />
@@ -415,7 +572,7 @@ export const StudentProfileView = ({
             </button>
             <button
               type="button"
-              onClick={() => setRouteModalOpen(true)}
+              onClick={() => setSubView('transport')}
               className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/30 text-white text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer transition-colors"
             >
               <Bus className="w-3.5 h-3.5" />
@@ -456,7 +613,7 @@ export const StudentProfileView = ({
             </button>
             <button
               type="button"
-              onClick={() => window.print()}
+              onClick={handlePrintProfile}
               className="px-3.5 py-1.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm transition-colors"
             >
               <Download className="w-3.5 h-3.5" />
@@ -467,7 +624,7 @@ export const StudentProfileView = ({
       </div>
 
       {/* 4 KPI Cards Below Banner */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 print:grid-cols-2 gap-3.5">
         <div className="bg-white rounded-xl border border-slate-200 p-4 text-center shadow-2xs space-y-1">
           <CheckCircle2 className="w-4 h-4 text-sky-500 mx-auto" />
           <p className="text-lg font-extrabold text-sky-600">{monthlyAttendance.present}</p>
@@ -523,7 +680,7 @@ export const StudentProfileView = ({
 
       {/* Tab 1: Overview (Picks 2 & 3) */}
       {activeTab === 'overview' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 print:block print:space-y-4 gap-5 items-start">
           {/* Left Column: Personal Information */}
           <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
             <div className="px-5 py-3.5 border-b border-slate-100 flex items-center gap-2 font-bold text-slate-800 text-sm">
@@ -676,7 +833,7 @@ export const StudentProfileView = ({
                 <div className="space-y-2 pt-1">
                   <button
                     type="button"
-                    onClick={() => setRouteModalOpen(true)}
+                    onClick={() => setSubView('transport')}
                     className="w-full py-2 rounded-lg border border-sky-400 text-sky-600 hover:bg-sky-50 font-semibold inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
                   >
                     <Pencil className="w-3.5 h-3.5" />
@@ -957,66 +1114,6 @@ export const StudentProfileView = ({
                 >
                   <Check className="w-3.5 h-3.5" />
                   <span>{saving ? 'Saving...' : 'Save Profile'}</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Edit Transport Route Modal */}
-      {routeModalOpen && (
-        <div className="fixed inset-0 z-[115] bg-slate-900/50 backdrop-blur-[1px] flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
-            <div className="bg-indigo-700 text-white px-5 py-3.5 flex items-center justify-between">
-              <span className="font-bold text-sm flex items-center gap-2">
-                <Bus className="w-4 h-4" />
-                <span>Assign Transport Route</span>
-              </span>
-              <button type="button" onClick={() => setRouteModalOpen(false)} className="text-white/80 hover:text-white cursor-pointer">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <form onSubmit={handleSaveRoute} className="p-5 space-y-3 text-xs">
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Transport Route</label>
-                <select
-                  value={selectedRouteId}
-                  onChange={(e) => setSelectedRouteId(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white font-medium"
-                >
-                  <option value="">No route assigned</option>
-                  {instituteRoutes.map((rt) => (
-                    <option key={rt.id} value={rt.id}>
-                      {rt.routeName || rt.name || `Route ${rt.id}`}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Pickup Point / Stop</label>
-                <input
-                  type="text"
-                  value={pickupPoint}
-                  onChange={(e) => setPickupPoint(e.target.value)}
-                  placeholder="e.g. Main Gate Stop"
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200"
-                />
-              </div>
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setRouteModalOpen(false)}
-                  className="px-4 py-1.5 rounded-lg border border-slate-200 text-slate-700 font-semibold cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold cursor-pointer"
-                >
-                  {saving ? 'Saving...' : 'Save Route'}
                 </button>
               </div>
             </form>
