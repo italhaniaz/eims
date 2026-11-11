@@ -1,629 +1,955 @@
 import React, { useState, useMemo } from 'react'
-import { 
-  GraduationCap, 
-  Users, 
-  Receipt, 
-  CalendarCheck, 
-  UserPlus, 
-  CreditCard, 
-  Clock, 
-  ArrowUpRight, 
-  School, 
-  BookOpen,
-  Award, 
-  Sparkles, 
-  Star, 
-  Plus, 
-  AlertTriangle,
-  PhoneCall,
+import {
+  UserPlus,
+  DollarSign,
+  FileText,
+  ArrowDown,
   MessageSquare,
+  Clock,
   Calendar,
-  X
+  Eye,
+  EyeOff,
+  Receipt,
+  CheckCircle2,
+  Percent,
+  Hourglass,
+  Users,
+  CalendarCheck,
+  AlertTriangle,
+  UserCheck,
+  BookOpen,
+  Award,
+  Megaphone,
+  Link2,
+  XCircle,
+  Sparkles,
+  Activity,
+  FileBadge
 } from 'lucide-react'
-import StatCard from '../../components/common/StatCard'
-import { CampusSetupWizard } from '../../components/common/CampusSetupWizard'
 import { useAppData } from '../../context/AppDataContext'
+import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
-import { normalizeClassSections, detectProgramLevel } from '../../constants/academicLevels'
-import { getInstituteTierConfig, filterClassesByInstituteTier, isClassAllowedForTier } from '../../utils/tierGating'
+import { isClassAllowedForTier } from '../../utils/tierGating'
+import { getAdminDisplayName } from '../../utils/profileUtils'
 
-export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
-  const tierConfig = getInstituteTierConfig(currentInstitute)
-  const { 
-    students = [], 
-    teachers = [], 
-    fees = [], 
-    notices = [],
-    classes = [], 
-    activeProgramLevel, 
-    programLevels = [],
-    sendCommunicationBlast,
-    logAuditEvent
-  } = useAppData()
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-  const { toast } = useToast()
+/**
+ * Stylized layered 3D gradient medallion badge for financial KPI cards.
+ */
+const StylizedKpiMedallion = ({ icon: Icon, gradientClass, ringClass, glowStyle }) => (
+  <div className="relative shrink-0">
+    <div
+      className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${gradientClass} p-[1px] shadow-md ${ringClass}`}
+      style={glowStyle}
+    >
+      <div className="w-full h-full rounded-[15px] bg-gradient-to-b from-white/25 to-transparent flex items-center justify-center relative overflow-hidden">
+        <div className="absolute -top-3 -right-3 w-7 h-7 rounded-full bg-white/20 blur-[1px]" />
+        <Icon className="w-5 h-5 text-white drop-shadow-xs relative z-10 stroke-[2.2]" />
+      </div>
+    </div>
+  </div>
+)
 
-  const [isNoticeDismissed, setIsNoticeDismissed] = useState(false)
-  const urgentNotice = notices.find(n => 
-    (n.category === 'Urgent' || n.priority === 'Urgent' || n.pinned) &&
-    (!n.instituteId || n.instituteId === currentInstitute?.id)
+/**
+ * Advanced interactive SVG combo bar + smooth spline trend chart for Fee Collection Overview.
+ */
+const FeeCollectionOverviewChart = ({ monthlyData, chartRange, onChangeRange }) => {
+  const [hoveredIdx, setHoveredIdx] = useState(null)
+
+  const visibleData = useMemo(
+    () => (chartRange === '6m' ? monthlyData.slice(Math.max(0, new Date().getMonth() - 5), new Date().getMonth() + 1) : monthlyData),
+    [monthlyData, chartRange]
   )
 
-  const activeLevelObj = programLevels.find(l => l.id === activeProgramLevel)
+  const maxTotal = useMemo(() => {
+    const peak = Math.max(
+      100000,
+      ...visibleData.map(m => Math.max(m.totalBilled, m.collected + m.waiver + m.outstanding))
+    )
+    return Math.ceil(peak / 100000) * 100000
+  }, [visibleData])
 
-  const instClasses = useMemo(() => {
-    return filterClassesByInstituteTier(classes, currentInstitute)
-  }, [classes, currentInstitute])
+  const svgWidth = 760
+  const svgHeight = 250
+  const padLeft = 64
+  const padRight = 22
+  const padTop = 26
+  const padBottom = 30
+  const plotW = svgWidth - padLeft - padRight
+  const plotH = svgHeight - padTop - padBottom
+  const count = Math.max(1, visibleData.length)
+  const slotW = plotW / count
+  const barW = Math.min(34, Math.max(18, slotW * 0.56))
 
-  const instStudents = useMemo(() => {
-    return students.filter(s => {
-      if (currentInstitute?.id && s.instituteId !== currentInstitute.id) return false
-      return isClassAllowedForTier(s.className, currentInstitute)
-    })
-  }, [students, currentInstitute])
+  const yPos = (val) => padTop + plotH - Math.min(1, Math.max(0, val / maxTotal)) * plotH
 
-  const instTeachers = teachers.filter(t => !currentInstitute?.id || t.instituteId === currentInstitute.id)
-  const instFees = fees.filter(f => !currentInstitute?.id || f.instituteId === currentInstitute.id)
+  const linePoints = visibleData.map((d, i) => ({
+    x: padLeft + i * slotW + slotW / 2,
+    y: yPos(d.totalBilled),
+    data: d
+  }))
 
-  const displayedClasses = useMemo(() => {
-    if (!activeProgramLevel || activeProgramLevel === 'all') return instClasses
-    return instClasses.filter(c => {
-      const cLevel = c.programLevel || detectProgramLevel(c.name)
-      return cLevel === activeProgramLevel
-    })
-  }, [instClasses, activeProgramLevel])
-
-  const paidFeesCount = instFees.filter(f => f.status === 'Paid').length
-  const feeRate = instFees.length > 0 ? Math.round((paidFeesCount / instFees.length) * 100) : 0
-
-  // Interactive Live Action Handlers
-  const handleTriggerAbsentSms = () => {
-    const count = instStudents.length > 0 ? Math.min(instStudents.length, 6) : 6
-    if (sendCommunicationBlast) {
-      sendCommunicationBlast({
-        title: 'Daily Unexcused Absence SMS Alert',
-        channel: 'SMS Gateway',
-        audience: 'Parents of Absent Students',
-        recipientsCount: count,
-        message: `Alert from ${currentInstitute?.name || 'School Campus'}: Your ward was marked absent today without prior approved leave. Please contact the school office.`
-      })
+  // Smooth cubic bezier path
+  const linePath = useMemo(() => {
+    if (linePoints.length === 0) return ''
+    if (linePoints.length === 1) return `M ${linePoints[0].x} ${linePoints[0].y}`
+    let d = `M ${linePoints[0].x} ${linePoints[0].y}`
+    for (let i = 0; i < linePoints.length - 1; i++) {
+      const p0 = linePoints[i]
+      const p1 = linePoints[i + 1]
+      const cx = (p0.x + p1.x) / 2
+      d += ` C ${cx} ${p0.y}, ${cx} ${p1.y}, ${p1.x} ${p1.y}`
     }
-    if (logAuditEvent) {
-      logAuditEvent(`Broadcasted Absentee SMS blast to ${count} parent phone numbers`, 'Attendance Supervisor', 'Success')
-    }
-    toast?.success?.(`Absentee SMS alert broadcasted to ${count} parent phone numbers via SMS Gateway!`)
+    return d
+  }, [linePoints])
+
+  const areaPath = useMemo(() => {
+    if (!linePath || linePoints.length === 0) return ''
+    const baseY = padTop + plotH
+    return `${linePath} L ${linePoints[linePoints.length - 1].x} ${baseY} L ${linePoints[0].x} ${baseY} Z`
+  }, [linePath, linePoints, plotH])
+
+  const yTicks = [0, 0.2, 0.4, 0.6, 0.8, 1].map(r => Math.round(maxTotal * r))
+  const formatCompact = (val) => {
+    if (val >= 1000000) return `PKR ${(val / 1000000).toFixed(1)}M`
+    if (val >= 1000) return `PKR ${(val / 1000).toFixed(0)}K`
+    return `PKR ${val}`
   }
-
-  // Dynamically adapt header title and section tag to the selected school wing
-  const getBannerDetails = () => {
-    const campusName = currentInstitute?.name || 'Main School Campus'
-    const campusCode = currentInstitute?.code || 'SCH-001'
-    const campusAddress = currentInstitute?.address || 'Central District'
-
-    switch (activeProgramLevel) {
-      case 'preschool':
-        return {
-          icon: Sparkles,
-          iconColor: 'text-pink-300',
-          sectionTag: 'Pre-School / Early Years (Playgroup - KG)',
-          mainTitle: `${campusName} • Early Years Wing`,
-          description: `Tier: Playgroup, Nursery, Prep & KG • Foundation Learning • ${campusCode}-PRE`,
-          badgeText: 'Pre-School',
-          badgeColor: 'bg-pink-500/20 text-pink-200 border-pink-400/30'
-        }
-      case 'elementary':
-        return {
-          icon: BookOpen,
-          iconColor: 'text-purple-300',
-          sectionTag: 'Elementary School Section (Grade 1 - 8)',
-          mainTitle: `${campusName} • Elementary School Wing`,
-          description: `Tier: Grades 1 to 8 • Primary (1-5) & Middle (6-8) Foundation • ${campusCode}-ELEM`,
-          badgeText: 'Elementary Level',
-          badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-        }
-      case 'secondary':
-        return {
-          icon: Award,
-          iconColor: 'text-blue-400',
-          sectionTag: 'Secondary School Section (Grade 9 - 10)',
-          mainTitle: `${campusName} • Secondary High School`,
-          description: `Tier: Grades 9 & 10 • Matriculation (SSC) & Cambridge O-Levels • ${campusCode}-SEC`,
-          badgeText: 'Secondary Level',
-          badgeColor: 'bg-blue-500/20 text-blue-300 border-blue-500/30'
-        }
-      default:
-        return {
-          icon: School,
-          iconColor: 'text-emerald-400',
-          sectionTag: 'School Administrative Center',
-          mainTitle: campusName,
-          description: `Registration Code: ${campusCode} • ${campusAddress} • School Portal (K-10)`,
-          badgeText: tierConfig.portalTypeLabel || 'School Portal (K-10)',
-          badgeColor: 'bg-white/10 text-slate-300 border-white/20'
-        }
-    }
-  }
-
-  const banner = getBannerDetails()
-  const BannerIcon = banner.icon
 
   return (
-    <div className="p-3.5 sm:p-5 md:p-6 space-y-4 sm:space-y-5 max-w-7xl mx-auto">
-      {/* Critical Emergency Broadcast Banner */}
-      {urgentNotice && !isNoticeDismissed && (
-        <div className="bg-gradient-to-r from-rose-600 via-rose-700 to-amber-600 text-white rounded-2xl p-4 shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in border border-rose-400/40">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0">
-              <AlertTriangle className="w-5 h-5 text-amber-200 animate-pulse" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-black/30 text-amber-200">
-                  SCHOOL DIRECTIVE • URGENT BROADCAST
-                </span>
-                <span className="text-xs text-white/80">{urgentNotice.date}</span>
-              </div>
-              <h3 className="text-sm font-bold mt-0.5 leading-snug">{urgentNotice.title}</h3>
-              <p className="text-xs text-white/90 line-clamp-1 mt-0.5">{urgentNotice.content}</p>
-            </div>
+    <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5 shadow-soft flex flex-col justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white flex items-center justify-center shadow-xs">
+            <Activity className="w-4 h-4" />
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={() => onRouteChange('inst-notices')}
-              className="px-3.5 py-1.5 bg-white text-rose-900 rounded-lg text-xs font-bold hover:bg-white/90 transition-all shadow-sm"
-            >
-              View Directive
-            </button>
-            <button
-              onClick={() => setIsNoticeDismissed(true)}
-              className="p-1.5 hover:bg-white/20 rounded-lg text-white/80 hover:text-white transition-colors"
-              title="Dismiss Alert"
-            >
-              <X className="w-4 h-4" />
-            </button>
+          <div>
+            <h2 className="text-sm sm:text-base font-bold text-[var(--text)]">Fee Collection Overview</h2>
+            <p className="text-[11px] text-[var(--text-muted)]">Monthly cash collected, waivers, outstanding &amp; billed trend</p>
           </div>
         </div>
-      )}
 
-      {/* Dynamic School Header Banner with Hero Gradient */}
-      <div 
-        className="rounded-2xl p-6 sm:p-7 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-all duration-200 relative overflow-hidden border border-white/20"
-        style={{ background: 'var(--hero-gradient)' }}
-      >
-        <div className="relative z-10">
-          <div className="flex items-center gap-2">
-            <span className={`text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 ${banner.iconColor}`}>
-              <BannerIcon className="w-4 h-4" />
-              <span>{banner.sectionTag}</span>
-            </span>
-            <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${banner.badgeColor}`}>
-              {banner.badgeText}
-            </span>
+        <select
+          value={chartRange}
+          onChange={(e) => onChangeRange(e.target.value)}
+          className="px-3 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--surface)] text-xs font-semibold text-[var(--text)] cursor-pointer self-start sm:self-auto"
+        >
+          <option value="year">This Year</option>
+          <option value="6m">Last 6 Months</option>
+        </select>
+      </div>
+
+      {/* Interactive Legend */}
+      <div className="flex flex-wrap items-center justify-center gap-4 text-[11px] font-semibold text-[var(--text-muted)] mb-2">
+        <span className="inline-flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+          <span>Cash collected (by month)</span>
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-violet-500" />
+          <span>Waiver</span>
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+          <span>Outstanding</span>
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded-full border-2 border-rose-500 bg-white" />
+          <span>Total Billed</span>
+        </span>
+      </div>
+
+      {/* Responsive SVG Combo Chart */}
+      <div className="relative w-full">
+        <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-auto overflow-visible">
+          <defs>
+            <linearGradient id="dashCashGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#10B981" />
+              <stop offset="100%" stopColor="#059669" />
+            </linearGradient>
+            <linearGradient id="dashWaiverGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#8B5CF6" />
+              <stop offset="100%" stopColor="#6D28D9" />
+            </linearGradient>
+            <linearGradient id="dashOutGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#FBBF24" />
+              <stop offset="100%" stopColor="#F59E0B" />
+            </linearGradient>
+            <linearGradient id="dashAreaGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#F43F5E" stopOpacity="0.16" />
+              <stop offset="100%" stopColor="#F43F5E" stopOpacity="0.01" />
+            </linearGradient>
+          </defs>
+
+          {/* Horizontal Grid & Y-Axis Ticks */}
+          {yTicks.map((tick) => {
+            const y = yPos(tick)
+            return (
+              <g key={tick}>
+                <line
+                  x1={padLeft}
+                  y1={y}
+                  x2={svgWidth - padRight}
+                  y2={y}
+                  stroke="#E2E8F0"
+                  strokeDasharray="3 3"
+                  strokeWidth="1"
+                />
+                <text
+                  x={padLeft - 8}
+                  y={y + 4}
+                  textAnchor="end"
+                  fontSize="10"
+                  fill="#94A3B8"
+                  fontFamily="ui-monospace, SFMono-Regular, monospace"
+                >
+                  {formatCompact(tick)}
+                </text>
+              </g>
+            )
+          })}
+
+          {/* Smooth Total Billed Area Glow */}
+          {areaPath && <path d={areaPath} fill="url(#dashAreaGrad)" />}
+
+          {/* Stacked Rounded Gradient Bars */}
+          {visibleData.map((d, i) => {
+            const cx = padLeft + i * slotW + slotW / 2
+            const bx = cx - barW / 2
+            const baseBottom = padTop + plotH
+            const isHovered = hoveredIdx === i
+
+            const hCash = (d.collected / maxTotal) * plotH
+            const hWaiver = (d.waiver / maxTotal) * plotH
+            const hOut = (d.outstanding / maxTotal) * plotH
+
+            const yCash = baseBottom - hCash
+            const yWaiver = yCash - hWaiver
+            const yOut = yWaiver - hOut
+
+            return (
+              <g
+                key={d.month}
+                onMouseEnter={() => setHoveredIdx(i)}
+                onMouseLeave={() => setHoveredIdx(null)}
+                className="cursor-pointer"
+              >
+                {isHovered && (
+                  <rect
+                    x={cx - slotW * 0.45}
+                    y={padTop}
+                    width={slotW * 0.9}
+                    height={plotH}
+                    rx="10"
+                    fill="#F1F5F9"
+                    opacity="0.7"
+                  />
+                )}
+
+                {hCash > 0 && (
+                  <rect
+                    x={bx}
+                    y={yCash}
+                    width={barW}
+                    height={hCash}
+                    rx={hWaiver === 0 && hOut === 0 ? 6 : 2}
+                    fill="url(#dashCashGrad)"
+                  />
+                )}
+                {hWaiver > 0 && (
+                  <rect
+                    x={bx}
+                    y={yWaiver}
+                    width={barW}
+                    height={hWaiver}
+                    rx={hOut === 0 ? 6 : 2}
+                    fill="url(#dashWaiverGrad)"
+                  />
+                )}
+                {hOut > 0 && (
+                  <rect
+                    x={bx}
+                    y={yOut}
+                    width={barW}
+                    height={hOut}
+                    rx="6"
+                    fill="url(#dashOutGrad)"
+                  />
+                )}
+
+                <text
+                  x={cx}
+                  y={svgHeight - 8}
+                  textAnchor="middle"
+                  fontSize="11"
+                  fontWeight={isHovered ? '700' : '500'}
+                  fill={isHovered ? '#0F172A' : '#64748B'}
+                >
+                  {d.month}
+                </text>
+              </g>
+            )
+          })}
+
+          {/* Total Billed Smooth Trendline */}
+          {linePath && (
+            <path
+              d={linePath}
+              fill="none"
+              stroke="#E11D48"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+            />
+          )}
+
+          {/* Data Nodes + Floating Value Tags on Non-Zero Months */}
+          {linePoints.map((pt, i) => {
+            const isHovered = hoveredIdx === i
+            return (
+              <g
+                key={pt.data.month}
+                onMouseEnter={() => setHoveredIdx(i)}
+                onMouseLeave={() => setHoveredIdx(null)}
+                className="cursor-pointer"
+              >
+                <circle
+                  cx={pt.x}
+                  cy={pt.y}
+                  r={isHovered ? 5.5 : 3.5}
+                  fill="#FFFFFF"
+                  stroke="#E11D48"
+                  strokeWidth="2.5"
+                />
+                {pt.data.totalBilled > 0 && (
+                  <text
+                    x={pt.x}
+                    y={Math.max(12, pt.y - 9)}
+                    textAnchor="middle"
+                    fontSize="9.5"
+                    fontWeight="700"
+                    fill="#BE123C"
+                  >
+                    {formatCompact(pt.data.totalBilled)}
+                  </text>
+                )}
+              </g>
+            )
+          })}
+        </svg>
+
+        {/* Glassmorphic Hover Tooltip */}
+        {hoveredIdx !== null && visibleData[hoveredIdx] && (
+          <div className="mt-2 px-3.5 py-2 rounded-xl bg-slate-900 text-white text-[11px] flex flex-wrap items-center justify-between gap-3 shadow-lg">
+            <span className="font-bold text-emerald-300">{visibleData[hoveredIdx].month} Breakdown</span>
+            <span>Billed: <strong>PKR {visibleData[hoveredIdx].totalBilled.toLocaleString()}</strong></span>
+            <span className="text-emerald-400">Collected: <strong>PKR {visibleData[hoveredIdx].collected.toLocaleString()}</strong></span>
+            <span className="text-violet-300">Waiver: <strong>PKR {visibleData[hoveredIdx].waiver.toLocaleString()}</strong></span>
+            <span className="text-amber-300">Outstanding: <strong>PKR {visibleData[hoveredIdx].outstanding.toLocaleString()}</strong></span>
           </div>
-          <h1 className="text-2xl font-bold mt-1.5 tracking-tight text-white flex items-center gap-2">
-            <span>{banner.mainTitle}</span>
-          </h1>
-          <p className="text-xs text-purple-200/80 mt-1">
-            {banner.description}
-          </p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
+  const {
+    students = [],
+    teachers = [],
+    fees = [],
+    notices = [],
+    attendance = {}
+  } = useAppData()
+  const { user } = useAuth()
+  const { toast } = useToast()
+
+  const instId = currentInstitute?.id || 'default'
+  const displayName = getAdminDisplayName(user)
+  const todayIso = new Date().toISOString().split('T')[0]
+
+  const [hideAmounts, setHideAmounts] = useState(true)
+  const [periodFilter, setPeriodFilter] = useState('this_month')
+  const [chartRange, setChartRange] = useState('year')
+
+  const myAttKey = `eims_my_attendance_${instId}_${user?.email || 'admin'}`
+  const [myAttLogs, setMyAttLogs] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(myAttKey) || '[]') } catch { return [] }
+  })
+
+  const todayCheckIn = useMemo(
+    () => myAttLogs.find(l => l.date === todayIso) || null,
+    [myAttLogs, todayIso]
+  )
+
+  const handleMyTimeIn = () => {
+    if (todayCheckIn?.timeIn) {
+      toast?.info?.(`Already checked in today at ${todayCheckIn.timeIn}.`)
+      return
+    }
+    const timeIn = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    const entry = { id: `myatt-${Date.now()}`, date: todayIso, timeIn, timeOut: '', status: 'Present' }
+    const next = [entry, ...myAttLogs.filter(l => l.date !== todayIso)]
+    setMyAttLogs(next)
+    try { localStorage.setItem(myAttKey, JSON.stringify(next)) } catch (_) {}
+    toast?.success?.(`Checked in at ${timeIn}.`)
+  }
+
+  const instStudents = useMemo(
+    () => students.filter(s => (!currentInstitute?.id || s.instituteId === currentInstitute.id) && isClassAllowedForTier(s.className, currentInstitute)),
+    [students, currentInstitute]
+  )
+
+  const activeStudents = useMemo(
+    () => instStudents.filter(s => (s.status || 'Active') === 'Active'),
+    [instStudents]
+  )
+
+  const instTeachers = useMemo(
+    () => teachers.filter(t => !currentInstitute?.id || !t.instituteId || t.instituteId === currentInstitute.id),
+    [teachers, currentInstitute?.id]
+  )
+
+  const instFees = useMemo(
+    () => fees.filter(f => !currentInstitute?.id || !f.instituteId || f.instituteId === currentInstitute.id),
+    [fees, currentInstitute?.id]
+  )
+
+  const instNotices = useMemo(
+    () => notices.filter(n => !currentInstitute?.id || !n.instituteId || n.instituteId === currentInstitute.id).slice(0, 4),
+    [notices, currentInstitute?.id]
+  )
+
+  const upcomingEvents = useMemo(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(`sms_campus_events_${instId}`) || '[]')
+      if (!Array.isArray(saved)) return []
+      return saved.filter(ev => !ev.date || ev.date >= todayIso).slice(0, 3)
+    } catch {
+      return []
+    }
+  }, [instId, todayIso])
+
+  // Real financial KPIs (respects periodFilter for current period cards, All Time for Total Outstanding)
+  const financialTotals = useMemo(() => {
+    const now = new Date()
+    const targetMonth = periodFilter === 'last_month'
+      ? (now.getMonth() === 0 ? 11 : now.getMonth() - 1)
+      : now.getMonth()
+    const targetYear = periodFilter === 'last_month' && now.getMonth() === 0
+      ? now.getFullYear() - 1
+      : now.getFullYear()
+
+    const periodFees = instFees.filter(f => {
+      if (periodFilter === 'this_year') return true
+      const rawDate = f.dueDate || f.createdAt || f.paidAt
+      if (!rawDate) return periodFilter === 'this_month'
+      const d = new Date(rawDate)
+      return !Number.isNaN(d.getTime()) ? (d.getMonth() === targetMonth && d.getFullYear() === targetYear) : periodFilter === 'this_month'
+    })
+
+    const totalBilled = periodFees.reduce((s, f) => s + Number(f.amount || 0), 0)
+    const cashCollected = periodFees.reduce((s, f) => s + (f.status === 'Paid' ? Number(f.paidAmount ?? f.amount ?? 0) : Number(f.paidAmount || 0)), 0)
+    const waivers = periodFees.reduce((s, f) => s + Number(f.discount || f.waiver || 0), 0)
+
+    const inactiveIds = new Set(instStudents.filter(s => s.status && s.status !== 'Active').map(s => s.id))
+    const activeOutstanding = instFees
+      .filter(f => !inactiveIds.has(f.studentId) && f.status !== 'Paid')
+      .reduce((s, f) => s + Math.max(0, Number(f.amount || 0) - Number(f.paidAmount || 0) - Number(f.discount || f.waiver || 0)), 0)
+
+    const outstandingStudents = new Set(instFees.filter(f => f.status !== 'Paid').map(f => f.studentName || f.studentId)).size
+    const finesPending = instFees.filter(f => Number(f.fine || f.lateFine || 0) > 0 && f.status !== 'Paid').length
+
+    return { totalBilled, cashCollected, waivers, activeOutstanding, outstandingStudents, finesPending }
+  }, [instFees, instStudents, periodFilter])
+
+  // Real monthly breakdown Jan..Dec for Fee Collection Overview chart
+  const monthlyChartData = useMemo(() => {
+    const buckets = MONTHS.map(m => ({ month: m, totalBilled: 0, collected: 0, waiver: 0, outstanding: 0 }))
+    instFees.forEach(f => {
+      const rawDate = f.dueDate || f.paidAt || f.createdAt
+      const d = rawDate ? new Date(rawDate) : new Date()
+      const idx = !Number.isNaN(d.getTime()) ? d.getMonth() : new Date().getMonth()
+      const amt = Number(f.amount || 0)
+      const waiver = Number(f.discount || f.waiver || 0)
+      const collected = f.status === 'Paid' ? Number(f.paidAmount ?? amt) : Number(f.paidAmount || 0)
+      const outstanding = f.status === 'Paid' ? 0 : Math.max(0, amt - collected - waiver)
+      buckets[idx].totalBilled += amt
+      buckets[idx].collected += collected
+      buckets[idx].waiver += waiver
+      buckets[idx].outstanding += outstanding
+    })
+    return buckets
+  }, [instFees])
+
+  // Real Today's Attendance breakdown
+  const attendanceBreakdown = useMemo(() => {
+    const counts = { present: 0, absent: 0, late: 0, leave: 0, consecutiveAbsent: 0, notMarked: activeStudents.length }
+    const todayEntries = Object.entries(attendance || {}).filter(([k]) => k.includes(todayIso))
+    if (todayEntries.length > 0) {
+      let marked = 0
+      todayEntries.forEach(([, recMap]) => {
+        if (recMap && typeof recMap === 'object') {
+          Object.values(recMap).forEach(entry => {
+            const st = String(entry?.status || '').toLowerCase()
+            if (st === 'present') counts.present++
+            else if (st === 'absent') counts.absent++
+            else if (st === 'late') counts.late++
+            else if (st === 'leave') counts.leave++
+            if (st) marked++
+          })
+        }
+      })
+      counts.notMarked = Math.max(0, activeStudents.length - marked)
+    }
+
+    let staffPresent = 0
+    try {
+      const staffMap = JSON.parse(localStorage.getItem(`eims_staff_attendance_${instId}`) || '{}')
+      const dayRec = staffMap[todayIso] || {}
+      Object.values(dayRec).forEach(st => { if (st === 'Present' || st === 'Late') staffPresent++ })
+    } catch (_) {}
+
+    const studentAttPct = activeStudents.length > 0 ? Math.round(((counts.present + counts.late) / activeStudents.length) * 100) : 0
+    const staffAttPct = instTeachers.length > 0 ? Math.round((staffPresent / instTeachers.length) * 100) : 0
+    return { ...counts, studentAttPct, staffAttPct }
+  }, [attendance, todayIso, activeStudents.length, instId, instTeachers.length])
+
+  const formattedToday = useMemo(
+    () => new Date().toLocaleDateString('en-US', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' }).toUpperCase(),
+    []
+  )
+
+  const maskCurrency = (val) => (hideAmounts ? '******' : `PKR ${Number(val || 0).toLocaleString()}`)
+
+  return (
+    <div className="p-4 sm:p-6 space-y-5 max-w-[1440px] mx-auto">
+      {/* Header Bar + Quick Action Pills */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <FileText className="w-5 h-5 text-[var(--text-muted)]" />
+          <h1 className="text-lg sm:text-xl font-bold text-[var(--text)]">My Dashboard</h1>
         </div>
 
-        <div className="flex items-center gap-2.5 flex-wrap relative z-10">
+        <div className="flex flex-wrap items-center gap-2">
           <button
-            onClick={() => onRouteChange('inst-students')}
-            className="px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-semibold shadow-md shadow-purple-600/30 transition-all duration-150 flex items-center gap-1.5 active:scale-[0.98]"
+            type="button"
+            onClick={() => onRouteChange?.('inst-admissions-enroll')}
+            className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs cursor-pointer transition-colors"
           >
             <UserPlus className="w-3.5 h-3.5" />
-            <span>New Admission</span>
+            <span>New Enrollment</span>
           </button>
           <button
-            onClick={() => onRouteChange('inst-fees')}
-            className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-semibold border border-white/20 transition-all duration-150 flex items-center gap-1.5 active:scale-[0.98]"
+            type="button"
+            onClick={() => onRouteChange?.('inst-fees')}
+            className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs cursor-pointer transition-colors"
           >
-            <CreditCard className="w-3.5 h-3.5" />
-            <span>Generate Fee Challan</span>
+            <DollarSign className="w-3.5 h-3.5" />
+            <span>Add Payment</span>
           </button>
-        </div>
-      </div>
-
-      {/* School Campus Setup Wizard */}
-      <CampusSetupWizard currentInstitute={currentInstitute} onRouteChange={onRouteChange} />
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <StatCard
-          title="Total Students"
-          value={instStudents.length}
-          color="purple"
-          badge={activeProgramLevel !== 'all' ? `${activeLevelObj?.shortTitle}` : (instStudents.length > 0 ? `+${instStudents.length} active` : '0 active')}
-          badgePositive={instStudents.length > 0}
-          icon={GraduationCap}
-          showActions={true}
-          showAllText="Show all"
-          onShowAll={() => onRouteChange('inst-students')}
-          onView={() => onRouteChange('inst-students')}
-          viewTooltip="View All School Students"
-          onAdd={() => onRouteChange('inst-students')}
-          addTooltip="Enroll New Student"
-        />
-        <StatCard
-          title="Teachers & Staff"
-          value={instTeachers.length}
-          color="blue"
-          badge={activeProgramLevel !== 'all' ? `${activeLevelObj?.code} Staff` : (instTeachers.length > 0 ? 'Staff Assigned' : '0 registered')}
-          badgePositive={instTeachers.length > 0}
-          icon={Users}
-          showActions={true}
-          showAllText="Show all"
-          onShowAll={() => onRouteChange('inst-teachers')}
-          onView={() => onRouteChange('inst-teachers')}
-          viewTooltip="View School Teachers Directory"
-          onAdd={() => onRouteChange('inst-teachers')}
-          addTooltip="Add Teacher"
-        />
-        <StatCard
-          title="Fee Collection Rate"
-          value={instFees.length > 0 ? `${feeRate}%` : '0.0%'}
-          color="indigo"
-          badge={activeProgramLevel !== 'all' ? `${activeLevelObj?.code} Fees` : (instFees.length > 0 ? `${paidFeesCount}/${instFees.length} Paid` : '0%')}
-          badgePositive={paidFeesCount > 0}
-          icon={Receipt}
-          showActions={true}
-          showAllText="Show all"
-          onShowAll={() => onRouteChange('inst-fees')}
-          onView={() => onRouteChange('inst-fees')}
-          viewTooltip="View Fee Records"
-          onAdd={() => onRouteChange('inst-fees')}
-          addTooltip="Generate Fee Challan"
-        />
-        <StatCard
-          title="Daily Attendance"
-          value={instStudents.length > 0 ? '96.4%' : '0.0%'}
-          color="amber"
-          badge={activeProgramLevel !== 'all' ? `${activeLevelObj?.code} Log` : (instStudents.length > 0 ? 'Good' : '0%')}
-          badgePositive={instStudents.length > 0}
-          icon={CalendarCheck}
-          showActions={true}
-          showAllText="Show all"
-          onShowAll={() => onRouteChange('inst-attendance')}
-          onView={() => onRouteChange('inst-attendance')}
-          viewTooltip="View Attendance Register"
-          onAdd={() => onRouteChange('inst-attendance')}
-          addTooltip="Mark Attendance"
-        />
-      </div>
-
-      {/* SCHOOL TACTICAL INTELLIGENCE COMMAND STRIP */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {/* Card 1: Absentee Sentinel & Parent SMS */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-2.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
-                Daily Attendance Sentinel
-              </span>
-              <PhoneCall className="w-4 h-4 text-rose-500" />
-            </div>
-            <h3 className="text-base font-bold text-slate-900 mt-1">14 Students Absent Today</h3>
-            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-              Unexcused absence recorded across Elementary and Secondary classes. Parents require notification.
-            </p>
-          </div>
-          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-            <span className="text-[11px] font-medium text-slate-400">96.4% Present</span>
-            <button
-              type="button"
-              onClick={handleTriggerAbsentSms}
-              className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer active:scale-95"
-            >
-              <MessageSquare className="w-3.5 h-3.5" />
-              <span>Send SMS to Parents</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Card 2: Class Diary & Homework Tracker */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-2.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
-                Daily Homework Routine
-              </span>
-              <BookOpen className="w-4 h-4 text-purple-600" />
-            </div>
-            <h3 className="text-base font-bold text-slate-900 mt-1">8 of 10 Classes Diary Published</h3>
-            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-              Grade 4 and Grade 7 class teachers are pending daily homework upload review.
-            </p>
-          </div>
-          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-            <span className="text-[11px] font-medium text-emerald-600 font-semibold">80% Submitted</span>
-            <button
-              type="button"
-              onClick={() => onRouteChange('inst-learning')}
-              className="px-3 py-1.5 bg-[#f5eeff] hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
-            >
-              <span>Review Diaries →</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Card 3: Upcoming PTM Scheduler */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-2.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                Parent Engagement
-              </span>
-              <Calendar className="w-4 h-4 text-blue-600" />
-            </div>
-            <h3 className="text-base font-bold text-slate-900 mt-1">Term PTM: Nov 15, 2026</h3>
-            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-              First Term Parent-Teacher meeting schedule dispatched. 84 parent appointment confirmations received.
-            </p>
-          </div>
-          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-            <span className="text-[11px] font-medium text-blue-700 font-semibold">Morning 09:00 AM</span>
-            <button
-              type="button"
-              onClick={() => onRouteChange('inst-notices')}
-              className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
-            >
-              <span>View PTM Agenda →</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Classes & Sections Directory */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-5">
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <BookOpen className="w-5 h-5 text-purple-600" />
-              <h2 className="text-base font-bold text-slate-900 tracking-tight">
-                Classes & Sections Directory
-              </h2>
-              {activeProgramLevel !== 'all' && (
-                <span className="text-[11px] font-semibold text-purple-700 bg-[#f5eeff] px-2 py-0.5 rounded-full border border-purple-200">
-                  {activeLevelObj?.shortTitle}
-                </span>
-              )}
-            </div>
-            <p className="text-xs text-slate-400 mt-0.5">
-              School-customized sections (e.g. Super Section, Section A, B, Star Section, Morning/Evening batches)
-            </p>
-          </div>
-
           <button
-            onClick={() => onRouteChange('inst-classes')}
-            className="px-3.5 py-1.5 bg-[#f5eeff] hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 shrink-0"
+            type="button"
+            onClick={() => onRouteChange?.('inst-fees-setup')}
+            className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs cursor-pointer transition-colors"
           >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Manage All Classes & Sections</span>
+            <FileText className="w-3.5 h-3.5" />
+            <span>Generate Invoice</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => onRouteChange?.('inst-accounts-expenses')}
+            className="px-3.5 py-2 rounded-xl bg-[var(--surface)] border border-[var(--border)] hover:bg-slate-50 text-[var(--text)] text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
+          >
+            <ArrowDown className="w-3.5 h-3.5 text-rose-500" />
+            <span>Manage Expense</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => onRouteChange?.('inst-communication')}
+            className="px-3.5 py-2 rounded-xl bg-[var(--surface)] border border-[var(--border)] hover:bg-slate-50 text-[var(--text)] text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
+          >
+            <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Send SMS</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Welcome Back Unknown User Hero Card */}
+      <div className="bg-gradient-to-r from-[var(--surface)] via-indigo-50/40 to-emerald-50/40 border border-[var(--border)] rounded-2xl p-5 sm:p-6 shadow-soft flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="space-y-2">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-[var(--text)] tracking-tight">
+            Welcome back, {displayName}!
+          </h2>
+          <p className="text-xs sm:text-sm text-[var(--text-muted)]">
+            Here&apos;s what&apos;s happening at your institution today.
+          </p>
+          <div className="pt-1">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--surface)] border border-[var(--border)] text-[11px] font-semibold text-[var(--text-muted)]">
+              <Clock className="w-3.5 h-3.5 text-emerald-600" />
+              <span>{todayCheckIn?.timeIn ? `Checked in today at ${todayCheckIn.timeIn}` : 'Not checked in today'}</span>
+            </span>
+          </div>
+        </div>
+
+        <div className="flex flex-col items-start lg:items-end gap-3">
+          <span className="text-[11px] font-bold tracking-wider text-indigo-600 uppercase">
+            {formattedToday}
+          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={handleMyTimeIn}
+              className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer transition-colors"
+            >
+              {todayCheckIn?.timeIn ? 'Checked In' : 'My Time In'}
+            </button>
+            <button
+              type="button"
+              onClick={() => onRouteChange?.('inst-attendance-my')}
+              className="px-4 py-2 rounded-xl bg-[var(--surface)] border border-[var(--border)] hover:bg-slate-50 text-[var(--text)] text-xs font-semibold cursor-pointer transition-colors"
+            >
+              My Attendance
+            </button>
+            <select
+              value={periodFilter}
+              onChange={(e) => setPeriodFilter(e.target.value)}
+              className="px-3 py-2 rounded-xl bg-[var(--surface)] border border-[var(--border)] text-xs font-semibold text-[var(--text)] cursor-pointer"
+            >
+              <option value="this_month">This Month</option>
+              <option value="last_month">Last Month</option>
+              <option value="this_year">This Year</option>
+            </select>
+            <button
+              type="button"
+              onClick={() => setHideAmounts(prev => !prev)}
+              className="p-2 rounded-xl bg-[var(--surface)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)] cursor-pointer"
+              title={hideAmounts ? 'Show Financial Figures' : 'Hide Financial Figures'}
+            >
+              {hideAmounts ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 4 Financial KPI Cards with Stylized Gradient Medallions */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5 shadow-soft flex flex-col justify-between gap-3">
+          <div className="flex items-start gap-3.5">
+            <StylizedKpiMedallion
+              icon={Receipt}
+              gradientClass="from-cyan-400 via-teal-500 to-sky-600"
+              ringClass="ring-4 ring-cyan-50"
+            />
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-[var(--text-muted)]">Total Billed</p>
+              <p className="text-lg sm:text-xl font-extrabold text-[var(--text)] mt-1 font-mono">
+                {maskCurrency(financialTotals.totalBilled)}
+              </p>
+            </div>
+          </div>
+          <p className="text-[11px] text-[var(--text-muted)]">Invoices generated in selected period</p>
+        </div>
+
+        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5 shadow-soft flex flex-col justify-between gap-3">
+          <div className="flex items-start gap-3.5">
+            <StylizedKpiMedallion
+              icon={CheckCircle2}
+              gradientClass="from-emerald-400 via-green-500 to-teal-600"
+              ringClass="ring-4 ring-emerald-50"
+            />
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-[var(--text-muted)]">Cash Collected</p>
+              <p className="text-lg sm:text-xl font-extrabold text-[var(--text)] mt-1 font-mono">
+                {maskCurrency(financialTotals.cashCollected)}
+              </p>
+            </div>
+          </div>
+          <p className="text-[11px] text-[var(--text-muted)]">Payments received in selected period</p>
+        </div>
+
+        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5 shadow-soft flex flex-col justify-between gap-3">
+          <div className="flex items-start gap-3.5">
+            <StylizedKpiMedallion
+              icon={Percent}
+              gradientClass="from-slate-600 via-slate-700 to-indigo-800"
+              ringClass="ring-4 ring-slate-100"
+            />
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-[var(--text-muted)]">Waivers / Discount</p>
+              <p className="text-lg sm:text-xl font-extrabold text-[var(--text)] mt-1 font-mono">
+                {maskCurrency(financialTotals.waivers)}
+              </p>
+            </div>
+          </div>
+          <p className="text-[11px] text-[var(--text-muted)]">Waivers applied in selected period</p>
+        </div>
+
+        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5 shadow-soft flex flex-col justify-between gap-3">
+          <div className="flex items-start gap-3.5">
+            <StylizedKpiMedallion
+              icon={Hourglass}
+              gradientClass="from-orange-400 via-amber-500 to-rose-500"
+              ringClass="ring-4 ring-orange-50"
+            />
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-[var(--text-muted)]">Total Outstanding (All Time)</p>
+              <p className="text-lg sm:text-xl font-extrabold text-[var(--text)] mt-1 font-mono">
+                {maskCurrency(financialTotals.activeOutstanding)}
+              </p>
+            </div>
+          </div>
+          <div className="px-2.5 py-1.5 rounded-lg bg-rose-50/70 border border-rose-100 text-[11px] text-rose-700 font-medium">
+            Excludes dropped / graduated
+          </div>
+        </div>
+      </div>
+
+      {/* 5 Secondary Operational KPI Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
+        <div
+          onClick={() => onRouteChange?.('inst-students')}
+          className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-4 shadow-soft flex items-center gap-3 cursor-pointer hover:border-emerald-300 transition-colors"
+        >
+          <div className="w-10 h-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0">
+            <Users className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-[var(--text-muted)]">Active Students</p>
+            <p className="text-xl font-bold text-[var(--text)]">{activeStudents.length}</p>
+            <p className="text-[10px] text-[var(--text-muted)]">Total</p>
+          </div>
+        </div>
+
+        <div
+          onClick={() => onRouteChange?.('inst-attendance')}
+          className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-4 shadow-soft flex items-center gap-3 cursor-pointer hover:border-emerald-300 transition-colors"
+        >
+          <div className="w-10 h-10 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center shrink-0">
+            <CalendarCheck className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-[var(--text-muted)]">Today&apos;s Attendance</p>
+            <p className="text-xl font-bold text-[var(--text)]">{attendanceBreakdown.studentAttPct}%</p>
+            <p className="text-[10px] text-[var(--text-muted)]">Present</p>
+          </div>
+        </div>
+
+        <div
+          onClick={() => onRouteChange?.('inst-fees-outstanding')}
+          className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-4 shadow-soft flex items-center gap-3 cursor-pointer hover:border-emerald-300 transition-colors"
+        >
+          <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+            <Receipt className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-[var(--text-muted)]">Outstanding Fees</p>
+            <p className="text-xl font-bold text-[var(--text)]">{financialTotals.outstandingStudents}</p>
+            <p className="text-[10px] text-[var(--text-muted)]">Students</p>
+          </div>
+        </div>
+
+        <div
+          onClick={() => onRouteChange?.('inst-fees-fines')}
+          className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-4 shadow-soft flex items-center gap-3 cursor-pointer hover:border-emerald-300 transition-colors"
+        >
+          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+            <AlertTriangle className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-[var(--text-muted)]">Attendance Fines</p>
+            <p className="text-xl font-bold text-[var(--text)]">{financialTotals.finesPending}</p>
+            <p className="text-[10px] text-[var(--text-muted)]">Unpaid</p>
+          </div>
+        </div>
+
+        <div
+          onClick={() => onRouteChange?.('inst-attendance-staff-report')}
+          className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-4 shadow-soft flex items-center gap-3 cursor-pointer hover:border-emerald-300 transition-colors"
+        >
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+            <UserCheck className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-[var(--text-muted)]">Staff Attendance</p>
+            <p className="text-xl font-bold text-[var(--text)]">{attendanceBreakdown.staffAttPct}%</p>
+            <p className="text-[10px] text-[var(--text-muted)]">Present</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Next Upcoming Events */}
+      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5 shadow-soft space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm font-bold text-[var(--text)]">
+            <Calendar className="w-4 h-4 text-emerald-600" />
+            <span>Next Upcoming Events</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => onRouteChange?.('inst-events')}
+            className="px-3 py-1.5 rounded-xl border border-[var(--border)] hover:bg-slate-50 text-xs font-semibold text-[var(--text)] flex items-center gap-1.5 cursor-pointer"
+          >
+            <Calendar className="w-3.5 h-3.5 text-emerald-600" />
+            <span>View calendar</span>
           </button>
         </div>
 
-        {displayedClasses.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {displayedClasses.map(cls => {
-              const secList = normalizeClassSections(cls)
-              const cLevel = cls.programLevel || detectProgramLevel(cls.name)
-              return (
-                <div 
-                  key={cls.id}
-                  className="p-4 rounded-xl border border-slate-200/70 bg-slate-50/60 hover:bg-white hover:border-slate-300 hover:shadow-xs transition-all flex flex-col justify-between"
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-bold text-slate-900">{cls.name}</span>
-                        <span className="text-[9px] font-mono uppercase px-1.5 py-0.2 rounded bg-white text-slate-500 border border-slate-200">
-                          {cLevel}
-                        </span>
-                      </div>
-                      <span className="text-[10px] font-mono font-medium text-slate-500 bg-white border border-slate-200 px-2 py-0.5 rounded-md">
-                        {secList.length} Sections
-                      </span>
-                    </div>
-
-                    {/* Section Badges */}
-                    <div className="flex flex-wrap gap-1.5 mt-2">
-                      {secList.map((sec, sIdx) => {
-                        const isSuper = sec.name.toLowerCase().includes('super') || sec.name.toLowerCase().includes('star')
-                        return (
-                          <span
-                            key={sec.id || sIdx}
-                            className={`text-[11px] font-medium px-2 py-0.5 rounded-md flex items-center gap-1 border ${
-                              isSuper 
-                                ? 'bg-amber-50 text-amber-800 border-amber-200 font-bold' 
-                                : 'bg-white text-slate-700 border-slate-200'
-                            }`}
-                          >
-                            {isSuper && <Star className="w-3 h-3 text-amber-500 fill-amber-400" />}
-                            <span>{sec.name}</span>
-                          </span>
-                        )
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="mt-3 pt-2.5 border-t border-slate-200/60 flex items-center justify-between text-[11px] text-slate-400">
-                    <span>
-                      Class Teacher: <strong className="text-slate-600 font-medium">{cls.classTeacher || 'Assigned Teacher'}</strong>
-                    </span>
-                    <button
-                      onClick={() => onRouteChange('inst-classes')}
-                      className="text-purple-600 hover:underline font-semibold"
-                    >
-                      Configure →
-                    </button>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+        {upcomingEvents.length === 0 ? (
+          <p className="text-xs text-[var(--text-muted)] py-3">
+            No upcoming school events scheduled yet. Open Academic Calendar to schedule events.
+          </p>
         ) : (
-          <div className="py-8 text-center flex flex-col items-center justify-center space-y-2 border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
-            <BookOpen className="w-8 h-8 text-slate-300" />
-            <p className="text-xs font-semibold text-slate-700">No classes configured for this school yet</p>
-            <p className="text-[11px] text-slate-400 max-w-sm">
-              Click below to setup and configure active grades and sections for this school campus.
-            </p>
-            <button
-              onClick={() => onRouteChange('inst-classes')}
-              className="mt-1 px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-semibold shadow-xs transition-all flex items-center gap-1"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Configure Classes & Sections</span>
-            </button>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {upcomingEvents.map((ev, i) => (
+              <div key={ev.id || i} className="p-3.5 rounded-xl border border-[var(--border)] bg-slate-50/70">
+                <span className="px-2 py-0.5 rounded bg-emerald-600 text-white text-[10px] font-bold uppercase">Event</span>
+                <p className="text-xs font-bold text-[var(--text)] mt-1.5">{ev.title}</p>
+                <p className="text-[11px] text-[var(--text-muted)] mt-0.5">{ev.date}</p>
+              </div>
+            ))}
           </div>
         )}
       </div>
 
-      {/* Two Columns: Recent Student Admissions & Quick Operations */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Recent Admissions */}
-        <div className="lg:col-span-8 bg-white rounded-2xl p-6 border border-slate-200/70 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-base font-bold text-slate-800">
-                Recent Student Admissions
-              </h2>
-              <p className="text-xs text-slate-400">Newly enrolled students in this school</p>
-            </div>
-            {instStudents.length > 0 && (
-              <button
-                onClick={() => onRouteChange('inst-students')}
-                className="text-xs font-semibold text-purple-600 hover:text-purple-700"
-              >
-                View Directory →
-              </button>
-            )}
-          </div>
+      {/* Graph + Empty Recent Activity Row */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
+        <div className="xl:col-span-7">
+          <FeeCollectionOverviewChart
+            monthlyData={monthlyChartData}
+            chartRange={chartRange}
+            onChangeRange={setChartRange}
+          />
+        </div>
 
-          <div className="overflow-x-auto">
-            {instStudents.length > 0 ? (
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 text-slate-500 uppercase font-semibold">
-                  <tr>
-                    <th className="px-4 py-3">Student Roll No</th>
-                    <th className="px-4 py-3">Student Name</th>
-                    <th className="px-4 py-3">Class</th>
-                    <th className="px-4 py-3">Fee Status</th>
-                    <th className="px-4 py-3">Attendance</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {instStudents.slice(0, 5).map((std) => (
-                    <tr key={std.id} className="hover:bg-slate-50/70 transition-colors">
-                      <td className="px-4 py-3 font-mono font-semibold text-slate-700">{std.rollNumber}</td>
-                      <td className="px-4 py-3 font-bold text-slate-800">{std.name}</td>
-                      <td className="px-4 py-3 text-slate-600">{std.className} ({std.section})</td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-0.5 rounded-full font-semibold ${
-                          std.feeStatus === 'Paid' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'
-                        }`}>
-                          {std.feeStatus}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 font-semibold text-slate-700">{std.attendanceRate || '95%'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+        {/* Recent Activity (intentionally kept empty right now) */}
+        <div className="xl:col-span-5 bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5 shadow-soft flex flex-col">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm sm:text-base font-bold text-[var(--text)]">Recent Activity</h2>
+            <span className="text-[11px] font-semibold text-[var(--text-muted)]">Live Feed</span>
+          </div>
+          <div className="flex-1 flex flex-col items-center justify-center text-center py-10 border border-dashed border-[var(--border)] rounded-xl bg-slate-50/40">
+            <Sparkles className="w-7 h-7 text-slate-300 mb-2" />
+            <p className="text-xs font-semibold text-[var(--text)]">No Recent Activity</p>
+            <p className="text-[11px] text-[var(--text-muted)] mt-0.5">
+              Recent school actions and updates will appear here.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Row: Latest Announcements, Quick Links, Today's Attendance */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* Latest Announcements */}
+        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5 shadow-soft flex flex-col justify-between">
+          <div>
+            <div className="flex items-center gap-2 text-sm font-bold text-[var(--text)] mb-4">
+              <Megaphone className="w-4 h-4 text-emerald-600" />
+              <span>Latest Announcements</span>
+            </div>
+            {instNotices.length === 0 ? (
+              <p className="text-xs text-[var(--text-muted)] py-6 text-center">
+                No announcements published yet.
+              </p>
             ) : (
-              <div className="py-12 text-center flex flex-col items-center justify-center space-y-2">
-                <GraduationCap className="w-8 h-8 text-slate-300" />
-                <p className="text-sm font-semibold text-slate-700">0 Students Enrolled in This School</p>
-                <p className="text-xs text-slate-400 max-w-sm">
-                  Click the button below to admit your first student and begin tracking attendance and grades.
-                </p>
-                <button
-                  onClick={() => onRouteChange('inst-students')}
-                  className="mt-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
-                >
-                  Admit First Student
-                </button>
+              <div className="space-y-3">
+                {instNotices.map(n => (
+                  <div key={n.id} className="pb-2.5 border-b border-[var(--border)] last:border-0">
+                    <p className="text-xs font-bold text-[var(--text)] flex items-center gap-1.5">
+                      <Megaphone className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+                      <span className="truncate">{n.title}</span>
+                    </p>
+                    <p className="text-[11px] text-[var(--text-muted)] mt-0.5 pl-5">{n.date || n.createdAt?.slice(0, 10)}</p>
+                  </div>
+                ))}
               </div>
             )}
+          </div>
+          <button
+            type="button"
+            onClick={() => onRouteChange?.('inst-notices')}
+            className="mt-3 text-xs font-semibold text-emerald-700 hover:underline self-start cursor-pointer"
+          >
+            Manage Announcements →
+          </button>
+        </div>
+
+        {/* Quick Links */}
+        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5 shadow-soft">
+          <div className="flex items-center gap-2 text-sm font-bold text-[var(--text)] mb-3">
+            <Link2 className="w-4 h-4 text-emerald-600" />
+            <span>Quick Links</span>
+          </div>
+          <div className="space-y-2">
+            {[
+              { label: 'Classes', route: 'inst-classes', icon: BookOpen },
+              { label: 'Timetable', route: 'inst-timetable', icon: Calendar },
+              { label: 'Exam Schedule', route: 'inst-exams-schedule', icon: FileText },
+              { label: 'Make-up Sessions', route: 'inst-makeup-sessions', icon: Clock },
+              { label: 'Marks Entry', route: 'inst-exams-marks', icon: Award },
+              { label: 'Payroll', route: 'inst-payroll', icon: DollarSign },
+              { label: 'Generate Certificate', route: 'inst-certificates', icon: FileBadge }
+            ].map(link => {
+              const Icon = link.icon
+              return (
+                <button
+                  key={link.route}
+                  type="button"
+                  onClick={() => onRouteChange?.(link.route)}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl border border-[var(--border)] hover:bg-slate-50 text-xs font-semibold text-[var(--text)] transition-colors cursor-pointer"
+                >
+                  <Icon className="w-3.5 h-3.5 text-slate-500" />
+                  <span>{link.label}</span>
+                </button>
+              )
+            })}
           </div>
         </div>
 
-        {/* Quick Operations (Contextual Shortcuts) */}
-        <div className="lg:col-span-4 bg-white rounded-2xl p-6 border border-slate-200/70 shadow-[0_2px_12px_rgba(0,0,0,0.03)] space-y-3">
-          <div className="flex items-center justify-between mb-1">
-            <h2 className="text-base font-bold text-slate-800">School Operations</h2>
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Shortcuts</span>
+        {/* Today's Attendance Summary */}
+        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5 shadow-soft">
+          <div className="flex items-center gap-2 text-sm font-bold text-[var(--text)] mb-4">
+            <CalendarCheck className="w-4 h-4 text-emerald-600" />
+            <span>Today&apos;s Attendance</span>
           </div>
-
-          {/* Shortcut 1: Attendance */}
-          <button
-            onClick={() => onRouteChange('inst-attendance')}
-            className="w-full flex items-center justify-between p-3.5 rounded-xl bg-slate-50/80 hover:bg-white transition-all duration-150 text-xs font-semibold text-slate-700 text-left border border-slate-200/70 hover:border-emerald-400 hover:shadow-sm group active:scale-[0.99]"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center transition-colors group-hover:bg-emerald-600 group-hover:text-white">
-                <CalendarCheck className="w-4 h-4" />
-              </div>
-              <div>
-                <p className="font-bold text-slate-800">Mark Daily Attendance</p>
-                <p className="text-[11px] text-slate-400 font-normal">Active section roll call</p>
-              </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100">
+              <span className="text-[11px] font-semibold text-emerald-800 flex items-center gap-1">
+                <CheckCircle2 className="w-3.5 h-3.5" /> Present
+              </span>
+              <p className="text-lg font-bold text-emerald-950 mt-1">{attendanceBreakdown.present}</p>
             </div>
-            <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
-          </button>
-
-          {/* Shortcut 2: Fees & Billing */}
-          <button
-            onClick={() => onRouteChange('inst-fees')}
-            className="w-full flex items-center justify-between p-3.5 rounded-xl bg-slate-50/80 hover:bg-white transition-all duration-150 text-xs font-semibold text-slate-700 text-left border border-slate-200/70 hover:border-blue-400 hover:shadow-sm group active:scale-[0.99]"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center transition-colors group-hover:bg-blue-600 group-hover:text-white">
-                <CreditCard className="w-4 h-4" />
-              </div>
-              <div>
-                <p className="font-bold text-slate-800">3-Part Fee Challan</p>
-                <p className="text-[11px] text-slate-400 font-normal">Print official bank vouchers</p>
-              </div>
+            <div className="p-3 rounded-xl bg-rose-50 border border-rose-100">
+              <span className="text-[11px] font-semibold text-rose-800 flex items-center gap-1">
+                <XCircle className="w-3.5 h-3.5" /> Absent
+              </span>
+              <p className="text-lg font-bold text-rose-950 mt-1">{attendanceBreakdown.absent}</p>
             </div>
-            <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
-          </button>
-
-          {/* Shortcut 3: Timetable */}
-          <button
-            onClick={() => onRouteChange('inst-timetable')}
-            className="w-full flex items-center justify-between p-3.5 rounded-xl bg-slate-50/80 hover:bg-white transition-all duration-150 text-xs font-semibold text-slate-700 text-left border border-slate-200/70 hover:border-amber-400 hover:shadow-sm group active:scale-[0.99]"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center transition-colors group-hover:bg-amber-500 group-hover:text-white">
-                <Clock className="w-4 h-4" />
-              </div>
-              <div>
-                <p className="font-bold text-slate-800">Class Timetable Matrix</p>
-                <p className="text-[11px] text-slate-400 font-normal">Weekly periods & routine</p>
-              </div>
+            <div className="p-3 rounded-xl bg-amber-50 border border-amber-100">
+              <span className="text-[11px] font-semibold text-amber-800 flex items-center gap-1">
+                <Clock className="w-3.5 h-3.5" /> Late
+              </span>
+              <p className="text-lg font-bold text-amber-950 mt-1">{attendanceBreakdown.late}</p>
             </div>
-            <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-amber-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
-          </button>
-
-          {/* Shortcut 4: Teachers */}
-          <button
-            onClick={() => onRouteChange('inst-teachers')}
-            className="w-full flex items-center justify-between p-3.5 rounded-xl bg-slate-50/80 hover:bg-white transition-all duration-150 text-xs font-semibold text-slate-700 text-left border border-slate-200/70 hover:border-purple-400 hover:shadow-sm group active:scale-[0.99]"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center transition-colors group-hover:bg-purple-600 group-hover:text-white">
-                <Users className="w-4 h-4" />
-              </div>
-              <div>
-                <p className="font-bold text-slate-800">Teachers & School Staff</p>
-                <p className="text-[11px] text-slate-400 font-normal">Teachers directory & classes</p>
-              </div>
+            <div className="p-3 rounded-xl bg-sky-50 border border-sky-100">
+              <span className="text-[11px] font-semibold text-sky-800 flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5" /> Leave
+              </span>
+              <p className="text-lg font-bold text-sky-950 mt-1">{attendanceBreakdown.leave}</p>
             </div>
-            <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-purple-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
-          </button>
+            <div className="p-3 rounded-xl bg-pink-50 border border-pink-100">
+              <span className="text-[11px] font-semibold text-pink-800 flex items-center gap-1">
+                <AlertTriangle className="w-3.5 h-3.5" /> Absent 3+ Days
+              </span>
+              <p className="text-lg font-bold text-pink-950 mt-1">{attendanceBreakdown.consecutiveAbsent}</p>
+            </div>
+            <div className="p-3 rounded-xl bg-slate-100 border border-slate-200">
+              <span className="text-[11px] font-semibold text-slate-700 flex items-center gap-1">
+                <AlertTriangle className="w-3.5 h-3.5" /> Not Marked
+              </span>
+              <p className="text-lg font-bold text-slate-900 mt-1">{attendanceBreakdown.notMarked}</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

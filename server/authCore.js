@@ -29,22 +29,22 @@ export const serverAuthDirectory = [
   },
   {
     id: 'usr-beacon-1',
-    name: 'Beaconhouse School Admin',
+    name: 'Unknown User',
     email: 'admin.beacon@sms.edu',
     passwordHash: hashPasswordServer('password123'),
     role: 'institute_admin',
-    roleTitle: 'School Principal',
+    roleTitle: 'ADMIN',
     instituteId: 'inst-1',
     instituteName: 'Beaconhouse Central High School',
     status: 'Active'
   },
   {
     id: 'usr-city-2',
-    name: 'Mrs. Samina Khurram',
+    name: 'Unknown User',
     email: 'admin.school@cityschool.edu',
     passwordHash: hashPasswordServer('password123'),
     role: 'institute_admin',
-    roleTitle: 'School Principal',
+    roleTitle: 'ADMIN',
     instituteId: 'inst-2',
     instituteName: 'City School Model Town Campus',
     status: 'Active'

@@ -421,8 +421,8 @@ export const AuthProvider = ({ children }) => {
       },
       'admin.beacon@sms.edu': {
         id: 'usr-beacon-1',
-        name: 'Beaconhouse School Admin',
-        roleTitle: 'School Principal',
+        name: 'Unknown User',
+        roleTitle: 'ADMIN',
         role: 'institute_admin',
         email: 'admin.beacon@sms.edu',
         instituteId: 'inst-1',
@@ -434,8 +434,8 @@ export const AuthProvider = ({ children }) => {
       },
       'admin.school@cityschool.edu': {
         id: 'usr-city-2',
-        name: 'Mrs. Samina Khurram',
-        roleTitle: 'School Principal',
+        name: 'Unknown User',
+        roleTitle: 'ADMIN',
         role: 'institute_admin',
         email: 'admin.school@cityschool.edu',
         instituteId: 'inst-2',

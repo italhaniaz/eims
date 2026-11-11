@@ -7,23 +7,25 @@ import {
   LogOut, 
   ShieldCheck, 
   GraduationCap, 
-  Building2, 
-  Layers, 
   Settings, 
   User,
   Key,
   UserCheck,
-  Eye,
-  Check,
   Palette,
   Moon,
-  Sun
+  Sun,
+  Search,
+  Bell,
+  Mail,
+  Camera
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useAppData } from '../../context/AppDataContext'
 import { useTheme } from '../../context/ThemeContext'
+import { useToast } from '../../context/ToastContext'
 import ChangePasswordModal from '../common/ChangePasswordModal'
 import { getInstituteTierConfig } from '../../utils/tierGating'
+import { getAdminDisplayName, compressAvatarImage } from '../../utils/profileUtils'
 
 export const InstituteAdminNavbar = ({ 
   currentRoute, 
@@ -35,13 +37,11 @@ export const InstituteAdminNavbar = ({
   onRouteChange,
   onOpenThemeModal
 }) => {
-  const { user, logout } = useAuth()
+  const { user, logout, updateProfile } = useAuth()
   const { isDark, toggleThemeMode, preset, activeThemeConfig } = useTheme()
+  const { toast } = useToast()
   const { 
-    institutes, 
-    activeWing = 'all',
-    setActiveWing,
-    isCloudSynced
+    institutes
   } = useAppData()
 
   const [dropdownOpen, setDropdownOpen] = useState(false)
@@ -52,6 +52,23 @@ export const InstituteAdminNavbar = ({
   const profileRef = useRef(null)
   const campusRef = useRef(null)
   const previewRef = useRef(null)
+  const avatarInputRef = useRef(null)
+
+  const displayName = getAdminDisplayName(user)
+
+  const handleAvatarSelected = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    try {
+      const dataUrl = await compressAvatarImage(file, 256)
+      updateProfile({ avatar: dataUrl })
+      toast?.success?.('Profile picture updated!')
+    } catch (err) {
+      toast?.error?.(err?.message || 'Unable to upload selected photo.')
+    } finally {
+      if (avatarInputRef.current) avatarInputRef.current.value = ''
+    }
+  }
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -234,114 +251,173 @@ export const InstituteAdminNavbar = ({
         </h1>
       </div>
 
-      {/* Center: School Portal Badge */}
-      <div className="hidden md:flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200/80 text-emerald-950 text-xs font-bold shadow-2xs">
-        <School className="w-4 h-4 text-emerald-600" />
-        <span>School Portal (K-10)</span>
-      </div>
-
-      {/* Sync Engine Status Indicator */}
-      <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200/70 text-[11px] font-semibold text-slate-600">
-        <span className={`w-2 h-2 rounded-full ${isCloudSynced ? 'bg-emerald-500 animate-pulse' : 'bg-emerald-600'}`}></span>
-        <span>{isCloudSynced ? 'Cloud Live' : 'Edge Mode'}</span>
-      </div>
-
-      {/* Right: Theme Studio, Settings, and User Menu */}
-      <div className="flex items-center gap-2 sm:gap-3">
-        {/* Theme Studio & Preset Trigger */}
+      {/* Center: Quick Global Search Input (opens Command Palette) */}
+      <div className="hidden md:flex flex-1 max-w-md mx-4">
         <button
           type="button"
-          onClick={onOpenThemeModal}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] hover:border-[var(--primary)] shadow-2xs transition-all cursor-pointer"
-          title="Theme Studio: Presets & Dark Mode"
+          onClick={onOpenCommandPalette}
+          className="w-full flex items-center justify-between gap-2.5 px-3.5 py-2 rounded-full bg-slate-50 border border-[var(--border)] text-xs text-[var(--text-muted)] hover:border-[var(--primary)] transition-colors cursor-pointer"
+          title="Quick Search (Ctrl+K)"
         >
-          <Palette className="w-3.5 h-3.5 text-[var(--primary)]" />
-          <span className="hidden sm:inline capitalize font-bold">{preset}</span>
-          <span 
-            className="w-2.5 h-2.5 rounded-full shadow-2xs" 
-            style={{ backgroundColor: activeThemeConfig?.primary || 'var(--primary)' }} 
-          />
+          <span className="truncate">Search name, roll, admission, registration no...</span>
+          <Search className="w-3.5 h-3.5 shrink-0 text-slate-400" />
+        </button>
+      </div>
+
+      {/* Right: Alerts, Theme, Settings, and Unknown User Profile */}
+      <div className="flex items-center gap-1.5 sm:gap-2.5">
+        <button
+          type="button"
+          onClick={() => onRouteChange && onRouteChange('inst-communication-notifications')}
+          className="p-2 text-[var(--text-muted)] hover:text-[var(--text)] rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+          title="Notifications"
+        >
+          <Bell className="w-4 h-4" />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onRouteChange && onRouteChange('inst-communication-inbox')}
+          className="p-2 text-[var(--text-muted)] hover:text-[var(--text)] rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+          title="Inbox & Messages"
+        >
+          <Mail className="w-4 h-4" />
         </button>
 
         {/* Quick Dark Mode Toggle */}
         <button
           type="button"
           onClick={toggleThemeMode}
-          className="p-2 text-[var(--text-muted)] hover:text-[var(--text)] rounded-xl hover:bg-[var(--primary-soft)] transition-colors cursor-pointer"
-          title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          className="p-2 text-[var(--text-muted)] hover:text-[var(--text)] rounded-full hover:bg-[var(--primary-soft)] transition-colors cursor-pointer"
+          title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
         >
-          {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-600" />}
+          {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-500" />}
         </button>
 
-        <button 
-          onClick={onOpenSettings}
-          className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-50 transition-colors"
-          title="System Settings"
-        >
-          <Settings className="w-5 h-5 text-slate-400" />
-        </button>
+        {/* Hidden Avatar Upload Input */}
+        <input
+          ref={avatarInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleAvatarSelected}
+          className="hidden"
+        />
 
-        {/* User Profile Avatar with Popover */}
+        {/* User Profile Pill with Avatar Picker & Dropdown */}
         <div className="relative" ref={profileRef}>
-          <button 
+          <button
+            type="button"
             onClick={() => setShowProfileMenu(!showProfileMenu)}
-            className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-white cursor-pointer hover:ring-2 hover:ring-emerald-300 transition-all shadow-sm focus:outline-none"
-            title="Institute Admin Profile"
+            className="flex items-center gap-2.5 pl-1.5 pr-2.5 py-1 rounded-full hover:bg-slate-100/80 border border-transparent hover:border-[var(--border)] transition-all cursor-pointer focus:outline-none"
+            title="Admin Profile & Photo"
           >
-            <User className="w-4 h-4 text-white" />
+            {user?.avatar ? (
+              <img
+                src={user.avatar}
+                alt={displayName}
+                className="w-8 h-8 rounded-full object-cover border border-slate-200 shrink-0"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center shrink-0 border border-slate-300">
+                <User className="w-4 h-4" />
+              </div>
+            )}
+            <div className="hidden sm:flex flex-col items-start text-left leading-tight">
+              <span className="text-xs font-bold text-[var(--text)] truncate max-w-[120px]">{displayName}</span>
+              <span className="mt-0.5 px-1.5 py-0.2 rounded bg-sky-100 text-sky-700 text-[9px] font-extrabold uppercase tracking-wider">
+                ADMIN
+              </span>
+            </div>
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400 hidden sm:block" />
           </button>
 
           {showProfileMenu && (
             <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-slate-100 py-2 z-50 animate-in fade-in zoom-in-95">
-              <div className="px-4 py-3 border-b border-slate-100">
-                <p className="text-xs font-bold text-slate-800">{user?.name || tierConfig.roleBadge}</p>
-                <p className="text-[11px] text-slate-400 mt-0.5 truncate">{user?.email || 'admin@campus.edu'}</p>
-                <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#ecfdf5] text-emerald-800 border border-emerald-200">
-                  <ShieldCheck className="w-3 h-3 text-emerald-600" />
-                  <span>{user?.roleTitle || tierConfig.roleBadge}</span>
+              <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-3">
+                {user?.avatar ? (
+                  <img src={user.avatar} alt={displayName} className="w-10 h-10 rounded-full object-cover border border-slate-200 shrink-0" />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center shrink-0 border border-slate-200">
+                    <User className="w-5 h-5" />
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-slate-800 truncate">{displayName}</p>
+                  <p className="text-[11px] text-slate-400 truncate">{user?.email || 'admin@campus.edu'}</p>
                 </div>
               </div>
 
               <div className="py-1">
                 <button
+                  type="button"
+                  onClick={() => {
+                    setShowProfileMenu(false)
+                    avatarInputRef.current?.click()
+                  }}
+                  className="w-full text-left px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-medium cursor-pointer"
+                >
+                  <Camera className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>{user?.avatar ? 'Change Profile Photo' : 'Select Profile Photo'}</span>
+                </button>
+
+                {user?.avatar && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      updateProfile({ avatar: null })
+                      setShowProfileMenu(false)
+                      toast?.info?.('Profile photo removed.')
+                    }}
+                    className="w-full text-left px-4 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2 font-medium cursor-pointer"
+                  >
+                    <User className="w-3.5 h-3.5 text-rose-500" />
+                    <span>Remove Profile Photo</span>
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowProfileMenu(false)
+                    onRouteChange && onRouteChange('inst-my-account')
+                  }}
+                  className="w-full text-left px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-medium cursor-pointer"
+                >
+                  <UserCheck className="w-3.5 h-3.5 text-slate-500" />
+                  <span>My Account &amp; Name</span>
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => {
                     setShowProfileMenu(false)
                     setShowPasswordModal(true)
                   }}
-                  className="w-full text-left px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-medium"
+                  className="w-full text-left px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-medium cursor-pointer"
                 >
                   <Key className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Change Password & Security</span>
+                  <span>Change Password &amp; Security</span>
                 </button>
 
                 <button
+                  type="button"
                   onClick={() => {
                     setShowProfileMenu(false)
-                    onRouteChange && onRouteChange('inst-students')
+                    onOpenThemeModal && onOpenThemeModal()
                   }}
-                  className="w-full text-left px-4 py-2 text-xs text-emerald-700 hover:bg-emerald-50 flex items-center gap-2 font-bold"
+                  className="w-full text-left px-4 py-2 text-xs text-slate-600 hover:bg-slate-50 flex items-center gap-2 cursor-pointer"
                 >
-                  <GraduationCap className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Manage Students Directory</span>
+                  <Palette className="w-3.5 h-3.5 text-indigo-500" />
+                  <span>Theme Studio ({preset})</span>
                 </button>
 
                 <button
-                  onClick={() => {
-                    setShowProfileMenu(false)
-                    onRouteChange && onRouteChange('inst-teachers')
-                  }}
-                  className="w-full text-left px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-medium"
-                >
-                  <UserCheck className="w-3.5 h-3.5 text-slate-500" />
-                  <span>Teacher Operations & Matrix</span>
-                </button>
-
-                <button
+                  type="button"
                   onClick={() => {
                     setShowProfileMenu(false)
                     onOpenSettings()
                   }}
-                  className="w-full text-left px-4 py-2 text-xs text-slate-600 hover:bg-slate-50 flex items-center gap-2"
+                  className="w-full text-left px-4 py-2 text-xs text-slate-600 hover:bg-slate-50 flex items-center gap-2 cursor-pointer"
                 >
                   <Settings className="w-3.5 h-3.5 text-slate-400" />
                   <span>System Settings</span>
@@ -350,11 +426,12 @@ export const InstituteAdminNavbar = ({
 
               <div className="border-t border-slate-100 pt-1">
                 <button
+                  type="button"
                   onClick={() => {
                     setShowProfileMenu(false)
                     logout()
                   }}
-                  className="w-full text-left px-4 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2 font-medium"
+                  className="w-full text-left px-4 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2 font-medium cursor-pointer"
                 >
                   <LogOut className="w-3.5 h-3.5 text-rose-500" />
                   <span>Sign Out</span>
