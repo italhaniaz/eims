@@ -353,7 +353,7 @@ const FeeCollectionOverviewChart = ({ monthlyData, chartRange, onChangeRange }) 
   )
 }
 
-export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
+export const InstituteDashboard = ({ currentInstitute, onRouteChange, onOpenQuickPayment }) => {
   const {
     students = [],
     teachers = [],
@@ -542,7 +542,7 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange }) => {
           </button>
           <button
             type="button"
-            onClick={() => onRouteChange?.('inst-fees')}
+            onClick={() => (onOpenQuickPayment ? onOpenQuickPayment() : onRouteChange?.('inst-fees'))}
             className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs cursor-pointer transition-colors"
           >
             <DollarSign className="w-3.5 h-3.5" />

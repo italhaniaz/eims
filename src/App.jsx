@@ -70,6 +70,8 @@ const CampusSettingsView = lazyWithRetry(() => import('./modules/institute-admin
 const TrainingVideosView = lazyWithRetry(() => import('./modules/institute-admin/training/TrainingVideosView'), 'campus-training-view')
 const MyAccountView = lazyWithRetry(() => import('./modules/institute-admin/account/MyAccountView'), 'campus-account-view')
 const EnrollStudentView = lazyWithRetry(() => import('./modules/institute-admin/students/EnrollStudentView'), 'enroll-student-view')
+const QuickPaymentModal = lazyWithRetry(() => import('./components/common/QuickPaymentModal'), 'quick-payment-modal')
+const StudentBillingHistoryView = lazyWithRetry(() => import('./modules/institute-admin/fees/StudentBillingHistoryView'), 'student-billing-history')
 
 // Executive Seamless Loading Fallback & Preloader
 import ModuleSkeletonLoader from './components/common/ModuleSkeletonLoader'
@@ -171,6 +173,13 @@ const AppContent = () => {
   // Routing state synced with Browser History & Hash
   const [superadminRoute, setSuperadminRouteState] = useState(getInitialSuperadminRoute)
   const [instituteRoute, setInstituteRouteState] = useState(getInitialInstituteRoute)
+  const [isQuickPaymentOpen, setIsQuickPaymentOpen] = useState(false)
+  const [quickPayStudentId, setQuickPayStudentId] = useState(null)
+  const [billingHistoryStudentId, setBillingHistoryStudentId] = useState(null)
+  const openQuickPayment = (studentId = null) => {
+    setQuickPayStudentId(studentId)
+    setIsQuickPaymentOpen(true)
+  }
 
   // Public visitor routing (Landing Page `/` vs Generic Login Page `/login`)
   const isLoginLocation = () => {
@@ -577,6 +586,7 @@ const AppContent = () => {
                   <InstituteDashboard
                     currentInstitute={activeCampus}
                     onRouteChange={setInstituteRoute}
+                    onOpenQuickPayment={() => openQuickPayment(null)}
                   />
                 )}
                 {['inst-admissions', 'inst-admissions-online'].includes(safeInstituteRoute) && (
@@ -589,6 +599,7 @@ const AppContent = () => {
                   <EnrollStudentView
                     currentInstitute={activeCampus}
                     onRouteChange={setInstituteRoute}
+                    onOpenQuickPayment={() => openQuickPayment(null)}
                   />
                 )}
                 {['inst-students', 'inst-admissions-import', 'inst-students-guardians', 'inst-students-promote', 'inst-students-status', 'inst-students-idcards'].includes(safeInstituteRoute) && (
@@ -654,14 +665,22 @@ const AppContent = () => {
                     }
                   />
                 )}
-                {['inst-fees', 'inst-fees-history', 'inst-fees-family', 'inst-fees-approvals', 'inst-fees-outstanding', 'inst-fees-fines', 'inst-fees-setup', 'inst-fees-settings'].includes(safeInstituteRoute) && (
+                {safeInstituteRoute === 'inst-fees-history' && (
+                  <StudentBillingHistoryView
+                    currentInstitute={activeCampus}
+                    studentId={billingHistoryStudentId}
+                    onSelectStudent={setBillingHistoryStudentId}
+                    onRouteChange={setInstituteRoute}
+                    onOpenQuickPayment={(sid) => openQuickPayment(sid)}
+                  />
+                )}
+                {['inst-fees', 'inst-fees-family', 'inst-fees-approvals', 'inst-fees-outstanding', 'inst-fees-fines', 'inst-fees-setup', 'inst-fees-settings'].includes(safeInstituteRoute) && (
                   <FeesView
                     currentInstitute={activeCampus}
                     initialFilter={
-                      safeInstituteRoute === 'inst-fees-history' ? 'paid'
-                        : safeInstituteRoute === 'inst-fees-approvals' ? 'pending'
-                          : safeInstituteRoute === 'inst-fees-outstanding' ? 'overdue'
-                            : 'all'
+                      safeInstituteRoute === 'inst-fees-approvals' ? 'pending'
+                        : safeInstituteRoute === 'inst-fees-outstanding' ? 'overdue'
+                          : 'all'
                     }
                     initialAction={
                       safeInstituteRoute === 'inst-fees-family' ? 'split'
@@ -782,6 +801,23 @@ const AppContent = () => {
           </main>
         </div>
       </div>
+
+      <Suspense fallback={null}>
+        {isQuickPaymentOpen && (
+          <QuickPaymentModal
+            isOpen={isQuickPaymentOpen}
+            onClose={() => setIsQuickPaymentOpen(false)}
+            currentInstitute={activeCampus}
+            preselectedStudentId={quickPayStudentId}
+            onOpenBillingDetail={(studentOrId) => {
+              const sid = typeof studentOrId === 'string' ? studentOrId : studentOrId?.id || null
+              setBillingHistoryStudentId(sid)
+              setIsQuickPaymentOpen(false)
+              setInstituteRoute('inst-fees-history')
+            }}
+          />
+        )}
+      </Suspense>
 
       <SettingsModal
         isOpen={isSettingsOpen}

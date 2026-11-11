@@ -42,7 +42,7 @@ const DEFAULT_STATES_AND_CITIES = {
 const DEFAULT_BOARDS = ['BISE Lahore', 'BISE Rawalpindi', 'FBISE Islamabad', 'Cambridge O-Level', 'Govt / District Board', 'Private / Independent']
 const DEFAULT_FEE_TYPES = ['Tuition Fee', 'Admission Fee', 'Transport Fee', 'Hostel / Boarding Fee', 'Exam Fee', 'Lab / Library Fee', 'Stationery / Books']
 
-export const EnrollStudentView = ({ currentInstitute, onRouteChange }) => {
+export const EnrollStudentView = ({ currentInstitute, onRouteChange, onOpenQuickPayment }) => {
   const { students = [], classes = [], addItem, logAuditEvent } = useAppData()
   const { toast } = useToast()
   const photoInputRef = useRef(null)
@@ -370,7 +370,7 @@ export const EnrollStudentView = ({ currentInstitute, onRouteChange }) => {
           </button>
           <button
             type="button"
-            onClick={() => onRouteChange?.('inst-fees')}
+            onClick={() => (onOpenQuickPayment ? onOpenQuickPayment() : onRouteChange?.('inst-fees'))}
             className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs cursor-pointer"
           >
             <DollarSign className="w-3.5 h-3.5" />
