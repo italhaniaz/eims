@@ -21,7 +21,9 @@ import {
   Plus,
   Sliders,
   User,
-  Receipt
+  Receipt,
+  RotateCcw,
+  History
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
@@ -96,6 +98,9 @@ export const StudentBillingHistoryView = ({
 
   const [deleteTargetFee, setDeleteTargetFee] = useState(null)
   const [printModalFee, setPrintModalFee] = useState(null)
+  const [transactionsModalFee, setTransactionsModalFee] = useState(null)
+  const [receiptSlipFee, setReceiptSlipFee] = useState(null)
+  const [reverseConfirm, setReverseConfirm] = useState(null) // { type: 'waiver' | 'payment', fee }
   const [profileModalOpen, setProfileModalOpen] = useState(false)
   const [creditDepositAmount, setCreditDepositAmount] = useState('')
   const [creditTick, setCreditTick] = useState(0)
@@ -326,6 +331,55 @@ export const StudentBillingHistoryView = ({
       setDeleteTargetFee(null)
     } catch (err) {
       toast(err?.message || 'Could not delete invoice.', 'error')
+    }
+  }
+
+  const handleConfirmReverse = async () => {
+    if (!reverseConfirm?.fee) return
+    const { type, fee } = reverseConfirm
+    try {
+      const paidNow = getInvoicePaid(fee)
+      const waivedNow = getInvoiceWaiver(fee)
+      if (type === 'waiver') {
+        const nextRemaining = Math.max(0, Number(fee.amount || 0) + Number(fee.fine || fee.lateFine || 0) - paidNow)
+        await updateItem('fees', fee.id, {
+          discount: 0,
+          discountAmount: 0,
+          waiver: 0,
+          waivedLateFee: 0,
+          discountReason: '',
+          status: nextRemaining <= 0 ? 'Paid' : paidNow > 0 ? 'Partial' : 'Pending'
+        })
+        logAuditEvent?.(`Reversed waiver (${formatMoney(waivedNow)}) for ${activeStudent?.fullName || activeStudent?.name}`, currentInstitute?.name || 'School Admin', 'Success')
+        toast(`Reversed waiver of ${formatMoney(waivedNow)}.`, 'info')
+      } else {
+        const nextRemaining = Math.max(0, getInvoiceTotal(fee) - waivedNow)
+        await updateItem('fees', fee.id, {
+          paidAmount: 0,
+          finalPaid: 0,
+          paidAt: null,
+          status: nextRemaining <= 0 ? 'Paid' : 'Pending'
+        })
+        if (paidNow > 0) {
+          recordCampusLedgerTransaction(instId, {
+            id: `VCH-REV-${fee.id}-${Date.now()}`,
+            date: new Date().toISOString().split('T')[0],
+            type: 'Expense',
+            category: 'Fee Payment Reversal',
+            debit: paidNow,
+            credit: 0,
+            account: fee.paymentMethod || 'Cash',
+            status: 'Cleared',
+            description: `Payment reversal for ${activeStudent?.fullName || activeStudent?.name} (${fee.feeMonth || fee.title || 'Fee'})`,
+            ref: `REV-${fee.id}-${Date.now()}`
+          })
+        }
+        logAuditEvent?.(`Reversed payment (${formatMoney(paidNow)}) for ${activeStudent?.fullName || activeStudent?.name}`, currentInstitute?.name || 'School Admin', 'Success')
+        toast(`Reversed cash payment of ${formatMoney(paidNow)}.`, 'info')
+      }
+      setReverseConfirm(null)
+    } catch (err) {
+      toast(err?.message || 'Reversal failed.', 'error')
     }
   }
 
@@ -682,13 +736,13 @@ export const StudentBillingHistoryView = ({
                               </div>
                               <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
                                 <div
-                                  className="h-full bg-emerald-500 transition-all"
+                                  className={`h-full transition-all ${pct >= 100 ? 'bg-emerald-500' : 'bg-rose-500'}`}
                                   style={{ width: `${pct}%` }}
                                 />
                               </div>
                             </div>
 
-                            <div className="grid grid-cols-3 gap-2 pt-1 text-center">
+                            <div className={`grid ${waived > 0 ? 'grid-cols-4' : 'grid-cols-3'} gap-2 pt-1 text-center`}>
                               <div>
                                 <p className="text-[11px] text-slate-400 font-medium">Total</p>
                                 <p className="text-sm font-extrabold text-slate-900">{formatMoney(total)}</p>
@@ -697,6 +751,12 @@ export const StudentBillingHistoryView = ({
                                 <p className="text-[11px] text-slate-400 font-medium">Cash paid</p>
                                 <p className="text-sm font-extrabold text-emerald-600">{formatMoney(paid)}</p>
                               </div>
+                              {waived > 0 && (
+                                <div>
+                                  <p className="text-[11px] text-slate-400 font-medium">Waiver / discount</p>
+                                  <p className="text-sm font-extrabold text-teal-600">{formatMoney(waived)}</p>
+                                </div>
+                              )}
                               <div>
                                 <p className="text-[11px] text-slate-400 font-medium">Remaining balance</p>
                                 <p className="text-sm font-extrabold text-rose-600">{formatMoney(remaining)}</p>
@@ -801,7 +861,7 @@ export const StudentBillingHistoryView = ({
                           </div>
                         </div>
 
-                        {/* Bottom Action Pills */}
+                        {/* Bottom Action Pills matching Picks 2 & 3 */}
                         <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100">
                           {remaining > 0 && (
                             <button
@@ -817,14 +877,56 @@ export const StudentBillingHistoryView = ({
                               <span>Apply Waiver/Discount</span>
                             </button>
                           )}
-                          <button
-                            type="button"
-                            onClick={() => setDeleteTargetFee(fee)}
-                            className="px-3 py-1.5 rounded-lg border border-rose-300 text-rose-600 hover:bg-rose-50 text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                            <span>Delete Invoice</span>
-                          </button>
+                          {waived > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setReverseConfirm({ type: 'waiver', fee })}
+                              className="px-3 py-1.5 rounded-lg border border-amber-300 text-amber-700 hover:bg-amber-50 text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <RotateCcw className="w-3.5 h-3.5" />
+                              <span>Reverse Waiver</span>
+                            </button>
+                          )}
+                          {(paid > 0 || waived > 0) && (
+                            <button
+                              type="button"
+                              onClick={() => setTransactionsModalFee(fee)}
+                              className="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <History className="w-3.5 h-3.5" />
+                              <span>Transactions</span>
+                            </button>
+                          )}
+                          {paid > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setReverseConfirm({ type: 'payment', fee })}
+                              className="px-3 py-1.5 rounded-lg border border-rose-300 text-rose-600 hover:bg-rose-50 text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <RotateCcw className="w-3.5 h-3.5" />
+                              <span>Reverse payment</span>
+                            </button>
+                          )}
+                          {paid > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setReceiptSlipFee(fee)}
+                              className="px-3 py-1.5 rounded-lg border border-emerald-300 text-emerald-700 hover:bg-emerald-50 text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <Receipt className="w-3.5 h-3.5" />
+                              <span>Receipt Slip</span>
+                            </button>
+                          )}
+                          {paid === 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setDeleteTargetFee(fee)}
+                              className="px-3 py-1.5 rounded-lg border border-rose-300 text-rose-600 hover:bg-rose-50 text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>Delete Invoice</span>
+                            </button>
+                          )}
                           <button
                             type="button"
                             onClick={() => setPrintModalFee(fee)}
@@ -1094,6 +1196,124 @@ export const StudentBillingHistoryView = ({
             <div className="px-5 py-3 bg-slate-50 border-t border-slate-200 flex justify-between">
               <button type="button" onClick={() => { setProfileModalOpen(false); onRouteChange?.('inst-students') }} className="text-xs font-bold text-indigo-600 hover:underline cursor-pointer">Open Full Directory →</button>
               <button type="button" onClick={() => setProfileModalOpen(false)} className="px-4 py-1.5 rounded-lg bg-slate-800 text-white text-xs font-semibold cursor-pointer">Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Reverse Waiver / Payment Modal */}
+      {reverseConfirm && (
+        <div className="fixed inset-0 z-[110] bg-slate-900/50 backdrop-blur-[1px] flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm p-5 space-y-4 border border-slate-200">
+            <h3 className="text-sm font-bold text-slate-900">
+              {reverseConfirm.type === 'waiver' ? 'Reverse Waiver?' : 'Reverse Payment?'}
+            </h3>
+            <p className="text-xs text-slate-600">
+              {reverseConfirm.type === 'waiver'
+                ? `This will remove the applied waiver (${formatMoney(getInvoiceWaiver(reverseConfirm.fee))}) and restore the remaining balance.`
+                : `This will reverse the paid amount (${formatMoney(getInvoicePaid(reverseConfirm.fee))}) and post a reversal entry.`}
+            </p>
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={() => setReverseConfirm(null)} className="px-3.5 py-2 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 cursor-pointer">
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmReverse}
+                className={`px-4 py-2 rounded-lg text-white text-xs font-bold cursor-pointer ${reverseConfirm.type === 'waiver' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-rose-600 hover:bg-rose-700'}`}
+              >
+                {reverseConfirm.type === 'waiver' ? 'Confirm Reverse Waiver' : 'Confirm Reverse Payment'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Invoice Transactions History Modal */}
+      {transactionsModalFee && (
+        <div className="fixed inset-0 z-[110] bg-slate-900/50 backdrop-blur-[1px] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200">
+            <div className="bg-slate-800 px-5 py-3.5 flex items-center justify-between text-white">
+              <div className="flex items-center gap-2 text-sm font-bold">
+                <History className="w-4 h-4 text-sky-400" />
+                <span>Invoice Transactions — #{transactionsModalFee.receiptNo || String(transactionsModalFee.id).slice(-7)}</span>
+              </div>
+              <button type="button" onClick={() => setTransactionsModalFee(null)} className="text-white/80 hover:text-white cursor-pointer">✕</button>
+            </div>
+            <div className="p-5 space-y-3 text-xs">
+              <div className="border border-slate-200 rounded-xl divide-y divide-slate-100">
+                <div className="px-4 py-2.5 flex items-center justify-between">
+                  <div>
+                    <p className="font-bold text-slate-800">Invoice Created</p>
+                    <p className="text-[10px] text-slate-400">{transactionsModalFee.feeMonth || transactionsModalFee.title || 'Tuition Fee'}</p>
+                  </div>
+                  <span className="font-bold text-slate-900">{formatMoney(getInvoiceTotal(transactionsModalFee))}</span>
+                </div>
+                {getInvoicePaid(transactionsModalFee) > 0 && (
+                  <div className="px-4 py-2.5 flex items-center justify-between bg-emerald-50/40">
+                    <div>
+                      <p className="font-bold text-emerald-700">Cash Payment Received ({transactionsModalFee.paymentMethod || 'Cash'})</p>
+                      <p className="text-[10px] text-slate-500">{String(transactionsModalFee.paidAt || transactionsModalFee.dueDate || 'Recorded').slice(0, 10)}</p>
+                    </div>
+                    <span className="font-extrabold text-emerald-700">+ {formatMoney(getInvoicePaid(transactionsModalFee))}</span>
+                  </div>
+                )}
+                {getInvoiceWaiver(transactionsModalFee) > 0 && (
+                  <div className="px-4 py-2.5 flex items-center justify-between bg-cyan-50/40">
+                    <div>
+                      <p className="font-bold text-cyan-700">Waiver / Discount Granted</p>
+                      <p className="text-[10px] text-slate-500">{transactionsModalFee.discountReason || 'Management approval'}</p>
+                    </div>
+                    <span className="font-extrabold text-cyan-700">{formatMoney(getInvoiceWaiver(transactionsModalFee))}</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex justify-end">
+                <button type="button" onClick={() => setTransactionsModalFee(null)} className="px-4 py-1.5 rounded-lg bg-slate-800 text-white font-semibold cursor-pointer">Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cash Receipt Slip Viewer & Print Modal */}
+      {receiptSlipFee && (
+        <div className="fixed inset-0 z-[110] bg-slate-900/50 backdrop-blur-[1px] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200">
+            <div className="bg-emerald-600 px-5 py-3 flex items-center justify-between text-white">
+              <div className="flex items-center gap-2 text-sm font-bold">
+                <Receipt className="w-4 h-4" />
+                <span>Payment Receipt Slip</span>
+              </div>
+              <button type="button" onClick={() => setReceiptSlipFee(null)} className="text-white/80 hover:text-white cursor-pointer">✕</button>
+            </div>
+            <div className="p-5 space-y-3 text-xs text-slate-800">
+              <div className="text-center border-b border-dashed border-slate-300 pb-3">
+                <p className="font-extrabold text-sm uppercase">{currentInstitute?.name || 'School Portal'}</p>
+                <p className="text-[11px] text-slate-500">Fee Payment Receipt Slip · #{receiptSlipFee.receiptNo || String(receiptSlipFee.id).slice(-7)}</p>
+              </div>
+              <div className="space-y-1.5">
+                <div className="flex justify-between"><span className="text-slate-500">Student:</span><strong>{activeStudent?.fullName || activeStudent?.name}</strong></div>
+                <div className="flex justify-between"><span className="text-slate-500">Class / Roll:</span><strong>{activeStudent?.className || 'N/A'} · Roll {activeStudent?.rollNumber || 'N/A'}</strong></div>
+                <div className="flex justify-between"><span className="text-slate-500">Invoice:</span><strong>{receiptSlipFee.feeMonth || receiptSlipFee.title || 'Monthly Fee'}</strong></div>
+                <div className="flex justify-between"><span className="text-slate-500">Payment Method:</span><strong>{receiptSlipFee.paymentMethod || 'Cash'}</strong></div>
+                <div className="flex justify-between border-t border-slate-100 pt-1.5"><span className="text-slate-500">Total Billed:</span><strong>{formatMoney(getInvoiceTotal(receiptSlipFee))}</strong></div>
+                <div className="flex justify-between"><span className="text-slate-500">Cash Paid:</span><strong className="text-emerald-600">{formatMoney(getInvoicePaid(receiptSlipFee))}</strong></div>
+                {getInvoiceWaiver(receiptSlipFee) > 0 && (
+                  <div className="flex justify-between"><span className="text-slate-500">Waiver / Discount:</span><strong className="text-cyan-600">{formatMoney(getInvoiceWaiver(receiptSlipFee))}</strong></div>
+                )}
+                <div className="flex justify-between font-extrabold text-sm border-t border-slate-200 pt-1.5">
+                  <span>Remaining Balance:</span>
+                  <span className="text-rose-600">{formatMoney(getInvoiceRemaining(receiptSlipFee))}</span>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                <button type="button" onClick={() => window.print()} className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold inline-flex items-center gap-1 cursor-pointer">
+                  <Printer className="w-3.5 h-3.5" />
+                  <span>Print Slip</span>
+                </button>
+                <button type="button" onClick={() => setReceiptSlipFee(null)} className="px-4 py-1.5 rounded-lg border border-slate-200 text-slate-600 font-semibold cursor-pointer">Close</button>
+              </div>
             </div>
           </div>
         </div>

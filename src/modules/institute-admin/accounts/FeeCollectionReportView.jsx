@@ -173,7 +173,9 @@ export const FeeCollectionReportView = ({
       const d = getFeeDateIso(f)
       if (d < rangeBounds.start || d > rangeBounds.end) return false
 
-      const std = f.studentId ? studentById.get(f.studentId) : instStudents.find((s) => (s.fullName || s.name) === f.studentName)
+      const std = f.studentId
+        ? studentById.get(f.studentId)
+        : instStudents.find((s) => (s.fullName || s.name || '').toLowerCase().trim() === (f.studentName || '').toLowerCase().trim())
       const stStatus = String(std?.status || 'Active').toLowerCase()
       const isDropped = stStatus === 'dropped' || stStatus === 'withdrawn' || stStatus === 'graduated'
       if (applied.studentScope === 'Active' && isDropped) return false
@@ -210,7 +212,9 @@ export const FeeCollectionReportView = ({
     const droppedSet = new Set()
 
     filteredFees.forEach((f) => {
-      const std = f.studentId ? studentById.get(f.studentId) : instStudents.find((s) => (s.fullName || s.name) === f.studentName)
+      const std = f.studentId
+        ? studentById.get(f.studentId)
+        : instStudents.find((s) => (s.fullName || s.name || '').toLowerCase().trim() === (f.studentName || '').toLowerCase().trim())
       const stdKey = std?.id || f.studentId || f.studentName || f.id
       const sStat = String(std?.status || 'Active').toLowerCase()
       const isDropped = sStat === 'dropped' || sStat === 'withdrawn' || sStat === 'graduated'
@@ -252,7 +256,9 @@ export const FeeCollectionReportView = ({
     const groups = new Map()
 
     filteredFees.forEach((f) => {
-      const std = f.studentId ? studentById.get(f.studentId) : instStudents.find((s) => (s.fullName || s.name) === f.studentName)
+      const std = f.studentId
+        ? studentById.get(f.studentId)
+        : instStudents.find((s) => (s.fullName || s.name || '').toLowerCase().trim() === (f.studentName || '').toLowerCase().trim())
       const cnic = normalizeCnic(std?.parentCnic || std?.fatherCnic || f.parentCnic || '')
       const groupKey = familyWise && cnic ? `FAM-${cnic}` : `STD-${std?.id || f.studentId || f.studentName || f.id}`
 
