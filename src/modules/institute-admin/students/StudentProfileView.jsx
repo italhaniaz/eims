@@ -29,13 +29,14 @@ import {
   Link2,
   History,
   Wallet,
-  Check,
-  X
+  Check
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
+import { useAuth } from '../../../context/AuthContext'
 import { useToast } from '../../../context/ToastContext'
 import { resolveStudentFeeSetup } from '../fees/StudentFeeSetupView'
 import { downloadSimplePdf } from '../../../utils/pdfExport'
+import { InvoiceTransactionsModal, formatTxnDateTime } from '../../../components/common/InvoiceTransactionsModal'
 import EnrollStudentView from './EnrollStudentView'
 
 const formatMoney = (val) => `PKR ${Number(val || 0).toLocaleString()}`
@@ -69,7 +70,9 @@ export const StudentProfileView = ({
     updateItem,
     logAuditEvent
   } = useAppData()
-  const { toast } = useToast()
+    const { user: authUser } = useAuth() || {}
+    const { toast } = useToast()
+    const actorName = authUser?.name || currentInstitute?.adminName || 'Admin'
 
   const instituteStudents = useMemo(() => {
     if (!currentInstitute?.id) return students
@@ -134,15 +137,6 @@ export const StudentProfileView = ({
     let paidLinesCount = 0
     const recentTxns = []
 
-    const formatTxnDate = (dStr) => {
-      if (!dStr) return '—'
-      const dt = new Date(dStr)
-      if (Number.isNaN(dt.getTime())) return String(dStr).slice(0, 16)
-      const d = dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-      const t = dt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
-      return `${d}, ${t}`
-    }
-
     studentFees.forEach((f) => {
       const billed = Number(f.amount || 0) + Number(f.fine || f.lateFine || 0)
       const paid = Number(f.paidAmount || 0)
@@ -162,37 +156,55 @@ export const StudentProfileView = ({
         pendingDues += remaining
       }
 
-      if (paid > 0) {
-        const dtIso = f.paidAt || f.updatedAt || f.createdAt || f.dueDate || ''
-        recentTxns.push({
-          id: `${f.id}-cash`,
-          sortDate: String(dtIso),
-          dateLabel: formatTxnDate(dtIso),
-          invoiceLabel: invLabel,
-          type: 'Cash',
-          amount: paid,
-          by: f.recordedBy || f.collectedBy || 'Admin',
-          reason: f.notes || '—'
+      if (Array.isArray(f.transactions) && f.transactions.length > 0) {
+        f.transactions.forEach((t, tIdx) => {
+          const dtIso = String(t.date || '')
+          const lower = String(t.type || '').toLowerCase()
+          const isWaiver = lower.includes('waiver')
+          recentTxns.push({
+            id: t.id || `${f.id}-t-${tIdx}`,
+            sortDate: dtIso,
+            dateLabel: formatTxnDateTime(dtIso),
+            invoiceLabel: invLabel,
+            type: isWaiver ? 'Waiver' : 'Cash',
+            amount: Math.abs(Number(t.amount || 0)),
+            by: t.by || actorName,
+            reason: t.reason || '—'
+          })
         })
-      }
-      if (waiver > 0) {
-        const dtIso = f.waivedAt || f.paidAt || f.updatedAt || f.createdAt || f.dueDate || ''
-        recentTxns.push({
-          id: `${f.id}-waiver`,
-          sortDate: String(dtIso),
-          dateLabel: formatTxnDate(dtIso),
-          invoiceLabel: invLabel,
-          type: 'Waiver',
-          amount: waiver,
-          by: f.waivedBy || f.recordedBy || 'Admin',
-          reason: f.discountReason || 'Concession'
-        })
+      } else {
+        if (paid > 0) {
+          const dtIso = f.paidAt || f.updatedAt || f.createdAt || f.dueDate || ''
+          recentTxns.push({
+            id: `${f.id}-cash`,
+            sortDate: String(dtIso),
+            dateLabel: formatTxnDateTime(dtIso),
+            invoiceLabel: invLabel,
+            type: 'Cash',
+            amount: paid,
+            by: f.recordedBy || f.collectedBy || actorName,
+            reason: f.notes || '—'
+          })
+        }
+        if (waiver > 0) {
+          const dtIso = f.waivedAt || f.paidAt || f.updatedAt || f.createdAt || f.dueDate || ''
+          recentTxns.push({
+            id: `${f.id}-waiver`,
+            sortDate: String(dtIso),
+            dateLabel: formatTxnDateTime(dtIso),
+            invoiceLabel: invLabel,
+            type: 'Waiver',
+            amount: waiver,
+            by: f.waivedBy || f.recordedBy || actorName,
+            reason: f.discountReason || 'Concession'
+          })
+        }
       }
     })
 
     recentTxns.sort((a, b) => b.sortDate.localeCompare(a.sortDate))
     return { pendingDues, totalPaid, totalWaivers, pendingLinesCount, paidLinesCount, recentTxns }
-  }, [studentFees])
+  }, [studentFees, actorName])
 
   const monthlyAttendance = useMemo(() => {
     const now = new Date()
@@ -1485,7 +1497,7 @@ export const StudentProfileView = ({
                             </span>
                           </td>
                           <td className="py-3 px-4 text-right">
-                            {(paid > 0 || waiver > 0) && (
+                            {(paid > 0 || waiver > 0 || (Array.isArray(f.transactions) && f.transactions.length > 0)) && (
                               <button
                                 type="button"
                                 onClick={() => setTxnModalFee(f)}
@@ -1525,65 +1537,13 @@ export const StudentProfileView = ({
         </div>
       )}
 
-      {/* Invoice Transactions Breakdown Modal */}
-      {txnModalFee && (
-        <div className="fixed inset-0 z-[115] bg-slate-900/50 backdrop-blur-[1px] flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden text-xs">
-            <div className="bg-indigo-600 text-white px-5 py-3.5 flex items-center justify-between">
-              <span className="font-bold text-sm inline-flex items-center gap-2">
-                <History className="w-4 h-4" />
-                <span>Invoice Transactions</span>
-              </span>
-              <button type="button" onClick={() => setTxnModalFee(null)} className="text-white/80 hover:text-white cursor-pointer">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="p-5 space-y-3">
-              <div className="flex justify-between font-bold text-slate-800 border-b border-slate-100 pb-2">
-                <span>{txnModalFee.feeMonth || txnModalFee.title || 'Tuition Fee'}</span>
-                <span>{formatMoney(Number(txnModalFee.amount || 0) + Number(txnModalFee.fine || txnModalFee.lateFine || 0))}</span>
-              </div>
-              {Number(txnModalFee.paidAmount || 0) > 0 && (
-                <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 flex justify-between items-center">
-                  <div>
-                    <p className="font-bold text-emerald-800">Cash Payment ({txnModalFee.paymentMethod || 'Cash'})</p>
-                    <p className="text-[10px] text-emerald-700">{String(txnModalFee.paidAt || txnModalFee.dueDate || 'Recorded').slice(0, 10)}</p>
-                  </div>
-                  <span className="font-extrabold text-emerald-700">{formatMoney(txnModalFee.paidAmount)}</span>
-                </div>
-              )}
-              {Number(txnModalFee.discount || txnModalFee.waiver || 0) > 0 && (
-                <div className="p-3 rounded-lg bg-cyan-50 border border-cyan-200 flex justify-between items-center">
-                  <div>
-                    <p className="font-bold text-cyan-800">Waiver / Discount</p>
-                    <p className="text-[10px] text-cyan-700">{txnModalFee.discountReason || 'Concession'}</p>
-                  </div>
-                  <span className="font-extrabold text-cyan-700">{formatMoney(txnModalFee.discount || txnModalFee.waiver)}</span>
-                </div>
-              )}
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTxnModalFee(null)
-                    onOpenBillingHistory?.(student.id)
-                  }}
-                  className="px-3.5 py-1.5 rounded-lg bg-sky-500 text-white font-bold cursor-pointer"
-                >
-                  Open Billing History
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTxnModalFee(null)}
-                  className="px-3.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 font-semibold cursor-pointer"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Shared Invoice Transaction History Modal */}
+      <InvoiceTransactionsModal
+        fee={txnModalFee}
+        onClose={() => setTxnModalFee(null)}
+        defaultBy={actorName}
+        formatMoney={formatMoney}
+      />
     </div>
   )
 }
