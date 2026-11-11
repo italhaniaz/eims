@@ -33,7 +33,7 @@ import {
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
 import { PrintableFeeChallanModal } from '../../../components/common/PrintableFeeChallanModal'
-import { BANK_PRESETS } from '../../../components/common/PrintHelpers'
+import { BANK_PRESETS, QrCodeSvg } from '../../../components/common/PrintHelpers'
 import {
   getFamilyCreditBalance,
   updateFamilyCreditBalance,
@@ -44,6 +44,24 @@ import { recordCampusLedgerTransaction } from '../accounts/CampusAccountsView'
 const normalizeCnic = (val = '') => String(val).replace(/[^0-9]/g, '')
 
 const formatMoney = (val) => `PKR ${Number(val || 0).toLocaleString()}`
+
+const formatInvoiceDate = (val) => {
+  if (!val) return '—'
+  const dt = new Date(val)
+  if (Number.isNaN(dt.getTime())) return String(val).slice(0, 10)
+  return dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+const classifyInvoiceCategory = (fee) => {
+  const tag = `${fee?.feeType || ''} ${fee?.category || ''} ${fee?.title || ''}`.toLowerCase()
+  if (tag.includes('store') || tag.includes('inventory') || tag.includes('book') || tag.includes('uniform') || tag.includes('stationary')) {
+    return 'store'
+  }
+  if (tag.includes('individual') || tag.includes('exam') || tag.includes('admission') || tag.includes('lab') || tag.includes('registration') || tag.includes('misc')) {
+    return 'individual'
+  }
+  return 'tuition'
+}
 
 const getInvoiceTotal = (fee) => Number(fee?.amount || 0) + Number(fee?.fine || fee?.lateFine || 0)
 const getInvoiceWaiver = (fee) => Number(fee?.discount || fee?.waiver || 0)
@@ -122,6 +140,20 @@ export const StudentBillingHistoryView = ({
     d.setDate(d.getDate() + 10)
     return d.toISOString().split('T')[0]
   })
+
+  // Generate Full Invoice Modal & Full Receipt Print Preview
+  const [fullInvoiceModalOpen, setFullInvoiceModalOpen] = useState(false)
+  const [fiCategories, setFiCategories] = useState({
+    tuition: true,
+    individual: true,
+    store: true,
+    fines: true
+  })
+  const [fiShowInstallments, setFiShowInstallments] = useState(false)
+  const [fiShowPaymentMethods, setFiShowPaymentMethods] = useState(true)
+  const [fiPrintLayout, setFiPrintLayout] = useState('a4') // 'a4' | 'horizontal' | 'vertical'
+  const [fiCopies, setFiCopies] = useState(3)
+  const [fiReceiptPreviewOpen, setFiReceiptPreviewOpen] = useState(false)
 
   // Student Banner Dedicated Add Payment Modal + Split Allocation
   const [isBannerPayOpen, setIsBannerPayOpen] = useState(false)
@@ -220,6 +252,74 @@ export const StudentBillingHistoryView = ({
     const activeBank = BANK_PRESETS.find((b) => b.id === familyVoucherBankId) || BANK_PRESETS[0]
     return { rows, grandTotal, activeBank }
   }, [familySiblings, activeStudent, fees, currentInstitute?.id, familyVoucherBankId])
+
+  // Generate Full Invoice category totals & printable invoice lines
+  const fullInvoiceSummary = useMemo(() => {
+    const totals = { tuition: 0, individual: 0, store: 0, fines: 0 }
+    const todayStart = new Date(new Date().toDateString()).getTime()
+    const sortedPending = [...pendingInvoices].sort((a, b) =>
+      String(a.createdAt || a.dueDate || '').localeCompare(String(b.createdAt || b.dueDate || ''))
+    )
+
+    const lines = []
+    sortedPending.forEach((fee) => {
+      const remTotal = getInvoiceRemaining(fee)
+      if (remTotal <= 0) return
+      const finePart = Math.min(remTotal, Math.max(0, Number(fee?.fine || fee?.lateFine || 0)))
+      const principalPart = Math.max(0, remTotal - finePart)
+      const cat = classifyInvoiceCategory(fee)
+
+      totals[cat] += principalPart
+      totals.fines += finePart
+
+      const includePrincipal = Boolean(fiCategories[cat])
+      const includeFine = Boolean(fiCategories.fines)
+      const dueContribution = (includePrincipal ? principalPart : 0) + (includeFine ? finePart : 0)
+
+      if (dueContribution > 0) {
+        const dueTime = fee.dueDate ? new Date(fee.dueDate).getTime() : NaN
+        const isOverdue = !Number.isNaN(dueTime) && dueTime < todayStart
+        lines.push({
+          fee,
+          category: cat,
+          principalDue: includePrincipal ? principalPart : 0,
+          fineDue: includeFine ? finePart : 0,
+          amountDue: dueContribution,
+          isOverdue
+        })
+      }
+    })
+
+    const selectedOutstanding = lines.reduce((sum, l) => sum + l.amountDue, 0)
+    const totalAfterDueDate = lines.reduce((sum, l) => sum + l.amountDue + (l.fineDue > 0 ? 0 : Number(l.fee?.afterDueSurcharge || 0)), 0)
+    const latestDueDate =
+      lines
+        .map((l) => l.fee?.dueDate)
+        .filter(Boolean)
+        .sort()
+        .slice(-1)[0] || ''
+
+    return {
+      totals,
+      lines,
+      selectedOutstanding,
+      totalAfterDueDate,
+      selectedCount: lines.length,
+      collectedAmount: summary.cashCollected,
+      collectedCount: summary.paidCount,
+      latestDueDate
+    }
+  }, [pendingInvoices, fiCategories, summary.cashCollected, summary.paidCount])
+
+  const openFullInvoiceModal = () => {
+    setFiCategories({ tuition: true, individual: true, store: true, fines: true })
+    setFiShowInstallments(false)
+    setFiShowPaymentMethods(true)
+    setFiPrintLayout('a4')
+    setFiCopies(3)
+    setFiReceiptPreviewOpen(false)
+    setFullInvoiceModalOpen(true)
+  }
 
   const bpCashVal = Math.max(0, Number(bpCash) || 0)
   const bpWaiverVal = Math.max(0, Number(bpWaiver) || 0)
@@ -816,14 +916,7 @@ export const StudentBillingHistoryView = ({
                       type="button"
                       onClick={() => {
                         setVoucherMenuOpen(false)
-                        setPrintModalFee(
-                          pendingInvoices[0] ||
-                            studentFees[0] || {
-                              studentId: activeStudent.id,
-                              studentName: activeStudent.fullName || activeStudent.name,
-                              className: activeStudent.className
-                            }
-                        )
+                        openFullInvoiceModal()
                       }}
                       className="w-full px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 cursor-pointer transition-colors"
                     >
@@ -2010,6 +2103,516 @@ export const StudentBillingHistoryView = ({
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Generate Full Invoice Options Modal (Pick 2) */}
+      {fullInvoiceModalOpen && activeStudent && (
+        <div className="fixed inset-0 z-[115] bg-slate-900/50 backdrop-blur-[1px] flex items-center justify-center p-4">
+          <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
+            {/* Modal Header */}
+            <div className="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between bg-white">
+              <div className="flex items-center gap-2 font-bold text-slate-800 text-sm">
+                <FileText className="w-4 h-4 text-slate-600" />
+                <span>Generate Full Invoice</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFullInvoiceModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 cursor-pointer"
+                aria-label="Close Generate Full Invoice"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4 text-xs">
+              {/* Categories Selection */}
+              <div className="space-y-2.5">
+                <p className="text-slate-600 font-medium">Select categories to include in the printed Invoice:</p>
+                {[
+                  { key: 'tuition', label: 'Tuition Fee Payments', amount: fullInvoiceSummary.totals.tuition },
+                  { key: 'individual', label: 'Individual Payments', amount: fullInvoiceSummary.totals.individual },
+                  { key: 'store', label: 'Store & Inventory Charges', amount: fullInvoiceSummary.totals.store },
+                  { key: 'fines', label: 'Late Fees & Fines', amount: fullInvoiceSummary.totals.fines }
+                ].map((cat) => (
+                  <label
+                    key={cat.key}
+                    className="flex items-center justify-between gap-3 cursor-pointer select-none py-0.5"
+                  >
+                    <span className="inline-flex items-center gap-2.5 font-semibold text-slate-800">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(fiCategories[cat.key])}
+                        onChange={(e) =>
+                          setFiCategories((prev) => ({ ...prev, [cat.key]: e.target.checked }))
+                        }
+                        className="w-4 h-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500 cursor-pointer"
+                      />
+                      <span>{cat.label}</span>
+                    </span>
+                    <span
+                      className={`px-2 py-0.5 rounded text-[11px] font-bold text-white min-w-[60px] text-center ${
+                        cat.amount > 0 ? 'bg-rose-500' : 'bg-slate-500'
+                      }`}
+                    >
+                      {formatMoney(cat.amount)}
+                    </span>
+                  </label>
+                ))}
+              </div>
+
+              {/* Print Layout Options */}
+              <div className="border-t border-slate-100 pt-3.5 space-y-2.5">
+                <p className="font-bold text-slate-800 text-xs">Print layout</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-2.5">
+                    <label className="flex items-start gap-2 cursor-pointer text-slate-700 leading-snug">
+                      <input
+                        type="checkbox"
+                        checked={fiShowInstallments}
+                        onChange={(e) => setFiShowInstallments(e.target.checked)}
+                        className="mt-0.5 rounded border-slate-300 text-sky-600 focus:ring-sky-500 cursor-pointer"
+                      />
+                      <span>Show payment installments history on fee lines</span>
+                    </label>
+                    <label className="flex items-start gap-2 cursor-pointer text-slate-700 leading-snug">
+                      <input
+                        type="checkbox"
+                        checked={fiShowPaymentMethods}
+                        onChange={(e) => setFiShowPaymentMethods(e.target.checked)}
+                        className="mt-0.5 rounded border-slate-300 text-sky-600 focus:ring-sky-500 cursor-pointer"
+                      />
+                      <span>Add payment method details (QR &amp; info)</span>
+                    </label>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    {[
+                      { id: 'a4', label: 'Full A4 page (recommended)' },
+                      { id: 'horizontal', label: 'Horizontal layout' },
+                      { id: 'vertical', label: 'Vertical layout' }
+                    ].map((opt) => (
+                      <label key={opt.id} className="flex items-center gap-2 cursor-pointer text-slate-700">
+                        <input
+                          type="radio"
+                          name="fiPrintLayout"
+                          value={opt.id}
+                          checked={fiPrintLayout === opt.id}
+                          onChange={() => setFiPrintLayout(opt.id)}
+                          className="text-sky-600 focus:ring-sky-500 cursor-pointer"
+                        />
+                        <span>{opt.label}</span>
+                      </label>
+                    ))}
+                    <p className="text-[10px] text-slate-400 leading-snug pt-0.5">
+                      You can change the layout and copies on the print page.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Totals Summary Strip */}
+              <div className="rounded-xl border border-slate-200 p-3.5 grid grid-cols-2 gap-4 bg-slate-50/40">
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">TOTAL OUTSTANDING</p>
+                  <p className="text-base font-extrabold text-rose-600 mt-0.5">
+                    {formatMoney(fullInvoiceSummary.selectedOutstanding)}
+                  </p>
+                  <p className="text-[11px] text-slate-400">{fullInvoiceSummary.selectedCount} unpaid invoices</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">ALREADY COLLECTED</p>
+                  <p className="text-base font-extrabold text-emerald-600 mt-0.5">
+                    {formatMoney(fullInvoiceSummary.collectedAmount)}
+                  </p>
+                  <p className="text-[11px] text-slate-400">{fullInvoiceSummary.collectedCount} paid invoices</p>
+                </div>
+              </div>
+
+              {/* Footer Buttons */}
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setFullInvoiceModalOpen(false)}
+                  className="px-4 py-2 rounded-lg bg-slate-500 hover:bg-slate-600 text-white font-semibold cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFullInvoiceModalOpen(false)
+                    setFiReceiptPreviewOpen(true)
+                  }}
+                  className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span>Print Receipt</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Full Invoice / Print Receipt Preview Modal (Picks 3 & 4) */}
+      {fiReceiptPreviewOpen && activeStudent && (
+        <div className="fixed inset-0 z-[120] bg-slate-900/65 backdrop-blur-[1px] flex flex-col items-center p-3 sm:p-6 overflow-y-auto print:bg-white print:p-0 print:static">
+          {/* Top Non-Printable Toolbar */}
+          <div className="w-full max-w-4xl bg-slate-900 text-white rounded-t-xl px-4 py-3 flex flex-wrap items-center justify-between gap-2 shadow-lg print:hidden">
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              <span className="font-bold">Invoice Print Preview</span>
+              <div className="flex items-center gap-1 bg-slate-800 rounded-lg p-0.5">
+                {[
+                  { id: 'a4', label: 'Full A4' },
+                  { id: 'horizontal', label: 'Horizontal' },
+                  { id: 'vertical', label: 'Vertical' }
+                ].map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setFiPrintLayout(opt.id)}
+                    className={`px-2.5 py-1 rounded-md text-[11px] font-semibold cursor-pointer ${
+                      fiPrintLayout === opt.id ? 'bg-emerald-500 text-white' : 'text-slate-300 hover:text-white'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              {fiPrintLayout !== 'a4' && (
+                <select
+                  value={fiCopies}
+                  onChange={(e) => setFiCopies(Number(e.target.value))}
+                  className="px-2 py-1 rounded-md bg-slate-800 border border-slate-700 text-xs font-semibold"
+                >
+                  <option value={2}>2 Copies</option>
+                  <option value={3}>3 Copies</option>
+                </select>
+              )}
+            </div>
+            <div className="flex items-center gap-2 text-xs">
+              <button
+                type="button"
+                onClick={() => {
+                  setFiReceiptPreviewOpen(false)
+                  setFullInvoiceModalOpen(true)
+                }}
+                className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold cursor-pointer"
+              >
+                Options
+              </button>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-bold inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print Receipt</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFiReceiptPreviewOpen(false)}
+                className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+
+          {/* Printable Document Container */}
+          {fiPrintLayout === 'a4' ? (
+            <div className="w-full max-w-4xl bg-white rounded-b-xl shadow-2xl p-6 sm:p-10 text-slate-900 relative overflow-hidden print:shadow-none print:rounded-none print:max-w-none print:p-6">
+              {/* Subtle Centered Watermark Emblem */}
+              <div className="pointer-events-none select-none absolute inset-0 flex items-center justify-center opacity-[0.045]">
+                <div className="w-72 h-72 rounded-full border-[14px] border-sky-600 flex flex-col items-center justify-center">
+                  <span className="text-4xl font-black tracking-widest text-sky-700 uppercase">
+                    {(currentInstitute?.name || 'EIMS').split(' ')[0]}
+                  </span>
+                </div>
+              </div>
+
+              <div className="relative z-10 space-y-6">
+                {/* Header Row: Institute Identity + INVOICE Metadata */}
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                  <div className="flex items-center gap-3.5">
+                    {currentInstitute?.logo ? (
+                      <img
+                        src={currentInstitute.logo}
+                        alt={currentInstitute?.name || 'Logo'}
+                        className="w-16 h-16 rounded-lg object-cover border border-slate-200"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-full bg-sky-500 text-white flex flex-col items-center justify-center font-black tracking-tight shadow-xs border-4 border-sky-100">
+                        <span className="text-lg leading-none">
+                          {(currentInstitute?.name || 'ED').slice(0, 2).toUpperCase()}
+                        </span>
+                        <span className="text-[7px] uppercase tracking-wider mt-0.5 opacity-90">Portal</span>
+                      </div>
+                    )}
+                    <div>
+                      <h2 className="text-lg font-extrabold text-slate-900 leading-tight">
+                        {currentInstitute?.name || 'EduDigize Institute'}
+                      </h2>
+                      <p className="text-xs text-slate-600 mt-0.5">
+                        Phone: {currentInstitute?.phone || '0300-0000000'}
+                      </p>
+                      <p className="text-xs text-slate-600">
+                        Email: {currentInstitute?.email || 'accounts@institute.edu'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="sm:text-right">
+                    <h1 className="text-2xl sm:text-3xl font-black tracking-[0.18em] text-slate-900 uppercase">
+                      INVOICE
+                    </h1>
+                    <div className="mt-2 space-y-0.5 text-xs">
+                      <div className="flex sm:justify-end gap-4">
+                        <span className="text-slate-500">Invoice Date</span>
+                        <span className="font-bold text-slate-900 min-w-[92px] text-right">
+                          {formatInvoiceDate(new Date().toISOString())}
+                        </span>
+                      </div>
+                      <div className="flex sm:justify-end gap-4">
+                        <span className="text-slate-500">Due Date</span>
+                        <span className="font-bold text-slate-900 min-w-[92px] text-right">
+                          {formatInvoiceDate(fullInvoiceSummary.latestDueDate)}
+                        </span>
+                      </div>
+                      <div className="flex sm:justify-end gap-4">
+                        <span className="text-slate-500">Admission No</span>
+                        <span className="font-bold text-slate-900 min-w-[92px] text-right">
+                          {activeStudent.admissionNo ||
+                            activeStudent.registrationNo ||
+                            String(activeStudent.id || '').slice(-8).toUpperCase()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Heavy Horizontal Rule */}
+                <hr className="border-t-2 border-slate-900" />
+
+                {/* Bill To + Academic Details */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs">
+                  <div>
+                    <p className="text-[10px] font-bold tracking-[0.15em] text-slate-500 uppercase border-b border-slate-300 pb-1 mb-2">
+                      BILL TO
+                    </p>
+                    <p className="font-extrabold text-sm text-slate-900">
+                      {activeStudent.fullName || activeStudent.name}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold tracking-[0.15em] text-slate-500 uppercase border-b border-slate-300 pb-1 mb-2">
+                      ACADEMIC DETAILS
+                    </p>
+                    <p className="text-slate-700">
+                      Class: <strong className="text-slate-900">{activeStudent.className || activeStudent.course || 'N/A'}</strong>
+                    </p>
+                    <p className="text-slate-700 mt-0.5">
+                      Roll No: <strong className="text-slate-900">{activeStudent.rollNumber || 'N/A'}</strong>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Line Items Table */}
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse border border-slate-700 text-xs">
+                    <thead>
+                      <tr className="bg-slate-50 text-[10px] uppercase tracking-wider text-slate-700">
+                        <th className="border border-slate-700 py-2 px-2.5 text-center w-9">#</th>
+                        <th className="border border-slate-700 py-2 px-3 text-left">DESCRIPTION</th>
+                        <th className="border border-slate-700 py-2 px-3 text-center">DATE</th>
+                        <th className="border border-slate-700 py-2 px-3 text-center">DUE DATE</th>
+                        <th className="border border-slate-700 py-2 px-3 text-center">LATE FEE</th>
+                        <th className="border border-slate-700 py-2 px-3 text-right">AMOUNT DUE (PKR)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {fullInvoiceSummary.lines.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="border border-slate-700 py-6 text-center text-slate-500">
+                            No unpaid charges match the selected categories.
+                          </td>
+                        </tr>
+                      ) : (
+                        fullInvoiceSummary.lines.map(({ fee, fineDue, amountDue, isOverdue }, idx) => (
+                          <tr key={fee.id}>
+                            <td className="border border-slate-700 py-2.5 px-2.5 text-center text-slate-600">{idx + 1}</td>
+                            <td className="border border-slate-700 py-2.5 px-3">
+                              <div className="font-bold text-slate-900">
+                                {fee.title || fee.feeType || 'Tuition Fee'}{' '}
+                                <span className="font-normal text-slate-600">
+                                  ({fee.feeMonth || 'Current'} - {fee.frequency || 'Monthly'})
+                                </span>
+                              </div>
+                              <div className="text-[11px] text-slate-600 mt-0.5">
+                                Class Fee: {Number(fee.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                              </div>
+                              {fiShowInstallments && (getInvoicePaid(fee) > 0 || getInvoiceWaiver(fee) > 0) && (
+                                <div className="text-[10px] text-emerald-700 font-semibold mt-0.5">
+                                  Paid: {formatMoney(getInvoicePaid(fee))} · Waiver: {formatMoney(getInvoiceWaiver(fee))}
+                                </div>
+                              )}
+                            </td>
+                            <td className="border border-slate-700 py-2.5 px-3 text-center whitespace-nowrap">
+                              {formatInvoiceDate(fee.createdAt || fee.dueDate)}
+                            </td>
+                            <td className="border border-slate-700 py-2.5 px-3 text-center whitespace-nowrap">
+                              {fee.dueDate ? (
+                                <div>
+                                  <div>{formatInvoiceDate(fee.dueDate)}</div>
+                                  {isOverdue && <div className="font-extrabold text-slate-900 text-[10px]">Overdue</div>}
+                                </div>
+                              ) : (
+                                '—'
+                              )}
+                            </td>
+                            <td className="border border-slate-700 py-2.5 px-3 text-center">
+                              {fineDue > 0 ? fineDue.toLocaleString('en-US', { minimumFractionDigits: 2 }) : '—'}
+                            </td>
+                            <td className="border border-slate-700 py-2.5 px-3 text-right font-extrabold text-slate-900 tabular-nums">
+                              {amountDue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Totals Box */}
+                <div className="flex justify-end">
+                  <div className="w-full sm:w-80 border border-slate-800 text-xs">
+                    <div className="flex items-center justify-between px-3.5 py-2 border-b border-slate-800 font-extrabold text-sm bg-slate-50/40">
+                      <span>Total Amount Due</span>
+                      <span className="tabular-nums">
+                        PKR {fullInvoiceSummary.selectedOutstanding.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between px-3.5 py-2 text-slate-700">
+                      <span>Amount After Due Date</span>
+                      <span className="tabular-nums font-medium">
+                        PKR {fullInvoiceSummary.totalAfterDueDate.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Payment Methods (QR & Accounts) */}
+                {fiShowPaymentMethods && (
+                  <div className="space-y-3 pt-2">
+                    <p className="text-[10px] font-bold tracking-[0.15em] text-slate-600 uppercase border-b border-slate-300 pb-1">
+                      PAYMENT METHODS
+                    </p>
+                    <div className="flex flex-col sm:flex-row items-start gap-5">
+                      <div className="border border-slate-300 rounded-md p-2 text-center bg-white shrink-0">
+                        <QrCodeSvg
+                          value={`EIMS-INV-${activeStudent.id}-${fullInvoiceSummary.selectedOutstanding}`}
+                          size={112}
+                        />
+                        <p className="text-[10px] text-slate-500 mt-1 font-medium">Scan the QR Code</p>
+                      </div>
+                      <div className="space-y-3 text-xs text-slate-700">
+                        <div>
+                          <p className="font-extrabold text-slate-900">EasyPaisa</p>
+                          <p>Mobile: {currentInstitute?.phone || '0300-0000000'}</p>
+                          <p>Account Title: {currentInstitute?.name || 'Institute Collection A/C'}</p>
+                          <p>Account Number: {currentInstitute?.phone || '0300-0000000'}</p>
+                          <p>IBAN: PK30EASY{(currentInstitute?.phone || '03000000000').replace(/[^0-9]/g, '').slice(-11)}</p>
+                        </div>
+                        <div>
+                          <p className="font-extrabold text-slate-900">{BANK_PRESETS[0].name}</p>
+                          <p>Account Title: {BANK_PRESETS[0].accountTitle}</p>
+                          <p>Account Number: {BANK_PRESETS[0].accountNo}</p>
+                          <p>IBAN: {BANK_PRESETS[0].iban}</p>
+                        </div>
+                        <div>
+                          <p className="font-extrabold text-slate-900">JazzCash</p>
+                          <p>Mobile: {currentInstitute?.phone || '0300-0000000'}</p>
+                          <p>Account Title: {currentInstitute?.name || 'Institute Collection A/C'}</p>
+                          <p>Account Number: {currentInstitute?.phone || '0300-0000000'}</p>
+                          <p>IBAN: PK03JAZZ{(currentInstitute?.phone || '03000000000').replace(/[^0-9]/g, '').slice(-11)}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Authorized Signature & Footer */}
+                <div className="pt-8 space-y-4">
+                  <div className="flex justify-end">
+                    <div className="w-60 border-t border-slate-800 pt-1.5 text-center font-bold text-xs text-slate-800">
+                      Authorized Signature
+                    </div>
+                  </div>
+                  <div className="border-t border-slate-300 pt-2 flex flex-wrap items-center justify-between gap-2 text-[10px] text-slate-500">
+                    <span>
+                      This is a computer-generated invoice. Generated on{' '}
+                      {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })},{' '}
+                      {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}.
+                    </span>
+                    <span className="font-semibold text-slate-600">{currentInstitute?.name || 'EduDigize'}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* Horizontal / Vertical Multi-Copy Challan Strips */
+            <div
+              className={`w-full max-w-5xl bg-white rounded-b-xl shadow-2xl p-5 grid gap-4 text-xs text-slate-900 print:shadow-none print:rounded-none ${
+                fiPrintLayout === 'horizontal'
+                  ? fiCopies === 2
+                    ? 'grid-cols-1 md:grid-cols-2'
+                    : 'grid-cols-1 md:grid-cols-3'
+                  : 'grid-cols-1'
+              }`}
+            >
+              {['Bank Copy', 'Institute Copy', 'Student Copy'].slice(0, fiCopies).map((copyLabel) => (
+                <div key={copyLabel} className="border-2 border-slate-800 rounded-lg p-3.5 space-y-2.5">
+                  <div className="flex items-start justify-between border-b border-slate-300 pb-2">
+                    <div>
+                      <p className="font-extrabold text-sm text-slate-900">{currentInstitute?.name || 'EduDigize Institute'}</p>
+                      <p className="text-[10px] text-slate-500">{copyLabel}</p>
+                    </div>
+                    <span className="px-2 py-0.5 rounded bg-slate-900 text-white text-[10px] font-bold uppercase">
+                      Due: {formatInvoiceDate(fullInvoiceSummary.latestDueDate)}
+                    </span>
+                  </div>
+                  <div className="text-[11px] space-y-0.5">
+                    <p><strong>Student:</strong> {activeStudent.fullName || activeStudent.name}</p>
+                    <p><strong>Class / Roll:</strong> {activeStudent.className || 'N/A'} · Roll {activeStudent.rollNumber || 'N/A'}</p>
+                    <p><strong>Adm No:</strong> {activeStudent.admissionNo || activeStudent.registrationNo || String(activeStudent.id).slice(-7)}</p>
+                  </div>
+                  <div className="border-t border-b border-slate-200 py-1.5 space-y-1 text-[11px]">
+                    {fullInvoiceSummary.lines.map(({ fee, amountDue }) => (
+                      <div key={fee.id} className="flex justify-between gap-2">
+                        <span className="truncate">{fee.title || fee.feeType || 'Tuition'} ({fee.feeMonth || 'Monthly'})</span>
+                        <span className="font-bold shrink-0">{formatMoney(amountDue)}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex items-center justify-between font-extrabold text-sm">
+                    <span>Total Payable</span>
+                    <span>{formatMoney(fullInvoiceSummary.selectedOutstanding)}</span>
+                  </div>
+                  {fiShowPaymentMethods && (
+                    <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-dashed border-slate-300 text-[10px] text-slate-600">
+                      <div>
+                        <p className="font-bold text-slate-800">{BANK_PRESETS[0].shortName}: {BANK_PRESETS[0].accountNo}</p>
+                        <p>EasyPaisa / JazzCash: {currentInstitute?.phone || '0300-0000000'}</p>
+                      </div>
+                      <QrCodeSvg value={`EIMS-INV-${activeStudent.id}`} size={44} />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
