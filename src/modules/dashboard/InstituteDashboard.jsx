@@ -722,7 +722,10 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange, onOpenQuic
           </div>
         </div>
 
-        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5 shadow-soft flex flex-col justify-between gap-3">
+        <div
+          onClick={() => onRouteChange?.('inst-accounts-collection')}
+          className="bg-[var(--surface)] border border-[var(--border)] hover:border-emerald-300 rounded-2xl p-5 shadow-soft flex flex-col justify-between gap-3 cursor-pointer transition-colors"
+        >
           <div className="flex items-start gap-3.5">
             <StylizedKpiMedallion
               icon={CheckCircle2}
@@ -740,7 +743,10 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange, onOpenQuic
             <p className="text-[11px] text-[var(--text-muted)]">Payments received in selected period</p>
             <button
               type="button"
-              onClick={() => onRouteChange?.('inst-accounts-collection')}
+              onClick={(e) => {
+                e.stopPropagation()
+                onRouteChange?.('inst-accounts-collection')
+              }}
               title="View Cash Collection Report"
               aria-label="View Cash Collection Report"
               className="p-1.5 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-400 hover:text-emerald-600 border border-slate-200/80 hover:border-emerald-300 transition-all cursor-pointer shadow-2xs flex items-center justify-center shrink-0 group/eye"

@@ -77,6 +77,7 @@ const SendSmsModal = lazyWithRetry(() => import('./components/common/SendSmsModa
 const StudentBillingHistoryView = lazyWithRetry(() => import('./modules/institute-admin/fees/StudentBillingHistoryView'), 'student-billing-history')
 const InvoicesView = lazyWithRetry(() => import('./modules/institute-admin/fees/InvoicesView'), 'invoices-view')
 const ExpensesView = lazyWithRetry(() => import('./modules/institute-admin/accounts/ExpensesView'), 'expenses-view')
+const FeeCollectionReportView = lazyWithRetry(() => import('./modules/institute-admin/accounts/FeeCollectionReportView'), 'fee-collection-report-view')
 const MyAttendanceView = lazyWithRetry(() => import('./modules/institute-admin/attendance/MyAttendanceView'), 'my-attendance-view')
 
 // Executive Seamless Loading Fallback & Preloader
@@ -740,7 +741,19 @@ const AppContent = () => {
                     onOpenSendSms={() => setIsSendSmsOpen(true)}
                   />
                 )}
-                {['inst-accounts', 'inst-accounts-collection', 'inst-accounts-income', 'inst-accounts-categories'].includes(safeInstituteRoute) && (
+                {safeInstituteRoute === 'inst-accounts-collection' && (
+                  <FeeCollectionReportView
+                    currentInstitute={activeCampus}
+                    onRouteChange={setInstituteRoute}
+                    onOpenQuickPayment={(sid) => openQuickPayment(sid)}
+                    onOpenSendSms={() => setIsSendSmsOpen(true)}
+                    onOpenBillingHistory={(sid) => {
+                      setBillingHistoryStudentId(sid)
+                      setInstituteRoute('inst-fees-history')
+                    }}
+                  />
+                )}
+                {['inst-accounts', 'inst-accounts-income', 'inst-accounts-categories'].includes(safeInstituteRoute) && (
                   <CampusAccountsView
                     currentInstitute={activeCampus}
                     initialTab={

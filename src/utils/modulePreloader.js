@@ -36,6 +36,7 @@ const ROUTE_LOADERS = {
   'inst-fees': () => import('../modules/institute-admin/fees/InvoicesView'),
   'inst-fees-history': () => import('../modules/institute-admin/fees/StudentBillingHistoryView'),
   'inst-accounts-expenses': () => import('../modules/institute-admin/accounts/ExpensesView'),
+  'inst-accounts-collection': () => import('../modules/institute-admin/accounts/FeeCollectionReportView'),
   'inst-attendance-my': () => import('../modules/institute-admin/attendance/MyAttendanceView'),
   'inst-assignments': () => import('../modules/institute-admin/learning/LearningResourcesView'),
   'inst-makeup-sessions': () => import('../modules/institute-admin/timetable/TimetableView'),
