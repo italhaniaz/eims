@@ -77,7 +77,8 @@ export const StudentBillingHistoryView = ({
   onRouteChange,
   onOpenQuickPayment,
   onOpenSendSms,
-  onSelectStudent
+  onSelectStudent,
+  onOpenFeeSetup
 }) => {
   const {
     students = [],
@@ -940,8 +941,12 @@ export const StudentBillingHistoryView = ({
               <button
                 type="button"
                 onClick={() => {
-                  onSelectStudent?.(activeStudent.id)
-                  onRouteChange?.('inst-fees-setup')
+                  if (onOpenFeeSetup) {
+                    onOpenFeeSetup(activeStudent.id)
+                  } else {
+                    onSelectStudent?.(activeStudent.id)
+                    onRouteChange?.('inst-fees-setup')
+                  }
                 }}
                 className="px-3.5 py-2 rounded-lg bg-white/15 hover:bg-white/25 border border-white/25 text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
               >

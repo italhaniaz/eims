@@ -186,6 +186,7 @@ const AppContent = () => {
   const [isQuickPaymentOpen, setIsQuickPaymentOpen] = useState(false)
   const [quickPayStudentId, setQuickPayStudentId] = useState(null)
   const [billingHistoryStudentId, setBillingHistoryStudentId] = useState(null)
+  const [feeSetupTargetStudentId, setFeeSetupTargetStudentId] = useState(null)
   const [isSendSmsOpen, setIsSendSmsOpen] = useState(false)
   const openQuickPayment = (studentId = null) => {
     setQuickPayStudentId(studentId)
@@ -250,8 +251,11 @@ const AppContent = () => {
     }
   }
 
-  const setInstituteRoute = (route) => {
+  const setInstituteRoute = (route, options = {}) => {
     const valid = VALID_INSTITUTE_ROUTES.includes(route) ? route : 'inst-dashboard'
+    if (valid === 'inst-fees-setup' && !options?.preserveFeeSetupStudent) {
+      setFeeSetupTargetStudentId(null)
+    }
     setInstituteRouteState(valid)
     if (typeof window !== 'undefined') {
       window.location.hash = `#${valid}`
@@ -713,6 +717,10 @@ const AppContent = () => {
                     onRouteChange={setInstituteRoute}
                     onOpenQuickPayment={(sid) => openQuickPayment(sid)}
                     onOpenSendSms={() => setIsSendSmsOpen(true)}
+                    onOpenFeeSetup={(sid) => {
+                      setFeeSetupTargetStudentId(sid)
+                      setInstituteRoute('inst-fees-setup', { preserveFeeSetupStudent: true })
+                    }}
                   />
                 )}
                 {safeInstituteRoute === 'inst-fees' && (
@@ -730,9 +738,9 @@ const AppContent = () => {
                 {safeInstituteRoute === 'inst-fees-setup' && (
                   <StudentFeeSetupView
                     currentInstitute={activeCampus}
-                    studentId={billingHistoryStudentId}
-                    initialMode={billingHistoryStudentId ? 'details' : 'list'}
-                    onSelectStudent={setBillingHistoryStudentId}
+                    studentId={feeSetupTargetStudentId}
+                    initialMode={feeSetupTargetStudentId ? 'details' : 'list'}
+                    onSelectStudent={setFeeSetupTargetStudentId}
                     onRouteChange={setInstituteRoute}
                     onOpenQuickPayment={(sid) => openQuickPayment(sid)}
                     onOpenSendSms={() => setIsSendSmsOpen(true)}
