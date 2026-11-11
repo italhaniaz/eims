@@ -118,7 +118,7 @@ const CrossInstituteAnalyticsView = () => {
   // --- Analytics Filter Popover State with Checkboxes ---
   const [showAnalyticsFilterPopover, setShowAnalyticsFilterPopover] = useState(false)
   const analyticsFilterPopoverRef = useRef(null)
-  const [selectedTypeFilters, setSelectedTypeFilters] = useState(['SCHOOL', 'COLLEGE', 'UNIVERSITY'])
+  const [selectedTypeFilters, setSelectedTypeFilters] = useState(['SCHOOL'])
   const [selectedHealthFilters, setSelectedHealthFilters] = useState(['high', 'standard', 'attention'])
 
   // Column Visibility Checkboxes (Enable / Disable Columns in Matrix)
@@ -185,7 +185,7 @@ const CrossInstituteAnalyticsView = () => {
   }, [analyticsData, searchTerm, typeFilter, selectedTypeFilters, selectedHealthFilters, sortField, sortAsc])
 
   // Active filter count for badge
-  const activeAnalyticsFiltersCount = (3 - selectedTypeFilters.length) + (3 - selectedHealthFilters.length)
+  const activeAnalyticsFiltersCount = (1 - selectedTypeFilters.length) + (3 - selectedHealthFilters.length)
 
   const handleToggleTypeFilter = (t) => {
     setSelectedTypeFilters(prev => 
@@ -204,7 +204,7 @@ const CrossInstituteAnalyticsView = () => {
   }
 
   const handleResetAnalyticsFilters = () => {
-    setSelectedTypeFilters(['SCHOOL', 'COLLEGE', 'UNIVERSITY'])
+    setSelectedTypeFilters(['SCHOOL'])
     setSelectedHealthFilters(['high', 'standard', 'attention'])
     setVisibleColumns({
       students: true,
@@ -435,7 +435,7 @@ const CrossInstituteAnalyticsView = () => {
 
           {/* Quick Type Filter Pills */}
           <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs">
-            {['ALL', 'School', 'College', 'University'].map((t) => (
+            {['ALL', 'School'].map((t) => (
               <button
                 key={t}
                 onClick={() => setTypeFilter(t)}
@@ -494,9 +494,7 @@ const CrossInstituteAnalyticsView = () => {
                     </label>
                     <div className="space-y-1.5">
                       {[
-                        { key: 'SCHOOL', label: '🏫 School Campuses (Primary & Matric)' },
-                        { key: 'COLLEGE', label: '🏛️ College Campuses (Inter & HSSC)' },
-                        { key: 'UNIVERSITY', label: '🎓 University Campuses (BS Degrees)' }
+                        { key: 'SCHOOL', label: '🏫 School Campuses (K-10 & Matric)' }
                       ].map(item => {
                         const checked = selectedTypeFilters.includes(item.key)
                         return (

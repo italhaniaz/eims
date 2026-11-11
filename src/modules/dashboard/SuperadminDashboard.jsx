@@ -60,13 +60,8 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
   const [isInstituteModalOpen, setIsInstituteModalOpen] = useState(false)
   const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false)
 
-  // Educational Tier Filter State (School, College, University, Custom)
-  const [selectedTierFilter, setSelectedTierFilter] = useState(() => {
-    if (activeWing === 'school') return 'school'
-    if (activeWing === 'college') return 'college'
-    if (activeWing === 'undergraduate') return 'university'
-    return 'all'
-  })
+  // School Tier Filter State (All Schools vs Active / Network)
+  const [selectedTierFilter, setSelectedTierFilter] = useState('all')
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false)
   const filterDropdownRef = useRef(null)
 
@@ -81,16 +76,13 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
   const [showCredentialPassword, setShowCredentialPassword] = useState(false)
 
   // Executive Super Admin Monthly Performance Chart State (Metric Switcher & Hover State)
-  // Metrics: 'saas_revenue' (SaaS MRR), 'campuses' (Network Onboarding), 'students' (Platform Capacity), 'vouchers' (Digital Gateway)
   const [executiveMetric, setExecutiveMetric] = useState('saas_revenue')
   const [hoveredMonthIdx, setHoveredMonthIdx] = useState(null)
 
-  // Synchronize tier filter when activeWing changes globally
+  // Synchronize filter when activeWing changes globally
   useEffect(() => {
     if (activeWing === 'school') setSelectedTierFilter('school')
-    else if (activeWing === 'college') setSelectedTierFilter('college')
-    else if (activeWing === 'undergraduate') setSelectedTierFilter('university')
-    else if (activeWing === 'all') setSelectedTierFilter('all')
+    else setSelectedTierFilter('all')
   }, [activeWing])
 
   // Close filter dropdown on outside click & Escape key
@@ -115,115 +107,36 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
     }
   }, [isFilterDropdownOpen])
 
-  // Filter options definition
+  // Filter options definition (Schools Only)
   const tierFilterOptions = [
     { 
       id: 'all', 
-      label: 'All Campuses', 
-      shortLabel: 'All Tiers',
-      subtitle: 'All educational tiers & wings',
+      label: 'All Schools', 
+      shortLabel: 'All Schools',
+      subtitle: 'All registered school campuses',
       badge: 'All', 
       icon: Building2 
     },
     { 
       id: 'school', 
-      label: 'School Wing', 
+      label: 'School Campuses', 
       shortLabel: 'Schools',
-      subtitle: 'Primary, Middle & Secondary Campuses',
+      subtitle: 'Primary, Middle & Secondary Schools (K-10)',
       badge: 'School', 
       icon: School 
-    },
-    { 
-      id: 'college', 
-      label: 'College Wing', 
-      shortLabel: 'Colleges',
-      subtitle: 'Intermediate & Higher Secondary Campuses',
-      badge: 'College', 
-      icon: GraduationCap 
-    },
-    { 
-      id: 'university', 
-      label: 'University Wing', 
-      shortLabel: 'Universities',
-      subtitle: 'Higher Ed, BS Degrees & Undergrad Campuses',
-      badge: 'University', 
-      icon: Award 
-    },
-    { 
-      id: 'custom', 
-      label: 'Custom Hybrid', 
-      shortLabel: 'Custom',
-      subtitle: 'Multi-Wing & Custom Tier Campuses',
-      badge: 'Custom', 
-      icon: Sparkles 
     }
   ]
 
-  // Robust matching helper
+  // Matching helper (Schools Only)
   const matchesTierFilter = (inst, filterId) => {
-    if (!filterId || filterId === 'all') return true
     if (!inst) return false
-
-    const type = String(inst.type || '').toLowerCase().trim()
-    const planType = String(inst.planType || '').toLowerCase().trim()
-    const planTier = String(inst.planTier || '').toLowerCase().trim()
-    const tiers = Array.isArray(inst.enabledTiers) ? inst.enabledTiers.map(t => String(t).toLowerCase()) : []
-    const name = String(inst.name || '').toLowerCase()
-
-    if (filterId === 'school') {
-      return (
-        type === 'school' ||
-        planType === 'school' ||
-        planTier.includes('school') ||
-        (tiers.includes('school') && type !== 'custom' && planType !== 'custom') ||
-        (name.includes('school') && type !== 'college' && type !== 'university' && type !== 'custom')
-      )
-    }
-
-    if (filterId === 'college') {
-      return (
-        type === 'college' ||
-        planType === 'college' ||
-        planTier.includes('college') ||
-        (tiers.includes('college') && type !== 'custom' && planType !== 'custom') ||
-        (name.includes('college') && type !== 'school' && type !== 'university' && type !== 'custom')
-      )
-    }
-
-    if (filterId === 'university') {
-      return (
-        type === 'university' ||
-        planType === 'university' ||
-        planTier.includes('university') ||
-        tiers.includes('undergraduate') ||
-        tiers.includes('university') ||
-        (name.includes('university') && type !== 'custom' && planType !== 'custom')
-      )
-    }
-
-    if (filterId === 'custom') {
-      return (
-        type === 'custom' ||
-        planType === 'custom' ||
-        planTier.includes('custom') ||
-        planTier.includes('hybrid') ||
-        tiers.length > 1 ||
-        Boolean(inst.isCustom)
-      )
-    }
-
-    return true
+    if (!filterId || filterId === 'all' || filterId === 'school') return true
+    return false
   }
 
   // Tier counts calculation
   const tierCounts = useMemo(() => {
-    const counts = { all: (institutes || []).length, school: 0, college: 0, university: 0, custom: 0 }
-    ;(institutes || []).forEach(inst => {
-      if (matchesTierFilter(inst, 'school')) counts.school++
-      if (matchesTierFilter(inst, 'college')) counts.college++
-      if (matchesTierFilter(inst, 'university')) counts.university++
-      if (matchesTierFilter(inst, 'custom')) counts.custom++
-    })
+    const counts = { all: (institutes || []).length, school: (institutes || []).length }
     return counts
   }, [institutes])
 
@@ -262,8 +175,6 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
     setIsFilterDropdownOpen(false)
     if (setActiveWing) {
       if (tierId === 'school') setActiveWing('school')
-      else if (tierId === 'college') setActiveWing('college')
-      else if (tierId === 'university') setActiveWing('undergraduate')
       else setActiveWing('all')
     }
   }
@@ -271,30 +182,14 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
   // Current active tier configuration
   const currentFilterConfig = tierFilterOptions.find(o => o.id === selectedTierFilter) || tierFilterOptions[0]
 
-  // Activity Stream Tier Logo & Badge Configuration Helper (School, College, University)
+  // Activity Stream School Logo & Badge Configuration Helper
   const getActivityBadgeConfig = (act) => {
-    if (!act) {
-      return {
-        tier: 'school',
-        tierLabel: 'School',
-        icon: School,
-        bg: 'bg-sky-50',
-        text: 'text-sky-600',
-        border: 'border-sky-100/90',
-        badgeClass: 'bg-sky-100/80 text-sky-700',
-        logoUrl: null
-      }
-    }
-
-    const text = String(act.text || '').toLowerCase()
-    const actTier = String(act.tier || '').toLowerCase()
-
-    // 1. Direct institute lookup by ID or by matching name in activity text
     let matchedInst = null
-    if (act.instituteId) {
+    if (act && act.instituteId) {
       matchedInst = institutes.find(i => String(i.id) === String(act.instituteId))
     }
-    if (!matchedInst && Array.isArray(institutes) && institutes.length > 0) {
+    if (act && !matchedInst && Array.isArray(institutes) && institutes.length > 0) {
+      const text = String(act.text || '').toLowerCase()
       matchedInst = institutes.find(i => {
         if (!i?.name) return false
         const cleanName = i.name.toLowerCase().trim()
@@ -302,74 +197,8 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
       })
     }
 
-    const logoUrl = matchedInst?.logoUrl || act.logoUrl || null
+    const logoUrl = matchedInst?.logoUrl || act?.logoUrl || null
 
-    // 2. Classify by matched institute or keyword analysis
-    // University Check
-    const isUniversity =
-      actTier === 'university' ||
-      actTier === 'undergraduate' ||
-      (matchedInst && matchesTierFilter(matchedInst, 'university')) ||
-      text.includes('university') ||
-      text.includes('undergrad') ||
-      text.includes('bs degree') ||
-      text.includes('chartered university')
-
-    if (isUniversity) {
-      return {
-        tier: 'university',
-        tierLabel: 'University',
-        icon: Landmark,
-        bg: 'bg-blue-50',
-        text: 'text-blue-600',
-        border: 'border-blue-100/90',
-        badgeClass: 'bg-blue-100/80 text-blue-700',
-        logoUrl
-      }
-    }
-
-    // College Check
-    const isCollege =
-      actTier === 'college' ||
-      (matchedInst && matchesTierFilter(matchedInst, 'college')) ||
-      text.includes('college') ||
-      text.includes('intermediate') ||
-      text.includes('hssc') ||
-      text.includes('higher secondary')
-
-    if (isCollege) {
-      return {
-        tier: 'college',
-        tierLabel: 'College',
-        icon: GraduationCap,
-        bg: 'bg-amber-50',
-        text: 'text-amber-600',
-        border: 'border-amber-100/90',
-        badgeClass: 'bg-amber-100/80 text-amber-700',
-        logoUrl
-      }
-    }
-
-    // Custom Hybrid Check
-    const isCustom =
-      actTier === 'custom' ||
-      (matchedInst && matchedInst.type === 'Custom' && !text.includes('school')) ||
-      text.includes('custom hybrid')
-
-    if (isCustom) {
-      return {
-        tier: 'custom',
-        tierLabel: 'Custom',
-        icon: Sparkles,
-        bg: 'bg-emerald-50',
-        text: 'text-emerald-600',
-        border: 'border-emerald-100/90',
-        badgeClass: 'bg-emerald-100/80 text-emerald-800',
-        logoUrl
-      }
-    }
-
-    // Default: School (Primary, Middle, High School / Matric)
     return {
       tier: 'school',
       tierLabel: 'School',
@@ -425,26 +254,12 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
   }, [selectedTierFilter, currentFilterConfig, filteredInstitutes, displayTotalStudents])
 
   const displayWingsValue = useMemo(() => {
-    if (selectedTierFilter === 'all') {
-      const activeWingsCount = [tierCounts.school > 0, tierCounts.college > 0, tierCounts.university > 0, tierCounts.custom > 0].filter(Boolean).length
-      return activeWingsCount > 0 ? `${activeWingsCount} Wings` : '0 Wings'
-    }
-    if (selectedTierFilter === 'school') return `${tierCounts.school} School${tierCounts.school === 1 ? '' : 's'}`
-    if (selectedTierFilter === 'college') return `${tierCounts.college} College${tierCounts.college === 1 ? '' : 's'}`
-    if (selectedTierFilter === 'university') return `${tierCounts.university} Uni${tierCounts.university === 1 ? '' : 's'}`
-    return `${tierCounts.custom} Custom`
-  }, [selectedTierFilter, tierCounts])
+    return `${tierCounts.school} School${tierCounts.school === 1 ? '' : 's'}`
+  }, [tierCounts])
 
   const displayWingsBadge = useMemo(() => {
-    if (selectedTierFilter === 'all') {
-      const activeWingsCount = [tierCounts.school > 0, tierCounts.college > 0, tierCounts.university > 0, tierCounts.custom > 0].filter(Boolean).length
-      return activeWingsCount > 0 ? `${activeWingsCount} Active Tiers` : '0 Active Tiers'
-    }
-    if (selectedTierFilter === 'school') return 'K-12 Primary'
-    if (selectedTierFilter === 'college') return 'Inter / HSSC'
-    if (selectedTierFilter === 'university') return 'Higher Ed'
-    return 'Hybrid Matrix'
-  }, [selectedTierFilter, tierCounts])
+    return tierCounts.school > 0 ? 'K-10 Schools Active' : '0 Schools'
+  }, [tierCounts])
 
   const displayMRRValue = useMemo(() => {
     const targetList = selectedTierFilter === 'all' ? (institutes || []) : filteredInstitutes
@@ -454,10 +269,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
       if (inst.mrr && Number(inst.mrr) > 0) return sum + Number(inst.mrr)
       const tier = String(inst.planTier || inst.type || '').toLowerCase()
       if (tier.includes('trial') || tier.includes('free')) return sum
-      if (tier.includes('custom') || tier.includes('hybrid')) return sum + 75000
-      if (tier.includes('university')) return sum + 55000
-      if (tier.includes('college')) return sum + 35000
-      if (tier.includes('school')) return sum + 25000
+      if (tier.includes('network') || tier.includes('enterprise')) return sum + 45000
       return sum + 25000
     }, 0)
     if (total === 0) return 'Rs. 0'
@@ -533,9 +345,8 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
 
       // Estimate monthly plan rate
       let planRate = 25000
-      if (tier.includes('custom') || tier.includes('hybrid')) planRate = 75000
-      else if (tier.includes('university')) planRate = 55000
-      else if (tier.includes('college')) planRate = 35000
+      if (tier.includes('enterprise') || tier.includes('network')) planRate = 75000
+      else if (tier.includes('custom')) planRate = 45000
 
       if (isSuspended) {
         atRiskCount++
@@ -639,7 +450,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           secondaryLegend: 'Trial Expansion (+Rs. 0/mo)',
           tipLabel1: 'Contracted:',
           tipLabel2: 'Pipeline:',
-          executiveInsight: 'No active subscriptions. Onboard campuses with School or College tiers to activate recurring SaaS billing.',
+          executiveInsight: 'No active subscriptions. Onboard school campuses to activate recurring SaaS billing.',
           months: monthNames.map((m, idx) => ({
             m,
             v1: 0,
@@ -722,7 +533,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
       }
     } else if (executiveMetric === 'campuses') {
       const schoolCampusesCount = tierCounts.school
-      const higherEdCampusesCount = tierCounts.college + tierCounts.university + tierCounts.custom
+      const activeCampusesCount = displayActiveCampuses
 
       const maxCampusVal = Math.max(displayTotalCampuses + 2, 8)
       const yAxisLabels = [
@@ -735,11 +546,11 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
 
       const months = monthNames.map((m, mIdx) => {
         let v1 = schoolCampusesCount
-        let v2 = higherEdCampusesCount
+        let v2 = activeCampusesCount
         if (mIdx < currentMonthIdx) {
           const ratio = Math.max(0.4, (mIdx + 1) / (currentMonthIdx + 1))
           v1 = Math.max(1, Math.round(schoolCampusesCount * ratio))
-          v2 = Math.max(0, Math.round(higherEdCampusesCount * ratio))
+          v2 = Math.max(0, Math.round(activeCampusesCount * ratio))
         }
         if (displayTotalCampuses === 0) {
           v1 = 0
@@ -750,9 +561,9 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           v1,
           v2,
           label1: `${v1} Schools`,
-          label2: `${v2} Higher Ed`,
-          total: `${v1 + v2} Campuses`,
-          note: mIdx === 4 ? 'Admission Peak Registrations' : mIdx === 8 ? 'Semester Affiliation Influx' : `${m} registered network`,
+          label2: `${v2} Active`,
+          total: `${v1} Campuses`,
+          note: mIdx === 4 ? 'Admission Peak Registrations' : mIdx === 8 ? 'New Academic Session' : `${m} registered network`,
           isPeak: mIdx === 4 || mIdx === 8,
           isCurrent: mIdx === currentMonthIdx
         }
@@ -760,21 +571,21 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
 
       return {
         unit: 'Campuses',
-        chartTitle: 'Campus Network & Multi-Tenant Onboarding Velocity',
-        chartSubtitle: 'Active educational campus registrations, tenant activations & multi-wing expansions',
+        chartTitle: 'School Network & Multi-Tenant Onboarding Velocity',
+        chartSubtitle: 'Active school campus registrations, tenant activations & multi-branch expansions',
         yAxisLabels,
         maxVal: maxCampusVal,
-        summaryLabel: 'Total Active Campuses',
-        summaryValue: `${displayTotalCampuses} Campus${displayTotalCampuses === 1 ? '' : 'es'}`,
+        summaryLabel: 'Total Active Schools',
+        summaryValue: `${displayTotalCampuses} School${displayTotalCampuses === 1 ? '' : 's'}`,
         avgLabel: 'Operational Rate',
         avgValue: `${displayActiveCampuses} of ${displayTotalCampuses} Active`,
-        badgeLabel: 'Network Diversity',
-        growthBadge: `${tierCounts.school} Schools • ${tierCounts.college + tierCounts.university} Higher Ed`,
-        primaryLegend: `School Campuses (${tierCounts.school})`,
-        secondaryLegend: `College & University (${tierCounts.college + tierCounts.university})`,
+        badgeLabel: 'Network Status',
+        growthBadge: `${tierCounts.school} Schools Registered`,
+        primaryLegend: `Registered Schools (${tierCounts.school})`,
+        secondaryLegend: `Active Campuses (${displayActiveCampuses})`,
         tipLabel1: 'Schools:',
-        tipLabel2: 'Higher Ed:',
-        executiveInsight: `Multi-campus directory is operating at ${Math.round((displayActiveCampuses / Math.max(1, displayTotalCampuses)) * 100)}% activation. ${displayTotalCampuses - displayActiveCampuses} campus${(displayTotalCampuses - displayActiveCampuses) === 1 ? '' : 'es'} pending initial onboarding.`,
+        tipLabel2: 'Active:',
+        executiveInsight: `School network is operating at ${Math.round((displayActiveCampuses / Math.max(1, displayTotalCampuses)) * 100)}% activation. ${displayTotalCampuses - displayActiveCampuses} campus${(displayTotalCampuses - displayActiveCampuses) === 1 ? '' : 'es'} pending initial onboarding.`,
         months
       }
     } else if (executiveMetric === 'students') {
@@ -782,7 +593,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
         return {
           unit: 'Students',
           chartTitle: 'Total Platform Workload & Enrolled Student Telemetry',
-          chartSubtitle: 'Active student rosters, server compute load & license quota capacity across all institutes',
+          chartSubtitle: 'Active student rosters, server compute load & license quota capacity across all schools',
           yAxisLabels: ['100', '75', '50', '25', '0'],
           maxVal: 100,
           summaryLabel: 'Total Active Student Body',
@@ -791,11 +602,11 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           avgValue: `${(displayTotalCampuses * 1500).toLocaleString()} Quota Seats`,
           badgeLabel: 'Server Workload',
           growthBadge: 'Roster Ready (0 Enrolled)',
-          primaryLegend: 'School Students (Grade 1-10)',
-          secondaryLegend: 'College & Uni (Inter/BS)',
-          tipLabel1: 'Schools:',
-          tipLabel2: 'Higher Ed:',
-          executiveInsight: `Platform database and server capacity configured for ${(displayTotalCampuses * 1500).toLocaleString()} student quota. System is ready for new admissions session.`,
+          primaryLegend: 'Primary & Middle (Grade 1-8)',
+          secondaryLegend: 'Secondary (Grade 9-10)',
+          tipLabel1: 'Elementary:',
+          tipLabel2: 'Secondary:',
+          executiveInsight: `Platform database and server capacity configured for ${(displayTotalCampuses * 1500).toLocaleString()} student quota. System is ready for new school admissions session.`,
           months: monthNames.map((m, mIdx) => ({
             m,
             v1: 0,
@@ -810,11 +621,11 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
         }
       }
 
-      const schoolStudentsCount = (students || []).filter(s => {
-        const inst = (institutes || []).find(i => i.id === s.instituteId)
-        return inst ? (String(inst.type || '').toLowerCase() === 'school') : true
+      const elementaryStudentsCount = (students || []).filter(s => {
+        const c = String(s.className || '').toLowerCase()
+        return !c.includes('9') && !c.includes('10') && !c.includes('matric') && !c.includes('o-level')
       }).length
-      const higherEdStudentsCount = Math.max(0, displayTotalStudents - schoolStudentsCount)
+      const secondaryStudentsCount = Math.max(0, displayTotalStudents - elementaryStudentsCount)
 
       const maxStudentVal = Math.ceil(Math.max(displayTotalStudents * 1.25, 50))
       const yAxisLabels = [
@@ -826,12 +637,12 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
       ]
 
       const months = monthNames.map((m, mIdx) => {
-        let v1 = schoolStudentsCount
-        let v2 = higherEdStudentsCount
+        let v1 = elementaryStudentsCount
+        let v2 = secondaryStudentsCount
         if (mIdx < currentMonthIdx) {
           const ratio = Math.max(0.5, (mIdx + 1) / (currentMonthIdx + 1))
-          v1 = Math.round(schoolStudentsCount * ratio)
-          v2 = Math.round(higherEdStudentsCount * ratio)
+          v1 = Math.round(elementaryStudentsCount * ratio)
+          v2 = Math.round(secondaryStudentsCount * ratio)
         }
         return {
           m,
@@ -840,7 +651,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           label1: v1.toLocaleString(),
           label2: v2.toLocaleString(),
           total: `${(v1 + v2).toLocaleString()} Students`,
-          note: mIdx === 4 ? 'Spring Admission Onboarding' : mIdx === 8 ? 'Fall Semester Intake' : `${m} active roster`,
+          note: mIdx === 4 ? 'Spring Admission Onboarding' : mIdx === 8 ? 'Annual School Intake' : `${m} active roster`,
           isPeak: mIdx === 4 || mIdx === 8,
           isCurrent: mIdx === currentMonthIdx
         }
@@ -849,20 +660,20 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
       return {
         unit: 'Students',
         chartTitle: 'Total Platform Workload & Enrolled Student Telemetry',
-        chartSubtitle: 'Active student rosters, server compute load & license quota capacity across all institutes',
+        chartSubtitle: 'Active student rosters, server compute load & license quota capacity across all schools',
         yAxisLabels,
         maxVal: maxStudentVal,
         summaryLabel: 'Total Active Student Body',
         summaryValue: `${displayTotalStudents.toLocaleString()} Students`,
-        avgLabel: 'Average Tenant Load',
-        avgValue: `${displayTotalCampuses > 0 ? Math.round(displayTotalStudents / displayTotalCampuses).toLocaleString() : 0} Students / Campus`,
+        avgLabel: 'Average School Load',
+        avgValue: `${displayTotalCampuses > 0 ? Math.round(displayTotalStudents / displayTotalCampuses).toLocaleString() : 0} Students / School`,
         badgeLabel: 'Capacity Quota',
         growthBadge: `${displayTotalStudents.toLocaleString()} Enrolled`,
-        primaryLegend: `School Students (${schoolStudentsCount.toLocaleString()})`,
-        secondaryLegend: `College & Uni (${higherEdStudentsCount.toLocaleString()})`,
-        tipLabel1: 'Schools:',
-        tipLabel2: 'Higher Ed:',
-        executiveInsight: `Average tenant workload is ${Math.round(displayTotalStudents / Math.max(1, displayTotalCampuses))} students/campus. Server response time remains sub-50ms.`,
+        primaryLegend: `Elementary (1-8) (${elementaryStudentsCount.toLocaleString()})`,
+        secondaryLegend: `Secondary (9-10) (${secondaryStudentsCount.toLocaleString()})`,
+        tipLabel1: 'Elementary:',
+        tipLabel2: 'Secondary:',
+        executiveInsight: `Average school workload is ${Math.round(displayTotalStudents / Math.max(1, displayTotalCampuses))} students/school. Server response time remains sub-50ms.`,
         months
       }
     } else {
@@ -964,37 +775,14 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
     onRouteChange('institutes')
   }
 
-  // Open Add Campus Modal with tier pre-selected
+  // Open Add Campus Modal for a new school
   const handleOpenAddCampusModal = () => {
-    if (selectedTierFilter === 'college') {
-      setNewInstituteData(prev => ({
-        ...prev,
-        planTier: 'College Plan',
-        planType: 'COLLEGE',
-        enabledTiers: ['college']
-      }))
-    } else if (selectedTierFilter === 'university') {
-      setNewInstituteData(prev => ({
-        ...prev,
-        planTier: 'University Plan',
-        planType: 'UNIVERSITY',
-        enabledTiers: ['undergraduate']
-      }))
-    } else if (selectedTierFilter === 'custom') {
-      setNewInstituteData(prev => ({
-        ...prev,
-        planTier: 'Custom Hybrid Plan',
-        planType: 'CUSTOM',
-        enabledTiers: ['school', 'college']
-      }))
-    } else {
-      setNewInstituteData(prev => ({
-        ...prev,
-        planTier: 'School Plan',
-        planType: 'SCHOOL',
-        enabledTiers: ['school']
-      }))
-    }
+    setNewInstituteData(prev => ({
+      ...prev,
+      planTier: 'School Plan',
+      planType: 'SCHOOL',
+      enabledTiers: ['school']
+    }))
     setIsInstituteModalOpen(true)
   }
 
@@ -2279,26 +2067,9 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                           {/* Active Wings Badges */}
                           <td className="py-3 px-3">
                             <div className="flex items-center gap-1 flex-wrap">
-                              {wings.includes('school') && (
-                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-800">
-                                  School
-                                </span>
-                              )}
-                              {wings.includes('college') && (
-                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700">
-                                  College
-                                </span>
-                              )}
-                              {(wings.includes('undergraduate') || wings.includes('university')) && (
-                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700">
-                                  Uni
-                                </span>
-                              )}
-                              {(inst.type === 'Custom' || inst.planType === 'CUSTOM') && (
-                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700">
-                                  Custom
-                                </span>
-                              )}
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-800">
+                                School
+                              </span>
                             </div>
                           </td>
 
@@ -2710,16 +2481,15 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Subscription Plan & Educational Tier</label>
+            <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Subscription Plan</label>
             <select
               value={newInstituteData.planTier}
               onChange={(e) => {
                 const val = e.target.value
                 const map = {
                   'School Plan': { planType: 'SCHOOL', enabledTiers: ['school'] },
-                  'College Plan': { planType: 'COLLEGE', enabledTiers: ['college'] },
-                  'University Plan': { planType: 'UNIVERSITY', enabledTiers: ['undergraduate'] },
-                  'Custom Hybrid Plan': { planType: 'CUSTOM', enabledTiers: ['school', 'college'] }
+                  'Enterprise Network': { planType: 'ENTERPRISE', enabledTiers: ['school'] },
+                  'Starter Trial': { planType: 'TRIAL', enabledTiers: ['school'] }
                 }
                 const conf = map[val] || map['School Plan']
                 setNewInstituteData({
@@ -2731,10 +2501,9 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               }}
               className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm bg-white"
             >
-              <option value="School Plan">School Plan (Primary & High School)</option>
-              <option value="College Plan">College Plan (Intermediate / HSSC)</option>
-              <option value="University Plan">University Plan (Undergraduates / BS Degrees)</option>
-              <option value="Custom Hybrid Plan">Custom Hybrid Plan (Multi-Wing Combo)</option>
+              <option value="School Plan">School Standard Plan (K-10 / Matric / O-Levels)</option>
+              <option value="Enterprise Network">Multi-Branch School Network</option>
+              <option value="Starter Trial">Starter Trial (30 Days Free)</option>
             </select>
           </div>
 

@@ -149,21 +149,6 @@ export const TabulationSheetModal = ({
     }))
   }
 
-  const isUniversity = (currentInstitute?.type || currentInstitute?.tier || '').toLowerCase().includes('uni')
-
-  const computeHecGpa = (pct) => {
-    if (pct >= 85) return 4.00
-    if (pct >= 80) return 3.67
-    if (pct >= 75) return 3.33
-    if (pct >= 71) return 3.00
-    if (pct >= 68) return 2.67
-    if (pct >= 64) return 2.33
-    if (pct >= 61) return 2.00
-    if (pct >= 58) return 1.67
-    if (pct >= 50) return 1.00
-    return 0.00
-  }
-
   const handleApplyDefaultMaxMarks = (theoryVal, practicalVal) => {
     setMaxTheory(theoryVal)
     setMaxPractical(practicalVal)
@@ -172,10 +157,10 @@ export const TabulationSheetModal = ({
   const calculateStudentRow = (studentId) => {
     const row = rosterMarks[studentId] || {}
     if (row.isAbsent) {
-      return { totalObt: 0, totalMax: maxTheory + maxPractical, pct: 0, grade: 'F', gpa: '0.00', status: 'ABSENT' }
+      return { totalObt: 0, totalMax: maxTheory + maxPractical, pct: 0, grade: 'F', status: 'ABSENT' }
     }
     if (row.isExempt) {
-      return { totalObt: 0, totalMax: maxTheory + maxPractical, pct: 100, grade: 'EXM', gpa: '4.00', status: 'EXEMPT' }
+      return { totalObt: 0, totalMax: maxTheory + maxPractical, pct: 100, grade: 'EXM', status: 'EXEMPT' }
     }
 
     const t = Number(row.theory) || 0
@@ -184,15 +169,13 @@ export const TabulationSheetModal = ({
     const totalMax = maxTheory + maxPractical
     const pct = totalMax > 0 ? Math.round((totalObt / totalMax) * 100) : 0
     const gradeObj = calculateGrade(pct, gradingSettings)
-    const gpa = computeHecGpa(pct).toFixed(2)
 
     return {
       totalObt,
       totalMax,
       pct,
       grade: gradeObj.grade,
-      gpa,
-      status: pct >= (gradingSettings?.passingPercentage || (isUniversity ? 50 : 33)) ? 'PASS' : 'FAIL'
+      status: pct >= (gradingSettings?.passingPercentage || 33) ? 'PASS' : 'FAIL'
     }
   }
 
@@ -219,7 +202,6 @@ export const TabulationSheetModal = ({
           obtained: row.isAbsent ? 0 : rowCalc.totalObt,
           percentage: `${rowCalc.pct}%`,
           grade: rowCalc.grade,
-          gpa: isUniversity ? Number(rowCalc.gpa) : undefined,
           isAbsent: row.isAbsent,
           isExempt: row.isExempt,
           remarks: row.remarks || ''
@@ -399,7 +381,6 @@ export const TabulationSheetModal = ({
                   )}
                   <th className="p-2.5 w-24 text-center">Total ({maxTheory + maxPractical})</th>
                   <th className="p-2.5 w-20 text-center">Grade</th>
-                  {isUniversity && <th className="p-2.5 w-20 text-center bg-emerald-50 text-emerald-900">GPA (4.0)</th>}
                   <th className="p-2.5 w-20 text-center">Status</th>
                   <th className="p-2.5 w-24 text-center">Flags</th>
                   <th className="p-2.5">Teacher Observation</th>
@@ -475,13 +456,6 @@ export const TabulationSheetModal = ({
                             {rowCalc.grade}
                           </span>
                         </td>
-
-                        {/* HEC GPA (University Mode) */}
-                        {isUniversity && (
-                          <td className="p-2.5 text-center font-mono font-bold text-emerald-800 bg-emerald-50/70">
-                            {rowCalc.gpa}
-                          </td>
-                        )}
 
                         {/* Status */}
                         <td className="p-2.5 text-center">

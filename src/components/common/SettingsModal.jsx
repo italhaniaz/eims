@@ -506,11 +506,10 @@ export const SettingsModal = ({ isOpen, onClose, onOpenThemeModal }) => {
             {/* Presets Grid */}
             <div className="space-y-2">
               <label className="block text-xs font-bold text-slate-600 uppercase">Institutional Preset</label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {[
-                  { id: 'school', title: 'School', colors: '#0EA5E9 + #F97316', desc: 'K-10 / Matric' },
-                  { id: 'college', title: 'College', colors: '#4F46E5 + #14B8A6', desc: 'Intermediate / F.Sc' },
-                  { id: 'university', title: 'University', colors: '#1E3A8A + #D4AF37', desc: 'HEC BS / Honors' }
+                  { id: 'school', title: 'School SaaS Default', colors: '#4F46E5 + #14B8A6', desc: 'K-10 / Matric / O-Levels' },
+                  { id: 'custom', title: 'Custom Brand Color', colors: 'Auto-Generated', desc: 'Pick your school primary color' }
                 ].map((p) => (
                   <button
                     key={p.id}

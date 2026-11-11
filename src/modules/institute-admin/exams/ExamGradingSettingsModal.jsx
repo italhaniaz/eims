@@ -101,7 +101,7 @@ export const ExamGradingSettingsModal = ({
               }`}
             >
               <span className="block font-bold">GPA 4.0 Scale</span>
-              <span className="text-[10px] text-slate-500 font-normal">College / Higher Ed (A=4.0)</span>
+              <span className="text-[10px] text-slate-500 font-normal">Standard GPA Reference (A=4.0)</span>
             </button>
 
             <button

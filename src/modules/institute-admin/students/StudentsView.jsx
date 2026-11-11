@@ -198,19 +198,15 @@ export const StudentsView = ({ currentInstitute }) => {
   // Pre-requisite Setup Guidance Modal ("Pehle class aur session banayein")
   const [isSetupGuidanceModalOpen, setIsSetupGuidanceModalOpen] = useState(false)
 
-  // Level Filter state: 'all' | 'school' | 'college' | 'university'
+  // Level Filter state: 'all' | 'school'
   const [selectedLevelFilter, setSelectedLevelFilter] = useState('all')
 
   // Synchronize selectedLevelFilter with Global activeProgramLevel from Navbar
   useEffect(() => {
     if (!activeProgramLevel || activeProgramLevel === 'all') {
       setSelectedLevelFilter('all')
-    } else if (['elementary', 'secondary', 'higher-secondary', 'school'].includes(activeProgramLevel)) {
+    } else {
       setSelectedLevelFilter('school')
-    } else if (activeProgramLevel === 'college') {
-      setSelectedLevelFilter('college')
-    } else if (activeProgramLevel === 'university') {
-      setSelectedLevelFilter('university')
     }
   }, [activeProgramLevel])
 
@@ -218,9 +214,7 @@ export const StudentsView = ({ currentInstitute }) => {
     setSelectedLevelFilter(lvl)
     if (setActiveProgramLevel) {
       if (lvl === 'all') setActiveProgramLevel('all')
-      else if (lvl === 'school') setActiveProgramLevel('secondary')
-      else if (lvl === 'college') setActiveProgramLevel('college')
-      else if (lvl === 'university') setActiveProgramLevel('university')
+      else setActiveProgramLevel('secondary')
     }
     setCurrentPage(1)
   }
@@ -310,7 +304,7 @@ export const StudentsView = ({ currentInstitute }) => {
     emergencyContact: '',
     emergencyContactRelation: 'Father',
 
-    // Step 3: Academic (School vs College vs University)
+    // Step 3: Academic (School Grades PG - 10)
     academicSession: '2026-2027',
     admissionDate: new Date().toISOString().split('T')[0],
     admissionType: 'New Admission', // 'New Admission' | 'Transfer Admission'
@@ -318,19 +312,6 @@ export const StudentsView = ({ currentInstitute }) => {
     className: '', // Starts empty, required!
     section: '', // Starts empty, required!
     rollNumber: '', // Auto-generated read-only
-
-    // College Specific
-    studyGroup: '',
-    boardRollNumber: '',
-    matricMarks: '',
-
-    // University Specific
-    degreeProgram: '',
-    department: '',
-    semester: 'Semester 1',
-    batch: 'Fall 2026',
-    previousDegree: '',
-    previousCgpa: '',
 
     // Step 4: Fees
     feePlan: 'Standard Monthly',
@@ -367,61 +348,25 @@ export const StudentsView = ({ currentInstitute }) => {
     })
   }, [students, currentInstitute])
 
-  // Dynamic Level Determination & Adaptive Tier Vocabulary (Respects current institute authority)
-  const currentLevelKey = useMemo(() => {
-    if (selectedLevelFilter !== 'all') return selectedLevelFilter
-    if (activeProgramLevel && activeProgramLevel !== 'all') {
-      if (['elementary', 'secondary', 'school', 'preschool'].includes(activeProgramLevel)) return 'school'
-      if (['college', 'higher-secondary'].includes(activeProgramLevel)) return 'college'
-      if (activeProgramLevel === 'university') return 'university'
-    }
-    if (tierConfig.isUniversityOnly) return 'university'
-    if (tierConfig.isCollegeOnly) return 'college'
-    return 'school'
-  }, [selectedLevelFilter, activeProgramLevel, tierConfig])
+  // Dynamic Level Determination (School only)
+  const currentLevelKey = 'school'
 
   const tierVocabulary = useMemo(() => {
-    switch (currentLevelKey) {
-      case 'college':
-        return {
-          levelName: 'Higher Secondary / College',
-          idLabel: 'Board Roll No',
-          idPlaceholder: 'e.g. COL-001',
-          groupLabel: 'Academic Year',
-          groupPlaceholder: 'e.g. 1st Year (11th Grade)',
-          subGroupLabel: 'Study Group',
-          subGroupPlaceholder: 'e.g. FSc Pre-Medical / Pre-Engineering / ICS',
-          unitLabel: 'Section'
-        }
-      case 'university':
-        return {
-          levelName: 'Undergraduate / University',
-          idLabel: 'Registration / CMS No',
-          idPlaceholder: 'e.g. REG-001',
-          groupLabel: 'Degree Program',
-          groupPlaceholder: 'e.g. BS Computer Science',
-          subGroupLabel: 'Current Semester',
-          subGroupPlaceholder: 'e.g. Semester 1',
-          unitLabel: 'Batch / Section'
-        }
-      case 'school':
-      default:
-        return {
-          levelName: 'Primary / Secondary School',
-          idLabel: 'Admission Roll No',
-          idPlaceholder: 'e.g. STD-001',
-          groupLabel: 'Class / Grade',
-          groupPlaceholder: 'e.g. Class 1 / 10th Grade',
-          subGroupLabel: 'Section',
-          subGroupPlaceholder: 'e.g. Section A',
-          unitLabel: 'Section'
-        }
+    return {
+      levelName: 'Primary / Secondary School',
+      idLabel: 'Admission Roll No',
+      idPlaceholder: 'e.g. STD-001',
+      groupLabel: 'Class / Grade',
+      groupPlaceholder: 'e.g. Grade 1 / Grade 10',
+      subGroupLabel: 'Section',
+      subGroupPlaceholder: 'e.g. Section A',
+      unitLabel: 'Section'
     }
-  }, [currentLevelKey])
+  }, [])
 
   // Sequential Roll Number Calculation starting from 1
-  const calculateNextRollNumber = (levelKey) => {
-    const prefix = levelKey === 'university' ? 'REG' : levelKey === 'college' ? 'COL' : 'STD'
+  const calculateNextRollNumber = () => {
+    const prefix = 'STD'
     const regex = new RegExp(`^${prefix}-(\\d+)`, 'i')
     let max = 0
     campusStudents.forEach(s => {
@@ -880,13 +825,6 @@ const validatePakistaniPhone = (phone) => {
       if (!formData.className) errs.className = `Please select ${tierVocabulary.groupLabel}.`
       if (!formData.section) errs.section = `Please select ${tierVocabulary.unitLabel}.`
       if (!formData.academicSession) errs.academicSession = 'Academic session is required.'
-
-      if (currentLevelKey === 'college') {
-        if (!formData.matricMarks.trim()) errs.matricMarks = 'Matric marks / percentage is required.'
-      } else if (currentLevelKey === 'university') {
-        if (!formData.department.trim()) errs.department = 'Academic department is required.'
-        if (!formData.previousDegree.trim()) errs.previousDegree = 'Previous degree & CGPA are required.'
-      }
     } else if (stepNumber === 4) {
       if (!formData.feePlan) errs.feePlan = 'Please select a fee plan.'
     } else if (stepNumber === 5) {
@@ -1560,10 +1498,8 @@ const validatePakistaniPhone = (phone) => {
             {/* Level Switcher Tabs - Synced with Global activeProgramLevel & enabledTiers */}
             <div className="flex items-center gap-1 p-1 bg-slate-200/70 rounded-lg text-xs font-semibold text-slate-600">
               {[
-                ...(tierConfig.isMultiTier ? [{ key: 'all', label: 'All Levels' }] : []),
-                ...(tierConfig.hasSchool ? [{ key: 'school', label: 'School' }] : []),
-                ...(tierConfig.hasCollege ? [{ key: 'college', label: 'College' }] : []),
-                ...(tierConfig.hasUniversity ? [{ key: 'university', label: 'University' }] : [])
+                { key: 'all', label: 'All School Levels' },
+                { key: 'school', label: 'K-10 / Matric / O-Levels' }
               ].map(lvl => (
                 <button
                   key={lvl.key}
@@ -2815,7 +2751,7 @@ const validatePakistaniPhone = (phone) => {
               </div>
             )}
 
-            {/* STEP 3: Academic Enrollment (School vs College vs University Level Adaptive) */}
+            {/* STEP 3: Academic Enrollment (School Levels) */}
             {activeStep === 3 && (
               <div className="space-y-4 animate-in fade-in duration-150">
                 {/* Level Specific Adaptive Banner */}
@@ -2970,240 +2906,11 @@ const validatePakistaniPhone = (phone) => {
                   </div>
                 )}
 
-                {currentLevelKey === 'college' && (
-                  <div className="space-y-4 p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
-                    <span className="text-xs font-bold text-slate-800 uppercase block">College Intermediate Academic Stream</span>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                          Academic Year <span className="text-rose-500">*</span>
-                        </label>
-                        <select
-                          required
-                          value={formData.className}
-                          onChange={(e) => {
-                            setFormData({ ...formData, className: e.target.value, section: '' })
-                            setIsFormDirty(true)
-                            if (formErrors.className) setFormErrors({ ...formErrors, className: null })
-                          }}
-                          className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white font-semibold focus:outline-none"
-                        >
-                          <option value="">-- Select Year --</option>
-                          <option value="1st Year (11th Grade)">1st Year (11th Grade)</option>
-                          <option value="2nd Year (12th Grade)">2nd Year (12th Grade)</option>
-                          {availableClasses.map(c => (
-                            <option key={c} value={c}>{c}</option>
-                          ))}
-                        </select>
-                        {formErrors.className && <p className="text-[11px] text-rose-600 mt-1 font-medium">{formErrors.className}</p>}
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                          Study Group <span className="text-rose-500">*</span>
-                        </label>
-                        <select
-                          required
-                          value={formData.section}
-                          onChange={(e) => {
-                            setFormData({ ...formData, section: e.target.value })
-                            setIsFormDirty(true)
-                            if (formErrors.section) setFormErrors({ ...formErrors, section: null })
-                          }}
-                          className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white font-semibold focus:outline-none"
-                        >
-                          <option value="">-- Select Study Group --</option>
-                          <option value="Pre-Medical">FSc Pre-Medical</option>
-                          <option value="Pre-Engineering">FSc Pre-Engineering</option>
-                          <option value="ICS (Physics)">ICS (Computer & Physics)</option>
-                          <option value="ICS (Stats)">ICS (Computer & Statistics)</option>
-                          <option value="I.Com">I.Com (Commerce)</option>
-                          <option value="Humanities / Arts">FA (Humanities / Arts)</option>
-                        </select>
-                        {formErrors.section && <p className="text-[11px] text-rose-600 mt-1 font-medium">{formErrors.section}</p>}
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">College Roll No (Auto)</label>
-                        <input
-                          type="text"
-                          readOnly
-                          value={formData.rollNumber}
-                          className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-slate-100 text-xs font-mono font-bold text-slate-700 cursor-not-allowed"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Matriculation Board Roll No</label>
-                        <input
-                          type="text"
-                          placeholder="BISE Roll No e.g. 554120"
-                          value={formData.boardRollNumber}
-                          onChange={(e) => {
-                            setFormData({ ...formData, boardRollNumber: e.target.value })
-                            setIsFormDirty(true)
-                          }}
-                          className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-mono focus:outline-none"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                          Matric Marks / Percentage <span className="text-rose-500">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="e.g. 1020 / 1100 (92.7%)"
-                          value={formData.matricMarks}
-                          onChange={(e) => {
-                            setFormData({ ...formData, matricMarks: e.target.value })
-                            setIsFormDirty(true)
-                            if (formErrors.matricMarks) setFormErrors({ ...formErrors, matricMarks: null })
-                          }}
-                          className={`w-full px-3 py-2 rounded-lg border text-xs focus:outline-none ${
-                            formErrors.matricMarks ? 'border-rose-500 bg-rose-50' : 'border-slate-300'
-                          }`}
-                        />
-                        {formErrors.matricMarks && <p className="text-[11px] text-rose-600 mt-1 font-medium">{formErrors.matricMarks}</p>}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {currentLevelKey === 'university' && (
-                  <div className="space-y-4 p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
-                    <span className="text-xs font-bold text-slate-800 uppercase block">University Degree Program Enrollment</span>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                          Degree Program <span className="text-rose-500">*</span>
-                        </label>
-                        <select
-                          required
-                          value={formData.className}
-                          onChange={(e) => {
-                            setFormData({ ...formData, className: e.target.value })
-                            setIsFormDirty(true)
-                            if (formErrors.className) setFormErrors({ ...formErrors, className: null })
-                          }}
-                          className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white font-semibold focus:outline-none"
-                        >
-                          <option value="">-- Select Degree --</option>
-                          <option value="BS Computer Science">BS Computer Science</option>
-                          <option value="BS Software Engineering">BS Software Engineering</option>
-                          <option value="BS Artificial Intelligence">BS Artificial Intelligence</option>
-                          <option value="BBA (Honors)">BBA (Honors)</option>
-                          <option value="BS Accounting & Finance">BS Accounting & Finance</option>
-                          <option value="MS Computer Science">MS Computer Science</option>
-                          {availableClasses.map(c => (
-                            <option key={c} value={c}>{c}</option>
-                          ))}
-                        </select>
-                        {formErrors.className && <p className="text-[11px] text-rose-600 mt-1 font-medium">{formErrors.className}</p>}
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                          Academic Department <span className="text-rose-500">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="e.g. Faculty of Computing"
-                          value={formData.department}
-                          onChange={(e) => {
-                            setFormData({ ...formData, department: e.target.value })
-                            setIsFormDirty(true)
-                            if (formErrors.department) setFormErrors({ ...formErrors, department: null })
-                          }}
-                          className={`w-full px-3 py-2 rounded-lg border text-xs focus:outline-none ${
-                            formErrors.department ? 'border-rose-500 bg-rose-50' : 'border-slate-300'
-                          }`}
-                        />
-                        {formErrors.department && <p className="text-[11px] text-rose-600 mt-1 font-medium">{formErrors.department}</p>}
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Registration / CMS No</label>
-                        <input
-                          type="text"
-                          readOnly
-                          value={formData.rollNumber}
-                          className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-slate-100 text-xs font-mono font-bold text-slate-700 cursor-not-allowed"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                          Current Semester <span className="text-rose-500">*</span>
-                        </label>
-                        <select
-                          value={formData.section}
-                          onChange={(e) => {
-                            setFormData({ ...formData, section: e.target.value })
-                            setIsFormDirty(true)
-                            if (formErrors.section) setFormErrors({ ...formErrors, section: null })
-                          }}
-                          className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white font-semibold focus:outline-none"
-                        >
-                          <option value="">-- Select Semester --</option>
-                          <option value="Semester 1">Semester 1 (Freshman)</option>
-                          <option value="Semester 2">Semester 2</option>
-                          <option value="Semester 3">Semester 3</option>
-                          <option value="Semester 4">Semester 4</option>
-                          <option value="Semester 5">Semester 5</option>
-                          <option value="Semester 6">Semester 6</option>
-                          <option value="Semester 7">Semester 7</option>
-                          <option value="Semester 8">Semester 8</option>
-                        </select>
-                        {formErrors.section && <p className="text-[11px] text-rose-600 mt-1 font-medium">{formErrors.section}</p>}
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Batch / Intake</label>
-                        <input
-                          type="text"
-                          placeholder="e.g. Fall 2026 / Batch 24"
-                          value={formData.batch}
-                          onChange={(e) => {
-                            setFormData({ ...formData, batch: e.target.value })
-                            setIsFormDirty(true)
-                          }}
-                          className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:outline-none"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                          Previous Degree & CGPA <span className="text-rose-500">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="e.g. FSc Pre-Eng (84% / 3.7 GPA)"
-                          value={formData.previousDegree}
-                          onChange={(e) => {
-                            setFormData({ ...formData, previousDegree: e.target.value })
-                            setIsFormDirty(true)
-                            if (formErrors.previousDegree) setFormErrors({ ...formErrors, previousDegree: null })
-                          }}
-                          className={`w-full px-3 py-2 rounded-lg border text-xs focus:outline-none ${
-                            formErrors.previousDegree ? 'border-rose-500 bg-rose-50' : 'border-slate-300'
-                          }`}
-                        />
-                        {formErrors.previousDegree && <p className="text-[11px] text-rose-600 mt-1 font-medium">{formErrors.previousDegree}</p>}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Previous School / Institute Attended</label>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Previous School Attended</label>
                   <input
                     type="text"
-                    placeholder="e.g. Army Public School / Beaconhouse / Punjab College"
+                    placeholder="e.g. Beaconhouse / City School / Lahore Grammar"
                     value={formData.previousSchool}
                     onChange={(e) => {
                       setFormData({ ...formData, previousSchool: e.target.value })

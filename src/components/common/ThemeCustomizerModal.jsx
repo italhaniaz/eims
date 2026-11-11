@@ -45,7 +45,7 @@ export const ThemeCustomizerModal = ({ isOpen, onClose }) => {
   }
 
   const handleResetDefaults = () => {
-    setPreset('college')
+    setPreset('school')
     if (isDark) toggleThemeMode()
     if (dir === 'rtl') toggleDir()
   }
@@ -127,60 +127,30 @@ export const ThemeCustomizerModal = ({ isOpen, onClose }) => {
           </div>
         </div>
 
-        {/* SECTION 2: INSTITUTIONAL THEME PRESETS */}
+        {/* SECTION 2: SCHOOL THEME PRESET */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              Institutional Tier Presets
+              School SaaS Theme Preset
             </h4>
-            <span className="text-[11px] text-slate-400">Instant multi-campus palette switch</span>
+            <span className="text-[11px] text-slate-400">Default School palette or custom brand colors</span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* 1. School Preset */}
             <div
               onClick={() => setPreset('school')}
               className={`p-3.5 rounded-xl border-2 transition-all cursor-pointer relative ${
                 preset === 'school' 
-                  ? 'border-sky-500 bg-sky-50/50 dark:bg-sky-950/20 shadow-sm' 
-                  : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-900'
-              }`}
-            >
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5">
-                  🏫 School
-                </span>
-                {preset === 'school' && (
-                  <span className="w-4 h-4 rounded-full bg-sky-500 text-white flex items-center justify-center text-[10px]">
-                    <Check className="w-3 h-3 stroke-[3]" />
-                  </span>
-                )}
-              </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-3">
-                #0EA5E9 + #F97316
-              </p>
-              <div className="flex items-center gap-1.5">
-                <span className="w-5 h-5 rounded-md bg-[#0EA5E9] shadow-xs" title="Primary #0EA5E9" />
-                <span className="w-5 h-5 rounded-md bg-[#F97316] shadow-xs" title="Secondary #F97316" />
-                <span className="w-5 h-5 rounded-md bg-[#F59E0B] shadow-xs" title="Accent #F59E0B" />
-                <span className="text-[10px] text-slate-400 ml-auto font-bold">K-10</span>
-              </div>
-            </div>
-
-            {/* 2. College Preset */}
-            <div
-              onClick={() => setPreset('college')}
-              className={`p-3.5 rounded-xl border-2 transition-all cursor-pointer relative ${
-                preset === 'college' 
                   ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/20 shadow-sm' 
                   : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-900'
               }`}
             >
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5">
-                  🏛️ College
+                  🏫 School SaaS Default
                 </span>
-                {preset === 'college' && (
+                {preset === 'school' && (
                   <span className="w-4 h-4 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px]">
                     <Check className="w-3 h-3 stroke-[3]" />
                   </span>
@@ -193,37 +163,37 @@ export const ThemeCustomizerModal = ({ isOpen, onClose }) => {
                 <span className="w-5 h-5 rounded-md bg-[#4F46E5] shadow-xs" title="Primary #4F46E5" />
                 <span className="w-5 h-5 rounded-md bg-[#14B8A6] shadow-xs" title="Secondary #14B8A6" />
                 <span className="w-5 h-5 rounded-md bg-[#F59E0B] shadow-xs" title="Accent #F59E0B" />
-                <span className="text-[10px] text-slate-400 ml-auto font-bold">Intermediate</span>
+                <span className="text-[10px] text-slate-400 ml-auto font-bold">K-10 / Matric</span>
               </div>
             </div>
 
-            {/* 3. University Preset */}
+            {/* 2. Sky School Preset */}
             <div
-              onClick={() => setPreset('university')}
+              onClick={() => handleColorChange('#0EA5E9')}
               className={`p-3.5 rounded-xl border-2 transition-all cursor-pointer relative ${
-                preset === 'university' 
-                  ? 'border-blue-900 bg-blue-50/50 dark:bg-blue-950/20 shadow-sm' 
+                preset === 'custom' && customPrimary === '#0EA5E9'
+                  ? 'border-sky-500 bg-sky-50/50 dark:bg-sky-950/20 shadow-sm' 
                   : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-900'
               }`}
             >
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5">
-                  🎓 University
+                  ✨ School Sky Ocean
                 </span>
-                {preset === 'university' && (
-                  <span className="w-4 h-4 rounded-full bg-blue-900 text-white flex items-center justify-center text-[10px]">
+                {preset === 'custom' && customPrimary === '#0EA5E9' && (
+                  <span className="w-4 h-4 rounded-full bg-sky-500 text-white flex items-center justify-center text-[10px]">
                     <Check className="w-3 h-3 stroke-[3]" />
                   </span>
                 )}
               </div>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-3">
-                #1E3A8A + #D4AF37
+                #0EA5E9 + #14B8A6
               </p>
               <div className="flex items-center gap-1.5">
-                <span className="w-5 h-5 rounded-md bg-[#1E3A8A] shadow-xs" title="Primary #1E3A8A" />
-                <span className="w-5 h-5 rounded-md bg-[#D4AF37] shadow-xs" title="Secondary #D4AF37" />
-                <span className="w-5 h-5 rounded-md bg-[#B45309] shadow-xs" title="Accent #B45309" />
-                <span className="text-[10px] text-slate-400 ml-auto font-bold">HEC Degree</span>
+                <span className="w-5 h-5 rounded-md bg-[#0EA5E9] shadow-xs" title="Primary #0EA5E9" />
+                <span className="w-5 h-5 rounded-md bg-[#14B8A6] shadow-xs" title="Secondary #14B8A6" />
+                <span className="w-5 h-5 rounded-md bg-[#F59E0B] shadow-xs" title="Accent #F59E0B" />
+                <span className="text-[10px] text-slate-400 ml-auto font-bold">Custom Sky</span>
               </div>
             </div>
           </div>
@@ -364,7 +334,7 @@ export const ThemeCustomizerModal = ({ isOpen, onClose }) => {
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 cursor-pointer transition-colors"
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            <span>Reset to College Default</span>
+            <span>Reset to School Default</span>
           </button>
 
           <button

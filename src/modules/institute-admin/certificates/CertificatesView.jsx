@@ -39,13 +39,8 @@ export const CertificatesView = ({ currentInstitute }) => {
   const storageKey = `sms_campus_certificates_${currentInstitute?.id || 'default'}`
 
   // Default initial certificate records
-  const primaryCertName = tierConfig.isUniversityOnly 
-    ? 'Official Academic Transcript & Degree Attestation'
-    : tierConfig.isCollegeOnly 
-    ? 'College Leaving Certificate (CLC)'
-    : 'School Leaving Certificate (SLC)'
-
-  const primaryCertPrefix = tierConfig.isUniversityOnly ? 'TRN' : tierConfig.isCollegeOnly ? 'CLC' : 'SLC'
+  const primaryCertName = 'School Leaving Certificate (SLC)'
+  const primaryCertPrefix = 'SLC'
 
   const initialCertificates = [
     {
@@ -55,10 +50,10 @@ export const CertificatesView = ({ currentInstitute }) => {
       studentName: 'Ammar Sheikh',
       fatherName: 'Tariq Sheikh',
       rollNumber: 'BHS-104',
-      className: tierConfig.isUniversityOnly ? 'BS Computer Science - Semester 8' : tierConfig.isCollegeOnly ? 'F.Sc Pre-Medical (Part II)' : 'Grade 10 - Section A',
+      className: 'Grade 10 - Section A',
       certType: primaryCertName,
       issueDate: '2026-10-25',
-      purpose: tierConfig.isUniversityOnly ? 'HEC Attestation & Employment' : tierConfig.isCollegeOnly ? 'University Admission Intake' : 'Transfer to Lahore College',
+      purpose: 'Transfer to Senior Branch',
       conduct: 'Exemplary',
       duesCleared: true,
       libraryCleared: true,
@@ -73,10 +68,10 @@ export const CertificatesView = ({ currentInstitute }) => {
       studentName: 'Khadija Imran',
       fatherName: 'Imran Ashraf',
       rollNumber: 'BHS-208',
-      className: 'Grade 11 - Pre-Medical',
+      className: 'Grade 10 - Section B',
       certType: 'Character & Conduct Certificate',
       issueDate: '2026-10-22',
-      purpose: 'University Admission Application',
+      purpose: 'Further Admissions & Scholarships',
       conduct: 'Excellent',
       duesCleared: true,
       libraryCleared: true,
@@ -135,11 +130,7 @@ export const CertificatesView = ({ currentInstitute }) => {
   // Form state for issuing new certificate
   const [formData, setFormData] = useState({
     studentId: '',
-    certType: tierConfig.isUniversityOnly 
-      ? 'Official Academic Transcript & Degree Attestation'
-      : tierConfig.isCollegeOnly 
-      ? 'College Leaving Certificate (CLC)'
-      : 'School Leaving Certificate (SLC)',
+    certType: 'School Leaving Certificate (SLC)',
     purpose: '',
     conduct: 'Good',
     duesCleared: true,
@@ -207,10 +198,8 @@ export const CertificatesView = ({ currentInstitute }) => {
       return
     }
 
-    const prefix = formData.certType.includes('Transcript') || formData.certType.includes('Degree') ? 'TRN' :
-                   formData.certType.includes('College Leaving') || formData.certType.includes('CLC') ? 'CLC' :
-                   formData.certType.includes('School Leaving') || formData.certType.includes('SLC') ? 'SLC' : 
-                   formData.certType.includes('Character') ? 'CHR' : 
+    const prefix = formData.certType.includes('School Leaving') || formData.certType.includes('SLC') ? 'SLC' :
+                   formData.certType.includes('Character') ? 'CHR' :
                    formData.certType.includes('Bonafide') ? 'BON' : 'AWARD'
     const seq = String(certificates.length + 1).padStart(3, '0')
     const serial = `${campusCode}-${prefix}-${new Date().getFullYear()}-${seq}`
@@ -483,7 +472,7 @@ export const CertificatesView = ({ currentInstitute }) => {
             {
               title: 'Character & Conduct Certificate',
               code: 'TPL-CHR-02',
-              desc: 'Attestation of moral character, disciplinary record, co-curricular participation, and general behavior for college/university admission.',
+              desc: 'Attestation of moral character, disciplinary record, co-curricular participation, and general behavior for further admissions.',
               badge: 'Conduct Attestation',
               color: 'indigo'
             },
@@ -567,32 +556,10 @@ export const CertificatesView = ({ currentInstitute }) => {
                   onChange={(e) => setFormData({ ...formData, certType: e.target.value })}
                   className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                 >
-                  {tierConfig.isUniversityOnly ? (
-                    <>
-                      <option value="Official Academic Transcript & Degree Attestation">Official Academic Transcript & Degree Attestation</option>
-                      <option value="Provisional Degree Certificate">Provisional Degree Certificate</option>
-                      <option value="Degree Clearance & No Objection Certificate (HEC)">Degree Clearance & No Objection Certificate (HEC)</option>
-                      <option value="Academic Distinction & Honor Roll Certificate">Academic Distinction & Honor Roll Certificate</option>
-                    </>
-                  ) : tierConfig.isCollegeOnly ? (
-                    <>
-                      <option value="Provisional Certificate (Higher Secondary)">Provisional Certificate (Higher Secondary)</option>
-                      <option value="Inter-Board Migration Certificate (NOC)">Inter-Board Migration Certificate (NOC)</option>
-                      <option value="College Leaving Certificate (CLC)">College Leaving Certificate (CLC)</option>
-                      <option value="Detailed Marks Certificate (DMC)">Detailed Marks Certificate (DMC)</option>
-                      <option value="Character & Good Conduct Certificate">Character & Good Conduct Certificate</option>
-                      <option value="Bonafide College Student Certificate">Bonafide College Student Certificate</option>
-                      <option value="FBISE / BISE Inter-Board Clearance & Migration Certificate">FBISE / BISE Inter-Board Clearance & Migration Certificate</option>
-                      <option value="Academic Merit & College Honors Award">Academic Merit & College Honors Award</option>
-                    </>
-                  ) : (
-                    <>
-                      <option value="School Leaving Certificate (SLC)">School Leaving Certificate (SLC)</option>
-                      <option value="Character & Conduct Certificate">Character & Conduct Certificate</option>
-                      <option value="Bonafide Student Certificate">Bonafide Student Certificate</option>
-                      <option value="Academic Achievement & Merit Award">Academic Achievement & Merit Award</option>
-                    </>
-                  )}
+                  <option value="School Leaving Certificate (SLC)">School Leaving Certificate (SLC)</option>
+                  <option value="Character & Conduct Certificate">Character &amp; Conduct Certificate</option>
+                  <option value="Bonafide Student Certificate">Bonafide Student Certificate</option>
+                  <option value="Academic Achievement & Merit Award">Academic Achievement &amp; Merit Award</option>
                 </select>
               </div>
 

@@ -100,26 +100,15 @@ export const ClassesView = ({ currentInstitute }) => {
   const [isAddSessionModalOpen, setIsAddSessionModalOpen] = useState(false)
   const [newSessionInput, setNewSessionInput] = useState('')
 
-  // Level Tabs state (Scoped dynamically to current institute permitted tier)
+  // Level Tabs state (School levels only)
   const availableTabs = useMemo(() => {
-    const tabs = []
-    if (tierConfig.isMultiTier) {
-      tabs.push({ id: 'all', label: 'All Levels' })
-    }
-    if (tierConfig.hasSchool) {
-      tabs.push({ id: 'preschool', label: 'Pre-School' })
-      tabs.push({ id: 'elementary', label: 'Elementary (1-8)' })
-      tabs.push({ id: 'secondary', label: 'Secondary (9-10)' })
-    }
-    if (tierConfig.hasCollege) {
-      tabs.push({ id: 'higher-secondary', label: 'HSSC / Intermediate (11-12)' })
-      tabs.push({ id: 'college', label: 'College Disciplines (ADP)' })
-    }
-    if (tierConfig.hasUniversity) {
-      tabs.push({ id: 'university', label: 'Degree Programs (BS)' })
-    }
-    return tabs.length > 0 ? tabs : [{ id: 'all', label: 'All Levels' }]
-  }, [tierConfig])
+    return [
+      { id: 'all', label: 'All School Classes' },
+      { id: 'preschool', label: 'Pre-School (PG-KG)' },
+      { id: 'elementary', label: 'Elementary (1-8)' },
+      { id: 'secondary', label: 'Secondary (9-10 / O-Levels)' }
+    ]
+  }, [])
 
   const [selectedLevelTab, setSelectedLevelTab] = useState(activeProgramLevel || 'all')
 
@@ -803,7 +792,7 @@ export const ClassesView = ({ currentInstitute }) => {
 
       {/* Tier Switcher Tabs & Search Toolbar */}
       <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
-        {/* Tier Tabs (Pre-School, Elementary, Secondary, HSSC, College, University) */}
+        {/* Tier Tabs (Pre-School, Elementary, Secondary) */}
         <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl overflow-x-auto scrollbar-none text-xs">
           {availableTabs.map(tab => (
             <button

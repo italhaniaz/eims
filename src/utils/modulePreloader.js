@@ -34,16 +34,6 @@ const ROUTE_LOADERS = {
   'inst-users': () => import('../modules/users-management/UsersManagementView'),
   'inst-settings': () => import('../modules/users-management/UsersManagementView'),
   'inst-program-levels': () => import('../modules/academics/ProgramLevelsView'),
-  'inst-board-exams': () => import('../modules/institute-admin/college/CollegeBoardExamsView'),
-  'inst-scholarships': () => import('../modules/institute-admin/college/CollegeScholarshipsView'),
-  'inst-discipline': () => import('../modules/institute-admin/college/CollegeDisciplineView'),
-  'inst-hostel': () => import('../modules/institute-admin/college/CollegeHostelView'),
-  'inst-labs': () => import('../modules/institute-admin/college/CollegeLabsView'),
-  'inst-course-registration': () => import('../modules/institute-admin/university/UniversityCourseRegistrationView'),
-  'inst-research-fyp': () => import('../modules/institute-admin/university/UniversityResearchFypView'),
-  'inst-career-alumni': () => import('../modules/institute-admin/university/UniversityCareerAlumniView'),
-  'inst-student-portal': () => import('../modules/student-portal/StudentParentPortalView'),
-  'inst-campus-it': () => import('../modules/institute-admin/university/UniversityCampusItView'),
 
   // --- Superadmin Governance Routes ---
   'dashboard': () => import('../modules/dashboard/SuperadminDashboard'),

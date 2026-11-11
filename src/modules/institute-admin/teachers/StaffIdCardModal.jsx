@@ -44,7 +44,7 @@ export const StaffIdCardModal = ({
   const staff = staffToPrint[previewIndex] || staffToPrint[0]
   if (!staff) return null
 
-  const instituteName = currentInstitute?.name || 'CENTRAL MODEL SCHOOL & COLLEGE'
+  const instituteName = currentInstitute?.name || 'CENTRAL MODEL SCHOOL'
   const instituteCampus = currentInstitute?.campus || 'Main Campus, Lahore'
   const institutePhone = currentInstitute?.phone || '+92 42 35889900'
 

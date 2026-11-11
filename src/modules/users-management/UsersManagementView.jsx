@@ -542,29 +542,17 @@ export const UsersManagementView = ({ defaultTab = 'all', onRouteChange, current
     handleExportUsersCSV(selectedUsersList)
   }
 
-  // Selected institute tier resolution for strict role scoping
+  // Selected institute tier resolution for strict school role scoping
   const selectedInstTier = useMemo(() => {
     const inst = (institutes || []).find(i => i.id === formData.institute)
     if (!inst) return 'all'
-    const id = (inst.id || '').toLowerCase()
-    const name = (inst.name || '').toLowerCase()
-    const type = (inst.type || '').toLowerCase()
-    if (id === 'inst-4' || id.includes('ias') || type.includes('uni') || name.includes('undergraduate') || name.includes('applied sciences')) return 'university'
-    if (id === 'inst-3' || id.includes('ria') || type.includes('col') || name.includes('roots') || name.includes('college')) return 'college'
-    if (id === 'inst-2' || id.includes('csm') || type.includes('school') || name.includes('school')) return 'school'
-    return 'all'
+    return 'school'
   }, [formData.institute, institutes])
 
   const filteredRoleGroups = useMemo(() => {
     if (!TIER_ROLE_GROUPS || TIER_ROLE_GROUPS.length === 0) return []
     if (selectedInstTier === 'school') {
       return TIER_ROLE_GROUPS.filter(g => g.tier === 'school' || g.tier === 'platform')
-    }
-    if (selectedInstTier === 'college') {
-      return TIER_ROLE_GROUPS.filter(g => g.tier === 'college' || g.tier === 'platform')
-    }
-    if (selectedInstTier === 'university') {
-      return TIER_ROLE_GROUPS.filter(g => g.tier === 'university' || g.tier === 'platform')
     }
     return TIER_ROLE_GROUPS
   }, [selectedInstTier])
@@ -706,11 +694,7 @@ export const UsersManagementView = ({ defaultTab = 'all', onRouteChange, current
       await updateItem('users', resetPasswordUser.id, {
         passwordHash: hashed,
         passwordLastChangedAt: new Date().toISOString(),
-        tier: formData.tier || (
-          formData.role.startsWith('college_') ? 'college' :
-          (formData.role.startsWith('uni_') || formData.role === 'university_admin') ? 'university' :
-          formData.role === 'superadmin' ? 'platform' : 'school'
-        )
+        tier: formData.tier || (formData.role === 'superadmin' ? 'platform' : 'school')
       })
       if (DataService?.logAuditEvent) {
         DataService.logAuditEvent(

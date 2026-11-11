@@ -23,10 +23,8 @@ export const PrintableSyllabusModal = ({
   const coreCount = subjects.filter(s => (s.type || 'core').toLowerCase() === 'core').length
   const labCount = subjects.filter(s => (s.type || '').toLowerCase() === 'practical' || (Number(s.labHours) || 0) > 0).length
 
-  const tierLabel = 
-    activeTier === 'school' ? 'K-12 School Wing' :
-    activeTier === 'college' ? 'College Intermediate Wing (HSSC)' :
-    activeTier === 'university' ? 'Higher Education & Degree Programs' : 'Comprehensive Campus-Wide'
+  const tierLabel =
+    activeTier === 'school' ? 'K-10 School Wing' : 'Comprehensive School-Wide'
 
   const campusName = currentInstitute?.name || 'Educational Institute Management System'
   const campusCode = currentInstitute?.code || 'MAIN-CAMPUS'

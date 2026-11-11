@@ -1,6 +1,6 @@
 /**
  * Enterprise Security & Academic Calculation Utilities
- * Multi-Campus Architecture (School, College, University)
+ * School Architecture (Playgroup-KG, Primary, Middle, Secondary)
  */
 
 /**
@@ -211,7 +211,7 @@ export const calculateSemesterGpa = (enrolledCourses = []) => {
 }
 
 /**
- * Checks if a university student is on HEC Academic Probation (CGPA < 2.00)
+ * Checks if a student's academic standing requires academic review
  * @param {number|string} cgpa 
  * @param {number} threshold 
  * @returns {boolean}
@@ -223,7 +223,7 @@ export const isAcademicProbation = (cgpa, threshold = 2.0) => {
 }
 
 /**
- * Regulatory 75% attendance detention check (BISE College & HEC University rule)
+ * Regulatory 75% attendance detention check (BISE Matric / School rule)
  * @param {number|string} percentage 
  * @param {number} threshold 
  * @returns {boolean} True if student is detained / barred from exams

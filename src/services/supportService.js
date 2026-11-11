@@ -26,19 +26,19 @@ const FALLBACK_TICKETS = [
   {
     id: 'tkt-002',
     ticketNumber: 'TKT-2026-102',
-    instituteName: 'Kips College',
-    requesterName: 'Prof. Tariq Mahmood',
-    requesterEmail: 'tariq@kipscollege.edu.pk',
-    subject: 'Intermediate Wing Board Examination Grade Scales',
+    instituteName: 'Lahore Grammar School Gulberg',
+    requesterName: 'Mr. Tariq Mahmood',
+    requesterEmail: 'tariq@lgsgulberg.edu.pk',
+    subject: 'Secondary Wing Board Examination Grade Scales',
     category: 'Academic Operations',
     priority: 'Medium',
     status: 'IN_PROGRESS',
     createdAt: new Date(Date.now() - 3600000 * 20).toISOString(),
     messages: [
       {
-        sender: 'Prof. Tariq Mahmood',
+        sender: 'Mr. Tariq Mahmood',
         role: 'Campus Admin',
-        text: 'Requesting assistance setting up BISE Gujranwala grade weighting percentages for 1st Year Pre-Medical exams.',
+        text: 'Requesting assistance setting up BISE Lahore grade weighting percentages for Grade 9 Science exams.',
         time: 'Yesterday'
       },
       {
@@ -52,25 +52,25 @@ const FALLBACK_TICKETS = [
   {
     id: 'tkt-003',
     ticketNumber: 'TKT-2026-098',
-    instituteName: 'Punjab University',
-    requesterName: 'Registrar Office',
-    requesterEmail: 'registrar@pu.edu.pk',
-    subject: 'Semester Examination Hall Admit Card Layout Customization',
+    instituteName: 'Roots Ivy High School',
+    requesterName: 'Principal Office',
+    requesterEmail: 'principal@rootsivy.edu.pk',
+    subject: 'Annual Examination Hall Admit Card Layout Customization',
     category: 'Exams & Grading',
     priority: 'Low',
     status: 'RESOLVED',
     createdAt: new Date(Date.now() - 3600000 * 72).toISOString(),
     messages: [
       {
-        sender: 'Registrar Office',
+        sender: 'Principal Office',
         role: 'Campus Admin',
-        text: 'Need roll number barcode printed on BS 8th semester admit cards.',
+        text: 'Need roll number barcode printed on Matric Grade 10 admit cards.',
         time: '3 days ago'
       },
       {
         sender: 'Super Administrator',
         role: 'Superadmin',
-        text: 'Admit card barcode module has been enabled for your university wing.',
+        text: 'Admit card barcode module has been enabled for your school portal.',
         time: '2 days ago'
       }
     ]

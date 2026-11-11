@@ -1,96 +1,117 @@
-import React, { useState, useEffect } from 'react'
-import { SchoolLoginPage } from './SchoolLoginPage'
-import { CollegeLoginPage } from './CollegeLoginPage'
-import { UniversityLoginPage } from './UniversityLoginPage'
-import { SuperadminLoginPage } from './SuperadminLoginPage'
-import { DemoPitchPill } from '../../components/common/DemoPitchPill'
+import React, { useState } from 'react'
+import {
+  School,
+  ShieldCheck,
+  Lock,
+  Mail,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  ArrowLeft,
+  AlertCircle,
+  Sparkles,
+  CalendarCheck,
+  BookOpen,
+  Receipt,
+  Award,
+  CheckCircle2,
+  Moon,
+  Sun,
+  Palette
+} from 'lucide-react'
+import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
 import ThemeCustomizerModal from '../../components/common/ThemeCustomizerModal'
-import { Moon, Sun, Palette } from 'lucide-react'
 
-export const LoginPage = ({ onBackToLanding, onOpenTrial, defaultTier }) => {
-  const { isDark, toggleThemeMode, preset, setPreset, activeThemeConfig } = useTheme()
+const UNIFIED_PORTALS = [
+  {
+    id: 'school_admin',
+    name: 'School Admin (Principal)',
+    subtitle: 'School Dashboard, Students, Staff, Attendance, Fees & Exams',
+    email: 'admin.school@cityschool.edu',
+    badge: 'School Campus',
+    icon: School
+  },
+  {
+    id: 'superadmin',
+    name: 'Super Admin (Platform HQ)',
+    subtitle: 'Manage Registered Schools, Subscriptions, Security & Settings',
+    email: 'admin@schoolms.com',
+    badge: 'Headquarters',
+    icon: ShieldCheck
+  }
+]
+
+export const LoginPage = ({ onBackToLanding, onOpenTrial }) => {
+  const { login } = useAuth()
+  const { isDark, toggleThemeMode, preset, activeThemeConfig } = useTheme()
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false)
 
-  // Determine initial tier based on URL hash or defaultTier prop
-  const getInitialTier = () => {
-    if (defaultTier && defaultTier !== 'school') return defaultTier
-    if (typeof window !== 'undefined') {
-      const hash = window.location.hash.toLowerCase()
-      const search = window.location.search.toLowerCase()
-      if (hash.includes('superadmin') || hash.includes('admin-login') || search.includes('superadmin')) {
-        return 'superadmin'
-      }
-      if (hash.includes('college') || search.includes('college')) {
-        return 'college'
-      }
-      if (hash.includes('uni') || search.includes('uni')) {
-        return 'university'
-      }
-      return 'school'
-    }
-    return 'school'
+  const [selectedPortal, setSelectedPortal] = useState('school_admin')
+  const [identifier, setIdentifier] = useState('admin.school@cityschool.edu')
+  const [password, setPassword] = useState('password123')
+  const [showPassword, setShowPassword] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [rememberMe, setRememberMe] = useState(true)
+  const [authError, setAuthError] = useState('')
+
+  const activePortalMeta = UNIFIED_PORTALS.find(p => p.id === selectedPortal) || UNIFIED_PORTALS[0]
+
+  const handleSelectPortal = (portal) => {
+    setSelectedPortal(portal.id)
+    setIdentifier(portal.email)
+    setPassword('password123')
+    setAuthError('')
   }
 
-  const [portalTier, setPortalTier] = useState(getInitialTier)
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    setAuthError('')
+    const id = (identifier || '').trim().toLowerCase()
+    const pass = (password || '').trim()
 
-  // Listen to hash changes dynamically and sync preset if desired
-  useEffect(() => {
-    const handleHashChange = () => {
-      if (typeof window !== 'undefined') {
-        const hash = window.location.hash.toLowerCase()
-        if (hash.includes('superadmin') || hash.includes('admin-login')) {
-          setPortalTier('superadmin')
-        } else if (hash.includes('college')) {
-          setPortalTier('college')
-          setPreset('college')
-        } else if (hash.includes('uni')) {
-          setPortalTier('university')
-          setPreset('university')
-        } else {
-          setPortalTier('school')
-          setPreset('school')
-        }
-      }
+    if (!id || !pass) {
+      setAuthError('Please enter both your email address and password.')
+      return
     }
 
-    window.addEventListener('hashchange', handleHashChange)
-    return () => window.removeEventListener('hashchange', handleHashChange)
-  }, [setPreset])
+    setIsLoading(true)
+    setTimeout(() => {
+      const isSuperadminEmail =
+        id === 'admin@schoolms.com' ||
+        id === 'admin@apexed.io' ||
+        id === 'superadmin'
 
-  // Switch tier and update URL hash & theme preset cleanly
-  const handleSwitchTier = (targetTier) => {
-    setPortalTier(targetTier)
-    if (targetTier === 'school') {
-      setPreset('school')
-    } else if (targetTier === 'college') {
-      setPreset('college')
-    } else if (targetTier === 'university') {
-      setPreset('university')
-    }
-    if (typeof window !== 'undefined') {
-      if (targetTier === 'superadmin') {
-        window.location.hash = '#superadmin'
-      } else if (targetTier === 'college') {
-        window.location.hash = '#college-login'
-      } else if (targetTier === 'university') {
-        window.location.hash = '#university-login'
-      } else {
-        window.location.hash = '#school-login'
-      }
-    }
-  }
-
-  // Common props passed to each dedicated login page
-  const commonProps = {
-    onBackToLanding,
-    onOpenTrial,
-    onSwitchTier: handleSwitchTier
+      const targetRole = isSuperadminEmail ? 'superadmin' : selectedPortal
+      login(targetRole, id, rememberMe)
+      setIsLoading(false)
+    }, 300)
   }
 
   return (
-    <>
-      {/* Top-Right Ambient Theme & Dark Mode Controls */}
+    <div className="min-h-screen w-full flex items-center justify-center bg-bg relative overflow-hidden px-4 py-8 sm:py-12 selection:bg-primary selection:text-white font-sans">
+      {/* Ambient Radial Background Accents */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-0 -left-20 w-[500px] h-[500px] bg-primary/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 -right-20 w-[500px] h-[500px] bg-secondary/10 rounded-full blur-3xl"></div>
+      </div>
+
+      {/* Top-Left: Back to Landing Page */}
+      {onBackToLanding && (
+        <div className="absolute top-4 left-4 sm:top-6 sm:left-8 z-30">
+          <button
+            type="button"
+            onClick={onBackToLanding}
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-white/90 dark:bg-slate-900/90 hover:bg-white dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 shadow-2xs hover:shadow-xs transition-all backdrop-blur-xs group cursor-pointer"
+            title="Back to Landing Page"
+          >
+            <ArrowLeft className="w-4 h-4 text-slate-500 group-hover:-translate-x-0.5 transition-transform" />
+            <span>Back to Home</span>
+          </button>
+        </div>
+      )}
+
+      {/* Top-Right: Theme Studio & Dark Mode Controls */}
       <div className="fixed top-4 right-4 z-40 flex items-center gap-2">
         <button
           type="button"
@@ -116,24 +137,260 @@ export const LoginPage = ({ onBackToLanding, onOpenTrial, defaultTier }) => {
         </button>
       </div>
 
-      {portalTier === 'college' && <CollegeLoginPage {...commonProps} />}
-      {portalTier === 'university' && <UniversityLoginPage {...commonProps} />}
-      {portalTier === 'superadmin' && <SuperadminLoginPage {...commonProps} />}
-      {portalTier !== 'college' && portalTier !== 'university' && portalTier !== 'superadmin' && (
-        <SchoolLoginPage {...commonProps} />
-      )}
+      {/* Main Container */}
+      <div className="w-full max-w-[920px] z-10 flex flex-col items-center mt-14 sm:mt-0">
+        {/* Dual-Pane Card */}
+        <div className="w-full rounded-3xl bg-surface border border-border shadow-soft overflow-hidden grid grid-cols-1 md:grid-cols-12 relative">
+          
+          {/* LEFT PANE: Unified School SaaS Branding */}
+          <div
+            className="md:col-span-5 p-5 sm:p-6 md:p-7 flex flex-col justify-between border-b md:border-b-0 md:border-r border-slate-100 dark:border-slate-800 text-white relative overflow-hidden login-hero-pane"
+            style={{ background: 'var(--hero-gradient)' }}
+          >
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border shadow-2xs mb-5 self-start bg-white/20 text-white border-white/30 backdrop-blur-sm">
+                <Sparkles className="w-3.5 h-3.5 text-white" />
+                <span>Unified School Portal (K-10)</span>
+              </div>
 
-      {/* Discreet Demo & Pitch Switcher (Floating at bottom-right for sales & testing) */}
-      <DemoPitchPill
-        activeTier={portalTier}
-        onSwitchTier={handleSwitchTier}
-      />
+              <div className="flex items-center gap-2.5 mb-4">
+                <div className="w-13 h-13 rounded-2xl flex items-center justify-center p-2.5 shadow-md bg-white/20 backdrop-blur-md border border-white/30 text-white">
+                  <School className="w-8 h-8 stroke-[2.2]" />
+                </div>
+                <div className="w-4 h-4 rounded-full border-2 border-white/40 bg-white flex items-center justify-center shadow-xs">
+                  <div className="w-1.5 h-1.5 rounded-full animate-ping bg-amber-400"></div>
+                </div>
+              </div>
+
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-heading">
+                School Management Portal
+              </h1>
+              <div className="mt-1 flex items-center gap-2">
+                <span className="text-xs font-bold text-white/90">Single Sign-In for School & Platform Admins</span>
+              </div>
+              <p className="text-xs sm:text-sm text-white/85 leading-relaxed mt-2 mb-4 md:mb-5">
+                Complete School Academic Operating System for Primary, Middle, Matriculation & Cambridge O-Level institutions.
+              </p>
+
+              {/* Feature Highlights */}
+              <div className="hidden md:block space-y-2">
+                <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 text-white shadow-2xs">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-white/20 text-white">
+                    <CalendarCheck className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-white">Daily Attendance & Absentee Alerts</h4>
+                    <p className="text-[11px] text-white/80 leading-tight">1-click daily roll call & parent SMS notifications.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 text-white shadow-2xs">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-white/20 text-white">
+                    <BookOpen className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-white">Classes, Syllabus & Timetable</h4>
+                    <p className="text-[11px] text-white/80 leading-tight">Manage Playgroup to Grade 10 sections, teachers & exams.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 text-white shadow-2xs">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-white/20 text-white">
+                    <Receipt className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-white">3-Part Bank Challan & Fee Accounts</h4>
+                    <p className="text-[11px] text-white/80 leading-tight">Monthly fee vouchers, reconciliations & campus ledgers.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 text-white shadow-2xs">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-white/20 text-white">
+                    <Award className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-white">School Leaving Certificates (SLC)</h4>
+                    <p className="text-[11px] text-white/80 leading-tight">Instant printable SLC, ID cards & report cards.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="hidden md:flex pt-4 mt-4 border-t border-white/20 items-center justify-between text-[11px] text-white/80">
+              <span className="flex items-center gap-1.5 font-medium">
+                <span className="w-2 h-2 rounded-full animate-pulse bg-emerald-400"></span>
+                <span>Academic Session: 2026-2027</span>
+              </span>
+              <span className="font-semibold text-white">School ERP v3.0</span>
+            </div>
+          </div>
+
+          {/* RIGHT PANE: Unified Sign In Form */}
+          <div className="md:col-span-7 p-5 sm:p-8 flex flex-col justify-between bg-surface text-text">
+            <div>
+              {/* Header */}
+              <div className="mb-5">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl sm:text-2xl font-bold text-text tracking-tight">
+                    Sign In to EIMS
+                  </h2>
+                  <span className="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full border bg-primary-soft text-primary border-primary/20">
+                    Unified Login
+                  </span>
+                </div>
+                <p className="text-xs text-muted mt-1">
+                  Enter your administrator credentials or select an access profile below.
+                </p>
+              </div>
+
+              {/* Quick Account Selector: School Admin vs Super Admin */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-5">
+                {UNIFIED_PORTALS.map((portal) => {
+                  const Icon = portal.icon
+                  const isSelected = selectedPortal === portal.id
+                  return (
+                    <button
+                      key={portal.id}
+                      type="button"
+                      onClick={() => handleSelectPortal(portal)}
+                      className={`p-3 rounded-xl text-left transition-all cursor-pointer border flex flex-col justify-between ${
+                        isSelected
+                          ? 'border-primary bg-primary-soft/70 ring-2 ring-primary/25 shadow-xs'
+                          : 'border-border hover:border-primary/40 bg-bg/50 hover:bg-primary-soft/30'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-bold text-text flex items-center gap-1.5">
+                          <Icon className="w-4 h-4 text-primary" />
+                          <span>{portal.name}</span>
+                        </span>
+                        {isSelected && <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />}
+                      </div>
+                      <p className="text-[10px] text-muted leading-tight line-clamp-2">
+                        {portal.subtitle}
+                      </p>
+                      <div className="mt-2 pt-1.5 border-t border-border/60 flex items-center justify-between text-[10px]">
+                        <span className="font-mono text-muted truncate">{portal.email}</span>
+                        <span className="font-bold text-primary shrink-0 ml-1">{portal.badge}</span>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+
+              {authError && (
+                <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 flex items-start gap-2.5 text-rose-800 text-xs">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
+                  <span>{authError}</span>
+                </div>
+              )}
+
+              {/* Credentials Form */}
+              <form onSubmit={handleSubmit} className="space-y-3.5">
+                <div>
+                  <label className="block text-[11px] font-bold text-muted uppercase tracking-wider mb-1">
+                    Email or Username
+                  </label>
+                  <div className="relative">
+                    <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
+                    <input
+                      type="text"
+                      value={identifier}
+                      onChange={(e) => setIdentifier(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-bg border border-border text-text placeholder-muted text-xs sm:text-sm focus:outline-none focus:ring-4 focus:ring-primary/15 focus:border-primary transition-all font-medium"
+                      placeholder="admin.school@cityschool.edu or admin@schoolms.com"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-[11px] font-bold text-muted uppercase tracking-wider">
+                      Password
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setPassword('password123')}
+                      className="text-xs font-bold text-primary hover:underline transition-colors cursor-pointer"
+                    >
+                      Fill Demo Password
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-bg border border-border text-text placeholder-muted text-xs sm:text-sm focus:outline-none focus:ring-4 focus:ring-primary/15 focus:border-primary transition-all"
+                      placeholder="••••••••••••"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted hover:text-text transition-colors cursor-pointer"
+                      title={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-xs pt-0.5">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      className="w-4 h-4 rounded border-border text-primary focus:ring-primary accent-indigo-600 cursor-pointer"
+                    />
+                    <span className="text-text font-medium">Keep me signed in</span>
+                  </label>
+                  <span className="text-muted font-medium">Encrypted Session</span>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="btn-hero-gradient w-full py-3 rounded-xl font-bold text-xs sm:text-sm text-white shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] disabled:opacity-50"
+                >
+                  {isLoading ? (
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  ) : (
+                    <>
+                      <span>Sign In as {activePortalMeta.name}</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+              </form>
+            </div>
+
+            {/* Bottom Registration & Trial Row */}
+            <div className="pt-4 mt-5 border-t border-border">
+              <button
+                type="button"
+                onClick={() => {
+                  if (onOpenTrial) onOpenTrial()
+                  else if (onBackToLanding) onBackToLanding()
+                }}
+                className="w-full py-2.5 rounded-xl border border-primary/25 bg-primary-soft/60 hover:bg-primary-soft text-primary text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs group"
+              >
+                <School className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                <span>Register New School / Start 14-Day Free Trial</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
 
       <ThemeCustomizerModal
         isOpen={isThemeModalOpen}
         onClose={() => setIsThemeModalOpen(false)}
       />
-    </>
+    </div>
   )
 }
 

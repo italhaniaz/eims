@@ -17,7 +17,7 @@ export const AppointmentLetterModal = ({
 }) => {
   if (!isOpen || !selectedStaff) return null
 
-  const instituteName = currentInstitute?.name || 'CENTRAL MODEL SCHOOL & COLLEGE'
+  const instituteName = currentInstitute?.name || 'CENTRAL MODEL SCHOOL'
   const instituteCampus = currentInstitute?.campus || 'Main Campus, Lahore'
   const instituteAddress = currentInstitute?.address || '12-A Kashmir Block, Allama Iqbal Town, Lahore'
   const institutePhone = currentInstitute?.phone || '+92 42 35889900'

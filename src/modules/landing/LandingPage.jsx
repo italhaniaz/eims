@@ -59,7 +59,7 @@ const STARBURST_POINTS = (() => {
   return points.join(' ')
 })()
 
-// Educational Plans Configuration (Dedicated Cards & Modal Specifications)
+// Educational Plans Configuration (School-Focused Packages)
 const PLAN_CONFIGS = {
   trial: {
     id: 'trial',
@@ -71,8 +71,8 @@ const PLAN_CONFIGS = {
     priceSub: 'No Credit Card · 14 Days Full Access',
     badge: '14 Days full testing access',
     badgeColor: 'text-emerald-700',
-    description: 'Enter your institutional details below to immediately launch an isolated 14-day evaluation request for your school or college.',
-    buttonText: 'Submit Institution Registration Request',
+    description: 'Enter your school details below to immediately launch an isolated 14-day evaluation request for your school.',
+    buttonText: 'Submit School Registration Request',
     buttonClass: 'bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md shadow-emerald-600/20',
     iconBg: 'bg-emerald-50 text-emerald-600 border border-emerald-200/80'
   },
@@ -80,46 +80,31 @@ const PLAN_CONFIGS = {
     id: 'school',
     wing: 'school',
     isMultiCampus: false,
-    title: 'School Plan (Primary & Matric)',
+    title: 'School Plan (Primary to Matric)',
     planName: 'School Plan',
     priceDisplay: 'PKR 25,000/mo',
     priceSub: 'Up to 1,500 Students · 2 Campuses',
     badge: '14 Days full testing access',
     badgeColor: 'text-emerald-800',
-    description: 'Submit institutional onboarding details for primary or matriculation school campus.',
-    buttonText: 'Submit Institution Registration Request',
+    description: 'Submit institutional onboarding details for your primary, middle, or secondary school campus.',
+    buttonText: 'Submit School Registration Request',
     buttonClass: 'bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md shadow-emerald-600/20',
     iconBg: 'bg-emerald-50 text-emerald-600 border border-emerald-200/80'
   },
-  college: {
-    id: 'college',
-    wing: 'college',
-    isMultiCampus: false,
-    title: 'College Plan (Intermediate & Inter)',
-    planName: 'College Plan',
-    priceDisplay: 'PKR 35,000/mo',
-    priceSub: 'Up to 3,000 Students · 3 Campuses',
+  enterprise: {
+    id: 'enterprise',
+    wing: 'multi-campus',
+    isMultiCampus: true,
+    title: 'Multi-Branch School Network',
+    planName: 'School Network Plan',
+    priceDisplay: 'PKR 45,000/mo',
+    priceSub: '5,000+ Students · Multi-Branch HQ',
     badge: '14 Days full testing access',
     badgeColor: 'text-indigo-700',
-    description: 'Submit higher secondary college registration (F.Sc, ICS, FA, I.Com) for Super Admin review.',
-    buttonText: 'Submit Institution Registration Request',
+    description: 'Submit multi-branch school network application for unified central Super Admin & branch governance.',
+    buttonText: 'Submit School Registration Request',
     buttonClass: 'bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md shadow-emerald-600/20',
     iconBg: 'bg-indigo-50 text-indigo-600 border border-indigo-200/80'
-  },
-  university: {
-    id: 'university',
-    wing: 'university',
-    isMultiCampus: true,
-    title: 'Apex Enterprise / University Plan',
-    planName: 'Apex Enterprise Plan',
-    priceDisplay: 'PKR 55,000/mo',
-    priceSub: '8,000+ Students · Multi-Campus HQ',
-    badge: '14 Days full testing access',
-    badgeColor: 'text-blue-700',
-    description: 'Submit multi-campus university network application for dedicated enterprise portal credentialing.',
-    buttonText: 'Submit Institution Registration Request',
-    buttonClass: 'bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md shadow-emerald-600/20',
-    iconBg: 'bg-blue-50 text-blue-600 border border-blue-200/80'
   }
 }
 
@@ -146,7 +131,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
     }
   }, [])
   const [activeSection, setActiveSection] = useState('hero')
-  const [activeTab, setActiveTab] = useState('school') // 'school', 'college', 'university', 'custom'
+  const [activeTab, setActiveTab] = useState('school') // 'school', 'early-years', 'matric', 'custom'
   const [billingCycle, setBillingCycle] = useState('monthly') // 'monthly', 'annual'
   const [isTrialModalOpen, setIsTrialModalOpen] = useState(() => (typeof window !== 'undefined' && window.location.hash === '#trial'))
   const [activeModalPlan, setActiveModalPlan] = useState('trial')
@@ -240,7 +225,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
     email: '',
     phone: '',
     city: 'Lahore',
-    wing: 'school', // 'school', 'college', 'university', 'multi-campus'
+    wing: 'school', // 'school', 'multi-branch'
     adminPassword: '',
     confirmPassword: '',
     notes: '',
@@ -317,14 +302,8 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
   // Smart Plan Modal Opener: Dynamically configures modal title, badge, icon, and default tier
   const openPlanModal = (planKey = 'trial') => {
     setActiveModalPlan(planKey)
-    setModalStep(2) // Jump directly to Step 2 (Enter Details) with preselected plan
-    if (planKey === 'school') {
-      setTrialForm(prev => ({ ...prev, wing: 'school' }))
-    } else if (planKey === 'college') {
-      setTrialForm(prev => ({ ...prev, wing: 'college' }))
-    } else if (planKey === 'university') {
-      setTrialForm(prev => ({ ...prev, wing: 'university' }))
-    } else if (planKey === 'custom') {
+    setModalStep(2)
+    if (planKey === 'enterprise') {
       setTrialForm(prev => ({ ...prev, wing: 'multi-campus' }))
     } else {
       setTrialForm(prev => ({ ...prev, wing: 'school' }))
@@ -332,14 +311,10 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
     setIsTrialModalOpen(true)
   }
 
-  // Smart Trial Modal Opener that pre-selects the clicked educational wing
+  // Smart Trial Modal Opener
   const handleOpenTrialModal = (targetWing = 'school') => {
-    if (targetWing === 'college') {
-      openPlanModal('college')
-    } else if (targetWing === 'university') {
-      openPlanModal('university')
-    } else if (targetWing === 'custom') {
-      openPlanModal('university')
+    if (targetWing === 'enterprise' || targetWing === 'custom') {
+      openPlanModal('enterprise')
     } else {
       openPlanModal('school')
     }
@@ -349,7 +324,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
   const handleSubmitTrial = (e) => {
     e.preventDefault()
     if (!trialForm.instituteName.trim()) {
-      showToast('Please enter your Institution Name.')
+      showToast('Please enter your School Name.')
       return
     }
     if (!trialForm.email.trim()) {
@@ -380,7 +355,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
         const fullPhone = trialForm.phone.trim().startsWith('+') ? trialForm.phone.trim() : `+92 ${trialForm.phone.trim().replace(/^0+/, '')}`
         const newInstId = `inst-trial-${Date.now().toString().slice(-4)}`
         const approvalId = `appr-reg-${Date.now().toString().slice(-6)}`
-        const instCode = trialForm.instituteName.replace(/[^A-Za-z0-9]/g, '').slice(0, 4).toUpperCase() || 'INST'
+        const instCode = trialForm.instituteName.replace(/[^A-Za-z0-9]/g, '').slice(0, 4).toUpperCase() || 'SCHL'
 
         const currentPlanConfig = PLAN_CONFIGS[activeModalPlan] || PLAN_CONFIGS.trial
         const planTierName = currentPlanConfig.planName
@@ -388,32 +363,28 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
         let planPrice = 0
         if (activeModalPlan === 'school') {
           planPrice = billingCycle === 'annual' ? 21250 : 25000
-        } else if (activeModalPlan === 'college') {
-          planPrice = billingCycle === 'annual' ? 29750 : 35000
-        } else if (activeModalPlan === 'university') {
-          planPrice = billingCycle === 'annual' ? 46750 : 55000
+        } else if (activeModalPlan === 'enterprise') {
+          planPrice = billingCycle === 'annual' ? 38250 : 45000
         }
 
-        const wingType = trialForm.wing === 'school' ? 'School' : trialForm.wing === 'college' ? 'College' : trialForm.wing === 'university' ? 'University' : 'Multi-Campus Hybrid'
-
-        // 1. Create Institute Entry in storedData
+        // 1. Create School Entry in storedData
         const newInstitute = {
           id: newInstId,
           name: trialForm.instituteName.trim(),
           code: instCode,
-          contactPerson: trialForm.adminName.trim() || 'Principal Administrator',
+          contactPerson: trialForm.adminName.trim() || 'School Principal',
           email: trialForm.email.trim(),
           phone: fullPhone,
           address: `${trialForm.city || 'Lahore'}, Pakistan`,
           city: trialForm.city || 'Lahore',
           country: 'Pakistan',
           planTier: planTierName,
-          planType: trialForm.wing.toUpperCase(),
-          type: wingType,
+          planType: 'SCHOOL',
+          type: 'School',
           subscriptionStatus: 'PENDING_APPROVAL',
           lifecycleStatus: 'Pending',
           trialEndsAt: new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
-          enabledTiers: [trialForm.wing === 'university' ? 'undergraduate' : trialForm.wing],
+          enabledTiers: ['school'],
           createdAt: new Date().toISOString().slice(0, 10),
           status: 'Pending Approval',
           wingsCount: 1,
@@ -435,7 +406,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
           instituteName: trialForm.instituteName.trim(),
           planId: `plan-${activeModalPlan}`,
           planName: planTierName,
-          enabledTiers: [trialForm.wing === 'university' ? 'undergraduate' : trialForm.wing],
+          enabledTiers: ['school'],
           status: 'PENDING_APPROVAL',
           billingCycle: activeModalPlan === 'trial' ? '14-day trial' : billingCycle,
           pricePKR: planPrice,
@@ -521,84 +492,84 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
     }, 600)
   }
 
-  // Tab previews data for live mockup
+  // Tab previews data for live school mockup
   const wingPreviews = {
-    school: {
-      title: 'School Wing (Primary to Matric / O-Levels)',
-      tag: 'Matriculation & Cambridge Stream',
-      description: 'Engineered specifically for junior schools, middle branches, and matriculation academies. Manage class timetables, daily period attendance, computerized fee challans, and progress reports.',
+    preschool: {
+      title: 'Early Years & Montessori Wing (Playgroup - KG)',
+      tag: 'Early Childhood Education',
+      description: 'Warm, structured tracking for Playgroup, Nursery, Prep & KG sections. Manage student portfolios, parent SMS alerts, daily activity notes, and fee challans.',
       metrics: [
-        { label: 'Active Students', value: '1,420', sub: 'Matric & O-Levels' },
+        { label: 'Active Learners', value: '320', sub: 'Playgroup to KG' },
+        { label: 'Daily Attendance', value: '97.2%', sub: 'Parent SMS Synced' },
+        { label: 'Early Sections', value: '12', sub: 'Morning Batches' },
+        { label: 'Montessori Staff', value: '18', sub: 'Class Teachers' }
+      ],
+      features: [
+        'Digital attendance roll call with automated guardian alerts',
+        'Visual progress & sensory milestone report cards',
+        'Monthly 3-copy computerized fee challans with 1Link ID',
+        'Safe transport route tracking & guardian pickup cards'
+      ]
+    },
+    school: {
+      title: 'Primary & Middle School Wing (Grades 1 - 8)',
+      tag: 'Elementary & Foundation Stream',
+      description: 'Engineered specifically for primary and middle school branches. Manage class timetables, daily period attendance, homework diaries, computerized fee challans, and progress reports.',
+      metrics: [
+        { label: 'Active Students', value: '860', sub: 'Grade 1 to Grade 8' },
         { label: 'Fee Collection', value: '98.4%', sub: 'JazzCash / 1Link' },
-        { label: 'Classes & Sections', value: '38', sub: 'Playgroup to Grade 10' },
-        { label: 'Faculty Members', value: '54', sub: 'Subject Specialists' }
+        { label: 'Classes & Sections', value: '26', sub: 'Super & Star Sections' },
+        { label: 'School Teachers', value: '36', sub: 'Subject Specialists' }
       ],
       features: [
         'Automated 3-copy fee challans with barcode & 1Bill reference',
         'Subject-wise timetable scheduler with collision detection',
         'Daily SMS and WhatsApp absent alerts sent to parents',
-        'Matric & O-Levels terminal examination marksheets'
+        'Terminal examination marksheets & printable admit cards'
       ]
     },
-    college: {
-      title: 'College Wing (Intermediate - F.Sc, ICS, FA, I.Com)',
-      tag: 'Higher Secondary & Pre-Engineering/Medical',
-      description: 'Tailored for intermediate colleges. Supports BISE board affiliations, academic session transitions, practical lab scheduling, automated roll number slips, and merit-based admissions.',
+    secondary: {
+      title: 'Secondary High School (Matric & O-Levels, Grades 9 - 10)',
+      tag: 'SSC Matriculation & Cambridge O-Levels',
+      description: 'Complete secondary school governance for Science, Computer, Arts & O-Level streams. Manage admit cards, term exams, result gazettes, and School Leaving Certificates (SLC).',
       metrics: [
-        { label: 'Active Students', value: '2,850', sub: 'Part-I & Part-II' },
-        { label: 'Board Pass Rate', value: '99.1%', sub: 'BISE Affiliated' },
-        { label: 'Program Wings', value: '6', sub: 'F.Sc, ICS, FA, I.Com' },
-        { label: 'Faculty Staff', value: '88', sub: 'College Lecturers' }
+        { label: 'High School Students', value: '540', sub: 'Grade 9 & Grade 10' },
+        { label: 'Exam Pass Rate', value: '99.1%', sub: 'BISE & CAIE Ready' },
+        { label: 'Subject Streams', value: '4', sub: 'Bio, CS, Arts, O-Level' },
+        { label: 'Senior Teachers', value: '24', sub: 'Science & Math' }
       ],
       features: [
-        'BISE examination board registration & roll number tracking',
-        'Group-wise subject electives (Medical, Engineering, Computer Science)',
-        'Merit list generator for intermediate admissions pipeline',
-        'College library book checkout & cataloging module'
-      ]
-    },
-    university: {
-      title: 'University Wing (4-Year BS Degrees & Semesters)',
-      tag: 'Higher Education Commission (HEC) Aligned',
-      description: 'Comprehensive undergraduate degree governance with semester credit hours, GPA/CGPA grading formulas, faculty departments, thesis tracking, and transcript printing.',
-      metrics: [
-        { label: 'Active Undergrads', value: '6,400', sub: '8 BS Programs' },
-        { label: 'Credit Hours Tracked', value: '136', sub: 'Per Degree Scheme' },
-        { label: 'Academic Departments', value: '9', sub: 'CS, BBA, SE, Math' },
-        { label: 'Faculty Professors', value: '142', sub: 'PhD & M.Phil' }
-      ],
-      features: [
-        'Automated CGPA calculation with relative & absolute grading schemes',
-        'Semester course registration with prerequisite validation',
-        'Departmental faculty workload & lecture room distribution',
-        'Official transcript and semester result gazette generator'
+        'Printable exam admit cards, date sheets & result gazettes',
+        'School Leaving Certificate (SLC) & character certificate generator',
+        'Attendance threshold tracking & parent PTM scheduling',
+        'Science & computer lab scheduling with timetable integration'
       ]
     },
     custom: {
-      title: 'Custom Multi-Campus Conglomerate',
-      tag: 'Unified Multi-Wing Headquarters',
-      description: 'Ideal for large educational networks operating multiple branches across Pakistan. Manage schools, colleges, and university wings under a centralized Super Admin headquarters.',
+      title: 'Multi-Branch School Network HQ',
+      tag: 'Unified Multi-Campus School Headquarters',
+      description: 'Ideal for school networks operating multiple branches across Pakistan. Manage all school branches under a centralized Super Admin headquarters.',
       metrics: [
-        { label: 'Total Enrolled', value: '14,800+', sub: 'Across 12 Campuses' },
-        { label: 'Network MRR', value: 'PKR 1.2M', sub: 'Reconciled Ledger' },
-        { label: 'Active Branches', value: '12', sub: 'Lahore, Isb, Khi' },
+        { label: 'Total Enrolled', value: '8,400+', sub: 'Across 10 School Branches' },
+        { label: 'Network Revenue', value: 'PKR 1.2M', sub: 'Reconciled Ledger' },
+        { label: 'Active Campuses', value: '10', sub: 'Lahore, Isb, Khi' },
         { label: 'System Uptime', value: '99.98%', sub: 'Cloud Isolated' }
       ],
       features: [
-        'Central Super Admin dashboard with real-time financial consolidated ledger',
-        'Cross-campus student transfer with historical academic record retention',
+        'Central Super Admin dashboard with consolidated school financial ledger',
+        'Cross-campus student transfer with complete academic history retention',
         'Headquarters fee revenue aggregation & 1Link corporate clearing',
-        'Platform security center with IP whitelisting & audit logs'
+        'Platform security center with session governance & audit logs'
       ]
     }
   }
 
-  const currentPreview = wingPreviews[activeTab]
+  const currentPreview = wingPreviews[activeTab] || wingPreviews.school
 
   // Navbar items matching the page sections in exact scroll order
   const navItems = [
     { id: 'features', label: 'Core Features' },
-    { id: 'wings', label: 'Educational Wings' },
+    { id: 'wings', label: 'School Wings' },
     { id: 'preview', label: 'Dashboard Preview' },
     { id: 'pricing', label: 'Packages & Free Trial' },
     { id: 'faq', label: 'FAQ' }
@@ -897,20 +868,20 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
           {/* Eyebrow Badge */}
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#f5eeff] text-emerald-800 border border-emerald-200 text-xs font-bold shadow-xs mb-6 animate-in fade-in">
             <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Next-Gen Multi-Campus Academic Operating System</span>
+            <span>Next-Gen School Management Operating System</span>
           </div>
 
           {/* Hero Headline */}
           <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 font-heading tracking-tight max-w-3xl mx-auto leading-tight">
             One Intelligent Platform to Run <br className="hidden sm:inline" />
             <span className="text-hero-gradient font-black">
-              Schools, Colleges & Universities
+              Primary, Middle &amp; High Schools
             </span>
           </h1>
 
           {/* Subtitle */}
           <p className="mt-5 text-sm sm:text-base lg:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed font-normal">
-            Eliminate chaotic spreadsheets and outdated software. Unify computerized fee challans (1Link/JazzCash), digital attendance, class timetables, and multi-tier examinations in a single, elegant cloud portal.
+            Eliminate chaotic spreadsheets and outdated software. Unify computerized fee challans (1Link/JazzCash), digital attendance, class timetables, and terminal examinations in a single, elegant school portal.
           </p>
 
           {/* Hero CTAs */}
@@ -1047,50 +1018,50 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
         </div>
       </section>
 
-      {/* 5. EDUCATIONAL WINGS SHOWCASE SECTION */}
+      {/* 5. SCHOOL WINGS SHOWCASE SECTION */}
       <section id="wings" className="py-20 bg-gradient-to-b from-white to-[#fcfaff]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
           <div className="text-center max-w-3xl mx-auto mb-14">
             <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 bg-[#f5eeff] px-3 py-1 rounded-full border border-emerald-200">
-              Engineered for Every Educational Wing
+              Engineered for Every School Wing
             </span>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 font-heading tracking-tight mt-3">
-              One Architecture. Endless Scalability.
+              One School Architecture. Every Grade Covered.
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 mt-2">
-              Whether you govern a standalone Montessori, an intermediate pre-medical college, or a multi-campus university network, ApexEd fits your institutional needs without compromises.
+              Whether you run an Early Years Montessori, a Primary &amp; Middle school, or a full Matric &amp; O-Levels campus network, EIMS fits your school workflows without compromises.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             
-            {/* Wing 1: School */}
+            {/* Wing 1: Early Years / Montessori */}
             <div className="p-6 rounded-3xl bg-white border border-emerald-100 hover:border-emerald-300 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group">
               <div>
-                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center justify-center mb-5 group-hover:scale-105 transition-transform">
-                  <School className="w-6 h-6 stroke-[2.2]" />
+                <div className="w-12 h-12 rounded-2xl bg-pink-50 text-pink-700 border border-pink-200 flex items-center justify-center mb-5 group-hover:scale-105 transition-transform">
+                  <Sparkles className="w-6 h-6 stroke-[2.2]" />
                 </div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800 bg-[#f5eeff] px-2.5 py-0.5 rounded-md border border-emerald-200">
-                  Primary & Secondary
+                <span className="text-[11px] font-bold uppercase tracking-wider text-pink-700 bg-pink-50 px-2.5 py-0.5 rounded-md border border-pink-200">
+                  Playgroup - KG
                 </span>
-                <h3 className="text-xl font-bold text-slate-900 mt-2">School Wing</h3>
+                <h3 className="text-xl font-bold text-slate-900 mt-2">Early Years &amp; Montessori</h3>
                 <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                  Tailored for Matriculation & Cambridge O-Levels. Includes parent communication, class timetables, daily attendance, and auto fee vouchers.
+                  Structured for Playgroup, Nursery, Prep &amp; KG. Track daily attendance, parent SMS alerts, class activities, and monthly fee challans.
                 </p>
 
                 <ul className="mt-5 space-y-2 text-xs text-slate-600">
                   <li className="flex items-center gap-2">
                     <Check className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Matric & O-Levels report cards</span>
+                    <span>Early childhood progress &amp; activity tracking</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Barcode-scannable 3-copy fee vouchers</span>
+                    <span>Automated guardian SMS &amp; pickup alerts</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Parent SMS / WhatsApp notification alerts</span>
+                    <span>School transport route &amp; bus tracking</span>
                   </li>
                 </ul>
               </div>
@@ -1106,83 +1077,83 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
               </div>
             </div>
 
-            {/* Wing 2: College */}
+            {/* Wing 2: Primary & Middle */}
             <div className="p-6 rounded-3xl bg-white border border-emerald-100 hover:border-emerald-300 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group">
               <div>
-                <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-700 border border-indigo-200 flex items-center justify-center mb-5 group-hover:scale-105 transition-transform">
-                  <Building2 className="w-6 h-6 stroke-[2.2]" />
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center justify-center mb-5 group-hover:scale-105 transition-transform">
+                  <School className="w-6 h-6 stroke-[2.2]" />
                 </div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-md border border-indigo-200">
-                  Intermediate & A-Levels
+                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800 bg-[#f5eeff] px-2.5 py-0.5 rounded-md border border-emerald-200">
+                  Grades 1 - 8
                 </span>
-                <h3 className="text-xl font-bold text-slate-900 mt-2">College Wing</h3>
+                <h3 className="text-xl font-bold text-slate-900 mt-2">Primary &amp; Middle Wing</h3>
                 <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                  Engineered for F.Sc (Pre-Med/Eng), ICS, FA, and I.Com colleges. Manage BISE board registrations, college admissions, and practical labs.
+                  Complete elementary operations for Classes 1 to 8. Manage custom sections, weekly timetables, homework diaries, and 3-part bank fee vouchers.
                 </p>
 
                 <ul className="mt-5 space-y-2 text-xs text-slate-600">
                   <li className="flex items-center gap-2">
                     <Check className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>BISE Board affiliations & roll number slips</span>
+                    <span>Barcode-scannable 3-copy bank fee vouchers</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Intermediate admissions merit pipeline</span>
+                    <span>Custom section rosters &amp; class promotion</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Multi-program subject group allocations</span>
+                    <span>Daily roll call &amp; teacher assignment matrix</span>
                   </li>
                 </ul>
               </div>
 
               <div className="mt-6 pt-4 border-t border-slate-100">
                 <button
-                  onClick={() => handleOpenTrialModal('college')}
+                  onClick={() => handleOpenTrialModal('school')}
                   className="w-full py-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                 >
-                  <span>Start College Free Trial</span>
+                  <span>Start School Free Trial</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
 
-            {/* Wing 3: University */}
+            {/* Wing 3: Matric & O-Levels */}
             <div className="p-6 rounded-3xl bg-white border border-emerald-100 hover:border-emerald-300 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group">
               <div>
-                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center mb-5 group-hover:scale-105 transition-transform">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-700 border border-indigo-200 flex items-center justify-center mb-5 group-hover:scale-105 transition-transform">
                   <GraduationCap className="w-6 h-6 stroke-[2.2]" />
                 </div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200">
-                  Higher Education & BS
+                <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-md border border-indigo-200">
+                  Grades 9 - 10
                 </span>
-                <h3 className="text-xl font-bold text-slate-900 mt-2">University Wing</h3>
+                <h3 className="text-xl font-bold text-slate-900 mt-2">Matric &amp; O-Levels Wing</h3>
                 <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                  Full 4-Year BS degree management aligned with HEC guidelines. Supports credit hours, semester GPA/CGPA grading, and academic faculties.
+                  High school academic engine for Science, Computer &amp; Cambridge O-Level streams. Print admit cards, result gazettes, and School Leaving Certificates (SLC).
                 </p>
 
                 <ul className="mt-5 space-y-2 text-xs text-slate-600">
                   <li className="flex items-center gap-2">
                     <Check className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Automated GPA & CGPA grading matrices</span>
+                    <span>Printable exam admit cards &amp; tabulation sheets</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Semester course schemes & credit hours</span>
+                    <span>Matric &amp; O-Level syllabus &amp; result gazettes</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Faculty departments & degree requirements</span>
+                    <span>Official SLC &amp; character certificates</span>
                   </li>
                 </ul>
               </div>
 
               <div className="mt-6 pt-4 border-t border-slate-100">
                 <button
-                  onClick={() => handleOpenTrialModal('university')}
+                  onClick={() => handleOpenTrialModal('enterprise')}
                   className="w-full py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                 >
-                  <span>Start University Trial</span>
+                  <span>Start Multi-Branch Trial</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -1201,14 +1172,25 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
               Interactive Dashboard Preview
             </span>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading tracking-tight mt-3">
-              Designed for Speed, Clarity, and Institutional Control
+              Designed for Speed, Clarity, and School Control
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 mt-2">
-              Select an educational wing below to inspect how ApexEd adapts interfaces, quotas, and workflows seamlessly.
+              Select a school wing below to inspect how EIMS organizes classrooms, sections, fees, and academic workflows seamlessly.
             </p>
 
-            {/* Wing Switcher Pills */}
+            {/* School Wing Switcher Pills */}
             <div className="flex flex-wrap items-center justify-center gap-2 mt-6 p-1.5 bg-slate-100/80 rounded-2xl border border-slate-200/80 max-w-2xl mx-auto">
+              <button
+                onClick={() => setActiveTab('preschool')}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  activeTab === 'preschool'
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-emerald-800 hover:bg-white'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Early Years (KG)</span>
+              </button>
               <button
                 onClick={() => setActiveTab('school')}
                 className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
@@ -1218,29 +1200,18 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                 }`}
               >
                 <School className="w-3.5 h-3.5" />
-                <span>School Wing</span>
+                <span>Primary &amp; Middle</span>
               </button>
               <button
-                onClick={() => setActiveTab('college')}
+                onClick={() => setActiveTab('secondary')}
                 className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  activeTab === 'college'
-                    ? 'bg-emerald-600 text-white shadow-xs'
-                    : 'text-slate-600 hover:text-emerald-800 hover:bg-white'
-                }`}
-              >
-                <Building2 className="w-3.5 h-3.5" />
-                <span>College Wing</span>
-              </button>
-              <button
-                onClick={() => setActiveTab('university')}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  activeTab === 'university'
+                  activeTab === 'secondary'
                     ? 'bg-emerald-600 text-white shadow-xs'
                     : 'text-slate-600 hover:text-emerald-800 hover:bg-white'
                 }`}
               >
                 <GraduationCap className="w-3.5 h-3.5" />
-                <span>University Wing</span>
+                <span>Matric &amp; O-Levels</span>
               </button>
               <button
                 onClick={() => setActiveTab('custom')}
@@ -1251,7 +1222,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                 }`}
               >
                 <Sliders className="w-3.5 h-3.5" />
-                <span>Multi-Campus Group</span>
+                <span>Multi-Branch HQ</span>
               </button>
             </div>
           </div>
@@ -1352,8 +1323,8 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 text-center divide-y sm:divide-y-0 sm:divide-x divide-purple-800/60">
             <div className="pt-4 sm:pt-0">
               <span className="text-3xl sm:text-4xl font-extrabold font-heading text-white tracking-tight block">50,000+</span>
-              <span className="text-xs sm:text-sm font-semibold text-purple-200 mt-1 block">Active Students Managed</span>
-              <span className="text-[10px] text-purple-400 block mt-0.5">Across School & College Wings</span>
+              <span className="text-xs sm:text-sm font-semibold text-purple-200 mt-1 block">Active School Students</span>
+              <span className="text-[10px] text-purple-400 block mt-0.5">Across Playgroup to Grade 10</span>
             </div>
             <div className="pt-4 sm:pt-0 sm:pl-6">
               <span className="text-3xl sm:text-4xl font-extrabold font-heading text-white tracking-tight block">150+</span>
@@ -1413,7 +1384,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-stretch">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch max-w-5xl mx-auto">
             
             {/* TIER 0: FREE EVALUATION TIER */}
             <div className="rounded-3xl border-2 border-emerald-400 bg-white p-6 flex flex-col justify-between shadow-md relative overflow-hidden">
@@ -1433,7 +1404,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
 
                 <h3 className="text-xl font-extrabold text-slate-900">14-Day Free Trial</h3>
                 <p className="text-xs text-slate-500 mt-1">
-                  Full evaluation access for schools exploring ApexEd.
+                  Full evaluation access for schools exploring EIMS.
                 </p>
 
                 <div className="mt-4 mb-5 p-3 rounded-xl bg-emerald-50/60 border border-emerald-100">
@@ -1456,7 +1427,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span><strong>1 Campus</strong> branch</span>
+                    <span><strong>1 School Campus</strong></span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
@@ -1464,7 +1435,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>Core fees, attendance & exams</span>
+                    <span>Core fees, attendance &amp; exams</span>
                   </li>
                 </ul>
               </div>
@@ -1491,7 +1462,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                   </span>
                 </div>
 
-                <h3 className="text-xl font-extrabold text-slate-900">Primary & Matric</h3>
+                <h3 className="text-xl font-extrabold text-slate-900">Primary to Matric</h3>
                 <p className="text-xs text-slate-500 mt-1">
                   Complete management for growing schools.
                 </p>
@@ -1516,7 +1487,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span><strong>2 Campuses</strong></span>
+                    <span><strong>2 School Campuses</strong></span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
@@ -1539,89 +1510,29 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
               </div>
             </div>
 
-            {/* TIER 2: COLLEGE PLAN */}
-            <div className="rounded-3xl border border-indigo-200 bg-white p-6 flex flex-col justify-between shadow-xs hover:border-indigo-300 transition-all">
+            {/* TIER 2: MULTI-BRANCH SCHOOL NETWORK */}
+            <div className="rounded-3xl border border-indigo-300 ring-2 ring-indigo-500/20 bg-gradient-to-b from-white to-[#f5eeff]/30 p-6 flex flex-col justify-between shadow-xs">
               <div>
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-800 flex items-center justify-center">
                     <Building2 className="w-4 h-4" />
                   </div>
-                  <span className="text-xs font-bold uppercase text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200">
-                    College Plan
+                  <span className="text-xs font-bold uppercase text-indigo-800 bg-white px-2 py-0.5 rounded-md border border-indigo-200">
+                    School Network
                   </span>
                 </div>
 
-                <h3 className="text-xl font-extrabold text-slate-900">Intermediate & Inter</h3>
+                <h3 className="text-xl font-extrabold text-slate-900">Multi-Branch Schools</h3>
                 <p className="text-xs text-slate-500 mt-1">
-                  Built for colleges and higher secondary institutions.
+                  For school chains and multi-branch groups.
                 </p>
 
-                <div className="mt-4 mb-5 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                <div className="mt-4 mb-5 p-3 rounded-xl bg-white border border-indigo-100 shadow-2xs">
                   <div className="flex items-baseline gap-1 font-heading">
-                    <span className="text-lg font-bold text-slate-500">₨</span>
-                    <span className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-                      {billingCycle === 'annual' ? '29,750' : '35,000'}
-                    </span>
-                    <span className="text-xs font-medium text-slate-500 ml-1">/ month</span>
-                  </div>
-                  <div className="text-xs text-slate-500 mt-1">
-                    {billingCycle === 'annual' ? 'Billed annually (Save 15%)' : 'Standard monthly billing'}
-                  </div>
-                </div>
-
-                <ul className="space-y-2.5 text-xs text-slate-600">
-                  <li className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                    <span>Up to <strong>3,000 Students</strong></span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                    <span><strong>3 Campuses</strong></span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                    <span><strong>100 Staff Accounts</strong></span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                    <span>BISE Board Registry & Admissions</span>
-                  </li>
-                </ul>
-              </div>
-
-              <div className="mt-6 pt-4 border-t border-slate-100">
-                <button
-                  onClick={() => openPlanModal('college')}
-                  className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm shadow-indigo-600/20 transition-all cursor-pointer"
-                >
-                  Choose College Plan
-                </button>
-              </div>
-            </div>
-
-            {/* TIER 3: UNIVERSITY / CUSTOM */}
-            <div className="rounded-3xl border border-emerald-300 ring-2 ring-emerald-500/20 bg-gradient-to-b from-white to-[#f5eeff]/30 p-6 flex flex-col justify-between shadow-xs">
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center">
-                    <GraduationCap className="w-4 h-4" />
-                  </div>
-                  <span className="text-xs font-bold uppercase text-emerald-800 bg-white px-2 py-0.5 rounded-md border border-emerald-200">
-                    Apex Enterprise
-                  </span>
-                </div>
-
-                <h3 className="text-xl font-extrabold text-slate-900">University / Hybrid</h3>
-                <p className="text-xs text-slate-500 mt-1">
-                  Large universities and multi-branch groups.
-                </p>
-
-                <div className="mt-4 mb-5 p-3 rounded-xl bg-white border border-emerald-100 shadow-2xs">
-                  <div className="flex items-baseline gap-1 font-heading">
-                    <span className="text-lg font-bold text-emerald-600">₨</span>
-                    <span className="text-3xl sm:text-4xl font-extrabold text-emerald-800 tracking-tight">
-                      {billingCycle === 'annual' ? '46,750' : '55,000'}
-                      <span className="text-2xl text-purple-500 font-bold">+</span>
+                    <span className="text-lg font-bold text-indigo-600">₨</span>
+                    <span className="text-3xl sm:text-4xl font-extrabold text-indigo-800 tracking-tight">
+                      {billingCycle === 'annual' ? '38,250' : '45,000'}
+                      <span className="text-2xl text-indigo-500 font-bold">+</span>
                     </span>
                     <span className="text-xs font-medium text-slate-500 ml-1">/ month</span>
                   </div>
@@ -1633,29 +1544,29 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                 <ul className="space-y-2.5 text-xs text-slate-600">
                   <li className="flex items-center gap-2">
                     <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span><strong>8,000+ Students</strong></span>
+                    <span><strong>5,000+ Students</strong></span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span><strong>15+ Campuses</strong></span>
+                    <span><strong>10+ School Branches</strong></span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>BS Degrees, Semesters & CGPA</span>
+                    <span>Central Super Admin HQ Control</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>Dedicated VIP Support & SLA</span>
+                    <span>Dedicated VIP Support &amp; SLA</span>
                   </li>
                 </ul>
               </div>
 
               <div className="mt-6 pt-4 border-t border-slate-100">
                 <button
-                  onClick={() => openPlanModal('university')}
-                  className="w-full py-2.5 rounded-xl bg-emerald-700 hover:bg-purple-800 text-white font-bold text-xs shadow-sm shadow-purple-700/25 transition-all cursor-pointer"
+                  onClick={() => openPlanModal('enterprise')}
+                  className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm shadow-indigo-600/25 transition-all cursor-pointer"
                 >
-                  Activate University Plan
+                  Activate School Network Plan
                 </button>
               </div>
             </div>
@@ -1681,19 +1592,19 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
             {[
               {
                 q: 'How does the 14-Day Free Evaluation Tier work?',
-                a: 'The 14-day free evaluation is 100% free with no credit card required. You gain immediate access to our complete school management modules (admissions, fee challans, attendance, exams) for up to 250 students. When your trial ends, you can easily upgrade to our School or College plan without losing any data.'
+                a: 'The 14-day free evaluation is 100% free with no credit card required. You gain immediate access to our complete school management modules (admissions, fee challans, attendance, exams) for up to 250 students. When your trial ends, you can easily upgrade to our School Plan without losing any data.'
               },
               {
-                q: 'Can we manage both School and College wings under one system?',
-                a: 'Yes! Our Custom Hybrid Plan allows educational groups to govern primary schools, matriculation branches, and intermediate colleges under a single central Super Admin dashboard while maintaining isolated campus records.'
+                q: 'Can we manage multiple school branches under one system?',
+                a: 'Yes! Our Multi-Branch School Network plan allows school groups to govern multiple branches across cities under a single central Super Admin dashboard while maintaining isolated branch records.'
               },
               {
-                q: 'Does ApexEd support Pakistani 1Link, 1Bill, and JazzCash fee payments?',
-                a: 'Yes, ApexEd generates automated 3-copy computerized fee challans with official 1Bill / 1Link consumer reference numbers and JazzCash corporate billing integration for real-time fee reconciliation.'
+                q: 'Does EIMS support Pakistani 1Link, 1Bill, and JazzCash fee payments?',
+                a: 'Yes, EIMS generates automated 3-copy computerized fee challans with official 1Bill / 1Link consumer reference numbers and JazzCash corporate billing integration for real-time fee reconciliation.'
               },
               {
-                q: 'Is our student and institutional data secure and backed up?',
-                a: 'Yes, every institution has dedicated tenant boundaries with multi-layer encryption. Automated cloud backups are generated on a daily schedule, and administrators can export complete data backups anytime.'
+                q: 'Is our student and school data secure and backed up?',
+                a: 'Yes, every school has dedicated tenant boundaries with multi-layer encryption. Automated cloud backups are generated on a daily schedule, and administrators can export complete data backups anytime.'
               }
             ].map((faq, idx) => {
               const isOpen = expandedFaq === idx
@@ -1735,10 +1646,10 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
               Transform Your Campus Today
             </span>
             <h2 className="text-2xl sm:text-4xl font-extrabold font-heading tracking-tight">
-              Ready to Streamline Your Educational Institution?
+              Ready to Streamline Your School Campus?
             </h2>
             <p className="mt-3 text-xs sm:text-sm text-purple-100 max-w-xl mx-auto">
-              Join hundreds of forward-thinking schools, colleges, and university faculties. Experience modern academic management in minutes.
+              Join hundreds of forward-thinking primary, middle, and high schools. Experience modern school management in minutes.
             </p>
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
               <button
@@ -1821,23 +1732,23 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                 <div className="w-7 h-7 rounded-lg bg-emerald-600 flex items-center justify-center text-white">
                   <GraduationCap className="w-4 h-4" />
                 </div>
-                <span>ApexEd ERP</span>
+                <span>EIMS School ERP</span>
               </div>
               <p className="text-slate-400 text-xs leading-relaxed max-w-xs">
-                Unified multi-campus academic operating system engineered for Pakistani schools, colleges, and universities.
+                Unified school academic operating system engineered for primary, middle, and secondary schools across Pakistan.
               </p>
             </div>
 
-            {/* Col 2: Wings */}
+            {/* Col 2: School Wings */}
             <div>
               <span className="text-slate-200 font-bold uppercase tracking-wider text-[11px] block mb-3">
-                Educational Wings
+                School Wings
               </span>
               <ul className="space-y-2">
-                <li><button onClick={(e) => { setActiveTab('school'); scrollToSection(e, 'wings'); }} className="hover:text-purple-400 transition-colors cursor-pointer">School Wing (Primary & Matric)</button></li>
-                <li><button onClick={(e) => { setActiveTab('college'); scrollToSection(e, 'wings'); }} className="hover:text-purple-400 transition-colors cursor-pointer">College Wing (Intermediate & F.Sc)</button></li>
-                <li><button onClick={(e) => { setActiveTab('university'); scrollToSection(e, 'wings'); }} className="hover:text-purple-400 transition-colors cursor-pointer">University Wing (BS & CGPA)</button></li>
-                <li><button onClick={(e) => { setActiveTab('custom'); scrollToSection(e, 'wings'); }} className="hover:text-purple-400 transition-colors cursor-pointer">Multi-Campus Conglomerates</button></li>
+                <li><button onClick={(e) => { setActiveTab('preschool'); scrollToSection(e, 'wings'); }} className="hover:text-purple-400 transition-colors cursor-pointer">Early Years (Playgroup - KG)</button></li>
+                <li><button onClick={(e) => { setActiveTab('school'); scrollToSection(e, 'wings'); }} className="hover:text-purple-400 transition-colors cursor-pointer">Primary &amp; Middle (Grades 1 - 8)</button></li>
+                <li><button onClick={(e) => { setActiveTab('secondary'); scrollToSection(e, 'wings'); }} className="hover:text-purple-400 transition-colors cursor-pointer">Matric &amp; O-Levels (Grades 9 - 10)</button></li>
+                <li><button onClick={(e) => { setActiveTab('custom'); scrollToSection(e, 'wings'); }} className="hover:text-purple-400 transition-colors cursor-pointer">Multi-Branch School Networks</button></li>
               </ul>
             </div>
 
@@ -1854,34 +1765,16 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
               </ul>
             </div>
 
-            {/* Col 4: Quick Portals */}
+            {/* Col 4: Unified Portal Access */}
             <div>
               <span className="text-slate-200 font-bold uppercase tracking-wider text-[11px] block mb-3">
-                Staff & Admin Portals
+                Portal Access
               </span>
               <ul className="space-y-2">
                 <li>
-                  <button onClick={() => onNavigateToLogin('school')} className="text-emerald-400 hover:text-emerald-300 font-semibold flex items-center gap-1 cursor-pointer">
-                    <School className="w-3 h-3" />
-                    <span>🏫 School Portal (K-10)</span>
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => onNavigateToLogin('college')} className="text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1 cursor-pointer">
-                    <Building2 className="w-3 h-3" />
-                    <span>🏛️ College Portal (11-12)</span>
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => onNavigateToLogin('university')} className="text-purple-400 hover:text-purple-300 font-semibold flex items-center gap-1 cursor-pointer">
-                    <GraduationCap className="w-3 h-3" />
-                    <span>🎓 University Portal (HEC)</span>
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => onNavigateToLogin('superadmin')} className="text-purple-400 hover:text-purple-300 font-semibold flex items-center gap-1 cursor-pointer">
+                  <button onClick={() => onNavigateToLogin()} className="text-emerald-400 hover:text-emerald-300 font-semibold flex items-center gap-1 cursor-pointer">
                     <Lock className="w-3 h-3" />
-                    <span>🛡️ Super Admin Control Plane</span>
+                    <span>Unified Portal Sign In</span>
                   </button>
                 </li>
                 <li>
@@ -2112,20 +2005,18 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                     {Object.keys(PLAN_CONFIGS).map((planKey) => {
                       const p = PLAN_CONFIGS[planKey]
                       const isSelected = activeModalPlan === planKey
-                      const PlanCardIcon = planKey === 'school' ? School : planKey === 'college' ? Building2 : planKey === 'university' ? GraduationCap : Sparkles
+                      const PlanCardIcon = planKey === 'school' ? School : planKey === 'enterprise' ? Building2 : Sparkles
 
                       return (
                         <div
                           key={p.id}
                           onClick={() => {
                             setActiveModalPlan(planKey)
-                            if (planKey === 'school') setTrialForm(prev => ({ ...prev, wing: 'school' }))
-                            else if (planKey === 'college') setTrialForm(prev => ({ ...prev, wing: 'college' }))
-                            else if (planKey === 'university') setTrialForm(prev => ({ ...prev, wing: 'university' }))
+                            if (planKey === 'enterprise') setTrialForm(prev => ({ ...prev, wing: 'multi-campus' }))
                             else setTrialForm(prev => ({ ...prev, wing: 'school' }))
                             setModalStep(2)
                           }}
@@ -2220,16 +2111,16 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                             required
                             value={trialForm.instituteName}
                             onChange={(e) => setTrialForm({ ...trialForm, instituteName: e.target.value })}
-                            placeholder="e.g. Apex High School & College / The Scholars Academy"
+                            placeholder="e.g. Beaconhouse School / City Grammar School"
                             className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm bg-[#f8fafc] border border-slate-200 text-slate-900 placeholder-slate-400 rounded-xl focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                           />
                         </div>
                       </div>
 
-                      {/* Institution Type / Wing */}
+                      {/* School Tier */}
                       <div>
                         <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
-                          Institution Type / Educational Wing <span className="text-rose-500">*</span>
+                          School Wing / Branch Type <span className="text-rose-500">*</span>
                         </label>
                         <div className="relative">
                           <School className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -2238,10 +2129,9 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                             onChange={(e) => setTrialForm({ ...trialForm, wing: e.target.value })}
                             className="w-full pl-10 pr-8 py-2.5 text-xs sm:text-sm bg-[#f8fafc] border border-slate-200 text-slate-900 rounded-xl focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all cursor-pointer font-medium appearance-none"
                           >
-                            <option value="school">School Wing (Primary to Matric / O-Levels)</option>
-                            <option value="college">College Wing (F.Sc, ICS, FA, I.Com)</option>
-                            <option value="university">University Wing (BS Degrees & Semesters)</option>
-                            <option value="multi-campus">Multi-Campus / Hybrid Educational Network</option>
+                            <option value="school">School Wing (Playgroup to Matric / O-Levels)</option>
+                            <option value="preschool">Early Years / Montessori Only (Playgroup - KG)</option>
+                            <option value="multi-campus">Multi-Branch School Network</option>
                           </select>
                           <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                         </div>
@@ -2422,7 +2312,7 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
                       rows="3"
                       value={trialForm.notes}
                       onChange={(e) => setTrialForm({ ...trialForm, notes: e.target.value })}
-                      placeholder="e.g. Multi-campus branch sync, biometric machine integration, custom fee voucher format, or specific BISE / HEC grading guidelines..."
+                      placeholder="e.g. Multi-branch school sync, biometric machine integration, custom fee voucher format, or BISE / Cambridge grading guidelines..."
                       className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-[#f8fafc] border border-slate-200 text-slate-900 placeholder-slate-400 rounded-xl focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all resize-y"
                     />
                   </div>

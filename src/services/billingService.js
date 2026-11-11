@@ -39,51 +39,19 @@ export const FALLBACK_PLANS = [
     isActive: true
   },
   {
-    id: 'plan-college',
-    name: 'College Plan',
-    tier: 'College',
-    planCode: 'COLLEGE',
-    enabledTiers: ['college'],
-    pricePKR: 35000,
+    id: 'plan-enterprise',
+    name: 'Multi-Branch School Network',
+    tier: 'School Network',
+    planCode: 'SCHOOL_NETWORK',
+    enabledTiers: ['school'],
+    pricePKR: 45000,
     billingCycle: 'monthly',
-    maxStudents: 3000,
-    maxCampuses: 3,
-    maxUsers: 100,
-    storageGB: 10,
-    features: ['students', 'fees', 'exams', 'attendance', 'programs', 'curriculum', 'timetable', 'notices', 'admissions'],
-    description: 'Built for Intermediate, F.Sc, ICS, FA, I.Com & A-Levels colleges',
-    isActive: true
-  },
-  {
-    id: 'plan-university',
-    name: 'University Plan',
-    tier: 'University',
-    planCode: 'UNIVERSITY',
-    enabledTiers: ['undergraduate'],
-    pricePKR: 55000,
-    billingCycle: 'monthly',
-    maxStudents: 8000,
-    maxCampuses: 5,
-    maxUsers: 300,
+    maxStudents: 5000,
+    maxCampuses: 10,
+    maxUsers: 200,
     storageGB: 25,
-    features: ['students', 'fees', 'exams', 'attendance', 'departments', 'degrees', 'semesters', 'cgpa_grading', 'credit_hours', 'library'],
-    description: 'Full Undergraduate BS degree management, Semesters, Credit Hours & CGPA',
-    isActive: true
-  },
-  {
-    id: 'plan-custom',
-    name: 'Custom Hybrid Plan',
-    tier: 'Custom',
-    planCode: 'CUSTOM',
-    enabledTiers: ['school', 'college', 'undergraduate'],
-    pricePKR: 75000,
-    billingCycle: 'monthly',
-    maxStudents: 15000,
-    maxCampuses: 15,
-    maxUsers: 600,
-    storageGB: 50,
-    features: ['students', 'fees', 'exams', 'attendance', 'classes', 'programs', 'departments', 'semesters', 'library', 'transport', 'hostel', 'admissions'],
-    description: 'Multi-wing educational groups combining School, College, and University wings',
+    features: ['students', 'fees', 'exams', 'attendance', 'classes', 'curriculum', 'library', 'transport', 'admissions'],
+    description: 'Multi-branch school networks under central Super Admin governance',
     isActive: true
   }
 ]
@@ -239,16 +207,11 @@ export const BillingService = {
       planName = 'Free Trial Plan'
       pricePKR = 0
       enabledTiers = ['school']
-    } else if (tierName === 'College') {
-      planId = 'plan-college'
-      planName = 'College Plan'
-      pricePKR = 35000
-      enabledTiers = ['college']
-    } else if (tierName === 'University') {
-      planId = 'plan-university'
-      planName = 'University Plan'
-      pricePKR = 55000
-      enabledTiers = ['undergraduate']
+    } else if (planTierLower.includes('network') || planTierLower.includes('enterprise')) {
+      planId = 'plan-enterprise'
+      planName = 'Multi-Branch School Network'
+      pricePKR = 45000
+      enabledTiers = ['school']
     }
 
     const startDate = new Date()

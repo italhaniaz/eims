@@ -80,7 +80,7 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
   const campusOptions = useMemo(() => {
     const list = institutes.map(i => i.name || i.instituteName).filter(Boolean)
     if (list.length === 0) {
-      return ['Beaconhouse Central High', 'City School Senior Branch', 'Lahore Grammar Model Town', 'Army Public School & College']
+      return ['Beaconhouse Central High', 'City School Senior Branch', 'Lahore Grammar Model Town', 'Roots Ivy High School']
     }
     return Array.from(new Set(list))
   }, [institutes])
@@ -270,22 +270,22 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
         ]
       },
       { 
-        wing: 'College & Higher Secondary Wing', 
+        wing: 'Secondary & Senior Wing (9-10)', 
         totalExaminees: Math.round(selectedWingCampus === 'all' ? 240 : 65 * campusMultiplier), 
         passPercentage: Math.min(100, Math.round(89.5 * campusMultiplier * 10) / 10), 
         topGpa: '3.88 (A+)', 
         distinctions: Math.round(selectedWingCampus === 'all' ? 62 : 18 * campusMultiplier), 
         status: 'Moderate',
         classes: [
-          { name: 'FSc Pre-Medical 2nd Year', students: 25, passRate: 92.0, topScore: 95 },
-          { name: 'FSc Pre-Engineering 2nd Year', students: 22, passRate: 86.4, topScore: 93 },
-          { name: 'ICS Computer Studies', students: 18, passRate: 90.1, topScore: 94 }
+          { name: 'Grade 10 Matric Bio', students: 25, passRate: 92.0, topScore: 95 },
+          { name: 'Grade 10 Matric CS', students: 22, passRate: 86.4, topScore: 93 },
+          { name: 'O-Level Year 3 (O3)', students: 18, passRate: 90.1, topScore: 94 }
         ],
         subjects: [
-          { name: 'Calculus & Analytical Geometry', passRate: 84.1, avgScore: 64 },
-          { name: 'Physics Mechanics & Electro', passRate: 88.3, avgScore: 69 },
-          { name: 'Organic Chemistry', passRate: 89.0, avgScore: 70 },
-          { name: 'Biology & Zoology', passRate: 93.5, avgScore: 77 }
+          { name: 'Additional Mathematics', passRate: 84.1, avgScore: 64 },
+          { name: 'Physics Practical & Theory', passRate: 88.3, avgScore: 69 },
+          { name: 'Chemistry (O-Level/SSC)', passRate: 89.0, avgScore: 70 },
+          { name: 'Biology', passRate: 93.5, avgScore: 77 }
         ]
       }
     ]
@@ -297,9 +297,9 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
   const defaultFreezeStatuses = [
     { id: 'FRZ-01', campus: 'Beaconhouse Central High', wing: 'High School Wing', examTerm: 'Midterm Examination 2026', isFrozen: true, published: true, approvedBy: 'Super Administrator', frozenAt: '2026-10-15 09:30 AM' },
     { id: 'FRZ-02', campus: 'Beaconhouse Central High', wing: 'Middle Wing', examTerm: 'Midterm Examination 2026', isFrozen: false, published: false, approvedBy: 'Pending Lock', frozenAt: null },
-    { id: 'FRZ-03', campus: 'City School Senior Branch', wing: 'College Wing', examTerm: 'Pre-Board Terminal Exams', isFrozen: true, published: true, approvedBy: 'Super Administrator', frozenAt: '2026-10-18 11:15 AM' },
+    { id: 'FRZ-03', campus: 'City School Senior Branch', wing: 'Secondary Wing', examTerm: 'Pre-Board Terminal Exams', isFrozen: true, published: true, approvedBy: 'Super Administrator', frozenAt: '2026-10-18 11:15 AM' },
     { id: 'FRZ-04', campus: 'Lahore Grammar Model Town', wing: 'Primary Wing', examTerm: 'First Term Assessment', isFrozen: false, published: false, approvedBy: 'Under Audit', frozenAt: null },
-    { id: 'FRZ-05', campus: 'Army Public School & College', wing: 'Senior Wing', examTerm: 'Annual Mock 2026', isFrozen: true, published: true, approvedBy: 'Super Administrator', frozenAt: '2026-10-20 02:40 PM' }
+    { id: 'FRZ-05', campus: 'Roots Ivy High School', wing: 'Senior Wing', examTerm: 'Annual Mock 2026', isFrozen: true, published: true, approvedBy: 'Super Administrator', frozenAt: '2026-10-20 02:40 PM' }
   ]
 
   const [freezeStatuses, setFreezeStatuses] = useState(() => {
@@ -317,7 +317,7 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
       const saved = localStorage.getItem(STORAGE_KEYS.FREEZE_LOGS)
       return saved ? JSON.parse(saved) : [
         { id: 'LOG-01', campus: 'Beaconhouse Central High', wing: 'High School Wing', action: 'LOCKED', author: 'Superadmin', timestamp: '2026-10-15 09:30 AM', note: 'Regular post-exam freeze lockout.' },
-        { id: 'LOG-02', campus: 'City School Senior Branch', wing: 'College Wing', action: 'LOCKED', author: 'Superadmin', timestamp: '2026-10-18 11:15 AM', note: 'Pre-board results locked.' }
+        { id: 'LOG-02', campus: 'City School Senior Branch', wing: 'Secondary Wing', action: 'LOCKED', author: 'Superadmin', timestamp: '2026-10-18 11:15 AM', note: 'Pre-board results locked.' }
       ]
     } catch {
       return []
@@ -484,7 +484,7 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
       roll: 'TCS-112', 
       subject: 'Physics Practical', 
       campus: 'City School Senior Branch', 
-      wing: 'College Wing',
+      wing: 'Secondary Wing',
       originalMarks: 18, 
       requestedMarks: 22, 
       reason: 'Lab attendance marks reconciled from internal laboratory register.', 
@@ -675,7 +675,7 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
       student: 'Areeba Noor', 
       roll: 'TCS-144', 
       campus: 'City School Senior Branch', 
-      wing: 'College Wing', 
+      wing: 'Secondary Wing', 
       failedSubjects: ['Biology'], 
       examDate: '2026-11-22', 
       feeStatus: 'Unpaid', 
@@ -837,12 +837,12 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
       roll: 'TCS-112', 
       name: 'Sarah Tariq', 
       campus: 'City School Senior Branch', 
-      wing: 'College & Higher Secondary',
+      wing: 'Secondary Wing (SSC / O-Level)',
       subjects: [
-        { sub: 'Functional English', max: 100, obt: 89, grade: 'A', gpa: '3.70', rem: 'Distinction' },
-        { sub: 'Calculus & Analytical Geometry', max: 100, obt: 95, grade: 'A+', gpa: '4.00', rem: 'Exceptional' },
-        { sub: 'Physics Mechanics & Electro', max: 100, obt: 91, grade: 'A+', gpa: '4.00', rem: 'Outstanding' },
-        { sub: 'Organic Chemistry', max: 100, obt: 90, grade: 'A+', gpa: '4.00', rem: 'Outstanding' },
+        { sub: 'English Language', max: 100, obt: 89, grade: 'A', gpa: '3.70', rem: 'Distinction' },
+        { sub: 'Additional Mathematics', max: 100, obt: 95, grade: 'A+', gpa: '4.00', rem: 'Exceptional' },
+        { sub: 'Physics Practical & Theory', max: 100, obt: 91, grade: 'A+', gpa: '4.00', rem: 'Outstanding' },
+        { sub: 'Chemistry', max: 100, obt: 90, grade: 'A+', gpa: '4.00', rem: 'Outstanding' },
         { sub: 'Pakistan Studies', max: 50, obt: 47, grade: 'A+', gpa: '4.00', rem: 'Exemplary' }
       ],
       total: 412, max: 450, grade: 'A+', gpa: '3.94', status: 'PASSED WITH MERIT'
@@ -885,11 +885,11 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
   const masterTabulationRecords = useMemo(() => {
     return [
       { roll: 'BHS-042', name: 'Mustafa Kamal', campus: 'Beaconhouse Central High', wing: 'High School Wing', term: 'Midterm 2026', total: 472, max: 500, pct: 94.4, gpa: 4.0, grade: 'A+', position: 1, status: 'Pass' },
-      { roll: 'TCS-112', name: 'Sarah Tariq', campus: 'City School Senior Branch', wing: 'College Wing', term: 'Midterm 2026', total: 458, max: 500, pct: 91.6, gpa: 4.0, grade: 'A+', position: 2, status: 'Pass' },
+      { roll: 'TCS-112', name: 'Sarah Tariq', campus: 'City School Senior Branch', wing: 'Secondary Wing', term: 'Midterm 2026', total: 458, max: 500, pct: 91.6, gpa: 4.0, grade: 'A+', position: 2, status: 'Pass' },
       { roll: 'LGS-088', name: 'Zainab Fatima', campus: 'Lahore Grammar Model Town', wing: 'Middle Wing', term: 'Midterm 2026', total: 445, max: 500, pct: 89.0, gpa: 3.7, grade: 'A', position: 3, status: 'Pass' },
       { roll: 'BHS-055', name: 'Bilal Farooq', campus: 'Beaconhouse Central High', wing: 'High School Wing', term: 'Midterm 2026', total: 412, max: 500, pct: 82.4, gpa: 3.7, grade: 'A', position: 4, status: 'Pass' },
-      { roll: 'APS-201', name: 'Rayan Mehmood', campus: 'Army Public School & College', wing: 'Senior Wing', term: 'Midterm 2026', total: 395, max: 500, pct: 79.0, gpa: 3.0, grade: 'B', position: 5, status: 'Pass' },
-      { roll: 'TCS-144', name: 'Areeba Noor', campus: 'City School Senior Branch', wing: 'College Wing', term: 'Midterm 2026', total: 310, max: 500, pct: 62.0, gpa: 2.0, grade: 'C', position: 12, status: 'Compartment' },
+      { roll: 'APS-201', name: 'Rayan Mehmood', campus: 'Roots Ivy High School', wing: 'Senior Wing', term: 'Midterm 2026', total: 395, max: 500, pct: 79.0, gpa: 3.0, grade: 'B', position: 5, status: 'Pass' },
+      { roll: 'TCS-144', name: 'Areeba Noor', campus: 'City School Senior Branch', wing: 'Secondary Wing', term: 'Midterm 2026', total: 310, max: 500, pct: 62.0, gpa: 2.0, grade: 'C', position: 12, status: 'Compartment' },
       { roll: 'BHS-091', name: 'Hamza Bilal', campus: 'Beaconhouse Central High', wing: 'High School Wing', term: 'Midterm 2026', total: 240, max: 500, pct: 48.0, gpa: 0.0, grade: 'F', position: 24, status: 'Compartment' }
     ]
   }, [])
@@ -1924,8 +1924,8 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
                     className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-purple-700 font-bold focus:outline-purple-500"
                   >
                     <option value="ssc">Standard SSC / Matriculation DMC</option>
-                    <option value="cambridge">Cambridge O / A-Level Statement</option>
-                    <option value="hssc">Higher Secondary (HSSC/College)</option>
+                    <option value="cambridge">Cambridge O-Level Statement</option>
+                    <option value="middle">Middle School (Grade 6-8) Transcript</option>
                     <option value="primary">Primary Wing Narrative Progress Report</option>
                   </select>
                 </div>
@@ -2162,7 +2162,7 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {[
                 { name: 'Advanced Mathematics (Class 9-10)', failRate: '12.5%', affected: 40, status: 'High Alert' },
-                { name: 'Calculus & Analytical Geometry (College)', failRate: '15.9%', affected: 38, status: 'High Alert' },
+                { name: 'Additional Mathematics (Grade 9-10)', failRate: '15.9%', affected: 38, status: 'High Alert' },
                 { name: 'Physics Theory (Pre-Board)', failRate: '9.8%', affected: 24, status: 'Moderate Concern' }
               ].map((def, dIdx) => (
                 <div key={dIdx} className="p-3.5 rounded-xl border border-amber-200 bg-amber-50/50 space-y-2">
@@ -2520,7 +2520,7 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
                   <option value="Elementary & Primary Wing">Elementary & Primary Wing</option>
                   <option value="Middle Wing">Middle Wing</option>
                   <option value="High School Wing">High School Wing</option>
-                  <option value="College Wing">College Wing</option>
+                  <option value="Secondary Wing">Secondary Wing</option>
                 </select>
               </div>
 
@@ -2817,7 +2817,7 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
                   <option value="Elementary & Primary Wing">Elementary & Primary Wing</option>
                   <option value="Middle Wing">Middle Wing</option>
                   <option value="High School Wing">High School Wing</option>
-                  <option value="College Wing">College Wing</option>
+                  <option value="Secondary Wing">Secondary Wing</option>
                 </select>
               </div>
 
@@ -3158,7 +3158,7 @@ export const SuperadminExaminationsResultsView = ({ activeTab = 'policies', onTa
             </div>
 
             <div className="flex justify-between items-center text-xs text-slate-400 pt-2 border-t border-slate-100">
-              <span>Official University & Board Accreditation Register</span>
+              <span>Official School & Board Accreditation Register</span>
               <span>Total Tabulated Records: {filteredTabulationRecords.length}</span>
             </div>
           </div>

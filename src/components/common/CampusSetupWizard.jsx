@@ -57,69 +57,65 @@ export const CampusSetupWizard = ({ currentInstitute, onRouteChange }) => {
   const steps = [
     {
       id: 'step-inst',
-      title: tierConfig.isUniversityOnly ? 'University Campus Profile' : tierConfig.isCollegeOnly ? 'College Campus Profile' : 'Campus Profile & Registration',
+      title: 'School Profile & Registration',
       subTitle: 'Profile, Code & Affiliation',
-      description: currentInstitute?.name 
+      description: currentInstitute?.name
         ? `Registered: ${currentInstitute.name} (${currentInstitute.code || 'Main'})`
-        : 'Register your institute branch, code, and board affiliation',
+        : 'Register your school branch, code, and board affiliation',
       isCompleted: Boolean(currentInstitute?.name),
-      actionLabel: 'View Campus',
+      actionLabel: 'View School',
       action: () => onRouteChange('inst-program-levels'),
-      icon: tierConfig.isUniversityOnly ? GraduationCap : tierConfig.isCollegeOnly ? Building2 : School,
+      icon: School,
       color: 'emerald'
     },
     {
       id: 'step-classes',
       title: tierConfig.terminology.classes,
-      subTitle: tierConfig.isUniversityOnly ? 'Programs & Semester Batches' : tierConfig.isCollegeOnly ? 'Disciplines & Study Streams' : 'Grades, Streams & Sections',
-      description: instClasses.length > 0 
+      subTitle: 'Grades, Streams & Sections',
+      description: instClasses.length > 0
         ? `${instClasses.length} ${tierConfig.terminology.classes} configured with active rosters`
-        : (tierConfig.isUniversityOnly 
-            ? 'Set up 4-Year BS degree programs (BSCS, BSSE, BBA) with semester batches'
-            : tierConfig.isCollegeOnly 
-            ? 'Set up intermediate disciplines (FSc Pre-Med, Pre-Eng, ICS) with lab batches' 
-            : 'Set up classes from Primary to Matric with Super Sections and room numbers'),
+        : 'Set up classes from Playgroup-KG & Primary to Matric / O-Levels with sections and room numbers',
       isCompleted: instClasses.length > 0,
       actionLabel: instClasses.length > 0 ? `Manage ${tierConfig.terminology.classUnit}s` : `Setup ${tierConfig.terminology.classUnit}s`,
       action: () => onRouteChange('inst-classes'),
-      icon: tierConfig.isUniversityOnly ? Award : tierConfig.isCollegeOnly ? Building2 : Layers,
+      icon: Layers,
       color: 'blue'
     },
     {
       id: 'step-faculty',
-      title: tierConfig.isUniversityOnly ? 'Professors & Faculty Roster' : tierConfig.isCollegeOnly ? 'Lecturers & College Faculty' : 'Faculty & Teachers Roster',
-      subTitle: 'Faculty & Department Staff',
+      title: 'Teachers & Staff Roster',
+      subTitle: 'Teachers & Department Staff',
       description: instTeachers.length > 0
-        ? `${instTeachers.length} Teaching faculty members assigned`
-        : 'Register teaching faculty, subject specializations & phone contacts',
+        ? `${instTeachers.length} Teaching staff members assigned`
+        : 'Register school teachers, subject specializations & phone contacts',
       isCompleted: instTeachers.length > 0,
-      actionLabel: instTeachers.length > 0 ? 'Faculty Directory' : (tierConfig.isUniversityOnly ? 'Add Professors' : tierConfig.isCollegeOnly ? 'Add Lecturers' : 'Add Teachers'),
+      actionLabel: instTeachers.length > 0 ? 'Teachers Directory' : 'Add Teachers',
       action: () => onRouteChange('inst-teachers'),
       icon: Users,
       color: 'indigo'
     },
     {
       id: 'step-students',
-      title: tierConfig.isUniversityOnly ? 'Undergraduate Admissions & Intake' : tierConfig.isCollegeOnly ? 'College Admissions & Merit Lists' : 'Student Admissions & Enrollment',
+      title: 'Student Admissions & Enrollment',
       subTitle: 'Enrollment & Student Records',
       description: instStudents.length > 0
         ? `${instStudents.length} Students enrolled with official dossiers and ID records`
         : 'Admit students into classes & sections with full dossiers and ID cards',
       isCompleted: instStudents.length > 0,
-      actionLabel: instStudents.length > 0 ? 'Student Roster' : (tierConfig.isUniversityOnly ? 'Intake Students' : tierConfig.isCollegeOnly ? 'Admit Students' : 'Admit Students'),
+      actionLabel: instStudents.length > 0 ? 'Student Roster' : 'Admit Students',
       action: () => onRouteChange('inst-students'),
       icon: GraduationCap,
       color: 'purple'
     },
     {
       id: 'step-fees',
-      title: tierConfig.isUniversityOnly ? 'Tuition Dues & Semester Invoices' : 'Fee Structure & Monthly Challans',
+      title: 'Fee Structure & Monthly Challans',
       subTitle: 'Fee Structure & Challans',
       description: instFees.length > 0
         ? `${instFees.length} Fee challan records active with collection status`
         : 'Generate monthly bank challans, concessions & collect payments',
       isCompleted: instFees.length > 0,
-      actionLabel: instFees.length > 0 ? 'Fee Counter' : (tierConfig.isUniversityOnly ? 'Issue Invoices' : 'Issue Challans'),
+      actionLabel: instFees.length > 0 ? 'Fee Counter' : 'Issue Challans',
       action: () => onRouteChange('inst-fees'),
       icon: Receipt,
       color: 'amber'

@@ -87,15 +87,11 @@ export const AppDataProvider = ({ children }) => {
 
 
   const setActiveWing = (wing) => {
-    setActiveWingState(wing)
+    setActiveWingState('school')
     if (wing === 'school') {
       if (!['preschool', 'elementary', 'secondary'].includes(activeProgramLevel)) {
         setActiveProgramLevel('elementary')
       }
-    } else if (wing === 'college') {
-      setActiveProgramLevel('higher-secondary')
-    } else if (wing === 'undergraduate') {
-      setActiveProgramLevel('university')
     } else if (wing === 'all') {
       setActiveProgramLevel('all')
     }

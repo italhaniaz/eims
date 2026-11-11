@@ -74,7 +74,7 @@ export const AddStaffModal = ({
     // 2. Job
     empId: autoEmpId,
     category: 'Teaching', // 'Teaching' | 'Non-Teaching'
-    level: 'school', // 'school' | 'college' | 'university'
+    level: 'school', // 'school'
     department: '', // starts empty!
     designation: '', // starts empty!
     employmentType: '', // starts empty!
@@ -398,28 +398,6 @@ export const AddStaffModal = ({
         'Transport Incharge',
         'Office Assistant',
         'Medical Nurse'
-      ]
-    }
-    if (formData.level === 'college') {
-      return [
-        'Lecturer',
-        'Senior Lecturer',
-        'Assistant Professor',
-        'Associate Professor',
-        'Vice Principal',
-        'Principal (College Wing)',
-        'Visiting Lecturer'
-      ]
-    }
-    if (formData.level === 'university') {
-      return [
-        'Lecturer',
-        'Assistant Professor',
-        'Associate Professor',
-        'Professor',
-        'Head of Department (HOD)',
-        'Dean of Faculty',
-        'Visiting Faculty / Adjunct'
       ]
     }
     // School default
@@ -872,15 +850,7 @@ export const AddStaffModal = ({
                   }}
                   className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white font-bold"
                 >
-                  {(currentInstitute?.enabledTiers || ['school']).includes('school') && (
-                    <option value="school">Primary & Secondary School</option>
-                  )}
-                  {(currentInstitute?.enabledTiers || ['school']).includes('college') && (
-                    <option value="college">Higher Secondary / College Wing</option>
-                  )}
-                  {(currentInstitute?.enabledTiers || ['school']).includes('undergraduate') && (
-                    <option value="university">University / Higher Education</option>
-                  )}
+                  <option value="school">Primary &amp; Secondary School</option>
                 </select>
               </div>
 
@@ -1170,7 +1140,7 @@ export const AddStaffModal = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-[10px] font-bold text-slate-700 uppercase mb-1">
-                  {formData.level === 'university' ? 'Weekly Credit Hours Workload' : 'Max Periods Per Week'}
+                  Max Periods Per Week
                 </label>
                 <input
                   type="number"

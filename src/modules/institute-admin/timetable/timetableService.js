@@ -35,7 +35,6 @@ export const getSubjectColor = (subjectName = '') => {
 
 // Default standard Bell Schedule template generator
 export const createDefaultBellSchedule = (level = 'secondary', shift = 'Morning') => {
-  const isCollege = level === 'college' || level === 'university'
   const isEvening = shift === 'Evening'
 
   const startHour = isEvening ? 13 : 8

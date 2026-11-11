@@ -23,7 +23,7 @@ export const DEFAULT_PERCENTAGE_BANDS = [
   { grade: 'F', min: 0, max: 32.9, gpa: 0.0, description: 'Fail', color: 'rose' }
 ]
 
-// Default GPA 4.0 Scale (Higher Education / College)
+// Default GPA 4.0 Scale (O-Levels / Grading Reference)
 export const DEFAULT_GPA_BANDS = [
   { grade: 'A', min: 85, max: 100, gpa: 4.0, description: 'Exceptional' },
   { grade: 'A-', min: 80, max: 84.9, gpa: 3.7, description: 'Superior' },

@@ -82,50 +82,32 @@ export const InstituteAdminNavbar = ({
 
   const tierConfig = getInstituteTierConfig(selectedInstitute)
 
-
-  const availableWings = [
-    ...(tierConfig.isMultiTier ? [{ id: 'all', label: 'All Wings', icon: Layers, badge: 'Overview' }] : []),
-    ...(tierConfig.hasSchool ? [{ id: 'school', label: 'School Wing', icon: School, badge: 'K-10' }] : []),
-    ...(tierConfig.hasCollege ? [{ id: 'college', label: 'College Wing', icon: Building2, badge: '11-12' }] : []),
-    ...(tierConfig.hasUniversity ? [{ id: 'undergraduate', label: 'Undergraduates', icon: GraduationCap, badge: 'BS' }] : [])
-  ]
-
   const getRouteTitle = () => {
     switch (currentRoute) {
-      case 'inst-dashboard': return tierConfig?.isUniversityOnly ? 'Executive Dashboard' : 'Campus Dashboard'
-      case 'inst-admissions': return (tierConfig?.isUniversityOnly || tierConfig?.isCollegeOnly) ? 'Admissions & Merit' : 'Admissions & Leads'
+      case 'inst-dashboard': return 'School Dashboard'
+      case 'inst-admissions': return 'Admissions & Leads'
       case 'inst-students': return 'Students Directory'
-      case 'inst-course-registration': return 'Course Registration & Enrollment'
-      case 'inst-teachers': return tierConfig?.isUniversityOnly ? 'Faculty & HR Roster' : tierConfig?.isCollegeOnly ? 'Faculty & Staff Roster' : 'Staff & Faculty'
-      case 'inst-payroll': return tierConfig?.isUniversityOnly ? 'HR Payroll & Compensation' : 'Staff Payroll & Compensation'
-      case 'inst-classes': return tierConfig?.isUniversityOnly ? 'Degree Programs & Semesters' : tierConfig?.isCollegeOnly ? 'College Sections & Groups' : 'Classes & Sections'
-      case 'inst-subjects': return tierConfig?.isUniversityOnly ? 'Course Catalog & Credit Hours' : tierConfig?.isCollegeOnly ? 'Curriculum & Course Subjects' : 'Academic Curriculum & Subjects'
-      case 'inst-timetable': return tierConfig?.isUniversityOnly ? 'Lecture & Lab Timetable' : tierConfig?.isCollegeOnly ? 'College Timetable Schedule' : 'Class Timetable Schedule'
-      case 'inst-program-levels': return (tierConfig?.isUniversityOnly || tierConfig?.isCollegeOnly) ? 'Academic Programs & Disciplines' : 'Academic Program Levels'
-      case 'inst-attendance': return 'Attendance'
-      case 'inst-exams': return tierConfig?.isUniversityOnly ? 'Examinations & Results (GPA / CGPA)' : tierConfig?.isCollegeOnly ? 'Examinations & Results (Internal)' : 'Term Examinations & Marks'
-      case 'inst-board-exams': return 'Board Registration & Exams'
+      case 'inst-teachers': return 'Teachers & School Staff'
+      case 'inst-payroll': return 'Staff Payroll & Compensation'
+      case 'inst-classes': return 'Classes & Sections'
+      case 'inst-subjects': return 'Syllabus & Subjects'
+      case 'inst-timetable': return 'Class Timetable Schedule'
+      case 'inst-program-levels': return 'School Grade Levels (K-10)'
+      case 'inst-attendance': return 'Daily Attendance Register'
+      case 'inst-exams': return 'Term Examinations & Marks'
       case 'inst-fees': return 'Fees & Finance'
-      case 'inst-accounts': return tierConfig?.isUniversityOnly ? 'Accounts, Budget & Procurement' : 'Campus Accounts & Financial Ledger'
-      case 'inst-scholarships': return tierConfig?.isUniversityOnly ? 'Scholarships & Financial Aid' : 'Scholarships & Merit Awards'
-      case 'inst-certificates': return tierConfig?.isUniversityOnly ? 'Transcripts, Degrees & Certificates' : tierConfig?.isCollegeOnly ? 'Certificates (Provisional, Migration, CLC, DMC)' : 'School Leaving (SLC) & Certificates'
-      case 'inst-research-fyp': return 'Research, FYP & Thesis (MS / PhD)'
+      case 'inst-accounts': return 'Campus Accounts & Financial Ledger'
+      case 'inst-certificates': return 'School Leaving (SLC) & Certificates'
       case 'inst-notices': return 'Communication & Notices'
-      case 'inst-discipline': return 'Student Affairs & Discipline'
-      case 'inst-learning': return tierConfig?.isUniversityOnly ? 'Learning Management (LMS)' : tierConfig?.isCollegeOnly ? 'Learning & Resources' : 'Homework & Learning Resources'
-      case 'inst-career-alumni': return 'Career, Placement & Alumni'
-      case 'inst-transport': return 'Campus Transport & Fleet'
-      case 'inst-library': return tierConfig?.isUniversityOnly ? 'Central University Library' : 'Campus Library & Book Issues'
+      case 'inst-learning': return 'Homework & Learning Resources'
+      case 'inst-transport': return 'School Transport & Fleet'
+      case 'inst-library': return 'School Library & Book Issues'
       case 'inst-inventory': return 'Campus Inventory & Asset Management'
-      case 'inst-hostel': return 'Campus Hostel & Boarding Services'
-      case 'inst-labs': return tierConfig?.isUniversityOnly ? 'Computing & Research Laboratories' : 'Science & Computer Laboratories'
-      case 'inst-campus-it': return 'IT Infrastructure & Networking'
-      case 'inst-events': return tierConfig?.isUniversityOnly ? 'Events & Convocation' : 'Events & Calendar'
-      case 'inst-reports': return tierConfig?.isUniversityOnly ? 'Reports & HEC / QEC Compliance' : 'Reports & Analytics'
-      case 'inst-users': return tierConfig?.isUniversityOnly ? 'Users, Roles & Workflow Approvals' : 'Users, Roles & Access'
-      case 'inst-settings': return tierConfig?.isUniversityOnly ? 'Settings & Security' : 'Campus System Settings'
-      case 'inst-student-portal': return 'Student & Parent Portal (Live Preview)'
-      default: return tierConfig?.portalTitle || 'Campus Portal'
+      case 'inst-events': return 'Events & Calendar'
+      case 'inst-reports': return 'Reports & Analytics'
+      case 'inst-users': return 'Users, Roles & Access'
+      case 'inst-settings': return 'School System Settings'
+      default: return tierConfig?.portalTitle || 'School Portal'
     }
   }
 
@@ -193,48 +175,11 @@ export const InstituteAdminNavbar = ({
         </h1>
       </div>
 
-      {/* Center: Academic Wing Switcher (Multi-Tier Option A Architecture) */}
-      {tierConfig.isMultiTier && availableWings.length > 2 && (
-        <div className="hidden lg:flex items-center bg-slate-100/90 p-1 rounded-xl border border-slate-200/80 shadow-2xs gap-1">
-          {availableWings.map(wing => {
-            const Icon = wing.icon
-            const isActive = activeWing === wing.id
-            return (
-              <button
-                key={wing.id}
-                type="button"
-                onClick={() => setActiveWing && setActiveWing(wing.id)}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  isActive 
-                    ? 'bg-white text-purple-700 shadow-xs border border-purple-200/70 ring-1 ring-purple-500/10' 
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-                }`}
-                title={`Switch active view to ${wing.label}`}
-              >
-                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-purple-600' : 'text-slate-500'}`} />
-                <span>{wing.label}</span>
-                {wing.badge && (
-                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-semibold ${
-                    isActive ? 'bg-[#f5eeff] text-purple-700' : 'bg-slate-200 text-slate-500'
-                  }`}>
-                    {wing.badge}
-                  </span>
-                )}
-              </button>
-            )
-          })}
-        </div>
-      )}
-
-      {/* Single Tier Campus Badge (when institute only has 1 tier enabled) */}
-      {!tierConfig.isMultiTier && (
-        <div className="hidden md:flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200/80 text-emerald-950 text-xs font-bold shadow-2xs">
-          {tierConfig.isSchoolOnly && <School className="w-4 h-4 text-emerald-600" />}
-          {tierConfig.isCollegeOnly && <Building2 className="w-4 h-4 text-emerald-600" />}
-          {tierConfig.isUniversityOnly && <GraduationCap className="w-4 h-4 text-emerald-600" />}
-          <span>{tierConfig.portalTypeLabel}</span>
-        </div>
-      )}
+      {/* Center: School Portal Badge */}
+      <div className="hidden md:flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200/80 text-emerald-950 text-xs font-bold shadow-2xs">
+        <School className="w-4 h-4 text-emerald-600" />
+        <span>School Portal (K-10)</span>
+      </div>
 
       {/* Sync Engine Status Indicator */}
       <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200/70 text-[11px] font-semibold text-slate-600">
@@ -242,139 +187,8 @@ export const InstituteAdminNavbar = ({
         <span>{isCloudSynced ? 'Cloud Live' : 'Edge Mode'}</span>
       </div>
 
-      {/* Right: Preview As Switcher, Settings, and User Menu */}
+      {/* Right: Theme Studio, Settings, and User Menu */}
       <div className="flex items-center gap-2 sm:gap-3">
-        {/* Discrete "Preview As" Role Switcher Dropdown */}
-        <div className="relative" ref={previewRef}>
-          <button
-            type="button"
-            onClick={() => setShowPreviewMenu(!showPreviewMenu)}
-            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs border active:scale-95 ${
-              currentRoute === 'inst-student-portal'
-                ? 'bg-emerald-600 text-white border-emerald-600 shadow-emerald-600/20'
-                : currentRoute === 'inst-teachers'
-                ? 'bg-teal-600 text-white border-teal-600 shadow-teal-600/20'
-                : 'bg-white hover:bg-emerald-50 text-slate-700 hover:text-emerald-800 border-slate-200 hover:border-emerald-300'
-            }`}
-            title="Preview system as Teacher or Student/Parent"
-          >
-            <Eye className={`w-3.5 h-3.5 ${currentRoute === 'inst-student-portal' || currentRoute === 'inst-teachers' ? 'text-white' : 'text-emerald-600'}`} />
-            <span className="hidden sm:inline">
-              {currentRoute === 'inst-student-portal'
-                ? 'Student/Parent View'
-                : currentRoute === 'inst-teachers'
-                ? 'Teacher Desk'
-                : 'Preview As'}
-            </span>
-            <ChevronDown className={`w-3 h-3 transition-transform ${showPreviewMenu ? 'rotate-180' : ''}`} />
-          </button>
-
-          {showPreviewMenu && (
-            <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-slate-100 py-2.5 z-50 animate-in fade-in zoom-in-95">
-              <div className="px-4 py-2 border-b border-slate-100">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">Portal Perspective</span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    Live Simulator
-                  </span>
-                </div>
-                <p className="text-xs text-slate-500 mt-0.5">Switch viewing role without logging out</p>
-              </div>
-
-              <div className="p-1.5 space-y-1">
-                {/* 1. Admin Master Desk */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowPreviewMenu(false)
-                    onRouteChange && onRouteChange('inst-dashboard')
-                  }}
-                  className={`w-full text-left p-2.5 rounded-xl text-xs flex items-center justify-between transition-colors cursor-pointer ${
-                    currentRoute !== 'inst-student-portal' && currentRoute !== 'inst-teachers'
-                      ? 'bg-emerald-50 text-emerald-950 font-bold border border-emerald-200/80'
-                      : 'text-slate-700 hover:bg-slate-50'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-100/70 text-emerald-800 flex items-center justify-center font-bold">
-                      <Building2 className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="font-bold flex items-center gap-1.5">
-                        <span>Admin Master Desk</span>
-                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-200 text-slate-700">Full Access</span>
-                      </div>
-                      <p className="text-[11px] text-slate-400 font-normal">Classes, timetable, admissions & fees</p>
-                    </div>
-                  </div>
-                  {currentRoute !== 'inst-student-portal' && currentRoute !== 'inst-teachers' && (
-                    <Check className="w-4 h-4 text-emerald-600" />
-                  )}
-                </button>
-
-                {/* 2. Teacher Desk */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowPreviewMenu(false)
-                    onRouteChange && onRouteChange('inst-teachers')
-                  }}
-                  className={`w-full text-left p-2.5 rounded-xl text-xs flex items-center justify-between transition-colors cursor-pointer ${
-                    currentRoute === 'inst-teachers'
-                      ? 'bg-teal-50 text-teal-950 font-bold border border-teal-200/80'
-                      : 'text-slate-700 hover:bg-slate-50'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-teal-100/70 text-teal-800 flex items-center justify-center font-bold">
-                      <UserCheck className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="font-bold flex items-center gap-1.5">
-                        <span>Teacher & Faculty Desk</span>
-                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-teal-100 text-teal-800">Faculty</span>
-                      </div>
-                      <p className="text-[11px] text-slate-400 font-normal">Attendance, diary & marks entry</p>
-                    </div>
-                  </div>
-                  {currentRoute === 'inst-teachers' && (
-                    <Check className="w-4 h-4 text-teal-600" />
-                  )}
-                </button>
-
-                {/* 3. Student & Parent Portal */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowPreviewMenu(false)
-                    onRouteChange && onRouteChange('inst-student-portal')
-                  }}
-                  className={`w-full text-left p-2.5 rounded-xl text-xs flex items-center justify-between transition-colors cursor-pointer ${
-                    currentRoute === 'inst-student-portal'
-                      ? 'bg-emerald-50 text-emerald-950 font-bold border border-emerald-200/80'
-                      : 'text-slate-700 hover:bg-slate-50'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-100/70 text-emerald-800 flex items-center justify-center font-bold">
-                      <GraduationCap className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="font-bold flex items-center gap-1.5">
-                        <span>Student & Parent Portal</span>
-                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800">Live View</span>
-                      </div>
-                      <p className="text-[11px] text-slate-400 font-normal">Bank fee challan, diary & report card</p>
-                    </div>
-                  </div>
-                  {currentRoute === 'inst-student-portal' && (
-                    <Check className="w-4 h-4 text-emerald-600" />
-                  )}
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
         {/* Theme Studio & Preset Trigger */}
         <button
           type="button"
@@ -444,12 +258,12 @@ export const InstituteAdminNavbar = ({
                 <button
                   onClick={() => {
                     setShowProfileMenu(false)
-                    onRouteChange && onRouteChange('inst-student-portal')
+                    onRouteChange && onRouteChange('inst-students')
                   }}
                   className="w-full text-left px-4 py-2 text-xs text-emerald-700 hover:bg-emerald-50 flex items-center gap-2 font-bold"
                 >
                   <GraduationCap className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>View Student & Parent Portal</span>
+                  <span>Manage Students Directory</span>
                 </button>
 
                 <button

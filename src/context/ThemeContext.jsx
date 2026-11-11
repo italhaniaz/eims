@@ -1,10 +1,10 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react'
 
 /**
- * Enterprise Multi-Campus Theme System
+ * Enterprise School Management Theme System
  * Supports:
  * - Light / Dark / System mode
- * - Presets: School (#0EA5E9 + #F97316), College (#4F46E5 + #14B8A6), University (#1E3A8A + #D4AF37), Custom
+ * - Presets: School (#4F46E5 + #14B8A6), Custom Brand (auto-generated shades)
  * - Auto-generated color shades & CSS variables
  * - Hero Gradients, Navy Sidebar tokens, Status tokens, Charts palette
  * - RTL / Urdu readiness with persistent direction & locale
@@ -13,43 +13,23 @@ import React, { createContext, useContext, useState, useEffect, useMemo, useCall
 export const THEME_PRESETS = {
   school: {
     id: 'school',
-    name: 'School Portal',
+    name: 'School SaaS Default',
     badge: 'K-10 / Matric',
-    primary: '#0EA5E9',
-    secondary: '#F97316',
-    accent: '#F59E0B',
-    heroGradient: 'linear-gradient(135deg, #0EA5E9, #38BDF8 55%, #F97316)',
-    description: 'Energetic sky blue & sunset orange for high engagement in primary & secondary schools'
-  },
-  college: {
-    id: 'college',
-    name: 'College & Higher Secondary',
-    badge: 'Intermediate / F.Sc / A-Levels',
     primary: '#4F46E5',
     secondary: '#14B8A6',
     accent: '#F59E0B',
     heroGradient: 'linear-gradient(135deg, #4F46E5, #7C3AED 55%, #06B6D4)',
-    description: 'Sophisticated indigo & teal for modern intermediate colleges and academies'
-  },
-  university: {
-    id: 'university',
-    name: 'University & Research',
-    badge: 'HEC / Undergraduate & Postgrad',
-    primary: '#1E3A8A',
-    secondary: '#D4AF37',
-    accent: '#B45309',
-    heroGradient: 'linear-gradient(135deg, #1E3A8A, #312E81 55%, #D4AF37)',
-    description: 'Prestigious deep royal navy & academic gold for universities and degree awarding institutes'
+    description: 'Modern indigo & teal SaaS theme crafted for primary, middle & secondary schools'
   },
   custom: {
     id: 'custom',
     name: 'Custom Brand',
     badge: 'Custom Palette',
-    primary: '#059669',
-    secondary: '#10B981',
+    primary: '#0EA5E9',
+    secondary: '#F97316',
     accent: '#F59E0B',
-    heroGradient: 'linear-gradient(135deg, #059669, #10B981 55%, #06B6D4)',
-    description: 'Pick custom brand colors with auto-generated shades, hover states and hero gradients'
+    heroGradient: 'linear-gradient(135deg, #0EA5E9, #38BDF8 55%, #F97316)',
+    description: 'Pick custom school brand colors with auto-generated shades, hover states and hero gradients'
   }
 }
 
@@ -143,7 +123,7 @@ export const ThemeProvider = ({ children }) => {
         if (parsed.preset && THEME_PRESETS[parsed.preset]) return parsed.preset
       }
     } catch {}
-    return 'college' // Default SaaS preset is College (#4F46E5 + #14B8A6)
+    return 'school'
   })
 
   const [customPrimary, setCustomPrimaryState] = useState(() => {
@@ -223,32 +203,8 @@ export const ThemeProvider = ({ children }) => {
       secondarySoft = isDark ? 'rgba(45, 212, 191, 0.18)' : '#CCFBF1'
       heroGradient = shades.heroGradient
       heroGradientHover = shades.heroGradientHover
-    } else if (preset === 'school') {
-      primary = isDark ? '#38BDF8' : '#0EA5E9'
-      primaryHover = isDark ? '#0EA5E9' : '#0284C7'
-      primarySoft = isDark ? 'rgba(56, 189, 248, 0.18)' : '#F0F9FF'
-      primaryBorder = isDark ? 'rgba(56, 189, 248, 0.35)' : 'rgba(14, 165, 233, 0.25)'
-      secondary = isDark ? '#FB923C' : '#F97316'
-      secondaryHover = isDark ? '#F97316' : '#EA580C'
-      secondarySoft = isDark ? 'rgba(251, 146, 60, 0.18)' : '#FFF7ED'
-      heroGradient = isDark 
-        ? 'linear-gradient(135deg, #0284C7, #0EA5E9 55%, #EA580C)' 
-        : 'linear-gradient(135deg, #0EA5E9, #38BDF8 55%, #F97316)'
-      heroGradientHover = 'linear-gradient(135deg, #0284C7, #0EA5E9 55%, #EA580C)'
-    } else if (preset === 'university') {
-      primary = isDark ? '#60A5FA' : '#1E3A8A'
-      primaryHover = isDark ? '#3B82F6' : '#172554'
-      primarySoft = isDark ? 'rgba(96, 165, 250, 0.18)' : '#EFF6FF'
-      primaryBorder = isDark ? 'rgba(96, 165, 250, 0.35)' : 'rgba(30, 58, 138, 0.25)'
-      secondary = isDark ? '#FACC15' : '#D4AF37'
-      secondaryHover = isDark ? '#EAB308' : '#B89628'
-      secondarySoft = isDark ? 'rgba(250, 204, 21, 0.18)' : '#FEFCE8'
-      heroGradient = isDark
-        ? 'linear-gradient(135deg, #1E40AF, #3730A3 55%, #EAB308)'
-        : 'linear-gradient(135deg, #1E3A8A, #312E81 55%, #D4AF37)'
-      heroGradientHover = 'linear-gradient(135deg, #172554, #1E1B4B 55%, #B89628)'
     } else {
-      // College (Default SaaS: #4F46E5 + #14B8A6)
+      // School SaaS Default (#4F46E5 + #14B8A6)
       primary = isDark ? '#818CF8' : '#4F46E5'
       primaryHover = isDark ? '#6366F1' : '#4338CA'
       primarySoft = isDark ? 'rgba(129, 140, 248, 0.18)' : '#EEF2FF'
@@ -359,7 +315,7 @@ export const ThemeProvider = ({ children }) => {
   }, [])
 
   const activeThemeConfig = useMemo(() => {
-    const base = THEME_PRESETS[preset] || THEME_PRESETS.college
+    const base = THEME_PRESETS[preset] || THEME_PRESETS.school
     if (preset === 'custom') {
       const shades = generateColorShades(customPrimary, isDark)
       return {

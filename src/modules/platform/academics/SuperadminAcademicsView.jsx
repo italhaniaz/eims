@@ -48,8 +48,6 @@ import { STANDARD_CAMPUS_ROOMS, getCampusRooms } from '../../../constants/campus
 // LocalStorage Persistence Keys
 const SESSIONS_KEY = 'edu_sms_academic_sessions'
 const SCHOOL_STRUCT_KEY = 'edu_sms_school_structures'
-const COLLEGE_STRUCT_KEY = 'edu_sms_college_programs'
-const UNIVERSITY_STRUCT_KEY = 'edu_sms_university_faculties'
 const CURRICULUM_KEY = 'edu_sms_curriculum_templates'
 const GRADING_KEY = 'edu_sms_grading_schemes'
 const TIMETABLE_RULES_KEY = 'edu_sms_timetable_policies'
@@ -65,7 +63,7 @@ const DEFAULT_SESSIONS = [
     startDate: '2026-08-15', 
     endDate: '2027-06-30', 
     status: 'Active (Current)', 
-    wings: 'All Wings (School, College, University)',
+    wings: 'School Wings (Primary, Middle, Secondary)',
     midtermDates: '2026-11-15 to 2026-11-30',
     finalExamDates: '2027-05-15 to 2027-06-10'
   },
@@ -107,101 +105,17 @@ const DEFAULT_SCHOOL_CLASSES = [
   { id: 'SC-10', sequenceWeight: 10, grade: 'Grade 10', wing: 'Secondary Wing', sections: ['A (Lily)', 'B (Tulip)', 'C (Rose)'], capacity: 120, passingThreshold: 40, isTerminal: true }
 ]
 
-const DEFAULT_COLLEGE_PROGRAMS = [
-  { 
-    id: 'CP-01', 
-    program: 'F.Sc Pre-Medical', 
-    years: 'Part-I & Part-II (2 Years)', 
-    groups: ['Morning Alpha', 'Morning Beta'], 
-    subjectCombinations: ['Physics', 'Chemistry', 'Biology', 'English', 'Urdu', 'Islamiat/PakStudies'],
-    labRequirement: 'Physics, Chemistry, Biology Labs', 
-    capacity: 160,
-    maxLabBatchSize: 25,
-    boardAffiliation: 'BISE Lahore / Federal Board'
-  },
-  { 
-    id: 'CP-02', 
-    program: 'F.Sc Pre-Engineering', 
-    years: 'Part-I & Part-II (2 Years)', 
-    groups: ['Morning Eng-1', 'Eng-2'], 
-    subjectCombinations: ['Physics', 'Chemistry', 'Mathematics', 'English', 'Urdu', 'Islamiat/PakStudies'],
-    labRequirement: 'Physics, Chemistry, Computer Lab', 
-    capacity: 120,
-    maxLabBatchSize: 25,
-    boardAffiliation: 'BISE Lahore / Federal Board'
-  },
-  { 
-    id: 'CP-03', 
-    program: 'ICS (Computer Science)', 
-    years: 'Part-I & Part-II (2 Years)', 
-    groups: ['ICS-A (Math)', 'ICS-B (Stats)'], 
-    subjectCombinations: ['Computer Science', 'Mathematics', 'Physics or Statistics', 'English', 'Urdu'],
-    labRequirement: 'Advanced Computing Lab', 
-    capacity: 140,
-    maxLabBatchSize: 25,
-    boardAffiliation: 'BISE Lahore / Federal Board'
-  },
-  { 
-    id: 'CP-04', 
-    program: 'I.Com (Commerce)', 
-    years: 'Part-I & Part-II (2 Years)', 
-    groups: ['I.Com Alpha'], 
-    subjectCombinations: ['Principles of Accounting', 'Economics', 'Commercial Geography', 'Business Math'],
-    labRequirement: 'Commerce Workshop', 
-    capacity: 80,
-    maxLabBatchSize: 30,
-    boardAffiliation: 'BISE Lahore / Federal Board'
-  }
-]
-
-const DEFAULT_UNI_FACULTIES = [
-  { 
-    id: 'UF-01', 
-    faculty: 'Faculty of Computing & Information Technology', 
-    depts: ['Computer Science', 'Software Engineering', 'Artificial Intelligence', 'Cyber Security'], 
-    semesters: '8 Semesters (4 Years)', 
-    creditHours: 134, 
-    degree: 'BS / MS',
-    hecCompliant: true,
-    theoryLabRatio: 'Theory 3 CH (3 hrs/wk) : Lab 1 CH (3 hrs/wk)',
-    compulsoryCourses: ['Pakistan Studies', 'Islamic Studies / Ethics', 'Ideology & Constitution of Pakistan']
-  },
-  { 
-    id: 'UF-02', 
-    faculty: 'Faculty of Business & Management Sciences', 
-    depts: ['Business Administration', 'Accounting & Finance'], 
-    semesters: '8 Semesters (4 Years)', 
-    creditHours: 130, 
-    degree: 'BBA / MBA',
-    hecCompliant: true,
-    theoryLabRatio: 'Theory 3 CH (3 hrs/wk) : Case Study Workshop',
-    compulsoryCourses: ['Pakistan Studies', 'Islamic Studies / Ethics', 'Business Communication']
-  },
-  { 
-    id: 'UF-03', 
-    faculty: 'Faculty of Social Sciences & Humanities', 
-    depts: ['English Literature', 'Psychology', 'Education'], 
-    semesters: '8 Semesters (4 Years)', 
-    creditHours: 126, 
-    degree: 'BS / MA',
-    hecCompliant: true,
-    theoryLabRatio: 'Theory 3 CH (3 hrs/wk)',
-    compulsoryCourses: ['Pakistan Studies', 'Islamic Studies / Ethics', 'Sociology']
-  }
-]
-
 const DEFAULT_CURRICULUM_SCHEMES = [
   { id: 'CUR-01', code: 'CUR-NSC-P', title: 'National Single Curriculum (Primary)', gradeRange: 'Grade 1 - 5', wing: 'Primary Wing', subjects: 'English Language, Urdu Literature, Mathematics Foundations, General Science, Islamiat / Ethics', totalHoursPerWeek: 30 },
   { id: 'CUR-02', code: 'CUR-FB-SEC', title: 'Federal & Punjab Secondary Board Scheme', gradeRange: 'Grade 9 - 10', wing: 'Secondary Wing', subjects: 'Physics, Chemistry, Biology / Computer Science, Pakistan Studies, Mathematics (Science)', totalHoursPerWeek: 35 },
-  { id: 'CUR-03', code: 'CUR-CIE-OL', title: 'Cambridge IGCSE & O-Levels', gradeRange: 'O1, O2, O3', wing: 'Cambridge Wing', subjects: 'Mathematics 4024, English Language 1123, Physics 5054, Chemistry 5070, Computer Science 2210', totalHoursPerWeek: 36 },
-  { id: 'CUR-04', code: 'CUR-HEC-CS', title: 'HEC National Computing Curriculum 2026', gradeRange: 'BS Computing', wing: 'University Wing', subjects: 'Programming Fundamentals, Object Oriented Programming, Data Structures, Database Systems, Operating Systems', totalHoursPerWeek: 21 }
+  { id: 'CUR-03', code: 'CUR-CIE-OL', title: 'Cambridge IGCSE & O-Levels', gradeRange: 'O1, O2, O3', wing: 'Cambridge Wing', subjects: 'Mathematics 4024, English Language 1123, Physics 5054, Chemistry 5070, Computer Science 2210', totalHoursPerWeek: 36 }
 ]
 
 const DEFAULT_GRADING_SCHEMES = [
   {
     id: 'SCH-BISE',
-    name: 'School & College Percentage Scale (BISE)',
-    wing: 'School & College Wings',
+    name: 'School Percentage Scale (BISE & Matric)',
+    wing: 'School Wings',
     roundingPolicy: 'Standard Half-Up (e.g. 79.5% -> 80%)',
     intervals: [
       { grade: 'A+', min: 80, max: 100, gpa: 4.0, remarks: 'Exceptional Distinction' },
@@ -210,20 +124,6 @@ const DEFAULT_GRADING_SCHEMES = [
       { grade: 'C', min: 50, max: 59.99, gpa: 2.5, remarks: 'Good' },
       { grade: 'D', min: 40, max: 49.99, gpa: 2.0, remarks: 'Passing' },
       { grade: 'F', min: 0, max: 39.99, gpa: 0.0, remarks: 'Fail' }
-    ]
-  },
-  {
-    id: 'SCH-HEC',
-    name: 'University 4.00 CGPA Scale (HEC Standard)',
-    wing: 'University Wing',
-    roundingPolicy: 'Exact 2 Decimal Places',
-    intervals: [
-      { grade: 'A', min: 85, max: 100, gpa: 4.00, remarks: 'Outstanding' },
-      { grade: 'A-', min: 80, max: 84.99, gpa: 3.67, remarks: 'Very Good' },
-      { grade: 'B+', min: 75, max: 79.99, gpa: 3.33, remarks: 'Good' },
-      { grade: 'B', min: 71, max: 74.99, gpa: 3.00, remarks: 'Satisfactory' },
-      { grade: 'C', min: 61, max: 70.99, gpa: 2.00, remarks: 'Acceptable' },
-      { grade: 'F', min: 0, max: 60.99, gpa: 0.00, remarks: 'Fail' }
     ]
   }
 ]
@@ -290,24 +190,6 @@ export const SuperadminAcademicsView = ({ activeTab = 'sessions', onTabChange = 
     }
   })
 
-  const [collegePrograms, setCollegePrograms] = useState(() => {
-    try {
-      const stored = localStorage.getItem(COLLEGE_STRUCT_KEY)
-      return stored ? JSON.parse(stored) : DEFAULT_COLLEGE_PROGRAMS
-    } catch {
-      return DEFAULT_COLLEGE_PROGRAMS
-    }
-  })
-
-  const [uniFaculties, setUniFaculties] = useState(() => {
-    try {
-      const stored = localStorage.getItem(UNIVERSITY_STRUCT_KEY)
-      return stored ? JSON.parse(stored) : DEFAULT_UNI_FACULTIES
-    } catch {
-      return DEFAULT_UNI_FACULTIES
-    }
-  })
-
   const [curriculumSchemes, setCurriculumSchemes] = useState(() => {
     try {
       const stored = localStorage.getItem(CURRICULUM_KEY)
@@ -353,14 +235,6 @@ export const SuperadminAcademicsView = ({ activeTab = 'sessions', onTabChange = 
   }, [schoolClasses])
 
   useEffect(() => {
-    try { localStorage.setItem(COLLEGE_STRUCT_KEY, JSON.stringify(collegePrograms)) } catch {}
-  }, [collegePrograms])
-
-  useEffect(() => {
-    try { localStorage.setItem(UNIVERSITY_STRUCT_KEY, JSON.stringify(uniFaculties)) } catch {}
-  }, [uniFaculties])
-
-  useEffect(() => {
     try { localStorage.setItem(CURRICULUM_KEY, JSON.stringify(curriculumSchemes)) } catch {}
   }, [curriculumSchemes])
 
@@ -387,7 +261,7 @@ export const SuperadminAcademicsView = ({ activeTab = 'sessions', onTabChange = 
     term: 'Full Year Regular',
     startDate: '',
     endDate: '',
-    wings: 'All Wings (School, College, University)',
+    wings: 'School Wings (Primary, Middle, Secondary)',
     status: 'Planned',
     midtermDates: '',
     finalExamDates: ''
@@ -407,35 +281,7 @@ export const SuperadminAcademicsView = ({ activeTab = 'sessions', onTabChange = 
     isTerminal: false
   })
 
-  // Modal 3: College Program
-  const [isProgramModalOpen, setIsProgramModalOpen] = useState(false)
-  const [editingProgramId, setEditingProgramId] = useState(null)
-  const [programForm, setProgramForm] = useState({
-    program: '',
-    years: 'Part-I & Part-II (2 Years)',
-    groupsInput: 'Morning Alpha, Morning Beta',
-    subjectCombinationsInput: 'Physics, Chemistry, Biology',
-    labRequirement: 'Physics, Chemistry Labs',
-    capacity: 120,
-    maxLabBatchSize: 25,
-    boardAffiliation: 'BISE Lahore'
-  })
-
-  // Modal 4: University Faculty
-  const [isFacultyModalOpen, setIsFacultyModalOpen] = useState(false)
-  const [editingFacultyId, setEditingFacultyId] = useState(null)
-  const [facultyForm, setFacultyForm] = useState({
-    faculty: '',
-    deptsInput: 'Computer Science, Software Engineering',
-    semesters: '8 Semesters (4 Years)',
-    creditHours: 134,
-    degree: 'BS',
-    hecCompliant: true,
-    theoryLabRatio: 'Theory 3 CH (3 hrs/wk) : Lab 1 CH (3 hrs/wk)',
-    compulsoryCoursesInput: 'Pakistan Studies, Islamic Studies / Ethics'
-  })
-
-  // Modal 5: Curriculum Scheme
+  // Modal 3: Curriculum Scheme
   const [isCurriculumModalOpen, setIsCurriculumModalOpen] = useState(false)
   const [editingCurriculumId, setEditingCurriculumId] = useState(null)
   const [curriculumForm, setCurriculumForm] = useState({
@@ -452,7 +298,7 @@ export const SuperadminAcademicsView = ({ activeTab = 'sessions', onTabChange = 
   const [editingGradingId, setEditingGradingId] = useState(null)
   const [gradingForm, setGradingForm] = useState({
     name: '',
-    wing: 'School & College Wings',
+    wing: 'School Wings',
     roundingPolicy: 'Standard Half-Up (e.g. 79.5% -> 80%)',
     intervals: [
       { grade: 'A+', min: 80, max: 100, gpa: 4.0, remarks: 'Exceptional Distinction' },
@@ -515,7 +361,7 @@ export const SuperadminAcademicsView = ({ activeTab = 'sessions', onTabChange = 
       term: 'Full Year Regular',
       startDate: '',
       endDate: '',
-      wings: 'All Wings (School, College, University)',
+      wings: 'School Wings (Primary, Middle, Secondary)',
       status: 'Planned',
       midtermDates: '',
       finalExamDates: ''
@@ -692,152 +538,6 @@ export const SuperadminAcademicsView = ({ activeTab = 'sessions', onTabChange = 
   }
 
   // -------------------------------------------------------------
-  // HANDLERS: College Programs
-  // -------------------------------------------------------------
-  const openCreateProgramModal = () => {
-    setEditingProgramId(null)
-    setProgramForm({
-      program: '',
-      years: 'Part-I & Part-II (2 Years)',
-      groupsInput: 'Morning Alpha, Morning Beta',
-      subjectCombinationsInput: 'Physics, Chemistry, Biology',
-      labRequirement: 'Physics, Chemistry Labs',
-      capacity: 120,
-      maxLabBatchSize: 25,
-      boardAffiliation: 'BISE Lahore'
-    })
-    setIsProgramModalOpen(true)
-  }
-
-  const openEditProgramModal = (prog) => {
-    setEditingProgramId(prog.id)
-    setProgramForm({
-      program: prog.program,
-      years: prog.years,
-      groupsInput: (prog.groups || []).join(', '),
-      subjectCombinationsInput: (prog.subjectCombinations || []).join(', '),
-      labRequirement: prog.labRequirement,
-      capacity: prog.capacity,
-      maxLabBatchSize: prog.maxLabBatchSize || 25,
-      boardAffiliation: prog.boardAffiliation || 'BISE Lahore'
-    })
-    setIsProgramModalOpen(true)
-  }
-
-  const handleSaveProgram = (e) => {
-    e.preventDefault()
-    if (!programForm.program.trim()) {
-      toast?.error?.('Please enter a college program name')
-      return
-    }
-    const groups = programForm.groupsInput.split(',').map(g => g.trim()).filter(Boolean)
-    const subjectCombinations = programForm.subjectCombinationsInput.split(',').map(s => s.trim()).filter(Boolean)
-
-    if (editingProgramId) {
-      setCollegePrograms(prev => prev.map(p => p.id === editingProgramId ? {
-        ...p,
-        ...programForm,
-        groups,
-        subjectCombinations,
-        capacity: Number(programForm.capacity) || 120,
-        maxLabBatchSize: Number(programForm.maxLabBatchSize) || 25
-      } : p))
-      toast?.success?.(`Program ${programForm.program} updated`)
-    } else {
-      const newProg = {
-        id: `CP-${Date.now().toString().slice(-4)}`,
-        ...programForm,
-        groups,
-        subjectCombinations,
-        capacity: Number(programForm.capacity) || 120,
-        maxLabBatchSize: Number(programForm.maxLabBatchSize) || 25
-      }
-      setCollegePrograms(prev => [...prev, newProg])
-      toast?.success?.(`Program ${programForm.program} added`)
-    }
-    setIsProgramModalOpen(false)
-  }
-
-  const handleDeleteProgram = (prog) => {
-    if (window.confirm(`Are you sure you want to remove college program "${prog.program}"?`)) {
-      setCollegePrograms(prev => prev.filter(p => p.id !== prog.id))
-      toast?.success?.(`Program ${prog.program} removed`)
-    }
-  }
-
-  // -------------------------------------------------------------
-  // HANDLERS: University Faculties
-  // -------------------------------------------------------------
-  const openCreateFacultyModal = () => {
-    setEditingFacultyId(null)
-    setFacultyForm({
-      faculty: '',
-      deptsInput: 'Computer Science, Software Engineering',
-      semesters: '8 Semesters (4 Years)',
-      creditHours: 134,
-      degree: 'BS',
-      hecCompliant: true,
-      theoryLabRatio: 'Theory 3 CH (3 hrs/wk) : Lab 1 CH (3 hrs/wk)',
-      compulsoryCoursesInput: 'Pakistan Studies, Islamic Studies / Ethics'
-    })
-    setIsFacultyModalOpen(true)
-  }
-
-  const openEditFacultyModal = (fac) => {
-    setEditingFacultyId(fac.id)
-    setFacultyForm({
-      faculty: fac.faculty,
-      deptsInput: (fac.depts || []).join(', '),
-      semesters: fac.semesters,
-      creditHours: fac.creditHours,
-      degree: fac.degree,
-      hecCompliant: !!fac.hecCompliant,
-      theoryLabRatio: fac.theoryLabRatio || 'Theory 3 CH (3 hrs/wk) : Lab 1 CH (3 hrs/wk)',
-      compulsoryCoursesInput: (fac.compulsoryCourses || []).join(', ')
-    })
-    setIsFacultyModalOpen(true)
-  }
-
-  const handleSaveFaculty = (e) => {
-    e.preventDefault()
-    if (!facultyForm.faculty.trim()) {
-      toast?.error?.('Please enter faculty name')
-      return
-    }
-    const depts = facultyForm.deptsInput.split(',').map(d => d.trim()).filter(Boolean)
-    const compulsoryCourses = facultyForm.compulsoryCoursesInput.split(',').map(c => c.trim()).filter(Boolean)
-
-    if (editingFacultyId) {
-      setUniFaculties(prev => prev.map(f => f.id === editingFacultyId ? {
-        ...f,
-        ...facultyForm,
-        depts,
-        compulsoryCourses,
-        creditHours: Number(facultyForm.creditHours) || 130
-      } : f))
-      toast?.success?.(`Faculty updated`)
-    } else {
-      const newFac = {
-        id: `UF-${Date.now().toString().slice(-4)}`,
-        ...facultyForm,
-        depts,
-        compulsoryCourses,
-        creditHours: Number(facultyForm.creditHours) || 130
-      }
-      setUniFaculties(prev => [...prev, newFac])
-      toast?.success?.(`Faculty created`)
-    }
-    setIsFacultyModalOpen(false)
-  }
-
-  const handleDeleteFaculty = (fac) => {
-    if (window.confirm(`Are you sure you want to delete "${fac.faculty}"?`)) {
-      setUniFaculties(prev => prev.filter(f => f.id !== fac.id))
-      toast?.success?.(`Faculty deleted`)
-    }
-  }
-
-  // -------------------------------------------------------------
   // HANDLERS: Curriculum Schemes
   // -------------------------------------------------------------
   const openCreateCurriculumModal = () => {
@@ -905,7 +605,7 @@ export const SuperadminAcademicsView = ({ activeTab = 'sessions', onTabChange = 
     setEditingGradingId(null)
     setGradingForm({
       name: '',
-      wing: 'School & College Wings',
+      wing: 'School Wings',
       roundingPolicy: 'Standard Half-Up (e.g. 79.5% -> 80%)',
       intervals: [
         { grade: 'A+', min: 80, max: 100, gpa: 4.0, remarks: 'Exceptional Distinction' },
@@ -1237,18 +937,6 @@ export const SuperadminAcademicsView = ({ activeTab = 'sessions', onTabChange = 
           sanitizeCSV(c.isTerminal ? 'Yes (Terminal)' : 'No')
         ].join(',')
       })
-    } else if (effectiveTab === 'college-struct') {
-      headers = ['Program ID', 'Program Name', 'Duration', 'Affiliated Board', 'Assigned Groups', 'Subject Combinations', 'Lab Requirements', 'Capacity']
-      rows = collegePrograms.map(p => [
-        sanitizeCSV(p.id),
-        sanitizeCSV(p.program),
-        sanitizeCSV(p.years),
-        sanitizeCSV(p.boardAffiliation || 'BISE'),
-        sanitizeCSV((p.groups || []).join('; ')),
-        sanitizeCSV((p.subjectCombinations || []).join('; ')),
-        sanitizeCSV(p.labRequirement),
-        sanitizeCSV(p.capacity)
-      ].join(','))
     } else {
       headers = ['Item ID', 'Title / Code', 'Details / Wing', 'Status']
       rows = [
@@ -1271,8 +959,6 @@ export const SuperadminAcademicsView = ({ activeTab = 'sessions', onTabChange = 
   const tabsConfig = [
     { key: 'sessions', label: 'Sessions & Calendars', icon: Calendar, badge: sessions.length },
     { key: 'school-struct', label: 'School Structure', icon: School, badge: schoolClasses.length },
-    { key: 'college-struct', label: 'College Structure', icon: Layers, badge: collegePrograms.length },
-    { key: 'university-struct', label: 'University Structure', icon: Building2, badge: uniFaculties.length },
     { key: 'curriculum', label: 'Curriculum & Subjects', icon: BookOpen, badge: curriculumSchemes.length },
     { key: 'grading', label: 'Grading Schemes', icon: Award, badge: gradingSchemes.length },
     { key: 'timetable', label: 'Timetable & Room Allocation', icon: Clock, badge: campusRooms.length },
@@ -1301,15 +987,6 @@ export const SuperadminAcademicsView = ({ activeTab = 'sessions', onTabChange = 
     )
   }, [schoolClasses, searchTerm])
 
-  const filteredCollegePrograms = useMemo(() => {
-    if (!searchTerm.trim()) return collegePrograms
-    const term = searchTerm.toLowerCase()
-    return collegePrograms.filter(p => 
-      p.program.toLowerCase().includes(term) ||
-      p.years.toLowerCase().includes(term)
-    )
-  }, [collegePrograms, searchTerm])
-
   const filteredRooms = useMemo(() => {
     if (!searchTerm.trim()) return campusRooms
     const term = searchTerm.toLowerCase()
@@ -1334,7 +1011,7 @@ export const SuperadminAcademicsView = ({ activeTab = 'sessions', onTabChange = 
               Academic Hierarchy & Frameworks
             </h1>
             <p className="text-sm text-purple-200 mt-1 max-w-2xl leading-relaxed">
-              Standardize multi-wing curricula, academic calendars, school/college/university divisions, and student progression rollover policies.
+              Standardize school curricula, academic calendars, grade divisions, and student progression rollover policies.
             </p>
           </div>
 
@@ -1628,184 +1305,7 @@ export const SuperadminAcademicsView = ({ activeTab = 'sessions', onTabChange = 
         </div>
       )}
 
-      {/* Sub-View 3: College Structure */}
-      {effectiveTab === 'college-struct' && (
-        <div className="space-y-6 animate-in fade-in duration-200">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
-            <div className="relative flex-1 max-w-md">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input 
-                type="text"
-                placeholder="Search program, duration, or affiliation..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <button 
-                type="button"
-                onClick={openCreateProgramModal}
-                className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs sm:text-sm font-semibold flex items-center gap-2 shadow-xs transition-all cursor-pointer"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Add College Program</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {filteredCollegePrograms.map(prog => (
-              <div 
-                key={prog.id}
-                className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-mono font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-100">
-                          {prog.id}
-                        </span>
-                        <span className="text-xs text-slate-500 font-medium">{prog.years}</span>
-                      </div>
-                      <h3 className="text-lg font-bold text-slate-900 mt-1">{prog.program}</h3>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => openEditProgramModal(prog)}
-                        className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all cursor-pointer"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteProgram(prog)}
-                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all cursor-pointer"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2.5 py-3 border-y border-slate-100 text-xs">
-                    <div>
-                      <span className="text-slate-400">Board Affiliation:</span>
-                      <span className="ml-2 font-semibold text-slate-800">{prog.boardAffiliation || 'BISE Lahore'}</span>
-                    </div>
-                    <div>
-                      <span className="text-slate-400">Subject Combinations:</span>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {(prog.subjectCombinations || []).map((sub, i) => (
-                          <span key={i} className="px-2 py-0.5 bg-purple-50 text-purple-700 rounded-md font-medium text-[11px]">
-                            {sub}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <span className="text-slate-400">Practical Labs & Batches:</span>
-                      <div className="font-semibold text-slate-700 mt-0.5">
-                        {prog.labRequirement} (Max {prog.maxLabBatchSize || 25} students/batch)
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-4 pt-3 border-t border-slate-50 flex items-center justify-between text-xs text-slate-500">
-                  <span>Groups: {(prog.groups || []).join(', ')}</span>
-                  <span className="font-bold text-slate-800">Cap: {prog.capacity}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Sub-View 4: University Structure */}
-      {effectiveTab === 'university-struct' && (
-        <div className="space-y-6 animate-in fade-in duration-200">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
-            <h2 className="text-base font-bold text-slate-900">HEC University Faculties & Departments</h2>
-            <button 
-              type="button"
-              onClick={openCreateFacultyModal}
-              className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs sm:text-sm font-semibold flex items-center gap-2 shadow-xs transition-all cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Add Faculty</span>
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {uniFaculties.map(fac => (
-              <div 
-                key={fac.id}
-                className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <div>
-                      <span className="text-[10px] font-mono font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded border border-purple-100">
-                        {fac.id}
-                      </span>
-                      <h3 className="text-base font-bold text-slate-900 mt-1">{fac.faculty}</h3>
-                      <p className="text-xs text-slate-500">{fac.degree} • {fac.semesters}</p>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => openEditFacultyModal(fac)}
-                        className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all cursor-pointer"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteFaculty(fac)}
-                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all cursor-pointer"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 py-3 border-y border-slate-100 text-xs">
-                    <div>
-                      <span className="text-slate-400 font-medium">Departments:</span>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {(fac.depts || []).map((d, i) => (
-                          <span key={i} className="px-2 py-0.5 bg-slate-100 text-slate-700 rounded-md font-medium text-[11px]">
-                            {d}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="pt-2">
-                      <span className="text-slate-400 font-medium">HEC Credit Hours:</span>
-                      <span className="ml-2 font-bold text-slate-800">{fac.creditHours} CH</span>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 font-medium">Ratio:</span>
-                      <span className="ml-2 text-slate-600 font-mono text-[11px]">{fac.theoryLabRatio}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-3 pt-3 border-t border-slate-50 flex items-center justify-between text-xs">
-                  <span className="text-emerald-600 font-semibold flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>HEC Accredited</span>
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Sub-View 5: Curriculum & Subjects */}
+      {/* Sub-View 3: Curriculum & Subjects */}
       {effectiveTab === 'curriculum' && (
         <div className="space-y-6 animate-in fade-in duration-200">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
@@ -2389,7 +1889,7 @@ export const SuperadminAcademicsView = ({ activeTab = 'sessions', onTabChange = 
                 <label className="block text-slate-600 font-semibold mb-1">Wings Covered</label>
                 <input 
                   type="text"
-                  placeholder="All Wings (School, College, University)"
+                  placeholder="School Wings (Primary, Middle, Secondary)"
                   value={sessionForm.wings}
                   onChange={(e) => setSessionForm({ ...sessionForm, wings: e.target.value })}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl"

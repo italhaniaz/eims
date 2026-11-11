@@ -66,7 +66,7 @@ export const NoticeModal = ({
         category: TIER_CATEGORIES[defaultTier]?.[0] || 'General',
         audience: TIER_AUDIENCES[defaultTier]?.[0] || 'All Students & Parents',
         priority: 'medium',
-        author: defaultTier === 'university' ? 'Office of the Registrar' : defaultTier === 'college' ? 'Office of the Principal' : 'School Administration',
+        author: 'School Administration',
         content: '',
         pinned: false,
         date: new Date().toISOString().split('T')[0]
@@ -83,7 +83,7 @@ export const NoticeModal = ({
       tier: newTier,
       category: categories[0] || 'General',
       audience: audiences[0] || 'All',
-      author: prev.author || (newTier === 'university' ? 'Office of the Registrar' : newTier === 'college' ? 'Office of the Principal' : 'School Administration')
+      author: prev.author || 'School Administration'
     }))
   }
 

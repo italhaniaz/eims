@@ -55,10 +55,7 @@ export const MeritListGazetteModal = ({
         const level = targetClass !== 'ALL' ? detectProgramLevel(targetClass) : 'school'
         const matched = parsed.find(p => {
           const w = (p.wing || '').toLowerCase()
-          if (level === 'college' && (w.includes('college') || w.includes('higher'))) return true
-          if (level === 'university' && (w.includes('university') || w.includes('undergraduate'))) return true
-          if (level === 'school' && (w.includes('school') || w.includes('primary') || w.includes('middle'))) return true
-          return false
+          return w.includes('school') || w.includes('primary') || w.includes('middle') || w.includes('secondary')
         }) || parsed[0]
 
         if (matched) {

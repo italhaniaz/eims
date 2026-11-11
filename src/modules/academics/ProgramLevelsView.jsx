@@ -36,7 +36,7 @@ export const ProgramLevelsView = ({ currentInstitute }) => {
 
   const [toastMessage, setToastMessage] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
-  const [activeTab, setActiveTab] = useState('all') // 'all' | 'school' | 'college' | 'university'
+  const [activeTab, setActiveTab] = useState('all') // 'all' | 'preschool' | 'elementary' | 'secondary'
   const [isAddStreamModalOpen, setIsAddStreamModalOpen] = useState(false)
   const [expandedCurriculum, setExpandedCurriculum] = useState({})
 
@@ -140,16 +140,12 @@ export const ProgramLevelsView = ({ currentInstitute }) => {
 
   const getLevelIcon = (id) => {
     switch (id) {
+      case 'preschool':
+        return <Sparkles className="w-5 h-5 text-pink-600" />
       case 'elementary':
         return <BookOpen className="w-5 h-5 text-emerald-600" />
       case 'secondary':
         return <Award className="w-5 h-5 text-blue-600" />
-      case 'higher-secondary':
-        return <GraduationCap className="w-5 h-5 text-indigo-600" />
-      case 'college':
-        return <Building2 className="w-5 h-5 text-amber-600" />
-      case 'university':
-        return <Sparkles className="w-5 h-5 text-purple-600" />
       default:
         return <Layers className="w-5 h-5 text-slate-600" />
     }
@@ -171,27 +167,6 @@ export const ProgramLevelsView = ({ currentInstitute }) => {
           badge: 'bg-blue-100 text-blue-800',
           btn: 'bg-blue-600 hover:bg-blue-700 text-white'
         }
-      case 'higher-secondary':
-        return {
-          bg: 'bg-indigo-50',
-          border: 'border-indigo-200',
-          badge: 'bg-indigo-100 text-indigo-800',
-          btn: 'bg-indigo-600 hover:bg-indigo-700 text-white'
-        }
-      case 'college':
-        return {
-          bg: 'bg-amber-50',
-          border: 'border-amber-200',
-          badge: 'bg-amber-100 text-amber-800',
-          btn: 'bg-amber-600 hover:bg-amber-700 text-white'
-        }
-      case 'university':
-        return {
-          bg: 'bg-purple-50',
-          border: 'border-purple-200',
-          badge: 'bg-purple-100 text-purple-800',
-          btn: 'bg-purple-600 hover:bg-purple-700 text-white'
-        }
       default:
         return {
           bg: 'bg-slate-50',
@@ -208,13 +183,12 @@ export const ProgramLevelsView = ({ currentInstitute }) => {
   const visibleLevels = programLevels.filter(lvl => {
     if (lvl.id === 'all') return false
 
-    // Tier Gating: Hide tiers outside of current institute authority
+    // Tier Gating: Hide tiers outside of current school scope
     if (!tierConfig.isLevelAllowed(lvl.id)) return false
 
     // Tab filter
     if (activeTab === 'school' && !['preschool', 'elementary', 'secondary'].includes(lvl.id)) return false
-    if (activeTab === 'higher-secondary' && lvl.id !== 'higher-secondary') return false
-    if (activeTab === 'university' && lvl.id !== 'university') return false
+    if (activeTab !== 'all' && activeTab !== 'school' && lvl.id !== activeTab) return false
 
     // Search filter
     if (!searchTerm) return true
@@ -265,18 +239,10 @@ export const ProgramLevelsView = ({ currentInstitute }) => {
             <span>Academic Architecture & Levels</span>
           </div>
           <h1 className="text-2xl font-bold text-slate-900 mt-1 tracking-tight">
-            {tierConfig.isUniversityOnly 
-              ? 'University Faculties & Degree Programs Matrix' 
-              : tierConfig.isCollegeOnly 
-              ? 'College Academic Streams & Intermediate Disciplines' 
-              : 'Academic Program Levels & Curriculum Streams'}
+            School Program Levels &amp; Curriculum Streams
           </h1>
           <p className="text-xs text-slate-500 mt-1 max-w-2xl">
-            {tierConfig.isUniversityOnly 
-              ? 'Higher Education Framework spanning 4-Year BS Honors programs, 8 Academic Semesters, credit hours & HEC guidelines.'
-              : tierConfig.isCollegeOnly 
-              ? 'Intermediate framework spanning Higher Secondary (HSSC: FSc Pre-Med, Pre-Engg, ICS, I.Com) & Associate Degrees (ADP).'
-              : 'Modular educational framework spanning from Pre-School & Elementary Education (Grades 1-8) to Secondary High School (Grades 9-10).'}
+            Modular school framework spanning Pre-School &amp; Kindergarten, Elementary (Grades 1-8), and Secondary High School (Grades 9-10 / Matric / O-Levels).
           </p>
         </div>
 
@@ -345,10 +311,10 @@ export const ProgramLevelsView = ({ currentInstitute }) => {
         {/* Tier Tabs */}
         <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl w-full sm:w-auto overflow-x-auto">
           {[
-            ...(tierConfig.isMultiTier ? [{ id: 'all', label: 'All Tiers' }] : []),
-            ...(tierConfig.hasSchool ? [{ id: 'school', label: 'School (Grades 1-10)' }] : []),
-            ...(tierConfig.hasCollege ? [{ id: 'higher-secondary', label: 'Higher Secondary / College (11-12)' }] : []),
-            ...(tierConfig.hasUniversity ? [{ id: 'university', label: 'Undergraduates (BS)' }] : [])
+            { id: 'all', label: 'All School Tiers' },
+            { id: 'preschool', label: 'Early Years (PG - KG)' },
+            { id: 'elementary', label: 'Primary & Middle (1-8)' },
+            { id: 'secondary', label: 'Matric / O-Levels (9-10)' }
           ].map((tab) => (
             <button
               key={tab.id}
@@ -607,10 +573,9 @@ export const ProgramLevelsView = ({ currentInstitute }) => {
               onChange={(e) => setNewStreamData({ ...newStreamData, levelId: e.target.value })}
               className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm bg-white"
             >
+              <option value="preschool">Early Years (Playgroup - KG)</option>
               <option value="elementary">Elementary Level (Grade 1 - 8)</option>
-              <option value="secondary">Secondary Level (Grade 9 - 10)</option>
-              <option value="higher-secondary">Higher Secondary Level (Grade 11 - 12)</option>
-              <option value="university">Undergraduate Level (BS Honors)</option>
+              <option value="secondary">Secondary Level (Grade 9 - 10 / O-Levels)</option>
             </select>
           </div>
 

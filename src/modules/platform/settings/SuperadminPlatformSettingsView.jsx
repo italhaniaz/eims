@@ -209,19 +209,7 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
       if (PlatformService?.startImpersonation) {
         await PlatformService.startImpersonation(inst, user)
       }
-      const instId = inst.id || ''
-      const instType = (inst.type || '').toLowerCase()
-      const tiers = inst.enabledTiers || []
-      
-      if (instId === 'inst-2' || instType === 'school' || (tiers.includes('school') && !tiers.includes('college'))) {
-        login('school_admin', 'admin.school@cityschool.edu')
-      } else if (instId === 'inst-3' || instType === 'college' || (tiers.includes('college') && !tiers.includes('undergraduate'))) {
-        login('college_admin', 'admin.college@roots.edu')
-      } else if (instId === 'inst-4' || instType === 'university' || tiers.includes('undergraduate')) {
-        login('university_admin', 'admin.uni@ias.edu.pk')
-      } else {
-        login('institute_admin', `admin@${inst.slug || 'campus'}.edu`)
-      }
+      login('institute_admin', inst.adminEmail || `admin@${inst.slug || 'campus'}.edu`)
       toast?.info?.(`Now impersonating "${inst.name}". A 60-minute delegation session is active.`)
     } catch (err) {
       toast?.error?.(err.message || 'Failed to initiate impersonation session')
@@ -363,28 +351,21 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
             <label className="block text-xs font-bold text-slate-600 uppercase mb-2">
               System Theme Preset
             </label>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {[
-                { 
-                  id: 'school', 
-                  title: 'School Portal', 
-                  primaryHex: '#0EA5E9', 
-                  secHex: '#F97316', 
-                  desc: 'Sky Blue + Sunset Orange for K-10 & Matric' 
+                {
+                  id: 'school',
+                  title: 'School SaaS Default',
+                  primaryHex: '#4F46E5',
+                  secHex: '#14B8A6',
+                  desc: 'Modern Indigo SaaS + Teal for K-10, Matric & O-Levels'
                 },
-                { 
-                  id: 'college', 
-                  title: 'College & HSSC', 
-                  primaryHex: '#4F46E5', 
-                  secHex: '#14B8A6', 
-                  desc: 'Modern Indigo SaaS + Teal for Intermediate' 
-                },
-                { 
-                  id: 'university', 
-                  title: 'University & Research', 
-                  primaryHex: '#1E3A8A', 
-                  secHex: '#D4AF37', 
-                  desc: 'Deep Royal Navy + Academic Gold for BS/Honors' 
+                {
+                  id: 'custom',
+                  title: 'Custom Brand Palette',
+                  primaryHex: customPrimary || '#4F46E5',
+                  secHex: '#14B8A6',
+                  desc: 'Auto-generated brand tokens tailored to your school identity'
                 }
               ].map(p => (
                 <div
@@ -443,8 +424,8 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
                 type="button"
                 onClick={() => {
                   setCustomPrimary('#4F46E5')
-                  setPreset('college')
-                  toast.info('Reset to College SaaS default tokens.')
+                  setPreset('school')
+                  toast.info('Reset to School SaaS default tokens.')
                 }}
                 className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
               >
@@ -552,7 +533,7 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
               { id: 'inst-1', name: 'Beaconhouse Central High', code: 'BHS-01', city: 'Lahore', students: 1314 },
               { id: 'inst-2', name: 'The City School Senior Branch', code: 'TCS-02', city: 'Lahore', students: 1211 },
               { id: 'inst-3', name: 'Lahore Grammar Model Town', code: 'LGS-03', city: 'Lahore', students: 895 },
-              { id: 'inst-4', name: 'Army Public School & College', code: 'APS-04', city: 'Rawalpindi', students: 940 }
+              { id: 'inst-4', name: 'Roots Ivy High School', code: 'RIHS-04', city: 'Rawalpindi', students: 940 }
             ].map(c => (
               <div key={c.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 flex items-center justify-between">
                 <div>

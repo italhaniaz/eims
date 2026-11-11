@@ -32,46 +32,18 @@ export const SUBSCRIPTION_PLANS = [
     description: 'Tailored for Primary, Middle & Matric / O-Levels schools'
   },
   {
-    id: 'plan-college',
-    name: 'College Plan',
-    type: 'College',
-    planCode: 'COLLEGE',
-    enabledTiers: ['college'],
-    pricePKR: 35000,
+    id: 'plan-enterprise',
+    name: 'Multi-Branch School Network',
+    type: 'School',
+    planCode: 'SCHOOL_NETWORK',
+    enabledTiers: ['school'],
+    pricePKR: 45000,
     interval: 'Monthly',
-    maxStudents: 3000,
-    maxUsers: 100,
-    maxCampuses: 3,
-    storageMB: 10240,
-    description: 'Built for Intermediate, F.Sc, ICS, FA, I.Com & A-Levels colleges'
-  },
-  {
-    id: 'plan-university',
-    name: 'University Plan',
-    type: 'University',
-    planCode: 'UNIVERSITY',
-    enabledTiers: ['undergraduate'],
-    pricePKR: 55000,
-    interval: 'Monthly',
-    maxStudents: 8000,
-    maxUsers: 300,
-    maxCampuses: 5,
+    maxStudents: 5000,
+    maxUsers: 200,
+    maxCampuses: 10,
     storageMB: 25600,
-    description: 'Full Undergraduate BS degree management, Semesters, Credit Hours & CGPA'
-  },
-  {
-    id: 'plan-custom',
-    name: 'Custom Hybrid Plan',
-    type: 'Custom',
-    planCode: 'CUSTOM',
-    enabledTiers: ['school', 'college'],
-    pricePKR: 75000,
-    interval: 'Monthly',
-    maxStudents: 15000,
-    maxUsers: 600,
-    maxCampuses: 15,
-    storageMB: 51200,
-    description: 'Multi-wing educational groups combining School, College, and University wings'
+    description: 'Multi-branch school network governance under central Super Admin control'
   }
 ]
 
@@ -147,11 +119,11 @@ export const PlatformService = {
             instituteName: inst.name,
             moduleKey: mod.key,
             moduleName: mod.name,
-            enabled: ['students', 'fees', 'exams', 'communication'].includes(mod.key) || inst.type === 'University',
-            quotaStudents: inst.type === 'University' ? 5000 : 1500,
-            quotaUsers: inst.type === 'University' ? 200 : 50,
-            quotaCampuses: inst.type === 'University' ? 10 : 3,
-            quotaStorageMb: inst.type === 'University' ? 10240 : 2048
+            enabled: ['students', 'fees', 'exams', 'communication'].includes(mod.key),
+            quotaStudents: 1500,
+            quotaUsers: 50,
+            quotaCampuses: 3,
+            quotaStorageMb: 2048
           })
           changed = true
         }
@@ -218,61 +190,27 @@ export const PlatformService = {
     return true
   },
 
-  // 3b. Toggle Educational Wing (School / College / Undergraduate) for an institute
+  // 3b. Toggle School Wing for an institute
   async toggleInstituteWing(instituteId, wingKey, enabled) {
     const store = getStoredData()
     const inst = (store.institutes || []).find(i => i.id === instituteId)
-    if (!inst) throw new Error('Institute not found')
+    if (!inst) throw new Error('School not found')
 
-    let currentTiers = inst.enabledTiers || (
-      inst.type === 'School' ? ['school'] :
-      inst.type === 'College' ? ['college'] :
-      inst.type === 'University' ? ['undergraduate'] : ['school']
-    )
-
-    let updatedTiers
-    if (enabled) {
-      updatedTiers = Array.from(new Set([...currentTiers, wingKey]))
-    } else {
-      updatedTiers = currentTiers.filter(t => t !== wingKey)
-      if (updatedTiers.length === 0) {
-        throw new Error('An institute must have at least one active educational wing.')
-      }
-    }
-
+    const updatedTiers = ['school']
     inst.enabledTiers = updatedTiers
-
-    // Auto-update plan and type to reflect enabled wings
-    if (updatedTiers.length > 1) {
-      inst.planTier = 'Custom Hybrid Plan'
-      inst.planType = 'CUSTOM'
-      inst.type = 'Custom Group'
-    } else if (updatedTiers.includes('school')) {
-      inst.planTier = 'School Plan'
-      inst.planType = 'SCHOOL'
-      inst.type = 'School'
-    } else if (updatedTiers.includes('college')) {
-      inst.planTier = 'College Plan'
-      inst.planType = 'COLLEGE'
-      inst.type = 'College'
-    } else if (updatedTiers.includes('undergraduate')) {
-      inst.planTier = 'University Plan'
-      inst.planType = 'UNIVERSITY'
-      inst.type = 'University'
-    }
+    inst.planTier = inst.planTier || 'School Plan'
+    inst.planType = 'SCHOOL'
+    inst.type = 'School'
 
     saveStoredData(store)
 
-    // Synchronize subscription record
     try {
       const subs = JSON.parse(localStorage.getItem('sms_institute_subscriptions') || '[]')
       const targetSub = subs.find(s => s.instituteId === instituteId)
       if (targetSub) {
         targetSub.enabledTiers = updatedTiers
         targetSub.planName = inst.planTier
-        targetSub.planId = updatedTiers.length > 1 ? 'plan-custom' :
-          updatedTiers.includes('school') ? 'plan-school' :
-          updatedTiers.includes('college') ? 'plan-college' : 'plan-university'
+        targetSub.planId = 'plan-school'
         localStorage.setItem('sms_institute_subscriptions', JSON.stringify(subs))
       }
       if (typeof window !== 'undefined') {
@@ -282,7 +220,7 @@ export const PlatformService = {
     } catch {}
 
     DataService.logAuditEvent(
-      `Toggled educational wing "${wingKey}" to ${enabled ? 'ENABLED' : 'DISABLED'} for ${inst.name} (${inst.code})`,
+      `Updated school configuration for ${inst.name} (${inst.code})`,
       'Super Administrator',
       'Success'
     )
@@ -290,39 +228,33 @@ export const PlatformService = {
     return { success: true, institute: inst, updatedTiers }
   },
 
-  // 3c. Comprehensive Update of Institute Wings & Subscription Plan
-  async updateInstituteWingsAndPlan(instituteId, { enabledTiers, planTier, planType, type }) {
+  // 3c. Update School Wings & Subscription Plan
+  async updateInstituteWingsAndPlan(instituteId, { planTier, planType }) {
     const store = getStoredData()
     const inst = (store.institutes || []).find(i => i.id === instituteId)
-    if (!inst) throw new Error('Institute not found')
+    if (!inst) throw new Error('School not found')
 
-    if (!enabledTiers || enabledTiers.length === 0) {
-      throw new Error('Please select at least one educational wing.')
-    }
-
+    const enabledTiers = ['school']
     inst.enabledTiers = enabledTiers
-    inst.planTier = planTier || (enabledTiers.length > 1 ? 'Custom Hybrid Plan' : enabledTiers.includes('school') ? 'School Plan' : enabledTiers.includes('college') ? 'College Plan' : 'University Plan')
-    inst.planType = planType || (enabledTiers.length > 1 ? 'CUSTOM' : enabledTiers.includes('school') ? 'SCHOOL' : enabledTiers.includes('college') ? 'COLLEGE' : 'UNIVERSITY')
-    inst.type = type || (enabledTiers.length > 1 ? 'Custom Group' : enabledTiers.includes('school') ? 'School' : enabledTiers.includes('college') ? 'College' : 'University')
+    inst.planTier = planTier || 'School Plan'
+    inst.planType = planType || 'SCHOOL'
+    inst.type = 'School'
 
     saveStoredData(store)
 
-    // Synchronize subscription record
     try {
       const subs = JSON.parse(localStorage.getItem('sms_institute_subscriptions') || '[]')
       const targetSub = subs.find(s => s.instituteId === instituteId)
       if (targetSub) {
         targetSub.enabledTiers = enabledTiers
         targetSub.planName = inst.planTier
-        targetSub.planId = enabledTiers.length > 1 ? 'plan-custom' :
-          enabledTiers.includes('school') ? 'plan-school' :
-          enabledTiers.includes('college') ? 'plan-college' : 'plan-university'
+        targetSub.planId = 'plan-school'
         localStorage.setItem('sms_institute_subscriptions', JSON.stringify(subs))
       }
     } catch {}
 
     DataService.logAuditEvent(
-      `Updated wings [${enabledTiers.join(', ')}] and plan "${inst.planTier}" for ${inst.name}`,
+      `Updated school plan "${inst.planTier}" for ${inst.name}`,
       'Super Administrator',
       'Success'
     )
@@ -501,14 +433,8 @@ export const PlatformService = {
       id: instituteId,
       name: wizardData.name,
       code: wizardData.code.toUpperCase().trim(),
-      type: wizardData.type || 'School', // School, College, University
-      enabledTiers: wizardData.enabledTiers && wizardData.enabledTiers.length > 0
-        ? wizardData.enabledTiers
-        : (
-          wizardData.type === 'University' ? ['undergraduate'] :
-          wizardData.type === 'College' ? ['college'] :
-          ['school']
-        ),
+      type: 'School',
+      enabledTiers: ['school'],
       country: wizardData.country || 'Pakistan',
       city: wizardData.city || 'Lahore',
       province: wizardData.province || 'Punjab',
@@ -622,16 +548,6 @@ export const PlatformService = {
         planName = 'Free Trial Plan'
         pricePKR = 0
         enabledTiers = ['school']
-      } else if (newInstitute.type === 'College') {
-        planId = 'plan-college'
-        planName = 'College Plan'
-        pricePKR = 35000
-        enabledTiers = ['college']
-      } else if (newInstitute.type === 'University') {
-        planId = 'plan-university'
-        planName = 'University Plan'
-        pricePKR = 55000
-        enabledTiers = ['undergraduate']
       }
 
       const now = new Date()

@@ -36,9 +36,7 @@ export const OfferLetterModal = ({
         const grade = (applicant?.gradeApplied || '').toLowerCase()
         const matched = tariffs.find(t => {
           const tier = (t.tier || '').toLowerCase()
-          if (grade.includes('grade') || grade.includes('primary') || grade.includes('class')) return tier.includes('primary') || tier.includes('middle') || tier.includes('school')
-          if (grade.includes('fsc') || grade.includes('ics') || grade.includes('college')) return tier.includes('college') || tier.includes('pre-')
-          if (grade.includes('bs') || grade.includes('bba')) return tier.includes('undergraduate')
+          if (grade.includes('grade') || grade.includes('primary') || grade.includes('middle') || grade.includes('o-level')) return tier.includes('primary') || tier.includes('middle') || tier.includes('school') || tier.includes('secondary')
           return false
         })
         if (matched) {
@@ -170,10 +168,10 @@ export const OfferLetterModal = ({
           <div className="text-center border-b pb-4 relative">
             <School className="w-11 h-11 text-teal-800 mx-auto mb-1" />
             <h2 className="text-xl font-black uppercase tracking-wider text-slate-900">
-              {currentInstitute?.name || 'CENTRAL HIGHER SECONDARY & COLLEGE'}
+              {currentInstitute?.name || 'CENTRAL HIGH SCHOOL SYSTEM'}
             </h2>
             <p className="text-xs text-slate-500 font-medium">
-              Office of the Dean & Directorate of Student Admissions
+              Office of the Principal &amp; Student Admissions
             </p>
             <div className="mt-2.5 inline-block px-4 py-1 bg-teal-50 border border-teal-300 rounded text-xs font-black uppercase tracking-widest text-teal-950">
               PROVISIONAL ADMISSION OFFER & FEE INTIMATION VOUCHER

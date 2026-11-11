@@ -44,8 +44,8 @@ const FREEZE_KEY = 'edu_sms_admissions_freeze'
 
 // Default Initial Data
 const DEFAULT_CYCLES = [
-  { id: 'CYC-2026-F', name: 'Fall 2026 Admissions Intake', campusScope: 'All Campuses (Central)', startDate: '2026-06-01', endDate: '2026-08-31', status: 'Active (Open)', capacity: 500, applications: 384 },
-  { id: 'CYC-2027-S', name: 'Spring 2027 Lateral Entry', campusScope: 'High School & College Wings', startDate: '2026-11-15', endDate: '2027-01-10', status: 'Scheduled', capacity: 250, applications: 45 }
+  { id: 'CYC-2026-F', name: 'Fall 2026 Admissions Intake', campusScope: 'All School Campuses (Central)', startDate: '2026-06-01', endDate: '2026-08-31', status: 'Active (Open)', capacity: 500, applications: 384 },
+  { id: 'CYC-2027-S', name: 'Spring 2027 Lateral Entry', campusScope: 'Middle & High School Wings', startDate: '2026-11-15', endDate: '2027-01-10', status: 'Scheduled', capacity: 250, applications: 45 }
 ]
 
 const DEFAULT_MERIT_POLICIES = [
@@ -77,7 +77,7 @@ const DEFAULT_MERIT_POLICIES = [
   },
   { 
     id: 'MER-03',
-    wing: 'College & Higher Secondary', 
+    wing: 'Secondary & O-Levels', 
     minPercentage: 70, 
     testWeight: 60, 
     interviewWeight: 15, 
@@ -94,8 +94,8 @@ const DEFAULT_SEAT_MATRIX = [
   { id: 'SM-01', campus: 'Beaconhouse Central High School', instituteId: 'inst-1', wing: 'Primary Wing', totalCapacity: 250, filledSeats: 210, waitlist: 15 },
   { id: 'SM-02', campus: 'Beaconhouse Central High School', instituteId: 'inst-1', wing: 'High School', totalCapacity: 300, filledSeats: 285, waitlist: 28 },
   { id: 'SM-03', campus: 'City School Model Town Campus', instituteId: 'inst-2', wing: 'Middle Wing', totalCapacity: 200, filledSeats: 160, waitlist: 8 },
-  { id: 'SM-04', campus: 'Roots International College & Academy', instituteId: 'inst-3', wing: 'College Wing', totalCapacity: 180, filledSeats: 175, waitlist: 42 },
-  { id: 'SM-05', campus: 'Institute of Applied Sciences & Undergraduates', instituteId: 'inst-4', wing: 'Undergraduate Wing', totalCapacity: 150, filledSeats: 130, waitlist: 22 }
+  { id: 'SM-04', campus: 'Lahore Grammar School Gulberg', instituteId: 'inst-3', wing: 'O-Levels Wing', totalCapacity: 180, filledSeats: 175, waitlist: 42 },
+  { id: 'SM-05', campus: 'Roots Ivy High School', instituteId: 'inst-4', wing: 'Secondary Wing', totalCapacity: 150, filledSeats: 130, waitlist: 22 }
 ]
 
 const DEFAULT_FEE_SETTINGS = [
@@ -123,7 +123,7 @@ const DEFAULT_FEE_SETTINGS = [
   },
   { 
     id: 'FEE-03',
-    tier: 'College / Pre-Medical / Pre-Eng', 
+    tier: 'Secondary & O-Levels', 
     prospectusFee: 3000, 
     processingFee: 2000, 
     testFee: 1500, 
@@ -736,7 +736,7 @@ export const SuperadminAdmissionsView = ({ activeTab = 'overview', onTabChange =
     } else {
       setEditingTariff({
         id: `FEE-${Date.now().toString().slice(-4)}`,
-        tier: 'Undergraduate Degree Programs (BS)',
+        tier: 'Secondary & O-Levels (Grades 9-10)',
         prospectusFee: 3500,
         processingFee: 2500,
         testFee: 2000,
@@ -1671,7 +1671,7 @@ export const SuperadminAdmissionsView = ({ activeTab = 'overview', onTabChange =
                   <option value="All Campuses (Central)">All Campuses (Central)</option>
                   <option value="Primary & Kindergarten Wings">Primary & Kindergarten Wings</option>
                   <option value="Middle & High School Wings">Middle & High School Wings</option>
-                  <option value="College & Higher Secondary">College & Higher Secondary</option>
+                  <option value="O-Levels & Cambridge Wing">O-Levels & Cambridge Wing</option>
                   {institutes.map(inst => (
                     <option key={inst.id} value={`${inst.name} (Exclusive)`}>
                       {inst.name} (Exclusive)
@@ -2079,8 +2079,7 @@ export const SuperadminAdmissionsView = ({ activeTab = 'overview', onTabChange =
                   <option value="Primary Wing">Primary Wing</option>
                   <option value="Middle Wing">Middle Wing</option>
                   <option value="High School">High School</option>
-                  <option value="College Wing">College Wing</option>
-                  <option value="University Undergraduate">University Undergraduate</option>
+                  <option value="O-Levels & Cambridge Wing">O-Levels & Cambridge Wing</option>
                 </select>
               </div>
 

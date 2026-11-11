@@ -575,7 +575,7 @@ export const TeachersView = ({ currentInstitute, initialTab = "directory" }) => 
       'BankAccount'
     ]
     const sampleData = [
-      'Prof. Dr. Shahid Javed,Teaching,college,Computer Science,Associate Professor,Permanent / Regular,Male,+92 300 1234567,shahid@institute.edu.pk,35201-1234567-1,95000,20000,5000,PK72HABB000192837465',
+      'Mrs. Ayesha Tariq,Teaching,school,Science,Senior Subject Teacher,Permanent / Regular,Female,+92 300 1234567,ayesha@school.edu.pk,35201-1234567-1,75000,15000,3000,PK72HABB000192837465',
       'Nadeem Akhtar,Non-Teaching,school,Administration,Senior Office Assistant,Contract,Male,+92 321 7654321,nadeem@institute.edu.pk,35202-9876543-1,45000,8000,2000,PK45MEZN000987654321'
     ]
     const content = [sampleHeaders.join(','), ...sampleData].join('\n')
@@ -949,16 +949,8 @@ export const TeachersView = ({ currentInstitute, initialTab = "directory" }) => 
               }}
               className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white font-medium text-slate-700"
             >
-              <option value="All Levels">All Academic Levels</option>
-              {tierConfig.hasSchool && (
-                <option value="school">Primary / Secondary School</option>
-              )}
-              {tierConfig.hasCollege && (
-                <option value="college">Higher Secondary / College Faculty</option>
-              )}
-              {tierConfig.hasUniversity && (
-                <option value="university">University Faculty & Professors</option>
-              )}
+              <option value="All Levels">All School Levels</option>
+              <option value="school">Primary &amp; Secondary School</option>
             </select>
           </div>
 
@@ -1578,7 +1570,7 @@ export const TeachersView = ({ currentInstitute, initialTab = "directory" }) => 
                           )}
                         </td>
                         <td className="p-3.5 text-center font-mono font-bold text-slate-800">
-                          {weeklyLoad} {teacher.level === 'university' ? 'Cr. Hrs' : 'Periods/Wk'}
+                          {weeklyLoad} Periods/Wk
                         </td>
                         <td className="p-3.5 text-center">
                           {isOverloaded ? (

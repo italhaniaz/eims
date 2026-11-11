@@ -34,7 +34,7 @@ export const ModulesControlView = () => {
   const [matrixData, setMatrixData] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
-  const [typeFilter, setTypeFilter] = useState('ALL') // ALL, School, College, University
+  const [typeFilter, setTypeFilter] = useState('ALL') // ALL, School, Enterprise
 
   // Bulk Apply state
   const [bulkModuleKey, setBulkModuleKey] = useState(PLATFORM_MODULES[0]?.key || 'students')
@@ -57,45 +57,31 @@ export const ModulesControlView = () => {
     const inst = institutes.find(i => i.id === instituteId)
     if (!inst) return
 
-    const currentTiers = inst.enabledTiers || (
-      inst.type === 'School' ? ['school'] :
-      inst.type === 'College' ? ['college'] :
-      inst.type === 'University' ? ['undergraduate'] : ['school']
-    )
+    const currentTiers = inst.enabledTiers || ['school']
     const isCurrentlyEnabled = currentTiers.includes(wingKey)
     const nextVal = !isCurrentlyEnabled
 
     if (!nextVal && currentTiers.length <= 1) {
-      toast.warning('An institute must have at least one active educational wing!')
+      toast.warning('Every school must retain active School Wing licensing!')
       return
     }
 
     try {
       await PlatformService.toggleInstituteWing(instituteId, wingKey, nextVal)
       refreshData()
-      const wingLabels = {
-        school: 'School Wing (K-10 & Matric)',
-        college: 'College Wing (11-12 & Intermediate)',
-        undergraduate: 'University Wing (BS Degrees & Semesters)'
-      }
       toast.success(
-        `${wingLabels[wingKey] || wingKey} ${nextVal ? 'ENABLED' : 'DISABLED'} for "${inst.name}"!`
+        `School Wing (K-10 & Matric) ${nextVal ? 'ENABLED' : 'DISABLED'} for "${inst.name}"!`
       )
     } catch (err) {
-      toast.error(err.message || 'Failed to toggle educational wing')
+      toast.error(err.message || 'Failed to toggle school wing')
     }
   }
 
   // Open Wings & Plan configuration modal
   const handleOpenWingsModal = (inst) => {
     setWingsTargetInstitute(inst)
-    const currentTiers = inst.enabledTiers || (
-      inst.type === 'School' ? ['school'] :
-      inst.type === 'College' ? ['college'] :
-      inst.type === 'University' ? ['undergraduate'] : ['school']
-    )
     setWingsForm({
-      enabledTiers: currentTiers,
+      enabledTiers: ['school'],
       planTier: inst.planTier || 'School Plan',
       quotaStudents: inst.quotaStudents || 1500,
       quotaStorageMb: inst.quotaStorageMb || 2048
@@ -103,33 +89,8 @@ export const ModulesControlView = () => {
   }
 
   // Toggle wing in the modal
-  const handleToggleWingInForm = (wingKey) => {
-    setWingsForm(prev => {
-      const exists = prev.enabledTiers.includes(wingKey)
-      let nextTiers
-      if (exists) {
-        if (prev.enabledTiers.length <= 1) {
-          toast.warning('At least one wing must remain selected.')
-          return prev
-        }
-        nextTiers = prev.enabledTiers.filter(w => w !== wingKey)
-      } else {
-        nextTiers = [...prev.enabledTiers, wingKey]
-      }
-
-      // Auto-determine plan tier based on selected wings
-      let autoPlan = prev.planTier
-      if (nextTiers.length > 1) autoPlan = 'Custom Hybrid Plan'
-      else if (nextTiers.includes('school')) autoPlan = 'School Plan'
-      else if (nextTiers.includes('college')) autoPlan = 'College Plan'
-      else if (nextTiers.includes('undergraduate')) autoPlan = 'University Plan'
-
-      return {
-        ...prev,
-        enabledTiers: nextTiers,
-        planTier: autoPlan
-      }
-    })
+  const handleToggleWingInForm = () => {
+    toast.info('School Wing is core and required for all school campuses.')
   }
 
   // Save Wings & Plan
@@ -139,10 +100,10 @@ export const ModulesControlView = () => {
 
     try {
       await PlatformService.updateInstituteWingsAndPlan(wingsTargetInstitute.id, {
-        enabledTiers: wingsForm.enabledTiers,
+        enabledTiers: ['school'],
         planTier: wingsForm.planTier,
-        planType: wingsForm.enabledTiers.length > 1 ? 'CUSTOM' : wingsForm.enabledTiers.includes('school') ? 'SCHOOL' : wingsForm.enabledTiers.includes('college') ? 'COLLEGE' : 'UNIVERSITY',
-        type: wingsForm.enabledTiers.length > 1 ? 'Custom Group' : wingsForm.enabledTiers.includes('school') ? 'School' : wingsForm.enabledTiers.includes('college') ? 'College' : 'University'
+        planType: wingsForm.planTier === 'Enterprise Network' ? 'ENTERPRISE' : wingsForm.planTier === 'Starter Trial' ? 'TRIAL' : 'SCHOOL',
+        type: 'School'
       })
 
       await PlatformService.updateInstituteQuotas(wingsTargetInstitute.id, {
@@ -154,9 +115,9 @@ export const ModulesControlView = () => {
 
       refreshData()
       setWingsTargetInstitute(null)
-      toast.success(`Educational wings & subscription plan updated for "${wingsTargetInstitute.name}"!`)
+      toast.success(`School plan & quotas updated for "${wingsTargetInstitute.name}"!`)
     } catch (err) {
-      toast.error(err.message || 'Failed to save wing configurations')
+      toast.error(err.message || 'Failed to save school configurations')
     }
   }
 
@@ -196,25 +157,16 @@ export const ModulesControlView = () => {
   }, [institutes])
 
   // Dynamic counts for wing filter badges
-  const { schoolCount, collegeCount, uniCount, hybridCount } = useMemo(() => {
+  const { schoolCount, enterpriseCount } = useMemo(() => {
     let school = 0
-    let college = 0
-    let uni = 0
-    let hybrid = 0
+    let enterprise = 0
 
     institutes.forEach(inst => {
-      const currentTiers = inst.enabledTiers || (
-        inst.type === 'School' ? ['school'] :
-        inst.type === 'College' ? ['college'] :
-        inst.type === 'University' ? ['undergraduate'] : ['school']
-      )
-      if (currentTiers.includes('school') || inst.type === 'School') school++
-      if (currentTiers.includes('college') || inst.type === 'College') college++
-      if (currentTiers.includes('undergraduate') || currentTiers.includes('university') || inst.type === 'University') uni++
-      if (currentTiers.length > 1 || inst.type === 'Custom Group' || (inst.planTier && inst.planTier.toLowerCase().includes('hybrid'))) hybrid++
+      school++
+      if ((inst.planTier || '').toLowerCase().includes('enterprise')) enterprise++
     })
 
-    return { schoolCount: school, collegeCount: college, uniCount: uni, hybridCount: hybrid }
+    return { schoolCount: school, enterpriseCount: enterprise }
   }, [institutes])
 
   // Filter institutes
@@ -226,23 +178,11 @@ export const ModulesControlView = () => {
         (inst.code && inst.code.toLowerCase().includes(term)) ||
         (inst.city && inst.city.toLowerCase().includes(term))
 
-      const currentTiers = inst.enabledTiers || (
-        inst.type === 'School' ? ['school'] :
-        inst.type === 'College' ? ['college'] :
-        inst.type === 'University' ? ['undergraduate'] : ['school']
-      )
-
       let matchesWing = true
       const f = typeFilter.toLowerCase()
-      if (f === 'school') {
-        matchesWing = currentTiers.includes('school') || inst.type === 'School'
-      } else if (f === 'college') {
-        matchesWing = currentTiers.includes('college') || inst.type === 'College'
-      } else if (f === 'university') {
-        matchesWing = currentTiers.includes('undergraduate') || currentTiers.includes('university') || inst.type === 'University'
-      } else if (f === 'hybrid') {
-        matchesWing = currentTiers.length > 1 || inst.type === 'Custom Group' || (inst.planTier && inst.planTier.toLowerCase().includes('hybrid'))
-      } else if (typeFilter !== 'ALL') {
+      if (f === 'enterprise') {
+        matchesWing = (inst.planTier || '').toLowerCase().includes('enterprise')
+      } else if (typeFilter !== 'ALL' && f !== 'school') {
         matchesWing = inst.type?.toLowerCase() === f
       }
 
@@ -260,23 +200,7 @@ export const ModulesControlView = () => {
       return Boolean(entry.enabled)
     }
 
-    // Tier-aware fallback if no explicit entry provisioned
-    const inst = institutes.find(i => i.id === instituteId)
-    const currentTiers = inst?.enabledTiers || (
-      inst?.type === 'School' ? ['school'] :
-      inst?.type === 'College' ? ['college'] :
-      inst?.type === 'University' ? ['undergraduate'] : ['school']
-    )
-    const isUni = currentTiers.includes('undergraduate') || inst?.type === 'University'
-    const isCollege = currentTiers.includes('college') || inst?.type === 'College'
-
-    if (['cgpa_grading', 'credit_hours', 'departments'].includes(moduleKey)) {
-      return isUni
-    }
-    if (['programs', 'curriculum', 'timetable'].includes(moduleKey)) {
-      return isUni || isCollege
-    }
-    return ['students', 'fees', 'exams', 'library', 'admissions'].includes(moduleKey)
+    return ['students', 'fees', 'exams', 'library', 'admissions', 'timetable', 'curriculum'].includes(moduleKey)
   }
 
   // Toggle single module flag
@@ -380,7 +304,7 @@ export const ModulesControlView = () => {
             Educational Wings & Modules Matrix
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
-            Centrally govern School, College, and University educational wings, module capabilities, and storage/student quotas across all registered campuses.
+            Centrally govern School module capabilities, subscription plans, and storage/student quotas across all registered school campuses.
           </p>
         </div>
 
@@ -469,8 +393,8 @@ export const ModulesControlView = () => {
                   aria-label="Select Matrix Control View"
                   className="bg-transparent text-xs sm:text-[13px] font-bold text-slate-900 focus:outline-none cursor-pointer pr-6 appearance-none mt-0.5"
                 >
-                  <option value="wings">Educational Wings Matrix (School • College • University)</option>
-                  <option value="features">Feature Capabilities Matrix (10 Core Modules)</option>
+                  <option value="wings">School Licensing Matrix (K-10 & Matric)</option>
+                  <option value="features">Feature Capabilities Matrix ({PLATFORM_MODULES.length} Core Modules)</option>
                 </select>
               </div>
               <ChevronDown className="w-4 h-4 text-purple-600 pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2" />
@@ -510,11 +434,9 @@ export const ModulesControlView = () => {
               aria-label="Filter institutes by educational wing"
               className="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer pr-1"
             >
-              <option value="ALL">All Wings ({institutes.length})</option>
-              <option value="school">School ({schoolCount})</option>
-              <option value="college">College ({collegeCount})</option>
-              <option value="university">University ({uniCount})</option>
-              <option value="hybrid">Hybrid ({hybridCount})</option>
+              <option value="ALL">All Schools ({institutes.length})</option>
+              <option value="school">School Standard ({schoolCount})</option>
+              <option value="enterprise">Enterprise Network ({enterpriseCount})</option>
             </select>
           </div>
 
@@ -540,9 +462,9 @@ export const ModulesControlView = () => {
                 <School className="w-5 h-5 text-purple-600" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-900">Institutional Educational Wings Governance</h3>
+                <h3 className="text-sm font-bold text-slate-900">School Wing & Plan Governance</h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Toggle School, College, or University wings with 1 click. Changes dynamically update the Institute Admin portal, class creation levels, faculty assignments, and student admissions.
+                  Govern School Wing licensing and subscription tiers with 1 click. Changes dynamically update the School Admin portal, class creation levels, staff assignments, and admissions.
                 </p>
               </div>
             </div>
@@ -554,42 +476,26 @@ export const ModulesControlView = () => {
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="bg-slate-50/90 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
-                    <th className="py-3.5 px-4 min-w-[200px] sticky left-0 bg-slate-50 z-20 shadow-[2px_0_5px_rgba(0,0,0,0.04)]">Institute / Campus</th>
+                    <th className="py-3.5 px-4 min-w-[200px] sticky left-0 bg-slate-50 z-20 shadow-[2px_0_5px_rgba(0,0,0,0.04)]">School / Campus</th>
                     <th className="py-3.5 px-3 min-w-[120px]">Subscription Plan</th>
                     <th className="py-3.5 px-3 text-center min-w-[130px]">🏫 School Wing</th>
-                    <th className="py-3.5 px-3 text-center min-w-[130px]">🏛️ College Wing</th>
-                    <th className="py-3.5 px-3 text-center min-w-[130px]">🎓 University Wing</th>
-                    <th className="py-3.5 px-4 min-w-[240px]">Cascading Chain Impact</th>
+                    <th className="py-3.5 px-4 min-w-[240px]">Portal Configuration</th>
                     <th className="py-3.5 px-3 text-right min-w-[130px]">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {filteredInstitutes.length > 0 ? (
                     filteredInstitutes.map((inst) => {
-                      const currentTiers = inst.enabledTiers || (
-                        inst.type === 'School' ? ['school'] :
-                        inst.type === 'College' ? ['college'] :
-                        inst.type === 'University' ? ['undergraduate'] : ['school']
-                      )
+                      const currentTiers = inst.enabledTiers || ['school']
                       const isSchoolOn = currentTiers.includes('school')
-                      const isCollegeOn = currentTiers.includes('college')
-                      const isUniOn = currentTiers.includes('undergraduate')
 
                       return (
                         <tr key={inst.id} className="hover:bg-slate-50/60 transition-colors">
                           {/* Institute Column */}
                           <td className="py-3.5 px-4 sticky left-0 bg-white z-10 shadow-[2px_0_5px_rgba(0,0,0,0.04)] border-r border-slate-100">
                             <div className="flex items-center gap-2.5">
-                              <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold shrink-0 transition-colors shadow-2xs border ${
-                                isUniOn 
-                                  ? 'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-100' 
-                                  : isCollegeOn 
-                                  ? 'bg-[#f5eeff] text-purple-700 border-purple-100' 
-                                  : 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                              }`}>
-                                {isUniOn ? <GraduationCap className="w-4.5 h-4.5" /> :
-                                 isCollegeOn ? <Building2 className="w-4.5 h-4.5" /> :
-                                 <School className="w-4.5 h-4.5" />}
+                              <div className="w-9 h-9 rounded-xl flex items-center justify-center font-bold shrink-0 transition-colors shadow-2xs border bg-emerald-50 text-emerald-700 border-emerald-100">
+                                <School className="w-4.5 h-4.5" />
                               </div>
                               <div>
                                 <span className="font-bold text-slate-900 text-xs sm:text-sm">{inst.name}</span>
@@ -609,7 +515,7 @@ export const ModulesControlView = () => {
                             </span>
                           </td>
 
-                          {/* 1. School Wing Toggle */}
+                          {/* School Wing Toggle */}
                           <td className="py-3.5 px-3 text-center">
                             <button
                               type="button"
@@ -619,61 +525,25 @@ export const ModulesControlView = () => {
                                   ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-purple-600/20 active:scale-95'
                                   : 'bg-slate-100/90 text-slate-400 hover:bg-slate-200/80 hover:text-slate-600'
                               }`}
-                              title={isSchoolOn ? 'School Wing Active (Click to disable)' : 'School Wing Disabled (Click to activate)'}
+                              title={isSchoolOn ? 'School Wing Active (Click to toggle)' : 'School Wing Disabled (Click to activate)'}
                             >
                               {isSchoolOn ? <Check className="w-3.5 h-3.5 stroke-[2.5]" /> : <X className="w-3.5 h-3.5" />}
                               <span>{isSchoolOn ? 'Active' : 'Disabled'}</span>
                             </button>
-                            <span className="block text-[10px] text-slate-400 mt-1 font-medium">K-10 & Matric</span>
+                            <span className="block text-[10px] text-slate-400 mt-1 font-medium">K-10 & Matric / O-Levels</span>
                           </td>
 
-                          {/* 2. College Wing Toggle */}
-                          <td className="py-3.5 px-3 text-center">
-                            <button
-                              type="button"
-                              onClick={() => handleToggleWing(inst.id, 'college')}
-                              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-xs ${
-                                isCollegeOn
-                                  ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-purple-600/20 active:scale-95'
-                                  : 'bg-slate-100/90 text-slate-400 hover:bg-slate-200/80 hover:text-slate-600'
-                              }`}
-                              title={isCollegeOn ? 'College Wing Active (Click to disable)' : 'College Wing Disabled (Click to activate)'}
-                            >
-                              {isCollegeOn ? <Check className="w-3.5 h-3.5 stroke-[2.5]" /> : <X className="w-3.5 h-3.5" />}
-                              <span>{isCollegeOn ? 'Active' : 'Disabled'}</span>
-                            </button>
-                            <span className="block text-[10px] text-slate-400 mt-1 font-medium">11-12 & Inter</span>
-                          </td>
-
-                          {/* 3. University Wing Toggle */}
-                          <td className="py-3.5 px-3 text-center">
-                            <button
-                              type="button"
-                              onClick={() => handleToggleWing(inst.id, 'undergraduate')}
-                              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-xs ${
-                                isUniOn
-                                  ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-purple-600/20 active:scale-95'
-                                  : 'bg-slate-100/90 text-slate-400 hover:bg-slate-200/80 hover:text-slate-600'
-                              }`}
-                              title={isUniOn ? 'University Wing Active (Click to disable)' : 'University Wing Disabled (Click to activate)'}
-                            >
-                              {isUniOn ? <Check className="w-3.5 h-3.5 stroke-[2.5]" /> : <X className="w-3.5 h-3.5" />}
-                              <span>{isUniOn ? 'Active' : 'Disabled'}</span>
-                            </button>
-                            <span className="block text-[10px] text-slate-400 mt-1 font-medium">BS & Semesters</span>
-                          </td>
-
-                          {/* Cascading Chain Impact Info */}
+                          {/* Portal Configuration Info */}
                           <td className="py-3.5 px-4">
                             <div className="space-y-1 text-[11px]">
                               <div className="flex items-center gap-1 text-slate-700">
                                 <span className="font-semibold text-slate-900">Admin Portal:</span>
-                                <span>{currentTiers.length > 1 ? 'Multi-Wing Top Switcher' : isUniOn ? 'BS Degree Hub' : isCollegeOn ? 'Inter College Suite' : 'School Classes'}</span>
+                                <span>School Admin Dashboard</span>
                               </div>
                               <div className="flex items-center gap-1 text-slate-500 text-[10px]">
-                                <span>Faculty: {isCollegeOn ? 'College Lecturers' : isUniOn ? 'Professors' : 'School Teachers'}</span>
+                                <span>Faculty: School Teachers</span>
                                 <span>•</span>
-                                <span>Students: {isSchoolOn && isCollegeOn ? 'K-12 Pipeline' : isUniOn ? 'BS Undergrads' : isCollegeOn ? 'Inter 11-12' : 'Grades 1-10'}</span>
+                                <span>Students: Grades PG - 10</span>
                               </div>
                             </div>
                           </td>
@@ -776,9 +646,7 @@ export const ModulesControlView = () => {
                       <td className="py-3 px-4 sticky left-0 bg-white hover:bg-slate-50/50 z-10 border-r border-slate-100">
                         <div className="flex items-center gap-2.5">
                           <div className="w-8 h-8 rounded-xl bg-[#f5eeff] text-purple-700 border border-purple-100 flex items-center justify-center font-bold shrink-0 shadow-2xs">
-                            {instType === 'University' ? <GraduationCap className="w-4 h-4" /> :
-                             instType === 'College' ? <Building2 className="w-4 h-4" /> :
-                             <School className="w-4 h-4" />}
+                            <School className="w-4 h-4" />
                           </div>
                           <div>
                             <span className="font-bold text-slate-800 line-clamp-1">{inst.name}</span>
@@ -849,84 +717,25 @@ export const ModulesControlView = () => {
         >
           <form onSubmit={handleSaveWingsAndPlan} className="space-y-4">
             <div className="p-3 bg-[#f5eeff] border border-purple-200 rounded-xl text-xs text-purple-900">
-              Select which educational wings are licensed for <strong>{wingsTargetInstitute.name}</strong>. Unselected wings will be disabled across the portal.
+              Manage licensed School plan tier and quotas for <strong>{wingsTargetInstitute.name}</strong>.
             </div>
 
-            {/* Checkboxes for 3 wings */}
             <div className="space-y-2.5">
-              <label className="block text-xs font-bold text-slate-700 uppercase">Licensed Wings & Modules</label>
-              
-              <div 
-                onClick={() => handleToggleWingInForm('school')}
-                className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
-                  wingsForm.enabledTiers.includes('school')
-                    ? 'bg-[#f5eeff]/70 border-purple-300 ring-1 ring-purple-500/20'
-                    : 'bg-white border-slate-200 hover:bg-slate-50'
-                }`}
-              >
+              <label className="block text-xs font-bold text-slate-700 uppercase">Licensed Scope</label>
+              <div className="p-3 rounded-xl border bg-[#f5eeff]/70 border-purple-300 ring-1 ring-purple-500/20 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center font-bold">
                     <School className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-slate-900">School Wing</h4>
+                    <h4 className="text-xs font-bold text-slate-900">School Wing (Core)</h4>
                     <p className="text-[11px] text-slate-500">Playgroup, Nursery, Primary, Middle & Matric (SSC / O-Levels)</p>
                   </div>
                 </div>
-                <input 
-                  type="checkbox" 
-                  checked={wingsForm.enabledTiers.includes('school')} 
-                  onChange={() => {}} 
-                  className="w-4 h-4 rounded text-purple-600 pointer-events-none"
-                />
-              </div>
-
-              <div 
-                onClick={() => handleToggleWingInForm('college')}
-                className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
-                  wingsForm.enabledTiers.includes('college')
-                    ? 'bg-indigo-50/70 border-indigo-300 ring-1 ring-indigo-500/20'
-                    : 'bg-white border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold">
-                    <Building2 className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-900">College Wing</h4>
-                    <p className="text-[11px] text-slate-500">Intermediate (HSSC), F.Sc Pre-Med/Eng, ICS, FA, I.Com & A-Levels</p>
-                  </div>
-                </div>
-                <input 
-                  type="checkbox" 
-                  checked={wingsForm.enabledTiers.includes('college')} 
-                  onChange={() => {}} 
-                  className="w-4 h-4 rounded text-indigo-600 pointer-events-none"
-                />
-              </div>
-
-              <div 
-                onClick={() => handleToggleWingInForm('undergraduate')}
-                className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
-                  wingsForm.enabledTiers.includes('undergraduate')
-                    ? 'bg-purple-50/70 border-purple-300 ring-1 ring-purple-500/20'
-                    : 'bg-white border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center font-bold">
-                    <GraduationCap className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-900">University Wing</h4>
-                    <p className="text-[11px] text-slate-500">4-Year Undergraduate BS Degrees, Semesters, CGPA & Credit Hours</p>
-                  </div>
-                </div>
-                <input 
-                  type="checkbox" 
-                  checked={wingsForm.enabledTiers.includes('undergraduate')} 
-                  onChange={() => {}} 
+                <input
+                  type="checkbox"
+                  checked={true}
+                  readOnly
                   className="w-4 h-4 rounded text-purple-600 pointer-events-none"
                 />
               </div>
@@ -940,10 +749,9 @@ export const ModulesControlView = () => {
                 onChange={(e) => setWingsForm({ ...wingsForm, planTier: e.target.value })}
                 className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white font-semibold"
               >
-                <option value="School Plan">School Plan (₨ 25,000 / mo)</option>
-                <option value="College Plan">College Plan (₨ 35,000 / mo)</option>
-                <option value="University Plan">University Plan (₨ 55,000 / mo)</option>
-                <option value="Custom Hybrid Plan">Custom Hybrid Plan (₨ 75,000 / mo)</option>
+                <option value="School Plan">School Standard Plan (₨ 25,000 / mo)</option>
+                <option value="Enterprise Network">Multi-Branch School Network (₨ 75,000 / mo)</option>
+                <option value="Starter Trial">Starter Trial (30 Days Free)</option>
               </select>
             </div>
 

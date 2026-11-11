@@ -269,7 +269,7 @@ export const SuperadminAccountsView = ({ activeTab = 'chart', onTabChange = () =
                   { campus: 'Beaconhouse Central High', rev: 'PKR 48.5M', pay: 'PKR 21.2M', utl: 'PKR 7.4M', net: 'PKR 19.9M', margin: '41.0%' },
                   { campus: 'The City School Senior Branch', rev: 'PKR 42.1M', pay: 'PKR 19.5M', utl: 'PKR 6.8M', net: 'PKR 15.8M', margin: '37.5%' },
                   { campus: 'Lahore Grammar Model Town', rev: 'PKR 31.2M', pay: 'PKR 14.8M', utl: 'PKR 5.2M', net: 'PKR 11.2M', margin: '35.9%' },
-                  { campus: 'Army Public School & College', rev: 'PKR 26.7M', pay: 'PKR 12.9M', utl: 'PKR 4.6M', net: 'PKR 9.2M', margin: '34.4%' }
+                  { campus: 'Roots Ivy High School', rev: 'PKR 26.7M', pay: 'PKR 12.9M', utl: 'PKR 4.6M', net: 'PKR 9.2M', margin: '34.4%' }
                 ].map((row, i) => (
                   <tr key={i} className="hover:bg-slate-50/60">
                     <td className="py-3.5 px-4 font-bold text-slate-900">{row.campus}</td>
@@ -375,7 +375,7 @@ export const SuperadminAccountsView = ({ activeTab = 'chart', onTabChange = () =
                   { campus: 'Beaconhouse Central High', count: 184, gross: 'PKR 14,800,000', tax: 'PKR 1,420,000', net: 'PKR 13,380,000', status: 'Disbursed' },
                   { campus: 'The City School Senior Branch', count: 142, gross: 'PKR 11,200,000', tax: 'PKR 1,080,000', net: 'PKR 10,120,000', status: 'Disbursed' },
                   { campus: 'Lahore Grammar Model Town', count: 98, gross: 'PKR 7,800,000', tax: 'PKR 720,000', net: 'PKR 7,080,000', status: 'Approved for Pay' },
-                  { campus: 'Army Public School & College', count: 115, gross: 'PKR 9,400,000', tax: 'PKR 890,000', net: 'PKR 8,510,000', status: 'Verification Pending' }
+                  { campus: 'Roots Ivy High School', count: 115, gross: 'PKR 9,400,000', tax: 'PKR 890,000', net: 'PKR 8,510,000', status: 'Verification Pending' }
                 ].map((row, i) => (
                   <tr key={i} className="hover:bg-slate-50/60">
                     <td className="py-3.5 px-4 font-bold text-slate-900">{row.campus}</td>

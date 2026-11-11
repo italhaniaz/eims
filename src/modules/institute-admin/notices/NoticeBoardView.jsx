@@ -61,15 +61,13 @@ export const NoticeBoardView = ({ currentInstitute }) => {
     } catch (e) {}
   }, [])
 
-  // Map activeProgramLevel to notice tiers ('school', 'college', 'university', 'all')
+  // Map activeProgramLevel to notice tiers ('school', 'all')
   const initialTier = useMemo(() => {
-    if (activeProgramLevel === 'college' || activeProgramLevel === 'higher-secondary') return 'college'
-    if (activeProgramLevel === 'university') return 'university'
     if (activeProgramLevel === 'elementary' || activeProgramLevel === 'secondary' || activeProgramLevel === 'preschool') return 'school'
     return 'all'
   }, [activeProgramLevel])
 
-  // Active Tier Tab: 'all' | 'school' | 'college' | 'university'
+  // Active Tier Tab: 'all' | 'school'
   const [activeTier, setActiveTier] = useState(initialTier)
 
   // Layout View Mode: 'list' (matching user reference image 1) vs 'grid'
@@ -94,9 +92,7 @@ export const NoticeBoardView = ({ currentInstitute }) => {
   const tierCounts = useMemo(() => {
     return {
       all: instNotices.length,
-      school: instNotices.filter(n => n.tier === 'school' || n.tier === 'all').length,
-      college: instNotices.filter(n => n.tier === 'college' || n.tier === 'all').length,
-      university: instNotices.filter(n => n.tier === 'university' || n.tier === 'all').length
+      school: instNotices.filter(n => n.tier === 'school' || n.tier === 'all').length
     }
   }, [instNotices])
 
@@ -201,13 +197,9 @@ export const NoticeBoardView = ({ currentInstitute }) => {
   const getTierBadge = (tier) => {
     switch (tier) {
       case 'school':
-        return { label: 'School / K-12', bg: 'bg-emerald-50 text-emerald-800 border-emerald-200' }
-      case 'college':
-        return { label: 'College Wing', bg: 'bg-blue-50 text-blue-800 border-blue-200' }
-      case 'university':
-        return { label: 'University', bg: 'bg-purple-50 text-purple-800 border-purple-200' }
+        return { label: 'School / K-10', bg: 'bg-emerald-50 text-emerald-800 border-emerald-200' }
       default:
-        return { label: 'Campus-Wide', bg: 'bg-slate-50 text-slate-700 border-slate-200' }
+        return { label: 'School-Wide', bg: 'bg-slate-50 text-slate-700 border-slate-200' }
     }
   }
 
@@ -257,9 +249,9 @@ export const NoticeBoardView = ({ currentInstitute }) => {
         </div>
       </div>
 
-      {/* TIER SELECTOR TABS (School/Students, College, University, All) */}
+      {/* TIER SELECTOR TABS (School, All) */}
       <div className="bg-white p-2 rounded-2xl border border-slate-200/80 shadow-2xs">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {ACADEMIC_TIERS.map(tier => {
             const isSelected = activeTier === tier.id
             const count = tierCounts[tier.id] || 0
@@ -282,8 +274,6 @@ export const NoticeBoardView = ({ currentInstitute }) => {
                     isSelected ? 'bg-orange-600 text-white' : 'bg-slate-100 text-slate-600'
                   }`}>
                     {tier.id === 'school' && <School className="w-4 h-4" />}
-                    {tier.id === 'college' && <Building2 className="w-4 h-4" />}
-                    {tier.id === 'university' && <GraduationCap className="w-4 h-4" />}
                     {tier.id === 'all' && <Layers className="w-4 h-4" />}
                   </div>
                   <div>
@@ -684,14 +674,10 @@ export const NoticeBoardView = ({ currentInstitute }) => {
                   <School className="w-6 h-6" />
                 </div>
                 <h2 className="text-lg font-black uppercase tracking-wider">
-                  {currentInstitute?.name || 'CENTRAL HIGH SCHOOL & COLLEGE SYSTEM'}
+                  {currentInstitute?.name || 'CENTRAL HIGH SCHOOL SYSTEM'}
                 </h2>
                 <p className="text-xs uppercase tracking-widest text-slate-600 font-sans font-semibold">
-                  {selectedNoticeForPrint.tier === 'university'
-                    ? 'OFFICE OF THE REGISTRAR & VICE CHANCELLOR'
-                    : selectedNoticeForPrint.tier === 'college'
-                    ? 'OFFICE OF THE PRINCIPAL & DIRECTOR OF COLLEGIATE STUDIES'
-                    : 'OFFICE OF THE PRINCIPAL & ADMINISTRATIVE REGISTRAR'}
+                  OFFICE OF THE PRINCIPAL &amp; ADMINISTRATIVE REGISTRAR
                 </p>
                 <p className="text-[10px] text-slate-500 font-mono font-sans">
                   Campus Code: {currentInstitute?.code || 'CAMPUS-01'} • {currentInstitute?.affiliation || currentInstitute?.province || 'Registered Institution'}
@@ -754,7 +740,7 @@ export const NoticeBoardView = ({ currentInstitute }) => {
                 <div className="text-center">
                   <div className="w-36 border-b-2 border-slate-900 mb-1"></div>
                   <span className="font-black text-slate-900">
-                    {selectedNoticeForPrint.tier === 'university' ? 'Registrar / Vice Chancellor' : 'Principal / Campus Head'}
+                    Principal / School Head
                   </span>
                   <span className="block text-[10px] text-slate-500">Chief Executive Authority</span>
                 </div>

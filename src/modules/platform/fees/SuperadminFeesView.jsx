@@ -33,17 +33,17 @@ export const SuperadminFeesView = ({ activeTab = 'structure', onTabChange = () =
   
   // Late fee rules
   const [lateRules, setLateRules] = useState([
-    { id: 'LR-01', wing: 'School Wing (Grades 1-10)', graceDays: 10, finePerDay: 'PKR 100', maxCap: 'PKR 2,000', suspendDays: 45, status: 'Active' },
-    { id: 'LR-02', wing: 'College Wing (HSSC / A-Levels)', graceDays: 10, finePerDay: 'PKR 150', maxCap: 'PKR 3,500', suspendDays: 40, status: 'Active' },
-    { id: 'LR-03', wing: 'University Wing (BS / MS)', graceDays: 15, finePerDay: 'PKR 250', maxCap: 'PKR 5,000', suspendDays: 30, status: 'Active' }
+    { id: 'LR-01', wing: 'Primary Wing (PG - Grade 5)', graceDays: 10, finePerDay: 'PKR 100', maxCap: 'PKR 2,000', suspendDays: 45, status: 'Active' },
+    { id: 'LR-02', wing: 'Middle Wing (Grades 6 - 8)', graceDays: 10, finePerDay: 'PKR 150', maxCap: 'PKR 3,000', suspendDays: 40, status: 'Active' },
+    { id: 'LR-03', wing: 'Secondary Wing (Matric / O-Levels)', graceDays: 15, finePerDay: 'PKR 200', maxCap: 'PKR 4,000', suspendDays: 30, status: 'Active' }
   ])
 
   // Defaulters data
   const [defaultersList] = useState([
-    { id: 'DEF-101', student: 'Bilal Farooq', roll: 'BHS-401', campus: 'Beaconhouse Central High', wing: 'School', amount: 'PKR 36,000', days: 42, contact: '0300-4829101', status: 'Notice Issued' },
-    { id: 'DEF-102', student: 'Zainab Qasim', roll: 'TCS-912', campus: 'City School Senior Branch', wing: 'College', amount: 'PKR 52,500', days: 65, contact: '0321-9988771', status: 'Exam Freeze Warning' },
-    { id: 'DEF-103', student: 'Usman Ghani', roll: 'LGS-112', campus: 'Lahore Grammar Model Town', wing: 'School', amount: 'PKR 28,000', days: 25, contact: '0333-5566772', status: '1st Reminder' },
-    { id: 'DEF-104', student: 'Hamza Tariq', roll: 'APS-551', campus: 'Army Public School & College', wing: 'University', amount: 'PKR 78,000', days: 88, contact: '0345-1122334', status: 'Suspension Pending' }
+    { id: 'DEF-101', student: 'Bilal Farooq', roll: 'BHS-401', campus: 'Beaconhouse Central High', wing: 'Primary Wing', amount: 'PKR 36,000', days: 42, contact: '0300-4829101', status: 'Notice Issued' },
+    { id: 'DEF-102', student: 'Zainab Qasim', roll: 'TCS-912', campus: 'City School Senior Branch', wing: 'Secondary Wing', amount: 'PKR 52,500', days: 65, contact: '0321-9988771', status: 'Exam Freeze Warning' },
+    { id: 'DEF-103', student: 'Usman Ghani', roll: 'LGS-112', campus: 'Lahore Grammar Model Town', wing: 'Middle Wing', amount: 'PKR 28,000', days: 25, contact: '0333-5566772', status: '1st Reminder' },
+    { id: 'DEF-104', student: 'Hamza Tariq', roll: 'RIHS-551', campus: 'Roots Ivy High School', wing: 'O-Levels Wing', amount: 'PKR 78,000', days: 88, contact: '0345-1122334', status: 'Suspension Pending' }
   ])
 
   // Promo vouchers
@@ -78,7 +78,7 @@ export const SuperadminFeesView = ({ activeTab = 'structure', onTabChange = () =
 
   // Refund / Waiver approval requests
   const [waiverRequests, setWaiverRequests] = useState([
-    { id: 'WAV-301', student: 'Zohaib Ali', roll: 'BHS-332', campus: 'Beaconhouse Central High', wing: 'College Wing', requestedAmount: 'PKR 18,500', type: 'Hardship Fee Concession (50%)', reason: 'Father medical emergency, submitted official hospital report', status: 'Pending Approval' },
+    { id: 'WAV-301', student: 'Zohaib Ali', roll: 'BHS-332', campus: 'Beaconhouse Central High', wing: 'High School Wing', requestedAmount: 'PKR 18,500', type: 'Hardship Fee Concession (50%)', reason: 'Father medical emergency, submitted official hospital report', status: 'Pending Approval' },
     { id: 'WAV-302', student: 'Maryam Naveed', roll: 'TCS-819', campus: 'City School Senior Branch', wing: 'Secondary Wing', requestedAmount: 'PKR 25,000', type: 'Refund of Advance Security Deposit', reason: 'Student transferred due to family relocation to Islamabad', status: 'Pending Approval' }
   ])
 
@@ -185,9 +185,9 @@ export const SuperadminFeesView = ({ activeTab = 'structure', onTabChange = () =
               <p className="text-xs text-slate-500 mt-1">Includes science labs, model exams, and library access</p>
             </div>
             <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">College & Intermediate Tariff</span>
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">O-Levels / Cambridge Tariff</span>
               <h3 className="text-xl font-bold text-slate-900 mt-1">PKR 22,500 / mo</h3>
-              <p className="text-xs text-slate-500 mt-1">F.Sc / ICS with complete practicals, test sessions, and entry test prep</p>
+              <p className="text-xs text-slate-500 mt-1">Cambridge O-Levels with complete science practicals and mock exam prep</p>
             </div>
           </div>
         </div>
@@ -364,9 +364,9 @@ export const SuperadminFeesView = ({ activeTab = 'structure', onTabChange = () =
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
-              { name: 'Bi-Annual (2 Split)', parts: '2 Installments (50% / 50%)', fee: '0% Surcharge', scope: 'School & College Wings', active: '184 Enrolled' },
-              { name: 'Quarterly (3 Trimester Split)', parts: '3 Installments (35% / 35% / 30%)', fee: '1.5% Processing Fee', scope: 'College Wing', active: '96 Enrolled' },
-              { name: 'Monthly Term Plan (10-Pay)', parts: '10 Equal Monthly Payments', fee: '3.0% Admin Surcharge', scope: 'University Degree Programs', active: '312 Enrolled' }
+              { name: 'Bi-Annual (2 Split)', parts: '2 Installments (50% / 50%)', fee: '0% Surcharge', scope: 'Primary & Middle Wings', active: '184 Enrolled' },
+              { name: 'Quarterly (3 Trimester Split)', parts: '3 Installments (35% / 35% / 30%)', fee: '1.5% Processing Fee', scope: 'High School Wing', active: '96 Enrolled' },
+              { name: 'Monthly Term Plan (10-Pay)', parts: '10 Equal Monthly Payments', fee: '3.0% Admin Surcharge', scope: 'All School Classes (PG - 10)', active: '312 Enrolled' }
             ].map((p, i) => (
               <div key={i} className="p-4 rounded-xl border border-slate-200 bg-slate-50/60 space-y-3">
                 <div className="flex items-center justify-between">
@@ -650,7 +650,7 @@ export const SuperadminFeesView = ({ activeTab = 'structure', onTabChange = () =
                     { name: 'Beaconhouse Central High', inv: 'PKR 48.5M', col: 'PKR 45.2M', out: 'PKR 3.3M', rate: '93.2%' },
                     { name: 'The City School Senior Branch', inv: 'PKR 42.1M', col: 'PKR 38.9M', out: 'PKR 3.2M', rate: '92.4%' },
                     { name: 'Lahore Grammar Model Town', inv: 'PKR 31.2M', col: 'PKR 28.5M', out: 'PKR 2.7M', rate: '91.3%' },
-                    { name: 'Army Public School & College', inv: 'PKR 26.7M', col: 'PKR 23.6M', out: 'PKR 3.1M', rate: '88.4%' }
+                    { name: 'Roots Ivy High School', inv: 'PKR 26.7M', col: 'PKR 23.6M', out: 'PKR 3.1M', rate: '88.4%' }
                   ].map((row, i) => (
                     <tr key={i} className="hover:bg-slate-50/60">
                       <td className="py-3.5 px-4 font-bold text-slate-900">{row.name}</td>

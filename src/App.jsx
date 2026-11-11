@@ -72,19 +72,9 @@ const TransportView = lazyWithRetry(() => import('./modules/transport/TransportV
 const LibraryView = lazyWithRetry(() => import('./modules/library/LibraryView'), 'library-view')
 const CertificatesView = lazyWithRetry(() => import('./modules/institute-admin/certificates/CertificatesView'), 'certificates-view')
 const LearningResourcesView = lazyWithRetry(() => import('./modules/institute-admin/learning/LearningResourcesView'), 'learning-resources-view')
-const StudentParentPortalView = lazyWithRetry(() => import('./modules/student-portal/StudentParentPortalView'), 'student-portal-view')
 const CampusInventoryView = lazyWithRetry(() => import('./modules/institute-admin/inventory/CampusInventoryView'), 'campus-inventory-view')
 const CampusEventsCalendarView = lazyWithRetry(() => import('./modules/institute-admin/events/CampusEventsCalendarView'), 'campus-events-view')
 const CampusReportsAnalyticsView = lazyWithRetry(() => import('./modules/institute-admin/reports/CampusReportsAnalyticsView'), 'campus-reports-view')
-const CollegeBoardExamsView = lazyWithRetry(() => import('./modules/institute-admin/college/CollegeBoardExamsView'), 'college-board-exams-view')
-const CollegeScholarshipsView = lazyWithRetry(() => import('./modules/institute-admin/college/CollegeScholarshipsView'), 'college-scholarships-view')
-const CollegeDisciplineView = lazyWithRetry(() => import('./modules/institute-admin/college/CollegeDisciplineView'), 'college-discipline-view')
-const CollegeHostelView = lazyWithRetry(() => import('./modules/institute-admin/college/CollegeHostelView'), 'college-hostel-view')
-const CollegeLabsView = lazyWithRetry(() => import('./modules/institute-admin/college/CollegeLabsView'), 'college-labs-view')
-const UniversityCourseRegistrationView = lazyWithRetry(() => import('./modules/institute-admin/university/UniversityCourseRegistrationView'), 'university-course-registration-view')
-const UniversityResearchFypView = lazyWithRetry(() => import('./modules/institute-admin/university/UniversityResearchFypView'), 'university-research-fyp-view')
-const UniversityCareerAlumniView = lazyWithRetry(() => import('./modules/institute-admin/university/UniversityCareerAlumniView'), 'university-career-alumni-view')
-const UniversityCampusItView = lazyWithRetry(() => import('./modules/institute-admin/university/UniversityCampusItView'), 'university-campus-it-view')
 
 const CampusAccountsView = lazyWithRetry(() => import('./modules/institute-admin/accounts/CampusAccountsView'), 'campus-accounts-view')
 
@@ -141,9 +131,9 @@ const AppContent = () => {
   const VALID_INSTITUTE_ROUTES = [
     'inst-dashboard', 'inst-admissions', 'inst-students', 'inst-teachers', 'inst-payroll',
     'inst-classes', 'inst-subjects', 'inst-timetable', 'inst-program-levels', 'inst-attendance', 'inst-exams',
-    'inst-board-exams', 'inst-fees', 'inst-accounts', 'inst-scholarships', 'inst-notices', 'inst-discipline',
-    'inst-learning', 'inst-transport', 'inst-library', 'inst-inventory', 'inst-hostel', 'inst-labs',
-    'inst-certificates', 'inst-events', 'inst-reports', 'inst-users', 'inst-settings', 'inst-course-registration', 'inst-research-fyp', 'inst-career-alumni', 'inst-campus-it', 'inst-student-portal'
+    'inst-fees', 'inst-accounts', 'inst-notices',
+    'inst-learning', 'inst-transport', 'inst-library', 'inst-inventory',
+    'inst-certificates', 'inst-events', 'inst-reports', 'inst-users', 'inst-settings'
   ]
 
   // Helpers to safely extract valid initial routes per portal role
@@ -167,11 +157,11 @@ const AppContent = () => {
   const [superadminRoute, setSuperadminRouteState] = useState(getInitialSuperadminRoute)
   const [instituteRoute, setInstituteRouteState] = useState(getInitialInstituteRoute)
 
-  // Public visitor routing (Landing Page vs Login Page)
+  // Public visitor routing (Landing Page vs Unified Login Page)
   const [publicView, setPublicView] = useState(() => {
     if (typeof window !== 'undefined' && window.location.hash) {
-      const hash = window.location.hash.replace(/^#\/?/, '')
-      if (hash.includes('login') || hash.includes('signin') || hash.includes('superadmin') || hash.includes('school') || hash.includes('college') || hash.includes('uni')) return 'login'
+      const hash = window.location.hash.replace(/^#\/?/, '').toLowerCase()
+      if (hash.includes('login') || hash.includes('signin') || hash.includes('superadmin') || hash.includes('school')) return 'login'
       if (hash === 'demo' || hash === 'live-demo') return 'demo'
     }
     return 'landing'
@@ -194,14 +184,6 @@ const AppContent = () => {
     }
   }
 
-  // Dedicated student/parent portal roles check
-  const isDedicatedPortalRole = [
-    'student', 'parent', 'applicant', 'alumni',
-    'school_student', 'school_parent',
-    'college_student', 'college_parent',
-    'uni_student', 'uni_parent', 'uni_applicant', 'uni_alumni'
-  ].includes(user?.role)
-
   // Synchronize route when user role changes or authenticates
   useEffect(() => {
     if (!user) return
@@ -213,21 +195,21 @@ const AppContent = () => {
       } else {
         setSuperadminRouteState(currentHash)
       }
-    } else if (!isDedicatedPortalRole) {
+    } else {
       if (!VALID_INSTITUTE_ROUTES.includes(currentHash)) {
         setInstituteRoute('inst-dashboard')
       } else {
         setInstituteRouteState(currentHash)
       }
     }
-  }, [user?.role, user?.id, isDedicatedPortalRole])
+  }, [user?.role, user?.id])
 
   // Synchronize on browser Back/Forward (popstate & hashchange)
   useEffect(() => {
     const handleHashChange = () => {
-      const hash = window.location.hash.replace(/^#\/?/, '')
+      const hash = window.location.hash.replace(/^#\/?/, '').toLowerCase()
       if (!user) {
-        if (hash.includes('login') || hash.includes('signin') || hash.includes('superadmin') || hash.includes('school') || hash.includes('college') || hash.includes('uni')) {
+        if (hash.includes('login') || hash.includes('signin') || hash.includes('superadmin') || hash.includes('school')) {
           setPublicView('login')
         } else if (hash === 'demo' || hash === 'live-demo') {
           setPublicView('demo')
@@ -243,7 +225,7 @@ const AppContent = () => {
           } else {
             setSuperadminRoute('dashboard')
           }
-        } else if (!isDedicatedPortalRole) {
+        } else {
           if (VALID_INSTITUTE_ROUTES.includes(hash)) {
             setInstituteRouteState(hash)
           } else {
@@ -290,7 +272,7 @@ const AppContent = () => {
     }
   }
 
-  // If no user is authenticated, display landing page, login page, or demo page
+  // If no user is authenticated, display landing page, unified login page, or demo page
   if (!user) {
     if (publicView === 'login') {
       return (
@@ -319,13 +301,10 @@ const AppContent = () => {
               window.location.hash = ''
             }
           }}
-          onNavigateToLogin={(tier = 'school') => {
+          onNavigateToLogin={() => {
             setPublicView('login')
             if (typeof window !== 'undefined') {
-              if (tier === 'superadmin') window.location.hash = '#superadmin'
-              else if (tier === 'college') window.location.hash = '#college-login'
-              else if (tier === 'university' || tier === 'uni') window.location.hash = '#university-login'
-              else window.location.hash = '#school-login'
+              window.location.hash = '#login'
             }
           }}
           onOpenTrial={() => {
@@ -339,14 +318,10 @@ const AppContent = () => {
     }
     return (
       <LandingPage
-        onNavigateToLogin={(tier = 'school') => {
+        onNavigateToLogin={() => {
           setPublicView('login')
           if (typeof window !== 'undefined') {
-            if (tier === 'superadmin') window.location.hash = '#superadmin'
-            else if (tier === 'college') window.location.hash = '#college-login'
-            else if (tier === 'university' || tier === 'uni') window.location.hash = '#university-login'
-            else if (tier === 'school') window.location.hash = '#school-login'
-            else window.location.hash = '#school-login'
+            window.location.hash = '#login'
           }
         }}
         onNavigateToDemo={() => {
@@ -497,86 +472,51 @@ const AppContent = () => {
     )
   }
 
-  // 2. DEDICATED STUDENT, PARENT, APPLICANT & ALUMNI PORTALS
-  const isDedicatedPortalUser = [
-    'student', 'parent', 'applicant', 'alumni',
-    'school_student', 'school_parent',
-    'college_student', 'college_parent',
-    'uni_student', 'uni_parent', 'uni_applicant', 'uni_alumni'
-  ].includes(user?.role)
-
-  if (isDedicatedPortalUser) {
-    return (
-      <ErrorBoundary onNavigateHome={() => window.location.reload()}>
-        <Suspense fallback={<ModuleSkeletonLoader />}>
-          <StudentParentPortalView />
-        </Suspense>
-      </ErrorBoundary>
-    )
-  }
-
-  // Helper to reliably enrich an institute with strict tier metadata
-  const enrichInstituteTier = (inst, fallbackUser = null) => {
+  // Helper to reliably normalize an institute strictly to School
+  const enrichInstituteTier = (inst) => {
     if (!inst) return inst
-    const id = String(inst.id || '').toLowerCase()
-    const name = String(inst.name || inst.instituteName || '').toLowerCase()
-    const code = String(inst.code || '').toLowerCase()
-    const rawType = String(inst.type || inst.instituteType || fallbackUser?.instituteType || '').toLowerCase()
-    const explicitTier = fallbackUser?.tier || ''
-
-    const isUni = explicitTier === 'university' || id === 'inst-4' || id.includes('ias') || code.includes('ias') || name.includes('applied sciences') || name.includes('undergraduate') || name.includes('university') || rawType.includes('uni')
-    const isCol = explicitTier === 'college' || id === 'inst-3' || id.includes('ria') || code.includes('ria') || name.includes('roots') || name.includes('college') || rawType.includes('col')
-    const isCustom = explicitTier === 'custom' || id === 'inst-1' || id.includes('bhs') || name.includes('beacon') || rawType.includes('custom') || rawType.includes('hybrid')
-
-    const detectedType = isUni ? 'University' : isCol ? 'College' : isCustom ? 'Custom' : 'School'
-    const detectedTiers = isUni ? ['undergraduate'] : isCol ? ['college'] : isCustom ? ['school', 'college'] : ['school']
-
     return {
       ...inst,
-      type: (isUni || isCol || isCustom) ? detectedType : (inst.type || 'School'),
-      enabledTiers: (inst.enabledTiers && inst.enabledTiers.length > 0 && !isUni && !isCol) ? inst.enabledTiers : detectedTiers
+      type: 'School',
+      enabledTiers: ['school']
     }
   }
 
-  // 3. INSTITUTE ADMIN & FACULTY PORTAL (Dedicated Multi-Tenant Scoped Management)
+  // 2. SCHOOL ADMIN PORTAL (Dedicated School Management)
   const allKnownInstitutes = [...(institutes || []), ...(sampleTemplateData?.institutes || [])]
   const matchedInst = allKnownInstitutes.find(i => i.id === user?.instituteId)
 
   const rawScopedInstitute = matchedInst
     ? {
         ...matchedInst,
-        type: matchedInst.type || user?.instituteType || (matchedInst.id === 'inst-3' ? 'College' : matchedInst.id === 'inst-4' ? 'University' : matchedInst.id === 'inst-2' ? 'School' : 'Custom'),
-        enabledTiers: matchedInst.enabledTiers || user?.enabledTiers || (matchedInst.id === 'inst-3' ? ['college'] : matchedInst.id === 'inst-4' ? ['undergraduate'] : matchedInst.id === 'inst-2' ? ['school'] : ['school', 'college'])
+        type: 'School',
+        enabledTiers: ['school']
       }
     : (user?.instituteId ? {
         id: user.instituteId,
-        name: user.instituteName || 'Designated Campus',
-        code: user.instituteId === 'inst-3' ? 'RIA-003' : user.instituteId === 'inst-2' ? 'CSM-002' : user.instituteId === 'inst-4' ? 'IAS-004' : 'CAMPUS',
-        type: user.instituteType || (user.instituteId === 'inst-3' || user.instituteName?.toLowerCase().includes('college') ? 'College' : user.instituteId === 'inst-4' || user.instituteName?.toLowerCase().includes('uni') ? 'University' : user.instituteId === 'inst-1' ? 'Custom' : 'School'),
-        enabledTiers: user.enabledTiers || (
-          user.instituteId === 'inst-3' || user.instituteName?.toLowerCase().includes('college') ? ['college'] :
-          user.instituteId === 'inst-4' || user.instituteName?.toLowerCase().includes('uni') ? ['undergraduate'] :
-          user.instituteId === 'inst-1' ? ['school', 'college'] : ['school']
-        ),
-        address: 'Designated Campus'
+        name: user.instituteName || 'City School Model Town Campus',
+        code: user.instituteId === 'inst-2' ? 'CSM-002' : 'SCH-001',
+        type: 'School',
+        enabledTiers: ['school'],
+        address: 'Designated School Campus'
       } : null)
 
-  const scopedInstitute = enrichInstituteTier(rawScopedInstitute, user)
+  const scopedInstitute = enrichInstituteTier(rawScopedInstitute)
 
   const rawActiveCampus = (user?.role !== 'superadmin' && scopedInstitute)
     ? scopedInstitute
     : (selectedInstitute || matchedInst || allKnownInstitutes[0] || {
-        id: user?.instituteId || 'inst-1',
-        name: user?.instituteName || 'Main Campus',
-        code: 'SCH-001',
-        type: user?.instituteType || 'Custom',
-        enabledTiers: user?.enabledTiers || ['school', 'college'],
-        address: 'Central Campus'
+        id: user?.instituteId || 'inst-2',
+        name: user?.instituteName || 'City School Model Town Campus',
+        code: 'CSM-002',
+        type: 'School',
+        enabledTiers: ['school'],
+        address: 'Central School Campus'
       })
 
-  const activeCampus = enrichInstituteTier(rawActiveCampus, user?.role !== 'superadmin' ? user : null)
+  const activeCampus = enrichInstituteTier(rawActiveCampus)
 
-  // Route access guard for institute routes based on user role & tier
+  // Route access guard for school admin routes
   const isAllowedInstituteRoute = typeof canRoleAccessRoute === 'function'
     ? canRoleAccessRoute(user?.role || 'institute_admin', instituteRoute)
     : true
@@ -699,39 +639,6 @@ const AppContent = () => {
                 )}
                 {safeInstituteRoute === 'inst-program-levels' && (
                   <ProgramLevelsView currentInstitute={activeCampus} />
-                )}
-                {safeInstituteRoute === 'inst-board-exams' && (
-                  <CollegeBoardExamsView currentInstitute={activeCampus} />
-                )}
-                {safeInstituteRoute === 'inst-scholarships' && (
-                  <CollegeScholarshipsView currentInstitute={activeCampus} />
-                )}
-                {safeInstituteRoute === 'inst-discipline' && (
-                  <CollegeDisciplineView currentInstitute={activeCampus} />
-                )}
-                {safeInstituteRoute === 'inst-hostel' && (
-                  <CollegeHostelView currentInstitute={activeCampus} />
-                )}
-                {safeInstituteRoute === 'inst-labs' && (
-                  <CollegeLabsView currentInstitute={activeCampus} />
-                )}
-                {safeInstituteRoute === 'inst-course-registration' && (
-                  <UniversityCourseRegistrationView currentInstitute={activeCampus} />
-                )}
-                {safeInstituteRoute === 'inst-research-fyp' && (
-                  <UniversityResearchFypView currentInstitute={activeCampus} />
-                )}
-                {safeInstituteRoute === 'inst-career-alumni' && (
-                  <UniversityCareerAlumniView currentInstitute={activeCampus} />
-                )}
-                {safeInstituteRoute === 'inst-student-portal' && (
-                  <StudentParentPortalView 
-                    currentInstitute={activeCampus} 
-                    onBackToAdmin={() => setInstituteRoute('inst-dashboard')}
-                  />
-                )}
-                {safeInstituteRoute === 'inst-campus-it' && (
-                  <UniversityCampusItView currentInstitute={activeCampus} />
                 )}
               </Suspense>
             </ErrorBoundary>

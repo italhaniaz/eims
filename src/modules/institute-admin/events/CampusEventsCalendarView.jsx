@@ -28,7 +28,7 @@ const INITIAL_EVENTS = [
   { id: 'EVT-102', title: 'Iqbal Day Public Holiday', category: 'Holidays & Gazetted', date: '2026-11-09', endDate: '2026-11-09', time: 'Full Day', location: 'Campus Closed', audience: 'All Campus Staff & Students', description: 'National gazetted holiday commemorated with digital student project tributes.' },
   { id: 'EVT-103', title: 'Annual Parent-Teacher Conference (PTM)', category: 'Parent-Teacher Meeting (PTM)', date: '2026-11-28', endDate: '2026-11-28', time: '09:00 AM - 02:00 PM', location: 'Central Auditorium & Classrooms', audience: 'Parents & Teachers', description: 'One-on-one progress review between subject teachers and student guardians.' },
   { id: 'EVT-104', title: 'Inter-House Annual Sports Gala 2026', category: 'Sports & Co-Curricular', date: '2026-12-05', endDate: '2026-12-07', time: '09:00 AM - 03:00 PM', location: 'Main Sports Complex Ground', audience: 'All Campus Houses & Parents', description: 'Track events, football, cricket, tug of war, and prize distribution ceremony.' },
-  { id: 'EVT-105', title: 'Science & Robotics Innovation Fair', category: 'Academic & Exams', date: '2026-12-15', endDate: '2026-12-16', time: '10:00 AM - 02:30 PM', location: 'Science Labs Courtyard', audience: 'Secondary & College Students', description: 'Student exhibits featuring STEM models, automated robotics, and chemistry demos.' },
+  { id: 'EVT-105', title: 'Science & Robotics Innovation Fair', category: 'Academic & Exams', date: '2026-12-15', endDate: '2026-12-16', time: '10:00 AM - 02:30 PM', location: 'Science Labs Courtyard', audience: 'Secondary School Students', description: 'Student exhibits featuring STEM models, automated robotics, and chemistry demos.' },
   { id: 'EVT-106', title: 'Faculty Pedagogical Workshop: AI in Teaching', category: 'Staff Workshop', date: '2026-11-22', endDate: '2026-11-22', time: '02:00 PM - 04:30 PM', location: 'Staff Multimedia Room', audience: 'Teaching Faculty Only', description: 'Professional development session on leveraging AI tools for personalized homework grading.' }
 ]
 
@@ -364,7 +364,7 @@ export const CampusEventsCalendarView = ({ currentInstitute }) => {
         {/* Printable Header Letterhead */}
         <div className="hidden print:block text-center border-b-2 border-slate-900 pb-3 mb-4">
           <h2 className="text-lg font-black uppercase text-slate-900 tracking-wider">
-            {currentInstitute?.name || 'CENTRAL HIGHER SECONDARY & COLLEGE SYSTEM'}
+            {currentInstitute?.name || 'CENTRAL HIGH SCHOOL SYSTEM'}
           </h2>
           <p className="text-xs font-bold text-slate-700 uppercase tracking-widest">
             OFFICIAL ACADEMIC ALMANAC & EVENTS CALENDAR • {year}

@@ -271,7 +271,7 @@ export const SuperadminReportsAnalyticsView = ({ activeTab = 'trends', onTabChan
               <label className="block text-xs font-bold text-slate-700 mb-1">Primary Dimension</label>
               <select className="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-white">
                 <option>By Affiliated Campus</option>
-                <option>By Academic Wing (School, College, University)</option>
+                <option>By School Section (Primary, Middle, Secondary)</option>
                 <option>By Grade / Class Cohort</option>
                 <option>By Fee Payment Status</option>
               </select>

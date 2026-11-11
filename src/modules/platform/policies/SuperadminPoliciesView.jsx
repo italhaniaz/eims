@@ -32,7 +32,7 @@ export const SuperadminPoliciesView = ({ activeTab = 'academic', onTabChange = (
     { id: 'POL-ACAD-01', title: 'Uniform Academic Progression & Promotion Policy', version: 'v3.2', effectiveDate: '2026-08-01', status: 'Published (Enforced)', target: 'All Wings' },
     { id: 'POL-FEE-02', title: 'Fee Refund, Security Deposit & Waiver Directive', version: 'v2.8', effectiveDate: '2026-07-15', status: 'Published (Enforced)', target: 'All Campuses' },
     { id: 'POL-SAFE-03', title: 'Child Protection, Anti-Bullying & Digital Safety Code', version: 'v4.0', effectiveDate: '2026-09-01', status: 'Published (Enforced)', target: 'Students, Staff & Parents' },
-    { id: 'POL-DISC-04', title: 'Campus Code of Conduct & Electronic Device Protocol', version: 'v2.1', effectiveDate: '2026-08-15', status: 'Published (Enforced)', target: 'Senior & College Wings' }
+    { id: 'POL-DISC-04', title: 'Campus Code of Conduct & Electronic Device Protocol', version: 'v2.1', effectiveDate: '2026-08-15', status: 'Published (Enforced)', target: 'Senior & Secondary Wings' }
   ])
 
   // Acknowledgment tracking
@@ -174,8 +174,8 @@ export const SuperadminPoliciesView = ({ activeTab = 'academic', onTabChange = (
           <div className="space-y-4">
             {(
               effectiveTab === 'academic' ? [
-                { id: 'POL-AC-01', title: 'Minimum Examination Eligibility Attendance Threshold', ver: 'v3.2', scope: 'All Wings', summary: 'Students must maintain minimum 75% verified biometric attendance in every registered subject to sit for annual Board / University examinations.' },
-                { id: 'POL-AC-02', title: 'Grading Curve & Relative Normalization Directive', ver: 'v2.0', scope: 'College & University Wings', summary: 'Standardized GPA relative grading curve guidelines to ensure parity across campus branches and affiliated colleges.' }
+                { id: 'POL-AC-01', title: 'Minimum Examination Eligibility Attendance Threshold', ver: 'v3.2', scope: 'All School Wings', summary: 'Students must maintain minimum 75% verified biometric attendance in every registered subject to sit for annual School / Board examinations.' },
+                { id: 'POL-AC-02', title: 'Grading Curve & Relative Normalization Directive', ver: 'v2.0', scope: 'Middle & Secondary Wings', summary: 'Standardized grading curve guidelines to ensure parity across school branches and matric/O-level sections.' }
               ] : effectiveTab === 'fees' ? [
                 { id: 'POL-FE-01', title: 'Withdrawal & Security Deposit Refund Schedule', ver: 'v2.4', scope: 'All Campuses', summary: 'Advance security deposit refundable within 30 days of issuance of formal School Leaving Certificate (SLC).' },
                 { id: 'POL-FE-02', title: 'Hardship Concession & Sibling Discount Governance', ver: 'v1.9', scope: 'School Wing', summary: 'Sibling discounts apply automatically at 25% for 2nd enrolled child and 50% for 3rd enrolled child.' }
@@ -184,7 +184,7 @@ export const SuperadminPoliciesView = ({ activeTab = 'academic', onTabChange = (
                 { id: 'POL-AT-02', title: 'Faculty Biometric Verification & Duty Leave Norms', ver: 'v2.1', scope: 'Staff & Faculty', summary: 'Daily thumbprint/face scan required prior to 08:15 AM PKT. Three late arrivals equivalent to half-day casual leave.' }
               ] : effectiveTab === 'discipline' ? [
                 { id: 'POL-DS-01', title: 'Zero-Tolerance Anti-Bullying & Cyber Safety Code', ver: 'v4.0', scope: 'All Campuses', summary: 'Strict prohibition of physical or digital harassment. Immediate referral to central disciplinary hearing committee.' },
-                { id: 'POL-DS-02', title: 'Examination Hall Integrity & Malpractice Sanctions', ver: 'v2.8', scope: 'College & University', summary: 'Possession of unauthorized electronic devices during examination results in paper cancellation and 1-year board debarment.' }
+                { id: 'POL-DS-02', title: 'Examination Hall Integrity & Malpractice Sanctions', ver: 'v2.8', scope: 'Middle & Secondary Wings', summary: 'Possession of unauthorized electronic devices during examination results in paper cancellation and board debarment.' }
               ] : [
                 { id: 'POL-PR-01', title: 'Child Data Protection & Biometric Minimization Policy', ver: 'v3.1', scope: 'GDPR / PECRA Aligned', summary: 'All facial recognition and biometric scan templates encrypted with AES-256 at rest. Never shared with third parties.' },
                 { id: 'POL-PR-02', title: 'Student Media & Online Publication Consent Guidelines', ver: 'v2.0', scope: 'Parental Consent Required', summary: 'Annual parental media release agreement mandatory prior to publishing student images in prospectuses or digital portals.' }

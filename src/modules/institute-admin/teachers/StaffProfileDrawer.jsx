@@ -415,13 +415,13 @@ export const StaffProfileDrawer = ({
                       <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-center">
                         <span className="text-[11px] text-slate-500 block">Weekly Workload</span>
                         <strong className="text-base font-bold text-slate-800">
-                          {staffMember.weeklyPeriods || staffMember.weeklyCreditHours || 18} {staffMember.level === 'university' ? 'Cr. Hrs' : 'Periods'}
+                          {staffMember.weeklyPeriods || 18} Periods
                         </strong>
                       </div>
                       <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-center">
                         <span className="text-[11px] text-slate-500 block">Max Permitted</span>
                         <strong className="text-base font-bold text-slate-800">
-                          {staffMember.level === 'university' ? '12 Cr. Hrs' : '26 Periods'}
+                          26 Periods
                         </strong>
                       </div>
                       <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-center">

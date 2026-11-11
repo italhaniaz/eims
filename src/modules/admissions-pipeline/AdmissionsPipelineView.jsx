@@ -225,16 +225,8 @@ export const AdmissionsPipelineView = ({ currentInstitute }) => {
     remarks: 'Clear conceptual foundation, confident communication.'
   })
 
-  // Determine current active level
-  const currentLevelKey = useMemo(() => {
-    if (selectedLevelFilter !== 'ALL') return selectedLevelFilter
-    if (activeProgramLevel && activeProgramLevel !== 'all') {
-      if (['elementary', 'secondary', 'school'].includes(activeProgramLevel)) return 'school'
-      if (activeProgramLevel === 'college') return 'college'
-      if (activeProgramLevel === 'university') return 'university'
-    }
-    return 'school'
-  }, [selectedLevelFilter, activeProgramLevel])
+  // Determine current active level (School only)
+  const currentLevelKey = 'school'
 
   // Available classes strictly scoped to current institute and educational tier
   const availableClasses = useMemo(() => {
@@ -275,11 +267,6 @@ export const AdmissionsPipelineView = ({ currentInstitute }) => {
     siblingEnrolled: false,
     siblingName: '',
     siblingRoll: '',
-    // Level specific
-    collegeGroup: 'Pre-Medical',
-    matricMarks: '',
-    universityProgram: 'BS Computer Science',
-    universityNtsScore: '',
     stage: 'Inquiry Received',
     academicSession: selectedSession
   }
@@ -737,13 +724,10 @@ export const AdmissionsPipelineView = ({ currentInstitute }) => {
       // Level filter
       if (selectedLevelFilter !== 'ALL') {
         const level = detectProgramLevel(lead.gradeApplied)
-        if (selectedLevelFilter === 'school') {
-          if (!['elementary', 'secondary', 'school'].includes(level)) return false
-        } else if (selectedLevelFilter === 'college') {
-          if (!['higher-secondary', 'college'].includes(level)) return false
-        } else if (selectedLevelFilter === 'university') {
-          if (level !== 'university') return false
-        }
+        if (selectedLevelFilter === 'preschool' && level !== 'preschool') return false
+        if (selectedLevelFilter === 'elementary' && level !== 'elementary') return false
+        if (selectedLevelFilter === 'secondary' && level !== 'secondary') return false
+        if (selectedLevelFilter === 'school' && !['preschool', 'elementary', 'secondary'].includes(level)) return false
       }
 
       // Class filter
@@ -1318,10 +1302,10 @@ export const AdmissionsPipelineView = ({ currentInstitute }) => {
               }}
               className="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 font-semibold focus:outline-none cursor-pointer"
             >
-              <option value="ALL">All Educational Tiers</option>
-              <option value="school">School (1st - 10th)</option>
-              <option value="college">College (11th - 12th)</option>
-              <option value="university">University (BS / BBA)</option>
+              <option value="ALL">All School Tiers</option>
+              <option value="preschool">Early Years (PG - KG)</option>
+              <option value="elementary">Elementary (Grades 1 - 8)</option>
+              <option value="secondary">Secondary (Matric / O-Levels)</option>
             </select>
 
             {/* Class / Program Applied Filter */}
@@ -2108,92 +2092,6 @@ export const AdmissionsPipelineView = ({ currentInstitute }) => {
                 />
               </div>
             </div>
-
-            {/* Level-Specific Academic Fields */}
-            {currentLevelKey === 'college' && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-200/60 text-xs">
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-700 uppercase mb-1">College Intermediate Group *</label>
-                  <select
-                    value={formData.collegeGroup}
-                    onChange={(e) => {
-                      setFormData({ ...formData, collegeGroup: e.target.value })
-                      setIsFormDirty(true)
-                    }}
-                    className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 bg-white font-bold"
-                  >
-                    <option value="Pre-Medical">FSc Pre-Medical</option>
-                    <option value="Pre-Engineering">FSc Pre-Engineering</option>
-                    <option value="ICS (Physics)">ICS (Computer Science & Physics)</option>
-                    <option value="ICS (Stats)">ICS (Computer Science & Statistics)</option>
-                    <option value="I.Com">I.Com (Commerce & Accounting)</option>
-                    <option value="FA">FA (Humanities & Arts)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-700 uppercase mb-1">Matric Marks / Percentage</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. 1020 / 1100 (92.7%)"
-                    value={formData.matricMarks}
-                    onChange={(e) => {
-                      setFormData({ ...formData, matricMarks: e.target.value })
-                      setIsFormDirty(true)
-                    }}
-                    className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 bg-white"
-                  />
-                </div>
-              </div>
-            )}
-
-            {currentLevelKey === 'university' && (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-200/60 text-xs">
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-700 uppercase mb-1">Program Preference *</label>
-                  <select
-                    value={formData.universityProgram}
-                    onChange={(e) => {
-                      setFormData({ ...formData, universityProgram: e.target.value })
-                      setIsFormDirty(true)
-                    }}
-                    className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 bg-white font-bold"
-                  >
-                    <option value="BS Computer Science">BS Computer Science</option>
-                    <option value="BS Software Engineering">BS Software Engineering</option>
-                    <option value="BS Artificial Intelligence">BS Artificial Intelligence</option>
-                    <option value="BBA Honors">BBA (Honors)</option>
-                    <option value="BS Accounting & Finance">BS Accounting & Finance</option>
-                    <option value="MS Computer Science">MS Computer Science</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-700 uppercase mb-1">NTS / NAT Merit Score</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. 78 / 100"
-                    value={formData.universityNtsScore}
-                    onChange={(e) => {
-                      setFormData({ ...formData, universityNtsScore: e.target.value })
-                      setIsFormDirty(true)
-                    }}
-                    className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 bg-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-700 uppercase mb-1">Prior Degree / Inter CGPA</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. 3.65 / 4.00 or 85%"
-                    value={formData.previousClassMarks}
-                    onChange={(e) => {
-                      setFormData({ ...formData, previousClassMarks: e.target.value })
-                      setIsFormDirty(true)
-                    }}
-                    className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 bg-white"
-                  />
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Section 2: Parent / Guardian Details */}

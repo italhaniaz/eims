@@ -28,7 +28,7 @@ export const SuperadminCommunicationView = ({ activeTab = 'announcements', onTab
   const [announcements] = useState([
     { id: 'ANN-901', title: 'Winter Vacation 2026 Notification', audience: 'All Campuses (Parents, Students, Faculty)', publishDate: '2026-10-25', status: 'Published', channels: 'Portal Banner, SMS, App Push' },
     { id: 'ANN-902', title: 'National Day of Iqbal Observance', audience: 'All Campuses', publishDate: '2026-10-20', status: 'Published', channels: 'Portal Notice' },
-    { id: 'ANN-903', title: 'Midterm Examination Schedule Release', audience: 'Secondary & College Wings', publishDate: '2026-10-15', status: 'Published', channels: 'SMS & WhatsApp PDF' }
+    { id: 'ANN-903', title: 'Midterm Examination Schedule Release', audience: 'Primary, Middle & Secondary Wings', publishDate: '2026-10-15', status: 'Published', channels: 'SMS & WhatsApp PDF' }
   ])
 
   // Notification templates
@@ -196,7 +196,7 @@ export const SuperadminCommunicationView = ({ activeTab = 'announcements', onTab
             {[
               { id: 'CIR-2026-041', title: 'Winter Break & Smog Advisory Notification', date: 'Oct 2026', scope: 'All Punjab Campuses', status: 'Published' },
               { id: 'CIR-2026-039', title: 'Annual Sports Gala Schedule & Inter-Wing Matches', date: 'Oct 2026', scope: 'All Campuses', status: 'Published' },
-              { id: 'CIR-2026-037', title: 'Federal Board (FBISE) Examination Registration Final Call', date: 'Sep 2026', scope: 'College Wing', status: 'Archived' }
+              { id: 'CIR-2026-037', title: 'Federal Board (FBISE) Matriculation Registration Final Call', date: 'Sep 2026', scope: 'Secondary Wing', status: 'Archived' }
             ].map((c, i) => (
               <div key={i} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>

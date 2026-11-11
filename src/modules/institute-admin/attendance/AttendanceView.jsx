@@ -183,9 +183,8 @@ export const AttendanceView = ({ currentInstitute, onRouteChange }) => {
     setSelectedSection('')
   }, [selectedClass])
 
-  // 5. Level detection (School vs College/University lecture-wise)
+  // 5. School Class Level
   const classTier = currentClassObj?.programLevel || 'secondary'
-  const isCollegeOrUniversity = classTier === 'college' || classTier === 'university'
   const [selectedSubjectId, setSelectedSubjectId] = useState('general')
 
   const availableSubjects = useMemo(() => {
@@ -961,17 +960,17 @@ export const AttendanceView = ({ currentInstitute, onRouteChange }) => {
             </div>
           )}
 
-          {/* Class Selector (Starts UNSELECTED on "-- Select class --") */}
+          {/* Class Selector (Starts UNSELECTED on "-- Select Class --") */}
           <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5">
             <span className="text-slate-400 font-bold uppercase text-[10px]">
-              {isCollegeOrUniversity ? 'Course / Program:' : 'Class:'}
+              Class:
             </span>
             <select
               value={selectedClass}
               onChange={(e) => setSelectedClass(e.target.value)}
               className="bg-transparent font-bold text-slate-900 focus:outline-none cursor-pointer"
             >
-              <option value="">-- Select {isCollegeOrUniversity ? 'Program' : 'Class'} --</option>
+              <option value="">-- Select Class --</option>
               {instClasses.map(c => (
                 <option key={c.id} value={c.name}>{c.name}</option>
               ))}
@@ -981,7 +980,7 @@ export const AttendanceView = ({ currentInstitute, onRouteChange }) => {
           {/* Section Selector (Starts UNSELECTED - Section is Required, NO All Sections) */}
           <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5">
             <span className="text-slate-400 font-bold uppercase text-[10px]">
-              {isCollegeOrUniversity ? 'Batch / Section:' : 'Section:'}
+              Section:
             </span>
             <select
               disabled={!selectedClass || classSections.length === 0}
@@ -996,10 +995,10 @@ export const AttendanceView = ({ currentInstitute, onRouteChange }) => {
             </select>
           </div>
 
-          {/* College & University Lecture / Subject Picker */}
-          {isCollegeOrUniversity && availableSubjects.length > 0 && (
+          {/* Subject Picker for Period Attendance (Optional) */}
+          {availableSubjects.length > 0 && (
             <div className="flex items-center gap-1.5 bg-emerald-50/70 border border-emerald-200 rounded-xl px-2.5 py-1.5">
-              <span className="text-emerald-600 font-bold uppercase text-[10px]">Lecture / Subject:</span>
+              <span className="text-emerald-600 font-bold uppercase text-[10px]">Period / Subject:</span>
               <select
                 value={selectedSubjectId}
                 onChange={(e) => setSelectedSubjectId(e.target.value)}

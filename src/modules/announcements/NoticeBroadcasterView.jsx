@@ -35,51 +35,9 @@ import AnnouncementService, {
 
 /**
  * Extract normalized educational wings for an institute
- * Supports: 'school', 'college', 'university'
+ * Supports: 'school'
  */
-export const getInstituteWings = (inst) => {
-  if (!inst) return []
-  const resolved = new Set()
-
-  // 1. Explicit enabledTiers array
-  if (Array.isArray(inst.enabledTiers) && inst.enabledTiers.length > 0) {
-    inst.enabledTiers.forEach((tier) => {
-      const t = String(tier).toLowerCase().trim()
-      if (t === 'school') resolved.add('school')
-      if (t === 'college') resolved.add('college')
-      if (t === 'undergraduate' || t === 'university') resolved.add('university')
-    })
-  }
-
-  // 2. Fallback heuristic from type, planType, planTier, or name
-  if (resolved.size === 0) {
-    const combined = [
-      inst.type || '',
-      inst.planType || '',
-      inst.planTier || '',
-      inst.name || ''
-    ]
-      .join(' ')
-      .toLowerCase()
-
-    if (combined.includes('school')) resolved.add('school')
-    if (combined.includes('college')) resolved.add('college')
-    if (
-      combined.includes('undergrad') ||
-      combined.includes('universit') ||
-      combined.includes('higher ed')
-    ) {
-      resolved.add('university')
-    }
-  }
-
-  // 3. Fallback default to 'school' if completely unspecified
-  if (resolved.size === 0) {
-    resolved.add('school')
-  }
-
-  return Array.from(resolved)
-}
+export const getInstituteWings = () => ['school']
 
 /**
  * Human-readable display label for educational wings
@@ -88,13 +46,9 @@ export const getWingDisplayName = (wingKey) => {
   switch (wingKey) {
     case 'school':
       return 'School Wing'
-    case 'college':
-      return 'College Wing'
-    case 'university':
-      return 'University Wing'
     case 'all':
     default:
-      return 'All Wings'
+      return 'All School Wings'
   }
 }
 
@@ -815,8 +769,6 @@ export const NoticeBroadcasterView = () => {
             >
               <option value="all">All Wings</option>
               <option value="school">School Wing</option>
-              <option value="college">College Wing</option>
-              <option value="university">University Wing</option>
             </select>
           </div>
         </div>
@@ -1159,10 +1111,8 @@ export const NoticeBroadcasterView = () => {
                     onChange={handleWingChange}
                     className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all cursor-pointer text-xs"
                   >
-                    <option value="all">All Wings (School, College, Uni)</option>
+                    <option value="all">All School Wings (K-10 / Matric / O-Levels)</option>
                     <option value="school">School Wing Only</option>
-                    <option value="college">College Wing Only</option>
-                    <option value="university">University Wing Only</option>
                   </select>
 
                   {/* Context status under Wing */}

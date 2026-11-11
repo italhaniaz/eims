@@ -1288,7 +1288,7 @@ const SupportApprovalsView = () => {
               <input
                 type="text"
                 required
-                placeholder="e.g. Allama Iqbal Campus / Kips College"
+                placeholder="e.g. Beaconhouse Central High School"
                 value={newTicketForm.instituteName}
                 onChange={(e) => setNewTicketForm({ ...newTicketForm, instituteName: e.target.value })}
                 className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none"

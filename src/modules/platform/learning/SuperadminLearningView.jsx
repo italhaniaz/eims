@@ -100,7 +100,7 @@ export const SuperadminLearningView = ({ activeTab = 'lms', onTabChange = () => 
             <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Automated Anti-Plagiarism</span>
               <h3 className="text-xl font-bold text-indigo-700 mt-1">Turnitin API Enabled</h3>
-              <p className="text-xs text-slate-500 mt-1">20% similarity threshold for university thesis</p>
+              <p className="text-xs text-slate-500 mt-1">20% similarity threshold for research projects &amp; assignments</p>
             </div>
             <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Online Quiz Proctoring</span>
@@ -176,7 +176,7 @@ export const SuperadminLearningView = ({ activeTab = 'lms', onTabChange = () => 
               { title: 'Matric & FSc Solved Board Papers (2015-2025)', size: '1.4 GB PDF Bundle', status: 'CDN Synced' },
               { title: 'Cambridge O/A-Levels Examiner Reports', size: '840 MB Archive', status: 'CDN Synced' },
               { title: 'STEM & Robotics Lab Digital Curriculum Guides', size: '2.1 GB Multimedia', status: 'CDN Synced' },
-              { title: 'University Undergraduate Lecture Video Repository', size: '48.5 GB Stream Host', status: 'CDN Synced' }
+              { title: 'Matric & O-Levels Video Lecture Repository', size: '48.5 GB Stream Host', status: 'CDN Synced' }
             ].map((res, i) => (
               <div key={i} className="p-4 rounded-xl border border-slate-200 bg-slate-50/60 flex items-center justify-between">
                 <div>

@@ -419,9 +419,8 @@ export const TimetableView = ({ currentInstitute, onRouteChange }) => {
     return { slots: map, total: count }
   }, [allTimetablesList, selectedRoomName, selectedSession])
 
-  const isUniversity = classTier === 'university'
-  const entityTitle = isUniversity ? 'Degree Program' : 'Class'
-  const sectionTitle = isUniversity ? 'Batch / Cohort' : 'Section'
+  const entityTitle = 'Class'
+  const sectionTitle = 'Section'
 
   return (
     <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
@@ -435,7 +434,7 @@ export const TimetableView = ({ currentInstitute, onRouteChange }) => {
             <span>Academic Routine & Master Schedule</span>
           </div>
           <h1 className="text-2xl font-bold text-slate-900 mt-1 tracking-tight">
-            {isUniversity ? 'Lecture & Course Time Management' : 'Class & Section Period Schedule'}
+            Class &amp; Section Period Schedule
           </h1>
           <p className="text-xs text-slate-500 mt-1">
             Dynamic bell timings, conflict validation, faculty workload protection, and institutional timetable publishing.

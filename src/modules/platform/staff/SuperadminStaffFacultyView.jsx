@@ -333,8 +333,8 @@ export const SuperadminStaffFacultyView = ({ activeTab = 'all', onTabChange = ()
       { id: 'ROLE-02', staffId: 'tch-2', staffName: 'Dr. Nadia Hashmi', empId: 'STF-002', campus: 'City School Model Town Campus', roleType: 'Faculty Specialist & Research Lead', department: 'Chemistry', tenure: '2025 - 2028', privilegeLevel: 'Senior Research Fellow', status: 'Active' },
       { id: 'ROLE-03', staffId: 'tch-3', staffName: 'Syed Ali Raza', empId: 'STF-003', campus: 'Beaconhouse Central High School', roleType: 'Section Coordinator', department: 'Physics', tenure: '2025 - 2026', privilegeLevel: 'Middle & Senior Wing', status: 'Active' },
       { id: 'ROLE-04', staffId: 'tch-5', staffName: 'Muhammad Waqas', empId: 'STF-005', campus: 'Beaconhouse Central High School', roleType: 'Campus Bursar & Finance Officer', department: 'Accounts & Finance', tenure: 'Permanent Appointment', privilegeLevel: 'Treasury & Challans', status: 'Active' },
-      { id: 'ROLE-05', staffId: 'tch-4', staffName: 'Amina Batool', empId: 'STF-004', campus: 'Roots International College & Academy', roleType: 'Examination Controller', department: 'English Literature', tenure: '2025 - 2026', privilegeLevel: 'Assessment Committee', status: 'Active' },
-      { id: 'ROLE-06', staffId: 'tch-6', staffName: 'Engr. Bilal Zubair', empId: 'STF-006', campus: 'Institute of Applied Sciences & Undergraduates', roleType: 'Curriculum & AI Lab Lead', department: 'Computer Science & AI', tenure: '2024 - 2027', privilegeLevel: 'Computing Syndicate', status: 'Active' }
+      { id: 'ROLE-05', staffId: 'tch-4', staffName: 'Amina Batool', empId: 'STF-004', campus: 'Lahore Grammar School Gulberg', roleType: 'Examination Controller', department: 'English Literature', tenure: '2025 - 2026', privilegeLevel: 'Assessment Committee', status: 'Active' },
+      { id: 'ROLE-06', staffId: 'tch-6', staffName: 'Engr. Bilal Zubair', empId: 'STF-006', campus: 'Roots Ivy High School', roleType: 'STEM & Computer Lab Lead', department: 'Computer Science', tenure: '2024 - 2027', privilegeLevel: 'IT Curriculum Lead', status: 'Active' }
     ]
   })
 
@@ -404,7 +404,7 @@ export const SuperadminStaffFacultyView = ({ activeTab = 'all', onTabChange = ()
     } catch {}
     return [
       { id: 'STR-201', staffId: 'tch-3', staffName: 'Syed Ali Raza', empId: 'STF-003', fromCampus: 'Beaconhouse Central High School', fromInstId: 'inst-1', toCampus: 'City School Model Town Campus', toInstId: 'inst-2', reason: 'Promoted to Campus Academic Coordinator', status: 'Pending Superadmin Approval', date: '2026-10-24' },
-      { id: 'STR-202', staffId: 'tch-4', staffName: 'Amina Batool', empId: 'STF-004', fromCampus: 'Roots International College & Academy', fromInstId: 'inst-3', toCampus: 'Beaconhouse Central High School', toInstId: 'inst-1', reason: 'Mutual Faculty Exchange Request', status: 'Authorized', date: '2026-10-15' }
+      { id: 'STR-202', staffId: 'tch-4', staffName: 'Amina Batool', empId: 'STF-004', fromCampus: 'Lahore Grammar School Gulberg', fromInstId: 'inst-3', toCampus: 'Beaconhouse Central High School', toInstId: 'inst-1', reason: 'Mutual Faculty Exchange Request', status: 'Authorized', date: '2026-10-15' }
     ]
   })
 
@@ -601,8 +601,8 @@ export const SuperadminStaffFacultyView = ({ activeTab = 'all', onTabChange = ()
     const targetInsts = institutes.length > 0 ? institutes : [
       { id: 'inst-1', name: 'Beaconhouse Central High School' },
       { id: 'inst-2', name: 'City School Model Town Campus' },
-      { id: 'inst-3', name: 'Roots International College & Academy' },
-      { id: 'inst-4', name: 'Institute of Applied Sciences & Undergraduates' }
+      { id: 'inst-3', name: 'Lahore Grammar School Gulberg' },
+      { id: 'inst-4', name: 'Roots Ivy High School' }
     ]
 
     return targetInsts.map(inst => {

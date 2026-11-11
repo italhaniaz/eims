@@ -119,10 +119,10 @@ export const SuperadminCertificatesView = ({ activeTab = 'templates', onTabChang
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { name: 'Character Certificate', code: 'TPL-CHR-01', desc: 'Standard moral conduct statement for college/university admissions' },
+              { name: 'Character Certificate', code: 'TPL-CHR-01', desc: 'Standard moral conduct statement for academic transfers and admissions' },
               { name: 'Bonafide Student Certificate', code: 'TPL-BON-02', desc: 'Official student status verification for passport / embassy visa' },
               { name: 'School Leaving Certificate (SLC)', code: 'TPL-SLC-03', desc: 'Mandatory transfer credential with clearance record & conduct note' },
-              { name: 'Provisional Degree / Diploma', code: 'TPL-PRV-04', desc: 'Terminal completion certificate prior to convocation' }
+              { name: 'Matric / O-Levels Provisional Certificate', code: 'TPL-PRV-04', desc: 'Terminal completion certificate prior to annual award ceremony' }
             ].map((t, i) => (
               <div key={i} className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs flex flex-col justify-between">
                 <div>

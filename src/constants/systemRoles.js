@@ -44,30 +44,30 @@ export const SYSTEM_ROLES = [
   },
   {
     id: 'institute_admin',
-    name: 'Institute Administrator (Principal / Director)',
-    shortName: 'Institute Admin',
+    name: 'School Administrator (Principal / Director)',
+    shortName: 'School Admin',
     category: 'Campus Leadership',
-    tierLevel: 'Level 2 - Campus Executive',
+    tierLevel: 'Level 2 - School Executive',
     badgeClass: 'bg-blue-50 text-blue-700 border-blue-200',
     dotColor: 'bg-blue-600',
     colorKey: 'blue',
-    scope: 'Assigned Campus / School Branch',
-    summary: 'Operational head of campus with full operational authority over student admissions, classes & sections, faculty, fees, exams, and timetables.',
+    scope: 'Assigned School Campus / Branch',
+    summary: 'Operational head of school campus with full operational authority over student admissions, classes & sections, teachers, fees, exams, and timetables.',
     icon: School,
     responsibilities: [
       'Manage student admission pipeline, registrations, and official roster',
-      'Configure academic tiers (Elementary to University) and classes',
+      'Configure school wings (Pre-School, Elementary, Secondary) and classes',
       'Set up custom class sections (Super Section, Star Section, Section A/B)',
-      'Assign teaching faculty, room allocations, and weekly timetables',
+      'Assign teaching staff, room allocations, and weekly timetables',
       'Issue monthly/term fee challan vouchers and publish official notices'
     ],
     privileges: [
-      'Full administrative control over campus data and academic routines',
+      'Full administrative control over school data and academic routines',
       'Authority to admit students, promote grades, and manage student ID cards',
-      'Generate campus-specific financial ledgers and attendance statistics'
+      'Generate school financial ledgers and attendance statistics'
     ],
     limitations: [
-      'Restricted to their assigned institute campus (cannot alter other branches)',
+      'Restricted to their assigned school campus (cannot alter other branches)',
       'Cannot modify global platform configurations or core system databases'
     ]
   },
@@ -500,42 +500,10 @@ export const TIER_ROLE_GROUPS = [
     ]
   },
   {
-    group: '🏫 School Portal Roles (Pick 2)',
+    group: '🏫 School Administration',
     tier: 'school',
     roles: [
-      { id: 'school_admin', name: 'School Principal (Admin) - 15 Modules', tier: 'school' },
-      { id: 'school_teacher', name: 'Teacher Portal (Classes, Attendance, Diary, Marks)', tier: 'school' },
-      { id: 'school_parent', name: 'Parent Portal (Attendance, Fee, Diary, Results)', tier: 'school' },
-      { id: 'school_student', name: 'Student Portal (Timetable, Homework, Results)', tier: 'school' },
-      { id: 'school_accountant', name: 'Accountant Portal (Fees & Accounts Only)', tier: 'school' }
-    ]
-  },
-  {
-    group: '🏛️ College Portal Roles (Pick 3)',
-    tier: 'college',
-    roles: [
-      { id: 'college_admin', name: 'College Principal (Admin) - 18 Modules', tier: 'college' },
-      { id: 'college_student', name: 'Student Portal (Timetable, Notes, Board Forms, Challan)', tier: 'college' },
-      { id: 'college_parent', name: 'Parent Portal (Attendance, Results, Concessions)', tier: 'college' },
-      { id: 'college_faculty', name: 'Faculty Portal (Classes, Lectures, Attendance, Salary)', tier: 'college' },
-      { id: 'college_hod', name: 'HOD Portal (Department Performance & Results)', tier: 'college' },
-      { id: 'college_accountant', name: 'Accountant Portal (Fees & Accounts Only)', tier: 'college' }
-    ]
-  },
-  {
-    group: '🎓 University Portal Roles (Pick 4)',
-    tier: 'university',
-    roles: [
-      { id: 'university_admin', name: 'Dean / Registrar Admin - 22 Modules', tier: 'university' },
-      { id: 'uni_student', name: 'Student Portal (Registration, LMS, GPA Transcript)', tier: 'university' },
-      { id: 'uni_faculty', name: 'Faculty Portal (Courses, Attendance, Marks, Research Profile)', tier: 'university' },
-      { id: 'uni_dean', name: 'HOD / Dean Portal (Workload, Approvals, Results)', tier: 'university' },
-      { id: 'uni_registrar', name: 'Registrar Portal (Admissions, Records, Approvals)', tier: 'university' },
-      { id: 'uni_controller', name: 'Controller Portal (Exams, Results, Degrees)', tier: 'university' },
-      { id: 'uni_finance', name: 'Finance Portal (Fees, Budget, Payroll)', tier: 'university' },
-      { id: 'uni_parent', name: 'Parent Portal (Attendance, Results, Fee - Optional)', tier: 'university' },
-      { id: 'uni_applicant', name: 'Applicant Portal (Admission Form, Merit, Challan)', tier: 'university' },
-      { id: 'uni_alumni', name: 'Alumni Portal (Profile, Events, Transcripts, Donations)', tier: 'university' }
+      { id: 'school_admin', name: 'School Principal / Admin', tier: 'school' }
     ]
   }
 ];

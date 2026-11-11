@@ -64,7 +64,7 @@ export const SuperadminAttendanceView = ({ activeTab = 'overview', onTabChange =
   // Attendance correction requests state
   const [corrections, setCorrections] = useState([
     { id: 'COR-091', student: 'Ahmed Raza', roll: 'LGS-221', campus: 'Lahore Grammar Model Town', wing: 'Middle Wing', date: '2026-10-28', markFrom: 'Absent', markTo: 'Present', reason: 'Biometric reader timeout during morning assembly', status: 'Pending Approval' },
-    { id: 'COR-092', student: 'Zainab Fatima', roll: 'BHS-108', campus: 'Beaconhouse Central High', wing: 'College Wing', date: '2026-10-27', markFrom: 'Late (40m)', markTo: 'Official Leave', reason: 'Participating in Interschool Science Olympiad', status: 'Approved' }
+    { id: 'COR-092', student: 'Zainab Fatima', roll: 'BHS-108', campus: 'Beaconhouse Central High', wing: 'Senior Wing', date: '2026-10-27', markFrom: 'Late (40m)', markTo: 'Official Leave', reason: 'Participating in Interschool Science Olympiad', status: 'Approved' }
   ])
 
   // Biometric devices state
@@ -77,7 +77,7 @@ export const SuperadminAttendanceView = ({ activeTab = 'overview', onTabChange =
   // Shortage Defaulters (<75%)
   const [defaulters] = useState([
     { roll: 'BHS-099', name: 'Bilal Shahid', campus: 'Beaconhouse Central High', wing: 'Secondary Wing', totalSessions: 180, attended: 112, percentage: '62.2%', status: 'Debarred from Terminal Exams' },
-    { roll: 'TCS-404', name: 'Hamza Farooq', campus: 'City School Senior Branch', wing: 'College Wing', totalSessions: 160, attended: 104, percentage: '65.0%', status: 'Warning Notice Sent' },
+    { roll: 'TCS-404', name: 'Hamza Farooq', campus: 'City School Senior Branch', wing: 'Secondary Wing', totalSessions: 160, attended: 104, percentage: '65.0%', status: 'Warning Notice Sent' },
     { roll: 'LGS-115', name: 'Ayesha Noor', campus: 'Lahore Grammar Model Town', wing: 'Primary Wing', totalSessions: 180, attended: 128, percentage: '71.1%', status: 'Medical Certificate Requested' }
   ])
 
@@ -189,7 +189,7 @@ export const SuperadminAttendanceView = ({ activeTab = 'overview', onTabChange =
             <div className="space-y-4 mt-4">
               {[
                 { name: 'Beaconhouse Central High (Senior School)', rate: 96.2, present: 840, total: 873, color: 'bg-emerald-500' },
-                { name: 'Beaconhouse Central High (College Wing)', rate: 93.4, present: 412, total: 441, color: 'bg-emerald-500' },
+                { name: 'Beaconhouse Central High (Secondary Wing)', rate: 93.4, present: 412, total: 441, color: 'bg-emerald-500' },
                 { name: 'City School Senior Branch (All Wings)', rate: 94.1, present: 1140, total: 1211, color: 'bg-emerald-500' },
                 { name: 'Lahore Grammar Model Town (Elementary & Middle)', rate: 95.8, present: 1028, total: 1073, color: 'bg-emerald-500' }
               ].map((c, i) => (
@@ -433,7 +433,7 @@ export const SuperadminAttendanceView = ({ activeTab = 'overview', onTabChange =
                   { name: 'Beaconhouse Central High', total: 184, present: 180, late: 4, leave: 3, rate: '97.8%' },
                   { name: 'The City School Senior Branch', total: 142, present: 137, late: 5, leave: 4, rate: '96.5%' },
                   { name: 'Lahore Grammar Model Town', total: 98, present: 97, late: 2, leave: 1, rate: '99.0%' },
-                  { name: 'Army Public School & College', total: 115, present: 110, late: 6, leave: 3, rate: '95.7%' }
+                  { name: 'Roots Ivy High School', total: 115, present: 110, late: 6, leave: 3, rate: '95.7%' }
                 ].map((row, i) => (
                   <tr key={i} className="hover:bg-slate-50/60">
                     <td className="py-3.5 px-4 font-bold text-slate-900">{row.name}</td>

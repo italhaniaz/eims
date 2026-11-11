@@ -161,7 +161,7 @@ export const SuperadminNavbar = ({
           type="button"
           onClick={onOpenThemeModal}
           className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] hover:border-[var(--primary)] shadow-2xs transition-all cursor-pointer"
-          title="Theme Studio: Switch School / College / University Presets or Custom"
+          title="Theme Studio: Switch School Preset or Custom Palette"
         >
           <Palette className="w-3.5 h-3.5 text-[var(--primary)]" />
           <span className="hidden sm:inline capitalize font-bold">{preset}</span>

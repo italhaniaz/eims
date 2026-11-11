@@ -226,7 +226,7 @@ export const SecurityService = {
         {
           id: 'sess-ia-2',
           userEmail: 'city.model@sms.edu',
-          userName: 'City College Admin',
+          userName: 'City School Admin',
           userRole: 'institute_admin',
           instituteName: 'City School Model Town Campus',
           ipAddress: '192.168.1.120',

@@ -273,22 +273,6 @@ export const ExamsView = ({ currentInstitute }) => {
       { name: 'General Science', maxMarks: 100, theoryMarks: '', practicalMarks: '', obtained: '', grade: 'F', isAbsent: false, isExempt: false }
     ]
 
-    if (tierConfig.isUniversityOnly) {
-      dynamicSubjects = [
-        { name: 'Design & Analysis of Algorithms', maxMarks: 100, theoryMarks: '', practicalMarks: '', obtained: '', grade: 'F', isAbsent: false, isExempt: false },
-        { name: 'Artificial Intelligence & Neural Nets', maxMarks: 100, theoryMarks: '', practicalMarks: '', obtained: '', grade: 'F', isAbsent: false, isExempt: false },
-        { name: 'Software Architecture & Design', maxMarks: 100, theoryMarks: '', practicalMarks: '', obtained: '', grade: 'F', isAbsent: false, isExempt: false },
-        { name: 'Database Systems & Warehousing', maxMarks: 100, theoryMarks: '', practicalMarks: '', obtained: '', grade: 'F', isAbsent: false, isExempt: false }
-      ]
-    } else if (tierConfig.isCollegeOnly) {
-      dynamicSubjects = [
-        { name: 'Physics (Part II)', maxMarks: 85, theoryMarks: '', practicalMarks: '', obtained: '', grade: 'F', isAbsent: false, isExempt: false },
-        { name: 'Chemistry (Part II)', maxMarks: 85, theoryMarks: '', practicalMarks: '', obtained: '', grade: 'F', isAbsent: false, isExempt: false },
-        { name: 'Biology / Mathematics', maxMarks: 100, theoryMarks: '', practicalMarks: '', obtained: '', grade: 'F', isAbsent: false, isExempt: false },
-        { name: 'English Compulsory', maxMarks: 100, theoryMarks: '', practicalMarks: '', obtained: '', grade: 'F', isAbsent: false, isExempt: false }
-      ]
-    }
-
     setNewMarksheetForm(prev => ({
       ...prev,
       studentId: std.id,
@@ -595,11 +579,7 @@ export const ExamsView = ({ currentInstitute }) => {
                 {tierConfig.terminology.exams}
               </h1>
               <p className="text-xs text-slate-500 mt-0.5">
-                {tierConfig.isUniversityOnly 
-                  ? 'Manage 8-semester course examinations, GPA/CGPA tabulations, date sheets, and official transcripts'
-                  : tierConfig.isCollegeOnly 
-                  ? 'Manage intermediate board & send-up exams, college date sheets, and FBISE/BISE DMC verification'
-                  : 'Conduct term assessments, manage date sheets, generate admit slips, and publish verified DMCs'}
+                Conduct term assessments, manage date sheets, generate admit slips, and publish verified DMCs
               </p>
             </div>
           </div>
@@ -1049,7 +1029,7 @@ export const ExamsView = ({ currentInstitute }) => {
             {/* Printable Letterhead Header */}
             <div className="hidden print:block text-center border-b-2 border-slate-900 pb-4 mb-4">
               <h2 className="text-lg font-black uppercase text-slate-900 tracking-wider">
-                {currentInstitute?.name || 'CENTRAL HIGHER SECONDARY & COLLEGE SYSTEM'}
+                {currentInstitute?.name || 'CENTRAL HIGH SCHOOL SYSTEM'}
               </h2>
               <p className="text-xs font-bold text-slate-700 uppercase tracking-widest">
                 OFFICIAL EXAMINATION DATE SHEET • {dateSheetTerm || terms[0]?.name || 'TERM EXAMINATION'}
@@ -2128,7 +2108,7 @@ export const ExamsView = ({ currentInstitute }) => {
             <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-2.5 text-amber-900">
               <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
               <div>
-                <span className="font-bold block">Official Statutory Paper Scrutiny Guidelines (BISE & University Standard)</span>
+                <span className="font-bold block">Official Statutory Paper Scrutiny Guidelines (BISE &amp; School Standard)</span>
                 <p className="text-[11px] text-amber-800 leading-relaxed mt-0.5">
                   Paper scrutiny encompasses recounting of answer script marks, verification of unassessed questions, and marks transfer validation into the official tabulation gazette.
                 </p>

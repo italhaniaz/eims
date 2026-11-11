@@ -14,10 +14,10 @@ export const defaultInstitutes = [
     id: 'inst-1', 
     name: 'Beaconhouse Central High School', 
     code: 'BHS-001', 
-    type: 'Custom',
-    planType: 'CUSTOM',
-    planTier: 'Custom Hybrid Plan',
-    enabledTiers: ['school', 'college'],
+    type: 'School',
+    planType: 'SCHOOL',
+    planTier: 'School Plan',
+    enabledTiers: ['school'],
     city: 'Lahore',
     province: 'Punjab',
     email: 'beacon.central@sms.edu', 
@@ -51,55 +51,13 @@ export const defaultInstitutes = [
     totalTeachers: 0,
     studentsCount: 0,
     teachersCount: 0
-  },
-  { 
-    id: 'inst-3', 
-    name: 'Roots International College & Academy', 
-    code: 'RIA-003', 
-    type: 'College',
-    planType: 'COLLEGE',
-    planTier: 'College Plan',
-    enabledTiers: ['college'],
-    city: 'Rawalpindi',
-    province: 'Punjab',
-    email: 'rawalpindi@roots.edu', 
-    phone: '+92 51 4455667', 
-    address: 'Harley Street, Rawalpindi Cantt', 
-    affiliatedBoard: 'Federal Board (FBISE)',
-    status: 'Active',
-    principal: 'Campus Principal',
-    totalStudents: 0,
-    totalTeachers: 0,
-    studentsCount: 0,
-    teachersCount: 0
-  },
-  { 
-    id: 'inst-4', 
-    name: 'Institute of Applied Sciences & Undergraduates', 
-    code: 'IAS-004', 
-    type: 'University',
-    planType: 'UNIVERSITY',
-    planTier: 'University Plan',
-    enabledTiers: ['undergraduate'],
-    city: 'Islamabad',
-    province: 'Federal',
-    email: 'registrar@ias.edu.pk', 
-    phone: '+92 51 9085100', 
-    address: 'Sector H-12, Knowledge Park, Islamabad', 
-    affiliatedBoard: 'Higher Education Commission (HEC)',
-    status: 'Active',
-    principal: 'Vice Chancellor / Registrar',
-    totalStudents: 0,
-    totalTeachers: 0,
-    studentsCount: 0,
-    teachersCount: 0
   }
 ]
 
 const cleanZeroData = {
   stats: {
     totalUsers: 0,
-    totalInstitutes: 4,
+    totalInstitutes: 2,
     activeSessions: 0,
     growthRate: '0.0%'
   },
@@ -326,17 +284,36 @@ export const getStoredData = () => {
         parsed.recentActivity = []
       }
 
-      // 7. Ensure multi-tenant institutes persist reliably with zero counters
+      // 7. Ensure multi-tenant school institutes persist reliably with zero college/university legacy records
       if (!Array.isArray(parsed.institutes) || parsed.institutes.length === 0) {
         parsed.institutes = defaultInstitutes
         dataChanged = true
       } else {
-        parsed.institutes.forEach(inst => {
-          inst.totalStudents = (parsed.students || []).filter(s => s.instituteId === inst.id).length
-          inst.studentsCount = inst.totalStudents
-          inst.totalTeachers = (parsed.teachers || []).filter(t => t.instituteId === inst.id).length
-          inst.teachersCount = inst.totalTeachers
-        })
+        const filteredInsts = parsed.institutes
+          .filter(inst => {
+            if (!inst) return false
+            const t = String(inst.type || '').toLowerCase()
+            const id = String(inst.id || '').toLowerCase()
+            if (id === 'inst-3' || id === 'inst-4') return false
+            if (t.includes('college') || t.includes('uni')) return false
+            return true
+          })
+          .map(inst => ({
+            ...inst,
+            type: 'School',
+            planType: 'SCHOOL',
+            planTier: 'School Plan',
+            enabledTiers: ['school'],
+            totalStudents: (parsed.students || []).filter(s => s.instituteId === inst.id).length,
+            studentsCount: (parsed.students || []).filter(s => s.instituteId === inst.id).length,
+            totalTeachers: (parsed.teachers || []).filter(t => t.instituteId === inst.id).length,
+            teachersCount: (parsed.teachers || []).filter(t => t.instituteId === inst.id).length
+          }))
+
+        if (filteredInsts.length !== parsed.institutes.length) {
+          dataChanged = true
+        }
+        parsed.institutes = filteredInsts.length > 0 ? filteredInsts : defaultInstitutes
       }
 
       // Live timetable store preserved

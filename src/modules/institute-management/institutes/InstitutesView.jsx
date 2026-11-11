@@ -106,14 +106,14 @@ export const InstitutesView = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [lifecycleFilter, setLifecycleFilter] = useState('ALL') // ALL, Active, Suspended, Archived
   const [typeFilter, setTypeFilter] = useState('ALL')
-  const [viewMode, setViewMode] = useState('grid') // 'grid' | 'table' // ALL, School, College, University
+  const [viewMode, setViewMode] = useState('grid') // 'grid' | 'table'
 
   // Advanced Campus Filter Popover state with Checkboxes
   const [showMainFilterPopover, setShowMainFilterPopover] = useState(false)
   const mainFilterPopoverRef = useRef(null)
   const [selectedStatusFilters, setSelectedStatusFilters] = useState(['Active', 'Suspended', 'Archived'])
-  const [selectedTypeFilters, setSelectedTypeFilters] = useState(['School', 'College', 'University', 'Custom Group'])
-  const [selectedPlanFilters, setSelectedPlanFilters] = useState(['School Plan', 'College Plan', 'University Plan', 'Custom Hybrid Plan'])
+  const [selectedTypeFilters, setSelectedTypeFilters] = useState(['School'])
+  const [selectedPlanFilters, setSelectedPlanFilters] = useState(['School Plan', 'Enterprise Network', 'Starter Trial'])
 
   // Row selection checkboxes for bulk enable/disable
   const [selectedCampusIds, setSelectedCampusIds] = useState([])
@@ -156,8 +156,8 @@ export const InstitutesView = () => {
 
   const resetMainFilters = () => {
     setSelectedStatusFilters(['Active', 'Suspended', 'Archived'])
-    setSelectedTypeFilters(['School', 'College', 'University', 'Custom Group'])
-    setSelectedPlanFilters(['School Plan', 'College Plan', 'University Plan', 'Custom Hybrid Plan'])
+    setSelectedTypeFilters(['School'])
+    setSelectedPlanFilters(['School Plan', 'Enterprise Network', 'Starter Trial'])
     setLifecycleFilter('ALL')
     setTypeFilter('ALL')
     setSearchTerm('')
@@ -180,8 +180,8 @@ export const InstitutesView = () => {
   const [isWizardOpen, setIsWizardOpen] = useState(false)
   const [wizardStep, setWizardStep] = useState(1)
 
-  // Tier cards visibility filter for Wizard Step 1 (Checkboxes to tick/untick cards to display on screen)
-  const [visibleTierCards, setVisibleTierCards] = useState(['School', 'College', 'University', 'Custom'])
+  // Tier cards visibility filter for Wizard Step 1
+  const [visibleTierCards, setVisibleTierCards] = useState(['School'])
   const [showTierFilterPopover, setShowTierFilterPopover] = useState(false)
   const tierFilterPopoverRef = useRef(null)
 
@@ -464,7 +464,7 @@ export const InstitutesView = () => {
   // ----------------------------------------------------
   const initialWizardState = {
     // Step 1: Demographics & Type
-    type: 'School', // School, College, University, Custom
+    type: 'School', // School, Enterprise
     planType: 'SCHOOL',
     enabledTiers: ['school'],
     name: '',
@@ -518,9 +518,7 @@ export const InstitutesView = () => {
   // Tier to Plan Mapping for Automatic Detection & Quota Initialization
   const tierPlanMapping = {
     School: { planName: 'School Plan', maxStudents: 1500, maxUsers: 50, maxCampuses: 2, storageMB: 2048, prefix: 'SCH', defaultTiers: ['school'] },
-    College: { planName: 'College Plan', maxStudents: 3000, maxUsers: 100, maxCampuses: 3, storageMB: 5120, prefix: 'COL', defaultTiers: ['college'] },
-    University: { planName: 'University Plan', maxStudents: 10000, maxUsers: 250, maxCampuses: 5, storageMB: 10240, prefix: 'UNI', defaultTiers: ['undergraduate'] },
-    Custom: { planName: 'Custom Hybrid Plan', maxStudents: 25000, maxUsers: 150, maxCampuses: 4, storageMB: 8192, prefix: 'HYB', defaultTiers: ['school', 'college'] }
+    Enterprise: { planName: 'Enterprise Network', maxStudents: 10000, maxUsers: 250, maxCampuses: 10, storageMB: 10240, prefix: 'NET', defaultTiers: ['school'] }
   }
 
   const [wizardData, setWizardData] = useState(initialWizardState)
@@ -662,7 +660,7 @@ export const InstitutesView = () => {
   // Auto-generate code and slug when name changes in Wizard
   const handleWizardNameChange = (name) => {
     const generatedSlug = name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').slice(0, 30)
-    const codePrefix = wizardData.type === 'University' ? 'UNI' : wizardData.type === 'College' ? 'COL' : wizardData.type === 'Custom' ? 'HYB' : 'SCH'
+    const codePrefix = 'SCH'
     const generatedCode = wizardData.code || `${codePrefix}-${Math.floor(100 + Math.random() * 900)}`
     
     setWizardData(prev => ({
@@ -889,19 +887,7 @@ export const InstitutesView = () => {
 
     try {
       await PlatformService.startImpersonation(inst, user)
-      const instId = inst.id || ''
-      const instType = (inst.type || '').toLowerCase()
-      const tiers = inst.enabledTiers || []
-      
-      if (instId === 'inst-2' || instType === 'school' || (tiers.includes('school') && !tiers.includes('college'))) {
-        login('school_admin', 'admin.school@cityschool.edu')
-      } else if (instId === 'inst-3' || instType === 'college' || (tiers.includes('college') && !tiers.includes('undergraduate'))) {
-        login('college_admin', 'admin.college@roots.edu')
-      } else if (instId === 'inst-4' || instType === 'university' || tiers.includes('undergraduate')) {
-        login('university_admin', 'admin.uni@ias.edu.pk')
-      } else {
-        login('institute_admin', `admin@${inst.slug || 'campus'}.edu`)
-      }
+      login('institute_admin', inst.adminEmail || `admin@${inst.slug || 'campus'}.edu`)
       toast.info(`Now impersonating "${inst.name}". A 60-minute delegation session is active.`)
     } catch (err) {
       toast.error(err.message || 'Failed to initiate impersonation session')
@@ -1136,19 +1122,11 @@ export const InstitutesView = () => {
 
   const handleEditTierChange = (selectedTier) => {
     const config = tierPlanMapping[selectedTier] || tierPlanMapping.School
-    const newTiers = selectedTier === 'University' 
-      ? ['undergraduate'] 
-      : selectedTier === 'College' 
-      ? ['college'] 
-      : selectedTier === 'Custom' 
-      ? (editFormData.enabledTiers?.length ? editFormData.enabledTiers : ['school', 'college']) 
-      : ['school']
-
     setEditFormData(prev => ({
       ...prev,
       type: selectedTier,
       planTier: config.planName,
-      enabledTiers: newTiers
+      enabledTiers: ['school']
     }))
   }
 
@@ -1171,14 +1149,7 @@ export const InstitutesView = () => {
       ? `${editFormData.phoneDialCode || '+92'} ${editFormData.phoneNumber.trim()}`
       : editFormData.phone || ''
 
-    const resolvedTiers = editFormData.enabledTiers?.length
-      ? editFormData.enabledTiers
-      : (
-        editFormData.type === 'University' ? ['undergraduate'] :
-        editFormData.type === 'College' ? ['college'] :
-        editFormData.type === 'Custom' ? (editingInstitute.enabledTiers || ['school', 'college']) :
-        ['school']
-      )
+    const resolvedTiers = ['school']
 
     const payload = {
       ...editingInstitute,
@@ -1393,40 +1364,28 @@ export const InstitutesView = () => {
     ]
     const sampleRows = [
       [
-        '"Army Public School & College"',
-        '"APS-101"',
+        '"Beaconhouse Central High School"',
+        '"BHS-101"',
         '"School"',
         '"Lahore"',
         '"Punjab"',
-        '"Brig. (R) Tariq Saeed"',
-        '"aps.lahore@eims.edu.pk"',
+        '"Mrs. Ayesha Tariq"',
+        '"bhs.lahore@eims.edu.pk"',
         '"+92 42 36601234"',
         '"Federal Board (FBISE)"',
         '"School Plan"'
       ],
       [
-        '"Superior Science College"',
-        '"SSC-202"',
-        '"College"',
-        '"Gujranwala"',
-        '"Punjab"',
-        '"Prof. Muhammad Aslam"',
-        '"info@superiorcollege.edu.pk"',
-        '"+92 55 3841234"',
-        '"BISE Gujranwala"',
-        '"College Plan"'
-      ],
-      [
-        '"National Institute of Engineering & Sciences"',
-        '"NIES-303"',
-        '"University"',
-        '"Islamabad"',
-        '"Federal"',
-        '"Dr. Salman Farooq"',
-        '"registrar@nies.edu.pk"',
-        '"+92 51 9205566"',
-        '"Higher Education Commission (HEC)"',
-        '"University Plan"'
+        '"City Grammar School"',
+        '"CGS-202"',
+        '"School"',
+        '"Karachi"',
+        '"Sindh"',
+        '"Mr. Salman Farooq"',
+        '"info@citygrammar.edu.pk"',
+        '"+92 21 3841234"',
+        '"BSEK Karachi"',
+        '"School Plan"'
       ]
     ]
 
@@ -1529,20 +1488,10 @@ export const InstitutesView = () => {
             continue
           }
 
-          const lowerType = type.toLowerCase()
-          if (lowerType.includes('uni') || lowerType.includes('undergrad')) {
-            type = 'University'
-          } else if (lowerType.includes('col')) {
-            type = 'College'
-          } else if (lowerType.includes('custom') || lowerType.includes('hyb')) {
-            type = 'Custom'
-          } else {
-            type = 'School'
-          }
+          type = 'School'
 
           if (!code.trim()) {
-            const prefix = type === 'University' ? 'UNI' : type === 'College' ? 'COL' : type === 'Custom' ? 'HYB' : 'SCH'
-            code = `${prefix}-${Math.floor(100 + Math.random() * 900)}`
+            code = `SCH-${Math.floor(100 + Math.random() * 900)}`
           } else {
             code = code.toUpperCase().trim()
           }
@@ -1557,13 +1506,7 @@ export const InstitutesView = () => {
             email = `admin@${slug || 'campus'}.edu.pk`
           }
 
-          const enabledTiers = type === 'University' 
-            ? ['undergraduate'] 
-            : type === 'College' 
-            ? ['college'] 
-            : type === 'Custom'
-            ? ['school', 'college']
-            : ['school']
+          const enabledTiers = ['school']
 
           validRows.push({
             name: name.trim(),
@@ -1579,14 +1522,14 @@ export const InstitutesView = () => {
             address: `${city}, ${province}, Pakistan`,
             affiliatedBoard,
             planTier,
-            planType: type === 'University' ? 'UNIVERSITY' : type === 'College' ? 'COLLEGE' : type === 'Custom' ? 'CUSTOM' : 'SCHOOL',
+            planType: 'SCHOOL',
             adminName: principal !== 'In-Charge Principal' ? `${principal} (Admin)` : `${name.trim()} Administrator`,
             adminEmail: email,
             adminPassword: 'admin' + Math.floor(100 + Math.random() * 900),
-            quotaStudents: type === 'University' ? 5000 : 1500,
-            quotaUsers: type === 'University' ? 100 : 50,
+            quotaStudents: 1500,
+            quotaUsers: 50,
             quotaCampuses: 1,
-            quotaStorageMb: type === 'University' ? 5120 : 2048,
+            quotaStorageMb: 2048,
             campuses: [{ name: 'Main Campus', city, address: `${city}, ${province}` }]
           })
         }
@@ -1730,7 +1673,7 @@ export const InstitutesView = () => {
             Institutes & Campuses
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
-            Global governance of schools, colleges, chartered universities, and multi-tenant registered campuses.
+            Global governance of registered schools and multi-branch school campuses.
           </p>
         </div>
 
@@ -1851,14 +1794,11 @@ export const InstitutesView = () => {
                 {/* Checkbox Group: Educational Wing */}
                 <div>
                   <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
-                    Educational Wings & Tier
+                    School Scope
                   </label>
                   <div className="space-y-1.5">
                     {[
-                      { id: 'School', label: 'School Wing (K-10)' },
-                      { id: 'College', label: 'College Wing (11-12)' },
-                      { id: 'University', label: 'University Wing (HEC BS/MS)' },
-                      { id: 'Custom Group', label: 'Custom / Hybrid Multi-Wing' }
+                      { id: 'School', label: 'School Wing (K-10 / Matric / O-Levels)' }
                     ].map(item => (
                       <label key={item.id} className="flex items-center gap-2.5 text-xs text-slate-700 cursor-pointer select-none py-0.5">
                         <input
@@ -1881,9 +1821,8 @@ export const InstitutesView = () => {
                   <div className="space-y-1.5">
                     {[
                       { id: 'School Plan', label: 'School Plan' },
-                      { id: 'College Plan', label: 'College Plan' },
-                      { id: 'University Plan', label: 'University Plan' },
-                      { id: 'Custom Hybrid Plan', label: 'Custom Hybrid Plan' }
+                      { id: 'Enterprise Network', label: 'Enterprise Network' },
+                      { id: 'Starter Trial', label: 'Starter Trial' }
                     ].map(item => (
                       <label key={item.id} className="flex items-center gap-2.5 text-xs text-slate-700 cursor-pointer select-none py-0.5">
                         <input
@@ -1942,8 +1881,6 @@ export const InstitutesView = () => {
             >
               <option value="ALL">All Types</option>
               <option value="School">School</option>
-              <option value="College">College</option>
-              <option value="University">University</option>
             </select>
           </div>
 
@@ -2050,13 +1987,7 @@ export const InstitutesView = () => {
                           className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 cursor-pointer"
                         />
                         <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-100 to-indigo-100 text-emerald-800 flex items-center justify-center font-bold text-lg shadow-2xs shrink-0">
-                          {inst.type === 'University' ? (
-                            <GraduationCap className="w-6 h-6" />
-                          ) : inst.type === 'College' ? (
-                            <Building2 className="w-6 h-6" />
-                          ) : (
-                            <School className="w-6 h-6" />
-                          )}
+                          <School className="w-6 h-6" />
                         </div>
                       </div>
 
@@ -2502,7 +2433,7 @@ export const InstitutesView = () => {
                           <div className="flex items-center gap-1.5 text-[10px]">
                             <button
                               type="button"
-                              onClick={() => setVisibleTierCards(['School', 'College', 'University', 'Custom'])}
+                              onClick={() => setVisibleTierCards(['School', 'Enterprise'])}
                               className="text-emerald-600 hover:underline font-bold cursor-pointer"
                             >
                               All
@@ -2525,9 +2456,7 @@ export const InstitutesView = () => {
                         <div className="space-y-1">
                           {[
                             { id: 'School', label: 'School Plan', icon: School, color: 'text-emerald-600', badge: 'K-10' },
-                            { id: 'College', label: 'College Plan', icon: Building2, color: 'text-indigo-600', badge: '11-12' },
-                            { id: 'University', label: 'University Plan', icon: GraduationCap, color: 'text-emerald-600', badge: 'BS' },
-                            { id: 'Custom', label: 'Custom Hybrid', icon: Layers, color: 'text-amber-600', badge: 'Multi' }
+                            { id: 'Enterprise', label: 'Enterprise Network', icon: Layers, color: 'text-indigo-600', badge: 'Multi' }
                           ].map(item => {
                             const ItemIcon = item.icon
                             const isChecked = visibleTierCards.includes(item.id)
@@ -2568,9 +2497,7 @@ export const InstitutesView = () => {
                 {(() => {
                   const allTierCards = [
                     { id: 'School', label: 'School Plan', icon: School, color: 'text-emerald-600' },
-                    { id: 'College', label: 'College Plan', icon: Building2, color: 'text-indigo-600' },
-                    { id: 'University', label: 'University Plan', icon: GraduationCap, color: 'text-emerald-600' },
-                    { id: 'Custom', label: 'Custom Hybrid', icon: Layers, color: 'text-amber-600' }
+                    { id: 'Enterprise', label: 'Enterprise Network', icon: Layers, color: 'text-indigo-600' }
                   ]
                   const displayedCards = allTierCards.filter(card => visibleTierCards.includes(card.id))
 
@@ -2582,7 +2509,7 @@ export const InstitutesView = () => {
                         <p className="text-[11px] text-slate-500 mt-0.5">Please tick at least one card in the Filter above to display it on screen.</p>
                         <button
                           type="button"
-                          onClick={() => setVisibleTierCards(['School', 'College', 'University', 'Custom'])}
+                          onClick={() => setVisibleTierCards(['School', 'Enterprise'])}
                           className="mt-3 px-3.5 py-1.5 text-xs font-bold text-emerald-800 bg-emerald-100 hover:bg-purple-200 rounded-xl transition-colors cursor-pointer"
                         >
                           Show All Cards
@@ -2591,9 +2518,7 @@ export const InstitutesView = () => {
                     )
                   }
 
-                  const gridColsClass = 
-                    displayedCards.length === 4 ? 'grid-cols-2 sm:grid-cols-4' :
-                    displayedCards.length === 3 ? 'grid-cols-1 sm:grid-cols-3' :
+                  const gridColsClass =
                     displayedCards.length === 2 ? 'grid-cols-2' :
                     'grid-cols-1 max-w-sm mx-auto'
 
@@ -2621,56 +2546,6 @@ export const InstitutesView = () => {
                     </div>
                   )
                 })()}
-
-                {/* Custom Plan: Multi-Wing Checkbox Configuration */}
-                {wizardData.type === 'Custom' && (
-                  <div className={`p-3 rounded-xl border mt-3 space-y-2 ${wizardErrors.enabledTiers ? 'bg-rose-50/30 border-rose-300 ring-2 ring-rose-200/50' : 'bg-slate-50 border-slate-200'}`}>
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
-                        Select Active Educational Wings for this Custom Client <span className="text-rose-500 font-bold">*</span>
-                      </span>
-                      {wizardErrors.enabledTiers && (
-                        <span className="text-[11px] text-rose-600 font-semibold">{wizardErrors.enabledTiers}</span>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                      {[
-                        { id: 'school', label: 'School Wing', desc: 'Primary & High School (K-10)', icon: School },
-                        { id: 'college', label: 'College Wing', desc: 'Intermediate (F.Sc, ICS, FA, A-Levels)', icon: Building2 },
-                        { id: 'undergraduate', label: 'Undergraduates Wing', desc: '4-Year BS Degrees & Semesters', icon: GraduationCap }
-                      ].map(wing => {
-                        const WingIcon = wing.icon
-                        const isChecked = (wizardData.enabledTiers || ['school', 'college']).includes(wing.id)
-                        return (
-                          <label key={wing.id} className="flex items-center gap-2 p-2 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-slate-300">
-                            <input
-                              type="checkbox"
-                              checked={isChecked}
-                              onChange={() => {
-                                const current = wizardData.enabledTiers || ['school', 'college']
-                                let updated
-                                if (current.includes(wing.id)) {
-                                  if (current.length > 1) updated = current.filter(t => t !== wing.id)
-                                  else updated = current
-                                } else {
-                                  updated = [...current, wing.id]
-                                }
-                                setWizardData({ ...wizardData, enabledTiers: updated })
-                                if (wizardErrors.enabledTiers) setWizardErrors(prev => ({ ...prev, enabledTiers: null }))
-                              }}
-                              className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500"
-                            />
-                            <WingIcon className="w-4 h-4 text-indigo-600 shrink-0" />
-                            <div>
-                              <span className="text-xs font-bold text-slate-800 block">{wing.label}</span>
-                              <span className="text-[10px] text-slate-400 block">{wing.desc}</span>
-                            </div>
-                          </label>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
               </div>
 
               <div>
@@ -4260,56 +4135,10 @@ export const InstitutesView = () => {
                       className="w-full px-3.5 py-2.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer"
                     >
                       <option value="School">School Plan</option>
-                      <option value="College">College Plan</option>
-                      <option value="University">University Plan</option>
-                      <option value="Custom">Custom Hybrid</option>
+                      <option value="Enterprise">Enterprise Network</option>
                     </select>
                   </div>
                 </div>
-
-                {/* Custom Hybrid: Educational Wings Allocation */}
-                {editFormData.type === 'Custom' && (
-                  <div className="p-3 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
-                    <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
-                      Licensed Educational Wings for this Campus
-                    </span>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                      {[
-                        { id: 'school', label: 'School Wing', desc: 'Grades 1-10', icon: School },
-                        { id: 'college', label: 'College Wing', desc: '11-12 & ADP', icon: Building2 },
-                        { id: 'undergraduate', label: 'University Wing', desc: 'BS / MS Semesters', icon: GraduationCap }
-                      ].map(wing => {
-                        const WingIcon = wing.icon
-                        const isChecked = (editFormData.enabledTiers || ['school', 'college']).includes(wing.id)
-                        return (
-                          <label key={wing.id} className="flex items-center gap-2 p-2 bg-white rounded-lg border border-slate-200 cursor-pointer hover:border-slate-300">
-                            <input
-                              type="checkbox"
-                              checked={isChecked}
-                              onChange={() => {
-                                const current = editFormData.enabledTiers || ['school', 'college']
-                                let updated
-                                if (current.includes(wing.id)) {
-                                  if (current.length > 1) updated = current.filter(t => t !== wing.id)
-                                  else updated = current
-                                } else {
-                                  updated = [...current, wing.id]
-                                }
-                                setEditFormData({ ...editFormData, enabledTiers: updated })
-                              }}
-                              className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500"
-                            />
-                            <WingIcon className="w-4 h-4 text-emerald-700 shrink-0" />
-                            <div>
-                              <span className="text-xs font-bold text-slate-800 block">{wing.label}</span>
-                              <span className="text-[10px] text-slate-400 block">{wing.desc}</span>
-                            </div>
-                          </label>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 uppercase mb-1 flex items-center gap-1">

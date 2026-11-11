@@ -1,30 +1,24 @@
 // src/modules/institute-admin/notices/noticeService.js
 /**
  * Campus Digital Notice Board & Circular Dispatch Service
- * Multi-Tier Scoped Architecture: School (Students), College, University & Campus-Wide
+ * School-Scoped Architecture: Playgroup-KG, Primary, Middle, Secondary & School-Wide
  */
 
 export const STORAGE_KEY = 'sms_campus_notices'
 
 export const ACADEMIC_TIERS = [
-  { id: 'all', label: 'All Campus Notices', icon: 'Layers', description: 'Universal institute-wide announcements' },
-  { id: 'school', label: 'School / K-12 Wing', icon: 'School', description: 'Elementary & Secondary school circulars' },
-  { id: 'college', label: 'College Wing', icon: 'Building2', description: 'Higher Secondary & Intermediate college notices' },
-  { id: 'university', label: 'University Wing', icon: 'GraduationCap', description: 'Undergraduate, Graduate & Faculty circulars' }
+  { id: 'all', label: 'All School Notices', icon: 'Layers', description: 'Universal school-wide announcements' },
+  { id: 'school', label: 'School / K-10 Wing', icon: 'School', description: 'Playgroup-KG, Primary, Middle & Secondary circulars' }
 ]
 
 export const TIER_CATEGORIES = {
   all: ['General', 'Holiday & Vacation', 'Urgent Directive', 'Administrative', 'Admissions', 'Sports & Events'],
-  school: ['General', 'Academic', 'Parent-Teacher Meeting (PTM)', 'School Timings', 'Exam & Datesheet', 'Fee Payment Reminder', 'Uniform & Rules', 'Winter / Summer Vacation', 'Homework & Syllabus'],
-  college: ['General', 'Academic', 'Board Registration (BISE)', 'Send-Up Examination', 'Lab Practicals', 'College Fee Installments', 'Sports Gala & Competitions', 'College Merit List'],
-  university: ['General', 'Academic', 'Semester Registration', 'Midterm & Final Exams', 'Research & Thesis Defense', 'HEC Directives', 'Convocation & Degrees', 'Hostel & Transport', 'Scholarships & Aid']
+  school: ['General', 'Academic', 'Parent-Teacher Meeting (PTM)', 'School Timings', 'Exam & Datesheet', 'Fee Payment Reminder', 'Uniform & Rules', 'Winter / Summer Vacation', 'Homework & Syllabus']
 }
 
 export const TIER_AUDIENCES = {
-  all: ['All Campus Students, Parents & Staff', 'Faculty & Staff Only', 'All Students Only', 'Parents & Guardians Only'],
-  school: ['All School Students & Parents', 'Primary Wing (Grades 1-5)', 'Middle Wing (Grades 6-8)', 'Secondary Wing (Matric/O-Level)', 'Parents Only', 'School Faculty'],
-  college: ['All College Students', '1st Year (FSc / FA / ICS / ICom)', '2nd Year (FSc / FA / ICS / ICom)', 'Science Students (Pre-Med / Pre-Eng)', 'College Faculty & Lab In-charges'],
-  university: ['All University Departments', 'Undergraduate Scholars (BS)', 'Postgraduate & MS/PhD Scholars', 'Faculty Deans & Department Heads', 'Visiting Professors', 'Campus Administration']
+  all: ['All School Students, Parents & Staff', 'Faculty & Staff Only', 'All Students Only', 'Parents & Guardians Only'],
+  school: ['All School Students & Parents', 'Primary Wing (Grades 1-5)', 'Middle Wing (Grades 6-8)', 'Secondary Wing (Matric/O-Level)', 'Parents Only', 'School Faculty']
 }
 
 export const NOTICE_PRIORITIES = [

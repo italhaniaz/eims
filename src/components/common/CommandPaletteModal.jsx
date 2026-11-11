@@ -139,7 +139,7 @@ export const CommandPaletteModal = ({ isOpen, onClose, onNavigate, onOpenSetting
           category: 'Campuses', 
           route: 'institutes', 
           icon: School, 
-          keywords: ['campuses', 'schools', 'colleges', 'branches', 'institutes', 'directory'] 
+          keywords: ['campuses', 'schools', 'branches', 'institutes', 'directory'] 
         },
         { 
           id: 'nav-users', 
@@ -322,11 +322,11 @@ export const CommandPaletteModal = ({ isOpen, onClose, onNavigate, onOpenSetting
         },
         { 
           id: 'nav-lvl', 
-          title: 'Academic Program Levels (K-12 / College)', 
+          title: 'Academic Program Levels (Playgroup - Grade 10)', 
           category: 'Academics', 
           route: 'inst-program-levels', 
           icon: Layers, 
-          keywords: ['program levels', 'matric', 'inter', 'fsc', 'levels', 'elementary', 'secondary', 'college'] 
+          keywords: ['program levels', 'matric', 'preschool', 'levels', 'elementary', 'secondary', 'school'] 
         },
         { 
           id: 'nav-adm2', 

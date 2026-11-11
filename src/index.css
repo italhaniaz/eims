@@ -137,40 +137,10 @@
 }
 
 /* =========================================================================
-   THEME PRESETS
-   School = #0EA5E9 + #F97316
-   College = #4F46E5 + #14B8A6
-   University = #1E3A8A + #D4AF37
+   SCHOOL THEME PRESET (Default SaaS: #4F46E5 + #14B8A6)
    ========================================================================= */
 
-/* Preset 1: School */
 [data-preset="school"] {
-  --primary: #0EA5E9;
-  --primary-hover: #0284C7;
-  --primary-soft: #F0F9FF;
-  --primary-border: rgba(14, 165, 233, 0.25);
-  --secondary: #F97316;
-  --secondary-hover: #EA580C;
-  --secondary-soft: #FFF7ED;
-  --hero-gradient: linear-gradient(135deg, #0EA5E9, #38BDF8 55%, #F97316);
-  --hero-gradient-text: linear-gradient(135deg, #0EA5E9 0%, #38BDF8 55%, #F97316 100%);
-  --hero-gradient-hover: linear-gradient(135deg, #0284C7, #0EA5E9 55%, #EA580C);
-}
-
-[data-theme="dark"][data-preset="school"],
-.dark[data-preset="school"] {
-  --primary: #38BDF8;
-  --primary-hover: #0EA5E9;
-  --primary-soft: rgba(56, 189, 248, 0.18);
-  --primary-border: rgba(56, 189, 248, 0.35);
-  --secondary: #FB923C;
-  --secondary-hover: #F97316;
-  --secondary-soft: rgba(251, 146, 60, 0.18);
-  --hero-gradient: linear-gradient(135deg, #0284C7, #0EA5E9 55%, #EA580C);
-}
-
-/* Preset 2: College (Default) */
-[data-preset="college"] {
   --primary: #4F46E5;
   --primary-hover: #4338CA;
   --primary-soft: #EEF2FF;
@@ -183,8 +153,8 @@
   --hero-gradient-hover: linear-gradient(135deg, #4338CA, #6D28D9 55%, #0891B2);
 }
 
-[data-theme="dark"][data-preset="college"],
-.dark[data-preset="college"] {
+[data-theme="dark"][data-preset="school"],
+.dark[data-preset="school"] {
   --primary: #818CF8;
   --primary-hover: #6366F1;
   --primary-soft: rgba(129, 140, 248, 0.18);
@@ -193,32 +163,6 @@
   --secondary-hover: #14B8A6;
   --secondary-soft: rgba(45, 212, 191, 0.18);
   --hero-gradient: linear-gradient(135deg, #6366F1, #8B5CF6 55%, #06B6D4);
-}
-
-/* Preset 3: University */
-[data-preset="university"] {
-  --primary: #1E3A8A;
-  --primary-hover: #172554;
-  --primary-soft: #EFF6FF;
-  --primary-border: rgba(30, 58, 138, 0.25);
-  --secondary: #D4AF37;
-  --secondary-hover: #B89628;
-  --secondary-soft: #FEFCE8;
-  --hero-gradient: linear-gradient(135deg, #1E3A8A, #312E81 55%, #D4AF37);
-  --hero-gradient-text: linear-gradient(135deg, #1E3A8A 0%, #312E81 55%, #D4AF37 100%);
-  --hero-gradient-hover: linear-gradient(135deg, #172554, #1E1B4B 55%, #B89628);
-}
-
-[data-theme="dark"][data-preset="university"],
-.dark[data-preset="university"] {
-  --primary: #60A5FA;
-  --primary-hover: #3B82F6;
-  --primary-soft: rgba(96, 165, 250, 0.18);
-  --primary-border: rgba(96, 165, 250, 0.35);
-  --secondary: #FACC15;
-  --secondary-hover: #EAB308;
-  --secondary-soft: rgba(250, 204, 21, 0.18);
-  --hero-gradient: linear-gradient(135deg, #1E40AF, #3730A3 55%, #EAB308);
 }
 
 @layer base {
@@ -405,7 +349,7 @@
 /* =========================================================================
    UNIVERSAL THEME ENGINE & TOKEN BRIDGE
    Seamlessly maps brand, surfaces, borders, and buttons to active theme tokens
-   so presets (School/College/University/Custom) and Dark Mode apply everywhere.
+   so presets (School / Custom) and Dark Mode apply everywhere.
    ========================================================================= */
 
 /* 1. Primary Action Buttons & Interactive Accents */

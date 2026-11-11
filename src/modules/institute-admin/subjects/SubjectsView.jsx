@@ -47,33 +47,21 @@ export const SubjectsView = ({ currentInstitute = null }) => {
   } = useAppData()
 
   // State Management
-  const defaultTier = tierConfig.isSchoolOnly ? 'school' : tierConfig.isCollegeOnly ? 'college' : tierConfig.isUniversityOnly ? 'university' : 'all'
+  const defaultTier = 'school'
   const [searchTerm, setSearchTerm] = useState('')
   const [activeTier, setActiveTier] = useState(defaultTier)
 
   const allowedAcademicTiers = useMemo(() => {
-    return ACADEMIC_TIERS.filter(tier => {
-      if (tier.id === 'all') return tierConfig.isMultiTier
-      if (tier.id === 'school') return tierConfig.hasSchool
-      if (tier.id === 'college') return tierConfig.hasCollege
-      if (tier.id === 'university') return tierConfig.hasUniversity
-      return false
-    })
-  }, [tierConfig])
+    return ACADEMIC_TIERS
+  }, [])
   const [selectedProgram, setSelectedProgram] = useState('all')
   const [selectedType, setSelectedType] = useState('all')
   const [viewMode, setViewMode] = useState('table') // 'table' | 'cards'
 
-  // Sync default tier with navbar's activeProgramLevel (when changed by user)
+  // Sync default tier with navbar's activeProgramLevel
   useEffect(() => {
     if (activeProgramLevel && activeProgramLevel !== 'all') {
-      if (['preschool', 'elementary', 'secondary'].includes(activeProgramLevel)) {
-        setActiveTier('school')
-      } else if (activeProgramLevel === 'college' || activeProgramLevel === 'higher-secondary') {
-        setActiveTier('college')
-      } else if (activeProgramLevel === 'university') {
-        setActiveTier('university')
-      }
+      setActiveTier('school')
     }
   }, [activeProgramLevel])
 
@@ -248,9 +236,7 @@ export const SubjectsView = ({ currentInstitute = null }) => {
 
     return {
       all: list.length,
-      school: list.filter(s => (s.tier || 'school') === 'school').length,
-      college: list.filter(s => s.tier === 'college').length,
-      university: list.filter(s => s.tier === 'university').length
+      school: list.length
     }
   }, [subjects, currentInstitute])
 
@@ -388,8 +374,6 @@ export const SubjectsView = ({ currentInstitute = null }) => {
               }`}
             >
               {tier.id === 'school' && <School className="w-3.5 h-3.5" />}
-              {tier.id === 'college' && <Layers className="w-3.5 h-3.5" />}
-              {tier.id === 'university' && <GraduationCap className="w-3.5 h-3.5" />}
               {tier.id === 'all' && <Bookmark className="w-3.5 h-3.5" />}
               <span>{tier.label}</span>
               <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${
@@ -563,12 +547,7 @@ export const SubjectsView = ({ currentInstitute = null }) => {
                       {/* Tier & Type */}
                       <td className="px-5 py-4 whitespace-nowrap">
                         <div className="flex flex-col gap-1 items-start">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                            s.tier === 'school' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
-                            s.tier === 'college' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
-                            s.tier === 'university' ? 'bg-purple-50 text-purple-700 border border-purple-200' :
-                            'bg-slate-100 text-slate-700'
-                          }`}>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
                             {(s.tier || 'school').toUpperCase()}
                           </span>
                           <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
@@ -663,12 +642,7 @@ export const SubjectsView = ({ currentInstitute = null }) => {
                     <span className="font-mono text-xs font-bold px-2.5 py-1 bg-slate-100 text-slate-800 rounded-lg border border-slate-200/80">
                       {s.code || 'NO-CODE'}
                     </span>
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                      s.tier === 'school' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
-                      s.tier === 'college' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
-                      s.tier === 'university' ? 'bg-purple-50 text-purple-700 border border-purple-200' :
-                      'bg-slate-100 text-slate-700'
-                    }`}>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
                       {(s.tier || 'school').toUpperCase()}
                     </span>
                   </div>
@@ -755,10 +729,10 @@ export const SubjectsView = ({ currentInstitute = null }) => {
                 {[
                   { name: 'Mathematics', code: 'MATH-101', tier: 'school', type: 'core', credits: 4 },
                   { name: 'English Language', code: 'ENG-101', tier: 'school', type: 'core', credits: 4 },
-                  { name: 'Physics (Mechanics)', code: 'PHY-101', tier: 'college', type: 'core', credits: 4 },
-                  { name: 'Chemistry', code: 'CHM-101', tier: 'college', type: 'core', credits: 4 },
-                  { name: 'Biology & Zoology', code: 'BIO-101', tier: 'college', type: 'core', credits: 4 },
-                  { name: 'Computer Programming', code: 'CS-101', tier: 'college', type: 'practical', credits: 4 },
+                  { name: 'Physics (Matric)', code: 'PHY-101', tier: 'school', type: 'core', credits: 4 },
+                  { name: 'Chemistry', code: 'CHM-101', tier: 'school', type: 'core', credits: 4 },
+                  { name: 'Biology', code: 'BIO-101', tier: 'school', type: 'core', credits: 4 },
+                  { name: 'Computer Science', code: 'CS-101', tier: 'school', type: 'practical', credits: 4 },
                   { name: 'Pakistan Studies', code: 'PKS-101', tier: 'school', type: 'core', credits: 3 },
                   { name: 'Islamic Studies', code: 'ISL-101', tier: 'school', type: 'core', credits: 3 }
                 ].map((sug, i) => (
@@ -823,9 +797,7 @@ export const SubjectsView = ({ currentInstitute = null }) => {
                 onChange={(e) => setFormData({ ...formData, tier: e.target.value })}
                 className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               >
-                <option value="school">School (K-12 / Primary / Secondary)</option>
-                <option value="college">College (Intermediate / FA / FSc / ICS)</option>
-                <option value="university">University (Degree / BS / MS)</option>
+                <option value="school">School (Playgroup - Grade 10 / O-Levels)</option>
               </select>
             </div>
             <div>

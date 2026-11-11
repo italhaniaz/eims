@@ -314,9 +314,7 @@ export const BellScheduleModal = ({
             >
               <option value="preschool">Pre-School (Playgroup - KG)</option>
               <option value="elementary">Elementary (Grade 1 - 8)</option>
-              <option value="secondary">Secondary (Grade 9 - 10 / Matric)</option>
-              <option value="higher-secondary">Higher Secondary (Grade 11 - 12 / Inter)</option>
-              <option value="university">Undergraduate (BS Honors)</option>
+              <option value="secondary">Secondary (Grade 9 - 10 / Matric / O-Levels)</option>
             </select>
           </div>
 
