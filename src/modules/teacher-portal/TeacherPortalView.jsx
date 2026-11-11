@@ -53,6 +53,8 @@ import TeacherStudentsView from './TeacherStudentsView'
 import TeacherMyAttendanceView from './TeacherMyAttendanceView'
 import TeacherMarkAttendanceView from './TeacherMarkAttendanceView'
 import TeacherAttendanceReportsView from './TeacherAttendanceReportsView'
+import TeacherMarksEntryView from './TeacherMarksEntryView'
+import TeacherReportCardsView from './TeacherReportCardsView'
 
 export default function TeacherPortalView() {
   const { user, logout } = useAuth()
@@ -63,9 +65,20 @@ export default function TeacherPortalView() {
   const [activeRoute, setActiveRoute] = useState('dashboard')
   const [subReportType, setSubReportType] = useState('student-attendance')
   const [isReportsMenuOpen, setIsReportsMenuOpen] = useState(false)
+  const [isResultsMenuOpen, setIsResultsMenuOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+
+  // Auto-expand accordion when navigating
+  useEffect(() => {
+    if (activeRoute === 'marks-entry' || activeRoute === 'report-cards') {
+      setOpenSidebarGroups((prev) => ({ ...prev, exams: true }))
+      if (activeRoute === 'report-cards') {
+        setIsResultsMenuOpen(true)
+      }
+    }
+  }, [activeRoute])
 
   // Student Count for Teacher Portal (reactive to local roster)
   const [portalStudentsCount, setPortalStudentsCount] = useState(() => {
@@ -492,10 +505,18 @@ export default function TeacherPortalView() {
           <div>
             <button
               onClick={() => toggleGroup('exams')}
-              className="w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer group"
+              className={`w-full flex items-center justify-between px-3.5 py-2 rounded-xl transition-colors cursor-pointer group ${
+                activeRoute === 'marks-entry' || activeRoute === 'report-cards'
+                  ? 'bg-blue-600/10 text-white border border-blue-500/30'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+              }`}
             >
               <div className="flex items-center gap-3 min-w-0">
-                <FileSpreadsheet className="w-4 h-4 text-slate-400 group-hover:text-purple-400 shrink-0" />
+                <FileSpreadsheet className={`w-4 h-4 shrink-0 ${
+                  activeRoute === 'marks-entry' || activeRoute === 'report-cards'
+                    ? 'text-sky-400'
+                    : 'text-slate-400 group-hover:text-purple-400'
+                }`} />
                 {!isSidebarCollapsed && <span className="truncate">Exams & Results</span>}
               </div>
               {!isSidebarCollapsed && (
@@ -503,16 +524,63 @@ export default function TeacherPortalView() {
               )}
             </button>
             {openSidebarGroups.exams && !isSidebarCollapsed && (
-              <div className="mt-1 pl-4 space-y-1 border-l border-slate-800 ml-5 text-xs text-slate-400">
+              <div className="mt-1 pl-3 space-y-1 border-l border-slate-800 ml-5 text-xs">
+                {/* 4.1 Marks Entry */}
                 <button
                   onClick={() => {
-                    setActiveModal('marks-entry')
+                    setActiveRoute('marks-entry')
                     setIsMobileMenuOpen(false)
                   }}
-                  className="w-full text-left py-1.5 px-2 rounded-lg hover:text-white hover:bg-slate-800/50"
+                  className={`w-full flex items-center gap-2 py-1.5 px-2.5 rounded-lg transition-colors cursor-pointer ${
+                    activeRoute === 'marks-entry'
+                      ? 'bg-gradient-to-r from-sky-600/30 to-blue-600/30 text-sky-200 font-bold border border-sky-500/40 shadow-xs'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                  }`}
                 >
-                  Enter Exam Marks
+                  <FileEdit className="w-3.5 h-3.5 text-sky-400" />
+                  <span>Marks Entry</span>
                 </button>
+
+                {/* 4.2 Results (Nested sub-accordion) */}
+                <div>
+                  <button
+                    onClick={() => setIsResultsMenuOpen(!isResultsMenuOpen)}
+                    className={`w-full flex items-center justify-between text-left py-1.5 px-2.5 rounded-lg transition-colors cursor-pointer ${
+                      activeRoute === 'report-cards'
+                        ? 'text-sky-300 font-bold'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-slate-400" />
+                      <span>Results</span>
+                    </div>
+                    {isResultsMenuOpen ? (
+                      <ChevronDown className="w-3 h-3 text-slate-400" />
+                    ) : (
+                      <ChevronRight className="w-3 h-3 text-slate-400" />
+                    )}
+                  </button>
+
+                  {/* Sub-items for Results */}
+                  {isResultsMenuOpen && (
+                    <div className="mt-1 pl-3 space-y-1 border-l border-slate-700 ml-4 text-[11px]">
+                      <button
+                        onClick={() => {
+                          setActiveRoute('report-cards')
+                          setIsMobileMenuOpen(false)
+                        }}
+                        className={`w-full text-left py-1 px-2 rounded-md transition-colors cursor-pointer ${
+                          activeRoute === 'report-cards'
+                            ? 'bg-sky-600/30 text-sky-200 font-bold border border-sky-500/40'
+                            : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
+                        }`}
+                      >
+                        Report Cards
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -773,12 +841,47 @@ export default function TeacherPortalView() {
               if (modalName === 'mark-attendance') {
                 setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
                 setActiveRoute('mark-attendance')
+              } else if (modalName === 'marks-entry') {
+                setOpenSidebarGroups((prev) => ({ ...prev, exams: true }))
+                setActiveRoute('marks-entry')
               } else {
                 setActiveModal(modalName)
               }
             }}
             subReportType={subReportType}
             onSelectSubReport={(type) => setSubReportType(type)}
+            teacherName={teacherName}
+          />
+        ) : activeRoute === 'marks-entry' ? (
+          <TeacherMarksEntryView
+            onBack={() => setActiveRoute('dashboard')}
+            onOpenModal={(modalName) => {
+              if (modalName === 'mark-attendance') {
+                setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
+                setActiveRoute('mark-attendance')
+              } else if (modalName === 'marks-entry') {
+                setOpenSidebarGroups((prev) => ({ ...prev, exams: true }))
+                setActiveRoute('marks-entry')
+              } else {
+                setActiveModal(modalName)
+              }
+            }}
+            teacherName={teacherName}
+          />
+        ) : activeRoute === 'report-cards' ? (
+          <TeacherReportCardsView
+            onBack={() => setActiveRoute('dashboard')}
+            onOpenModal={(modalName) => {
+              if (modalName === 'mark-attendance') {
+                setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
+                setActiveRoute('mark-attendance')
+              } else if (modalName === 'marks-entry') {
+                setOpenSidebarGroups((prev) => ({ ...prev, exams: true }))
+                setActiveRoute('marks-entry')
+              } else {
+                setActiveModal(modalName)
+              }
+            }}
             teacherName={teacherName}
           />
         ) : (
@@ -817,7 +920,10 @@ export default function TeacherPortalView() {
                   <span>Mark Attendance</span>
                 </button>
                 <button
-                  onClick={() => setActiveModal('marks-entry')}
+                  onClick={() => {
+                    setOpenSidebarGroups((prev) => ({ ...prev, exams: true }))
+                    setActiveRoute('marks-entry')
+                  }}
                   className="flex items-center gap-1.5 hover:text-purple-600 dark:hover:text-purple-400 transition-colors cursor-pointer"
                 >
                   <FileEdit className="w-3.5 h-3.5" />
@@ -1109,7 +1215,10 @@ export default function TeacherPortalView() {
               {/* Button 4: Enter Marks */}
               <button
                 type="button"
-                onClick={() => setActiveModal('marks-entry')}
+                onClick={() => {
+                  setOpenSidebarGroups((prev) => ({ ...prev, exams: true }))
+                  setActiveRoute('marks-entry')
+                }}
                 className="p-3.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-purple-300 dark:hover:border-purple-700 hover:bg-purple-50/50 dark:hover:bg-purple-950/30 text-slate-700 dark:text-slate-200 font-semibold text-xs flex flex-col items-center justify-center gap-2 shadow-2xs transition-all cursor-pointer group"
               >
                 <FileEdit className="w-5 h-5 text-slate-500 group-hover:text-purple-600 group-hover:scale-110 transition-transform" />
