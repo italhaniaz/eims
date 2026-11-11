@@ -22,7 +22,9 @@ import {
   Trash2,
   X,
   CheckCircle2,
-  Calendar
+  Calendar,
+  List,
+  Check
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
@@ -105,7 +107,16 @@ export const InvoicesView = ({
   onOpenQuickPayment,
   onOpenBillingHistory
 }) => {
-  const { fees = [], students = [], classes = [], addItem, updateItem, deleteItem, logAuditEvent } = useAppData()
+  const {
+    fees = [],
+    students = [],
+    classes = [],
+    addItem,
+    updateItem,
+    deleteItem,
+    sendCommunicationBlast,
+    logAuditEvent
+  } = useAppData()
   const { toast } = useToast()
 
   const now = useMemo(() => new Date(), [])
@@ -445,82 +456,179 @@ export const InvoicesView = ({
     toast(`Exported ${filteredInvoices.length} invoice(s) to CSV.`, 'success')
   }
 
-  // Class Invoice Modal State
+  // Class Invoice Modal State (Picks 2, 3, 4)
   const [classModalOpen, setClassModalOpen] = useState(false)
+  const [selectClassesOpen, setSelectClassesOpen] = useState(false)
+  const [draftSelectedClasses, setDraftSelectedClasses] = useState([])
   const [classForm, setClassForm] = useState({
-    targetClass: 'ALL',
-    feeHead: 'Tuition Fee',
-    schedule: 'Monthly',
-    month: MONTHS[now.getMonth()],
-    year: String(now.getFullYear()),
-    useStudentTuition: true,
-    fixedAmount: '2000',
-    dueDate: `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-10`
+    invoiceTitle: '',
+    feeType: '',
+    selectedClasses: [],
+    amount: '0.00',
+    notes: '',
+    billingMonth: `${now.getFullYear()}-${pad2(now.getMonth() + 1)}`,
+    dueDate: '',
+    lateFine: '0',
+    notifySms: true
   })
   const [isGenerating, setIsGenerating] = useState(false)
 
+  const openClassInvoiceModal = () => {
+    setClassForm({
+      invoiceTitle: '',
+      feeType: '',
+      selectedClasses: [],
+      amount: '0.00',
+      notes: '',
+      billingMonth: `${now.getFullYear()}-${pad2(now.getMonth() + 1)}`,
+      dueDate: '',
+      lateFine: '0',
+      notifySms: true
+    })
+    setDraftSelectedClasses([])
+    setSelectClassesOpen(false)
+    setClassModalOpen(true)
+  }
+
+  const classStudentCounts = useMemo(() => {
+    const map = new Map()
+    availableClasses.forEach((cls) => map.set(cls, []))
+    instStudents.forEach((s) => {
+      if ((s.status || 'Active') !== 'Active') return
+      const cls = s.className || ''
+      if (!cls) return
+      if (!map.has(cls)) map.set(cls, [])
+      map.get(cls).push(s)
+    })
+    return Array.from(map.entries()).map(([name, list]) => ({ name, count: list.length, students: list }))
+  }, [availableClasses, instStudents])
+
+  const selectedClassTargets = useMemo(() => {
+    if (classForm.selectedClasses.length === 0) return []
+    const set = new Set(classForm.selectedClasses)
+    return instStudents.filter((s) => (s.status || 'Active') === 'Active' && set.has(s.className || ''))
+  }, [classForm.selectedClasses, instStudents])
+
+  const missingPhoneCount = useMemo(() => {
+    return selectedClassTargets.filter((s) => {
+      const ph = String(s.parentPhone || s.phone || s.guardianPhone || '').replace(/[^0-9]/g, '')
+      return ph.length < 7
+    }).length
+  }, [selectedClassTargets])
+
+  const openSelectClassesModal = () => {
+    setDraftSelectedClasses([...classForm.selectedClasses])
+    setSelectClassesOpen(true)
+  }
+
+  const applySelectedClasses = () => {
+    setClassForm((prev) => ({ ...prev, selectedClasses: [...draftSelectedClasses] }))
+    setSelectClassesOpen(false)
+  }
+
   const handleGenerateClassInvoices = async (e) => {
     e.preventDefault()
-    const targets = instStudents.filter((s) => {
-      if ((s.status || 'Active') !== 'Active') return false
-      if (classForm.targetClass === 'ALL') return true
-      return (s.className || '') === classForm.targetClass
-    })
-    if (targets.length === 0) {
-      toast('No active students found in the selected class.', 'warning')
+    if (!classForm.invoiceTitle.trim()) {
+      toast('Please enter an invoice title.', 'warning')
       return
     }
+    if (!classForm.feeType) {
+      toast('Please select a fee type.', 'warning')
+      return
+    }
+    if (classForm.selectedClasses.length === 0) {
+      toast('Please select at least one class.', 'warning')
+      return
+    }
+    if (selectedClassTargets.length === 0) {
+      toast('No active students found in the selected class(es).', 'warning')
+      return
+    }
+
     setIsGenerating(true)
     try {
-      const feeMonth = `${classForm.month.slice(0, 3)} ${classForm.year}`
+      const [yrStr, moStr] = (classForm.billingMonth || `${now.getFullYear()}-${pad2(now.getMonth() + 1)}`).split('-')
+      const monthLabel = SHORT_MONTHS[Math.max(0, Number(moStr) - 1)] || SHORT_MONTHS[now.getMonth()]
+      const feeMonth = `${monthLabel} ${yrStr}`
+      const enteredAmt = Math.max(0, Number(classForm.amount || 0))
+      const lateFineVal = Math.max(0, Number(classForm.lateFine || 0))
+
       let created = 0
       let skipped = 0
-      for (const st of targets) {
+      let smsEligible = 0
+
+      for (const st of selectedClassTargets) {
         const sName = st.fullName || st.name
         const dup = fees.some(
           (f) =>
             (f.studentId === st.id || (f.studentName || '').toLowerCase() === (sName || '').toLowerCase()) &&
             (f.feeMonth || '') === feeMonth &&
-            (f.feeHead || f.feeType || 'Tuition Fee') === classForm.feeHead &&
+            (f.feeTitle || '').toLowerCase() === classForm.invoiceTitle.trim().toLowerCase() &&
             (!currentInstitute?.id || !f.instituteId || f.instituteId === currentInstitute.id)
         )
         if (dup) {
           skipped += 1
           continue
         }
-        const amt = classForm.useStudentTuition
-          ? Number(st.monthlyFee || st.tuitionFee || classForm.fixedAmount || 0)
-          : Number(classForm.fixedAmount || 0)
+        const amt = enteredAmt > 0 ? enteredAmt : Number(st.monthlyFee || st.tuitionFee || 0)
         const receiptNo = String(Math.floor(1000000 + Math.random() * 8999999))
+        const hasPhone = String(st.parentPhone || st.phone || st.guardianPhone || '').replace(/[^0-9]/g, '').length >= 7
+        if (hasPhone) smsEligible += 1
+
         await addItem('fees', {
           studentId: st.id,
           studentName: sName,
           fatherName: st.fatherName || st.guardianName || '',
           rollNumber: st.rollNumber || '',
           admissionNo: st.admissionNo || st.registrationNo || '',
-          className: st.className || classForm.targetClass,
+          className: st.className || '',
           invoiceType: 'Class',
-          feeHead: classForm.feeHead,
-          feeType: classForm.feeHead,
-          feeTitle: classForm.feeHead,
-          schedule: classForm.schedule,
-          frequency: classForm.schedule,
+          feeHead: classForm.feeType,
+          feeType: classForm.feeType,
+          feeTitle: classForm.invoiceTitle.trim(),
+          schedule: 'Monthly',
+          frequency: 'Monthly',
           kind: 'Regular',
           feeMonth,
           receiptNo,
           amount: amt,
           grossAmount: amt,
+          fine: lateFineVal,
+          lateFine: lateFineVal,
           discount: 0,
           paidAmount: 0,
-          dueDate: classForm.dueDate,
+          notes: classForm.notes.trim(),
+          dueDate: classForm.dueDate || `${yrStr}-${moStr}-10`,
           createdAt: new Date().toISOString(),
           status: 'Pending',
+          smsSent: classForm.notifySms && hasPhone,
           instituteId: instId
         })
         created += 1
       }
-      logAuditEvent?.(`Generated ${created} Class Invoice(s) (${classForm.feeHead} · ${feeMonth})`, currentInstitute?.name || 'Admin', 'Success')
-      toast(`Created ${created} invoice(s)${skipped > 0 ? ` (${skipped} skipped as duplicates)` : ''}.`, created > 0 ? 'success' : 'info')
+
+      if (classForm.notifySms && created > 0 && smsEligible > 0 && sendCommunicationBlast) {
+        try {
+          await sendCommunicationBlast({
+            channel: 'SMS',
+            recipientGroup: classForm.selectedClasses.join(', '),
+            message: `${classForm.invoiceTitle.trim()} (${classForm.feeType}) generated for ${feeMonth}. Please submit fee by due date.`,
+            recipientsCount: smsEligible
+          })
+        } catch {
+          // non-blocking SMS log
+        }
+      }
+
+      logAuditEvent?.(
+        `Generated ${created} Class Invoice(s) (${classForm.invoiceTitle.trim()} · ${feeMonth})`,
+        currentInstitute?.name || 'Admin',
+        'Success'
+      )
+      toast(
+        `Created ${created} invoice(s)${skipped > 0 ? ` (${skipped} duplicate skipped)` : ''}.`,
+        created > 0 ? 'success' : 'info'
+      )
       setClassModalOpen(false)
     } catch (err) {
       toast(err?.message || 'Failed to generate class invoices.', 'error')
@@ -1026,7 +1134,7 @@ export const InvoicesView = ({
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={() => setClassModalOpen(true)}
+              onClick={openClassInvoiceModal}
               className="px-3.5 py-2 rounded-lg bg-teal-700 hover:bg-teal-800 text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer transition-colors"
             >
               <Users className="w-3.5 h-3.5" />
@@ -1232,118 +1340,335 @@ export const InvoicesView = ({
         )}
       </div>
 
-      {/* Modal 1: Class Invoice Generator */}
+      {/* Modal 1: Generate Class Invoice (Pick 2) + Nested Select Classes Modal (Picks 3 & 4) */}
       {classModalOpen && (
         <div className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-[1px] flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200">
-            <div className="bg-teal-700 px-5 py-3.5 flex items-center justify-between text-white">
-              <div className="flex items-center gap-2 font-bold text-sm">
-                <Users className="w-4 h-4" />
-                <span>Generate Class Invoice</span>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden border border-slate-200 relative">
+            {/* Clean Light Header matching Pick 2 */}
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                  <Users className="w-4 h-4" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-bold text-slate-900">Generate class invoice</h2>
+                  <p className="text-[11px] text-slate-500">One billed line per student in the class you select.</p>
+                </div>
               </div>
-              <button type="button" onClick={() => setClassModalOpen(false)} className="text-white/80 hover:text-white cursor-pointer">
+              <button
+                type="button"
+                onClick={() => setClassModalOpen(false)}
+                className="text-slate-400 hover:text-slate-700 p-1 rounded-lg cursor-pointer"
+              >
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <form onSubmit={handleGenerateClassInvoices} className="p-5 space-y-3.5 text-xs">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Target Class *</label>
-                  <select
-                    value={classForm.targetClass}
-                    onChange={(e) => setClassForm((p) => ({ ...p, targetClass: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white font-semibold"
-                  >
-                    <option value="ALL">All Classes</option>
-                    {availableClasses.map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Fee Head *</label>
-                  <select
-                    value={classForm.feeHead}
-                    onChange={(e) => setClassForm((p) => ({ ...p, feeHead: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white font-semibold"
-                  >
-                    {FEE_HEADS.map((h) => <option key={h} value={h}>{h}</option>)}
-                  </select>
+
+            <form onSubmit={handleGenerateClassInvoices} className="p-6 space-y-5 text-xs">
+              {/* INVOICE DETAILS */}
+              <div className="space-y-3">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Invoice Details</p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block font-bold text-slate-800 mb-1">
+                      Invoice title <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. November Fee"
+                      value={classForm.invoiceTitle}
+                      onChange={(e) => setClassForm((p) => ({ ...p, invoiceTitle: e.target.value }))}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-800 mb-1">
+                      Fee type <span className="text-rose-500">*</span>
+                    </label>
+                    <select
+                      value={classForm.feeType}
+                      onChange={(e) => setClassForm((p) => ({ ...p, feeType: e.target.value }))}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                      required
+                    >
+                      <option value="">Select type</option>
+                      {FEE_HEADS.map((h) => (
+                        <option key={h} value={h}>{h}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-800 mb-1">
+                      Class <span className="text-rose-500">*</span>
+                    </label>
+                    <div className="flex items-center gap-1.5">
+                      <select
+                        value={
+                          classForm.selectedClasses.length === 1
+                            ? classForm.selectedClasses[0]
+                            : classForm.selectedClasses.length > 1
+                              ? '__MULTI__'
+                              : ''
+                        }
+                        onChange={(e) => {
+                          const val = e.target.value
+                          if (!val) setClassForm((p) => ({ ...p, selectedClasses: [] }))
+                          else if (val !== '__MULTI__') setClassForm((p) => ({ ...p, selectedClasses: [val] }))
+                        }}
+                        className="flex-1 min-w-0 px-2.5 py-2 rounded-lg border border-slate-200 bg-white text-xs text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                      >
+                        <option value="">Select class</option>
+                        {classForm.selectedClasses.length > 1 && (
+                          <option value="__MULTI__">
+                            {classForm.selectedClasses.length} classes ({selectedClassTargets.length} students)
+                          </option>
+                        )}
+                        {availableClasses.map((c) => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={openSelectClassesModal}
+                        title="Select multiple classes"
+                        className="p-2 rounded-lg border border-blue-400 text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer shrink-0"
+                      >
+                        <List className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Schedule</label>
-                  <select
-                    value={classForm.schedule}
-                    onChange={(e) => setClassForm((p) => ({ ...p, schedule: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white"
-                  >
-                    {SCHEDULES.map((s) => <option key={s} value={s}>{s}</option>)}
-                  </select>
+              {/* SCHEDULE & AMOUNT */}
+              <div className="space-y-3 pt-1 border-t border-slate-100">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider pt-2">Schedule &amp; Amount</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold text-slate-800 mb-1">
+                      Amount (PKR) <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={classForm.amount}
+                      onChange={(e) => setClassForm((p) => ({ ...p, amount: e.target.value }))}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                      required
+                    />
+                    <p className="text-[10px] text-slate-400 mt-1">Use 0 if all students have fee setup.</p>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">
+                      Notes <span className="font-normal text-slate-400">(optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Shown on invoice or for internal reference"
+                      value={classForm.notes}
+                      onChange={(e) => setClassForm((p) => ({ ...p, notes: e.target.value }))}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Month</label>
-                  <select
-                    value={classForm.month}
-                    onChange={(e) => setClassForm((p) => ({ ...p, month: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white"
-                  >
-                    {MONTHS.map((m) => <option key={m} value={m}>{m}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Year</label>
-                  <select
-                    value={classForm.year}
-                    onChange={(e) => setClassForm((p) => ({ ...p, year: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white"
-                  >
-                    {yearOptions.map((y) => <option key={y} value={String(y)}>{y}</option>)}
-                  </select>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block font-bold text-slate-800 mb-1">
+                      Billing/Fee Month <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="month"
+                      value={classForm.billingMonth}
+                      onChange={(e) => setClassForm((p) => ({ ...p, billingMonth: e.target.value }))}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">
+                      Due date <span className="font-normal text-slate-400">(optional)</span>
+                    </label>
+                    <input
+                      type="date"
+                      value={classForm.dueDate}
+                      onChange={(e) => setClassForm((p) => ({ ...p, dueDate: e.target.value }))}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">
+                      Late fine (PKR) <span className="font-normal text-slate-400">(optional)</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={classForm.lateFine}
+                      onChange={(e) => setClassForm((p) => ({ ...p, lateFine: e.target.value }))}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    />
+                  </div>
                 </div>
               </div>
 
-              <label className="flex items-center gap-2 font-semibold text-slate-700 cursor-pointer pt-1">
-                <input
-                  type="checkbox"
-                  checked={classForm.useStudentTuition}
-                  onChange={(e) => setClassForm((p) => ({ ...p, useStudentTuition: e.target.checked }))}
-                  className="rounded border-slate-300 text-teal-600"
-                />
-                <span>Use each student&apos;s configured monthly fee (fallback to fixed amount below if 0)</span>
-              </label>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Amount (PKR)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={classForm.fixedAmount}
-                    onChange={(e) => setClassForm((p) => ({ ...p, fixedAmount: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 font-bold"
-                    required
-                  />
+              {/* Footer */}
+              <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="space-y-0.5 max-w-xs">
+                  <label className="inline-flex items-center gap-2 font-bold text-slate-800 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={classForm.notifySms}
+                      onChange={(e) => setClassForm((p) => ({ ...p, notifySms: e.target.checked }))}
+                      className="rounded border-slate-300 text-blue-600"
+                    />
+                    <span>Notify parents (SMS)</span>
+                  </label>
+                  <p className="text-[10px] text-slate-400 leading-snug">
+                    {classForm.selectedClasses.length === 0
+                      ? 'Select a class to see how many parents are missing a phone number.'
+                      : missingPhoneCount > 0
+                        ? `${selectedClassTargets.length} student(s) in ${classForm.selectedClasses.length} class(es) · ${missingPhoneCount} parent(s) missing a phone number.`
+                        : `${selectedClassTargets.length} student(s) in ${classForm.selectedClasses.length} class(es) · All parents have phone numbers.`}
+                  </p>
                 </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Due Date *</label>
-                  <input
-                    type="date"
-                    value={classForm.dueDate}
-                    onChange={(e) => setClassForm((p) => ({ ...p, dueDate: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200"
-                    required
-                  />
-                </div>
-              </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
-                <button type="button" onClick={() => setClassModalOpen(false)} className="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 font-semibold cursor-pointer">Cancel</button>
-                <button type="submit" disabled={isGenerating} className="px-4 py-2 rounded-lg bg-teal-700 hover:bg-teal-800 text-white font-bold cursor-pointer disabled:opacity-50">
-                  {isGenerating ? 'Generating...' : 'Generate Class Invoices'}
-                </button>
+                <div className="flex items-center justify-end gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setClassModalOpen(false)}
+                    className="px-4 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isGenerating}
+                    className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    <span>{isGenerating ? 'Generating...' : 'Generate invoices'}</span>
+                  </button>
+                </div>
               </div>
             </form>
+
+            {/* Nested Modal: Select classes (Pick 4) */}
+            {selectClassesOpen && (
+              <div className="fixed inset-0 z-[120] bg-slate-900/40 flex items-center justify-center p-4">
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md border-2 border-rose-400/0 ring-1 ring-slate-200 overflow-hidden">
+                  <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                        <List className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-bold text-slate-900">Select classes</h3>
+                        <p className="text-[11px] text-slate-500">One invoice is created for each class you tick.</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSelectClassesOpen(false)}
+                      className="text-slate-400 hover:text-slate-700 p-1 cursor-pointer"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <div className="p-5 space-y-3 text-xs">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 font-semibold">
+                        <button
+                          type="button"
+                          onClick={() => setDraftSelectedClasses(classStudentCounts.map((c) => c.name))}
+                          className="text-blue-600 hover:underline cursor-pointer"
+                        >
+                          Select all
+                        </button>
+                        <span className="text-slate-300">·</span>
+                        <button
+                          type="button"
+                          onClick={() => setDraftSelectedClasses([])}
+                          className="text-blue-600 hover:underline cursor-pointer"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                      <span className="text-[11px] text-slate-500 font-medium">
+                        {draftSelectedClasses.length} classes ·{' '}
+                        {classStudentCounts
+                          .filter((c) => draftSelectedClasses.includes(c.name))
+                          .reduce((sum, c) => sum + c.count, 0)}{' '}
+                        students
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto pr-0.5">
+                      {classStudentCounts.length === 0 ? (
+                        <p className="col-span-2 text-center text-slate-400 py-6">No classes available.</p>
+                      ) : (
+                        classStudentCounts.map((item) => {
+                          const checked = draftSelectedClasses.includes(item.name)
+                          return (
+                            <label
+                              key={item.name}
+                              className={`flex items-center justify-between px-3 py-2 rounded-lg border cursor-pointer transition-colors ${
+                                checked
+                                  ? 'border-blue-500 bg-blue-50/50'
+                                  : 'border-slate-200 hover:bg-slate-50'
+                              }`}
+                            >
+                              <span className="flex items-center gap-2 min-w-0">
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  onChange={() =>
+                                    setDraftSelectedClasses((prev) =>
+                                      prev.includes(item.name) ? prev.filter((x) => x !== item.name) : [...prev, item.name]
+                                    )
+                                  }
+                                  className="rounded border-slate-300 text-blue-600 shrink-0"
+                                />
+                                <span className="font-semibold text-slate-800 truncate">{item.name}</span>
+                              </span>
+                              <span className="text-[10px] text-slate-400 shrink-0 ml-1.5">
+                                {item.count} {item.count === 1 ? 'student' : 'students'}
+                              </span>
+                            </label>
+                          )
+                        })
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                      <button
+                        type="button"
+                        onClick={() => setSelectClassesOpen(false)}
+                        className="px-4 py-1.5 rounded-lg border border-slate-200 text-slate-700 font-semibold hover:bg-slate-50 cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={applySelectedClasses}
+                        className="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold inline-flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                        <span>Apply</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
