@@ -1566,7 +1566,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           </div>
 
           {/* 3. The Interactive Chart Area with Clear Y-Axis & Gridlines */}
-          <div className="pt-4 pb-1 relative">
+          <div className="pt-7 pb-1 relative">
             
             {/* Chart Wrapper with Y-Axis on Left and Bars on Right */}
             <div className="flex items-stretch gap-2 sm:gap-3.5">
@@ -1767,7 +1767,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
 
             {/* Vital Signs Donut Ring Visual */}
             <div className="flex items-center justify-center py-2">
-              <div className="relative w-40 h-40 flex items-center justify-center">
+              <div className="relative w-44 h-44 sm:w-48 sm:h-48 flex items-center justify-center">
                 <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
                   {/* Background track circle */}
                   <circle
@@ -1775,7 +1775,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                     cy="50"
                     r="38"
                     className="stroke-slate-100"
-                    strokeWidth="11"
+                    strokeWidth="9"
                     fill="transparent"
                   />
                   {/* Segment 1: Monetized & Healthy (Emerald) */}
@@ -1785,7 +1785,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                       cy="50"
                       r="38"
                       className="stroke-emerald-500 transition-all duration-500"
-                      strokeWidth="11"
+                      strokeWidth="9"
                       strokeDasharray={`${tenantHealthMatrix.monetizedDash} ${238.76 - tenantHealthMatrix.monetizedDash}`}
                       strokeDashoffset={tenantHealthMatrix.monetizedOffset}
                       strokeLinecap="butt"
@@ -1799,7 +1799,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                       cy="50"
                       r="38"
                       className="stroke-purple-600 transition-all duration-500"
-                      strokeWidth="11"
+                      strokeWidth="9"
                       strokeDasharray={`${tenantHealthMatrix.trialDash} ${238.76 - tenantHealthMatrix.trialDash}`}
                       strokeDashoffset={tenantHealthMatrix.trialOffset}
                       strokeLinecap="butt"
@@ -1813,7 +1813,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                       cy="50"
                       r="38"
                       className="stroke-amber-500 transition-all duration-500"
-                      strokeWidth="11"
+                      strokeWidth="9"
                       strokeDasharray={`${tenantHealthMatrix.pendingDash} ${238.76 - tenantHealthMatrix.pendingDash}`}
                       strokeDashoffset={tenantHealthMatrix.pendingOffset}
                       strokeLinecap="butt"
@@ -1827,7 +1827,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                       cy="50"
                       r="38"
                       className="stroke-rose-500 transition-all duration-500"
-                      strokeWidth="11"
+                      strokeWidth="9"
                       strokeDasharray={`${tenantHealthMatrix.atRiskDash} ${238.76 - tenantHealthMatrix.atRiskDash}`}
                       strokeDashoffset={tenantHealthMatrix.atRiskOffset}
                       strokeLinecap="butt"
@@ -1836,16 +1836,16 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                   )}
                 </svg>
 
-                {/* Inside Center Badge */}
-                <div className="absolute flex flex-col items-center justify-center text-center">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                {/* Inside Center Badge - Spacious, Mathematically Centered, Zero Text Overflow */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-2 pointer-events-none select-none">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-normal leading-none mb-1">
                     Platform SLA
                   </span>
-                  <span className="text-2xl font-black text-slate-900 font-heading">
+                  <span className="text-2xl sm:text-[28px] font-black text-slate-900 font-heading leading-tight tracking-tight">
                     {tenantHealthMatrix.healthScore}%
                   </span>
-                  <span className={`text-[10px] font-extrabold px-1.5 py-0.2 rounded-full ${
-                    tenantHealthMatrix.atRiskCount > 0 ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'
+                  <span className={`mt-1 text-[10px] font-extrabold px-2 py-0.5 rounded-full whitespace-nowrap shadow-2xs leading-none ${
+                    tenantHealthMatrix.atRiskCount > 0 ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-800'
                   }`}>
                     {tenantHealthMatrix.healthStatus}
                   </span>
