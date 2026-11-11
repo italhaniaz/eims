@@ -51,6 +51,8 @@ import {
 } from '../institute-admin/attendance/MyAttendanceView'
 import TeacherStudentsView from './TeacherStudentsView'
 import TeacherMyAttendanceView from './TeacherMyAttendanceView'
+import TeacherMarkAttendanceView from './TeacherMarkAttendanceView'
+import TeacherAttendanceReportsView from './TeacherAttendanceReportsView'
 
 export default function TeacherPortalView() {
   const { user, logout } = useAuth()
@@ -59,6 +61,8 @@ export default function TeacherPortalView() {
 
   // Navigation & UI States
   const [activeRoute, setActiveRoute] = useState('dashboard')
+  const [subReportType, setSubReportType] = useState('student-attendance')
+  const [isReportsMenuOpen, setIsReportsMenuOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -360,14 +364,16 @@ export default function TeacherPortalView() {
             <button
               onClick={() => toggleGroup('attendance')}
               className={`w-full flex items-center justify-between px-3.5 py-2 rounded-xl transition-colors cursor-pointer group ${
-                activeRoute === 'my-attendance'
+                activeRoute === 'my-attendance' || activeRoute === 'mark-attendance' || activeRoute === 'attendance-reports'
                   ? 'bg-slate-800/80 text-white font-bold'
                   : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
               }`}
             >
               <div className="flex items-center gap-3 min-w-0">
                 <CheckCircle2 className={`w-4 h-4 shrink-0 transition-colors ${
-                  activeRoute === 'my-attendance' ? 'text-purple-400' : 'text-slate-400 group-hover:text-purple-400'
+                  activeRoute === 'my-attendance' || activeRoute === 'mark-attendance' || activeRoute === 'attendance-reports'
+                    ? 'text-sky-400'
+                    : 'text-slate-400 group-hover:text-sky-400'
                 }`} />
                 {!isSidebarCollapsed && <span className="truncate">Attendance</span>}
               </div>
@@ -377,6 +383,7 @@ export default function TeacherPortalView() {
             </button>
             {openSidebarGroups.attendance && !isSidebarCollapsed && (
               <div className="mt-1 pl-3 space-y-1 border-l border-slate-800 ml-5 text-xs">
+                {/* 3.1 My Attendance */}
                 <button
                   onClick={() => {
                     setActiveRoute('my-attendance')
@@ -391,29 +398,92 @@ export default function TeacherPortalView() {
                   <Clock className="w-3.5 h-3.5 text-purple-400" />
                   <span>My Attendance</span>
                 </button>
+
+                {/* 3.2 Mark Attendance */}
                 <button
                   onClick={() => {
-                    setActiveModal('mark-attendance')
+                    setActiveRoute('mark-attendance')
                     setIsMobileMenuOpen(false)
                   }}
-                  className="w-full flex items-center gap-2 text-left py-1.5 px-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 cursor-pointer"
+                  className={`w-full flex items-center gap-2 py-1.5 px-2.5 rounded-lg transition-colors cursor-pointer ${
+                    activeRoute === 'mark-attendance'
+                      ? 'bg-gradient-to-r from-sky-600/30 to-blue-600/30 text-sky-200 font-bold border border-sky-500/40 shadow-xs'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                  }`}
                 >
-                  <CheckSquare className="w-3.5 h-3.5 text-slate-400" />
+                  <CheckSquare className="w-3.5 h-3.5 text-sky-400" />
                   <span>Mark Attendance</span>
                 </button>
-                <button
-                  onClick={() => {
-                    setActiveModal('attendance')
-                    setIsMobileMenuOpen(false)
-                  }}
-                  className="w-full flex items-center justify-between text-left py-1.5 px-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 cursor-pointer"
-                >
-                  <div className="flex items-center gap-2">
-                    <FileSpreadsheet className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Reports</span>
-                  </div>
-                  <ChevronRight className="w-3 h-3 text-slate-500" />
-                </button>
+
+                {/* 3.3 Reports (Nested sub-accordion matching screenshot 2) */}
+                <div>
+                  <button
+                    onClick={() => setIsReportsMenuOpen(!isReportsMenuOpen)}
+                    className={`w-full flex items-center justify-between text-left py-1.5 px-2.5 rounded-lg transition-colors cursor-pointer ${
+                      activeRoute === 'attendance-reports'
+                        ? 'text-sky-300 font-bold'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <FileSpreadsheet className="w-3.5 h-3.5 text-slate-400" />
+                      <span>Reports</span>
+                    </div>
+                    {isReportsMenuOpen ? (
+                      <ChevronDown className="w-3 h-3 text-slate-400" />
+                    ) : (
+                      <ChevronRight className="w-3 h-3 text-slate-400" />
+                    )}
+                  </button>
+
+                  {/* Sub-items for Reports */}
+                  {isReportsMenuOpen && (
+                    <div className="mt-1 pl-3 space-y-1 border-l border-slate-700 ml-4 text-[11px]">
+                      <button
+                        onClick={() => {
+                          setActiveRoute('attendance-reports')
+                          setSubReportType('student-attendance')
+                          setIsMobileMenuOpen(false)
+                        }}
+                        className={`w-full text-left py-1 px-2 rounded-md transition-colors cursor-pointer ${
+                          activeRoute === 'attendance-reports' && subReportType === 'student-attendance'
+                            ? 'bg-sky-600/30 text-sky-200 font-bold border border-sky-500/40'
+                            : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
+                        }`}
+                      >
+                        Student Attendance
+                      </button>
+                      <button
+                        onClick={() => {
+                          setActiveRoute('attendance-reports')
+                          setSubReportType('consecutive-absences')
+                          setIsMobileMenuOpen(false)
+                        }}
+                        className={`w-full text-left py-1 px-2 rounded-md transition-colors cursor-pointer ${
+                          activeRoute === 'attendance-reports' && subReportType === 'consecutive-absences'
+                            ? 'bg-sky-600/30 text-sky-200 font-bold border border-sky-500/40'
+                            : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
+                        }`}
+                      >
+                        Consecutive Absences
+                      </button>
+                      <button
+                        onClick={() => {
+                          setActiveRoute('attendance-reports')
+                          setSubReportType('low-attendance')
+                          setIsMobileMenuOpen(false)
+                        }}
+                        className={`w-full text-left py-1 px-2 rounded-md transition-colors cursor-pointer ${
+                          activeRoute === 'attendance-reports' && subReportType === 'low-attendance'
+                            ? 'bg-sky-600/30 text-sky-200 font-bold border border-sky-500/40'
+                            : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
+                        }`}
+                      >
+                        Low Attendance
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -667,13 +737,48 @@ export default function TeacherPortalView() {
         {activeRoute === 'students' ? (
           <TeacherStudentsView
             onBack={() => setActiveRoute('dashboard')}
-            onOpenModal={(modalName) => setActiveModal(modalName)}
+            onOpenModal={(modalName) => {
+              if (modalName === 'mark-attendance') {
+                setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
+                setActiveRoute('mark-attendance')
+              } else {
+                setActiveModal(modalName)
+              }
+            }}
             teacherName={teacherName}
           />
         ) : activeRoute === 'my-attendance' ? (
           <TeacherMyAttendanceView
             onBack={() => setActiveRoute('dashboard')}
+            onOpenModal={(modalName) => {
+              if (modalName === 'mark-attendance') {
+                setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
+                setActiveRoute('mark-attendance')
+              } else {
+                setActiveModal(modalName)
+              }
+            }}
+            teacherName={teacherName}
+          />
+        ) : activeRoute === 'mark-attendance' ? (
+          <TeacherMarkAttendanceView
+            onBack={() => setActiveRoute('dashboard')}
             onOpenModal={(modalName) => setActiveModal(modalName)}
+            teacherName={teacherName}
+          />
+        ) : activeRoute === 'attendance-reports' ? (
+          <TeacherAttendanceReportsView
+            onBack={() => setActiveRoute('dashboard')}
+            onOpenModal={(modalName) => {
+              if (modalName === 'mark-attendance') {
+                setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
+                setActiveRoute('mark-attendance')
+              } else {
+                setActiveModal(modalName)
+              }
+            }}
+            subReportType={subReportType}
+            onSelectSubReport={(type) => setSubReportType(type)}
             teacherName={teacherName}
           />
         ) : (
@@ -702,7 +807,10 @@ export default function TeacherPortalView() {
                   <span>Announcements</span>
                 </button>
                 <button
-                  onClick={() => setActiveModal('mark-attendance')}
+                  onClick={() => {
+                    setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
+                    setActiveRoute('mark-attendance')
+                  }}
                   className="flex items-center gap-1.5 hover:text-purple-600 dark:hover:text-purple-400 transition-colors cursor-pointer"
                 >
                   <CheckSquare className="w-3.5 h-3.5" />
@@ -988,7 +1096,10 @@ export default function TeacherPortalView() {
               {/* Button 3: Mark Attendance */}
               <button
                 type="button"
-                onClick={() => setActiveModal('mark-attendance')}
+                onClick={() => {
+                  setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
+                  setActiveRoute('mark-attendance')
+                }}
                 className="p-3.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-purple-300 dark:hover:border-purple-700 hover:bg-purple-50/50 dark:hover:bg-purple-950/30 text-slate-700 dark:text-slate-200 font-semibold text-xs flex flex-col items-center justify-center gap-2 shadow-2xs transition-all cursor-pointer group"
               >
                 <CheckSquare className="w-5 h-5 text-slate-500 group-hover:text-purple-600 group-hover:scale-110 transition-transform" />
