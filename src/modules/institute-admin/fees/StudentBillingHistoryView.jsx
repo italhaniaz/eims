@@ -28,7 +28,8 @@ import {
   Edit2,
   Users,
   X,
-  Check
+  Check,
+  HelpCircle
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
@@ -119,6 +120,7 @@ export const StudentBillingHistoryView = ({
   const [processingId, setProcessingId] = useState(null)
 
   // Modals
+  const [confirmPayModal, setConfirmPayModal] = useState(null)
   const [waiverModalFee, setWaiverModalFee] = useState(null)
   const [waiverInput, setWaiverInput] = useState('')
   const [waiverReasonInput, setWaiverReasonInput] = useState('')
@@ -498,7 +500,7 @@ export const StudentBillingHistoryView = ({
     })
   }, [studentFees])
 
-  const handlePayInvoice = async (fee) => {
+  const handlePayInvoice = (fee) => {
     const fineVal = Number(fee.fine || fee.lateFine || 0)
     const waiveFineChecked = Boolean(waiveFineChecks[fee.id]) && fineVal > 0
     const rawPay = Number(payInputs[fee.id] || 0)
@@ -509,14 +511,39 @@ export const StudentBillingHistoryView = ({
       return
     }
 
+    const fineReduction = waiveFineChecked ? fineVal : 0
+    const updatedFine = Math.max(0, fineVal - fineReduction)
+    const effectiveDue = Math.max(0, Number(fee.amount || 0) + updatedFine - getInvoicePaid(fee) - getInvoiceWaiver(fee))
+    const appliedCash = Math.min(rawPay, effectiveDue)
+    const nextRemaining = Math.max(0, effectiveDue - appliedCash)
+
+    setConfirmPayModal({
+      fee,
+      appliedCash,
+      waiverAmount: fineReduction,
+      paymentMethod: 'Cash',
+      nextRemaining,
+      waiveFineChecked,
+      fineReduction,
+      updatedFine
+    })
+  }
+
+  const handleConfirmPayInvoice = async () => {
+    if (!confirmPayModal) return
+    const {
+      fee,
+      appliedCash,
+      waiveFineChecked,
+      fineReduction,
+      updatedFine,
+      nextRemaining,
+      paymentMethod
+    } = confirmPayModal
+
     setProcessingId(fee.id)
     try {
-      const fineReduction = waiveFineChecked ? fineVal : 0
-      const updatedFine = Math.max(0, fineVal - fineReduction)
-      const effectiveDue = Math.max(0, Number(fee.amount || 0) + updatedFine - getInvoicePaid(fee) - getInvoiceWaiver(fee))
-      const appliedCash = Math.min(rawPay, effectiveDue)
       const newPaid = getInvoicePaid(fee) + appliedCash
-      const nextRemaining = Math.max(0, effectiveDue - appliedCash)
       const nextStatus = nextRemaining <= 0 ? 'Paid' : 'Partial'
 
       await updateItem('fees', fee.id, {
@@ -525,8 +552,8 @@ export const StudentBillingHistoryView = ({
         waivedLateFee: Number(fee.waivedLateFee || 0) + fineReduction,
         waiveFineReason: waiveFineChecked ? (waiveFineReasons[fee.id] || 'Late fee waived') : fee.waiveFineReason,
         status: nextStatus,
-        paymentMethod: 'Cash',
-        paidAt: nextStatus === 'Paid' ? new Date().toISOString() : fee.paidAt,
+        paymentMethod,
+        paidAt: new Date().toISOString(),
         smsSent: smsChecks[fee.id] !== false
       })
 
@@ -538,7 +565,7 @@ export const StudentBillingHistoryView = ({
           category: 'Student Fee Payment',
           debit: 0,
           credit: appliedCash,
-          account: 'Cash',
+          account: paymentMethod,
           status: 'Cleared',
           description: `${activeStudent?.fullName || activeStudent?.name} — ${fee.feeMonth || fee.title || 'Fee'}${waiveFineChecked ? ` (Late fine PKR ${fineReduction} waived)` : ''}`,
           ref: `PAY-${fee.id}-${Date.now()}`
@@ -566,6 +593,7 @@ export const StudentBillingHistoryView = ({
       )
 
       setPayInputs((prev) => ({ ...prev, [fee.id]: '' }))
+      setConfirmPayModal(null)
       toast(`Payment recorded (${nextStatus})`, 'success')
     } catch (err) {
       toast(err?.message || 'Could not process payment.', 'error')
@@ -599,15 +627,25 @@ export const StudentBillingHistoryView = ({
       toast('Enter a waiver/discount amount greater than zero.', 'warning')
       return
     }
+    if (!waiverReasonInput.trim()) {
+      toast('Please enter a reason for the waiver/discount.', 'warning')
+      return
+    }
     try {
       const nextWaiver = getInvoiceWaiver(waiverModalFee) + amt
       const nextRem = Math.max(0, rem - amt)
+      const reason = waiverReasonInput.trim()
       await updateItem('fees', waiverModalFee.id, {
         discount: nextWaiver,
-        discountReason: waiverReasonInput.trim() || waiverModalFee.discountReason || 'Management discount',
+        discountReason: reason,
         waivedAt: new Date().toISOString(),
         status: nextRem <= 0 ? 'Paid' : waiverModalFee.status
       })
+      logAuditEvent?.(
+        `Applied Waiver (${formatMoney(amt)}) for ${activeStudent?.fullName || activeStudent?.name} — ${reason}`,
+        currentInstitute?.name || 'School Admin',
+        'Success'
+      )
       toast(`Applied ${formatMoney(amt)} waiver/discount.`, 'success')
       setWaiverModalFee(null)
       setWaiverInput('')
@@ -1204,7 +1242,7 @@ export const StudentBillingHistoryView = ({
                               onClick={() => {
                                 setWaiverModalFee(fee)
                                 setWaiverInput('')
-                                setWaiverReasonInput(fee.discountReason || '')
+                                setWaiverReasonInput('')
                               }}
                               className="px-3 py-1.5 rounded-lg border border-cyan-300 text-cyan-700 hover:bg-cyan-50 text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer"
                             >
@@ -1451,43 +1489,163 @@ export const StudentBillingHistoryView = ({
         </>
       )}
 
-      {/* Apply Waiver/Discount Modal */}
-      {waiverModalFee && (
+      {/* Confirm Payment Modal (Pick 2) */}
+      {confirmPayModal && (
         <div className="fixed inset-0 z-[110] bg-slate-900/50 backdrop-blur-[1px] flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200">
-            <div className="bg-cyan-600 px-5 py-3 flex items-center justify-between text-white">
-              <span className="text-sm font-bold">Apply Waiver / Discount</span>
-              <button type="button" onClick={() => setWaiverModalFee(null)} className="text-white/80 hover:text-white cursor-pointer">✕</button>
+            <div className="bg-rose-500 px-5 py-3.5 flex items-center justify-between text-white">
+              <div className="flex items-center gap-2 text-sm font-bold">
+                <HelpCircle className="w-4 h-4 text-white" />
+                <span>Confirm Payment</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setConfirmPayModal(null)}
+                className="text-white/80 hover:text-white cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
-            <form onSubmit={handleApplyModalWaiver} className="p-5 space-y-3">
+            <div className="p-5 space-y-4">
               <p className="text-xs text-slate-600">
-                Invoice: <strong>{waiverModalFee.feeMonth || waiverModalFee.title || 'Monthly'}</strong> · Remaining: <strong className="text-rose-600">{formatMoney(getInvoiceRemaining(waiverModalFee))}</strong>
+                Confirm payment for:{' '}
+                <strong className="font-semibold text-slate-900">
+                  {activeStudent?.fullName || activeStudent?.name}
+                </strong>
               </p>
+
+              <div className="divide-y divide-slate-100 text-xs">
+                <div className="py-2 flex items-center justify-between">
+                  <span className="text-slate-500">Cash collected</span>
+                  <span className="font-bold text-slate-900">
+                    {formatMoney(confirmPayModal.appliedCash)}
+                  </span>
+                </div>
+                <div className="py-2 flex items-center justify-between">
+                  <span className="text-slate-500">Waiver / discount</span>
+                  <span className="font-bold text-slate-900">
+                    {formatMoney(confirmPayModal.waiverAmount)}
+                  </span>
+                </div>
+                <div className="py-2 flex items-center justify-between">
+                  <span className="text-slate-500">Payment method</span>
+                  <span className="font-bold text-slate-900">
+                    {confirmPayModal.paymentMethod}
+                  </span>
+                </div>
+                <div className="py-2 flex items-center justify-between">
+                  <span className="text-slate-500">Remaining after</span>
+                  <span className="font-bold text-slate-900">
+                    {formatMoney(confirmPayModal.nextRemaining)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="rounded-lg bg-rose-50 border border-rose-200/80 px-3.5 py-2.5 flex items-center gap-2 text-xs text-rose-700">
+                <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                <span>Once confirmed, this payment will be recorded permanently.</span>
+              </div>
+
+              <div className="flex items-center justify-between pt-1">
+                <button
+                  type="button"
+                  onClick={() => setConfirmPayModal(null)}
+                  className="px-4 py-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-xs font-semibold text-slate-600 inline-flex items-center gap-1.5 cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  <span>Cancel</span>
+                </button>
+                <button
+                  type="button"
+                  disabled={processingId === confirmPayModal.fee.id}
+                  onClick={handleConfirmPayInvoice}
+                  className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>{processingId === confirmPayModal.fee.id ? 'Saving...' : 'Yes, Save Payment'}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Apply Waiver/Discount Modal (Pick 4) */}
+      {waiverModalFee && (
+        <div className="fixed inset-0 z-[110] bg-slate-900/50 backdrop-blur-[1px] flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200">
+            <div className="px-6 pt-5 pb-3 flex items-center justify-between border-b border-slate-100">
+              <div className="flex items-center gap-2 text-sm font-bold text-slate-800">
+                <span className="w-5 h-5 rounded-full bg-slate-800 text-white inline-flex items-center justify-center">
+                  <Percent className="w-3 h-3" />
+                </span>
+                <span>Apply Waiver / Discount</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setWaiverModalFee(null)}
+                className="text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <form onSubmit={handleApplyModalWaiver} className="px-6 py-4 space-y-4">
+              <div className="space-y-1">
+                <p className="text-xs text-slate-500">
+                  {waiverModalFee.title || waiverModalFee.feeName || 'Tuition Fee'} —{' '}
+                  {waiverModalFee.feeMonth || waiverModalFee.frequency || 'Monthly'}
+                </p>
+                <p className="text-xs text-slate-600">
+                  Remaining balance:{' '}
+                  <strong className="text-rose-600 font-bold">
+                    {formatMoney(getInvoiceRemaining(waiverModalFee))}
+                  </strong>
+                </p>
+              </div>
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Waiver Amount (PKR)</label>
+                <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                  Waiver / discount amount{' '}
+                  <span className="font-normal text-slate-500">(PKR)</span>
+                </label>
                 <input
                   type="number"
                   min="1"
                   max={getInvoiceRemaining(waiverModalFee)}
+                  placeholder="Enter amount"
                   value={waiverInput}
                   onChange={(e) => setWaiverInput(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs font-semibold"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-400"
                   required
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Reason of Discount</label>
+                <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                  Reason <span className="text-rose-500">*</span>
+                </label>
                 <input
                   type="text"
-                  placeholder="e.g. Management approval, hardship"
+                  placeholder="e.g. Management approval, hardship case..."
                   value={waiverReasonInput}
                   onChange={(e) => setWaiverReasonInput(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-400"
+                  required
                 />
               </div>
               <div className="flex justify-end gap-2 pt-2">
-                <button type="button" onClick={() => setWaiverModalFee(null)} className="px-3.5 py-2 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 cursor-pointer">Cancel</button>
-                <button type="submit" className="px-4 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-bold cursor-pointer">Apply Waiver</button>
+                <button
+                  type="button"
+                  onClick={() => setWaiverModalFee(null)}
+                  className="px-4 py-2 rounded-lg bg-slate-500 hover:bg-slate-600 text-white text-xs font-semibold cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-600 text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Apply Waiver</span>
+                </button>
               </div>
             </form>
           </div>
