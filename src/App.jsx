@@ -80,9 +80,7 @@ const CampusAccountsView = lazyWithRetry(() => import('./modules/institute-admin
 const HostelsView = lazyWithRetry(() => import('./modules/institute-admin/hostels/HostelsView'), 'campus-hostels-view')
 const CampusPoliciesView = lazyWithRetry(() => import('./modules/institute-admin/policies/CampusPoliciesView'), 'campus-policies-view')
 const CampusSettingsView = lazyWithRetry(() => import('./modules/institute-admin/settings/CampusSettingsView'), 'campus-settings-view')
-const CampusSubscriptionView = lazyWithRetry(() => import('./modules/institute-admin/subscription/CampusSubscriptionView'), 'campus-subscription-view')
 const TrainingVideosView = lazyWithRetry(() => import('./modules/institute-admin/training/TrainingVideosView'), 'campus-training-view')
-const MyTransactionsView = lazyWithRetry(() => import('./modules/institute-admin/transactions/MyTransactionsView'), 'campus-transactions-view')
 const MyAccountView = lazyWithRetry(() => import('./modules/institute-admin/account/MyAccountView'), 'campus-account-view')
 
 // Executive Seamless Loading Fallback & Preloader
@@ -159,7 +157,7 @@ const AppContent = () => {
     'inst-transport', 'inst-hostels',
     'inst-reports', 'inst-policies',
     'inst-users', 'inst-settings', 'inst-settings-locations', 'inst-settings-activity',
-    'inst-subscription', 'inst-training', 'inst-my-transactions', 'inst-my-account'
+    'inst-training', 'inst-my-account'
   ]
 
   // Helpers to safely extract valid initial routes per portal role
@@ -778,17 +776,8 @@ const AppContent = () => {
                 {safeInstituteRoute === 'inst-policies' && (
                   <CampusPoliciesView currentInstitute={activeCampus} />
                 )}
-                {safeInstituteRoute === 'inst-subscription' && (
-                  <CampusSubscriptionView
-                    currentInstitute={activeCampus}
-                    onRouteChange={setInstituteRoute}
-                  />
-                )}
                 {safeInstituteRoute === 'inst-training' && (
                   <TrainingVideosView onRouteChange={setInstituteRoute} />
-                )}
-                {safeInstituteRoute === 'inst-my-transactions' && (
-                  <MyTransactionsView currentInstitute={activeCampus} />
                 )}
                 {safeInstituteRoute === 'inst-my-account' && (
                   <MyAccountView currentInstitute={activeCampus} />

@@ -29,7 +29,6 @@ import {
   Building2,
   FileText,
   PlayCircle,
-  ArrowLeftRight,
   User,
   MessageSquare,
   Wallet,
@@ -273,16 +272,7 @@ const buildMenuItems = (studentsCount) => [
       { id: 'inst-users', label: 'Users & Roles', icon: ShieldCheck }
     ]
   },
-  {
-    id: 'grp-subscription',
-    label: 'Subscription',
-    icon: Wallet,
-    children: [
-      { id: 'inst-subscription', label: 'Plan & Billing', icon: CreditCard }
-    ]
-  },
   { id: 'inst-training', label: 'Training Videos', icon: PlayCircle },
-  { id: 'inst-my-transactions', label: 'My Transactions', icon: ArrowLeftRight },
   { id: 'inst-my-account', label: 'My Account', icon: User }
 ]
 

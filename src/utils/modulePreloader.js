@@ -40,9 +40,7 @@ const ROUTE_LOADERS = {
   'inst-communication': () => import('../modules/communication/CommunicationGatewayView'),
   'inst-hostels': () => import('../modules/institute-admin/hostels/HostelsView'),
   'inst-policies': () => import('../modules/institute-admin/policies/CampusPoliciesView'),
-  'inst-subscription': () => import('../modules/institute-admin/subscription/CampusSubscriptionView'),
   'inst-training': () => import('../modules/institute-admin/training/TrainingVideosView'),
-  'inst-my-transactions': () => import('../modules/institute-admin/transactions/MyTransactionsView'),
   'inst-my-account': () => import('../modules/institute-admin/account/MyAccountView'),
 
   // --- Superadmin Governance Routes ---
