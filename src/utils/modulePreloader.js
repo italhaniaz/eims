@@ -90,7 +90,8 @@ const PREFIX_LOADERS = [
   { prefix: 'inst-communication-', loader: () => import('../modules/communication/CommunicationGatewayView') },
   { prefix: 'inst-inventory-', loader: () => import('../modules/institute-admin/inventory/CampusInventoryView') },
   { prefix: 'inst-learning-', loader: () => import('../modules/institute-admin/learning/LearningResourcesView') },
-  { prefix: 'inst-library-', loader: () => import('../modules/library/LibraryView') }
+  { prefix: 'inst-library-', loader: () => import('../modules/library/LibraryView') },
+  { prefix: 'inst-settings-', loader: () => import('../modules/institute-admin/settings/CampusSettingsView') }
 ]
 
 /**

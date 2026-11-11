@@ -256,8 +256,8 @@ const buildMenuItems = (studentsCount) => [
     label: 'Transport & Hostels',
     icon: Bus,
     children: [
-      { id: 'inst-transport', label: 'Transport & Fleet', icon: Bus },
-      { id: 'inst-hostels', label: 'Hostels & Boarding', icon: Building2 }
+      { id: 'inst-transport', label: 'Transport Routes', icon: Bus },
+      { id: 'inst-hostels', label: 'Hostels & Dorms', icon: Building2 }
     ]
   },
   { id: 'inst-reports', label: 'Reports', icon: BarChart3 },
@@ -267,7 +267,9 @@ const buildMenuItems = (studentsCount) => [
     label: 'Settings',
     icon: Settings,
     children: [
-      { id: 'inst-settings', label: 'Campus System Settings', icon: Settings },
+      { id: 'inst-settings', label: 'Institute Profile', icon: Building2 },
+      { id: 'inst-settings-locations', label: 'Locations', icon: Boxes },
+      { id: 'inst-settings-activity', label: 'Activity Log', icon: ClipboardList },
       { id: 'inst-users', label: 'Users & Roles', icon: ShieldCheck }
     ]
   },

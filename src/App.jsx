@@ -158,8 +158,8 @@ const AppContent = () => {
     'inst-library', 'inst-library-issue',
     'inst-transport', 'inst-hostels',
     'inst-reports', 'inst-policies',
-    'inst-users', 'inst-settings', 'inst-subscription', 'inst-training',
-    'inst-my-transactions', 'inst-my-account'
+    'inst-users', 'inst-settings', 'inst-settings-locations', 'inst-settings-activity',
+    'inst-subscription', 'inst-training', 'inst-my-transactions', 'inst-my-account'
   ]
 
   // Helpers to safely extract valid initial routes per portal role
@@ -750,10 +750,15 @@ const AppContent = () => {
                     onRouteChange={setInstituteRoute} 
                   />
                 )}
-                {safeInstituteRoute === 'inst-settings' && (
+                {['inst-settings', 'inst-settings-locations', 'inst-settings-activity'].includes(safeInstituteRoute) && (
                   <CampusSettingsView
                     currentInstitute={activeCampus}
                     onRouteChange={setInstituteRoute}
+                    initialTab={
+                      safeInstituteRoute === 'inst-settings-locations' ? 'locations'
+                        : safeInstituteRoute === 'inst-settings-activity' ? 'activity'
+                          : 'profile'
+                    }
                   />
                 )}
                 {['inst-communication', 'inst-communication-inbox', 'inst-communication-notifications', 'inst-communication-whatsapp', 'inst-communication-sms'].includes(safeInstituteRoute) && (
