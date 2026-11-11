@@ -689,114 +689,172 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
         
         {/* Card 1: Total Schools */}
-        <div 
-          onClick={() => onRouteChange && onRouteChange('institutes')}
-          className="p-5 sm:p-5.5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-xs hover:border-purple-300 dark:hover:border-purple-700/60 hover:shadow-md transition-all cursor-pointer flex items-center justify-between group"
-        >
-          <div>
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-              Total Schools
-            </span>
-            <div className="flex items-baseline gap-2 mt-1.5">
-              <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-heading tracking-tight">
-                {totalSchoolsCount}
+        <div className="p-5 sm:p-5.5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-xs flex items-stretch justify-between group">
+          <div className="flex flex-col justify-between flex-1 min-w-0 pr-2">
+            <div>
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                Total Schools
               </span>
-              <span className="text-[11px] font-bold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/60 px-2 py-0.5 rounded-md border border-purple-200/60 dark:border-purple-800/50">
-                Registered
-              </span>
+              <div className="flex items-baseline gap-2 mt-1.5">
+                <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-heading tracking-tight">
+                  {totalSchoolsCount}
+                </span>
+                <span className="text-[11px] font-bold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/60 px-2 py-0.5 rounded-md border border-purple-200/60 dark:border-purple-800/50">
+                  Registered
+                </span>
+              </div>
             </div>
-            <span className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 block">
+            <span className="text-[11px] text-slate-400 dark:text-slate-500 mt-2 block">
               All registered campus entities
             </span>
           </div>
 
-          <div className="w-12 h-12 rounded-2xl bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 border border-purple-200/80 dark:border-purple-800/60 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-2xs">
-            <School className="w-6 h-6 stroke-[2.2]" />
+          <div className="flex flex-col items-end justify-between shrink-0">
+            <div className="w-11 h-11 rounded-2xl bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 border border-purple-200/80 dark:border-purple-800/60 flex items-center justify-center shrink-0 shadow-2xs">
+              <School className="w-5.5 h-5.5 stroke-[2.2]" />
+            </div>
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                if (onRouteChange) onRouteChange('institutes')
+              }}
+              title="View Total Schools Details"
+              aria-label="View Total Schools Details"
+              className="mt-3 p-1.5 sm:p-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 hover:bg-purple-50 dark:hover:bg-purple-950/60 text-slate-400 hover:text-purple-600 dark:text-slate-400 dark:hover:text-purple-300 border border-slate-200/80 hover:border-purple-300 dark:border-slate-700 dark:hover:border-purple-800/70 transition-all cursor-pointer shadow-2xs flex items-center justify-center group/eye"
+            >
+              <Eye className="w-4 h-4 transition-transform group-hover/eye:scale-110" />
+            </button>
           </div>
         </div>
 
         {/* Card 2: Active Schools */}
-        <div 
-          onClick={() => onRouteChange && onRouteChange('institutes')}
-          className="p-5 sm:p-5.5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-xs hover:border-purple-300 dark:hover:border-purple-700/60 hover:shadow-md transition-all cursor-pointer flex items-center justify-between group"
-        >
-          <div>
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-              Active Schools
-            </span>
-            <div className="flex items-baseline gap-2 mt-1.5">
-              <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-heading tracking-tight">
-                {activeSchoolsCount}
+        <div className="p-5 sm:p-5.5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-xs flex items-stretch justify-between group">
+          <div className="flex flex-col justify-between flex-1 min-w-0 pr-2">
+            <div>
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                Active Schools
               </span>
-              <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-200/60 dark:border-emerald-800/50">
-                Online
-              </span>
+              <div className="flex items-baseline gap-2 mt-1.5">
+                <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-heading tracking-tight">
+                  {activeSchoolsCount}
+                </span>
+                <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-200/60 dark:border-emerald-800/50">
+                  Online
+                </span>
+              </div>
             </div>
-            <span className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 block">
+            <span className="text-[11px] text-slate-400 dark:text-slate-500 mt-2 block">
               Operational &amp; verified portals
             </span>
           </div>
 
-          <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800/60 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-2xs">
-            <CheckCircle2 className="w-6 h-6 stroke-[2.2]" />
+          <div className="flex flex-col items-end justify-between shrink-0">
+            <div className="w-11 h-11 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800/60 flex items-center justify-center shrink-0 shadow-2xs">
+              <CheckCircle2 className="w-5.5 h-5.5 stroke-[2.2]" />
+            </div>
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                if (onRouteChange) onRouteChange('institutes')
+              }}
+              title="View Active Schools Details"
+              aria-label="View Active Schools Details"
+              className="mt-3 p-1.5 sm:p-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 hover:bg-emerald-50 dark:hover:bg-emerald-950/60 text-slate-400 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-300 border border-slate-200/80 hover:border-emerald-300 dark:border-slate-700 dark:hover:border-emerald-800/70 transition-all cursor-pointer shadow-2xs flex items-center justify-center group/eye"
+            >
+              <Eye className="w-4 h-4 transition-transform group-hover/eye:scale-110" />
+            </button>
           </div>
         </div>
 
         {/* Card 3: Inactive Schools */}
-        <div 
-          onClick={() => onRouteChange && onRouteChange('institutes')}
-          className="p-5 sm:p-5.5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-xs hover:border-purple-300 dark:hover:border-purple-700/60 hover:shadow-md transition-all cursor-pointer flex items-center justify-between group"
-        >
-          <div>
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-              Inactive Schools
-            </span>
-            <div className="flex items-baseline gap-2 mt-1.5">
-              <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-heading tracking-tight">
-                {inactiveSchoolsCount}
+        <div className="p-5 sm:p-5.5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-xs flex items-stretch justify-between group">
+          <div className="flex flex-col justify-between flex-1 min-w-0 pr-2">
+            <div>
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                Inactive Schools
               </span>
-              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md border ${
-                inactiveSchoolsCount > 0 
-                  ? 'text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 border-amber-200/60 dark:border-amber-800/50' 
-                  : 'text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border-slate-200'
-              }`}>
-                {inactiveSchoolsCount > 0 ? 'Pending' : 'Zero Idle'}
-              </span>
+              <div className="flex items-baseline gap-2 mt-1.5">
+                <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-heading tracking-tight">
+                  {inactiveSchoolsCount}
+                </span>
+                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md border ${
+                  inactiveSchoolsCount > 0 
+                    ? 'text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 border-amber-200/60 dark:border-amber-800/50' 
+                    : 'text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border-slate-200'
+                }`}>
+                  {inactiveSchoolsCount > 0 ? 'Pending' : 'Zero Idle'}
+                </span>
+              </div>
             </div>
-            <span className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 block">
+            <span className="text-[11px] text-slate-400 dark:text-slate-500 mt-2 block">
               Suspended or under setup
             </span>
           </div>
 
-          <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200/80 dark:border-amber-800/60 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-2xs">
-            <AlertCircle className="w-6 h-6 stroke-[2.2]" />
+          <div className="flex flex-col items-end justify-between shrink-0">
+            <div className="w-11 h-11 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200/80 dark:border-amber-800/60 flex items-center justify-center shrink-0 shadow-2xs">
+              <AlertCircle className="w-5.5 h-5.5 stroke-[2.2]" />
+            </div>
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                if (onRouteChange) {
+                  onRouteChange(inactiveSchoolsCount > 0 ? 'support-approvals' : 'institutes')
+                }
+              }}
+              title="View Inactive Schools Details"
+              aria-label="View Inactive Schools Details"
+              className="mt-3 p-1.5 sm:p-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 hover:bg-amber-50 dark:hover:bg-amber-950/60 text-slate-400 hover:text-amber-600 dark:text-slate-400 dark:hover:text-amber-300 border border-slate-200/80 hover:border-amber-300 dark:border-slate-700 dark:hover:border-amber-800/70 transition-all cursor-pointer shadow-2xs flex items-center justify-center group/eye"
+            >
+              <Eye className="w-4 h-4 transition-transform group-hover/eye:scale-110" />
+            </button>
           </div>
         </div>
 
         {/* Card 4: Total Packages */}
-        <div 
-          onClick={() => onRouteChange && onRouteChange('subscriptions')}
-          className="p-5 sm:p-5.5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-xs hover:border-purple-300 dark:hover:border-purple-700/60 hover:shadow-md transition-all cursor-pointer flex items-center justify-between group"
-        >
-          <div>
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-              Total Packages
-            </span>
-            <div className="flex items-baseline gap-2 mt-1.5">
-              <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-heading tracking-tight">
-                {totalPackagesCount}
+        <div className="p-5 sm:p-5.5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-xs flex items-stretch justify-between group">
+          <div className="flex flex-col justify-between flex-1 min-w-0 pr-2">
+            <div>
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                Total Packages
               </span>
-              <span className="text-[11px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-md border border-indigo-200/60 dark:border-indigo-800/50">
-                SaaS Tiers
-              </span>
+              <div className="flex items-baseline gap-2 mt-1.5">
+                <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-heading tracking-tight">
+                  {totalPackagesCount}
+                </span>
+                <span className="text-[11px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-md border border-indigo-200/60 dark:border-indigo-800/50">
+                  SaaS Tiers
+                </span>
+              </div>
             </div>
-            <span className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 block">
+            <span className="text-[11px] text-slate-400 dark:text-slate-500 mt-2 block">
               Active subscription tiers
             </span>
           </div>
 
-          <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-200/80 dark:border-indigo-800/60 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-2xs">
-            <Package className="w-6 h-6 stroke-[2.2]" />
+          <div className="flex flex-col items-end justify-between shrink-0">
+            <div className="w-11 h-11 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-200/80 dark:border-indigo-800/60 flex items-center justify-center shrink-0 shadow-2xs">
+              <Package className="w-5.5 h-5.5 stroke-[2.2]" />
+            </div>
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                if (onRouteChange) onRouteChange('platform-billing')
+              }}
+              title="View Packages & Subscriptions"
+              aria-label="View Packages & Subscriptions"
+              className="mt-3 p-1.5 sm:p-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 text-slate-400 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-300 border border-slate-200/80 hover:border-indigo-300 dark:border-slate-700 dark:hover:border-indigo-800/70 transition-all cursor-pointer shadow-2xs flex items-center justify-center group/eye"
+            >
+              <Eye className="w-4 h-4 transition-transform group-hover/eye:scale-110" />
+            </button>
           </div>
         </div>
 
@@ -1237,7 +1295,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 Subscription Details
               </h3>
               <button
-                onClick={() => onRouteChange && onRouteChange('subscriptions')}
+                onClick={() => onRouteChange && onRouteChange('platform-billing')}
                 className="text-xs font-bold text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1 cursor-pointer"
               >
                 <span>Manage</span>
@@ -1462,7 +1520,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
             <span>Granular role-based access control (RBAC) enforced platform-wide.</span>
             <button
-              onClick={() => onRouteChange && onRouteChange('users')}
+              onClick={() => onRouteChange && onRouteChange('users-all')}
               className="font-bold text-purple-600 dark:text-purple-400 hover:underline cursor-pointer"
             >
               Full User Directory →

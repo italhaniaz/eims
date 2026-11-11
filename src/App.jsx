@@ -194,9 +194,29 @@ const AppContent = () => {
     return 'landing'
   })
 
+  // Superadmin Route Aliases to normalize shortcuts and prevent invalid fallback
+  const SUPERADMIN_ROUTE_ALIASES = {
+    'subscriptions': 'platform-billing',
+    'billing': 'platform-billing',
+    'packages': 'platform-billing',
+    'users': 'users-all',
+    'roles': 'users-roles',
+    'approvals': 'support-approvals',
+    'support': 'support-approvals',
+    'modules': 'platform-modules',
+    'settings': 'platform-settings',
+    'policies': 'compliance-policies',
+    'analytics': 'cross-institute-analytics',
+    'health': 'system-health',
+    'backup': 'backup-data',
+    'logs': 'audit-logs',
+    'broadcasts': 'announcements'
+  }
+
   // Route setters that update the browser URL hash without full reload
   const setSuperadminRoute = (route) => {
-    const valid = VALID_SUPERADMIN_ROUTES.includes(route) ? route : 'dashboard'
+    const resolved = SUPERADMIN_ROUTE_ALIASES[route] || route
+    const valid = VALID_SUPERADMIN_ROUTES.includes(resolved) ? resolved : 'dashboard'
     setSuperadminRouteState(valid)
     if (typeof window !== 'undefined') {
       window.location.hash = `#${valid}`
