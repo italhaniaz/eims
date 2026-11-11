@@ -190,6 +190,7 @@ const AppContent = () => {
   const [feeSetupTargetStudentId, setFeeSetupTargetStudentId] = useState(null)
   const [feeSetupInitialMode, setFeeSetupInitialMode] = useState('details')
   const [studentProfileTargetId, setStudentProfileTargetId] = useState(null)
+  const [studentsInitialClass, setStudentsInitialClass] = useState('ALL')
   const [isSendSmsOpen, setIsSendSmsOpen] = useState(false)
   const openQuickPayment = (studentId = null) => {
     setQuickPayStudentId(studentId)
@@ -262,6 +263,7 @@ const AppContent = () => {
     }
     if (valid === 'inst-students' && !options?.preserveStudentProfile) {
       setStudentProfileTargetId(null)
+      setStudentsInitialClass('ALL')
     }
     setInstituteRouteState(valid)
     if (typeof window !== 'undefined') {
@@ -652,7 +654,10 @@ const AppContent = () => {
                     onRouteChange={setInstituteRoute}
                     onOpenQuickPayment={(sid) => openQuickPayment(sid)}
                     onOpenSendSms={() => setIsSendSmsOpen(true)}
-                    onBackToList={() => setStudentProfileTargetId(null)}
+                    onBackToList={(cls) => {
+                      setStudentsInitialClass(cls || 'ALL')
+                      setStudentProfileTargetId(null)
+                    }}
                     onBack={() => {
                       setStudentProfileTargetId(null)
                       setInstituteRoute('inst-fees-history')
@@ -670,6 +675,7 @@ const AppContent = () => {
                 ) : ['inst-students', 'inst-admissions-import', 'inst-students-guardians', 'inst-students-promote', 'inst-students-status', 'inst-students-idcards'].includes(safeInstituteRoute) && (
                   <StudentsView
                     currentInstitute={activeCampus}
+                    initialClassFilter={studentsInitialClass}
                     initialAction={
                       safeInstituteRoute === 'inst-admissions-import' ? 'import'
                         : safeInstituteRoute === 'inst-students-guardians' ? 'guardians'

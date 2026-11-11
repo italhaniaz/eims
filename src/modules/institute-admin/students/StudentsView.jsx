@@ -72,7 +72,7 @@ import { compressImageFile } from '../../../utils/securityUtils'
 import PrintableStudentIdCardModal from '../../../components/common/PrintableStudentIdCardModal'
 import PrintableExamAdmitCardModal from '../../../components/common/PrintableExamAdmitCardModal'
 
-export const StudentsView = ({ currentInstitute, initialAction = null }) => {
+export const StudentsView = ({ currentInstitute, initialAction = null, initialClassFilter = 'ALL' }) => {
   const tierConfig = getInstituteTierConfig(currentInstitute)
   const { user } = useAuth()
   const isSuperOrInstituteAdmin = ['superadmin', 'admin', 'institute_admin', 'registrar', 'principal'].includes(user?.role) || !user?.role
@@ -227,7 +227,11 @@ export const StudentsView = ({ currentInstitute, initialAction = null }) => {
   // Search & Multi-Dimensional Filters
   const [searchTerm, setSearchTerm] = useState('')
   const debouncedSearchTerm = useDebounce(searchTerm, 250)
-  const [selectedClassFilter, setSelectedClassFilter] = useState('ALL')
+  const [selectedClassFilter, setSelectedClassFilter] = useState(initialClassFilter || 'ALL')
+  useEffect(() => {
+    setSelectedClassFilter(initialClassFilter || 'ALL')
+    setCurrentPage(1)
+  }, [initialClassFilter])
   const [selectedSectionFilter, setSelectedSectionFilter] = useState('ALL')
   const [selectedStatusFilter, setSelectedStatusFilter] = useState('ALL') // 'Active' | 'Withdrawn' | 'Transferred' | 'Graduated' | 'Suspended'
   const [selectedGenderFilter, setSelectedGenderFilter] = useState('ALL') // 'Male' | 'Female'
@@ -1327,7 +1331,9 @@ const validatePakistaniPhone = (phone) => {
         <div>
           <div className="flex items-center gap-2">
             <GraduationCap className="w-5 h-5 text-emerald-600" />
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Student Admissions & Roster</h1>
+            <h1 className="text-xl font-bold text-slate-900 tracking-tight">
+              {selectedClassFilter !== 'ALL' ? `Student Information - ${selectedClassFilter}` : 'Student Admissions & Roster'}
+            </h1>
           </div>
           <p className="text-xs text-slate-500 mt-1">
             Enroll students, generate smart photo ID cards, manage 360° student academic dossiers, and issue official registration slips

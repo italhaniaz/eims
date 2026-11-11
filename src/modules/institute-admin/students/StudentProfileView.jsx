@@ -21,13 +21,13 @@ import {
   Calendar,
   CreditCard,
   Eye,
-  X,
-  Award
+  Award,
+  Phone,
+  Mail
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
 import { resolveStudentFeeSetup } from '../fees/StudentFeeSetupView'
-import { QrCodeSvg } from '../../../components/common/PrintHelpers'
 import EnrollStudentView from './EnrollStudentView'
 
 const formatMoney = (val) => `PKR ${Number(val || 0).toLocaleString()}`
@@ -80,9 +80,8 @@ export const StudentProfileView = ({
     return transport.filter((t) => t.instituteId === currentInstitute.id || !t.instituteId)
   }, [transport, currentInstitute?.id])
 
-  const [subView, setSubView] = useState('profile') // 'profile' | 'transport' | 'edit'
+  const [subView, setSubView] = useState('profile') // 'profile' | 'transport' | 'edit' | 'welcome'
   const [activeTab, setActiveTab] = useState('overview') // 'overview' | 'results' | 'guardian' | 'attendance' | 'fees'
-  const [welcomeCardOpen, setWelcomeCardOpen] = useState(false)
   const [saving, setSaving] = useState(false)
 
   // Route Edit Form
@@ -283,6 +282,122 @@ export const StudentProfileView = ({
       </button>
     </div>
   )
+
+  if (subView === 'welcome') {
+    const issuedDate = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+    const instName = (currentInstitute?.name || 'EduDigize Demo').toUpperCase()
+    const instPhone = currentInstitute?.phone || '0300-0000000'
+    const instEmail = currentInstitute?.email || 'accounts@institute.edu'
+
+    return (
+      <div className="p-4 sm:p-6 space-y-5 max-w-4xl mx-auto print:p-0 print:max-w-none">
+        {/* Top Action Toolbar matching Pick 4 */}
+        <div className="bg-white rounded-xl border border-slate-200 px-4 py-3 flex flex-wrap items-center justify-center gap-2.5 shadow-2xs print:hidden">
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="px-4 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-600 text-white text-xs font-semibold cursor-pointer shadow-xs transition-colors"
+          >
+            Print
+          </button>
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer shadow-xs transition-colors"
+          >
+            Download PDF
+          </button>
+          <button
+            type="button"
+            onClick={() => setSubView('profile')}
+            className="px-4 py-1.5 rounded-lg bg-slate-600 hover:bg-slate-700 text-white text-xs font-semibold cursor-pointer shadow-xs transition-colors"
+          >
+            Back
+          </button>
+        </div>
+
+        {/* Full-Page Gradient Frame Welcome Card matching Picks 4 & 5 */}
+        <div className="bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500 p-6 sm:p-10 rounded-lg shadow-2xl print:shadow-none print:p-6">
+          <div className="bg-white p-4 sm:p-6 relative shadow-inner">
+            {/* Dashed Inner Frame */}
+            <div className="border border-dashed border-indigo-200 p-6 sm:p-10 relative">
+              {/* 4 Corner L-Brackets */}
+              <span className="absolute top-3 left-3 w-7 h-7 border-t-2 border-l-2 border-indigo-500 pointer-events-none" />
+              <span className="absolute top-3 right-3 w-7 h-7 border-t-2 border-r-2 border-indigo-500 pointer-events-none" />
+              <span className="absolute bottom-3 left-3 w-7 h-7 border-b-2 border-l-2 border-indigo-500 pointer-events-none" />
+              <span className="absolute bottom-3 right-3 w-7 h-7 border-b-2 border-r-2 border-indigo-500 pointer-events-none" />
+
+              <div className="max-w-lg mx-auto text-center space-y-5 font-serif">
+                {/* Institute Crest & Uppercase Name */}
+                <div className="flex flex-col items-center gap-3">
+                  {currentInstitute?.logo ? (
+                    <img
+                      src={currentInstitute.logo}
+                      alt={instName}
+                      className="w-12 h-12 rounded-xl object-cover border border-slate-200 shadow-xs"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-xl bg-sky-500 text-white flex items-center justify-center font-sans font-black text-base shadow-sm border-2 border-sky-100">
+                      {instName.slice(0, 2)}
+                    </div>
+                  )}
+                  <h2 className="text-xl sm:text-2xl font-bold tracking-[0.14em] text-slate-800">{instName}</h2>
+                  <div className="w-14 h-0.5 bg-indigo-400/60" />
+                </div>
+
+                {/* Graduation Crest + WELCOME Heading */}
+                <div className="space-y-1.5 pt-1">
+                  <GraduationCap className="w-10 h-10 text-indigo-700 mx-auto" />
+                  <h1 className="text-2xl sm:text-3xl font-bold tracking-[0.18em] text-slate-800">WELCOME</h1>
+                  <p className="text-sm italic text-indigo-500">To Our Institute Community</p>
+                </div>
+
+                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed max-w-md mx-auto">
+                  We are delighted to extend a warm welcome to you as you begin your educational journey with us. We
+                  look forward to supporting your growth and success.
+                </p>
+
+                {/* Student Summary Card Box */}
+                <div className="rounded-xl border border-indigo-200 bg-slate-50/70 px-5 sm:px-8 py-5 shadow-xs space-y-2.5 text-xs sm:text-sm">
+                  <h3 className="text-xl font-bold text-slate-900 pb-1">{studentName}</h3>
+                  <div className="divide-y divide-dotted divide-slate-200 text-xs">
+                    {[
+                      ['Class:', student.className || student.course || 'Unassigned'],
+                      ['Section:', student.section || 'A'],
+                      ['Roll Number:', student.rollNumber || 'N/A'],
+                      ['Admission Number:', admissionNo]
+                    ].map(([label, val]) => (
+                      <div key={label} className="py-1.5 flex items-center justify-center gap-3">
+                        <span className="font-bold text-indigo-600">{label}</span>
+                        <span className="text-slate-700">{val}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Bottom Divider & Institute Contact Footer */}
+                <div className="pt-6 border-t border-slate-200 space-y-1.5">
+                  <p className="text-sm font-bold tracking-[0.1em] text-slate-800">{instName}</p>
+                  <p className="text-[11px] text-slate-500 flex flex-wrap items-center justify-center gap-2 font-sans">
+                    <span className="inline-flex items-center gap-1">
+                      <Phone className="w-3 h-3 text-rose-500" />
+                      <span>{instPhone}</span>
+                    </span>
+                    <span>|</span>
+                    <span className="inline-flex items-center gap-1">
+                      <Mail className="w-3 h-3 text-indigo-500" />
+                      <span>{instEmail}</span>
+                    </span>
+                  </p>
+                  <p className="text-[11px] italic text-slate-400">Issued on {issuedDate}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   if (subView === 'edit') {
     return (
@@ -524,14 +639,14 @@ export const StudentProfileView = ({
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={() => onBackToList?.()}
+              onClick={() => onBackToList?.(student.className || 'ALL')}
               className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/30 text-white text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer transition-colors"
             >
               <span>Back to List</span>
             </button>
             <button
               type="button"
-              onClick={() => setWelcomeCardOpen(true)}
+              onClick={() => setSubView('welcome')}
               className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/30 text-white text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer transition-colors"
             >
               <Gift className="w-3.5 h-3.5" />
@@ -939,57 +1054,6 @@ export const StudentProfileView = ({
         </div>
       )}
 
-      {/* Printable Welcome Card Modal */}
-      {welcomeCardOpen && (
-        <div className="fixed inset-0 z-[115] bg-slate-900/55 backdrop-blur-[1px] flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
-            <div className="bg-indigo-800 text-white px-5 py-3 flex items-center justify-between print:hidden">
-              <span className="font-bold text-sm flex items-center gap-2">
-                <Gift className="w-4 h-4" />
-                <span>Student Welcome Card</span>
-              </span>
-              <button type="button" onClick={() => setWelcomeCardOpen(false)} className="text-white/80 hover:text-white cursor-pointer">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="p-6 space-y-4 text-xs text-center">
-              <div>
-                <p className="font-extrabold text-base text-slate-900 uppercase">
-                  {currentInstitute?.name || 'Institute Management Portal'}
-                </p>
-                <p className="text-[11px] text-slate-500">Welcome to the Student Portal</p>
-              </div>
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col items-center gap-2">
-                <QrCodeSvg value={`WELCOME-${student.id}-${portalUsername}`} size={88} />
-                <p className="font-extrabold text-sm text-slate-900">{studentName}</p>
-                <p className="text-slate-600">
-                  Class {student.className || 'N/A'} · Roll {student.rollNumber || 'N/A'}
-                </p>
-                <p className="text-[11px] text-slate-500">
-                  Portal Username: <strong className="text-rose-600 font-mono">{portalUsername}</strong>
-                </p>
-              </div>
-              <div className="flex justify-center gap-2 print:hidden">
-                <button
-                  type="button"
-                  onClick={() => window.print()}
-                  className="px-4 py-1.5 rounded-lg bg-indigo-600 text-white font-bold inline-flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Printer className="w-3.5 h-3.5" />
-                  <span>Print Welcome Card</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setWelcomeCardOpen(false)}
-                  className="px-4 py-1.5 rounded-lg border border-slate-200 text-slate-700 font-semibold cursor-pointer"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
