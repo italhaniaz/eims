@@ -31,8 +31,8 @@ export const AuthProvider = ({ children }) => {
       if (sessionSaved) {
         const parsed = JSON.parse(sessionSaved)
         if (parsed && parsed.email && parsed.isExplicitLogin) {
-          // Only allow superadmin and institute_admin (School Admin)
-          if (parsed.role === 'superadmin' || parsed.role === 'institute_admin') {
+          // Allow superadmin, institute_admin (School Admin), and teacher
+          if (parsed.role === 'superadmin' || parsed.role === 'institute_admin' || parsed.role === 'teacher') {
             delete parsed.password
             return parsed
           }
@@ -43,7 +43,7 @@ export const AuthProvider = ({ children }) => {
       if (localSaved) {
         const parsed = JSON.parse(localSaved)
         if (parsed && parsed.email && parsed.isExplicitLogin) {
-          if (parsed.role === 'superadmin' || parsed.role === 'institute_admin') {
+          if (parsed.role === 'superadmin' || parsed.role === 'institute_admin' || parsed.role === 'teacher') {
             delete parsed.password
             return parsed
           }
@@ -150,6 +150,13 @@ export const AuthProvider = ({ children }) => {
       mail === 'superadmin' ||
       matchedDbUser?.role === 'superadmin'
 
+    const isTeacherLogin =
+      role === 'teacher' ||
+      mail === 'teacher@schoolms.com' ||
+      mail === 'teacher@apexed.io' ||
+      mail.includes('teacher') ||
+      matchedDbUser?.role === 'teacher'
+
     if (isSuperadminLogin) {
       userPayload = {
         id: matchedDbUser?.id || 'usr-1',
@@ -161,6 +168,23 @@ export const AuthProvider = ({ children }) => {
         instituteId: null,
         instituteName: 'Central Headquarters',
         scope: 'Schools Platform Administration',
+        isExplicitLogin: true,
+        loginTimestamp: new Date().toISOString()
+      }
+    } else if (isTeacherLogin) {
+      userPayload = {
+        id: matchedDbUser?.id || 'usr-teacher-1',
+        name: matchedDbUser?.name || 'Prof. Tariq Mehmood',
+        roleTitle: 'Faculty / Subject Teacher',
+        role: 'teacher',
+        email: customEmail || mail || 'teacher@schoolms.com',
+        avatar: null,
+        instituteId: matchedInst?.id || 'inst-2',
+        instituteName: matchedInst?.name || 'City School Model Town Campus',
+        instituteType: 'School',
+        tier: 'school',
+        enabledTiers: ['school'],
+        scope: 'Teacher Academic Portal',
         isExplicitLogin: true,
         loginTimestamp: new Date().toISOString()
       }
@@ -290,23 +314,28 @@ export const AuthProvider = ({ children }) => {
         const matchedInst = dbInstitutes.find(
           i => i.id === matchedDbUser.instituteId || i.id === matchedDbUser.institute || i.name === matchedDbUser.institute
         )
-        const targetRole = matchedDbUser.role === 'superadmin' ? 'superadmin' : 'institute_admin'
+        const targetRole = matchedDbUser.role === 'superadmin' 
+          ? 'superadmin' 
+          : (matchedDbUser.role === 'teacher' ? 'teacher' : 'institute_admin')
+        const roleTitle = targetRole === 'superadmin' 
+          ? 'Superadmin' 
+          : (targetRole === 'teacher' ? 'Faculty / Subject Teacher' : 'School Principal / Admin')
         return {
           matched: true,
           success: true,
           user: {
             id: matchedDbUser.id,
-            name: matchedDbUser.name || (targetRole === 'superadmin' ? 'Super Administrator' : 'School Principal'),
-            roleTitle: targetRole === 'superadmin' ? 'Superadmin' : 'School Principal / Admin',
+            name: matchedDbUser.name || (targetRole === 'superadmin' ? 'Super Administrator' : targetRole === 'teacher' ? 'Faculty Teacher' : 'School Principal'),
+            roleTitle: roleTitle,
             role: targetRole,
             email: matchedDbUser.email || mail,
             avatar: null,
-            instituteId: targetRole === 'superadmin' ? null : (matchedInst?.id || matchedDbUser.instituteId || matchedDbUser.institute || null),
-            instituteName: targetRole === 'superadmin' ? 'Central Headquarters' : (matchedInst?.name || matchedDbUser.instituteName || matchedDbUser.institute || 'School Campus'),
+            instituteId: targetRole === 'superadmin' ? null : (matchedInst?.id || matchedDbUser.instituteId || matchedDbUser.institute || 'inst-2'),
+            instituteName: targetRole === 'superadmin' ? 'Central Headquarters' : (matchedInst?.name || matchedDbUser.instituteName || matchedDbUser.institute || 'City School Model Town Campus'),
             instituteType: targetRole === 'superadmin' ? undefined : 'School',
             tier: targetRole === 'superadmin' ? undefined : 'school',
             enabledTiers: targetRole === 'superadmin' ? undefined : ['school'],
-            scope: targetRole === 'superadmin' ? 'Schools Platform Administration' : 'School Administration (K-10)',
+            scope: targetRole === 'superadmin' ? 'Schools Platform Administration' : targetRole === 'teacher' ? 'Teacher Academic Portal' : 'School Administration (K-10)',
             loginTimestamp: new Date().toISOString()
           }
         }
@@ -444,6 +473,32 @@ export const AuthProvider = ({ children }) => {
         tier: 'school',
         enabledTiers: ['school'],
         scope: 'School Administration (K-10)'
+      },
+      'teacher@schoolms.com': {
+        id: 'usr-teacher-1',
+        name: 'Prof. Tariq Mehmood',
+        roleTitle: 'Faculty / Subject Teacher',
+        role: 'teacher',
+        email: 'teacher@schoolms.com',
+        instituteId: 'inst-2',
+        instituteName: 'City School Model Town Campus',
+        instituteType: 'School',
+        tier: 'school',
+        enabledTiers: ['school'],
+        scope: 'Teacher Academic Portal'
+      },
+      'teacher@apexed.io': {
+        id: 'usr-teacher-2',
+        name: 'Prof. Tariq Mehmood',
+        roleTitle: 'Faculty / Subject Teacher',
+        role: 'teacher',
+        email: 'teacher@apexed.io',
+        instituteId: 'inst-2',
+        instituteName: 'City School Model Town Campus',
+        instituteType: 'School',
+        tier: 'school',
+        enabledTiers: ['school'],
+        scope: 'Teacher Academic Portal'
       }
     }
 
@@ -451,7 +506,7 @@ export const AuthProvider = ({ children }) => {
     if (builtIn) {
       const isDefaultValid = storedCustomHash
         ? inputHash === storedCustomHash
-        : ['password123', 'admin123', 'Password@123'].includes(pass)
+        : ['password123', 'admin123', 'Password@123', 'teacher123', 'password'].includes(pass)
 
       if (!isDefaultValid) {
         return { success: false, message: 'Invalid email or password.' }

@@ -36,6 +36,7 @@ const SystemHealthView = lazyWithRetry(() => import('./modules/platform/health/S
 const SupportApprovalsView = lazyWithRetry(() => import('./modules/platform/support/SupportApprovalsView'), 'support-approvals')
 const UsersManagementView = lazyWithRetry(() => import('./modules/users-management/UsersManagementView'), 'users-management')
 const PersonnelManagementView = lazyWithRetry(() => import('./modules/personnel/PersonnelManagementView'), 'personnel-management')
+const TeacherPortalView = lazyWithRetry(() => import('./modules/teacher-portal/TeacherPortalView'), 'teacher-portal')
 const NoticeBroadcasterView = lazyWithRetry(() => import('./modules/announcements/NoticeBroadcasterView'), 'notice-broadcaster')
 const CommunicationGatewayView = lazyWithRetry(() => import('./modules/communication/CommunicationGatewayView'), 'communication-gateway')
 const AuditLogsView = lazyWithRetry(() => import('./modules/audit-logs/AuditLogsView'), 'audit-logs')
@@ -529,7 +530,16 @@ const AppContent = () => {
     }
   }
 
-  // 2. SCHOOL ADMIN PORTAL (Dedicated School Management)
+  // 2. TEACHER PORTAL (Academic Faculty Console)
+  if (user.role === 'teacher') {
+    return (
+      <Suspense fallback={<ModuleSkeletonLoader />}>
+        <TeacherPortalView />
+      </Suspense>
+    )
+  }
+
+  // 3. SCHOOL ADMIN PORTAL (Dedicated School Management)
   const allKnownInstitutes = [...(institutes || []), ...(sampleTemplateData?.institutes || [])]
   const matchedInst = allKnownInstitutes.find(i => i.id === user?.instituteId)
 
