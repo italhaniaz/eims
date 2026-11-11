@@ -82,6 +82,7 @@ const CampusPoliciesView = lazyWithRetry(() => import('./modules/institute-admin
 const CampusSettingsView = lazyWithRetry(() => import('./modules/institute-admin/settings/CampusSettingsView'), 'campus-settings-view')
 const TrainingVideosView = lazyWithRetry(() => import('./modules/institute-admin/training/TrainingVideosView'), 'campus-training-view')
 const MyAccountView = lazyWithRetry(() => import('./modules/institute-admin/account/MyAccountView'), 'campus-account-view')
+const EnrollStudentView = lazyWithRetry(() => import('./modules/institute-admin/students/EnrollStudentView'), 'enroll-student-view')
 
 // Executive Seamless Loading Fallback & Preloader
 import ModuleSkeletonLoader from './components/common/ModuleSkeletonLoader'
@@ -598,17 +599,22 @@ const AppContent = () => {
                     initialSourceFilter={safeInstituteRoute === 'inst-admissions-online' ? 'Website / Online' : 'ALL'}
                   />
                 )}
-                {['inst-students', 'inst-admissions-enroll', 'inst-admissions-import', 'inst-students-guardians', 'inst-students-promote', 'inst-students-status', 'inst-students-idcards'].includes(safeInstituteRoute) && (
+                {safeInstituteRoute === 'inst-admissions-enroll' && (
+                  <EnrollStudentView
+                    currentInstitute={activeCampus}
+                    onRouteChange={setInstituteRoute}
+                  />
+                )}
+                {['inst-students', 'inst-admissions-import', 'inst-students-guardians', 'inst-students-promote', 'inst-students-status', 'inst-students-idcards'].includes(safeInstituteRoute) && (
                   <StudentsView
                     currentInstitute={activeCampus}
                     initialAction={
-                      safeInstituteRoute === 'inst-admissions-enroll' ? 'enroll'
-                        : safeInstituteRoute === 'inst-admissions-import' ? 'import'
-                          : safeInstituteRoute === 'inst-students-guardians' ? 'guardians'
-                            : safeInstituteRoute === 'inst-students-promote' ? 'promote'
-                              : safeInstituteRoute === 'inst-students-status' ? 'status'
-                                : safeInstituteRoute === 'inst-students-idcards' ? 'idcards'
-                                  : null
+                      safeInstituteRoute === 'inst-admissions-import' ? 'import'
+                        : safeInstituteRoute === 'inst-students-guardians' ? 'guardians'
+                          : safeInstituteRoute === 'inst-students-promote' ? 'promote'
+                            : safeInstituteRoute === 'inst-students-status' ? 'status'
+                              : safeInstituteRoute === 'inst-students-idcards' ? 'idcards'
+                                : null
                     }
                   />
                 )}
