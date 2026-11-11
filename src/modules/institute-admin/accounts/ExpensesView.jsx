@@ -20,7 +20,10 @@ import {
   X,
   Menu,
   Trash2,
-  CreditCard
+  CreditCard,
+  FileSpreadsheet,
+  Table,
+  Send
 } from 'lucide-react'
 import { useToast } from '../../../context/ToastContext'
 import { recordCampusLedgerTransaction } from './CampusAccountsView'
@@ -278,7 +281,99 @@ export const ExpensesView = ({
     link.click()
     document.body.removeChild(link)
     URL.revokeObjectURL(url)
-    toast(`Exported ${filteredExpenses.length} expense record(s).`, 'success')
+    toast(`Exported ${filteredExpenses.length} expense record(s) as CSV.`, 'success')
+  }
+
+  const handleExportExcel = () => {
+    setExportOpen(false)
+    if (filteredExpenses.length === 0) {
+      toast('No expenses to export.', 'warning')
+      return
+    }
+    const rowsHtml = filteredExpenses
+      .map((e, i) => {
+        const bill = Number(e.billAmount || 0)
+        const paid = getPaidAmount(e)
+        const rem = Math.max(0, bill - paid)
+        return `<tr>
+          <td>${i + 1}</td>
+          <td>${String(e.title || '').replace(/</g, '&lt;')}</td>
+          <td>${String(e.category || '').replace(/</g, '&lt;')}</td>
+          <td>${String(e.vendor || '—').replace(/</g, '&lt;')}</td>
+          <td>${bill}</td>
+          <td>${paid}</td>
+          <td>${rem}</td>
+          <td>${getExpenseStatus(e)}</td>
+          <td>${String(e.paymentMethod || 'Cash')}</td>
+          <td>${String(e.expenseDate || '')}</td>
+        </tr>`
+      })
+      .join('')
+    const tableHtml = `<html><head><meta charset="utf-8" /></head><body>
+      <table border="1">
+        <thead><tr>
+          <th>S/N</th><th>Expense</th><th>Category</th><th>Vendor</th><th>Bill (PKR)</th>
+          <th>Paid (PKR)</th><th>Remaining (PKR)</th><th>Status</th><th>Method</th><th>Date</th>
+        </tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table></body></html>`
+    const blob = new Blob([tableHtml], { type: 'application/vnd.ms-excel;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `expenses_${new Date().toISOString().slice(0, 10)}.xls`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+    toast(`Exported ${filteredExpenses.length} expense record(s) to Excel.`, 'success')
+  }
+
+  const handleExportPdf = () => {
+    setExportOpen(false)
+    if (filteredExpenses.length === 0) {
+      toast('No expenses to export.', 'warning')
+      return
+    }
+    const rowsHtml = filteredExpenses
+      .map((e, i) => {
+        const bill = Number(e.billAmount || 0)
+        const paid = getPaidAmount(e)
+        const rem = Math.max(0, bill - paid)
+        return `<tr>
+          <td>${i + 1}</td>
+          <td><strong>${String(e.title || '').replace(/</g, '&lt;')}</strong><br/><small>${String(e.category || '').replace(/</g, '&lt;')}</small></td>
+          <td>${String(e.vendor || '—').replace(/</g, '&lt;')}</td>
+          <td>PKR ${bill.toLocaleString()}</td>
+          <td>PKR ${paid.toLocaleString()}</td>
+          <td>PKR ${rem.toLocaleString()}</td>
+          <td>${getExpenseStatus(e)}</td>
+          <td>${formatDisplayDate(e.expenseDate)}</td>
+        </tr>`
+      })
+      .join('')
+    const win = window.open('', '_blank', 'width=960,height=720')
+    if (!win) {
+      window.print()
+      return
+    }
+    win.document.write(`<!doctype html><html><head><title>Expenses Report</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 24px; color: #0f172a; }
+        h2 { margin: 0 0 4px; }
+        p { margin: 0 0 16px; color: #64748b; font-size: 12px; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th, td { border: 1px solid #cbd5e1; padding: 8px 10px; text-align: left; }
+        th { background: #f8fafc; font-weight: 700; }
+      </style></head><body>
+      <h2>${String(currentInstitute?.name || 'School')} — Expenses Report</h2>
+      <p>Generated on ${new Date().toLocaleDateString()} · ${filteredExpenses.length} record(s) · Total: PKR ${stats.totalBills.toLocaleString()}</p>
+      <table><thead><tr>
+        <th>S/N</th><th>Expense</th><th>Vendor</th><th>Bill</th><th>Paid</th><th>Remaining</th><th>Status</th><th>Date</th>
+      </tr></thead><tbody>${rowsHtml}</tbody></table>
+      <script>window.onload = function(){ window.print(); };</script>
+      </body></html>`)
+    win.document.close()
   }
 
   // Row Actions Popover Menu (Pick 4 & Pick 5: View Details | Add Payment | Edit)
@@ -315,40 +410,83 @@ export const ExpensesView = ({
 
   const [vendorHistoryTarget, setVendorHistoryTarget] = useState(null)
 
-  // Create New Expense Form State (+ Create New Expense tab)
+  const vendorsStorageKey = `sms_campus_vendors_${instId}`
+  const [savedVendors, setSavedVendors] = useState(() => {
+    try {
+      const raw = localStorage.getItem(`sms_campus_vendors_${instId}`)
+      return raw ? JSON.parse(raw) : {}
+    } catch {
+      return {}
+    }
+  })
+
+  // Create New Expense Form State (+ Create New Expense tab - Picks 2 & 3)
   const [createForm, setCreateForm] = useState({
     title: '',
-    category: allCategories[0] || 'Utility Bills',
-    customCategory: '',
-    vendor: '',
+    category: '',
+    paymentMethod: 'Cash',
     billAmount: '',
     paidNow: '',
-    paymentMethod: 'Cash',
     expenseDate: new Date().toISOString().slice(0, 10),
+    vendor: '',
+    vendorPhone: '',
+    vendorEmail: '',
+    vendorAddress: '',
     notes: ''
   })
+
+  const handleVendorInputChange = (val) => {
+    const matchedKey = Object.keys(savedVendors).find(
+      (k) => k.toLowerCase() === val.trim().toLowerCase()
+    )
+    const profile = matchedKey ? savedVendors[matchedKey] : null
+    setCreateForm((p) => ({
+      ...p,
+      vendor: val,
+      vendorPhone: profile?.phone ?? p.vendorPhone,
+      vendorEmail: profile?.email ?? p.vendorEmail,
+      vendorAddress: profile?.address ?? p.vendorAddress
+    }))
+  }
 
   const handleCreateExpense = (e) => {
     e.preventDefault()
     if (!createForm.title.trim()) {
-      toast('Enter expense title.', 'warning')
+      toast('Enter expense name.', 'warning')
+      return
+    }
+    if (!createForm.category) {
+      toast('Select Expense Type.', 'warning')
       return
     }
     const bill = Math.max(0, Number(createForm.billAmount || 0))
     if (bill <= 0) {
-      toast('Bill amount must be greater than zero.', 'warning')
+      toast('Total Amount (PKR) must be greater than zero.', 'warning')
       return
     }
-    const chosenCat = createForm.customCategory.trim() || createForm.category
-    if (createForm.customCategory.trim() && !categories.includes(createForm.customCategory.trim())) {
-      const nextCats = [...categories, createForm.customCategory.trim()]
-      setCategories(nextCats)
+
+    // Rule per Pick 2 helper: "Leave blank or equal to total for Paid. Enter 0 for Pending."
+    const hasExplicitPaidNow = String(createForm.paidNow).trim() !== ''
+    const paid = hasExplicitPaidNow
+      ? Math.min(bill, Math.max(0, Number(createForm.paidNow || 0)))
+      : bill
+
+    const vendorName = createForm.vendor.trim()
+    if (vendorName) {
+      const nextVendors = {
+        ...savedVendors,
+        [vendorName]: {
+          phone: createForm.vendorPhone.trim(),
+          email: createForm.vendorEmail.trim(),
+          address: createForm.vendorAddress.trim()
+        }
+      }
+      setSavedVendors(nextVendors)
       try {
-        localStorage.setItem(expCatKey, JSON.stringify(nextCats))
+        localStorage.setItem(vendorsStorageKey, JSON.stringify(nextVendors))
       } catch {}
     }
 
-    const paid = Math.min(bill, Math.max(0, Number(createForm.paidNow || 0)))
     const installments = paid > 0
       ? [{
           id: `INST-${Date.now()}`,
@@ -363,8 +501,11 @@ export const ExpensesView = ({
     const newExp = {
       id: `EXP-${Date.now()}`,
       title: createForm.title.trim(),
-      category: chosenCat,
-      vendor: createForm.vendor.trim(),
+      category: createForm.category,
+      vendor: vendorName,
+      vendorPhone: createForm.vendorPhone.trim(),
+      vendorEmail: createForm.vendorEmail.trim(),
+      vendorAddress: createForm.vendorAddress.trim(),
       billAmount: bill,
       paidAmount: paid,
       installments,
@@ -383,7 +524,7 @@ export const ExpensesView = ({
         date: createForm.expenseDate,
         description: `${newExp.title}${newExp.vendor ? ` (${newExp.vendor})` : ''}`,
         type: 'Expense',
-        category: chosenCat,
+        category: createForm.category,
         debit: paid,
         credit: 0,
         account: createForm.paymentMethod,
@@ -395,13 +536,15 @@ export const ExpensesView = ({
     toast(`Expense "${newExp.title}" saved.`, 'success')
     setCreateForm({
       title: '',
-      category: chosenCat,
-      customCategory: '',
-      vendor: '',
+      category: '',
+      paymentMethod: 'Cash',
       billAmount: '',
       paidNow: '',
-      paymentMethod: 'Cash',
       expenseDate: new Date().toISOString().slice(0, 10),
+      vendor: '',
+      vendorPhone: '',
+      vendorEmail: '',
+      vendorAddress: '',
       notes: ''
     })
     setActiveTab('list')
@@ -664,20 +807,30 @@ export const ExpensesView = ({
               <ChevronDown className="w-3.5 h-3.5" />
             </button>
             {exportOpen && (
-              <div className="absolute right-0 mt-1 w-44 rounded-lg bg-white border border-slate-200 shadow-lg py-1 z-30 text-xs">
+              <div className="absolute right-0 mt-1.5 w-44 rounded-xl bg-white border border-slate-200 shadow-xl py-1.5 z-30 text-xs">
                 <button
                   type="button"
-                  onClick={handleExportCsv}
-                  className="w-full px-3.5 py-2 text-left hover:bg-slate-50 font-semibold text-slate-700 cursor-pointer"
+                  onClick={handleExportPdf}
+                  className="w-full px-3.5 py-2 text-left hover:bg-slate-50 font-medium text-slate-700 cursor-pointer flex items-center gap-2.5"
                 >
-                  Export CSV Register
+                  <FileText className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Export as PDF</span>
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setExportOpen(false); window.print() }}
-                  className="w-full px-3.5 py-2 text-left hover:bg-slate-50 font-semibold text-slate-700 cursor-pointer"
+                  onClick={handleExportExcel}
+                  className="w-full px-3.5 py-2 text-left hover:bg-slate-50 font-medium text-slate-700 cursor-pointer flex items-center gap-2.5"
                 >
-                  Print Expense Sheet
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Export as Excel</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleExportCsv}
+                  className="w-full px-3.5 py-2 text-left hover:bg-slate-50 font-medium text-slate-700 cursor-pointer flex items-center gap-2.5"
+                >
+                  <Table className="w-3.5 h-3.5 text-sky-600" />
+                  <span>Export as CSV</span>
                 </button>
               </div>
             )}
@@ -974,125 +1127,181 @@ export const ExpensesView = ({
             </div>
           </div>
         ) : (
-          /* Tab 2: + Create New Expense Form */
-          <form onSubmit={handleCreateExpense} className="p-6 max-w-3xl space-y-4 text-xs">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Expense Title / Description *</label>
+          /* Tab 2: + Create New Expense Form matching Picks 2 & 3 */
+          <form onSubmit={handleCreateExpense} className="p-6 max-w-4xl space-y-4 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:items-center">
+              <label className="sm:col-span-3 font-semibold text-slate-800">
+                Name <span className="text-rose-500">*</span>
+              </label>
+              <div className="sm:col-span-9">
                 <input
                   type="text"
-                  placeholder="e.g. Electricity Bill, Chairs Purchase"
+                  placeholder="Name of Expense"
                   value={createForm.title}
                   onChange={(e) => setCreateForm((p) => ({ ...p, title: e.target.value }))}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 font-semibold"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   required
                 />
               </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Vendor / Supplier (optional)</label>
-                <input
-                  type="text"
-                  placeholder="e.g. WAPDA, Al-Noor Furniture"
-                  value={createForm.vendor}
-                  onChange={(e) => setCreateForm((p) => ({ ...p, vendor: e.target.value }))}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200"
-                />
-              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Category *</label>
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:items-center">
+              <label className="sm:col-span-3 font-semibold text-slate-800">
+                Expense Type <span className="text-rose-500">*</span>
+              </label>
+              <div className="sm:col-span-9">
                 <select
                   value={createForm.category}
                   onChange={(e) => setCreateForm((p) => ({ ...p, category: e.target.value }))}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white font-semibold"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  required
                 >
+                  <option value="">Select Expense Type</option>
                   {allCategories.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Or New Category Name (optional)</label>
-                <input
-                  type="text"
-                  placeholder="Adds automatically if filled"
-                  value={createForm.customCategory}
-                  onChange={(e) => setCreateForm((p) => ({ ...p, customCategory: e.target.value }))}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200"
-                />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:items-center">
+              <label className="sm:col-span-3 font-semibold text-slate-800">Payment Method</label>
+              <div className="sm:col-span-9">
+                <select
+                  value={createForm.paymentMethod}
+                  onChange={(e) => setCreateForm((p) => ({ ...p, paymentMethod: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                >
+                  {PAYMENT_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
+                </select>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Total Bill (PKR) *</label>
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:items-center">
+              <label className="sm:col-span-3 font-semibold text-slate-800">
+                Total Amount (PKR) <span className="text-rose-500">*</span>
+              </label>
+              <div className="sm:col-span-9">
                 <input
                   type="number"
                   min="1"
                   value={createForm.billAmount}
                   onChange={(e) => setCreateForm((p) => ({ ...p, billAmount: e.target.value }))}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 font-bold"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   required
                 />
               </div>
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Paid Now (PKR)</label>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:items-start">
+              <label className="sm:col-span-3 font-semibold text-slate-800 sm:pt-2">Paid Now (PKR)</label>
+              <div className="sm:col-span-9">
                 <input
                   type="number"
                   min="0"
-                  placeholder="0 if unpaid"
+                  placeholder="Defaults to full total (Paid)"
                   value={createForm.paidNow}
                   onChange={(e) => setCreateForm((p) => ({ ...p, paidNow: e.target.value }))}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 />
+                <p className="text-[10px] text-slate-400 mt-1">
+                  Leave blank or equal to total for Paid. Enter 0 for Pending.
+                </p>
               </div>
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Payment Method</label>
-                <select
-                  value={createForm.paymentMethod}
-                  onChange={(e) => setCreateForm((p) => ({ ...p, paymentMethod: e.target.value }))}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white"
-                >
-                  {PAYMENT_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Expense Date *</label>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:items-center">
+              <label className="sm:col-span-3 font-semibold text-slate-800">Expense Date</label>
+              <div className="sm:col-span-9">
                 <input
                   type="date"
                   value={createForm.expenseDate}
                   onChange={(e) => setCreateForm((p) => ({ ...p, expenseDate: e.target.value }))}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   required
                 />
               </div>
             </div>
 
-            <div>
-              <label className="block font-bold text-slate-700 mb-1">Notes / Bill Reference (optional)</label>
-              <input
-                type="text"
-                placeholder="Voucher no, invoice ref, or internal remarks..."
-                value={createForm.notes}
-                onChange={(e) => setCreateForm((p) => ({ ...p, notes: e.target.value }))}
-                className="w-full px-3 py-2 rounded-lg border border-slate-200"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:items-start">
+              <label className="sm:col-span-3 font-semibold text-slate-800 sm:pt-2">Vendor</label>
+              <div className="sm:col-span-9">
+                <input
+                  type="text"
+                  list="expense-vendors-list"
+                  placeholder="Select or type new vendor"
+                  value={createForm.vendor}
+                  onChange={(e) => handleVendorInputChange(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                />
+                <datalist id="expense-vendors-list">
+                  {Array.from(new Set([...allVendors, ...Object.keys(savedVendors)])).map((v) => (
+                    <option key={v} value={v} />
+                  ))}
+                </datalist>
+                <p className="text-[10px] text-slate-400 mt-1">
+                  Pick an existing vendor or type a new name — it will be saved for next time.
+                </p>
+              </div>
             </div>
 
-            <div className="flex items-center gap-2 pt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:items-center">
+              <label className="sm:col-span-3 font-semibold text-slate-800">Vendor Phone</label>
+              <div className="sm:col-span-9">
+                <input
+                  type="text"
+                  placeholder="Optional"
+                  value={createForm.vendorPhone}
+                  onChange={(e) => setCreateForm((p) => ({ ...p, vendorPhone: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:items-center">
+              <label className="sm:col-span-3 font-semibold text-slate-800">Vendor Email</label>
+              <div className="sm:col-span-9">
+                <input
+                  type="email"
+                  placeholder="Optional"
+                  value={createForm.vendorEmail}
+                  onChange={(e) => setCreateForm((p) => ({ ...p, vendorEmail: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:items-start">
+              <label className="sm:col-span-3 font-semibold text-slate-800 sm:pt-2">Vendor Address</label>
+              <div className="sm:col-span-9">
+                <textarea
+                  rows={2}
+                  placeholder="Optional"
+                  value={createForm.vendorAddress}
+                  onChange={(e) => setCreateForm((p) => ({ ...p, vendorAddress: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:items-start">
+              <label className="sm:col-span-3 font-semibold text-slate-800 sm:pt-2">Description</label>
+              <div className="sm:col-span-9">
+                <textarea
+                  rows={2}
+                  placeholder="Description of Expense"
+                  value={createForm.notes}
+                  onChange={(e) => setCreateForm((p) => ({ ...p, notes: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-2">
               <button
                 type="submit"
-                className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold cursor-pointer"
+                className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold inline-flex items-center gap-1.5 shadow-sm cursor-pointer transition-colors"
               >
-                Save Expense Bill
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('list')}
-                className="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 cursor-pointer"
-              >
-                Cancel
+                <span>Submit form</span>
+                <Send className="w-3.5 h-3.5" />
               </button>
             </div>
           </form>
