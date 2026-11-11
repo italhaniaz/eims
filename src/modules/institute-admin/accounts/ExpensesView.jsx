@@ -625,16 +625,35 @@ export const ExpensesView = ({
 
   const openEditModal = (exp) => {
     setOpenMenuId(null)
+    const vName = exp.vendor || ''
+    const vProfile = vName ? savedVendors[vName] : null
     setEditExpense(exp)
     setEditForm({
       title: exp.title || '',
       category: exp.category || allCategories[0] || 'Utility Bills',
-      vendor: exp.vendor || '',
+      vendor: vName,
+      vendorPhone: exp.vendorPhone ?? vProfile?.phone ?? '',
+      vendorEmail: exp.vendorEmail ?? vProfile?.email ?? '',
+      vendorAddress: exp.vendorAddress ?? vProfile?.address ?? '',
       billAmount: String(exp.billAmount || 0),
       expenseDate: exp.expenseDate || new Date().toISOString().slice(0, 10),
       paymentMethod: exp.paymentMethod || 'Cash',
       notes: exp.notes || ''
     })
+  }
+
+  const handleEditVendorChange = (val) => {
+    const matchedKey = Object.keys(savedVendors).find(
+      (k) => k.toLowerCase() === val.trim().toLowerCase()
+    )
+    const profile = matchedKey ? savedVendors[matchedKey] : null
+    setEditForm((p) => ({
+      ...p,
+      vendor: val,
+      vendorPhone: profile?.phone ?? p.vendorPhone,
+      vendorEmail: profile?.email ?? p.vendorEmail,
+      vendorAddress: profile?.address ?? p.vendorAddress
+    }))
   }
 
   const handleSaveEdit = (e) => {
@@ -645,6 +664,22 @@ export const ExpensesView = ({
       toast('Enter a valid title and bill amount.', 'warning')
       return
     }
+    const vendorName = editForm.vendor.trim()
+    if (vendorName) {
+      const nextVendors = {
+        ...savedVendors,
+        [vendorName]: {
+          phone: (editForm.vendorPhone || '').trim(),
+          email: (editForm.vendorEmail || '').trim(),
+          address: (editForm.vendorAddress || '').trim()
+        }
+      }
+      setSavedVendors(nextVendors)
+      try {
+        localStorage.setItem(vendorsStorageKey, JSON.stringify(nextVendors))
+      } catch {}
+    }
+
     setExpenses((prev) =>
       prev.map((item) =>
         item.id === editExpense.id
@@ -652,7 +687,10 @@ export const ExpensesView = ({
               ...item,
               title: editForm.title.trim(),
               category: editForm.category,
-              vendor: editForm.vendor.trim(),
+              vendor: vendorName,
+              vendorPhone: (editForm.vendorPhone || '').trim(),
+              vendorEmail: (editForm.vendorEmail || '').trim(),
+              vendorAddress: (editForm.vendorAddress || '').trim(),
               billAmount: nextBill,
               expenseDate: editForm.expenseDate,
               paymentMethod: editForm.paymentMethod,
@@ -778,12 +816,20 @@ export const ExpensesView = ({
           <div className="flex items-center gap-2 text-slate-900">
             <FileText className="w-5 h-5 text-slate-600" />
             <h1 className="text-lg font-bold tracking-tight">
-              {detailsExpense ? `Expense Details - ${detailsExpense.title}` : 'Expenses'}
+              {editExpense
+                ? `Edit Expense - ${editExpense.title}`
+                : detailsExpense
+                  ? `Expense Details - ${detailsExpense.title}`
+                  : 'Expenses'}
             </h1>
           </div>
           <button
             type="button"
-            onClick={() => (detailsExpense ? setDetailsExpenseId(null) : onRouteChange?.('inst-dashboard'))}
+            onClick={() => {
+              if (editExpense) setEditExpense(null)
+              else if (detailsExpense) setDetailsExpenseId(null)
+              else onRouteChange?.('inst-dashboard')
+            }}
             className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-800 mt-0.5 cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
@@ -818,7 +864,7 @@ export const ExpensesView = ({
           </button>
           <button
             type="button"
-            onClick={() => { setDetailsExpenseId(null); setActiveTab('create') }}
+            onClick={() => { setEditExpense(null); setDetailsExpenseId(null); setActiveTab('create') }}
             className="px-3.5 py-2 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 text-xs font-semibold flex items-center gap-1.5 shadow-2xs cursor-pointer transition-colors"
           >
             <ArrowDown className="w-3.5 h-3.5" />
@@ -835,7 +881,212 @@ export const ExpensesView = ({
         </div>
       </div>
 
-      {detailsExpense ? (
+      {editExpense ? (
+        /* Full-Page Edit Expense View matching Picks 2, 3 & 4 */
+        <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-sm font-bold text-slate-800">
+              <Edit3 className="w-4 h-4 text-slate-600" />
+              <span>Edit Expense</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setEditExpense(null)
+                  setDetailsExpenseId(null)
+                  setActiveTab('list')
+                }}
+                className="px-3.5 py-1.5 rounded-lg bg-slate-600 hover:bg-slate-700 text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Back to List</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const id = editExpense.id
+                  setEditExpense(null)
+                  setDetailsExpenseId(id)
+                }}
+                className="px-3.5 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+              >
+                <Eye className="w-3.5 h-3.5" />
+                <span>View Details</span>
+              </button>
+            </div>
+          </div>
+
+          <form onSubmit={handleSaveEdit} className="p-6 max-w-4xl space-y-4 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:items-center">
+              <label className="sm:col-span-3 font-semibold text-slate-800">
+                Name <span className="text-rose-500">*</span>
+              </label>
+              <div className="sm:col-span-9">
+                <input
+                  type="text"
+                  value={editForm.title}
+                  onChange={(e) => setEditForm((p) => ({ ...p, title: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:items-center">
+              <label className="sm:col-span-3 font-semibold text-slate-800">
+                Expense Type <span className="text-rose-500">*</span>
+              </label>
+              <div className="sm:col-span-9">
+                <select
+                  value={editForm.category}
+                  onChange={(e) => setEditForm((p) => ({ ...p, category: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  required
+                >
+                  <option value="">Select Expense Type</option>
+                  {allCategories.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:items-start">
+              <label className="sm:col-span-3 font-semibold text-slate-800 sm:pt-2">
+                Total Amount (PKR) <span className="text-rose-500">*</span>
+              </label>
+              <div className="sm:col-span-9">
+                <input
+                  type="number"
+                  min="1"
+                  value={editForm.billAmount}
+                  onChange={(e) => setEditForm((p) => ({ ...p, billAmount: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  required
+                />
+                <p className="text-[10px] text-slate-400 mt-1">
+                  Changing total recalculates remaining from payment history.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:items-center">
+              <label className="sm:col-span-3 font-semibold text-slate-800">Payment Method</label>
+              <div className="sm:col-span-9">
+                <select
+                  value={editForm.paymentMethod}
+                  onChange={(e) => setEditForm((p) => ({ ...p, paymentMethod: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                >
+                  {PAYMENT_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:items-center">
+              <label className="sm:col-span-3 font-semibold text-slate-800">Expense Date</label>
+              <div className="sm:col-span-9">
+                <input
+                  type="date"
+                  value={editForm.expenseDate}
+                  onChange={(e) => setEditForm((p) => ({ ...p, expenseDate: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:items-center">
+              <label className="sm:col-span-3 font-semibold text-slate-800">Vendor</label>
+              <div className="sm:col-span-9">
+                <input
+                  type="text"
+                  list="edit-expense-vendors-list"
+                  placeholder="Select or type new vendor"
+                  value={editForm.vendor}
+                  onChange={(e) => handleEditVendorChange(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                />
+                <datalist id="edit-expense-vendors-list">
+                  {Array.from(new Set([...allVendors, ...Object.keys(savedVendors)])).map((v) => (
+                    <option key={v} value={v} />
+                  ))}
+                </datalist>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:items-center">
+              <label className="sm:col-span-3 font-semibold text-slate-800">Vendor Phone</label>
+              <div className="sm:col-span-9">
+                <input
+                  type="text"
+                  placeholder="Optional"
+                  value={editForm.vendorPhone || ''}
+                  onChange={(e) => setEditForm((p) => ({ ...p, vendorPhone: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-800 placeholder:text-slate-400"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:items-center">
+              <label className="sm:col-span-3 font-semibold text-slate-800">Vendor Email</label>
+              <div className="sm:col-span-9">
+                <input
+                  type="email"
+                  placeholder="Optional"
+                  value={editForm.vendorEmail || ''}
+                  onChange={(e) => setEditForm((p) => ({ ...p, vendorEmail: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-800 placeholder:text-slate-400"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:items-start">
+              <label className="sm:col-span-3 font-semibold text-slate-800 sm:pt-2">Vendor Address</label>
+              <div className="sm:col-span-9">
+                <textarea
+                  rows={2}
+                  placeholder="Optional"
+                  value={editForm.vendorAddress || ''}
+                  onChange={(e) => setEditForm((p) => ({ ...p, vendorAddress: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-800 placeholder:text-slate-400"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:items-start">
+              <label className="sm:col-span-3 font-semibold text-slate-800 sm:pt-2">Description</label>
+              <div className="sm:col-span-9">
+                <textarea
+                  rows={2}
+                  placeholder="Description of Expense"
+                  value={editForm.notes}
+                  onChange={(e) => setEditForm((p) => ({ ...p, notes: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-800 placeholder:text-slate-400"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-2">
+              <button
+                type="button"
+                onClick={() => handleDeleteExpense(editExpense.id)}
+                className="px-3.5 py-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 font-semibold inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete Expense</span>
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold inline-flex items-center gap-1.5 shadow-sm cursor-pointer transition-colors"
+              >
+                <span>Submit form</span>
+                <Send className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </form>
+        </div>
+      ) : detailsExpense ? (
         /* Full-Page Expense Details View (Picks 2 & 3) */
         (() => {
           const bill = Number(detailsExpense.billAmount || 0)
@@ -1845,101 +2096,6 @@ export const ExpensesView = ({
             </div>
           )
         })()
-      )}
-
-      {/* Modal 3: Edit Expense */}
-      {editExpense && (
-        <div className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-[1px] flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200">
-            <div className="bg-blue-600 px-5 py-3.5 flex items-center justify-between text-white">
-              <div className="flex items-center gap-2 text-sm font-bold">
-                <Edit3 className="w-4 h-4" />
-                <span>Edit Expense</span>
-              </div>
-              <button type="button" onClick={() => setEditExpense(null)} className="text-white/80 hover:text-white cursor-pointer">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <form onSubmit={handleSaveEdit} className="p-5 space-y-3 text-xs">
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Expense Title *</label>
-                <input
-                  type="text"
-                  value={editForm.title}
-                  onChange={(e) => setEditForm((p) => ({ ...p, title: e.target.value }))}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 font-semibold"
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Category</label>
-                  <select
-                    value={editForm.category}
-                    onChange={(e) => setEditForm((p) => ({ ...p, category: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white"
-                  >
-                    {allCategories.map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Vendor</label>
-                  <input
-                    type="text"
-                    value={editForm.vendor}
-                    onChange={(e) => setEditForm((p) => ({ ...p, vendor: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Bill Amount (PKR) *</label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={editForm.billAmount}
-                    onChange={(e) => setEditForm((p) => ({ ...p, billAmount: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 font-bold"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Expense Date *</label>
-                  <input
-                    type="date"
-                    value={editForm.expenseDate}
-                    onChange={(e) => setEditForm((p) => ({ ...p, expenseDate: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200"
-                    required
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Notes</label>
-                <input
-                  type="text"
-                  value={editForm.notes}
-                  onChange={(e) => setEditForm((p) => ({ ...p, notes: e.target.value }))}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200"
-                />
-              </div>
-              <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => handleDeleteExpense(editExpense.id)}
-                  className="px-3 py-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 font-semibold cursor-pointer"
-                >
-                  Delete
-                </button>
-                <div className="flex gap-2">
-                  <button type="button" onClick={() => setEditExpense(null)} className="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 font-semibold cursor-pointer">Cancel</button>
-                  <button type="submit" className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold cursor-pointer">Save Changes</button>
-                </div>
-              </div>
-            </form>
-          </div>
-        </div>
       )}
 
       {/* Modal 4: Vendor History */}
