@@ -25,6 +25,8 @@ lerna-debug.log*
 # OS / Editor
 .DS_Store
 Thumbs.db
+desktop.ini
+*.ico
 .vscode/
 .idea/
 *.suo

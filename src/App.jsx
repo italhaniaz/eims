@@ -35,6 +35,7 @@ const BackupDataView = lazyWithRetry(() => import('./modules/platform/backup/Bac
 const SystemHealthView = lazyWithRetry(() => import('./modules/platform/health/SystemHealthView'), 'system-health')
 const SupportApprovalsView = lazyWithRetry(() => import('./modules/platform/support/SupportApprovalsView'), 'support-approvals')
 const UsersManagementView = lazyWithRetry(() => import('./modules/users-management/UsersManagementView'), 'users-management')
+const PersonnelManagementView = lazyWithRetry(() => import('./modules/personnel/PersonnelManagementView'), 'personnel-management')
 const NoticeBroadcasterView = lazyWithRetry(() => import('./modules/announcements/NoticeBroadcasterView'), 'notice-broadcaster')
 const CommunicationGatewayView = lazyWithRetry(() => import('./modules/communication/CommunicationGatewayView'), 'communication-gateway')
 const AuditLogsView = lazyWithRetry(() => import('./modules/audit-logs/AuditLogsView'), 'audit-logs')
@@ -220,6 +221,10 @@ const AppContent = () => {
     'packages': 'platform-billing',
     'users': 'users-all',
     'roles': 'users-roles',
+    'staff': 'users-all',
+    'personnel': 'users-all',
+    'personnel-staff': 'users-all',
+    'personnel-roles': 'users-roles',
     'approvals': 'support-approvals',
     'support': 'support-approvals',
     'modules': 'platform-modules',
@@ -469,11 +474,11 @@ const AppContent = () => {
                   {(superadminRoute === 'cross-institute-analytics' || superadminRoute === 'platform-analytics') && (
                     <CrossInstituteAnalyticsView />
                   )}
-                  {superadminRoute === 'users-all' && (
-                    <UsersManagementView defaultTab="all" onRouteChange={setSuperadminRoute} />
+                  {(superadminRoute === 'users-all' || superadminRoute === 'personnel-staff') && (
+                    <PersonnelManagementView defaultTab="staff" onRouteChange={setSuperadminRoute} />
                   )}
-                  {superadminRoute === 'users-roles' && (
-                    <UsersManagementView defaultTab="roles" onRouteChange={setSuperadminRoute} />
+                  {(superadminRoute === 'users-roles' || superadminRoute === 'personnel-roles') && (
+                    <PersonnelManagementView defaultTab="roles" onRouteChange={setSuperadminRoute} />
                   )}
 
                   {/* Compliance & Governance Policies */}
