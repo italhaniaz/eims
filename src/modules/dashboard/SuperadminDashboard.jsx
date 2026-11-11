@@ -1305,24 +1305,24 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
 
             {/* Donut Chart Visual */}
             <div className="py-6 flex flex-col items-center justify-center relative">
-              <div className="relative w-44 h-44 sm:w-48 sm:h-48 flex items-center justify-center">
+              <div className="relative w-48 h-48 sm:w-52 sm:h-52 flex items-center justify-center">
                 {/* SVG Vector Donut */}
                 <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
                   {/* Background Track */}
                   <circle
                     cx="50"
                     cy="50"
-                    r="38"
+                    r="40"
                     fill="transparent"
                     stroke="currentColor"
-                    strokeWidth="14"
+                    strokeWidth="10"
                     className="text-slate-100 dark:text-slate-800"
                   />
 
                   {/* Dynamic Segments */}
                   {(() => {
-                    const radius = 38
-                    const circumference = 2 * Math.PI * radius // ~238.76
+                    const radius = 40
+                    const circumference = 2 * Math.PI * radius // ~251.33
                     let accumulatedPercent = 0
 
                     return subscriptionDetails.map((seg, sIdx) => {
@@ -1338,7 +1338,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                           r={radius}
                           fill="transparent"
                           stroke={seg.color}
-                          strokeWidth="14"
+                          strokeWidth="10"
                           strokeDasharray={strokeDasharray}
                           strokeDashoffset={strokeDashoffset}
                           className="transition-all duration-500 hover:opacity-85"
@@ -1348,12 +1348,12 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                   })()}
                 </svg>
 
-                {/* Center Badge */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
-                  <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-heading tracking-tight">
+                {/* Center Badge with Zero Overflow */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none px-3">
+                  <span className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white font-heading tracking-tight leading-none mb-1">
                     {totalSchoolsCount}
                   </span>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide max-w-[95px] text-center leading-tight">
                     Total Subscriptions
                   </span>
                 </div>
