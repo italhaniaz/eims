@@ -72,6 +72,7 @@ const MyAccountView = lazyWithRetry(() => import('./modules/institute-admin/acco
 const EnrollStudentView = lazyWithRetry(() => import('./modules/institute-admin/students/EnrollStudentView'), 'enroll-student-view')
 const QuickPaymentModal = lazyWithRetry(() => import('./components/common/QuickPaymentModal'), 'quick-payment-modal')
 const StudentBillingHistoryView = lazyWithRetry(() => import('./modules/institute-admin/fees/StudentBillingHistoryView'), 'student-billing-history')
+const InvoicesView = lazyWithRetry(() => import('./modules/institute-admin/fees/InvoicesView'), 'invoices-view')
 
 // Executive Seamless Loading Fallback & Preloader
 import ModuleSkeletonLoader from './components/common/ModuleSkeletonLoader'
@@ -674,7 +675,18 @@ const AppContent = () => {
                     onOpenQuickPayment={(sid) => openQuickPayment(sid)}
                   />
                 )}
-                {['inst-fees', 'inst-fees-family', 'inst-fees-approvals', 'inst-fees-outstanding', 'inst-fees-fines', 'inst-fees-setup', 'inst-fees-settings'].includes(safeInstituteRoute) && (
+                {safeInstituteRoute === 'inst-fees' && (
+                  <InvoicesView
+                    currentInstitute={activeCampus}
+                    onRouteChange={setInstituteRoute}
+                    onOpenQuickPayment={(sid) => openQuickPayment(sid)}
+                    onOpenBillingHistory={(sid) => {
+                      setBillingHistoryStudentId(sid)
+                      setInstituteRoute('inst-fees-history')
+                    }}
+                  />
+                )}
+                {['inst-fees-family', 'inst-fees-approvals', 'inst-fees-outstanding', 'inst-fees-fines', 'inst-fees-setup', 'inst-fees-settings'].includes(safeInstituteRoute) && (
                   <FeesView
                     currentInstitute={activeCampus}
                     initialFilter={

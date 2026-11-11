@@ -33,6 +33,7 @@ const ROUTE_LOADERS = {
   'inst-reports': () => import('../modules/institute-admin/reports/CampusReportsAnalyticsView'),
   'inst-reports-students': () => import('../modules/institute-admin/reports/CampusReportsAnalyticsView'),
   'inst-admissions-enroll': () => import('../modules/institute-admin/students/EnrollStudentView'),
+  'inst-fees': () => import('../modules/institute-admin/fees/InvoicesView'),
   'inst-fees-history': () => import('../modules/institute-admin/fees/StudentBillingHistoryView'),
   'inst-assignments': () => import('../modules/institute-admin/learning/LearningResourcesView'),
   'inst-makeup-sessions': () => import('../modules/institute-admin/timetable/TimetableView'),
