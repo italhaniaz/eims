@@ -157,11 +157,23 @@ const AppContent = () => {
   const [superadminRoute, setSuperadminRouteState] = useState(getInitialSuperadminRoute)
   const [instituteRoute, setInstituteRouteState] = useState(getInitialInstituteRoute)
 
-  // Public visitor routing (Landing Page vs Unified Login Page)
+  // Public visitor routing (Landing Page `/` vs Generic Login Page `/login`)
+  const isLoginLocation = () => {
+    if (typeof window === 'undefined') return false
+    const path = window.location.pathname.toLowerCase().replace(/\/+$/, '')
+    const hash = window.location.hash.replace(/^#\/?/, '').toLowerCase()
+    return path === '/login' || hash.includes('login') || hash.includes('signin')
+  }
+
   const [publicView, setPublicView] = useState(() => {
-    if (typeof window !== 'undefined' && window.location.hash) {
+    if (typeof window !== 'undefined') {
+      if (isLoginLocation()) {
+        if (window.location.pathname.toLowerCase().replace(/\/+$/, '') !== '/login') {
+          window.history.replaceState(null, '', '/login')
+        }
+        return 'login'
+      }
       const hash = window.location.hash.replace(/^#\/?/, '').toLowerCase()
-      if (hash.includes('login') || hash.includes('signin') || hash.includes('superadmin') || hash.includes('school')) return 'login'
       if (hash === 'demo' || hash === 'live-demo') return 'demo'
     }
     return 'landing'
@@ -187,7 +199,12 @@ const AppContent = () => {
   // Synchronize route when user role changes or authenticates
   useEffect(() => {
     if (!user) return
+    const currentPath = typeof window !== 'undefined' ? window.location.pathname.toLowerCase().replace(/\/+$/, '') : ''
     const currentHash = typeof window !== 'undefined' ? window.location.hash.replace(/^#\/?/, '') : ''
+
+    if (typeof window !== 'undefined' && currentPath === '/login') {
+      window.history.replaceState(null, '', '/')
+    }
 
     if (user.role === 'superadmin') {
       if (!VALID_SUPERADMIN_ROUTES.includes(currentHash)) {
@@ -206,10 +223,14 @@ const AppContent = () => {
 
   // Synchronize on browser Back/Forward (popstate & hashchange)
   useEffect(() => {
-    const handleHashChange = () => {
+    const handleRouteChange = () => {
+      const path = window.location.pathname.toLowerCase().replace(/\/+$/, '')
       const hash = window.location.hash.replace(/^#\/?/, '').toLowerCase()
       if (!user) {
-        if (hash.includes('login') || hash.includes('signin') || hash.includes('superadmin') || hash.includes('school')) {
+        if (path === '/login' || hash.includes('login') || hash.includes('signin')) {
+          if (path !== '/login') {
+            window.history.replaceState(null, '', '/login')
+          }
           setPublicView('login')
         } else if (hash === 'demo' || hash === 'live-demo') {
           setPublicView('demo')
@@ -235,8 +256,12 @@ const AppContent = () => {
       }
     }
 
-    window.addEventListener('hashchange', handleHashChange)
-    return () => window.removeEventListener('hashchange', handleHashChange)
+    window.addEventListener('popstate', handleRouteChange)
+    window.addEventListener('hashchange', handleRouteChange)
+    return () => {
+      window.removeEventListener('popstate', handleRouteChange)
+      window.removeEventListener('hashchange', handleRouteChange)
+    }
   }, [user?.role])
   
   // Mobile drawer states
@@ -272,62 +297,45 @@ const AppContent = () => {
     }
   }
 
-  // If no user is authenticated, display landing page, unified login page, or demo page
+  // If no user is authenticated, display landing page (/), generic login page (/login), or demo page
   if (!user) {
+    const goToLogin = () => {
+      setPublicView('login')
+      if (typeof window !== 'undefined') {
+        window.history.pushState(null, '', '/login')
+      }
+    }
+
+    const goToLanding = (hashSuffix = '') => {
+      setPublicView('landing')
+      if (typeof window !== 'undefined') {
+        window.history.pushState(null, '', `/${hashSuffix}`)
+      }
+    }
+
     if (publicView === 'login') {
       return (
         <LoginPage
-          onBackToLanding={() => {
-            setPublicView('landing')
-            if (typeof window !== 'undefined') {
-              window.location.hash = ''
-            }
-          }}
-          onOpenTrial={() => {
-            setPublicView('landing')
-            if (typeof window !== 'undefined') {
-              window.location.hash = '#trial'
-            }
-          }}
+          onBackToLanding={() => goToLanding('')}
         />
       )
     }
     if (publicView === 'demo') {
       return (
         <DemoComingSoonPage
-          onBackToLanding={() => {
-            setPublicView('landing')
-            if (typeof window !== 'undefined') {
-              window.location.hash = ''
-            }
-          }}
-          onNavigateToLogin={() => {
-            setPublicView('login')
-            if (typeof window !== 'undefined') {
-              window.location.hash = '#login'
-            }
-          }}
-          onOpenTrial={() => {
-            setPublicView('landing')
-            if (typeof window !== 'undefined') {
-              window.location.hash = '#pricing'
-            }
-          }}
+          onBackToLanding={() => goToLanding('')}
+          onNavigateToLogin={goToLogin}
+          onOpenTrial={() => goToLanding('#pricing')}
         />
       )
     }
     return (
       <LandingPage
-        onNavigateToLogin={() => {
-          setPublicView('login')
-          if (typeof window !== 'undefined') {
-            window.location.hash = '#login'
-          }
-        }}
+        onNavigateToLogin={goToLogin}
         onNavigateToDemo={() => {
           setPublicView('demo')
           if (typeof window !== 'undefined') {
-            window.location.hash = '#demo'
+            window.history.pushState(null, '', '/#demo')
           }
         }}
       />

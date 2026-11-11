@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
+import { getApiUrl } from '../services/apiConfig'
 
 const AuthContext = createContext(null)
 
@@ -230,103 +231,247 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  // Unified Credential Authentication: Verifies email & password and routes to Super Admin or School Admin
+  // Backend-First Credential Authentication: Verifies email & password and routes to exact portal
   const authenticateCredentials = async (identifierInput = '', passwordInput = '', remember = false) => {
     const mail = String(identifierInput || '').trim().toLowerCase()
-    const pass = String(passwordInput || '').trim()
+    const pass = String(passwordInput || '')
 
-    if (!mail || !pass) {
-      return { success: false, message: 'Please enter both your email address and password.' }
+    if (!mail || !pass.trim()) {
+      return { success: false, message: 'Please enter both email and password.' }
     }
 
+    const commitAuthenticatedSession = (userPayload, token = null) => {
+      const cleanUser = { ...userPayload, isExplicitLogin: true }
+      delete cleanUser.password
+      setUser(cleanUser)
+      try {
+        if (token) {
+          sessionStorage.setItem('sms_auth_token', token)
+        }
+        sessionStorage.setItem('sms_auth_user', JSON.stringify(cleanUser))
+        if (remember) {
+          localStorage.setItem('sms_auth_user', JSON.stringify(cleanUser))
+        } else {
+          localStorage.removeItem('sms_auth_user')
+        }
+      } catch (e) {
+        console.error('Storage write error:', e)
+      }
+    }
+
+    const storedCustomHash = localStorage.getItem(`sms_pwd_hash_${mail}`)
+    const inputHash = await hashPassword(pass)
+
+    // Load client-created schools/users from local store (for offline/browser-created tenants)
     let db = { users: [], institutes: [] }
     try {
       const rawDb = localStorage.getItem('sms_database_v3_enterprise')
       if (rawDb) db = JSON.parse(rawDb)
     } catch (_) {}
-
     const dbUsers = Array.isArray(db.users) ? db.users : []
     const dbInstitutes = Array.isArray(db.institutes) ? db.institutes : []
 
-    const storedCustomHash = localStorage.getItem(`sms_pwd_hash_${mail}`)
-    const inputHash = await hashPassword(pass)
-    const isDefaultDemoPass = ['password123', 'admin123', 'admin', 'Password@123'].includes(pass)
-
-    // 1. Check registered user account in local database
-    const matchedDbUser = dbUsers.find(u => (u.email || '').trim().toLowerCase() === mail)
-    if (matchedDbUser) {
-      if (matchedDbUser.status === 'Suspended' || matchedDbUser.status === 'Disabled') {
-        return { success: false, message: 'This account is suspended. Please contact your Super Administrator.' }
+    const verifyLocalDatabaseAccount = () => {
+      const matchedDbUser = dbUsers.find(u => (u.email || '').trim().toLowerCase() === mail)
+      if (matchedDbUser) {
+        if (matchedDbUser.status === 'Suspended' || matchedDbUser.status === 'Disabled') {
+          return { matched: true, success: false, message: 'This account is suspended. Please contact your administrator.' }
+        }
+        const isPasswordValid = storedCustomHash
+          ? inputHash === storedCustomHash
+          : matchedDbUser.passwordHash
+            ? (inputHash === matchedDbUser.passwordHash || matchedDbUser.password === pass)
+            : matchedDbUser.password
+              ? matchedDbUser.password === pass
+              : false
+        if (!isPasswordValid) {
+          return { matched: true, success: false, message: 'Invalid email or password.' }
+        }
+        const matchedInst = dbInstitutes.find(
+          i => i.id === matchedDbUser.instituteId || i.id === matchedDbUser.institute || i.name === matchedDbUser.institute
+        )
+        const targetRole = matchedDbUser.role === 'superadmin' ? 'superadmin' : 'institute_admin'
+        return {
+          matched: true,
+          success: true,
+          user: {
+            id: matchedDbUser.id,
+            name: matchedDbUser.name || (targetRole === 'superadmin' ? 'Super Administrator' : 'School Principal'),
+            roleTitle: targetRole === 'superadmin' ? 'Superadmin' : 'School Principal / Admin',
+            role: targetRole,
+            email: matchedDbUser.email || mail,
+            avatar: null,
+            instituteId: targetRole === 'superadmin' ? null : (matchedInst?.id || matchedDbUser.instituteId || matchedDbUser.institute || null),
+            instituteName: targetRole === 'superadmin' ? 'Central Headquarters' : (matchedInst?.name || matchedDbUser.instituteName || matchedDbUser.institute || 'School Campus'),
+            instituteType: targetRole === 'superadmin' ? undefined : 'School',
+            tier: targetRole === 'superadmin' ? undefined : 'school',
+            enabledTiers: targetRole === 'superadmin' ? undefined : ['school'],
+            scope: targetRole === 'superadmin' ? 'Schools Platform Administration' : 'School Administration (K-10)',
+            loginTimestamp: new Date().toISOString()
+          }
+        }
       }
 
-      const isPasswordValid = storedCustomHash
+      const matchedInst = dbInstitutes.find(
+        i => (i.adminEmail || '').trim().toLowerCase() === mail || (i.email || '').trim().toLowerCase() === mail
+      )
+      if (matchedInst && (matchedInst.adminPassword || storedCustomHash)) {
+        if ((matchedInst.status || matchedInst.lifecycleStatus) === 'Suspended') {
+          return { matched: true, success: false, message: 'This school account is currently suspended.' }
+        }
+        const isPasswordValid = storedCustomHash
+          ? inputHash === storedCustomHash
+          : matchedInst.adminPassword === pass
+        if (!isPasswordValid) {
+          return { matched: true, success: false, message: 'Invalid email or password.' }
+        }
+        return {
+          matched: true,
+          success: true,
+          user: {
+            id: `usr-${matchedInst.id}`,
+            name: matchedInst.adminName || matchedInst.principal || 'School Principal',
+            roleTitle: 'School Principal / Admin',
+            role: 'institute_admin',
+            email: mail,
+            avatar: null,
+            instituteId: matchedInst.id,
+            instituteName: matchedInst.name,
+            instituteType: 'School',
+            tier: 'school',
+            enabledTiers: ['school'],
+            scope: 'School Administration (K-10)',
+            loginTimestamp: new Date().toISOString()
+          }
+        }
+      }
+      return { matched: false }
+    }
+
+    // 1. Call Backend API (/api/auth/login) for verification
+    try {
+      const endpoint =
+        typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+          ? '/api/auth/login'
+          : getApiUrl('/api/auth/login')
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: mail, password: pass })
+      })
+
+      const data = await response.json().catch(() => null)
+
+      if (response.ok && data?.success && data?.user) {
+        // Respect locally updated custom password override if user changed password in browser
+        if (storedCustomHash && inputHash !== storedCustomHash) {
+          return { success: false, message: 'Invalid email or password.' }
+        }
+        commitAuthenticatedSession(data.user, data.token || null)
+        return { success: true, user: data.user }
+      }
+
+      // If backend responded (e.g. 401/403/400), check if account was provisioned solely in local browser store
+      if (data !== null) {
+        const localRes = verifyLocalDatabaseAccount()
+        if (localRes.matched) {
+          if (localRes.success) {
+            commitAuthenticatedSession(localRes.user)
+            return { success: true, user: localRes.user }
+          }
+          return { success: false, message: localRes.message }
+        }
+        return { success: false, message: data?.error || 'Invalid email or password.' }
+      }
+    } catch (_) {
+      // Backend API unreachable -> fall through to strict offline verification below
+    }
+
+    // 2. Strict Offline / Static-Host Verification (never skips password check)
+    const localRes = verifyLocalDatabaseAccount()
+    if (localRes.matched) {
+      if (localRes.success) {
+        commitAuthenticatedSession(localRes.user)
+        return { success: true, user: localRes.user }
+      }
+      return { success: false, message: localRes.message }
+    }
+
+    const offlineDefaults = {
+      'admin@schoolms.com': {
+        id: 'usr-1',
+        name: 'Super Administrator',
+        roleTitle: 'Superadmin',
+        role: 'superadmin',
+        email: 'admin@schoolms.com',
+        instituteId: null,
+        instituteName: 'Central Headquarters',
+        scope: 'Schools Platform Administration'
+      },
+      'admin@apexed.io': {
+        id: 'usr-1-apex',
+        name: 'Super Administrator',
+        roleTitle: 'Superadmin',
+        role: 'superadmin',
+        email: 'admin@apexed.io',
+        instituteId: null,
+        instituteName: 'Central Headquarters',
+        scope: 'Schools Platform Administration'
+      },
+      'admin.beacon@sms.edu': {
+        id: 'usr-beacon-1',
+        name: 'Beaconhouse School Admin',
+        roleTitle: 'School Principal',
+        role: 'institute_admin',
+        email: 'admin.beacon@sms.edu',
+        instituteId: 'inst-1',
+        instituteName: 'Beaconhouse Central High School',
+        instituteType: 'School',
+        tier: 'school',
+        enabledTiers: ['school'],
+        scope: 'School Administration (K-10)'
+      },
+      'admin.school@cityschool.edu': {
+        id: 'usr-city-2',
+        name: 'Mrs. Samina Khurram',
+        roleTitle: 'School Principal',
+        role: 'institute_admin',
+        email: 'admin.school@cityschool.edu',
+        instituteId: 'inst-2',
+        instituteName: 'City School Model Town Campus',
+        instituteType: 'School',
+        tier: 'school',
+        enabledTiers: ['school'],
+        scope: 'School Administration (K-10)'
+      }
+    }
+
+    const builtIn = offlineDefaults[mail]
+    if (builtIn) {
+      const isDefaultValid = storedCustomHash
         ? inputHash === storedCustomHash
-        : matchedDbUser.passwordHash
-          ? (inputHash === matchedDbUser.passwordHash || matchedDbUser.password === pass)
-          : matchedDbUser.password
-            ? matchedDbUser.password === pass
-            : isDefaultDemoPass
+        : ['password123', 'admin123', 'Password@123'].includes(pass)
 
-      if (!isPasswordValid) {
-        return { success: false, message: 'Invalid email or password. Please check your credentials and try again.' }
+      if (!isDefaultValid) {
+        return { success: false, message: 'Invalid email or password.' }
       }
-
-      const targetRole = matchedDbUser.role === 'superadmin' ? 'superadmin' : 'institute_admin'
-      login(targetRole, matchedDbUser.email || mail, remember)
-      return { success: true, role: targetRole }
+      commitAuthenticatedSession({ ...builtIn, loginTimestamp: new Date().toISOString() })
+      return { success: true, user: builtIn }
     }
 
-    // 2. Check registered school adminEmail/email on institutes list
-    const matchedInst = dbInstitutes.find(
-      i => (i.adminEmail || '').trim().toLowerCase() === mail || (i.email || '').trim().toLowerCase() === mail
-    )
-    if (matchedInst) {
-      if ((matchedInst.status || matchedInst.lifecycleStatus) === 'Suspended') {
-        return { success: false, message: 'This school portal is currently suspended.' }
-      }
-
-      const isPasswordValid = storedCustomHash
-        ? inputHash === storedCustomHash
-        : matchedInst.adminPassword
-          ? matchedInst.adminPassword === pass
-          : isDefaultDemoPass
-
-      if (!isPasswordValid) {
-        return { success: false, message: 'Invalid email or password. Please check your credentials and try again.' }
-      }
-
-      login('institute_admin', mail, remember)
-      return { success: true, role: 'institute_admin' }
-    }
-
-    // 3. Check built-in Super Admin accounts
-    if (mail === 'admin@schoolms.com' || mail === 'admin@apexed.io' || mail === 'superadmin') {
-      const isPasswordValid = storedCustomHash ? inputHash === storedCustomHash : isDefaultDemoPass
-      if (!isPasswordValid) {
-        return { success: false, message: 'Invalid email or password. Please check your credentials and try again.' }
-      }
-      login('superadmin', mail === 'superadmin' ? 'admin@schoolms.com' : mail, remember)
-      return { success: true, role: 'superadmin' }
-    }
-
-    // 4. Check built-in School Admin demo accounts
-    if (mail === 'admin.school@cityschool.edu' || mail === 'admin.beacon@sms.edu') {
-      const isPasswordValid = storedCustomHash ? inputHash === storedCustomHash : isDefaultDemoPass
-      if (!isPasswordValid) {
-        return { success: false, message: 'Invalid email or password. Please check your credentials and try again.' }
-      }
-      login('institute_admin', mail, remember)
-      return { success: true, role: 'institute_admin' }
-    }
-
-    return { success: false, message: 'No active account found with this email address.' }
+    return { success: false, message: 'Invalid email or password.' }
   }
 
   const logout = () => {
     setUser(null)
     try {
       sessionStorage.removeItem('sms_auth_user')
+      sessionStorage.removeItem('sms_auth_token')
       localStorage.removeItem('sms_auth_user')
+      if (typeof window !== 'undefined') {
+        window.history.replaceState(null, '', '/')
+      }
       window.dispatchEvent(new Event('sms_auth_logout'))
     } catch (e) {
       console.error('Storage clear error:', e)
