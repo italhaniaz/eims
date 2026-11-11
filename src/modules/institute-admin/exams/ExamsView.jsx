@@ -1035,7 +1035,7 @@ export const ExamsView = ({ currentInstitute }) => {
                 OFFICIAL EXAMINATION DATE SHEET • {dateSheetTerm || terms[0]?.name || 'TERM EXAMINATION'}
               </p>
               <p className="text-[10px] text-slate-500 font-mono">
-                Class / Degree: {dateSheetClass} • Academic Session: {selectedSession} • Issued by Controller of Examinations
+                Class / Degree: {dateSheetClass} • Academic Session: {dateSheetTerm ? (terms.find(t => t.name === dateSheetTerm)?.session || sessionsList[0] || '2026-2027') : (sessionsList[0] || '2026-2027')} • Issued by Controller of Examinations
               </p>
             </div>
             <div className="overflow-x-auto">
