@@ -1,33 +1,39 @@
 import React, { useState, useEffect } from 'react'
-import { 
-  LayoutDashboard, 
-  GraduationCap, 
-  Users, 
-  BookOpen, 
-  CalendarCheck, 
-  Receipt, 
-  Award, 
-  Clock, 
-  Megaphone, 
-  ChevronLeft, 
-  ChevronRight, 
-  ChevronDown, 
-  ChevronUp, 
-  LogOut, 
+import {
+  LayoutDashboard,
+  GraduationCap,
+  Users,
+  BookOpen,
+  CalendarCheck,
+  Receipt,
+  Award,
+  Clock,
+  Megaphone,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  LogOut,
   School,
-  X, 
-  UserCheck, 
-  Bus, 
-  BookMarked, 
-  FileBadge, 
-  Laptop, 
-  Boxes, 
-  Calendar, 
-  BarChart3, 
-  ShieldCheck, 
-  Settings, 
-  CreditCard, 
-  Calculator
+  X,
+  UserCheck,
+  Bus,
+  BookMarked,
+  FileBadge,
+  Laptop,
+  Boxes,
+  Calendar,
+  BarChart3,
+  ShieldCheck,
+  Settings,
+  CreditCard,
+  Calculator,
+  Building2,
+  FileText,
+  PlayCircle,
+  ArrowLeftRight,
+  User,
+  MessageSquare,
+  Wallet
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { preloadRoute } from '../../utils/modulePreloader'
@@ -40,10 +46,126 @@ export const canRoleAccessRoute = (role, routeId) => {
   return routeId === 'inst-dashboard'
 }
 
-export const InstituteAdminSidebar = ({ 
-  currentRoute, 
-  onRouteChange, 
-  currentInstitute,
+const MENU_ITEMS = [
+  { id: 'inst-dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  {
+    id: 'grp-admissions',
+    label: 'Admissions',
+    icon: UserCheck,
+    children: [
+      { id: 'inst-admissions', label: 'Inquiries & Applications', icon: UserCheck },
+      { id: 'inst-certificates', label: 'SLC & Certificates', icon: FileBadge }
+    ]
+  },
+  {
+    id: 'grp-students',
+    label: 'Students',
+    icon: GraduationCap,
+    children: [
+      { id: 'inst-students', label: 'Students Directory', icon: GraduationCap },
+      { id: 'inst-learning', label: 'Homework & Learning', icon: Laptop }
+    ]
+  },
+  {
+    id: 'grp-attendance',
+    label: 'Attendance',
+    icon: CalendarCheck,
+    children: [
+      { id: 'inst-attendance', label: 'Daily Attendance Register', icon: CalendarCheck }
+    ]
+  },
+  {
+    id: 'grp-billing',
+    label: 'Billing & Fees',
+    icon: Receipt,
+    children: [
+      { id: 'inst-fees', label: 'Fee Invoices & Challans', icon: Receipt }
+    ]
+  },
+  {
+    id: 'grp-academics',
+    label: 'Academics',
+    icon: BookOpen,
+    children: [
+      { id: 'inst-classes', label: 'Classes & Sections', icon: BookOpen },
+      { id: 'inst-subjects', label: 'Curriculum & Subjects', icon: BookMarked },
+      { id: 'inst-timetable', label: 'Class Timetable', icon: Clock },
+      { id: 'inst-program-levels', label: 'Grade Levels', icon: GraduationCap }
+    ]
+  },
+  {
+    id: 'grp-exams',
+    label: 'Exams & Results',
+    icon: Award,
+    children: [
+      { id: 'inst-exams', label: 'Examinations & Marks', icon: Award }
+    ]
+  },
+  {
+    id: 'grp-finance',
+    label: 'Finance & Accounts',
+    icon: Calculator,
+    children: [
+      { id: 'inst-accounts', label: 'Campus Accounts & Ledger', icon: Calculator }
+    ]
+  },
+  {
+    id: 'grp-staff',
+    label: 'Staff & Payroll',
+    icon: Users,
+    children: [
+      { id: 'inst-teachers', label: 'Faculty & Staff Roster', icon: Users },
+      { id: 'inst-payroll', label: 'Payroll & Compensation', icon: CreditCard }
+    ]
+  },
+  {
+    id: 'grp-communication',
+    label: 'Communication',
+    icon: MessageSquare,
+    children: [
+      { id: 'inst-notices', label: 'Notices & Circulars', icon: Megaphone },
+      { id: 'inst-events', label: 'Events & Calendar', icon: Calendar },
+      { id: 'inst-communication', label: 'SMS & Email Gateway', icon: MessageSquare }
+    ]
+  },
+  { id: 'inst-inventory', label: 'Inventory', icon: Boxes },
+  { id: 'inst-library', label: 'Library', icon: BookMarked },
+  {
+    id: 'grp-transport-hostels',
+    label: 'Transport & Hostels',
+    icon: Bus,
+    children: [
+      { id: 'inst-transport', label: 'Transport & Fleet', icon: Bus },
+      { id: 'inst-hostels', label: 'Hostels & Boarding', icon: Building2 }
+    ]
+  },
+  { id: 'inst-reports', label: 'Reports', icon: BarChart3 },
+  { id: 'inst-policies', label: 'Policies & Guidelines', icon: FileText },
+  {
+    id: 'grp-settings',
+    label: 'Settings',
+    icon: Settings,
+    children: [
+      { id: 'inst-settings', label: 'Campus System Settings', icon: Settings },
+      { id: 'inst-users', label: 'Users & Roles', icon: ShieldCheck }
+    ]
+  },
+  {
+    id: 'grp-subscription',
+    label: 'Subscription',
+    icon: Wallet,
+    children: [
+      { id: 'inst-subscription', label: 'Plan & Billing', icon: CreditCard }
+    ]
+  },
+  { id: 'inst-training', label: 'Training Videos', icon: PlayCircle },
+  { id: 'inst-my-transactions', label: 'My Transactions', icon: ArrowLeftRight },
+  { id: 'inst-my-account', label: 'My Account', icon: User }
+]
+
+export const InstituteAdminSidebar = ({
+  currentRoute,
+  onRouteChange,
   instituteName,
   isMobileOpen = false,
   onCloseMobile = () => {}
@@ -54,29 +176,20 @@ export const InstituteAdminSidebar = ({
   const userRole = user?.role || 'institute_admin'
   const canAccessRoute = (routeId) => canRoleAccessRoute(userRole, routeId)
 
-  // Route active state check
-  const isRouteActive = (route) => currentRoute === route
+  const findGroupForRoute = (routeId) =>
+    MENU_ITEMS.find(item => item.children?.some(child => child.id === routeId))?.id || null
 
-  // Accordion active groups
-  const isFacultyRoute = ['inst-teachers', 'inst-payroll'].includes(currentRoute)
-  const isAcademicsRoute = ['inst-classes', 'inst-subjects', 'inst-timetable', 'inst-program-levels'].includes(currentRoute)
-  const isFinanceRoute = ['inst-fees', 'inst-accounts'].includes(currentRoute)
-  const isServicesRoute = ['inst-transport', 'inst-library', 'inst-inventory'].includes(currentRoute)
-  const isUsersRoute = ['inst-users', 'inst-settings'].includes(currentRoute)
-
-  const [facultyOpen, setFacultyOpen] = useState(isFacultyRoute)
-  const [academicsOpen, setAcademicsOpen] = useState(isAcademicsRoute)
-  const [financeOpen, setFinanceOpen] = useState(isFinanceRoute)
-  const [servicesOpen, setServicesOpen] = useState(isServicesRoute)
-  const [usersOpen, setUsersOpen] = useState(isUsersRoute)
+  const [openGroups, setOpenGroups] = useState(() => {
+    const activeGroup = findGroupForRoute(currentRoute)
+    return activeGroup ? { [activeGroup]: true } : {}
+  })
 
   useEffect(() => {
-    if (isFacultyRoute) setFacultyOpen(true)
-    if (isAcademicsRoute) setAcademicsOpen(true)
-    if (isFinanceRoute) setFinanceOpen(true)
-    if (isServicesRoute) setServicesOpen(true)
-    if (isUsersRoute) setUsersOpen(true)
-  }, [currentRoute, isFacultyRoute, isAcademicsRoute, isFinanceRoute, isServicesRoute, isUsersRoute])
+    const activeGroup = findGroupForRoute(currentRoute)
+    if (activeGroup) {
+      setOpenGroups(prev => (prev[activeGroup] ? prev : { ...prev, [activeGroup]: true }))
+    }
+  }, [currentRoute])
 
   const handleNavClick = (id) => {
     preloadRoute(id)
@@ -86,26 +199,30 @@ export const InstituteAdminSidebar = ({
     }
   }
 
+  const toggleGroup = (groupId) => {
+    if (collapsed) setCollapsed(false)
+    setOpenGroups(prev => ({ ...prev, [groupId]: !prev[groupId] }))
+  }
+
   return (
     <>
-      {/* Mobile Backdrop */}
       {isMobileOpen && (
-        <div 
+        <div
           onClick={onCloseMobile}
           className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 lg:hidden"
         />
       )}
 
-      <aside 
+      <aside
         className={`
           fixed lg:static top-0 bottom-0 left-0 z-50
           ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-          ${collapsed ? 'lg:w-20' : 'w-64'} 
-          h-full max-h-screen sidebar-navy bg-[var(--sidebar-bg)] text-[var(--sidebar-text)] border-r border-[var(--sidebar-border)] flex flex-col 
+          ${collapsed ? 'lg:w-20' : 'w-64'}
+          h-full max-h-screen sidebar-navy bg-[var(--sidebar-bg)] text-[var(--sidebar-text)] border-r border-[var(--sidebar-border)] flex flex-col
           transition-all duration-300 shrink-0 select-none
         `}
       >
-        {/* Top Header */}
+        {/* Top Brand Header */}
         <div className="h-14 sm:h-16 min-h-[56px] sm:min-h-[64px] flex items-center justify-between px-4 sm:px-5 border-b border-slate-100 shrink-0">
           {(!collapsed || isMobileOpen) && (
             <div className="flex items-center gap-2.5 overflow-hidden">
@@ -123,8 +240,7 @@ export const InstituteAdminSidebar = ({
             </div>
           )}
 
-          {/* Mobile Close Button */}
-          <button 
+          <button
             onClick={onCloseMobile}
             className="lg:hidden text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition-colors ml-auto cursor-pointer"
             title="Close Menu"
@@ -132,655 +248,122 @@ export const InstituteAdminSidebar = ({
             <X className="w-5 h-5" />
           </button>
 
-          {/* Desktop Collapse Button */}
-          <button 
+          <button
             onClick={() => setCollapsed(!collapsed)}
             className="hidden lg:block text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition-colors ml-auto cursor-pointer"
-            title={collapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+            title={collapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
           >
             {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
         </div>
 
         {/* Navigation Menu */}
-        <div className="flex-1 py-3 px-3 space-y-1 overflow-y-auto dark-scroll text-[13.5px]">
+        <nav className="flex-1 py-3 px-3 space-y-1 overflow-y-auto dark-scroll text-[13.5px]">
+          {MENU_ITEMS.map(item => {
+            const Icon = item.icon
 
-          {/* 1. Campus Dashboard (Both) */}
-          <div className="relative">
-            {isRouteActive('inst-dashboard') && (
-
-              <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
-
-            )}
-            <button
-              onClick={() => handleNavClick('inst-dashboard')}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
-                isRouteActive('inst-dashboard')
-
-                  ? 'bg-[#ecfdf5] text-emerald-800 font-semibold shadow-2xs'
-
-                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
-              }`}
-            >
-              <LayoutDashboard className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-
-                isRouteActive('inst-dashboard') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
-
-              }`} />
-              {(!collapsed || isMobileOpen) && <span>School Dashboard</span>}
-            </button>
-          </div>
-
-          {/* Section Divider */}
-          {(!collapsed || isMobileOpen) && (
-            <div className="pt-2.5 pb-1 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              <span>School Operational Modules</span>
-            </div>
-          )}
-
-          {/* ================= SCHOOL ADMIN: 15 MODULES ============== */}
-              {/* 2. Admissions & Leads */}
-              {canAccessRoute('inst-admissions') && (
-                <div className="relative">
-                  {isRouteActive('inst-admissions') && (
-
-                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
-
+            if (!item.children) {
+              if (!canAccessRoute(item.id)) return null
+              const active = currentRoute === item.id
+              return (
+                <div key={item.id} className="relative">
+                  {active && (
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10" />
                   )}
                   <button
-                    onClick={() => handleNavClick('inst-admissions')}
+                    type="button"
+                    onClick={() => handleNavClick(item.id)}
+                    onMouseEnter={() => preloadRoute(item.id)}
                     className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
-                      isRouteActive('inst-admissions')
-
+                      active
                         ? 'bg-[#ecfdf5] text-emerald-800 font-semibold shadow-2xs'
-
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
                     }`}
                   >
-                    <UserCheck className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-
-                      isRouteActive('inst-admissions') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
-
-                    }`} />
-                    {(!collapsed || isMobileOpen) && <span>Admissions & Leads</span>}
+                    <Icon
+                      className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                        active ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
+                      }`}
+                    />
+                    {(!collapsed || isMobileOpen) && <span className="truncate">{item.label}</span>}
                   </button>
                 </div>
-              )}
+              )
+            }
 
-              {/* 3. Students Directory */}
-              {canAccessRoute('inst-students') && (
-                <div className="relative">
-                  {isRouteActive('inst-students') && (
+            const allowedChildren = item.children.filter(child => canAccessRoute(child.id))
+            if (allowedChildren.length === 0) return null
 
-                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
+            const isGroupActive = allowedChildren.some(child => child.id === currentRoute)
+            const isOpen = Boolean(openGroups[item.id])
 
+            return (
+              <div key={item.id}>
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(item.id)}
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-colors cursor-pointer group ${
+                    isGroupActive
+                      ? 'text-emerald-800 bg-[#ecfdf5]/60 font-semibold'
+                      : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Icon
+                      className={`w-[18px] h-[18px] shrink-0 transition-colors ${
+                        isGroupActive ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
+                      }`}
+                    />
+                    {(!collapsed || isMobileOpen) && <span className="truncate">{item.label}</span>}
+                  </div>
+                  {(!collapsed || isMobileOpen) && (
+                    <ChevronRight
+                      className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform ${
+                        isOpen ? 'rotate-90 text-emerald-600' : ''
+                      }`}
+                    />
                   )}
-                  <button
-                    onClick={() => handleNavClick('inst-students')}
-                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
-                      isRouteActive('inst-students')
+                </button>
 
-                        ? 'bg-[#ecfdf5] text-emerald-800 font-semibold shadow-2xs'
-
-                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
-                    }`}
-                  >
-                    <GraduationCap className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-
-                      isRouteActive('inst-students') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
-
-                    }`} />
-                    {(!collapsed || isMobileOpen) && <span>Students Directory</span>}
-                  </button>
-                </div>
-              )}
-
-              {/* 4. Staff & Faculty (Payroll ke sath) */}
-              {(canAccessRoute('inst-teachers') || canAccessRoute('inst-payroll')) && (
-                <div>
-                  <button
-                    onClick={() => {
-                      if (collapsed) setCollapsed(false)
-                      setFacultyOpen(!facultyOpen)
-                    }}
-                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-colors cursor-pointer group ${
-                      isFacultyRoute 
-
-                        ? 'text-emerald-800 bg-[#ecfdf5]/50 font-semibold' 
-
-                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/80'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Users className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-
-                        isFacultyRoute ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
-
-                      }`} />
-                      {(!collapsed || isMobileOpen) && (
-                        <div className="flex items-center gap-1.5">
-                          <span>Staff & Faculty</span>
-
-                          <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.2 rounded-md">
-
-                            Payroll
-                          </span>
+                {(!collapsed || isMobileOpen) && isOpen && (
+                  <div className="mt-1 pl-3.5 space-y-1 border-l-2 border-slate-100 ml-5">
+                    {allowedChildren.map(child => {
+                      const ChildIcon = child.icon
+                      const active = currentRoute === child.id
+                      return (
+                        <div key={child.id} className="relative">
+                          {active && (
+                            <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10" />
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleNavClick(child.id)}
+                            onMouseEnter={() => preloadRoute(child.id)}
+                            className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
+                              active
+                                ? 'bg-[#ecfdf5] text-emerald-800 font-semibold'
+                                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                            }`}
+                          >
+                            <ChildIcon
+                              className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-emerald-600' : 'text-slate-400'}`}
+                            />
+                            <span className="truncate">{child.label}</span>
+                          </button>
                         </div>
-                      )}
-                    </div>
-                    {(!collapsed || isMobileOpen) && (
-                      facultyOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-                    )}
-                  </button>
-
-                  {(!collapsed || isMobileOpen) && facultyOpen && (
-                    <div className="mt-1 pl-3.5 space-y-1 border-l-2 border-slate-100 ml-5">
-                      {[
-                        { route: 'inst-teachers', label: 'Faculty & Staff Roster', icon: Users },
-                        { route: 'inst-payroll', label: 'Payroll & Compensation', icon: CreditCard }
-                      ].map(item => {
-                        const ItemIcon = item.icon
-                        const active = isRouteActive(item.route)
-                        return (
-                          <div key={item.route} className="relative">
-                            {active && (
-
-                              <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
-
-                            )}
-                            <button
-                              onClick={() => handleNavClick(item.route)}
-                              className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
-                                active
-
-                                  ? 'bg-[#ecfdf5] text-emerald-800 font-semibold'
-                                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
-                              }`}
-                            >
-                              <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-emerald-600' : 'text-slate-400'}`} />
-
-                              <span className="truncate">{item.label}</span>
-                            </button>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* 5. Academics (Classes, Subjects, Timetable) */}
-              {(canAccessRoute('inst-classes') || canAccessRoute('inst-subjects') || canAccessRoute('inst-timetable')) && (
-                <div>
-                  <button
-                    onClick={() => {
-                      if (collapsed) setCollapsed(false)
-                      setAcademicsOpen(!academicsOpen)
-                    }}
-                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-colors cursor-pointer group ${
-                      isAcademicsRoute 
-
-                        ? 'text-emerald-800 bg-[#ecfdf5]/50 font-semibold' 
-
-                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/80'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <BookOpen className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-
-                        isAcademicsRoute ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
-
-                      }`} />
-                      {(!collapsed || isMobileOpen) && <span>Academics</span>}
-                    </div>
-                    {(!collapsed || isMobileOpen) && (
-                      academicsOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-                    )}
-                  </button>
-
-                  {(!collapsed || isMobileOpen) && academicsOpen && (
-                    <div className="mt-1 pl-3.5 space-y-1 border-l-2 border-slate-100 ml-5">
-                      {[
-                        { route: 'inst-classes', label: 'Classes & Sections', icon: BookOpen },
-                        { route: 'inst-subjects', label: 'Curriculum & Subjects', icon: BookMarked },
-                        { route: 'inst-timetable', label: 'Class Timetable', icon: Clock }
-                      ].map(item => {
-                        const ItemIcon = item.icon
-                        const active = isRouteActive(item.route)
-                        return (
-                          <div key={item.route} className="relative">
-                            {active && (
-
-                              <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
-
-                            )}
-                            <button
-                              onClick={() => handleNavClick(item.route)}
-                              className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
-                                active
-
-                                  ? 'bg-[#ecfdf5] text-emerald-800 font-semibold'
-                                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
-                              }`}
-                            >
-                              <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-emerald-600' : 'text-slate-400'}`} />
-
-                              <span className="truncate">{item.label}</span>
-                            </button>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* 6. Attendance Register */}
-              {canAccessRoute('inst-attendance') && (
-                <div className="relative">
-                  {isRouteActive('inst-attendance') && (
-
-                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
-
-                  )}
-                  <button
-                    onClick={() => handleNavClick('inst-attendance')}
-                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
-                      isRouteActive('inst-attendance')
-
-                        ? 'bg-[#ecfdf5] text-emerald-800 font-semibold shadow-2xs'
-
-                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
-                    }`}
-                  >
-                    <CalendarCheck className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-
-                      isRouteActive('inst-attendance') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
-
-                    }`} />
-                    {(!collapsed || isMobileOpen) && <span>Attendance Register</span>}
-                  </button>
-                </div>
-              )}
-
-              {/* 7. Term Examinations & Marks */}
-              {canAccessRoute('inst-exams') && (
-                <div className="relative">
-                  {isRouteActive('inst-exams') && (
-
-                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
-
-                  )}
-                  <button
-                    onClick={() => handleNavClick('inst-exams')}
-                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
-                      isRouteActive('inst-exams')
-
-                        ? 'bg-[#ecfdf5] text-emerald-800 font-semibold shadow-2xs'
-
-                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
-                    }`}
-                  >
-                    <Award className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-
-                      isRouteActive('inst-exams') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
-
-                    }`} />
-                    {(!collapsed || isMobileOpen) && <span>Term Examinations & Marks</span>}
-                  </button>
-                </div>
-              )}
-
-              {/* 8. Fees & Finance (Accounts ke sath) */}
-              {(canAccessRoute('inst-fees') || canAccessRoute('inst-accounts')) && (
-                <div>
-                  <button
-                    onClick={() => {
-                      if (collapsed) setCollapsed(false)
-                      setFinanceOpen(!financeOpen)
-                    }}
-                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-colors cursor-pointer group ${
-                      isFinanceRoute 
-
-                        ? 'text-emerald-800 bg-[#ecfdf5]/50 font-semibold' 
-
-                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/80'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Receipt className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-
-                        isFinanceRoute ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
-
-                      }`} />
-                      {(!collapsed || isMobileOpen) && (
-                        <div className="flex items-center gap-1.5">
-                          <span>Fees & Finance</span>
-
-                          <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.2 rounded-md">
-
-                            Accounts
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    {(!collapsed || isMobileOpen) && (
-                      financeOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-                    )}
-                  </button>
-
-                  {(!collapsed || isMobileOpen) && financeOpen && (
-                    <div className="mt-1 pl-3.5 space-y-1 border-l-2 border-slate-100 ml-5">
-                      {[
-                        { route: 'inst-fees', label: 'Fee Invoices & Challans', icon: Receipt },
-                        { route: 'inst-accounts', label: 'Campus Accounts & Ledger', icon: Calculator }
-                      ].map(item => {
-                        const ItemIcon = item.icon
-                        const active = isRouteActive(item.route)
-                        return (
-                          <div key={item.route} className="relative">
-                            {active && (
-
-                              <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
-
-                            )}
-                            <button
-                              onClick={() => handleNavClick(item.route)}
-                              className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
-                                active
-
-                                  ? 'bg-[#ecfdf5] text-emerald-800 font-semibold'
-                                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
-                              }`}
-                            >
-                              <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-emerald-600' : 'text-slate-400'}`} />
-
-                              <span className="truncate">{item.label}</span>
-                            </button>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* 9. Communication & Notices */}
-              {canAccessRoute('inst-notices') && (
-              <div className="relative">
-                {isRouteActive('inst-notices') && (
-
-                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
-
+                      )
+                    })}
+                  </div>
                 )}
-                <button
-                  onClick={() => handleNavClick('inst-notices')}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
-                    isRouteActive('inst-notices')
-
-                      ? 'bg-[#ecfdf5] text-emerald-800 font-semibold shadow-2xs'
-
-                      : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
-                  }`}
-                >
-                  <Megaphone className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-
-                    isRouteActive('inst-notices') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
-
-                  }`} />
-                  {(!collapsed || isMobileOpen) && <span>Communication & Notices</span>}
-                </button>
               </div>
-              )}
+            )
+          })}
+        </nav>
 
-              {/* 10. Homework & Learning Resources */}
-              {canAccessRoute('inst-learning') && (
-              <div className="relative">
-                {isRouteActive('inst-learning') && (
-
-                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
-
-                )}
-                <button
-                  onClick={() => handleNavClick('inst-learning')}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
-                    isRouteActive('inst-learning')
-
-                      ? 'bg-[#ecfdf5] text-emerald-800 font-semibold shadow-2xs'
-
-                      : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
-                  }`}
-                >
-                  <Laptop className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-
-                    isRouteActive('inst-learning') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
-
-                  }`} />
-                  {(!collapsed || isMobileOpen) && <span>Homework & Learning Resources</span>}
-                </button>
-              </div>
-              )}
-
-              {/* 11. Campus Services (Transport, Library, Inventory) */}
-              {(canAccessRoute('inst-transport') || canAccessRoute('inst-library') || canAccessRoute('inst-inventory')) && (
-                <div>
-                  <button
-                    onClick={() => {
-                      if (collapsed) setCollapsed(false)
-                      setServicesOpen(!servicesOpen)
-                    }}
-                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-colors cursor-pointer group ${
-                      isServicesRoute 
-
-                        ? 'text-emerald-800 bg-[#ecfdf5]/50 font-semibold' 
-
-                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/80'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Bus className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-
-                        isServicesRoute ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
-
-                      }`} />
-                      {(!collapsed || isMobileOpen) && <span>Campus Services</span>}
-                    </div>
-                    {(!collapsed || isMobileOpen) && (
-                      servicesOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-                    )}
-                  </button>
-
-                  {(!collapsed || isMobileOpen) && servicesOpen && (
-                    <div className="mt-1 pl-3.5 space-y-1 border-l-2 border-slate-100 ml-5">
-                      {[
-                        { route: 'inst-transport', label: 'Transport & Fleet', icon: Bus },
-                        { route: 'inst-library', label: 'Library & Books', icon: BookMarked },
-                        { route: 'inst-inventory', label: 'Inventory & Assets', icon: Boxes }
-                      ].map(item => {
-                        const ItemIcon = item.icon
-                        const active = isRouteActive(item.route)
-                        return (
-                          <div key={item.route} className="relative">
-                            {active && (
-
-                              <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
-
-                            )}
-                            <button
-                              onClick={() => handleNavClick(item.route)}
-                              className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
-                                active
-
-                                  ? 'bg-[#ecfdf5] text-emerald-800 font-semibold'
-                                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
-                              }`}
-                            >
-                              <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-emerald-600' : 'text-slate-400'}`} />
-
-                              <span className="truncate">{item.label}</span>
-                            </button>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* 12. School Leaving (SLC) & Certificates */}
-              {canAccessRoute('inst-certificates') && (
-                <div className="relative">
-                  {isRouteActive('inst-certificates') && (
-
-                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
-
-                  )}
-                  <button
-                    onClick={() => handleNavClick('inst-certificates')}
-                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
-                      isRouteActive('inst-certificates')
-
-                        ? 'bg-[#ecfdf5] text-emerald-800 font-semibold shadow-2xs'
-
-                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
-                    }`}
-                  >
-                    <FileBadge className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-
-                      isRouteActive('inst-certificates') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
-
-                    }`} />
-                    {(!collapsed || isMobileOpen) && <span>School Leaving (SLC) & Certificates</span>}
-                  </button>
-                </div>
-              )}
-
-              {/* 13. Events & Calendar */}
-              {canAccessRoute('inst-events') && (
-              <div className="relative">
-                {isRouteActive('inst-events') && (
-
-                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
-
-                )}
-                <button
-                  onClick={() => handleNavClick('inst-events')}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
-                    isRouteActive('inst-events')
-
-                      ? 'bg-[#ecfdf5] text-emerald-800 font-semibold shadow-2xs'
-
-                      : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
-                  }`}
-                >
-                  <Calendar className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-
-                    isRouteActive('inst-events') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
-
-                  }`} />
-                  {(!collapsed || isMobileOpen) && <span>Events & Calendar</span>}
-                </button>
-              </div>
-              )}
-
-              {/* 14. Reports & Analytics */}
-              {canAccessRoute('inst-reports') && (
-              <div className="relative">
-                {isRouteActive('inst-reports') && (
-
-                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
-
-                )}
-                <button
-                  onClick={() => handleNavClick('inst-reports')}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer group ${
-                    isRouteActive('inst-reports')
-
-                      ? 'bg-[#ecfdf5] text-emerald-800 font-semibold shadow-2xs'
-
-                      : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/80'
-                  }`}
-                >
-                  <BarChart3 className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-
-                    isRouteActive('inst-reports') ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
-
-                  }`} />
-                  {(!collapsed || isMobileOpen) && <span>Reports & Analytics</span>}
-                </button>
-              </div>
-              )}
-
-              {/* 15. Users, Roles & Settings */}
-              {(canAccessRoute('inst-users') || canAccessRoute('inst-settings')) && (
-                <div>
-                  <button
-                    onClick={() => {
-                      if (collapsed) setCollapsed(false)
-                      setUsersOpen(!usersOpen)
-                    }}
-                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-colors cursor-pointer group ${
-                      isUsersRoute 
-
-                        ? 'text-emerald-800 bg-[#ecfdf5]/50 font-semibold' 
-
-                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/80'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <ShieldCheck className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-
-                        isUsersRoute ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-600'
-
-                      }`} />
-                      {(!collapsed || isMobileOpen) && <span>Users, Roles & Settings</span>}
-                    </div>
-                    {(!collapsed || isMobileOpen) && (
-                      usersOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-                    )}
-                  </button>
-
-                  {(!collapsed || isMobileOpen) && usersOpen && (
-                    <div className="mt-1 pl-3.5 space-y-1 border-l-2 border-slate-100 ml-5">
-                      {[
-                        { route: 'inst-users', label: 'User Logins & Roles', icon: ShieldCheck },
-                        { route: 'inst-settings', label: 'Campus System Settings', icon: Settings }
-                      ].map(item => {
-                        const ItemIcon = item.icon
-                        const active = isRouteActive(item.route)
-                        return (
-                          <div key={item.route} className="relative">
-                            {active && (
-
-                              <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-emerald-600 rounded-full z-10"></div>
-
-                            )}
-                            <button
-                              onClick={() => handleNavClick(item.route)}
-                              className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
-                                active
-
-                                  ? 'bg-[#ecfdf5] text-emerald-800 font-semibold'
-                                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
-                              }`}
-                            >
-                              <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-emerald-600' : 'text-slate-400'}`} />
-
-                              <span className="truncate">{item.label}</span>
-                            </button>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-
-        </div>
-
-        {/* Clean Sign Out Footer */}
+        {/* Sign Out Footer */}
         <div className="p-3 border-t border-slate-100 bg-white">
           <button
+            type="button"
             onClick={logout}
             className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors text-xs font-semibold cursor-pointer"
           >

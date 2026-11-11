@@ -32,8 +32,15 @@ const ROUTE_LOADERS = {
   'inst-events': () => import('../modules/institute-admin/events/CampusEventsCalendarView'),
   'inst-reports': () => import('../modules/institute-admin/reports/CampusReportsAnalyticsView'),
   'inst-users': () => import('../modules/users-management/UsersManagementView'),
-  'inst-settings': () => import('../modules/users-management/UsersManagementView'),
+  'inst-settings': () => import('../modules/institute-admin/settings/CampusSettingsView'),
   'inst-program-levels': () => import('../modules/academics/ProgramLevelsView'),
+  'inst-communication': () => import('../modules/communication/CommunicationGatewayView'),
+  'inst-hostels': () => import('../modules/institute-admin/hostels/HostelsView'),
+  'inst-policies': () => import('../modules/institute-admin/policies/CampusPoliciesView'),
+  'inst-subscription': () => import('../modules/institute-admin/subscription/CampusSubscriptionView'),
+  'inst-training': () => import('../modules/institute-admin/training/TrainingVideosView'),
+  'inst-my-transactions': () => import('../modules/institute-admin/transactions/MyTransactionsView'),
+  'inst-my-account': () => import('../modules/institute-admin/account/MyAccountView'),
 
   // --- Superadmin Governance Routes ---
   'dashboard': () => import('../modules/dashboard/SuperadminDashboard'),

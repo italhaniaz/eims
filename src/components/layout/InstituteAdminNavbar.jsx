@@ -105,8 +105,15 @@ export const InstituteAdminNavbar = ({
       case 'inst-inventory': return 'Campus Inventory & Asset Management'
       case 'inst-events': return 'Events & Calendar'
       case 'inst-reports': return 'Reports & Analytics'
-      case 'inst-users': return 'Users, Roles & Access'
-      case 'inst-settings': return 'School System Settings'
+      case 'inst-communication': return 'SMS & Email Gateway'
+      case 'inst-hostels': return 'Hostels & Boarding'
+      case 'inst-policies': return 'Policies & Guidelines'
+      case 'inst-users': return 'Users & Roles'
+      case 'inst-settings': return 'Campus System Settings'
+      case 'inst-subscription': return 'Subscription & Plan'
+      case 'inst-training': return 'Training Videos'
+      case 'inst-my-transactions': return 'My Transactions'
+      case 'inst-my-account': return 'My Account & Security'
       default: return tierConfig?.portalTitle || 'School Portal'
     }
   }

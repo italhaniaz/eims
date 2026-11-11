@@ -77,6 +77,13 @@ const CampusEventsCalendarView = lazyWithRetry(() => import('./modules/institute
 const CampusReportsAnalyticsView = lazyWithRetry(() => import('./modules/institute-admin/reports/CampusReportsAnalyticsView'), 'campus-reports-view')
 
 const CampusAccountsView = lazyWithRetry(() => import('./modules/institute-admin/accounts/CampusAccountsView'), 'campus-accounts-view')
+const HostelsView = lazyWithRetry(() => import('./modules/institute-admin/hostels/HostelsView'), 'campus-hostels-view')
+const CampusPoliciesView = lazyWithRetry(() => import('./modules/institute-admin/policies/CampusPoliciesView'), 'campus-policies-view')
+const CampusSettingsView = lazyWithRetry(() => import('./modules/institute-admin/settings/CampusSettingsView'), 'campus-settings-view')
+const CampusSubscriptionView = lazyWithRetry(() => import('./modules/institute-admin/subscription/CampusSubscriptionView'), 'campus-subscription-view')
+const TrainingVideosView = lazyWithRetry(() => import('./modules/institute-admin/training/TrainingVideosView'), 'campus-training-view')
+const MyTransactionsView = lazyWithRetry(() => import('./modules/institute-admin/transactions/MyTransactionsView'), 'campus-transactions-view')
+const MyAccountView = lazyWithRetry(() => import('./modules/institute-admin/account/MyAccountView'), 'campus-account-view')
 
 // Executive Seamless Loading Fallback & Preloader
 import ModuleSkeletonLoader from './components/common/ModuleSkeletonLoader'
@@ -131,9 +138,11 @@ const AppContent = () => {
   const VALID_INSTITUTE_ROUTES = [
     'inst-dashboard', 'inst-admissions', 'inst-students', 'inst-teachers', 'inst-payroll',
     'inst-classes', 'inst-subjects', 'inst-timetable', 'inst-program-levels', 'inst-attendance', 'inst-exams',
-    'inst-fees', 'inst-accounts', 'inst-notices',
-    'inst-learning', 'inst-transport', 'inst-library', 'inst-inventory',
-    'inst-certificates', 'inst-events', 'inst-reports', 'inst-users', 'inst-settings'
+    'inst-fees', 'inst-accounts', 'inst-notices', 'inst-communication',
+    'inst-learning', 'inst-transport', 'inst-hostels', 'inst-library', 'inst-inventory',
+    'inst-certificates', 'inst-events', 'inst-reports', 'inst-policies',
+    'inst-users', 'inst-settings', 'inst-subscription', 'inst-training',
+    'inst-my-transactions', 'inst-my-account'
   ]
 
   // Helpers to safely extract valid initial routes per portal role
@@ -639,11 +648,34 @@ const AppContent = () => {
                   />
                 )}
                 {safeInstituteRoute === 'inst-settings' && (
-                  <UsersManagementView 
-                    defaultTab="roles" 
-                    currentInstitute={activeCampus} 
-                    onRouteChange={setInstituteRoute} 
+                  <CampusSettingsView
+                    currentInstitute={activeCampus}
+                    onRouteChange={setInstituteRoute}
                   />
+                )}
+                {safeInstituteRoute === 'inst-communication' && (
+                  <CommunicationGatewayView />
+                )}
+                {safeInstituteRoute === 'inst-hostels' && (
+                  <HostelsView currentInstitute={activeCampus} />
+                )}
+                {safeInstituteRoute === 'inst-policies' && (
+                  <CampusPoliciesView currentInstitute={activeCampus} />
+                )}
+                {safeInstituteRoute === 'inst-subscription' && (
+                  <CampusSubscriptionView
+                    currentInstitute={activeCampus}
+                    onRouteChange={setInstituteRoute}
+                  />
+                )}
+                {safeInstituteRoute === 'inst-training' && (
+                  <TrainingVideosView onRouteChange={setInstituteRoute} />
+                )}
+                {safeInstituteRoute === 'inst-my-transactions' && (
+                  <MyTransactionsView currentInstitute={activeCampus} />
+                )}
+                {safeInstituteRoute === 'inst-my-account' && (
+                  <MyAccountView currentInstitute={activeCampus} />
                 )}
                 {safeInstituteRoute === 'inst-program-levels' && (
                   <ProgramLevelsView currentInstitute={activeCampus} />
