@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import {
   UserPlus,
   DollarSign,
@@ -31,6 +31,11 @@ import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { isClassAllowedForTier } from '../../utils/tierGating'
 import { getAdminDisplayName } from '../../utils/profileUtils'
+import {
+  readMyAttendanceLogs,
+  recordMyTimeIn,
+  recordMyTimeOut
+} from '../institute-admin/attendance/MyAttendanceView'
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
@@ -372,10 +377,14 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange, onOpenQuic
   const [periodFilter, setPeriodFilter] = useState('this_month')
   const [chartRange, setChartRange] = useState('year')
 
-  const myAttKey = `eims_my_attendance_${instId}_${user?.email || 'admin'}`
-  const [myAttLogs, setMyAttLogs] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(myAttKey) || '[]') } catch { return [] }
-  })
+  const [myAttLogs, setMyAttLogs] = useState(() => readMyAttendanceLogs(instId, user?.email))
+
+  useEffect(() => {
+    setMyAttLogs(readMyAttendanceLogs(instId, user?.email))
+    const sync = () => setMyAttLogs(readMyAttendanceLogs(instId, user?.email))
+    window.addEventListener('my-attendance-updated', sync)
+    return () => window.removeEventListener('my-attendance-updated', sync)
+  }, [instId, user?.email])
 
   const todayCheckIn = useMemo(
     () => myAttLogs.find(l => l.date === todayIso) || null,
@@ -383,16 +392,26 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange, onOpenQuic
   )
 
   const handleMyTimeIn = () => {
-    if (todayCheckIn?.timeIn) {
-      toast?.info?.(`Already checked in today at ${todayCheckIn.timeIn}.`)
+    const res = recordMyTimeIn(instId, user?.email)
+    setMyAttLogs(res.logs)
+    if (res.alreadyDone) {
+      toast?.info?.(`Already checked in today at ${res.entry.timeIn}.`)
       return
     }
-    const timeIn = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    const entry = { id: `myatt-${Date.now()}`, date: todayIso, timeIn, timeOut: '', status: 'Present' }
-    const next = [entry, ...myAttLogs.filter(l => l.date !== todayIso)]
-    setMyAttLogs(next)
-    try { localStorage.setItem(myAttKey, JSON.stringify(next)) } catch (_) {}
-    toast?.success?.(`Checked in at ${timeIn}.`)
+    toast?.success?.(`Checked in at ${res.entry.timeIn}.`)
+  }
+
+  const handleMyTimeOut = () => {
+    const res = recordMyTimeOut(instId, user?.email)
+    setMyAttLogs(res.logs)
+    if (res.notCheckedIn) {
+      toast?.warning?.('Check in first before checking out.')
+      return
+    }
+    if (!res.alreadyDone) {
+      toast?.success?.(`Checked out at ${res.entry.timeOut}.`)
+    }
+    onRouteChange?.('inst-attendance-my')
   }
 
   const instStudents = useMemo(
@@ -584,11 +603,28 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange, onOpenQuic
           <p className="text-xs sm:text-sm text-[var(--text-muted)]">
             Here&apos;s what&apos;s happening at your institution today.
           </p>
-          <div className="pt-1">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--surface)] border border-[var(--border)] text-[11px] font-semibold text-[var(--text-muted)]">
-              <Clock className="w-3.5 h-3.5 text-emerald-600" />
-              <span>{todayCheckIn?.timeIn ? `Checked in today at ${todayCheckIn.timeIn}` : 'Not checked in today'}</span>
-            </span>
+          <div className="pt-1 flex flex-wrap items-center gap-2">
+            {todayCheckIn?.timeIn && !todayCheckIn?.timeOut ? (
+              <>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-[11px] font-bold text-indigo-700">
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>My Time In {todayCheckIn.timeIn}</span>
+                </span>
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-orange-50 border border-orange-200 text-[11px] font-bold text-orange-700">
+                  Not checked out
+                </span>
+              </>
+            ) : todayCheckIn?.timeIn && todayCheckIn?.timeOut ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[11px] font-bold text-emerald-700">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>In {todayCheckIn.timeIn} · Out {todayCheckIn.timeOut}</span>
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--surface)] border border-[var(--border)] text-[11px] font-semibold text-[var(--text-muted)]">
+                <Clock className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Not checked in today</span>
+              </span>
+            )}
           </div>
         </div>
 
@@ -597,13 +633,31 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange, onOpenQuic
             {formattedToday}
           </span>
           <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={handleMyTimeIn}
-              className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer transition-colors"
-            >
-              {todayCheckIn?.timeIn ? 'Checked In' : 'My Time In'}
-            </button>
+            {!todayCheckIn?.timeIn ? (
+              <button
+                type="button"
+                onClick={handleMyTimeIn}
+                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer transition-colors"
+              >
+                My Time In
+              </button>
+            ) : !todayCheckIn?.timeOut ? (
+              <button
+                type="button"
+                onClick={handleMyTimeOut}
+                className="px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold cursor-pointer transition-colors"
+              >
+                My Time Out
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onRouteChange?.('inst-attendance-my')}
+                className="px-4 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold cursor-pointer transition-colors"
+              >
+                Completed Today
+              </button>
+            )}
             <button
               type="button"
               onClick={() => onRouteChange?.('inst-attendance-my')}

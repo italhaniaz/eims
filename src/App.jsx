@@ -76,6 +76,7 @@ const SendSmsModal = lazyWithRetry(() => import('./components/common/SendSmsModa
 const StudentBillingHistoryView = lazyWithRetry(() => import('./modules/institute-admin/fees/StudentBillingHistoryView'), 'student-billing-history')
 const InvoicesView = lazyWithRetry(() => import('./modules/institute-admin/fees/InvoicesView'), 'invoices-view')
 const ExpensesView = lazyWithRetry(() => import('./modules/institute-admin/accounts/ExpensesView'), 'expenses-view')
+const MyAttendanceView = lazyWithRetry(() => import('./modules/institute-admin/attendance/MyAttendanceView'), 'my-attendance-view')
 
 // Executive Seamless Loading Fallback & Preloader
 import ModuleSkeletonLoader from './components/common/ModuleSkeletonLoader'
@@ -652,7 +653,15 @@ const AppContent = () => {
                     initialTab={safeInstituteRoute === 'inst-makeup-sessions' ? 'makeup' : 'class'}
                   />
                 )}
-                {['inst-attendance', 'inst-attendance-my', 'inst-attendance-student-report', 'inst-attendance-staff-report', 'inst-attendance-consecutive', 'inst-attendance-low', 'inst-attendance-unmarked', 'inst-attendance-settings'].includes(safeInstituteRoute) && (
+                {safeInstituteRoute === 'inst-attendance-my' && (
+                  <MyAttendanceView
+                    currentInstitute={activeCampus}
+                    onRouteChange={setInstituteRoute}
+                    onOpenQuickPayment={(sid) => openQuickPayment(sid)}
+                    onOpenSendSms={() => setIsSendSmsOpen(true)}
+                  />
+                )}
+                {['inst-attendance', 'inst-attendance-student-report', 'inst-attendance-staff-report', 'inst-attendance-consecutive', 'inst-attendance-low', 'inst-attendance-unmarked', 'inst-attendance-settings'].includes(safeInstituteRoute) && (
                   <AttendanceView
                     currentInstitute={activeCampus}
                     onRouteChange={setInstituteRoute}
