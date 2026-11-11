@@ -686,7 +686,7 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange, onOpenQuic
         </div>
       </div>
 
-      {/* 4 Financial KPI Cards with Stylized Gradient Medallions */}
+      {/* 4 Financial KPI Cards with Stylized Gradient Medallions & Detail Eye Buttons */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5 shadow-soft flex flex-col justify-between gap-3">
           <div className="flex items-start gap-3.5">
@@ -702,7 +702,18 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange, onOpenQuic
               </p>
             </div>
           </div>
-          <p className="text-[11px] text-[var(--text-muted)]">Invoices generated in selected period</p>
+          <div className="flex items-center justify-between gap-2 pt-1">
+            <p className="text-[11px] text-[var(--text-muted)]">Invoices generated in selected period</p>
+            <button
+              type="button"
+              onClick={() => onRouteChange?.('inst-fees')}
+              title="View Billed Invoices"
+              aria-label="View Billed Invoices"
+              className="p-1.5 rounded-xl bg-slate-50 hover:bg-cyan-50 text-slate-400 hover:text-cyan-600 border border-slate-200/80 hover:border-cyan-300 transition-all cursor-pointer shadow-2xs flex items-center justify-center shrink-0 group/eye"
+            >
+              <Eye className="w-4 h-4 transition-transform group-hover/eye:scale-110" />
+            </button>
+          </div>
         </div>
 
         <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5 shadow-soft flex flex-col justify-between gap-3">
@@ -719,7 +730,18 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange, onOpenQuic
               </p>
             </div>
           </div>
-          <p className="text-[11px] text-[var(--text-muted)]">Payments received in selected period</p>
+          <div className="flex items-center justify-between gap-2 pt-1">
+            <p className="text-[11px] text-[var(--text-muted)]">Payments received in selected period</p>
+            <button
+              type="button"
+              onClick={() => onRouteChange?.('inst-accounts-collection')}
+              title="View Cash Collection Report"
+              aria-label="View Cash Collection Report"
+              className="p-1.5 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-400 hover:text-emerald-600 border border-slate-200/80 hover:border-emerald-300 transition-all cursor-pointer shadow-2xs flex items-center justify-center shrink-0 group/eye"
+            >
+              <Eye className="w-4 h-4 transition-transform group-hover/eye:scale-110" />
+            </button>
+          </div>
         </div>
 
         <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5 shadow-soft flex flex-col justify-between gap-3">
@@ -736,7 +758,18 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange, onOpenQuic
               </p>
             </div>
           </div>
-          <p className="text-[11px] text-[var(--text-muted)]">Waivers applied in selected period</p>
+          <div className="flex items-center justify-between gap-2 pt-1">
+            <p className="text-[11px] text-[var(--text-muted)]">Waivers applied in selected period</p>
+            <button
+              type="button"
+              onClick={() => onRouteChange?.('inst-fees-history')}
+              title="View Waivers & Student Billing"
+              aria-label="View Waivers & Student Billing"
+              className="p-1.5 rounded-xl bg-slate-50 hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 border border-slate-200/80 hover:border-indigo-300 transition-all cursor-pointer shadow-2xs flex items-center justify-center shrink-0 group/eye"
+            >
+              <Eye className="w-4 h-4 transition-transform group-hover/eye:scale-110" />
+            </button>
+          </div>
         </div>
 
         <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5 shadow-soft flex flex-col justify-between gap-3">
@@ -753,8 +786,17 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange, onOpenQuic
               </p>
             </div>
           </div>
-          <div className="px-2.5 py-1.5 rounded-lg bg-rose-50/70 border border-rose-100 text-[11px] text-rose-700 font-medium">
-            Excludes dropped / graduated
+          <div className="px-2.5 py-1.5 rounded-lg bg-rose-50/70 border border-rose-100 text-[11px] text-rose-700 font-medium flex items-center justify-between gap-2">
+            <span>Excludes dropped / graduated</span>
+            <button
+              type="button"
+              onClick={() => onRouteChange?.('inst-fees-outstanding')}
+              title="View Outstanding Fees"
+              aria-label="View Outstanding Fees"
+              className="p-1 rounded-lg bg-white hover:bg-rose-100 text-rose-400 hover:text-rose-600 border border-rose-200/80 transition-all cursor-pointer shadow-2xs flex items-center justify-center shrink-0 group/eye"
+            >
+              <Eye className="w-4 h-4 transition-transform group-hover/eye:scale-110" />
+            </button>
           </div>
         </div>
       </div>
