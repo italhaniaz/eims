@@ -52,31 +52,21 @@ const ROUTE_LOADERS = {
   'cross-institute-analytics': () => import('../modules/platform/analytics/CrossInstituteAnalyticsView'),
   'platform-billing': () => import('../modules/platform/billing/SubscriptionsBillingView'),
   'global-templates': () => import('../modules/platform/templates/GlobalTemplatesView'),
+  'compliance-policies': () => import('../modules/platform/policies/SuperadminPoliciesView'),
+  'sa-policies': () => import('../modules/platform/policies/SuperadminPoliciesView'),
   'backup-data': () => import('../modules/platform/backup/BackupDataView'),
   'system-health': () => import('../modules/platform/health/SystemHealthView'),
   'support-approvals': () => import('../modules/platform/support/SupportApprovalsView'),
-  'communication': () => import('../modules/communication/CommunicationGatewayView'),
   'audit-logs': () => import('../modules/audit-logs/AuditLogsView'),
   'announcements': () => import('../modules/announcements/NoticeBroadcasterView'),
   'users-all': () => import('../modules/users-management/UsersManagementView'),
   'users-roles': () => import('../modules/users-management/UsersManagementView'),
-  'sa-students': () => import('../modules/platform/students/SuperadminStudentsView'),
-  'sa-staff': () => import('../modules/platform/staff/SuperadminStaffFacultyView'),
-  'sa-academics': () => import('../modules/platform/academics/SuperadminAcademicsView'),
-  'sa-admissions': () => import('../modules/platform/admissions/SuperadminAdmissionsView'),
-  'sa-exams': () => import('../modules/platform/examinations/SuperadminExaminationsResultsView'),
-  'sa-fees': () => import('../modules/platform/fees/SuperadminFeesView'),
-  'sa-attendance': () => import('../modules/platform/attendance/SuperadminAttendanceView'),
-  'sa-accounts': () => import('../modules/platform/accounts/SuperadminAccountsView'),
-  'sa-services': () => import('../modules/platform/services/SuperadminCampusServicesView'),
-  'sa-certificates': () => import('../modules/platform/certificates/SuperadminCertificatesView'),
-  'sa-learning': () => import('../modules/platform/learning/SuperadminLearningView')
+  'platform-settings': () => import('../modules/platform/settings/SuperadminPlatformSettingsView'),
+  'sa-settings': () => import('../modules/platform/settings/SuperadminPlatformSettingsView')
 }
 
 // Prefix loaders for tabbed superadmin sub-modules
 const PREFIX_LOADERS = [
-  { prefix: 'sa-comm-', loader: () => import('../modules/platform/communication/SuperadminCommunicationView') },
-  { prefix: 'sa-reports-', loader: () => import('../modules/platform/reports/SuperadminReportsAnalyticsView') },
   { prefix: 'sa-policies-', loader: () => import('../modules/platform/policies/SuperadminPoliciesView') },
   { prefix: 'sa-settings-', loader: () => import('../modules/platform/settings/SuperadminPlatformSettingsView') },
   { prefix: 'inst-admissions-', loader: () => import('../modules/admissions-pipeline/AdmissionsPipelineView') },
@@ -176,17 +166,19 @@ export const preloadInstituteCoreModules = () => {
 export const preloadSuperadminCoreModules = () => {
   const coreRoutes = [
     'institutes',
-    'sa-students',
-    'sa-staff',
-    'sa-fees',
-    'sa-exams',
-    'sa-admissions',
+    'support-approvals',
+    'platform-billing',
     'users-all',
-    'audit-logs',
-    'communication',
-    'sa-reports-trends',
+    'users-roles',
+    'security-center',
+    'global-templates',
+    'compliance-policies',
+    'cross-institute-analytics',
+    'announcements',
     'system-health',
-    'security-center'
+    'audit-logs',
+    'backup-data',
+    'sa-settings'
   ]
 
   let index = 0
