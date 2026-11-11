@@ -71,6 +71,7 @@ const TrainingVideosView = lazyWithRetry(() => import('./modules/institute-admin
 const MyAccountView = lazyWithRetry(() => import('./modules/institute-admin/account/MyAccountView'), 'campus-account-view')
 const EnrollStudentView = lazyWithRetry(() => import('./modules/institute-admin/students/EnrollStudentView'), 'enroll-student-view')
 const QuickPaymentModal = lazyWithRetry(() => import('./components/common/QuickPaymentModal'), 'quick-payment-modal')
+const SendSmsModal = lazyWithRetry(() => import('./components/common/SendSmsModal'), 'send-sms-modal')
 const StudentBillingHistoryView = lazyWithRetry(() => import('./modules/institute-admin/fees/StudentBillingHistoryView'), 'student-billing-history')
 const InvoicesView = lazyWithRetry(() => import('./modules/institute-admin/fees/InvoicesView'), 'invoices-view')
 const ExpensesView = lazyWithRetry(() => import('./modules/institute-admin/accounts/ExpensesView'), 'expenses-view')
@@ -178,6 +179,7 @@ const AppContent = () => {
   const [isQuickPaymentOpen, setIsQuickPaymentOpen] = useState(false)
   const [quickPayStudentId, setQuickPayStudentId] = useState(null)
   const [billingHistoryStudentId, setBillingHistoryStudentId] = useState(null)
+  const [isSendSmsOpen, setIsSendSmsOpen] = useState(false)
   const openQuickPayment = (studentId = null) => {
     setQuickPayStudentId(studentId)
     setIsQuickPaymentOpen(true)
@@ -589,6 +591,7 @@ const AppContent = () => {
                     currentInstitute={activeCampus}
                     onRouteChange={setInstituteRoute}
                     onOpenQuickPayment={() => openQuickPayment(null)}
+                    onOpenSendSms={() => setIsSendSmsOpen(true)}
                   />
                 )}
                 {['inst-admissions', 'inst-admissions-online'].includes(safeInstituteRoute) && (
@@ -602,6 +605,7 @@ const AppContent = () => {
                     currentInstitute={activeCampus}
                     onRouteChange={setInstituteRoute}
                     onOpenQuickPayment={() => openQuickPayment(null)}
+                    onOpenSendSms={() => setIsSendSmsOpen(true)}
                   />
                 )}
                 {['inst-students', 'inst-admissions-import', 'inst-students-guardians', 'inst-students-promote', 'inst-students-status', 'inst-students-idcards'].includes(safeInstituteRoute) && (
@@ -674,6 +678,7 @@ const AppContent = () => {
                     onSelectStudent={setBillingHistoryStudentId}
                     onRouteChange={setInstituteRoute}
                     onOpenQuickPayment={(sid) => openQuickPayment(sid)}
+                    onOpenSendSms={() => setIsSendSmsOpen(true)}
                   />
                 )}
                 {safeInstituteRoute === 'inst-fees' && (
@@ -681,6 +686,7 @@ const AppContent = () => {
                     currentInstitute={activeCampus}
                     onRouteChange={setInstituteRoute}
                     onOpenQuickPayment={(sid) => openQuickPayment(sid)}
+                    onOpenSendSms={() => setIsSendSmsOpen(true)}
                     onOpenBillingHistory={(sid) => {
                       setBillingHistoryStudentId(sid)
                       setInstituteRoute('inst-fees-history')
@@ -709,6 +715,7 @@ const AppContent = () => {
                     currentInstitute={activeCampus}
                     onRouteChange={setInstituteRoute}
                     onOpenQuickPayment={(sid) => openQuickPayment(sid)}
+                    onOpenSendSms={() => setIsSendSmsOpen(true)}
                   />
                 )}
                 {['inst-accounts', 'inst-accounts-collection', 'inst-accounts-income', 'inst-accounts-categories'].includes(safeInstituteRoute) && (
@@ -835,6 +842,13 @@ const AppContent = () => {
               setIsQuickPaymentOpen(false)
               setInstituteRoute('inst-fees-history')
             }}
+          />
+        )}
+        {isSendSmsOpen && (
+          <SendSmsModal
+            isOpen={isSendSmsOpen}
+            onClose={() => setIsSendSmsOpen(false)}
+            currentInstitute={activeCampus}
           />
         )}
       </Suspense>

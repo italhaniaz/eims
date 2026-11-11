@@ -353,7 +353,7 @@ const FeeCollectionOverviewChart = ({ monthlyData, chartRange, onChangeRange }) 
   )
 }
 
-export const InstituteDashboard = ({ currentInstitute, onRouteChange, onOpenQuickPayment }) => {
+export const InstituteDashboard = ({ currentInstitute, onRouteChange, onOpenQuickPayment, onOpenSendSms }) => {
   const {
     students = [],
     teachers = [],
@@ -566,7 +566,7 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange, onOpenQuic
           </button>
           <button
             type="button"
-            onClick={() => onRouteChange?.('inst-communication')}
+            onClick={() => (onOpenSendSms ? onOpenSendSms() : onRouteChange?.('inst-communication'))}
             className="px-3.5 py-2 rounded-xl bg-[var(--surface)] border border-[var(--border)] hover:bg-slate-50 text-[var(--text)] text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
           >
             <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />

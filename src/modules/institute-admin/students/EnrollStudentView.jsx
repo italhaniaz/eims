@@ -42,7 +42,7 @@ const DEFAULT_STATES_AND_CITIES = {
 const DEFAULT_BOARDS = ['BISE Lahore', 'BISE Rawalpindi', 'FBISE Islamabad', 'Cambridge O-Level', 'Govt / District Board', 'Private / Independent']
 const DEFAULT_FEE_TYPES = ['Tuition Fee', 'Admission Fee', 'Transport Fee', 'Hostel / Boarding Fee', 'Exam Fee', 'Lab / Library Fee', 'Stationery / Books']
 
-export const EnrollStudentView = ({ currentInstitute, onRouteChange, onOpenQuickPayment }) => {
+export const EnrollStudentView = ({ currentInstitute, onRouteChange, onOpenQuickPayment, onOpenSendSms }) => {
   const { students = [], classes = [], addItem, logAuditEvent } = useAppData()
   const { toast } = useToast()
   const photoInputRef = useRef(null)
@@ -394,7 +394,7 @@ export const EnrollStudentView = ({ currentInstitute, onRouteChange, onOpenQuick
           </button>
           <button
             type="button"
-            onClick={() => onRouteChange?.('inst-communication')}
+            onClick={() => (onOpenSendSms ? onOpenSendSms() : onRouteChange?.('inst-communication'))}
             className="px-3.5 py-2 rounded-xl bg-[var(--surface)] border border-[var(--border)] hover:bg-slate-50 text-[var(--text)] text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
           >
             <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />

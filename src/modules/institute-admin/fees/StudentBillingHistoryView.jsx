@@ -49,6 +49,7 @@ export const StudentBillingHistoryView = ({
   currentInstitute,
   onRouteChange,
   onOpenQuickPayment,
+  onOpenSendSms,
   onSelectStudent
 }) => {
   const {
@@ -411,7 +412,7 @@ export const StudentBillingHistoryView = ({
           </button>
           <button
             type="button"
-            onClick={() => onRouteChange?.('inst-communication-sms')}
+            onClick={() => (onOpenSendSms ? onOpenSendSms() : onRouteChange?.('inst-communication-sms'))}
             className="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold flex items-center gap-1.5 shadow-2xs cursor-pointer transition-colors"
           >
             <MessageSquare className="w-3.5 h-3.5 text-slate-500" />
