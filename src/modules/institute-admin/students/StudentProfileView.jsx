@@ -23,11 +23,15 @@ import {
   Eye,
   Award,
   Phone,
-  Mail
+  Mail,
+  Info,
+  BarChart3,
+  Link2
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
 import { resolveStudentFeeSetup } from '../fees/StudentFeeSetupView'
+import { downloadSimplePdf } from '../../../utils/pdfExport'
 import EnrollStudentView from './EnrollStudentView'
 
 const formatMoney = (val) => `PKR ${Number(val || 0).toLocaleString()}`
@@ -81,6 +85,7 @@ export const StudentProfileView = ({
   }, [transport, currentInstitute?.id])
 
   const [subView, setSubView] = useState('profile') // 'profile' | 'transport' | 'edit' | 'welcome'
+  const [editInitialStep, setEditInitialStep] = useState(1)
   const [activeTab, setActiveTab] = useState('overview') // 'overview' | 'results' | 'guardian' | 'attendance' | 'fees'
   const [saving, setSaving] = useState(false)
 
@@ -131,31 +136,71 @@ export const StudentProfileView = ({
   }, [studentFees])
 
   const monthlyAttendance = useMemo(() => {
-    if (!student) return { present: 0, absent: 0, rate: 0, records: [] }
-    const nowMonth = new Date().toISOString().slice(0, 7)
+    const now = new Date()
+    const nowMonth = now.toISOString().slice(0, 7)
+    const monthLabel = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+    if (!student) {
+      return { present: 0, absent: 0, late: 0, leave: 0, rate: 0, recordedDays: 0, monthLabel, byYear: [], records: [] }
+    }
     let present = 0
     let absent = 0
+    let late = 0
+    let leave = 0
     const records = []
+    const yearMap = {}
+    const monthDates = new Set()
 
     Object.entries(attendance || {}).forEach(([key, recMap]) => {
       if (!recMap || typeof recMap !== 'object') return
-      const entry = recMap[student.id]
-      if (!entry) return
       const dateMatch = key.match(/\d{4}-\d{2}-\d{2}/)
       const dateStr = dateMatch ? dateMatch[0] : key
+      if (dateStr.startsWith(nowMonth)) monthDates.add(dateStr)
+
+      const entry = recMap[student.id]
+      if (!entry) return
       const status = String(entry.status || entry || '')
+      const lower = status.toLowerCase()
       records.push({ date: dateStr, status, note: entry.note || '' })
+
+      const yearKey = dateStr.slice(0, 4) || String(now.getFullYear())
+      if (!yearMap[yearKey]) {
+        yearMap[yearKey] = { year: yearKey, days: 0, present: 0, absent: 0, late: 0, leave: 0 }
+      }
+      yearMap[yearKey].days += 1
+      if (lower === 'present') yearMap[yearKey].present += 1
+      else if (lower === 'absent') yearMap[yearKey].absent += 1
+      else if (lower === 'late') yearMap[yearKey].late += 1
+      else if (lower === 'leave') yearMap[yearKey].leave += 1
+
       if (dateStr.startsWith(nowMonth)) {
-        const lower = status.toLowerCase()
-        if (lower === 'present' || lower === 'late') present++
+        if (lower === 'present') present++
         else if (lower === 'absent') absent++
+        else if (lower === 'late') late++
+        else if (lower === 'leave') leave++
       }
     })
 
     records.sort((a, b) => b.date.localeCompare(a.date))
-    const total = present + absent
-    const rate = total > 0 ? Math.round((present / total) * 100) : 0
-    return { present, absent, rate, records }
+    const byYear = Object.values(yearMap)
+      .sort((a, b) => b.year.localeCompare(a.year))
+      .map((y) => ({
+        ...y,
+        presentPct: y.days > 0 ? Math.round(((y.present + y.late) / y.days) * 100) : 0
+      }))
+    const total = present + absent + late + leave
+    const rate = total > 0 ? Math.round(((present + late) / total) * 100) : 0
+    return {
+      present: present + late,
+      exactPresent: present,
+      absent,
+      late,
+      leave,
+      rate,
+      recordedDays: monthDates.size || total,
+      monthLabel,
+      byYear,
+      records
+    }
   }, [attendance, student])
 
   const studentExams = useMemo(() => {
@@ -212,6 +257,41 @@ export const StudentProfileView = ({
     } else {
       window.print()
     }
+  }
+
+  const handleExportPdf = () => {
+    if (!student) return
+    const name = student.fullName || student.name || 'Student'
+    const adm =
+      student.admissionNo ||
+      student.registrationNo ||
+      student.systemAdmissionNo ||
+      String(student.id || '').slice(-8).toUpperCase()
+    const safeSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'student'
+
+    const lines = [
+      { text: `${currentInstitute?.name || 'Institute Portal'} - Student Profile`, bold: true },
+      { text: `Generated on: ${new Date().toLocaleString('en-GB')}`, gap: -18 },
+      { text: `PERSONAL INFORMATION`, bold: true, gap: -22 },
+      `Full Name: ${name}`,
+      `Class: ${student.className || student.course || 'Unassigned'} (${student.section || 'A'})`,
+      `Roll Number: ${student.rollNumber || 'N/A'} | Admission No: ${adm}`,
+      `Gender: ${student.gender || 'Male'} | Status: ${student.status || 'Active'}`,
+      `Phone: ${student.phone || student.guardianPhone || 'N/A'} | Email: ${student.email || 'Not set'}`,
+      `CNIC / B-Form: ${student.bFormCnic || 'Not set'} | DOB: ${student.dob || 'Not set'}`,
+      `Address: ${student.address || 'Not set'} (${student.city || ''} ${student.province || ''})`,
+      { text: `PARENT / GUARDIAN DETAILS`, bold: true, gap: -22 },
+      `Father / Guardian: ${student.fatherName || student.guardianName || 'Not linked'}`,
+      `Guardian CNIC: ${student.fatherCnic || student.parentCnic || 'Not set'} | Phone: ${student.guardianPhone || student.parentPhone || 'N/A'}`,
+      { text: `ATTENDANCE & FEE SUMMARY`, bold: true, gap: -22 },
+      `Present This Month: ${monthlyAttendance.present} (${monthlyAttendance.rate}%) | Absent: ${monthlyAttendance.absent}`,
+      `Pending Dues: ${formatMoney(feeSummary.pendingDues)} | Total Paid: ${formatMoney(feeSummary.totalPaid)}`,
+      `Fee Schedule: ${resolvedSetup.feeType} | Net Regular Voucher: ${formatMoney(resolvedSetup.finalAmount)}`,
+      `Transport Route: ${assignedTransportRoute.routeName || 'No route assigned'}`
+    ]
+
+    downloadSimplePdf(`student-profile-${safeSlug}.pdf`, lines)
+    toast?.success?.(`Downloaded PDF profile for ${name}.`)
   }
 
   if (!student) {
@@ -403,6 +483,7 @@ export const StudentProfileView = ({
     return (
       <EnrollStudentView
         editingStudentId={student.id}
+        initialStep={editInitialStep}
         currentInstitute={currentInstitute}
         onRouteChange={onRouteChange}
         onOpenQuickPayment={onOpenQuickPayment}
@@ -629,7 +710,10 @@ export const StudentProfileView = ({
             </button>
             <button
               type="button"
-              onClick={() => setSubView('edit')}
+              onClick={() => {
+                setEditInitialStep(1)
+                setSubView('edit')
+              }}
               className="px-3.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 text-indigo-900 text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm transition-colors"
             >
               <Pencil className="w-3.5 h-3.5" />
@@ -654,7 +738,7 @@ export const StudentProfileView = ({
             </button>
             <button
               type="button"
-              onClick={handlePrintProfile}
+              onClick={handleExportPdf}
               className="px-3.5 py-1.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm transition-colors"
             >
               <Download className="w-3.5 h-3.5" />
@@ -895,20 +979,37 @@ export const StudentProfileView = ({
         </div>
       )}
 
-      {/* Tab 2: Results & Exams */}
+      {/* Tab 2: Results & Exams (Pick 2) */}
       {activeTab === 'results' && (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-5 text-xs space-y-3">
-          <h3 className="text-sm font-bold text-slate-800">Exam &amp; Academic Results</h3>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-[11px] text-slate-400">
+              Exam and marks history by session year. Open the full report card (all subjects) or use Print profile for a paper copy of this page.
+            </p>
+            {studentExams.length > 0 && (
+              <button
+                type="button"
+                onClick={() => onRouteChange?.('inst-exams-report-cards')}
+                className="px-3 py-1.5 rounded-lg border border-sky-400 text-sky-600 hover:bg-sky-50 font-semibold cursor-pointer"
+              >
+                Open Full Report Card
+              </button>
+            )}
+          </div>
           {studentExams.length === 0 ? (
-            <p className="text-slate-400 py-6 text-center">No exam results recorded yet for {studentName}.</p>
+            <div className="rounded-xl border border-cyan-300 bg-cyan-50/80 px-4 py-3 flex items-center gap-2 text-cyan-800 font-medium">
+              <Info className="w-4 h-4 text-cyan-600 shrink-0" />
+              <span>No exam or marks records found for this student yet.</span>
+            </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto border border-slate-200 rounded-xl">
               <table className="w-full text-left">
                 <thead className="bg-slate-50 border-b text-[10px] uppercase text-slate-500">
                   <tr>
-                    <th className="py-2.5 px-3">Exam / Subject</th>
-                    <th className="py-2.5 px-3">Date</th>
-                    <th className="py-2.5 px-3 text-right">Obtained / Total</th>
+                    <th className="py-2.5 px-4">Exam / Subject</th>
+                    <th className="py-2.5 px-4">Session</th>
+                    <th className="py-2.5 px-4">Date</th>
+                    <th className="py-2.5 px-4 text-right">Obtained / Total</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -916,9 +1017,10 @@ export const StudentProfileView = ({
                     const mark = ex.results?.[student.id]
                     return (
                       <tr key={ex.id}>
-                        <td className="py-2.5 px-3 font-semibold text-slate-800">{ex.title || ex.name || ex.subject || 'Exam'}</td>
-                        <td className="py-2.5 px-3 text-slate-500">{ex.date || '—'}</td>
-                        <td className="py-2.5 px-3 text-right font-bold text-indigo-700">
+                        <td className="py-2.5 px-4 font-semibold text-slate-800">{ex.title || ex.name || ex.subject || 'Exam'}</td>
+                        <td className="py-2.5 px-4 text-slate-500">{ex.academicSession || student.academicSession || '2026-2027'}</td>
+                        <td className="py-2.5 px-4 text-slate-500">{ex.date || '—'}</td>
+                        <td className="py-2.5 px-4 text-right font-bold text-indigo-700">
                           {mark !== undefined ? `${mark} / ${ex.totalMarks || 100}` : 'Scheduled'}
                         </td>
                       </tr>
@@ -931,74 +1033,203 @@ export const StudentProfileView = ({
         </div>
       )}
 
-      {/* Tab 3: Parent / Guardian */}
-      {activeTab === 'guardian' && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden text-xs">
-          <div className="px-5 py-3.5 border-b border-slate-100 font-bold text-slate-800 text-sm">
-            Parent / Guardian Details
-          </div>
-          <div className="divide-y divide-slate-100">
-            {[
-              ['Father / Guardian Name', student.fatherName || student.guardianName],
-              ['Parent CNIC', student.parentCnic || student.fatherCnic || student.cnic],
-              ['Guardian Phone', student.guardianPhone || student.parentPhone || student.phone],
-              ['WhatsApp Number', student.guardianWhatsapp],
-              ['Parent Email', student.parentEmail],
-              ['Mother Name', student.motherName],
-              ['Mother CNIC', student.motherCnic],
-              ['Residential Address', student.address]
-            ].map(([label, val]) => (
-              <div key={label} className="px-5 py-3 grid grid-cols-12 gap-3">
-                <div className="col-span-5 sm:col-span-4 font-bold text-slate-700">{label}</div>
-                <div className="col-span-7 sm:col-span-8">{renderFieldValue(val)}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Tab 3: Parent / Guardian (Pick 3) */}
+      {activeTab === 'guardian' && (() => {
+        const hasLinkedGuardian = Boolean(
+          (student.fatherName && student.fatherName.trim() && student.fatherName.trim() !== 'Parent / Guardian') ||
+            student.guardianName ||
+            student.fatherCnic ||
+            student.parentCnic ||
+            student.guardianPhone ||
+            student.parentPhone ||
+            student.motherName
+        )
 
-      {/* Tab 4: Attendance */}
-      {activeTab === 'attendance' && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-5 text-xs space-y-3">
-          <h3 className="text-sm font-bold text-slate-800">Attendance Logs</h3>
-          {monthlyAttendance.records.length === 0 ? (
-            <p className="text-slate-400 py-6 text-center">No attendance logs marked yet for {studentName}.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead className="bg-slate-50 border-b text-[10px] uppercase text-slate-500">
-                  <tr>
-                    <th className="py-2.5 px-3">Date</th>
-                    <th className="py-2.5 px-3">Status</th>
-                    <th className="py-2.5 px-3">Remarks</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {monthlyAttendance.records.slice(0, 30).map((rec, idx) => (
-                    <tr key={`${rec.date}-${idx}`}>
-                      <td className="py-2 px-3 font-medium text-slate-700">{rec.date}</td>
-                      <td className="py-2 px-3">
-                        <span
-                          className={`px-2 py-0.5 rounded font-bold text-[10px] ${
-                            rec.status.toLowerCase() === 'present'
-                              ? 'bg-emerald-100 text-emerald-700'
-                              : rec.status.toLowerCase() === 'absent'
-                                ? 'bg-rose-100 text-rose-700'
-                                : 'bg-amber-100 text-amber-700'
-                          }`}
-                        >
-                          {rec.status}
-                        </span>
-                      </td>
-                      <td className="py-2 px-3 text-slate-500">{rec.note || '—'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+        if (!hasLinkedGuardian) {
+          return (
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-4 text-xs">
+              <div className="rounded-xl border border-amber-200 bg-amber-50/75 px-4 py-3 flex flex-wrap items-center gap-3 text-amber-900">
+                <span className="inline-flex items-center gap-2 font-medium">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>No parent / guardian is linked to this student.</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditInitialStep(2)
+                    setSubView('edit')
+                  }}
+                  className="px-3.5 py-1.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-bold shadow-2xs cursor-pointer transition-colors"
+                >
+                  Edit Profile to Add Parent
+                </button>
+              </div>
             </div>
-          )}
-        </div>
-      )}
+          )
+        }
+
+        return (
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden text-xs">
+            <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
+              <span className="font-bold text-slate-800 text-sm">Parent / Guardian Details</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditInitialStep(2)
+                  setSubView('edit')
+                }}
+                className="px-3 py-1 rounded-lg border border-sky-400 text-sky-600 hover:bg-sky-50 font-semibold cursor-pointer"
+              >
+                Edit Guardian Info
+              </button>
+            </div>
+            <div className="divide-y divide-slate-100">
+              {[
+                ['Father / Guardian Name', student.fatherName || student.guardianName],
+                ['Parent CNIC', student.parentCnic || student.fatherCnic || student.cnic],
+                ['Guardian Phone', student.guardianPhone || student.parentPhone || student.phone],
+                ['WhatsApp Number', student.guardianWhatsapp],
+                ['Parent Email', student.parentEmail],
+                ['Mother Name', student.motherName],
+                ['Mother CNIC', student.motherCnic],
+                ['Residential Address', student.address]
+              ].map(([label, val]) => (
+                <div key={label} className="px-5 py-3 grid grid-cols-12 gap-3">
+                  <div className="col-span-5 sm:col-span-4 font-bold text-slate-700">{label}</div>
+                  <div className="col-span-7 sm:col-span-8">{renderFieldValue(val)}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* Tab 4: Attendance (Pick 4) */}
+      {activeTab === 'attendance' && (() => {
+        const mTotal = monthlyAttendance.exactPresent + monthlyAttendance.absent + monthlyAttendance.late + monthlyAttendance.leave
+        const pPct = mTotal > 0 ? Math.round((monthlyAttendance.exactPresent / mTotal) * 100) : 0
+        const lPct = mTotal > 0 ? Math.round((monthlyAttendance.late / mTotal) * 100) : 0
+        const lvPct = mTotal > 0 ? Math.round((monthlyAttendance.leave / mTotal) * 100) : 0
+        const aPct = mTotal > 0 ? Math.max(0, 100 - pPct - lPct - lvPct) : 0
+        const currentYear = String(new Date().getFullYear())
+        const yearRows =
+          monthlyAttendance.byYear.length > 0
+            ? monthlyAttendance.byYear
+            : [{ year: currentYear, days: 0, present: 0, absent: 0, late: 0, leave: 0, presentPct: 0 }]
+
+        return (
+          <div className="space-y-5 text-xs">
+            {/* Calendar Year Attendance Table */}
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
+              <div className="px-5 py-3.5 border-b border-slate-100 flex items-center gap-2 font-bold text-slate-800 text-sm">
+                <BarChart3 className="w-4 h-4 text-sky-600" />
+                <span>Attendance by calendar year (general)</span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead className="bg-slate-50/70 border-b border-slate-200 text-[11px] font-bold text-slate-600">
+                    <tr>
+                      <th className="py-2.5 px-5">Year</th>
+                      <th className="py-2.5 px-4 text-center">Days recorded</th>
+                      <th className="py-2.5 px-4 text-center">Present</th>
+                      <th className="py-2.5 px-4 text-center">Absent</th>
+                      <th className="py-2.5 px-4 text-center">Late</th>
+                      <th className="py-2.5 px-4 text-center">Leave</th>
+                      <th className="py-2.5 px-5 text-center">Present %</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {yearRows.map((row) => (
+                      <tr key={row.year} className="hover:bg-slate-50/60">
+                        <td className="py-3 px-5 font-extrabold text-slate-900">{row.year}</td>
+                        <td className="py-3 px-4 text-center text-slate-700 font-semibold">{row.days}</td>
+                        <td className="py-3 px-4 text-center text-emerald-700 font-semibold">{row.present}</td>
+                        <td className="py-3 px-4 text-center text-rose-600 font-semibold">{row.absent}</td>
+                        <td className="py-3 px-4 text-center text-amber-600 font-semibold">{row.late}</td>
+                        <td className="py-3 px-4 text-center text-cyan-600 font-semibold">{row.leave}</td>
+                        <td className="py-3 px-5 text-center font-bold text-slate-900">{row.presentPct}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="px-5 py-2.5 border-t border-slate-100 text-[10px] text-slate-400">
+                Percentages use present days vs total general attendance entries for that year.
+              </div>
+            </div>
+
+            {/* Monthly Summary + Quick Links */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+              <div className="lg:col-span-8 bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
+                <div className="px-5 py-3.5 border-b border-slate-100 flex items-center gap-2 font-bold text-slate-800 text-sm">
+                  <Calendar className="w-4 h-4 text-sky-600" />
+                  <span>{monthlyAttendance.monthLabel} — Attendance Summary</span>
+                </div>
+                <div className="p-5 space-y-4">
+                  <div className="rounded-xl bg-slate-50 border border-slate-100 p-4 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-slate-700">Attendance Rate</span>
+                      <span className="font-extrabold text-indigo-700">{monthlyAttendance.rate}%</span>
+                    </div>
+                    <div className="h-2.5 w-full rounded-full bg-slate-200 overflow-hidden flex">
+                      {pPct > 0 && <div className="bg-emerald-500 h-full" style={{ width: `${pPct}%` }} />}
+                      {lPct > 0 && <div className="bg-amber-400 h-full" style={{ width: `${lPct}%` }} />}
+                      {lvPct > 0 && <div className="bg-cyan-500 h-full" style={{ width: `${lvPct}%` }} />}
+                      {aPct > 0 && <div className="bg-rose-500 h-full" style={{ width: `${aPct}%` }} />}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 pt-0.5 text-[10px] font-bold">
+                      <span className="px-2 py-0.5 rounded bg-emerald-500 text-white">Present</span>
+                      <span className="px-2 py-0.5 rounded bg-amber-400 text-slate-900">Late</span>
+                      <span className="px-2 py-0.5 rounded bg-cyan-500 text-white">Leave</span>
+                      <span className="px-2 py-0.5 rounded bg-rose-500 text-white">Absent</span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="rounded-xl bg-emerald-50/70 border border-emerald-100 py-4 text-center">
+                      <p className="text-lg font-extrabold text-emerald-700">{monthlyAttendance.exactPresent}</p>
+                      <p className="text-[11px] text-slate-400 font-medium mt-0.5">Present</p>
+                    </div>
+                    <div className="rounded-xl bg-rose-50/70 border border-rose-100 py-4 text-center">
+                      <p className="text-lg font-extrabold text-rose-600">{monthlyAttendance.absent}</p>
+                      <p className="text-[11px] text-slate-400 font-medium mt-0.5">Absent</p>
+                    </div>
+                    <div className="rounded-xl bg-amber-50/70 border border-amber-100 py-4 text-center">
+                      <p className="text-lg font-extrabold text-amber-600">{monthlyAttendance.late}</p>
+                      <p className="text-[11px] text-slate-400 font-medium mt-0.5">Late</p>
+                    </div>
+                    <div className="rounded-xl bg-cyan-50/70 border border-cyan-100 py-4 text-center">
+                      <p className="text-lg font-extrabold text-cyan-600">{monthlyAttendance.leave}</p>
+                      <p className="text-[11px] text-slate-400 font-medium mt-0.5">Leave</p>
+                    </div>
+                  </div>
+
+                  <p className="text-center text-[11px] text-slate-400 pt-1">
+                    Total school days recorded this month: <strong className="text-slate-700">{monthlyAttendance.recordedDays}</strong>
+                  </p>
+                </div>
+              </div>
+
+              <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
+                <div className="px-5 py-3.5 border-b border-slate-100 flex items-center gap-2 font-bold text-slate-800 text-sm">
+                  <Link2 className="w-4 h-4 text-sky-600" />
+                  <span>Quick Links</span>
+                </div>
+                <div className="p-5">
+                  <button
+                    type="button"
+                    onClick={() => onRouteChange?.('inst-attendance-student-report')}
+                    className="w-full py-2.5 px-4 rounded-lg bg-sky-500 hover:bg-sky-600 text-white font-bold inline-flex items-center justify-center gap-2 shadow-xs cursor-pointer transition-colors"
+                  >
+                    <Calendar className="w-4 h-4" />
+                    <span>Class Attendance Reports</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Tab 5: Fee & Payments */}
       {activeTab === 'fees' && (

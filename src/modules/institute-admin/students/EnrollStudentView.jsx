@@ -49,6 +49,7 @@ export const EnrollStudentView = ({
   onOpenQuickPayment,
   onOpenSendSms,
   editingStudentId = null,
+  initialStep = 1,
   onCancelEdit,
   onSavedEdit
 }) => {
@@ -131,7 +132,7 @@ export const EnrollStudentView = ({
 
   useEffect(() => {
     if (!editingStudent) return
-    setStep(1)
+    setStep(Math.min(5, Math.max(1, Number(initialStep) || 1)))
     const savedSetup = editingStudent.feeSetup || {}
     const latestStudentFee = fees.find((f) => f.studentId === editingStudent.id && Number(f.amount || 0) > 0)
     const fallbackTuition = Number(
