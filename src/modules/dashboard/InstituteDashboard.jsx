@@ -57,7 +57,8 @@ const StylizedKpiMedallion = ({ icon: Icon, gradientClass, ringClass, glowStyle 
 )
 
 /**
- * Advanced interactive SVG combo bar + smooth spline trend chart for Fee Collection Overview.
+ * Semi-circular half-donut gauge chart with radial spoke callouts for Fee Collection Overview.
+ * Preserves the exact Pick 2 fee metrics while rendering Pick 1's semi-circular segmented arc shape.
  */
 const FeeCollectionOverviewChart = ({ monthlyData, chartRange, onChangeRange }) => {
   const [hoveredIdx, setHoveredIdx] = useState(null)
@@ -67,59 +68,76 @@ const FeeCollectionOverviewChart = ({ monthlyData, chartRange, onChangeRange }) 
     [monthlyData, chartRange]
   )
 
-  const maxTotal = useMemo(() => {
-    const peak = Math.max(
-      100000,
-      ...visibleData.map(m => Math.max(m.totalBilled, m.collected + m.waiver + m.outstanding))
+  const summaryTotals = useMemo(() => {
+    return visibleData.reduce(
+      (acc, d) => ({
+        collected: acc.collected + Number(d.collected || 0),
+        waiver: acc.waiver + Number(d.waiver || 0),
+        outstanding: acc.outstanding + Number(d.outstanding || 0),
+        totalBilled: acc.totalBilled + Number(d.totalBilled || 0)
+      }),
+      { collected: 0, waiver: 0, outstanding: 0, totalBilled: 0 }
     )
-    return Math.ceil(peak / 100000) * 100000
   }, [visibleData])
 
+  const segments = useMemo(() => {
+    const raw = [
+      { key: 'collected', label: 'Cash collected', value: summaryTotals.collected, color: '#10B981', dark: '#059669' },
+      { key: 'waiver', label: 'Waiver', value: summaryTotals.waiver, color: '#8B5CF6', dark: '#6D28D9' },
+      { key: 'outstanding', label: 'Outstanding', value: summaryTotals.outstanding, color: '#F59E0B', dark: '#D97706' },
+      { key: 'totalBilled', label: 'Total Billed', value: summaryTotals.totalBilled, color: '#EF4444', dark: '#DC2626' }
+    ]
+    const total = raw.reduce((s, r) => s + r.value, 0)
+    // Apply minimum visual floor per wedge so all 4 callout labels remain clearly spaced
+    const minShare = 0.16
+    const rawShares = raw.map((r) => (total > 0 ? r.value / total : 0.25))
+    const floored = rawShares.map((sh) => Math.max(minShare, sh))
+    const flooredSum = floored.reduce((s, x) => s + x, 0)
+    const normalized = floored.map((x) => x / flooredSum)
+
+    let cursor = Math.PI
+    return raw.map((seg, idx) => {
+      const sweep = normalized[idx] * Math.PI
+      const startAngle = cursor
+      const endAngle = Math.max(0, cursor - sweep)
+      cursor = endAngle
+      const pct = total > 0 ? Math.round((seg.value / total) * 100) : 0
+      return { ...seg, startAngle, endAngle, midAngle: (startAngle + endAngle) / 2, pct }
+    })
+  }, [summaryTotals])
+
   const svgWidth = 760
-  const svgHeight = 250
-  const padLeft = 64
-  const padRight = 22
-  const padTop = 26
-  const padBottom = 30
-  const plotW = svgWidth - padLeft - padRight
-  const plotH = svgHeight - padTop - padBottom
-  const count = Math.max(1, visibleData.length)
-  const slotW = plotW / count
-  const barW = Math.min(34, Math.max(18, slotW * 0.56))
+  const svgHeight = 315
+  const cx = 380
+  const cy = 278
+  const outerR = 144
+  const innerR = 72
+  const spokeR = outerR + 44
+  const boxW = 144
+  const boxH = 42
 
-  const yPos = (val) => padTop + plotH - Math.min(1, Math.max(0, val / maxTotal)) * plotH
+  const describeHalfDonutSlice = (rIn, rOut, a1, a2) => {
+    const x1Out = cx + rOut * Math.cos(a1)
+    const y1Out = cy - rOut * Math.sin(a1)
+    const x2Out = cx + rOut * Math.cos(a2)
+    const y2Out = cy - rOut * Math.sin(a2)
+    const x2In = cx + rIn * Math.cos(a2)
+    const y2In = cy - rIn * Math.sin(a2)
+    const x1In = cx + rIn * Math.cos(a1)
+    const y1In = cy - rIn * Math.sin(a1)
+    return [
+      `M ${x1Out.toFixed(2)} ${y1Out.toFixed(2)}`,
+      `A ${rOut} ${rOut} 0 0 1 ${x2Out.toFixed(2)} ${y2Out.toFixed(2)}`,
+      `L ${x2In.toFixed(2)} ${y2In.toFixed(2)}`,
+      `A ${rIn} ${rIn} 0 0 0 ${x1In.toFixed(2)} ${y1In.toFixed(2)}`,
+      'Z'
+    ].join(' ')
+  }
 
-  const linePoints = visibleData.map((d, i) => ({
-    x: padLeft + i * slotW + slotW / 2,
-    y: yPos(d.totalBilled),
-    data: d
-  }))
-
-  // Smooth cubic bezier path
-  const linePath = useMemo(() => {
-    if (linePoints.length === 0) return ''
-    if (linePoints.length === 1) return `M ${linePoints[0].x} ${linePoints[0].y}`
-    let d = `M ${linePoints[0].x} ${linePoints[0].y}`
-    for (let i = 0; i < linePoints.length - 1; i++) {
-      const p0 = linePoints[i]
-      const p1 = linePoints[i + 1]
-      const cx = (p0.x + p1.x) / 2
-      d += ` C ${cx} ${p0.y}, ${cx} ${p1.y}, ${p1.x} ${p1.y}`
-    }
-    return d
-  }, [linePoints])
-
-  const areaPath = useMemo(() => {
-    if (!linePath || linePoints.length === 0) return ''
-    const baseY = padTop + plotH
-    return `${linePath} L ${linePoints[linePoints.length - 1].x} ${baseY} L ${linePoints[0].x} ${baseY} Z`
-  }, [linePath, linePoints, plotH])
-
-  const yTicks = [0, 0.2, 0.4, 0.6, 0.8, 1].map(r => Math.round(maxTotal * r))
   const formatCompact = (val) => {
     if (val >= 1000000) return `PKR ${(val / 1000000).toFixed(1)}M`
-    if (val >= 1000) return `PKR ${(val / 1000).toFixed(0)}K`
-    return `PKR ${val}`
+    if (val >= 1000) return `PKR ${(val / 1000).toFixed(1).replace(/\.0$/, '')}K`
+    return `PKR ${Number(val || 0).toLocaleString()}`
   }
 
   return (
@@ -145,7 +163,7 @@ const FeeCollectionOverviewChart = ({ monthlyData, chartRange, onChangeRange }) 
         </select>
       </div>
 
-      {/* Interactive Legend */}
+      {/* Legend preserving Pick 2 series metadata */}
       <div className="flex flex-wrap items-center justify-center gap-4 text-[11px] font-semibold text-[var(--text-muted)] mb-2">
         <span className="inline-flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
@@ -165,192 +183,120 @@ const FeeCollectionOverviewChart = ({ monthlyData, chartRange, onChangeRange }) 
         </span>
       </div>
 
-      {/* Responsive SVG Combo Chart */}
+      {/* Responsive Semi-Circular Radial Callout Chart */}
       <div className="relative w-full">
         <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-auto overflow-visible">
-          <defs>
-            <linearGradient id="dashCashGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#10B981" />
-              <stop offset="100%" stopColor="#059669" />
-            </linearGradient>
-            <linearGradient id="dashWaiverGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#8B5CF6" />
-              <stop offset="100%" stopColor="#6D28D9" />
-            </linearGradient>
-            <linearGradient id="dashOutGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#FBBF24" />
-              <stop offset="100%" stopColor="#F59E0B" />
-            </linearGradient>
-            <linearGradient id="dashAreaGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#F43F5E" stopOpacity="0.16" />
-              <stop offset="100%" stopColor="#F43F5E" stopOpacity="0.01" />
-            </linearGradient>
-          </defs>
-
-          {/* Horizontal Grid & Y-Axis Ticks */}
-          {yTicks.map((tick) => {
-            const y = yPos(tick)
-            return (
-              <g key={tick}>
-                <line
-                  x1={padLeft}
-                  y1={y}
-                  x2={svgWidth - padRight}
-                  y2={y}
-                  stroke="#E2E8F0"
-                  strokeDasharray="3 3"
-                  strokeWidth="1"
-                />
-                <text
-                  x={padLeft - 8}
-                  y={y + 4}
-                  textAnchor="end"
-                  fontSize="10"
-                  fill="#94A3B8"
-                  fontFamily="ui-monospace, SFMono-Regular, monospace"
-                >
-                  {formatCompact(tick)}
-                </text>
-              </g>
-            )
-          })}
-
-          {/* Smooth Total Billed Area Glow */}
-          {areaPath && <path d={areaPath} fill="url(#dashAreaGrad)" />}
-
-          {/* Stacked Rounded Gradient Bars */}
-          {visibleData.map((d, i) => {
-            const cx = padLeft + i * slotW + slotW / 2
-            const bx = cx - barW / 2
-            const baseBottom = padTop + plotH
+          {segments.map((seg, i) => {
             const isHovered = hoveredIdx === i
-
-            const hCash = (d.collected / maxTotal) * plotH
-            const hWaiver = (d.waiver / maxTotal) * plotH
-            const hOut = (d.outstanding / maxTotal) * plotH
-
-            const yCash = baseBottom - hCash
-            const yWaiver = yCash - hWaiver
-            const yOut = yWaiver - hOut
+            const rOutActive = isHovered ? outerR + 6 : outerR
+            const x1 = cx + (rOutActive - 2) * Math.cos(seg.midAngle)
+            const y1 = cy - (rOutActive - 2) * Math.sin(seg.midAngle)
+            const x2 = cx + spokeR * Math.cos(seg.midAngle)
+            const y2 = cy - spokeR * Math.sin(seg.midAngle)
+            const boxCx = x2 + Math.cos(seg.midAngle) * (boxW * 0.42)
+            const boxCy = y2 - Math.sin(seg.midAngle) * (boxH * 0.42)
+            const boxX = boxCx - boxW / 2
+            const boxY = boxCy - boxH / 2
 
             return (
               <g
-                key={d.month}
+                key={seg.key}
                 onMouseEnter={() => setHoveredIdx(i)}
                 onMouseLeave={() => setHoveredIdx(null)}
-                className="cursor-pointer"
+                className="cursor-pointer transition-all"
               >
-                {isHovered && (
-                  <rect
-                    x={cx - slotW * 0.45}
-                    y={padTop}
-                    width={slotW * 0.9}
-                    height={plotH}
-                    rx="10"
-                    fill="#F1F5F9"
-                    opacity="0.7"
-                  />
-                )}
+                {/* Radial Spoke Connector */}
+                <line
+                  x1={x1}
+                  y1={y1}
+                  x2={boxCx}
+                  y2={boxCy}
+                  stroke={seg.color}
+                  strokeWidth={isHovered ? '8' : '7'}
+                />
 
-                {hCash > 0 && (
-                  <rect
-                    x={bx}
-                    y={yCash}
-                    width={barW}
-                    height={hCash}
-                    rx={hWaiver === 0 && hOut === 0 ? 6 : 2}
-                    fill="url(#dashCashGrad)"
-                  />
-                )}
-                {hWaiver > 0 && (
-                  <rect
-                    x={bx}
-                    y={yWaiver}
-                    width={barW}
-                    height={hWaiver}
-                    rx={hOut === 0 ? 6 : 2}
-                    fill="url(#dashWaiverGrad)"
-                  />
-                )}
-                {hOut > 0 && (
-                  <rect
-                    x={bx}
-                    y={yOut}
-                    width={barW}
-                    height={hOut}
-                    rx="6"
-                    fill="url(#dashOutGrad)"
-                  />
-                )}
+                {/* Semi-Circle Donut Wedge */}
+                <path
+                  d={describeHalfDonutSlice(innerR, rOutActive, seg.startAngle, seg.endAngle)}
+                  fill={isHovered ? seg.dark : seg.color}
+                  stroke="#FFFFFF"
+                  strokeWidth="3"
+                />
 
+                {/* Outward Colored Callout Label Box */}
+                <rect
+                  x={boxX}
+                  y={boxY}
+                  width={boxW}
+                  height={boxH}
+                  rx="3"
+                  fill={isHovered ? seg.dark : seg.color}
+                  stroke="#FFFFFF"
+                  strokeWidth="1.5"
+                />
                 <text
-                  x={cx}
-                  y={svgHeight - 8}
+                  x={boxCx}
+                  y={boxCy - 4}
                   textAnchor="middle"
                   fontSize="11"
-                  fontWeight={isHovered ? '700' : '500'}
-                  fill={isHovered ? '#0F172A' : '#64748B'}
+                  fontWeight="700"
+                  fill="#FFFFFF"
                 >
-                  {d.month}
+                  {seg.label}
+                </text>
+                <text
+                  x={boxCx}
+                  y={boxCy + 12}
+                  textAnchor="middle"
+                  fontSize="10.5"
+                  fontWeight="800"
+                  fill="#F8FAFC"
+                  fontFamily="ui-monospace, SFMono-Regular, monospace"
+                >
+                  {formatCompact(seg.value)}
                 </text>
               </g>
             )
           })}
 
-          {/* Total Billed Smooth Trendline */}
-          {linePath && (
-            <path
-              d={linePath}
-              fill="none"
-              stroke="#E11D48"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-            />
-          )}
-
-          {/* Data Nodes + Floating Value Tags on Non-Zero Months */}
-          {linePoints.map((pt, i) => {
-            const isHovered = hoveredIdx === i
-            return (
-              <g
-                key={pt.data.month}
-                onMouseEnter={() => setHoveredIdx(i)}
-                onMouseLeave={() => setHoveredIdx(null)}
-                className="cursor-pointer"
-              >
-                <circle
-                  cx={pt.x}
-                  cy={pt.y}
-                  r={isHovered ? 5.5 : 3.5}
-                  fill="#FFFFFF"
-                  stroke="#E11D48"
-                  strokeWidth="2.5"
-                />
-                {pt.data.totalBilled > 0 && (
-                  <text
-                    x={pt.x}
-                    y={Math.max(12, pt.y - 9)}
-                    textAnchor="middle"
-                    fontSize="9.5"
-                    fontWeight="700"
-                    fill="#BE123C"
-                  >
-                    {formatCompact(pt.data.totalBilled)}
-                  </text>
-                )}
-              </g>
-            )
-          })}
+          {/* Inner Arch Center Readout */}
+          <text
+            x={cx}
+            y={cy - 28}
+            textAnchor="middle"
+            fontSize="10"
+            fontWeight="700"
+            fill="#64748B"
+            letterSpacing="0.08em"
+          >
+            {chartRange === '6m' ? 'LAST 6 MONTHS' : 'THIS YEAR'}
+          </text>
+          <text
+            x={cx}
+            y={cy - 10}
+            textAnchor="middle"
+            fontSize="13"
+            fontWeight="800"
+            fill="#0F172A"
+            fontFamily="ui-monospace, SFMono-Regular, monospace"
+          >
+            {hoveredIdx !== null && segments[hoveredIdx]
+              ? `${segments[hoveredIdx].label}: ${formatCompact(segments[hoveredIdx].value)}`
+              : formatCompact(summaryTotals.totalBilled)}
+          </text>
         </svg>
 
-        {/* Glassmorphic Hover Tooltip */}
-        {hoveredIdx !== null && visibleData[hoveredIdx] && (
+        {/* Glassmorphic Hover Breakdown Bar */}
+        {hoveredIdx !== null && segments[hoveredIdx] && (
           <div className="mt-2 px-3.5 py-2 rounded-xl bg-slate-900 text-white text-[11px] flex flex-wrap items-center justify-between gap-3 shadow-lg">
-            <span className="font-bold text-emerald-300">{visibleData[hoveredIdx].month} Breakdown</span>
-            <span>Billed: <strong>PKR {visibleData[hoveredIdx].totalBilled.toLocaleString()}</strong></span>
-            <span className="text-emerald-400">Collected: <strong>PKR {visibleData[hoveredIdx].collected.toLocaleString()}</strong></span>
-            <span className="text-violet-300">Waiver: <strong>PKR {visibleData[hoveredIdx].waiver.toLocaleString()}</strong></span>
-            <span className="text-amber-300">Outstanding: <strong>PKR {visibleData[hoveredIdx].outstanding.toLocaleString()}</strong></span>
+            <span className="font-bold text-emerald-300">
+              {segments[hoveredIdx].label} ({chartRange === '6m' ? 'Last 6 Months' : 'This Year'})
+            </span>
+            <span>Amount: <strong>PKR {segments[hoveredIdx].value.toLocaleString()}</strong></span>
+            <span>Billed: <strong>PKR {summaryTotals.totalBilled.toLocaleString()}</strong></span>
+            <span className="text-emerald-400">Collected: <strong>PKR {summaryTotals.collected.toLocaleString()}</strong></span>
+            <span className="text-violet-300">Waiver: <strong>PKR {summaryTotals.waiver.toLocaleString()}</strong></span>
+            <span className="text-amber-300">Outstanding: <strong>PKR {summaryTotals.outstanding.toLocaleString()}</strong></span>
           </div>
         )}
       </div>
