@@ -70,6 +70,7 @@ const LibraryView = lazyWithRetry(() => import('./modules/library/LibraryView'),
 const CertificatesView = lazyWithRetry(() => import('./modules/institute-admin/certificates/CertificatesView'), 'certificates-view')
 const LearningResourcesView = lazyWithRetry(() => import('./modules/institute-admin/learning/LearningResourcesView'), 'learning-resources-view')
 const CampusInventoryView = lazyWithRetry(() => import('./modules/institute-admin/inventory/CampusInventoryView'), 'campus-inventory-view')
+const InventorySuiteViews = lazyWithRetry(() => import('./modules/institute-admin/inventory/InventorySuiteViews'), 'inventory-suite-views')
 const CampusEventsCalendarView = lazyWithRetry(() => import('./modules/institute-admin/events/CampusEventsCalendarView'), 'campus-events-view')
 const CampusReportsAnalyticsView = lazyWithRetry(() => import('./modules/institute-admin/reports/CampusReportsAnalyticsView'), 'campus-reports-view')
 const StudentPerformanceReportsView = lazyWithRetry(() => import('./modules/institute-admin/students/StudentPerformanceReportsView'), 'student-performance-reports-view')
@@ -1038,16 +1039,24 @@ const AppContent = () => {
                     initialTab={safeInstituteRoute === 'inst-library-issue' ? 'issued' : 'catalog'}
                   />
                 )}
-                {['inst-inventory', 'inst-inventory-categories', 'inst-inventory-receive', 'inst-inventory-issue', 'inst-inventory-reports'].includes(safeInstituteRoute) && (
-                  <CampusInventoryView
-                    currentInstitute={activeCampus}
-                    initialTab={
+                {['inst-inventory', 'inst-inventory-categories', 'inst-inventory-receive', 'inst-inventory-issue'].includes(safeInstituteRoute) && (
+                  <InventorySuiteViews
+                    mode={
                       safeInstituteRoute === 'inst-inventory-categories' ? 'categories'
                         : safeInstituteRoute === 'inst-inventory-receive' ? 'receive'
                           : safeInstituteRoute === 'inst-inventory-issue' ? 'issue'
-                            : safeInstituteRoute === 'inst-inventory-reports' ? 'reports'
-                              : 'items'
+                            : 'items'
                     }
+                    currentInstitute={activeCampus}
+                    onRouteChange={setInstituteRoute}
+                    onOpenQuickPayment={(sid) => openQuickPayment(sid)}
+                    onOpenSendSms={() => setIsSendSmsOpen(true)}
+                  />
+                )}
+                {safeInstituteRoute === 'inst-inventory-reports' && (
+                  <CampusInventoryView
+                    currentInstitute={activeCampus}
+                    initialTab="reports"
                   />
                 )}
                 {safeInstituteRoute === 'inst-certificates' && (
