@@ -218,6 +218,11 @@ export default function TeacherPortalView() {
     } else {
       showToast('You have already completed attendance for today.')
     }
+
+    // Auto-redirect to the My Attendance page matching real software workflow
+    setActiveModal(null)
+    setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
+    setActiveRoute('my-attendance')
   }
 
   const toggleGroup = (key) => {
@@ -1190,7 +1195,7 @@ export default function TeacherPortalView() {
                     ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
                     : punchStatus === 'CHECKED_IN'
                       ? 'bg-amber-600 hover:bg-amber-700 text-white'
-                      : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 cursor-not-allowed'
+                      : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'
                 }`}
               >
                 <Clock className="w-4 h-4" />
