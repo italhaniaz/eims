@@ -91,6 +91,7 @@ const AcademicsViews = lazyWithRetry(() => import('./modules/institute-admin/aca
 const AcademicsResourcesViews = lazyWithRetry(() => import('./modules/institute-admin/academics/AcademicsResourcesViews'), 'academics-resources-views')
 const ExamsManagementViews = lazyWithRetry(() => import('./modules/institute-admin/exams/ExamsManagementViews'), 'exams-management-views')
 const ExamsResultsViews = lazyWithRetry(() => import('./modules/institute-admin/exams/ExamsResultsViews'), 'exams-results-views')
+const FinanceDashboardAndIncomeViews = lazyWithRetry(() => import('./modules/institute-admin/finance/FinanceDashboardAndIncomeViews'), 'finance-dashboard-income-views')
 const ExpensesView = lazyWithRetry(() => import('./modules/institute-admin/accounts/ExpensesView'), 'expenses-view')
 const FeeCollectionReportView = lazyWithRetry(() => import('./modules/institute-admin/accounts/FeeCollectionReportView'), 'fee-collection-report-view')
 const MyAttendanceView = lazyWithRetry(() => import('./modules/institute-admin/attendance/MyAttendanceView'), 'my-attendance-view')
@@ -956,19 +957,19 @@ const AppContent = () => {
                     }}
                   />
                 )}
-                {['inst-accounts', 'inst-accounts-income', 'inst-accounts-categories'].includes(safeInstituteRoute) && (
+                {['inst-accounts', 'inst-accounts-income'].includes(safeInstituteRoute) && (
+                  <FinanceDashboardAndIncomeViews
+                    mode={safeInstituteRoute === 'inst-accounts-income' ? 'other-income' : 'dashboard'}
+                    currentInstitute={activeCampus}
+                    onRouteChange={setInstituteRoute}
+                    onOpenQuickPayment={(sid) => openQuickPayment(sid)}
+                  />
+                )}
+                {safeInstituteRoute === 'inst-accounts-categories' && (
                   <CampusAccountsView
                     currentInstitute={activeCampus}
-                    initialTab={
-                      safeInstituteRoute === 'inst-accounts' || safeInstituteRoute === 'inst-accounts-collection' ? 'statement'
-                        : safeInstituteRoute === 'inst-accounts-categories' ? 'categories'
-                          : 'ledger'
-                    }
-                    initialFilter={
-                      safeInstituteRoute === 'inst-accounts-income' ? 'Income'
-                        : safeInstituteRoute === 'inst-accounts-expenses' ? 'Expense'
-                          : 'All'
-                    }
+                    initialTab="categories"
+                    initialFilter="All"
                   />
                 )}
                 {safeInstituteRoute === 'inst-notices' && (
