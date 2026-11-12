@@ -52,6 +52,7 @@ const TeachersView = lazyWithRetry(() => import('./modules/institute-admin/teach
 const StaffAndPayrollViews = lazyWithRetry(() => import('./modules/institute-admin/teachers/StaffAndPayrollViews'), 'staff-payroll-views')
 const StaffLoansAndFinesViews = lazyWithRetry(() => import('./modules/institute-admin/teachers/StaffLoansAndFinesViews'), 'staff-loans-fines-views')
 const StaffDocsAndIdCardsViews = lazyWithRetry(() => import('./modules/institute-admin/teachers/StaffDocsAndIdCardsViews'), 'staff-docs-idcards-views')
+const HrReportsView = lazyWithRetry(() => import('./modules/institute-admin/teachers/HrReportsView'), 'hr-reports-view')
 const ClassesView = lazyWithRetry(() => import('./modules/institute-admin/classes/ClassesView'), 'classes-view')
 const TimetableView = lazyWithRetry(() => import('./modules/institute-admin/timetable/TimetableView'), 'timetable-view')
 const AttendanceView = lazyWithRetry(() => import('./modules/institute-admin/attendance/AttendanceView'), 'attendance-view')
@@ -785,9 +786,11 @@ const AppContent = () => {
                   />
                 )}
                 {safeInstituteRoute === 'inst-staff-reports' && (
-                  <TeachersView
+                  <HrReportsView
                     currentInstitute={activeCampus}
-                    initialTab="workload"
+                    onRouteChange={setInstituteRoute}
+                    onOpenQuickPayment={(sid) => openQuickPayment(sid)}
+                    onOpenSendSms={() => setIsSendSmsOpen(true)}
                   />
                 )}
                 {['inst-classes', 'inst-subjects', 'inst-timetable', 'inst-assignments'].includes(safeInstituteRoute) && (
