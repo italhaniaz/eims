@@ -145,6 +145,20 @@ export const InvoicesView = ({
     return map
   }, [instStudents])
 
+  const resolveInvoiceStudent = (f) => {
+    if (!f) return null
+    if (f.studentId && studentById.has(f.studentId)) return studentById.get(f.studentId)
+    const targetName = (f.studentName || '').trim().toLowerCase()
+    const targetRoll = f.rollNumber ? String(f.rollNumber).trim().toLowerCase() : ''
+    return (
+      instStudents.find(
+        (s) =>
+          (targetName && (s.fullName || s.name || '').trim().toLowerCase() === targetName) ||
+          (targetRoll && s.rollNumber && String(s.rollNumber).trim().toLowerCase() === targetRoll)
+      ) || null
+    )
+  }
+
   const availableClasses = useMemo(
     () => getDistinctInstituteClassNames(classes, instStudents, currentInstitute),
     [classes, instStudents, currentInstitute]
@@ -1350,7 +1364,7 @@ export const InvoicesView = ({
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredInvoices.map((f, idx) => {
-                  const std = f.studentId ? studentById.get(f.studentId) : instStudents.find((s) => (s.fullName || s.name) === f.studentName)
+                  const std = resolveInvoiceStudent(f)
                   const total = getFeeTotal(f)
                   const rem = getFeeRemaining(f)
                   const act = formatRelativeActivity(getFeeDateIso(f))
@@ -1377,9 +1391,14 @@ export const InvoicesView = ({
                           >
                             {isClass ? 'Class' : 'Individual'}
                           </button>
-                          <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 text-[10px] font-medium">
+                          <button
+                            type="button"
+                            onClick={() => setDetailFee(f)}
+                            title="View invoice details"
+                            className="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-[10px] font-medium cursor-pointer transition-colors"
+                          >
                             {f.className || std?.className || 'Class'}
-                          </span>
+                          </button>
                         </div>
                       </td>
 
@@ -2116,9 +2135,7 @@ export const InvoicesView = ({
 
       {/* Modal 6: Invoice Details Summary (Pick 4) */}
       {detailFee && (() => {
-        const detailStd = detailFee.studentId
-          ? studentById.get(detailFee.studentId)
-          : instStudents.find((s) => (s.fullName || s.name) === detailFee.studentName)
+        const detailStd = resolveInvoiceStudent(detailFee)
         const invType = detailFee.invoiceType || 'Individual'
         const clsName = detailFee.className || detailStd?.className || 'Class'
         const billedAmt = getFeeTotal(detailFee)
