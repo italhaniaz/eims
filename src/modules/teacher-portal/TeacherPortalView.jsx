@@ -26,7 +26,6 @@ import {
   FileEdit,
   Wallet,
   CalendarDays,
-  Smartphone,
   Receipt,
   UserCheck,
   MessageSquare,
@@ -40,7 +39,9 @@ import {
   Download,
   Check,
   Upload,
-  Inbox
+  Inbox,
+  FileText,
+  Video
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useAppData } from '../../context/AppDataContext'
@@ -834,19 +835,7 @@ export default function TeacherPortalView() {
             {!isSidebarCollapsed && <span className="truncate">My Transactions</span>}
           </button>
 
-          {/* 12. Download App */}
-          <button
-            onClick={() => {
-              showToast('Teacher Mobile App: APK download link dispatched.')
-              setIsMobileMenuOpen(false)
-            }}
-            className="w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer group"
-          >
-            <Smartphone className="w-4 h-4 text-slate-400 group-hover:text-purple-400 shrink-0" />
-            {!isSidebarCollapsed && <span className="truncate">Download App</span>}
-          </button>
-
-          {/* 13. My Account */}
+          {/* 12. My Account */}
           <button
             onClick={() => {
               setActiveModal('attendance')
