@@ -90,6 +90,7 @@ const FeeSettingsViews = lazyWithRetry(() => import('./modules/institute-admin/f
 const AcademicsViews = lazyWithRetry(() => import('./modules/institute-admin/academics/AcademicsViews'), 'academics-views')
 const AcademicsResourcesViews = lazyWithRetry(() => import('./modules/institute-admin/academics/AcademicsResourcesViews'), 'academics-resources-views')
 const ExamsManagementViews = lazyWithRetry(() => import('./modules/institute-admin/exams/ExamsManagementViews'), 'exams-management-views')
+const ExamsResultsViews = lazyWithRetry(() => import('./modules/institute-admin/exams/ExamsResultsViews'), 'exams-results-views')
 const ExpensesView = lazyWithRetry(() => import('./modules/institute-admin/accounts/ExpensesView'), 'expenses-view')
 const FeeCollectionReportView = lazyWithRetry(() => import('./modules/institute-admin/accounts/FeeCollectionReportView'), 'fee-collection-report-view')
 const MyAttendanceView = lazyWithRetry(() => import('./modules/institute-admin/attendance/MyAttendanceView'), 'my-attendance-view')
@@ -828,14 +829,16 @@ const AppContent = () => {
                   />
                 )}
                 {['inst-exams-result-summary', 'inst-exams-report-cards', 'inst-exams-grades', 'inst-exams-settings'].includes(safeInstituteRoute) && (
-                  <ExamsView
-                    currentInstitute={activeCampus}
-                    initialTab="results"
-                    initialAction={
-                      safeInstituteRoute === 'inst-exams-report-cards' ? 'gazette'
-                        : ['inst-exams-grades', 'inst-exams-settings'].includes(safeInstituteRoute) ? 'settings'
-                          : null
+                  <ExamsResultsViews
+                    mode={
+                      safeInstituteRoute === 'inst-exams-report-cards' ? 'report-cards'
+                        : safeInstituteRoute === 'inst-exams-grades' ? 'grades'
+                          : safeInstituteRoute === 'inst-exams-settings' ? 'settings'
+                            : 'summary'
                     }
+                    currentInstitute={activeCampus}
+                    onRouteChange={setInstituteRoute}
+                    onOpenQuickPayment={(sid) => openQuickPayment(sid)}
                   />
                 )}
                 {safeInstituteRoute === 'inst-fees-history' && (
