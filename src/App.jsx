@@ -85,6 +85,7 @@ const CampusPoliciesView = lazyWithRetry(() => import('./modules/institute-admin
 const CampusSettingsView = lazyWithRetry(() => import('./modules/institute-admin/settings/CampusSettingsView'), 'campus-settings-view')
 const SettingsSuiteViews = lazyWithRetry(() => import('./modules/institute-admin/settings/SettingsSuiteViews'), 'settings-suite-views')
 const MyAccountView = lazyWithRetry(() => import('./modules/institute-admin/account/MyAccountView'), 'campus-account-view')
+const MyTransactionsView = lazyWithRetry(() => import('./modules/institute-admin/account/MyTransactionsView'), 'my-transactions-view')
 const EnrollStudentView = lazyWithRetry(() => import('./modules/institute-admin/students/EnrollStudentView'), 'enroll-student-view')
 const QuickPaymentModal = lazyWithRetry(() => import('./components/common/QuickPaymentModal'), 'quick-payment-modal')
 const SendSmsModal = lazyWithRetry(() => import('./components/common/SendSmsModal'), 'send-sms-modal')
@@ -187,7 +188,7 @@ const AppContent = () => {
     'inst-transport', 'inst-hostels',
     'inst-reports', 'inst-policies',
     'inst-users', 'inst-settings', 'inst-settings-locations', 'inst-settings-activity',
-    'inst-my-account'
+    'inst-my-transactions', 'inst-my-account'
   ]
 
   // Helpers to safely extract valid initial routes per portal role
@@ -1120,6 +1121,14 @@ const AppContent = () => {
                   <CommunicationGatewayView
                     initialTab={safeInstituteRoute === 'inst-communication-sms' ? 'settings' : 'compose'}
                     initialChannel="SMS"
+                  />
+                )}
+                {safeInstituteRoute === 'inst-my-transactions' && (
+                  <MyTransactionsView
+                    currentInstitute={activeCampus}
+                    onRouteChange={setInstituteRoute}
+                    onOpenQuickPayment={(sid) => openQuickPayment(sid)}
+                    onOpenSendSms={() => setIsSendSmsOpen(true)}
                   />
                 )}
                 {safeInstituteRoute === 'inst-my-account' && (

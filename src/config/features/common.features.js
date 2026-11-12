@@ -63,7 +63,8 @@ export const COMMON_ROUTES = [
   'inst-notices',
   'inst-reports',
   'inst-users',
-  'inst-settings'
+  'inst-settings',
+  'inst-my-transactions'
 ]
 
 export const COMMON_DASHBOARD_SHORTCUTS = [
