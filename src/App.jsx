@@ -57,8 +57,9 @@ const ExamsView = lazyWithRetry(() => import('./modules/institute-admin/exams/Ex
 const SubjectsView = lazyWithRetry(() => import('./modules/institute-admin/subjects/SubjectsView'), 'subjects-view')
 const ProgramLevelsView = lazyWithRetry(() => import('./modules/academics/ProgramLevelsView'), 'program-levels-view')
 const NoticeBoardView = lazyWithRetry(() => import('./modules/institute-admin/notices/NoticeBoardView'), 'notice-board-view')
-const AdmissionsPipelineView = lazyWithRetry(() => import('./modules/admissions-pipeline/AdmissionsPipelineView'), 'admissions-pipeline')
 const AdmissionInquiriesView = lazyWithRetry(() => import('./modules/admissions-pipeline/AdmissionInquiriesView'), 'admission-inquiries')
+const OnlineApplicationsView = lazyWithRetry(() => import('./modules/admissions-pipeline/OnlineApplicationsView'), 'online-applications')
+const BulkImportView = lazyWithRetry(() => import('./modules/admissions-pipeline/BulkImportView'), 'bulk-import')
 const TransportView = lazyWithRetry(() => import('./modules/transport/TransportView'), 'transport-view')
 const LibraryView = lazyWithRetry(() => import('./modules/library/LibraryView'), 'library-view')
 const CertificatesView = lazyWithRetry(() => import('./modules/institute-admin/certificates/CertificatesView'), 'certificates-view')
@@ -652,9 +653,15 @@ const AppContent = () => {
                   />
                 )}
                 {safeInstituteRoute === 'inst-admissions-online' && (
-                  <AdmissionsPipelineView
+                  <OnlineApplicationsView
                     currentInstitute={activeCampus}
-                    initialSourceFilter="Website / Online"
+                    onRouteChange={setInstituteRoute}
+                  />
+                )}
+                {safeInstituteRoute === 'inst-admissions-import' && (
+                  <BulkImportView
+                    currentInstitute={activeCampus}
+                    onRouteChange={setInstituteRoute}
                   />
                 )}
                 {safeInstituteRoute === 'inst-admissions-enroll' && (
@@ -698,17 +705,16 @@ const AppContent = () => {
                       })
                     }}
                   />
-                ) : ['inst-students', 'inst-admissions-import', 'inst-students-guardians', 'inst-students-promote', 'inst-students-status', 'inst-students-idcards'].includes(safeInstituteRoute) && (
+                ) : ['inst-students', 'inst-students-guardians', 'inst-students-promote', 'inst-students-status', 'inst-students-idcards'].includes(safeInstituteRoute) && (
                   <StudentsView
                     currentInstitute={activeCampus}
                     initialClassFilter={studentsInitialClass}
                     initialAction={
-                      safeInstituteRoute === 'inst-admissions-import' ? 'import'
-                        : safeInstituteRoute === 'inst-students-guardians' ? 'guardians'
-                          : safeInstituteRoute === 'inst-students-promote' ? 'promote'
-                            : safeInstituteRoute === 'inst-students-status' ? 'status'
-                              : safeInstituteRoute === 'inst-students-idcards' ? 'idcards'
-                                : null
+                      safeInstituteRoute === 'inst-students-guardians' ? 'guardians'
+                        : safeInstituteRoute === 'inst-students-promote' ? 'promote'
+                          : safeInstituteRoute === 'inst-students-status' ? 'status'
+                            : safeInstituteRoute === 'inst-students-idcards' ? 'idcards'
+                              : null
                     }
                   />
                 )}
