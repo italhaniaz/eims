@@ -257,20 +257,20 @@ export const MyAttendanceView = ({
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="bg-white rounded-xl border border-slate-200 p-3.5 text-center">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">My Time In</p>
-              <p className="text-sm font-extrabold text-emerald-600 mt-1">
-                {todayEntry?.timeIn || '—'}
+              <p className={`text-sm font-extrabold mt-1 ${todayEntry?.timeIn ? 'text-emerald-600' : 'text-slate-500'}`}>
+                {todayEntry?.timeIn || 'Not recorded'}
               </p>
             </div>
             <div className="bg-white rounded-xl border border-slate-200 p-3.5 text-center">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">My Time Out</p>
-              <p className="text-sm font-extrabold text-rose-600 mt-1">
-                {todayEntry?.timeOut || '—'}
+              <p className={`text-sm font-extrabold mt-1 ${todayEntry?.timeOut ? 'text-rose-600' : 'text-slate-500'}`}>
+                {todayEntry?.timeOut || 'Not recorded'}
               </p>
             </div>
             <div className="bg-white rounded-xl border border-slate-200 p-3.5 text-center">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status</p>
               <p className={`text-sm font-extrabold mt-1 ${statusColor}`}>
-                {statusText}
+                {todayEntry?.timeIn ? statusText : 'Not started'}
               </p>
             </div>
           </div>
@@ -298,9 +298,11 @@ export const MyAttendanceView = ({
               </span>
             </div>
           ) : (
-            <div className="rounded-xl bg-slate-50 border border-slate-200 px-3.5 py-2.5 flex items-center gap-2 text-xs text-slate-600">
-              <Clock className="w-4 h-4 text-slate-400 shrink-0" />
-              <span>You haven&apos;t checked in today yet. Click <strong>My Time In</strong> under Quick Actions to start.</span>
+            <div className="rounded-xl bg-indigo-50/70 border border-indigo-200 px-3.5 py-2.5 flex items-center gap-2 text-xs text-indigo-700">
+              <Clock className="w-4 h-4 text-indigo-500 shrink-0" />
+              <span>
+                Mark <strong>My Time In</strong> when you arrive and <strong>My Time Out</strong> when you leave. Times are saved for admin reports.
+              </span>
             </div>
           )}
         </div>
@@ -309,29 +311,31 @@ export const MyAttendanceView = ({
         <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs flex flex-col justify-between space-y-4">
           <div className="space-y-2.5">
             <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Quick Actions</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Disabled buttons mean that step is already done for today. You can only check in once and check out once per day.
-            </p>
-            <div className="flex flex-wrap items-center gap-2 pt-1">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
               <button
                 type="button"
                 disabled={hasTimedIn}
                 onClick={handleTimeIn}
-                className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-100 disabled:text-slate-400 text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer disabled:cursor-not-allowed transition-colors"
+                className="flex-1 px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-100 disabled:text-slate-400 text-white text-xs font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:cursor-not-allowed transition-colors"
               >
                 <LogIn className="w-3.5 h-3.5" />
                 <span>My Time In</span>
               </button>
-              <button
-                type="button"
-                disabled={!hasTimedIn || hasTimedOut}
-                onClick={handleTimeOut}
-                className="px-4 py-2 rounded-lg bg-orange-500 hover:bg-orange-600 disabled:bg-slate-100 disabled:text-slate-400 text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer disabled:cursor-not-allowed transition-colors"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-                <span>My Time Out</span>
-              </button>
+              {hasTimedIn && (
+                <button
+                  type="button"
+                  disabled={hasTimedOut}
+                  onClick={handleTimeOut}
+                  className="flex-1 px-4 py-2.5 rounded-lg bg-orange-500 hover:bg-orange-600 disabled:bg-slate-100 disabled:text-slate-400 text-white text-xs font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:cursor-not-allowed transition-colors"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>My Time Out</span>
+                </button>
+              )}
             </div>
+            <p className="text-[11px] text-slate-400 leading-relaxed">
+              Disabled buttons mean that step is already done for today. You can only check in once and check out once per day.
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-3 pt-1">

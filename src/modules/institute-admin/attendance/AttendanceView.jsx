@@ -71,8 +71,9 @@ import AttendanceSettingsModal from './AttendanceSettingsModal'
 import StudentLeaveModal from './StudentLeaveModal'
 import UnlockSheetModal from './UnlockSheetModal'
 import AttendanceAuditHistoryModal from './AttendanceAuditHistoryModal'
+import MarkAttendanceView from './MarkAttendanceView'
 
-export const AttendanceView = ({ currentInstitute, onRouteChange, initialTab = 'daily', initialAction = null }) => {
+export const AttendanceView = ({ currentInstitute, onRouteChange, onOpenProfile, onOpenQuickPayment, initialTab = 'daily', initialAction = null }) => {
   const { toast } = useToast()
   const { 
     students = [], 
@@ -688,6 +689,18 @@ export const AttendanceView = ({ currentInstitute, onRouteChange, initialTab = '
   const pendingSectionsToday = useMemo(() => {
     return getPendingSectionsToday(selectedSession, instClasses, todayIso)
   }, [selectedSession, instClasses, todayIso, sheetStatus])
+
+  if (activeTab === 'daily' && !initialAction) {
+    return (
+      <MarkAttendanceView
+        currentInstitute={currentInstitute}
+        onRouteChange={onRouteChange}
+        onSwitchToStaff={() => setActiveTab('staff')}
+        onOpenProfile={onOpenProfile}
+        onOpenQuickPayment={onOpenQuickPayment}
+      />
+    )
+  }
 
   return (
     <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto">

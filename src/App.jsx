@@ -783,6 +783,8 @@ const AppContent = () => {
                   <AttendanceView
                     currentInstitute={activeCampus}
                     onRouteChange={setInstituteRoute}
+                    onOpenProfile={(sid) => setStudentProfileTargetId(sid)}
+                    onOpenQuickPayment={(sid) => openQuickPayment(sid)}
                     initialTab={
                       safeInstituteRoute === 'inst-attendance-my' ? 'my-attendance'
                         : safeInstituteRoute === 'inst-attendance-staff-report' ? 'staff'
