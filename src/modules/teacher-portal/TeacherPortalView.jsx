@@ -169,7 +169,7 @@ export default function TeacherPortalView() {
 
   // Load teacher's personal attendance punch records
   const loadAttendance = () => {
-    const instId = user?.instituteId || 'inst-2'
+    const instId = user?.instituteId || 'inst-teacher-portal'
     const userEmail = user?.email || 'teacher@schoolms.com'
     const logs = readMyAttendanceLogs(instId, userEmail)
     setAttendanceLogs(logs)
@@ -203,7 +203,7 @@ export default function TeacherPortalView() {
 
   // Handle punch button click (Time In / Time Out)
   const handleTogglePunch = () => {
-    const instId = user?.instituteId || 'inst-2'
+    const instId = user?.instituteId || 'inst-teacher-portal'
     const userEmail = user?.email || 'teacher@schoolms.com'
 
     if (punchStatus === 'NOT_CHECKED_IN') {
@@ -221,6 +221,33 @@ export default function TeacherPortalView() {
 
   const toggleGroup = (key) => {
     setOpenSidebarGroups(prev => ({ ...prev, [key]: !prev[key] }))
+  }
+
+  // Universal Quick Link and In-View Navigation Dispatcher
+  const handleQuickLinkNavigate = (target) => {
+    if (target === 'mark-attendance' || target === 'my-attendance' || target === 'attendance-reports') {
+      setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
+      setActiveRoute(target)
+    } else if (target === 'marks-entry' || target === 'report-cards') {
+      setOpenSidebarGroups((prev) => ({ ...prev, exams: true }))
+      setActiveRoute(target)
+    } else if (target === 'assignments') {
+      setActiveRoute('assignments')
+    } else if (target === 'timetable') {
+      setActiveRoute('timetable')
+    } else if (target === 'announcements') {
+      setActiveRoute('announcements')
+    } else if (target === 'salary' || target === 'my-transactions') {
+      setActiveRoute('my-transactions')
+    } else if (target === 'handouts' || target === 'recorded-lectures') {
+      setOpenSidebarGroups((prev) => ({ ...prev, resources: true }))
+      setActiveRoute(target)
+    } else if (target === 'notifications' || target === 'inbox') {
+      setOpenSidebarGroups((prev) => ({ ...prev, communication: true }))
+      setActiveRoute(target)
+    } else {
+      setActiveModal(target)
+    }
   }
 
   // Interactive Mock State for Assignments created by teacher
@@ -935,49 +962,29 @@ export default function TeacherPortalView() {
         {activeRoute === 'students' ? (
           <TeacherStudentsView
             onBack={() => setActiveRoute('dashboard')}
-            onOpenModal={(modalName) => {
-              if (modalName === 'mark-attendance') {
-                setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
-                setActiveRoute('mark-attendance')
-              } else {
-                setActiveModal(modalName)
-              }
-            }}
+            onOpenModal={handleQuickLinkNavigate}
+            onNavigate={handleQuickLinkNavigate}
             teacherName={teacherName}
           />
         ) : activeRoute === 'my-attendance' ? (
           <TeacherMyAttendanceView
             onBack={() => setActiveRoute('dashboard')}
-            onOpenModal={(modalName) => {
-              if (modalName === 'mark-attendance') {
-                setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
-                setActiveRoute('mark-attendance')
-              } else {
-                setActiveModal(modalName)
-              }
-            }}
+            onOpenModal={handleQuickLinkNavigate}
+            onNavigate={handleQuickLinkNavigate}
             teacherName={teacherName}
           />
         ) : activeRoute === 'mark-attendance' ? (
           <TeacherMarkAttendanceView
             onBack={() => setActiveRoute('dashboard')}
-            onOpenModal={(modalName) => setActiveModal(modalName)}
+            onOpenModal={handleQuickLinkNavigate}
+            onNavigate={handleQuickLinkNavigate}
             teacherName={teacherName}
           />
         ) : activeRoute === 'attendance-reports' ? (
           <TeacherAttendanceReportsView
             onBack={() => setActiveRoute('dashboard')}
-            onOpenModal={(modalName) => {
-              if (modalName === 'mark-attendance') {
-                setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
-                setActiveRoute('mark-attendance')
-              } else if (modalName === 'marks-entry') {
-                setOpenSidebarGroups((prev) => ({ ...prev, exams: true }))
-                setActiveRoute('marks-entry')
-              } else {
-                setActiveModal(modalName)
-              }
-            }}
+            onOpenModal={handleQuickLinkNavigate}
+            onNavigate={handleQuickLinkNavigate}
             subReportType={subReportType}
             onSelectSubReport={(type) => setSubReportType(type)}
             teacherName={teacherName}
@@ -985,269 +992,80 @@ export default function TeacherPortalView() {
         ) : activeRoute === 'marks-entry' ? (
           <TeacherMarksEntryView
             onBack={() => setActiveRoute('dashboard')}
-            onOpenModal={(modalName) => {
-              if (modalName === 'mark-attendance') {
-                setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
-                setActiveRoute('mark-attendance')
-              } else if (modalName === 'marks-entry') {
-                setOpenSidebarGroups((prev) => ({ ...prev, exams: true }))
-                setActiveRoute('marks-entry')
-              } else {
-                setActiveModal(modalName)
-              }
-            }}
+            onOpenModal={handleQuickLinkNavigate}
+            onNavigate={handleQuickLinkNavigate}
             teacherName={teacherName}
           />
         ) : activeRoute === 'report-cards' ? (
           <TeacherReportCardsView
             onBack={() => setActiveRoute('dashboard')}
-            onOpenModal={(modalName) => {
-              if (modalName === 'mark-attendance') {
-                setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
-                setActiveRoute('mark-attendance')
-              } else if (modalName === 'marks-entry') {
-                setOpenSidebarGroups((prev) => ({ ...prev, exams: true }))
-                setActiveRoute('marks-entry')
-              } else if (modalName === 'assignments') {
-                setActiveRoute('assignments')
-              } else if (modalName === 'timetable') {
-                setActiveRoute('timetable')
-              } else {
-                setActiveModal(modalName)
-              }
-            }}
+            onOpenModal={handleQuickLinkNavigate}
+            onNavigate={handleQuickLinkNavigate}
             teacherName={teacherName}
           />
         ) : activeRoute === 'timetable' ? (
           <TeacherTimetableView
             onBack={() => setActiveRoute('dashboard')}
-            onOpenModal={(modalName) => {
-              if (modalName === 'mark-attendance') {
-                setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
-                setActiveRoute('mark-attendance')
-              } else if (modalName === 'marks-entry') {
-                setOpenSidebarGroups((prev) => ({ ...prev, exams: true }))
-                setActiveRoute('marks-entry')
-              } else if (modalName === 'assignments') {
-                setActiveRoute('assignments')
-              } else if (modalName === 'timetable') {
-                setActiveRoute('timetable')
-              } else {
-                setActiveModal(modalName)
-              }
-            }}
+            onOpenModal={handleQuickLinkNavigate}
+            onNavigate={handleQuickLinkNavigate}
             teacherName={teacherName}
           />
         ) : activeRoute === 'make-up-sessions' ? (
           <TeacherMakeupSessionsView
             onBack={() => setActiveRoute('dashboard')}
-            onOpenModal={(modalName) => {
-              if (modalName === 'mark-attendance') {
-                setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
-                setActiveRoute('mark-attendance')
-              } else if (modalName === 'marks-entry') {
-                setOpenSidebarGroups((prev) => ({ ...prev, exams: true }))
-                setActiveRoute('marks-entry')
-              } else if (modalName === 'assignments') {
-                setActiveRoute('assignments')
-              } else if (modalName === 'timetable') {
-                setActiveRoute('timetable')
-              } else {
-                setActiveModal(modalName)
-              }
-            }}
+            onOpenModal={handleQuickLinkNavigate}
+            onNavigate={handleQuickLinkNavigate}
             teacherName={teacherName}
           />
         ) : activeRoute === 'assignments' ? (
           <TeacherAssignmentsView
             onBack={() => setActiveRoute('dashboard')}
-            onOpenModal={(modalName) => {
-              if (modalName === 'mark-attendance') {
-                setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
-                setActiveRoute('mark-attendance')
-              } else if (modalName === 'marks-entry') {
-                setOpenSidebarGroups((prev) => ({ ...prev, exams: true }))
-                setActiveRoute('marks-entry')
-              } else if (modalName === 'assignments') {
-                setActiveRoute('assignments')
-              } else if (modalName === 'timetable') {
-                setActiveRoute('timetable')
-              } else if (modalName === 'announcements') {
-                setActiveRoute('announcements')
-              } else {
-                setActiveModal(modalName)
-              }
-            }}
+            onOpenModal={handleQuickLinkNavigate}
+            onNavigate={handleQuickLinkNavigate}
             teacherName={teacherName}
           />
         ) : activeRoute === 'handouts' ? (
           <TeacherClassResourcesView
             resourceType="handouts"
             onBack={() => setActiveRoute('dashboard')}
-            onOpenModal={(modalName) => {
-              if (modalName === 'mark-attendance') {
-                setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
-                setActiveRoute('mark-attendance')
-              } else if (modalName === 'marks-entry') {
-                setOpenSidebarGroups((prev) => ({ ...prev, exams: true }))
-                setActiveRoute('marks-entry')
-              } else if (modalName === 'assignments') {
-                setActiveRoute('assignments')
-              } else if (modalName === 'timetable') {
-                setActiveRoute('timetable')
-              } else if (modalName === 'announcements') {
-                setActiveRoute('announcements')
-              } else {
-                setActiveModal(modalName)
-              }
-            }}
+            onOpenModal={handleQuickLinkNavigate}
+            onNavigate={handleQuickLinkNavigate}
             teacherName={teacherName}
           />
         ) : activeRoute === 'recorded-lectures' ? (
           <TeacherClassResourcesView
             resourceType="recorded-lectures"
             onBack={() => setActiveRoute('dashboard')}
-            onOpenModal={(modalName) => {
-              if (modalName === 'mark-attendance') {
-                setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
-                setActiveRoute('mark-attendance')
-              } else if (modalName === 'marks-entry') {
-                setOpenSidebarGroups((prev) => ({ ...prev, exams: true }))
-                setActiveRoute('marks-entry')
-              } else if (modalName === 'assignments') {
-                setActiveRoute('assignments')
-              } else if (modalName === 'timetable') {
-                setActiveRoute('timetable')
-              } else if (modalName === 'announcements') {
-                setActiveRoute('announcements')
-              } else {
-                setActiveModal(modalName)
-              }
-            }}
+            onOpenModal={handleQuickLinkNavigate}
+            onNavigate={handleQuickLinkNavigate}
             teacherName={teacherName}
           />
         ) : activeRoute === 'announcements' ? (
           <TeacherAnnouncementsView
             onBack={() => setActiveRoute('dashboard')}
-            onOpenModal={(modalName) => {
-              if (modalName === 'mark-attendance') {
-                setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
-                setActiveRoute('mark-attendance')
-              } else if (modalName === 'marks-entry') {
-                setOpenSidebarGroups((prev) => ({ ...prev, exams: true }))
-                setActiveRoute('marks-entry')
-              } else if (modalName === 'assignments') {
-                setActiveRoute('assignments')
-              } else if (modalName === 'timetable') {
-                setActiveRoute('timetable')
-              } else if (modalName === 'announcements') {
-                setActiveRoute('announcements')
-              } else {
-                setActiveModal(modalName)
-              }
-            }}
+            onOpenModal={handleQuickLinkNavigate}
+            onNavigate={handleQuickLinkNavigate}
             teacherName={teacherName}
           />
         ) : activeRoute === 'notifications' ? (
           <TeacherNotificationsView
             onBack={() => setActiveRoute('dashboard')}
-            onNavigate={(route) => {
-              if (route === 'mark-attendance' || route === 'my-attendance' || route === 'attendance-reports') {
-                setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
-              } else if (route === 'marks-entry' || route === 'report-cards') {
-                setOpenSidebarGroups((prev) => ({ ...prev, exams: true }))
-              } else if (route === 'notifications' || route === 'inbox') {
-                setOpenSidebarGroups((prev) => ({ ...prev, communication: true }))
-              }
-              setActiveRoute(route)
-            }}
-            onOpenModal={(modalName) => {
-              if (modalName === 'mark-attendance') {
-                setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
-                setActiveRoute('mark-attendance')
-              } else if (modalName === 'marks-entry') {
-                setOpenSidebarGroups((prev) => ({ ...prev, exams: true }))
-                setActiveRoute('marks-entry')
-              } else if (modalName === 'assignments') {
-                setActiveRoute('assignments')
-              } else if (modalName === 'timetable') {
-                setActiveRoute('timetable')
-              } else if (modalName === 'announcements') {
-                setActiveRoute('announcements')
-              } else if (modalName === 'salary') {
-                setActiveRoute('my-transactions')
-              } else {
-                setActiveModal(modalName)
-              }
-            }}
+            onNavigate={handleQuickLinkNavigate}
+            onOpenModal={handleQuickLinkNavigate}
             teacherName={teacherName}
           />
         ) : activeRoute === 'inbox' ? (
           <TeacherInboxView
             onBack={() => setActiveRoute('dashboard')}
-            onNavigate={(route) => {
-              if (route === 'mark-attendance' || route === 'my-attendance' || route === 'attendance-reports') {
-                setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
-              } else if (route === 'marks-entry' || route === 'report-cards') {
-                setOpenSidebarGroups((prev) => ({ ...prev, exams: true }))
-              } else if (route === 'notifications' || route === 'inbox') {
-                setOpenSidebarGroups((prev) => ({ ...prev, communication: true }))
-              }
-              setActiveRoute(route)
-            }}
-            onOpenModal={(modalName) => {
-              if (modalName === 'mark-attendance') {
-                setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
-                setActiveRoute('mark-attendance')
-              } else if (modalName === 'marks-entry') {
-                setOpenSidebarGroups((prev) => ({ ...prev, exams: true }))
-                setActiveRoute('marks-entry')
-              } else if (modalName === 'assignments') {
-                setActiveRoute('assignments')
-              } else if (modalName === 'timetable') {
-                setActiveRoute('timetable')
-              } else if (modalName === 'announcements') {
-                setActiveRoute('announcements')
-              } else if (modalName === 'salary') {
-                setActiveRoute('my-transactions')
-              } else {
-                setActiveModal(modalName)
-              }
-            }}
+            onNavigate={handleQuickLinkNavigate}
+            onOpenModal={handleQuickLinkNavigate}
             teacherName={teacherName}
           />
         ) : activeRoute === 'my-transactions' ? (
           <TeacherTransactionsView
             onBack={() => setActiveRoute('dashboard')}
-            onNavigate={(route) => {
-              if (route === 'mark-attendance' || route === 'my-attendance' || route === 'attendance-reports') {
-                setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
-              } else if (route === 'marks-entry' || route === 'report-cards') {
-                setOpenSidebarGroups((prev) => ({ ...prev, exams: true }))
-              } else if (route === 'notifications' || route === 'inbox') {
-                setOpenSidebarGroups((prev) => ({ ...prev, communication: true }))
-              }
-              setActiveRoute(route)
-            }}
-            onOpenModal={(modalName) => {
-              if (modalName === 'mark-attendance') {
-                setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
-                setActiveRoute('mark-attendance')
-              } else if (modalName === 'marks-entry') {
-                setOpenSidebarGroups((prev) => ({ ...prev, exams: true }))
-                setActiveRoute('marks-entry')
-              } else if (modalName === 'assignments') {
-                setActiveRoute('assignments')
-              } else if (modalName === 'timetable') {
-                setActiveRoute('timetable')
-              } else if (modalName === 'announcements') {
-                setActiveRoute('announcements')
-              } else if (modalName === 'salary') {
-                setActiveRoute('my-transactions')
-              } else {
-                setActiveModal(modalName)
-              }
-            }}
+            onNavigate={handleQuickLinkNavigate}
+            onOpenModal={handleQuickLinkNavigate}
             teacherName={teacherName}
           />
         ) : (

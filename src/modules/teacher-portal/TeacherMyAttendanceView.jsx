@@ -31,7 +31,7 @@ export default function TeacherMyAttendanceView({
   const { user } = useAuth()
   const { toast } = useToast()
 
-  const instId = user?.instituteId || 'inst-demo'
+  const instId = user?.instituteId || 'inst-teacher-portal'
   const userEmail = user?.email || 'teacher@schoolms.com'
 
   // Attendance Logs State
