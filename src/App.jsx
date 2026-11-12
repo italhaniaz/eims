@@ -88,6 +88,7 @@ const OutstandingFeesView = lazyWithRetry(() => import('./modules/institute-admi
 const FinesView = lazyWithRetry(() => import('./modules/institute-admin/fees/FinesView'), 'fines-view')
 const FeeSettingsViews = lazyWithRetry(() => import('./modules/institute-admin/fees/FeeSettingsViews'), 'fee-settings-views')
 const AcademicsViews = lazyWithRetry(() => import('./modules/institute-admin/academics/AcademicsViews'), 'academics-views')
+const AcademicsResourcesViews = lazyWithRetry(() => import('./modules/institute-admin/academics/AcademicsResourcesViews'), 'academics-resources-views')
 const ExpensesView = lazyWithRetry(() => import('./modules/institute-admin/accounts/ExpensesView'), 'expenses-view')
 const FeeCollectionReportView = lazyWithRetry(() => import('./modules/institute-admin/accounts/FeeCollectionReportView'), 'fee-collection-report-view')
 const MyAttendanceView = lazyWithRetry(() => import('./modules/institute-admin/attendance/MyAttendanceView'), 'my-attendance-view')
@@ -767,11 +768,17 @@ const AppContent = () => {
                     onOpenQuickPayment={(sid) => openQuickPayment(sid)}
                   />
                 )}
-                {safeInstituteRoute === 'inst-makeup-sessions' && (
-                  <TimetableView
+                {['inst-learning-handouts', 'inst-learning-lectures', 'inst-events', 'inst-makeup-sessions'].includes(safeInstituteRoute) && (
+                  <AcademicsResourcesViews
+                    mode={
+                      safeInstituteRoute === 'inst-learning-lectures' ? 'lectures'
+                        : safeInstituteRoute === 'inst-events' ? 'calendar'
+                          : safeInstituteRoute === 'inst-makeup-sessions' ? 'makeup'
+                            : 'handouts'
+                    }
                     currentInstitute={activeCampus}
                     onRouteChange={setInstituteRoute}
-                    initialTab="makeup"
+                    onOpenQuickPayment={(sid) => openQuickPayment(sid)}
                   />
                 )}
                 {safeInstituteRoute === 'inst-attendance-my' && (
@@ -952,12 +959,10 @@ const AppContent = () => {
                 {safeInstituteRoute === 'inst-notices' && (
                   <NoticeBoardView currentInstitute={activeCampus} />
                 )}
-                {['inst-learning', 'inst-learning-handouts', 'inst-learning-lectures'].includes(safeInstituteRoute) && (
+                {safeInstituteRoute === 'inst-learning' && (
                   <LearningResourcesView
                     currentInstitute={activeCampus}
-                    initialTab={
-                      safeInstituteRoute === 'inst-learning-lectures' ? 'videos' : 'notes'
-                    }
+                    initialTab="notes"
                   />
                 )}
                 {safeInstituteRoute === 'inst-transport' && (
@@ -984,7 +989,7 @@ const AppContent = () => {
                 {safeInstituteRoute === 'inst-certificates' && (
                   <CertificatesView currentInstitute={activeCampus} />
                 )}
-                {safeInstituteRoute === 'inst-events' && (
+                {safeInstituteRoute === 'inst-events-legacy' && (
                   <CampusEventsCalendarView currentInstitute={activeCampus} />
                 )}
                 {safeInstituteRoute === 'inst-reports' && (
