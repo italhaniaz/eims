@@ -87,7 +87,9 @@ const buildMenuItems = (studentsCount) => [
         icon: ArrowUpRight,
         children: [
           { id: 'inst-students-promote', label: 'Promote Students', icon: TrendingUp },
-          { id: 'inst-students-status', label: 'Status & Transfers', icon: RotateCcw }
+          { id: 'inst-students-manage-promotions', label: 'Manage Promotions', icon: ClipboardList },
+          { id: 'inst-students-graduated', label: 'Graduated', icon: GraduationCap },
+          { id: 'inst-students-drop-leave', label: 'Drop / Leave', icon: LogOut }
         ]
       },
       { id: 'inst-reports-students', label: 'Performance Reports', icon: BarChart3 },

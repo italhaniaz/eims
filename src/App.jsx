@@ -143,7 +143,7 @@ const AppContent = () => {
   const VALID_INSTITUTE_ROUTES = [
     'inst-dashboard',
     'inst-admissions', 'inst-admissions-online', 'inst-admissions-enroll', 'inst-admissions-import',
-    'inst-students', 'inst-students-guardians', 'inst-students-promote', 'inst-students-status', 'inst-students-idcards',
+    'inst-students', 'inst-students-guardians', 'inst-students-promote', 'inst-students-manage-promotions', 'inst-students-graduated', 'inst-students-drop-leave', 'inst-students-status', 'inst-students-idcards',
     'inst-reports-students', 'inst-certificates',
     'inst-attendance', 'inst-attendance-my', 'inst-attendance-student-report', 'inst-attendance-staff-report',
     'inst-attendance-consecutive', 'inst-attendance-low', 'inst-attendance-unmarked', 'inst-attendance-settings',
@@ -705,16 +705,19 @@ const AppContent = () => {
                       })
                     }}
                   />
-                ) : ['inst-students', 'inst-students-guardians', 'inst-students-promote', 'inst-students-status', 'inst-students-idcards'].includes(safeInstituteRoute) && (
+                ) : ['inst-students', 'inst-students-guardians', 'inst-students-promote', 'inst-students-manage-promotions', 'inst-students-graduated', 'inst-students-drop-leave', 'inst-students-status', 'inst-students-idcards'].includes(safeInstituteRoute) && (
                   <StudentsView
                     currentInstitute={activeCampus}
                     initialClassFilter={studentsInitialClass}
                     initialAction={
                       safeInstituteRoute === 'inst-students-guardians' ? 'guardians'
                         : safeInstituteRoute === 'inst-students-promote' ? 'promote'
-                          : safeInstituteRoute === 'inst-students-status' ? 'status'
-                            : safeInstituteRoute === 'inst-students-idcards' ? 'idcards'
-                              : null
+                          : safeInstituteRoute === 'inst-students-manage-promotions' ? 'manage-promotions'
+                            : safeInstituteRoute === 'inst-students-graduated' ? 'graduated'
+                              : safeInstituteRoute === 'inst-students-drop-leave' ? 'drop-leave'
+                                : safeInstituteRoute === 'inst-students-status' ? 'drop-leave'
+                                  : safeInstituteRoute === 'inst-students-idcards' ? 'idcards'
+                                    : null
                     }
                     onRouteChange={setInstituteRoute}
                     onOpenProfile={(sid) => setStudentProfileTargetId(sid)}

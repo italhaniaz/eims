@@ -73,6 +73,7 @@ import PrintableStudentIdCardModal from '../../../components/common/PrintableStu
 import PrintableExamAdmitCardModal from '../../../components/common/PrintableExamAdmitCardModal'
 import AllStudentsDirectory from './AllStudentsDirectory'
 import ParentsGuardiansView from './ParentsGuardiansView'
+import PromotionStatusViews from './PromotionStatusViews'
 
 export const StudentsView = ({ currentInstitute, initialAction = null, initialClassFilter = 'ALL', onRouteChange, onOpenProfile, onOpenFeeSetup, onOpenBillingHistory, onOpenQuickPayment }) => {
   const tierConfig = getInstituteTierConfig(currentInstitute)
@@ -1343,6 +1344,18 @@ const validatePakistaniPhone = (phone) => {
   if (initialAction === 'guardians') {
     return (
       <ParentsGuardiansView
+        currentInstitute={currentInstitute}
+        onRouteChange={onRouteChange}
+        onOpenProfile={onOpenProfile}
+        onOpenQuickPayment={onOpenQuickPayment}
+      />
+    )
+  }
+
+  if (['promote', 'manage-promotions', 'graduated', 'drop-leave', 'status'].includes(initialAction)) {
+    return (
+      <PromotionStatusViews
+        mode={initialAction === 'status' ? 'drop-leave' : initialAction}
         currentInstitute={currentInstitute}
         onRouteChange={onRouteChange}
         onOpenProfile={onOpenProfile}
