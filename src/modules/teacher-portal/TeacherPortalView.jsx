@@ -58,6 +58,8 @@ import TeacherReportCardsView from './TeacherReportCardsView'
 import TeacherTimetableView from './TeacherTimetableView'
 import TeacherMakeupSessionsView from './TeacherMakeupSessionsView'
 import TeacherAssignmentsView from './TeacherAssignmentsView'
+import TeacherClassResourcesView from './TeacherClassResourcesView'
+import TeacherAnnouncementsView from './TeacherAnnouncementsView'
 
 export default function TeacherPortalView() {
   const { user, logout } = useAuth()
@@ -80,6 +82,8 @@ export default function TeacherPortalView() {
       if (activeRoute === 'report-cards') {
         setIsResultsMenuOpen(true)
       }
+    } else if (activeRoute === 'handouts' || activeRoute === 'recorded-lectures') {
+      setOpenSidebarGroups((prev) => ({ ...prev, resources: true }))
     }
   }, [activeRoute])
 
@@ -646,10 +650,18 @@ export default function TeacherPortalView() {
           <div>
             <button
               onClick={() => toggleGroup('resources')}
-              className="w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer group"
+              className={`w-full flex items-center justify-between px-3.5 py-2 rounded-xl transition-colors cursor-pointer group ${
+                activeRoute === 'handouts' || activeRoute === 'recorded-lectures'
+                  ? 'bg-blue-600/10 text-white border border-blue-500/30'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+              }`}
             >
               <div className="flex items-center gap-3 min-w-0">
-                <Layers className="w-4 h-4 text-slate-400 group-hover:text-purple-400 shrink-0" />
+                <Layers className={`w-4 h-4 shrink-0 ${
+                  activeRoute === 'handouts' || activeRoute === 'recorded-lectures'
+                    ? 'text-sky-400'
+                    : 'text-slate-400 group-hover:text-purple-400'
+                }`} />
                 {!isSidebarCollapsed && <span className="truncate">Class Resources</span>}
               </div>
               {!isSidebarCollapsed && (
@@ -657,12 +669,37 @@ export default function TeacherPortalView() {
               )}
             </button>
             {openSidebarGroups.resources && !isSidebarCollapsed && (
-              <div className="mt-1 pl-4 space-y-1 border-l border-slate-800 ml-5 text-xs text-slate-400">
+              <div className="mt-1 pl-3 space-y-1 border-l border-slate-800 ml-5 text-xs">
+                {/* 8.1 Handouts */}
                 <button
-                  onClick={() => showToast('Class Resources: 0 handouts uploaded.')}
-                  className="w-full text-left py-1.5 px-2 rounded-lg hover:text-white hover:bg-slate-800/50"
+                  onClick={() => {
+                    setActiveRoute('handouts')
+                    setIsMobileMenuOpen(false)
+                  }}
+                  className={`w-full flex items-center gap-2 py-1.5 px-2.5 rounded-lg transition-colors cursor-pointer ${
+                    activeRoute === 'handouts'
+                      ? 'bg-gradient-to-r from-sky-600/30 to-blue-600/30 text-sky-200 font-bold border border-sky-500/40 shadow-xs'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                  }`}
                 >
-                  Handouts & Syllabus
+                  <FileText className="w-3.5 h-3.5 text-sky-400" />
+                  <span>Handouts</span>
+                </button>
+
+                {/* 8.2 Recorded Lectures */}
+                <button
+                  onClick={() => {
+                    setActiveRoute('recorded-lectures')
+                    setIsMobileMenuOpen(false)
+                  }}
+                  className={`w-full flex items-center gap-2 py-1.5 px-2.5 rounded-lg transition-colors cursor-pointer ${
+                    activeRoute === 'recorded-lectures'
+                      ? 'bg-gradient-to-r from-sky-600/30 to-blue-600/30 text-sky-200 font-bold border border-sky-500/40 shadow-xs'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                  }`}
+                >
+                  <Video className="w-3.5 h-3.5 text-sky-400" />
+                  <span>Recorded Lectures</span>
                 </button>
               </div>
             )}
@@ -671,12 +708,18 @@ export default function TeacherPortalView() {
           {/* 9. Announcements */}
           <button
             onClick={() => {
-              setActiveModal('announcements')
+              setActiveRoute('announcements')
               setIsMobileMenuOpen(false)
             }}
-            className="w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer group"
+            className={`w-full flex items-center gap-3 px-3.5 py-2 rounded-xl transition-colors cursor-pointer group ${
+              activeRoute === 'announcements'
+                ? 'bg-gradient-to-r from-sky-600/30 to-blue-600/30 text-sky-200 font-bold border border-sky-500/40 shadow-xs'
+                : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+            }`}
           >
-            <Megaphone className="w-4 h-4 text-slate-400 group-hover:text-purple-400 shrink-0" />
+            <Megaphone className={`w-4 h-4 shrink-0 ${
+              activeRoute === 'announcements' ? 'text-sky-400' : 'text-slate-400 group-hover:text-purple-400'
+            }`} />
             {!isSidebarCollapsed && <span className="truncate">Announcements</span>}
           </button>
 
@@ -963,6 +1006,76 @@ export default function TeacherPortalView() {
                 setActiveRoute('assignments')
               } else if (modalName === 'timetable') {
                 setActiveRoute('timetable')
+              } else if (modalName === 'announcements') {
+                setActiveRoute('announcements')
+              } else {
+                setActiveModal(modalName)
+              }
+            }}
+            teacherName={teacherName}
+          />
+        ) : activeRoute === 'handouts' ? (
+          <TeacherClassResourcesView
+            resourceType="handouts"
+            onBack={() => setActiveRoute('dashboard')}
+            onOpenModal={(modalName) => {
+              if (modalName === 'mark-attendance') {
+                setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
+                setActiveRoute('mark-attendance')
+              } else if (modalName === 'marks-entry') {
+                setOpenSidebarGroups((prev) => ({ ...prev, exams: true }))
+                setActiveRoute('marks-entry')
+              } else if (modalName === 'assignments') {
+                setActiveRoute('assignments')
+              } else if (modalName === 'timetable') {
+                setActiveRoute('timetable')
+              } else if (modalName === 'announcements') {
+                setActiveRoute('announcements')
+              } else {
+                setActiveModal(modalName)
+              }
+            }}
+            teacherName={teacherName}
+          />
+        ) : activeRoute === 'recorded-lectures' ? (
+          <TeacherClassResourcesView
+            resourceType="recorded-lectures"
+            onBack={() => setActiveRoute('dashboard')}
+            onOpenModal={(modalName) => {
+              if (modalName === 'mark-attendance') {
+                setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
+                setActiveRoute('mark-attendance')
+              } else if (modalName === 'marks-entry') {
+                setOpenSidebarGroups((prev) => ({ ...prev, exams: true }))
+                setActiveRoute('marks-entry')
+              } else if (modalName === 'assignments') {
+                setActiveRoute('assignments')
+              } else if (modalName === 'timetable') {
+                setActiveRoute('timetable')
+              } else if (modalName === 'announcements') {
+                setActiveRoute('announcements')
+              } else {
+                setActiveModal(modalName)
+              }
+            }}
+            teacherName={teacherName}
+          />
+        ) : activeRoute === 'announcements' ? (
+          <TeacherAnnouncementsView
+            onBack={() => setActiveRoute('dashboard')}
+            onOpenModal={(modalName) => {
+              if (modalName === 'mark-attendance') {
+                setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
+                setActiveRoute('mark-attendance')
+              } else if (modalName === 'marks-entry') {
+                setOpenSidebarGroups((prev) => ({ ...prev, exams: true }))
+                setActiveRoute('marks-entry')
+              } else if (modalName === 'assignments') {
+                setActiveRoute('assignments')
+              } else if (modalName === 'timetable') {
+                setActiveRoute('timetable')
+              } else if (modalName === 'announcements') {
+                setActiveRoute('announcements')
               } else {
                 setActiveModal(modalName)
               }
@@ -988,7 +1101,7 @@ export default function TeacherPortalView() {
                   <span>Assignments</span>
                 </button>
                 <button
-                  onClick={() => setActiveModal('announcements')}
+                  onClick={() => setActiveRoute('announcements')}
                   className="flex items-center gap-1.5 hover:text-purple-600 dark:hover:text-purple-400 transition-colors cursor-pointer"
                 >
                   <Megaphone className="w-3.5 h-3.5" />
@@ -1323,7 +1436,7 @@ export default function TeacherPortalView() {
               {/* Button 6: Announcements */}
               <button
                 type="button"
-                onClick={() => setActiveModal('announcements')}
+                onClick={() => setActiveRoute('announcements')}
                 className="p-3.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-purple-300 dark:hover:border-purple-700 hover:bg-purple-50/50 dark:hover:bg-purple-950/30 text-slate-700 dark:text-slate-200 font-semibold text-xs flex flex-col items-center justify-center gap-2 shadow-2xs transition-all cursor-pointer group"
               >
                 <Megaphone className="w-5 h-5 text-slate-500 group-hover:text-purple-600 group-hover:scale-110 transition-transform" />
