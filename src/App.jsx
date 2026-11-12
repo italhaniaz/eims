@@ -85,6 +85,7 @@ const InvoicesView = lazyWithRetry(() => import('./modules/institute-admin/fees/
 const FamilyInvoicesView = lazyWithRetry(() => import('./modules/institute-admin/fees/FamilyInvoicesView'), 'family-invoices-view')
 const PaymentApprovalsView = lazyWithRetry(() => import('./modules/institute-admin/fees/PaymentApprovalsView'), 'payment-approvals-view')
 const OutstandingFeesView = lazyWithRetry(() => import('./modules/institute-admin/fees/OutstandingFeesView'), 'outstanding-fees-view')
+const FinesView = lazyWithRetry(() => import('./modules/institute-admin/fees/FinesView'), 'fines-view')
 const ExpensesView = lazyWithRetry(() => import('./modules/institute-admin/accounts/ExpensesView'), 'expenses-view')
 const FeeCollectionReportView = lazyWithRetry(() => import('./modules/institute-admin/accounts/FeeCollectionReportView'), 'fee-collection-report-view')
 const MyAttendanceView = lazyWithRetry(() => import('./modules/institute-admin/attendance/MyAttendanceView'), 'my-attendance-view')
@@ -878,11 +879,22 @@ const AppContent = () => {
                     onOpenQuickPayment={(sid) => openQuickPayment(sid)}
                   />
                 )}
-                {['inst-fees-fines', 'inst-fees-settings'].includes(safeInstituteRoute) && (
+                {safeInstituteRoute === 'inst-fees-fines' && (
+                  <FinesView
+                    currentInstitute={activeCampus}
+                    onRouteChange={setInstituteRoute}
+                    onOpenBillingHistory={(sid) => {
+                      setBillingHistoryStudentId(sid)
+                      setInstituteRoute('inst-fees-history')
+                    }}
+                    onOpenQuickPayment={(sid) => openQuickPayment(sid)}
+                  />
+                )}
+                {safeInstituteRoute === 'inst-fees-settings' && (
                   <FeesView
                     currentInstitute={activeCampus}
                     initialFilter="all"
-                    initialAction={safeInstituteRoute === 'inst-fees-fines' ? 'pos' : 'new'}
+                    initialAction="new"
                   />
                 )}
                 {safeInstituteRoute === 'inst-accounts-expenses' && (
