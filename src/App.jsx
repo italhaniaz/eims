@@ -192,6 +192,7 @@ const AppContent = () => {
   const [feeSetupInitialMode, setFeeSetupInitialMode] = useState('details')
   const [studentProfileTargetId, setStudentProfileTargetId] = useState(null)
   const [studentsInitialClass, setStudentsInitialClass] = useState('ALL')
+  const [invoicesInitialScope, setInvoicesInitialScope] = useState('ALL')
   const [attendanceReportClass, setAttendanceReportClass] = useState('')
   const [attendanceReportReturnRoute, setAttendanceReportReturnRoute] = useState('inst-attendance')
   const [isSendSmsOpen, setIsSendSmsOpen] = useState(false)
@@ -267,6 +268,9 @@ const AppContent = () => {
     if (valid === 'inst-students' && !options?.preserveStudentProfile) {
       setStudentProfileTargetId(null)
       setStudentsInitialClass('ALL')
+    }
+    if (valid === 'inst-fees') {
+      setInvoicesInitialScope(options?.studentScope || 'ALL')
     }
     if (valid === 'inst-attendance-student-report' && !options?.preserveAttendanceReport) {
       setAttendanceReportClass('')
@@ -794,6 +798,7 @@ const AppContent = () => {
                 {safeInstituteRoute === 'inst-fees' && (
                   <InvoicesView
                     currentInstitute={activeCampus}
+                    initialStudentScope={invoicesInitialScope}
                     onRouteChange={setInstituteRoute}
                     onOpenQuickPayment={(sid) => openQuickPayment(sid)}
                     onOpenSendSms={() => setIsSendSmsOpen(true)}

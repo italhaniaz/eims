@@ -108,6 +108,7 @@ const formatPkrDec = (val) =>
 
 export const InvoicesView = ({
   currentInstitute,
+  initialStudentScope = 'ALL',
   onRouteChange,
   onOpenQuickPayment,
   onOpenSendSms,
@@ -180,7 +181,7 @@ export const InvoicesView = ({
   const [kindFilter, setKindFilter] = useState('ALL')
   const [headFilter, setHeadFilter] = useState('ALL')
   const [statusFilter, setStatusFilter] = useState('ALL')
-  const [studentScopeFilter, setStudentScopeFilter] = useState('ALL') // 'ALL' | 'Active' | 'Dropped'
+  const [studentScopeFilter, setStudentScopeFilter] = useState(initialStudentScope || 'ALL') // 'ALL' | 'Active' | 'Dropped'
 
   const [appliedFilters, setAppliedFilters] = useState(() => ({
     dateMode: 'month',
@@ -193,8 +194,14 @@ export const InvoicesView = ({
     kindFilter: 'ALL',
     headFilter: 'ALL',
     statusFilter: 'ALL',
-    studentScopeFilter: 'ALL'
+    studentScopeFilter: initialStudentScope || 'ALL'
   }))
+
+  useEffect(() => {
+    const scope = initialStudentScope || 'ALL'
+    setStudentScopeFilter(scope)
+    setAppliedFilters((prev) => ({ ...prev, studentScopeFilter: scope }))
+  }, [initialStudentScope])
 
   // Switch date tab immediately applies cleanly (matching Picks 3, 4, 5)
   const handleSwitchDateMode = (mode) => {
@@ -861,7 +868,6 @@ export const InvoicesView = ({
     status: 'Pending',
     notes: ''
   })
-  const [deleteFee, setDeleteFee] = useState(null)
   const [receiptFee, setReceiptFee] = useState(null)
   const [detailFee, setDetailFee] = useState(null)
 
@@ -930,12 +936,28 @@ export const InvoicesView = ({
     }
   }
 
-  const handleConfirmDelete = async () => {
-    if (!deleteFee) return
+  const handleDeleteInvoicePrompt = async (fee) => {
+    if (!fee) return
+    const isClass = (fee.invoiceType || '').toLowerCase() === 'class'
+    const chargeType = isClass ? 'class invoice' : 'individual charge'
+    const headRaw = fee.feeHead || fee.feeType || fee.feeTitle || 'tuition'
+    const headLower = headRaw.toLowerCase().replace(/\s+fee$/i, '').trim() || 'tuition'
+    const amtFmt = Number(getFeeTotal(fee) || 0).toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })
+    const ok = window.confirm(
+      `Delete this ${chargeType} (${headLower}, ${amtFmt} PKR)?\n\nRelated submissions will be rolled back.`
+    )
+    if (!ok) return
     try {
-      await deleteItem('fees', deleteFee.id)
+      await deleteItem('fees', fee.id)
+      logAuditEvent?.(
+        `Deleted ${chargeType} (${headLower}, ${amtFmt} PKR) for ${fee.studentName || 'Student'}`,
+        currentInstitute?.name || 'Admin',
+        'Success'
+      )
       toast('Invoice deleted.', 'info')
-      setDeleteFee(null)
     } catch (err) {
       toast(err?.message || 'Could not delete invoice.', 'error')
     }
@@ -1750,7 +1772,7 @@ export const InvoicesView = ({
                           </button>
                           <button
                             type="button"
-                            onClick={() => setDeleteFee(f)}
+                            onClick={() => handleDeleteInvoicePrompt(f)}
                             className="px-2 py-1 rounded border border-rose-300 text-rose-600 hover:bg-rose-50 text-[11px] font-semibold cursor-pointer"
                           >
                             Delete
@@ -2299,22 +2321,6 @@ export const InvoicesView = ({
                 </div>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* Modal 4: Delete Invoice Confirmation */}
-      {deleteFee && (
-        <div className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-[1px] flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm p-5 space-y-4 border border-slate-200">
-            <h3 className="text-sm font-bold text-slate-900">Delete Invoice?</h3>
-            <p className="text-xs text-slate-600">
-              Delete <strong>{deleteFee.feeTitle || deleteFee.feeHead || 'Tuition Fee'}</strong> for <strong>{deleteFee.studentName}</strong> ({formatPkrDec(getFeeTotal(deleteFee))})?
-            </p>
-            <div className="flex justify-end gap-2">
-              <button type="button" onClick={() => setDeleteFee(null)} className="px-3.5 py-2 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 cursor-pointer">Cancel</button>
-              <button type="button" onClick={handleConfirmDelete} className="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold cursor-pointer">Delete</button>
-            </div>
           </div>
         </div>
       )}

@@ -790,7 +790,10 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange, onOpenQuic
           </div>
         </div>
 
-        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5 shadow-soft flex flex-col justify-between gap-3">
+        <div
+          onClick={() => onRouteChange?.('inst-fees', { studentScope: 'Active' })}
+          className="bg-[var(--surface)] border border-[var(--border)] hover:border-rose-300 rounded-2xl p-5 shadow-soft flex flex-col justify-between gap-3 cursor-pointer transition-colors"
+        >
           <div className="flex items-start gap-3.5">
             <StylizedKpiMedallion
               icon={Hourglass}
@@ -808,9 +811,12 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange, onOpenQuic
             <span>Excludes dropped / graduated</span>
             <button
               type="button"
-              onClick={() => onRouteChange?.('inst-fees-outstanding')}
-              title="View Outstanding Fees"
-              aria-label="View Outstanding Fees"
+              onClick={(e) => {
+                e.stopPropagation()
+                onRouteChange?.('inst-fees', { studentScope: 'Active' })
+              }}
+              title="View Active Students Invoices"
+              aria-label="View Active Students Invoices"
               className="p-1 rounded-lg bg-white hover:bg-rose-100 text-rose-400 hover:text-rose-600 border border-rose-200/80 transition-all cursor-pointer shadow-2xs flex items-center justify-center shrink-0 group/eye"
             >
               <Eye className="w-4 h-4 transition-transform group-hover/eye:scale-110" />
