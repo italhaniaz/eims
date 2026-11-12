@@ -61,6 +61,7 @@ const ExamsView = lazyWithRetry(() => import('./modules/institute-admin/exams/Ex
 const SubjectsView = lazyWithRetry(() => import('./modules/institute-admin/subjects/SubjectsView'), 'subjects-view')
 const ProgramLevelsView = lazyWithRetry(() => import('./modules/academics/ProgramLevelsView'), 'program-levels-view')
 const NoticeBoardView = lazyWithRetry(() => import('./modules/institute-admin/notices/NoticeBoardView'), 'notice-board-view')
+const CommunicationSuiteViews = lazyWithRetry(() => import('./modules/institute-admin/communication/CommunicationSuiteViews'), 'communication-suite-views')
 const AdmissionInquiriesView = lazyWithRetry(() => import('./modules/admissions-pipeline/AdmissionInquiriesView'), 'admission-inquiries')
 const OnlineApplicationsView = lazyWithRetry(() => import('./modules/admissions-pipeline/OnlineApplicationsView'), 'online-applications')
 const BulkImportView = lazyWithRetry(() => import('./modules/admissions-pipeline/BulkImportView'), 'bulk-import')
@@ -1008,8 +1009,19 @@ const AppContent = () => {
                     onOpenSendSms={() => setIsSendSmsOpen(true)}
                   />
                 )}
-                {safeInstituteRoute === 'inst-notices' && (
-                  <NoticeBoardView currentInstitute={activeCampus} />
+                {['inst-notices', 'inst-communication-inbox', 'inst-communication-notifications', 'inst-communication-whatsapp'].includes(safeInstituteRoute) && (
+                  <CommunicationSuiteViews
+                    mode={
+                      safeInstituteRoute === 'inst-notices' ? 'announcements'
+                        : safeInstituteRoute === 'inst-communication-notifications' ? 'notifications'
+                          : safeInstituteRoute === 'inst-communication-whatsapp' ? 'whatsapp'
+                            : 'inbox'
+                    }
+                    currentInstitute={activeCampus}
+                    onRouteChange={setInstituteRoute}
+                    onOpenQuickPayment={(sid) => openQuickPayment(sid)}
+                    onOpenSendSms={() => setIsSendSmsOpen(true)}
+                  />
                 )}
                 {safeInstituteRoute === 'inst-learning' && (
                   <LearningResourcesView
@@ -1073,15 +1085,10 @@ const AppContent = () => {
                     }
                   />
                 )}
-                {['inst-communication', 'inst-communication-inbox', 'inst-communication-notifications', 'inst-communication-whatsapp', 'inst-communication-sms'].includes(safeInstituteRoute) && (
+                {['inst-communication', 'inst-communication-sms'].includes(safeInstituteRoute) && (
                   <CommunicationGatewayView
-                    initialTab={
-                      safeInstituteRoute === 'inst-communication-inbox' ? 'inbox'
-                        : safeInstituteRoute === 'inst-communication-notifications' ? 'notifications'
-                          : safeInstituteRoute === 'inst-communication-sms' ? 'settings'
-                            : 'compose'
-                    }
-                    initialChannel={safeInstituteRoute === 'inst-communication-whatsapp' ? 'WhatsApp' : 'SMS'}
+                    initialTab={safeInstituteRoute === 'inst-communication-sms' ? 'settings' : 'compose'}
+                    initialChannel="SMS"
                   />
                 )}
                 {safeInstituteRoute === 'inst-hostels' && (
