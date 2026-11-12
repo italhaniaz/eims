@@ -497,7 +497,7 @@ export const InvoicesView = ({
     const map = new Map()
     availableClasses.forEach((cls) => map.set(cls, []))
     instStudents.forEach((s) => {
-      if ((s.status || 'Active') !== 'Active') return
+      if (String(s.status || 'Active').toLowerCase() !== 'active') return
       const cls = s.className || ''
       if (!cls) return
       if (!map.has(cls)) map.set(cls, [])
@@ -509,7 +509,9 @@ export const InvoicesView = ({
   const selectedClassTargets = useMemo(() => {
     if (classForm.selectedClasses.length === 0) return []
     const set = new Set(classForm.selectedClasses)
-    return instStudents.filter((s) => (s.status || 'Active') === 'Active' && set.has(s.className || ''))
+    return instStudents.filter(
+      (s) => String(s.status || 'Active').toLowerCase() === 'active' && set.has(s.className || '')
+    )
   }, [classForm.selectedClasses, instStudents])
 
   const missingPhoneCount = useMemo(() => {
@@ -699,6 +701,7 @@ export const InvoicesView = ({
     const parentPhoneRaw = st.parentPhone || st.phone || st.guardianPhone || ''
     const hasPhone = String(parentPhoneRaw).replace(/[^0-9]/g, '').length >= 7
 
+    const createdIso = new Date().toISOString()
     try {
       await addItem('fees', {
         studentId: st.id,
@@ -723,12 +726,23 @@ export const InvoicesView = ({
         discount: 0,
         notes: indivForm.notes.trim(),
         paidAmount: isPaid ? gross + fineVal : 0,
-        paidAt: isPaid ? new Date().toISOString() : null,
+        paidAt: isPaid ? createdIso : null,
         dueDate: indivForm.dueDate || todayIso,
-        createdAt: new Date().toISOString(),
+        createdAt: createdIso,
         status: indivForm.status,
         smsSent: indivForm.notifySms && hasPhone,
-        instituteId: instId
+        instituteId: instId,
+        transactions: isPaid && gross + fineVal > 0
+          ? [{
+              id: `txn-init-${Date.now()}`,
+              date: createdIso,
+              type: 'Cash',
+              amount: gross + fineVal,
+              balanceAfter: 0,
+              by: currentInstitute?.adminName || 'Admin',
+              reason: indivForm.notes.trim() || '—'
+            }]
+          : []
       })
 
       if (indivForm.notifySms && hasPhone && sendCommunicationBlast) {
