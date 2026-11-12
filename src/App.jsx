@@ -51,6 +51,7 @@ const StudentsView = lazyWithRetry(() => import('./modules/institute-admin/stude
 const TeachersView = lazyWithRetry(() => import('./modules/institute-admin/teachers/TeachersView'), 'teachers-view')
 const StaffAndPayrollViews = lazyWithRetry(() => import('./modules/institute-admin/teachers/StaffAndPayrollViews'), 'staff-payroll-views')
 const StaffLoansAndFinesViews = lazyWithRetry(() => import('./modules/institute-admin/teachers/StaffLoansAndFinesViews'), 'staff-loans-fines-views')
+const StaffDocsAndIdCardsViews = lazyWithRetry(() => import('./modules/institute-admin/teachers/StaffDocsAndIdCardsViews'), 'staff-docs-idcards-views')
 const ClassesView = lazyWithRetry(() => import('./modules/institute-admin/classes/ClassesView'), 'classes-view')
 const TimetableView = lazyWithRetry(() => import('./modules/institute-admin/timetable/TimetableView'), 'timetable-view')
 const AttendanceView = lazyWithRetry(() => import('./modules/institute-admin/attendance/AttendanceView'), 'attendance-view')
@@ -770,13 +771,23 @@ const AppContent = () => {
                     onOpenSendSms={() => setIsSendSmsOpen(true)}
                   />
                 )}
-                {['inst-staff-docs', 'inst-staff-letters', 'inst-staff-idcards', 'inst-staff-reports'].includes(safeInstituteRoute) && (
+                {['inst-staff-docs', 'inst-staff-letters', 'inst-staff-idcards'].includes(safeInstituteRoute) && (
+                  <StaffDocsAndIdCardsViews
+                    mode={
+                      safeInstituteRoute === 'inst-staff-letters' ? 'letters'
+                        : safeInstituteRoute === 'inst-staff-idcards' ? 'idcards'
+                          : 'docs'
+                    }
+                    currentInstitute={activeCampus}
+                    onRouteChange={setInstituteRoute}
+                    onOpenQuickPayment={(sid) => openQuickPayment(sid)}
+                    onOpenSendSms={() => setIsSendSmsOpen(true)}
+                  />
+                )}
+                {safeInstituteRoute === 'inst-staff-reports' && (
                   <TeachersView
                     currentInstitute={activeCampus}
-                    initialTab={
-                      ['inst-staff-docs', 'inst-staff-letters', 'inst-staff-idcards'].includes(safeInstituteRoute) ? 'documents'
-                        : 'workload'
-                    }
+                    initialTab="workload"
                   />
                 )}
                 {['inst-classes', 'inst-subjects', 'inst-timetable', 'inst-assignments'].includes(safeInstituteRoute) && (
