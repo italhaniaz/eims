@@ -55,6 +55,9 @@ import TeacherMarkAttendanceView from './TeacherMarkAttendanceView'
 import TeacherAttendanceReportsView from './TeacherAttendanceReportsView'
 import TeacherMarksEntryView from './TeacherMarksEntryView'
 import TeacherReportCardsView from './TeacherReportCardsView'
+import TeacherTimetableView from './TeacherTimetableView'
+import TeacherMakeupSessionsView from './TeacherMakeupSessionsView'
+import TeacherAssignmentsView from './TeacherAssignmentsView'
 
 export default function TeacherPortalView() {
   const { user, logout } = useAuth()
@@ -588,36 +591,54 @@ export default function TeacherPortalView() {
           {/* 5. My Timetable */}
           <button
             onClick={() => {
-              setActiveModal('timetable')
+              setActiveRoute('timetable')
               setIsMobileMenuOpen(false)
             }}
-            className="w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer group"
+            className={`w-full flex items-center gap-3 px-3.5 py-2 rounded-xl transition-colors cursor-pointer group ${
+              activeRoute === 'timetable'
+                ? 'bg-gradient-to-r from-sky-600/30 to-blue-600/30 text-sky-200 font-bold border border-sky-500/40 shadow-xs'
+                : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+            }`}
           >
-            <Clock className="w-4 h-4 text-slate-400 group-hover:text-purple-400 shrink-0" />
+            <Clock className={`w-4 h-4 shrink-0 ${
+              activeRoute === 'timetable' ? 'text-sky-400' : 'text-slate-400 group-hover:text-purple-400'
+            }`} />
             {!isSidebarCollapsed && <span className="truncate">My Timetable</span>}
           </button>
 
           {/* 6. Make-up Sessions */}
           <button
             onClick={() => {
-              showToast('Make-up Sessions: No pending makeup classes scheduled.')
+              setActiveRoute('make-up-sessions')
               setIsMobileMenuOpen(false)
             }}
-            className="w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer group"
+            className={`w-full flex items-center gap-3 px-3.5 py-2 rounded-xl transition-colors cursor-pointer group ${
+              activeRoute === 'make-up-sessions'
+                ? 'bg-gradient-to-r from-sky-600/30 to-blue-600/30 text-sky-200 font-bold border border-sky-500/40 shadow-xs'
+                : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+            }`}
           >
-            <CalendarDays className="w-4 h-4 text-slate-400 group-hover:text-purple-400 shrink-0" />
+            <CalendarDays className={`w-4 h-4 shrink-0 ${
+              activeRoute === 'make-up-sessions' ? 'text-sky-400' : 'text-slate-400 group-hover:text-purple-400'
+            }`} />
             {!isSidebarCollapsed && <span className="truncate">Make-up Sessions</span>}
           </button>
 
           {/* 7. Assignments */}
           <button
             onClick={() => {
-              setActiveModal('assignments')
+              setActiveRoute('assignments')
               setIsMobileMenuOpen(false)
             }}
-            className="w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer group"
+            className={`w-full flex items-center gap-3 px-3.5 py-2 rounded-xl transition-colors cursor-pointer group ${
+              activeRoute === 'assignments'
+                ? 'bg-gradient-to-r from-sky-600/30 to-blue-600/30 text-sky-200 font-bold border border-sky-500/40 shadow-xs'
+                : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+            }`}
           >
-            <BookMarked className="w-4 h-4 text-slate-400 group-hover:text-purple-400 shrink-0" />
+            <BookMarked className={`w-4 h-4 shrink-0 ${
+              activeRoute === 'assignments' ? 'text-sky-400' : 'text-slate-400 group-hover:text-purple-400'
+            }`} />
             {!isSidebarCollapsed && <span className="truncate">Assignments</span>}
           </button>
 
@@ -878,6 +899,70 @@ export default function TeacherPortalView() {
               } else if (modalName === 'marks-entry') {
                 setOpenSidebarGroups((prev) => ({ ...prev, exams: true }))
                 setActiveRoute('marks-entry')
+              } else if (modalName === 'assignments') {
+                setActiveRoute('assignments')
+              } else if (modalName === 'timetable') {
+                setActiveRoute('timetable')
+              } else {
+                setActiveModal(modalName)
+              }
+            }}
+            teacherName={teacherName}
+          />
+        ) : activeRoute === 'timetable' ? (
+          <TeacherTimetableView
+            onBack={() => setActiveRoute('dashboard')}
+            onOpenModal={(modalName) => {
+              if (modalName === 'mark-attendance') {
+                setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
+                setActiveRoute('mark-attendance')
+              } else if (modalName === 'marks-entry') {
+                setOpenSidebarGroups((prev) => ({ ...prev, exams: true }))
+                setActiveRoute('marks-entry')
+              } else if (modalName === 'assignments') {
+                setActiveRoute('assignments')
+              } else if (modalName === 'timetable') {
+                setActiveRoute('timetable')
+              } else {
+                setActiveModal(modalName)
+              }
+            }}
+            teacherName={teacherName}
+          />
+        ) : activeRoute === 'make-up-sessions' ? (
+          <TeacherMakeupSessionsView
+            onBack={() => setActiveRoute('dashboard')}
+            onOpenModal={(modalName) => {
+              if (modalName === 'mark-attendance') {
+                setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
+                setActiveRoute('mark-attendance')
+              } else if (modalName === 'marks-entry') {
+                setOpenSidebarGroups((prev) => ({ ...prev, exams: true }))
+                setActiveRoute('marks-entry')
+              } else if (modalName === 'assignments') {
+                setActiveRoute('assignments')
+              } else if (modalName === 'timetable') {
+                setActiveRoute('timetable')
+              } else {
+                setActiveModal(modalName)
+              }
+            }}
+            teacherName={teacherName}
+          />
+        ) : activeRoute === 'assignments' ? (
+          <TeacherAssignmentsView
+            onBack={() => setActiveRoute('dashboard')}
+            onOpenModal={(modalName) => {
+              if (modalName === 'mark-attendance') {
+                setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
+                setActiveRoute('mark-attendance')
+              } else if (modalName === 'marks-entry') {
+                setOpenSidebarGroups((prev) => ({ ...prev, exams: true }))
+                setActiveRoute('marks-entry')
+              } else if (modalName === 'assignments') {
+                setActiveRoute('assignments')
+              } else if (modalName === 'timetable') {
+                setActiveRoute('timetable')
               } else {
                 setActiveModal(modalName)
               }
@@ -896,7 +981,7 @@ export default function TeacherPortalView() {
               {/* Top Quick Links Bar from screenshot */}
               <div className="hidden lg:flex items-center gap-4 text-xs font-semibold text-slate-600 dark:text-slate-300">
                 <button
-                  onClick={() => setActiveModal('assignments')}
+                  onClick={() => setActiveRoute('assignments')}
                   className="flex items-center gap-1.5 hover:text-purple-600 dark:hover:text-purple-400 transition-colors cursor-pointer"
                 >
                   <BookMarked className="w-3.5 h-3.5" />
@@ -930,7 +1015,7 @@ export default function TeacherPortalView() {
                   <span>Marks Entry</span>
                 </button>
                 <button
-                  onClick={() => setActiveModal('timetable')}
+                  onClick={() => setActiveRoute('timetable')}
                   className="flex items-center gap-1.5 hover:text-purple-600 dark:hover:text-purple-400 transition-colors cursor-pointer"
                 >
                   <Calendar className="w-3.5 h-3.5" />
@@ -1192,7 +1277,7 @@ export default function TeacherPortalView() {
               {/* Button 2: Assignments */}
               <button
                 type="button"
-                onClick={() => setActiveModal('assignments')}
+                onClick={() => setActiveRoute('assignments')}
                 className="p-3.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-purple-300 dark:hover:border-purple-700 hover:bg-purple-50/50 dark:hover:bg-purple-950/30 text-slate-700 dark:text-slate-200 font-semibold text-xs flex flex-col items-center justify-center gap-2 shadow-2xs transition-all cursor-pointer group"
               >
                 <BookMarked className="w-5 h-5 text-slate-500 group-hover:text-purple-600 group-hover:scale-110 transition-transform" />
@@ -1228,7 +1313,7 @@ export default function TeacherPortalView() {
               {/* Button 5: My Timetable */}
               <button
                 type="button"
-                onClick={() => setActiveModal('timetable')}
+                onClick={() => setActiveRoute('timetable')}
                 className="p-3.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-purple-300 dark:hover:border-purple-700 hover:bg-purple-50/50 dark:hover:bg-purple-950/30 text-slate-700 dark:text-slate-200 font-semibold text-xs flex flex-col items-center justify-center gap-2 shadow-2xs transition-all cursor-pointer group"
               >
                 <Calendar className="w-5 h-5 text-slate-500 group-hover:text-purple-600 group-hover:scale-110 transition-transform" />
