@@ -93,6 +93,7 @@ const ExamsManagementViews = lazyWithRetry(() => import('./modules/institute-adm
 const ExamsResultsViews = lazyWithRetry(() => import('./modules/institute-admin/exams/ExamsResultsViews'), 'exams-results-views')
 const FinanceDashboardAndIncomeViews = lazyWithRetry(() => import('./modules/institute-admin/finance/FinanceDashboardAndIncomeViews'), 'finance-dashboard-income-views')
 const ExpensesView = lazyWithRetry(() => import('./modules/institute-admin/accounts/ExpensesView'), 'expenses-view')
+const ExpenseCategoriesView = lazyWithRetry(() => import('./modules/institute-admin/accounts/ExpenseCategoriesView'), 'expense-categories-view')
 const FeeCollectionReportView = lazyWithRetry(() => import('./modules/institute-admin/accounts/FeeCollectionReportView'), 'fee-collection-report-view')
 const MyAttendanceView = lazyWithRetry(() => import('./modules/institute-admin/attendance/MyAttendanceView'), 'my-attendance-view')
 const AttendanceReportsViews = lazyWithRetry(() => import('./modules/institute-admin/attendance/AttendanceReportsViews'), 'attendance-reports-views')
@@ -966,10 +967,11 @@ const AppContent = () => {
                   />
                 )}
                 {safeInstituteRoute === 'inst-accounts-categories' && (
-                  <CampusAccountsView
+                  <ExpenseCategoriesView
                     currentInstitute={activeCampus}
-                    initialTab="categories"
-                    initialFilter="All"
+                    onRouteChange={setInstituteRoute}
+                    onOpenQuickPayment={(sid) => openQuickPayment(sid)}
+                    onOpenSendSms={() => setIsSendSmsOpen(true)}
                   />
                 )}
                 {safeInstituteRoute === 'inst-notices' && (
