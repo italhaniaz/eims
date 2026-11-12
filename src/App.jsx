@@ -86,6 +86,7 @@ const FamilyInvoicesView = lazyWithRetry(() => import('./modules/institute-admin
 const PaymentApprovalsView = lazyWithRetry(() => import('./modules/institute-admin/fees/PaymentApprovalsView'), 'payment-approvals-view')
 const OutstandingFeesView = lazyWithRetry(() => import('./modules/institute-admin/fees/OutstandingFeesView'), 'outstanding-fees-view')
 const FinesView = lazyWithRetry(() => import('./modules/institute-admin/fees/FinesView'), 'fines-view')
+const FeeSettingsViews = lazyWithRetry(() => import('./modules/institute-admin/fees/FeeSettingsViews'), 'fee-settings-views')
 const ExpensesView = lazyWithRetry(() => import('./modules/institute-admin/accounts/ExpensesView'), 'expenses-view')
 const FeeCollectionReportView = lazyWithRetry(() => import('./modules/institute-admin/accounts/FeeCollectionReportView'), 'fee-collection-report-view')
 const MyAttendanceView = lazyWithRetry(() => import('./modules/institute-admin/attendance/MyAttendanceView'), 'my-attendance-view')
@@ -154,7 +155,7 @@ const AppContent = () => {
     'inst-attendance', 'inst-attendance-my', 'inst-attendance-student-report', 'inst-attendance-staff-report',
     'inst-attendance-consecutive', 'inst-attendance-low', 'inst-attendance-unmarked', 'inst-attendance-settings',
     'inst-fees', 'inst-fees-history', 'inst-fees-family', 'inst-fees-approvals',
-    'inst-fees-outstanding', 'inst-fees-fines', 'inst-fees-setup', 'inst-fees-settings',
+    'inst-fees-outstanding', 'inst-fees-fines', 'inst-fees-setup', 'inst-fees-settings', 'inst-fees-categories', 'inst-fees-payment-methods', 'inst-fees-invoice-layout',
     'inst-classes', 'inst-subjects', 'inst-timetable', 'inst-assignments',
     'inst-learning', 'inst-learning-handouts', 'inst-learning-lectures', 'inst-events', 'inst-makeup-sessions',
     'inst-program-levels',
@@ -890,11 +891,16 @@ const AppContent = () => {
                     onOpenQuickPayment={(sid) => openQuickPayment(sid)}
                   />
                 )}
-                {safeInstituteRoute === 'inst-fees-settings' && (
-                  <FeesView
+                {['inst-fees-settings', 'inst-fees-categories', 'inst-fees-payment-methods', 'inst-fees-invoice-layout'].includes(safeInstituteRoute) && (
+                  <FeeSettingsViews
+                    mode={
+                      safeInstituteRoute === 'inst-fees-payment-methods' ? 'payment-methods'
+                        : safeInstituteRoute === 'inst-fees-invoice-layout' ? 'invoice-layout'
+                          : 'categories'
+                    }
                     currentInstitute={activeCampus}
-                    initialFilter="all"
-                    initialAction="new"
+                    onRouteChange={setInstituteRoute}
+                    onOpenQuickPayment={(sid) => openQuickPayment(sid)}
                   />
                 )}
                 {safeInstituteRoute === 'inst-accounts-expenses' && (

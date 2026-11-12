@@ -131,7 +131,16 @@ const buildMenuItems = (studentsCount) => [
       { id: 'inst-fees-outstanding', label: 'Outstanding Fees', icon: AlertTriangle },
       { id: 'inst-fees-fines', label: 'Fines', icon: Receipt },
       { id: 'inst-fees-setup', label: 'Student Fee Setup', icon: SlidersHorizontal },
-      { id: 'inst-fees-settings', label: 'Fee Settings', icon: Settings }
+      {
+        id: 'grp-fees-settings',
+        label: 'Fee Settings',
+        icon: Settings,
+        children: [
+          { id: 'inst-fees-categories', label: 'Fee Categories', icon: ClipboardList },
+          { id: 'inst-fees-payment-methods', label: 'Payment Methods', icon: CreditCard },
+          { id: 'inst-fees-invoice-layout', label: 'Invoice Layout', icon: FileText }
+        ]
+      }
     ]
   },
   {
