@@ -58,6 +58,7 @@ const SubjectsView = lazyWithRetry(() => import('./modules/institute-admin/subje
 const ProgramLevelsView = lazyWithRetry(() => import('./modules/academics/ProgramLevelsView'), 'program-levels-view')
 const NoticeBoardView = lazyWithRetry(() => import('./modules/institute-admin/notices/NoticeBoardView'), 'notice-board-view')
 const AdmissionsPipelineView = lazyWithRetry(() => import('./modules/admissions-pipeline/AdmissionsPipelineView'), 'admissions-pipeline')
+const AdmissionInquiriesView = lazyWithRetry(() => import('./modules/admissions-pipeline/AdmissionInquiriesView'), 'admission-inquiries')
 const TransportView = lazyWithRetry(() => import('./modules/transport/TransportView'), 'transport-view')
 const LibraryView = lazyWithRetry(() => import('./modules/library/LibraryView'), 'library-view')
 const CertificatesView = lazyWithRetry(() => import('./modules/institute-admin/certificates/CertificatesView'), 'certificates-view')
@@ -644,10 +645,16 @@ const AppContent = () => {
                     onOpenSendSms={() => setIsSendSmsOpen(true)}
                   />
                 )}
-                {['inst-admissions', 'inst-admissions-online'].includes(safeInstituteRoute) && (
+                {safeInstituteRoute === 'inst-admissions' && (
+                  <AdmissionInquiriesView
+                    currentInstitute={activeCampus}
+                    onRouteChange={setInstituteRoute}
+                  />
+                )}
+                {safeInstituteRoute === 'inst-admissions-online' && (
                   <AdmissionsPipelineView
                     currentInstitute={activeCampus}
-                    initialSourceFilter={safeInstituteRoute === 'inst-admissions-online' ? 'Website / Online' : 'ALL'}
+                    initialSourceFilter="Website / Online"
                   />
                 )}
                 {safeInstituteRoute === 'inst-admissions-enroll' && (
