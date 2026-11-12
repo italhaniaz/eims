@@ -67,12 +67,16 @@ export const StudentAttendanceReportView = ({
     return Array.from(set).sort()
   }, [classes, instituteStudents, currentInstitute?.id])
 
-  const [selectedClass, setSelectedClass] = useState(() => initialClassFilter || classOptions[0] || 'All Classes')
+  const [selectedClass, setSelectedClass] = useState(() => initialClassFilter || '')
+  const [draftClassSelect, setDraftClassSelect] = useState(() => initialClassFilter || '')
+  const [hasLoadedReport, setHasLoadedReport] = useState(() => Boolean(initialClassFilter))
   const [changeClassOpen, setChangeClassOpen] = useState(false)
 
   useEffect(() => {
     if (initialClassFilter) {
       setSelectedClass(initialClassFilter)
+      setDraftClassSelect(initialClassFilter)
+      setHasLoadedReport(true)
     }
   }, [initialClassFilter])
 
@@ -314,7 +318,7 @@ export const StudentAttendanceReportView = ({
         </div>
       </div>
 
-      {/* Top Info Header Box */}
+      {/* Top Info Header Box (Pick 1: Select Class + Load reports) */}
       <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
@@ -327,47 +331,60 @@ export const StudentAttendanceReportView = ({
             </p>
           </div>
 
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-50 border border-sky-200 text-sky-700 text-xs font-bold">
-            <Building2 className="w-3.5 h-3.5" />
-            <span>{selectedClass}</span>
-          </span>
-
-          <button
-            type="button"
-            onClick={() => setChangeClassOpen((v) => !v)}
-            className="px-3.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer print:hidden"
-          >
-            {changeClassOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-            <span>Change class</span>
-          </button>
+          {hasLoadedReport && selectedClass && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-50 border border-sky-200 text-sky-700 text-xs font-bold">
+              <Building2 className="w-3.5 h-3.5" />
+              <span>{selectedClass}</span>
+            </span>
+          )}
         </div>
 
-        {changeClassOpen && (
-          <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center gap-2 print:hidden">
-            {['All Classes', ...classOptions].map((cls) => (
-              <button
-                key={cls}
-                type="button"
-                onClick={() => {
-                  setSelectedClass(cls)
-                  setDraftStudentId('ALL')
-                  setApplied((prev) => ({ ...prev, studentId: 'ALL' }))
-                  setChangeClassOpen(false)
-                }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border cursor-pointer transition-colors ${
-                  selectedClass === cls
-                    ? 'bg-sky-500 border-sky-500 text-white'
-                    : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-                }`}
-              >
-                {cls}
-              </button>
-            ))}
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_240px] gap-3 items-end print:hidden">
+          <div>
+            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+              SELECT CLASS
+            </label>
+            <select
+              value={draftClassSelect}
+              onChange={(e) => setDraftClassSelect(e.target.value)}
+              className="w-full px-3.5 py-2.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500"
+            >
+              <option value="">Choose a class...</option>
+              <option value="All Classes">All Classes</option>
+              {classOptions.map((cls) => (
+                <option key={cls} value={cls}>
+                  {cls}
+                </option>
+              ))}
+            </select>
           </div>
-        )}
+          <button
+            type="button"
+            onClick={() => {
+              if (!draftClassSelect) {
+                toast?.warning?.('Please choose a class first')
+                return
+              }
+              setSelectedClass(draftClassSelect)
+              setDraftStudentId('ALL')
+              setApplied((prev) => ({ ...prev, studentId: 'ALL' }))
+              setHasLoadedReport(true)
+            }}
+            className="px-5 py-2.5 rounded-lg bg-[#0284c7] hover:bg-[#0369a1] text-white text-xs font-bold inline-flex items-center justify-center gap-2 shadow-2xs cursor-pointer transition-colors"
+          >
+            <span>✈ Load reports</span>
+          </button>
+        </div>
       </div>
 
-      {/* Main Content Wrapper Card */}
+      {!hasLoadedReport ? (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs py-16 px-6 text-center space-y-2">
+          <Building2 className="w-10 h-10 text-slate-300 mx-auto" />
+          <div className="text-sm font-bold text-slate-700">Select a class to view reports</div>
+          <p className="text-xs text-slate-400">Choose a class above and click Load reports.</p>
+        </div>
+      ) : (
+      /* Main Content Wrapper Card */
       <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-5 space-y-5">
         {/* Top Pills Row */}
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
@@ -620,6 +637,7 @@ export const StudentAttendanceReportView = ({
           </table>
         </div>
       </div>
+      )}
     </div>
   )
 }
