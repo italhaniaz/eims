@@ -89,6 +89,7 @@ const FinesView = lazyWithRetry(() => import('./modules/institute-admin/fees/Fin
 const FeeSettingsViews = lazyWithRetry(() => import('./modules/institute-admin/fees/FeeSettingsViews'), 'fee-settings-views')
 const AcademicsViews = lazyWithRetry(() => import('./modules/institute-admin/academics/AcademicsViews'), 'academics-views')
 const AcademicsResourcesViews = lazyWithRetry(() => import('./modules/institute-admin/academics/AcademicsResourcesViews'), 'academics-resources-views')
+const ExamsManagementViews = lazyWithRetry(() => import('./modules/institute-admin/exams/ExamsManagementViews'), 'exams-management-views')
 const ExpensesView = lazyWithRetry(() => import('./modules/institute-admin/accounts/ExpensesView'), 'expenses-view')
 const FeeCollectionReportView = lazyWithRetry(() => import('./modules/institute-admin/accounts/FeeCollectionReportView'), 'fee-collection-report-view')
 const MyAttendanceView = lazyWithRetry(() => import('./modules/institute-admin/attendance/MyAttendanceView'), 'my-attendance-view')
@@ -813,16 +814,27 @@ const AppContent = () => {
                     initialAction={safeInstituteRoute === 'inst-attendance-settings' ? 'settings' : null}
                   />
                 )}
-                {['inst-exams', 'inst-exams-schedule', 'inst-exams-assessments', 'inst-exams-marks', 'inst-exams-result-summary', 'inst-exams-report-cards', 'inst-exams-grades', 'inst-exams-settings'].includes(safeInstituteRoute) && (
+                {['inst-exams', 'inst-exams-schedule', 'inst-exams-assessments', 'inst-exams-marks'].includes(safeInstituteRoute) && (
+                  <ExamsManagementViews
+                    mode={
+                      safeInstituteRoute === 'inst-exams-schedule' ? 'schedule'
+                        : safeInstituteRoute === 'inst-exams-assessments' ? 'assessments'
+                          : safeInstituteRoute === 'inst-exams-marks' ? 'marks'
+                            : 'exams'
+                    }
+                    currentInstitute={activeCampus}
+                    onRouteChange={setInstituteRoute}
+                    onOpenQuickPayment={(sid) => openQuickPayment(sid)}
+                  />
+                )}
+                {['inst-exams-result-summary', 'inst-exams-report-cards', 'inst-exams-grades', 'inst-exams-settings'].includes(safeInstituteRoute) && (
                   <ExamsView
                     currentInstitute={activeCampus}
-                    initialTab={safeInstituteRoute === 'inst-exams-schedule' ? 'datesheet' : 'results'}
+                    initialTab="results"
                     initialAction={
-                      safeInstituteRoute === 'inst-exams-marks' ? 'new-marksheet'
-                        : safeInstituteRoute === 'inst-exams-report-cards' ? 'gazette'
-                          : ['inst-exams-grades', 'inst-exams-settings'].includes(safeInstituteRoute) ? 'settings'
-                            : safeInstituteRoute === 'inst-exams-assessments' ? 'tabulation'
-                              : null
+                      safeInstituteRoute === 'inst-exams-report-cards' ? 'gazette'
+                        : ['inst-exams-grades', 'inst-exams-settings'].includes(safeInstituteRoute) ? 'settings'
+                          : null
                     }
                   />
                 )}
