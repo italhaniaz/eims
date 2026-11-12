@@ -1378,65 +1378,46 @@ export const InvoicesView = ({
                         : 'bg-orange-500 text-white'
 
                   return (
-                    <tr key={f.id} className="hover:bg-slate-50/70 transition-colors">
+                    <tr
+                      key={f.id}
+                      onClick={() => setDetailFee(f)}
+                      title="Click to view invoice details"
+                      className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                    >
                       <td className="py-3 px-3 text-slate-500 font-semibold">{idx + 1}</td>
 
                       <td className="py-3 px-3 text-center">
                         <div className="flex flex-col items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={() => setDetailFee(f)}
-                            title="View invoice details"
-                            className={`px-2 py-0.5 rounded text-[10px] font-bold text-white cursor-pointer hover:opacity-90 transition-opacity ${isClass ? 'bg-teal-600' : 'bg-blue-600'}`}
-                          >
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold text-white ${isClass ? 'bg-teal-600' : 'bg-blue-600'}`}>
                             {isClass ? 'Class' : 'Individual'}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setDetailFee(f)}
-                            title="View invoice details"
-                            className="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-[10px] font-medium cursor-pointer transition-colors"
-                          >
+                          </span>
+                          <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 text-[10px] font-medium">
                             {f.className || std?.className || 'Class'}
-                          </button>
+                          </span>
                         </div>
                       </td>
 
                       <td className="py-3 px-3">
                         <button
                           type="button"
-                          onClick={() => onOpenBillingHistory?.(std?.id || f.studentId || null)}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onOpenBillingHistory?.(std?.id || f.studentId || null)
+                          }}
                           className="font-bold text-blue-600 hover:underline text-left cursor-pointer"
                           title="Open Student Billing History"
                         >
                           {f.studentName || std?.fullName || std?.name || 'Student'}
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => setDetailFee(f)}
-                          title="View invoice details"
-                          className="block text-[11px] text-slate-500 hover:text-slate-800 hover:underline text-left cursor-pointer"
-                        >
-                          {f.fatherName || std?.fatherName || 'Guardian'}
-                        </button>
+                        <div className="text-[11px] text-slate-500">{f.fatherName || std?.fatherName || 'Guardian'}</div>
                         <div className="flex flex-wrap items-center gap-1 mt-1">
-                          <button
-                            type="button"
-                            onClick={() => setDetailFee(f)}
-                            title="View invoice details"
-                            className="px-1.5 py-0.5 rounded bg-slate-100 hover:bg-slate-200 border border-slate-200 text-[10px] font-semibold text-slate-600 cursor-pointer transition-colors"
-                          >
+                          <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-semibold text-slate-600">
                             Roll No: {f.rollNumber || std?.rollNumber || 'N/A'}
-                          </button>
+                          </span>
                           {(f.admissionNo || std?.admissionNo) && (
-                            <button
-                              type="button"
-                              onClick={() => setDetailFee(f)}
-                              title="View invoice details"
-                              className="px-1.5 py-0.5 rounded bg-slate-100 hover:bg-slate-200 border border-slate-200 text-[10px] font-semibold text-slate-600 cursor-pointer transition-colors"
-                            >
+                            <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-semibold text-slate-600">
                               Ad No: {f.admissionNo || std?.admissionNo}
-                            </button>
+                            </span>
                           )}
                         </div>
                       </td>
@@ -1464,7 +1445,7 @@ export const InvoicesView = ({
                         <div className="text-[10px] text-slate-400">{act.rel}</div>
                       </td>
 
-                      <td className="py-3 px-3 text-right">
+                      <td onClick={(e) => e.stopPropagation()} className="py-3 px-3 text-right">
                         <div className="inline-flex items-center gap-1">
                           <button
                             type="button"
