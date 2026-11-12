@@ -562,7 +562,11 @@ export const StudentBillingHistoryView = ({
           amount: appliedCash,
           balanceAfter: nextRemaining,
           by: actorName,
-          reason: waiveFineChecked ? (waiveFineReasons[fee.id] || 'Late fee waived') : '—'
+          reason: confirmPayModal.isZeroFee
+            ? 'Zero fee marked paid'
+            : waiveFineChecked
+              ? (waiveFineReasons[fee.id] || 'Late fee waived')
+              : '—'
         }
       ]
 
@@ -609,14 +613,16 @@ export const StudentBillingHistoryView = ({
       }
 
       logAuditEvent?.(
-        `Fee Pay Now (${formatMoney(appliedCash)}) for ${activeStudent?.fullName || activeStudent?.name}`,
+        confirmPayModal.isZeroFee
+          ? `Marked Zero-fee invoice Paid for ${activeStudent?.fullName || activeStudent?.name}`
+          : `Fee Pay Now (${formatMoney(appliedCash)}) for ${activeStudent?.fullName || activeStudent?.name}`,
         currentInstitute?.name || 'School Admin',
         'Success'
       )
 
       setPayInputs((prev) => ({ ...prev, [fee.id]: '' }))
       setConfirmPayModal(null)
-      toast(`Payment recorded (${nextStatus})`, 'success')
+      toast(confirmPayModal.isZeroFee ? 'Zero-fee invoice marked as Paid.' : `Payment recorded (${nextStatus})`, 'success')
     } catch (err) {
       toast(err?.message || 'Could not process payment.', 'error')
     } finally {
@@ -624,20 +630,18 @@ export const StudentBillingHistoryView = ({
     }
   }
 
-  const handleMarkZeroFeePaid = async (fee) => {
-    setProcessingId(fee.id)
-    try {
-      await updateItem('fees', fee.id, {
-        status: 'Paid',
-        paidAt: new Date().toISOString(),
-        smsSent: smsChecks[fee.id] !== false
-      })
-      toast('Zero-fee invoice marked as Paid.', 'success')
-    } catch (err) {
-      toast(err?.message || 'Failed to mark paid.', 'error')
-    } finally {
-      setProcessingId(null)
-    }
+  const handleMarkZeroFeePaid = (fee) => {
+    setConfirmPayModal({
+      fee,
+      isZeroFee: true,
+      appliedCash: 0,
+      waiverAmount: 0,
+      paymentMethod: 'Cash',
+      nextRemaining: 0,
+      waiveFineChecked: false,
+      fineReduction: 0,
+      updatedFine: Number(fee.fine || fee.lateFine || 0)
+    })
   }
 
   const handleApplyModalWaiver = async (e) => {
@@ -1618,7 +1622,9 @@ export const StudentBillingHistoryView = ({
             </div>
             <div className="p-5 space-y-4">
               <p className="text-xs text-slate-600">
-                Confirm payment for:{' '}
+                {confirmPayModal.isZeroFee
+                  ? 'Mark as paid with no cash collected for: '
+                  : 'Confirm payment for: '}
                 <strong className="font-semibold text-slate-900">
                   {activeStudent?.fullName || activeStudent?.name}
                 </strong>

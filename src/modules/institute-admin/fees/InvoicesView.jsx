@@ -1411,15 +1411,32 @@ export const InvoicesView = ({
                         >
                           {f.studentName || std?.fullName || std?.name || 'Student'}
                         </button>
-                        <div className="text-[11px] text-slate-500">{f.fatherName || std?.fatherName || 'Guardian'}</div>
+                        <button
+                          type="button"
+                          onClick={() => setDetailFee(f)}
+                          title="View invoice details"
+                          className="block text-[11px] text-slate-500 hover:text-slate-800 hover:underline text-left cursor-pointer"
+                        >
+                          {f.fatherName || std?.fatherName || 'Guardian'}
+                        </button>
                         <div className="flex flex-wrap items-center gap-1 mt-1">
-                          <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-semibold text-slate-600">
+                          <button
+                            type="button"
+                            onClick={() => setDetailFee(f)}
+                            title="View invoice details"
+                            className="px-1.5 py-0.5 rounded bg-slate-100 hover:bg-slate-200 border border-slate-200 text-[10px] font-semibold text-slate-600 cursor-pointer transition-colors"
+                          >
                             Roll No: {f.rollNumber || std?.rollNumber || 'N/A'}
-                          </span>
+                          </button>
                           {(f.admissionNo || std?.admissionNo) && (
-                            <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-semibold text-slate-600">
+                            <button
+                              type="button"
+                              onClick={() => setDetailFee(f)}
+                              title="View invoice details"
+                              className="px-1.5 py-0.5 rounded bg-slate-100 hover:bg-slate-200 border border-slate-200 text-[10px] font-semibold text-slate-600 cursor-pointer transition-colors"
+                            >
                               Ad No: {f.admissionNo || std?.admissionNo}
-                            </span>
+                            </button>
                           )}
                         </div>
                       </td>
