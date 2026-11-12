@@ -87,6 +87,7 @@ const PaymentApprovalsView = lazyWithRetry(() => import('./modules/institute-adm
 const OutstandingFeesView = lazyWithRetry(() => import('./modules/institute-admin/fees/OutstandingFeesView'), 'outstanding-fees-view')
 const FinesView = lazyWithRetry(() => import('./modules/institute-admin/fees/FinesView'), 'fines-view')
 const FeeSettingsViews = lazyWithRetry(() => import('./modules/institute-admin/fees/FeeSettingsViews'), 'fee-settings-views')
+const AcademicsViews = lazyWithRetry(() => import('./modules/institute-admin/academics/AcademicsViews'), 'academics-views')
 const ExpensesView = lazyWithRetry(() => import('./modules/institute-admin/accounts/ExpensesView'), 'expenses-view')
 const FeeCollectionReportView = lazyWithRetry(() => import('./modules/institute-admin/accounts/FeeCollectionReportView'), 'fee-collection-report-view')
 const MyAttendanceView = lazyWithRetry(() => import('./modules/institute-admin/attendance/MyAttendanceView'), 'my-attendance-view')
@@ -753,14 +754,24 @@ const AppContent = () => {
                     }
                   />
                 )}
-                {safeInstituteRoute === 'inst-classes' && (
-                  <ClassesView currentInstitute={activeCampus} />
+                {['inst-classes', 'inst-subjects', 'inst-timetable', 'inst-assignments'].includes(safeInstituteRoute) && (
+                  <AcademicsViews
+                    mode={
+                      safeInstituteRoute === 'inst-subjects' ? 'subjects'
+                        : safeInstituteRoute === 'inst-timetable' ? 'timetable'
+                          : safeInstituteRoute === 'inst-assignments' ? 'assignments'
+                            : 'classes'
+                    }
+                    currentInstitute={activeCampus}
+                    onRouteChange={setInstituteRoute}
+                    onOpenQuickPayment={(sid) => openQuickPayment(sid)}
+                  />
                 )}
-                {['inst-timetable', 'inst-makeup-sessions'].includes(safeInstituteRoute) && (
+                {safeInstituteRoute === 'inst-makeup-sessions' && (
                   <TimetableView
                     currentInstitute={activeCampus}
                     onRouteChange={setInstituteRoute}
-                    initialTab={safeInstituteRoute === 'inst-makeup-sessions' ? 'makeup' : 'class'}
+                    initialTab="makeup"
                   />
                 )}
                 {safeInstituteRoute === 'inst-attendance-my' && (
@@ -938,19 +949,14 @@ const AppContent = () => {
                     }
                   />
                 )}
-                {safeInstituteRoute === 'inst-subjects' && (
-                  <SubjectsView currentInstitute={activeCampus} />
-                )}
                 {safeInstituteRoute === 'inst-notices' && (
                   <NoticeBoardView currentInstitute={activeCampus} />
                 )}
-                {['inst-learning', 'inst-assignments', 'inst-learning-handouts', 'inst-learning-lectures'].includes(safeInstituteRoute) && (
+                {['inst-learning', 'inst-learning-handouts', 'inst-learning-lectures'].includes(safeInstituteRoute) && (
                   <LearningResourcesView
                     currentInstitute={activeCampus}
                     initialTab={
-                      safeInstituteRoute === 'inst-assignments' ? 'assignments'
-                        : safeInstituteRoute === 'inst-learning-lectures' ? 'videos'
-                          : 'notes'
+                      safeInstituteRoute === 'inst-learning-lectures' ? 'videos' : 'notes'
                     }
                   />
                 )}
