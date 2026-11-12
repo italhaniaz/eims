@@ -66,7 +66,9 @@ const AdmissionInquiriesView = lazyWithRetry(() => import('./modules/admissions-
 const OnlineApplicationsView = lazyWithRetry(() => import('./modules/admissions-pipeline/OnlineApplicationsView'), 'online-applications')
 const BulkImportView = lazyWithRetry(() => import('./modules/admissions-pipeline/BulkImportView'), 'bulk-import')
 const TransportView = lazyWithRetry(() => import('./modules/transport/TransportView'), 'transport-view')
+const TransportAndHostelsViews = lazyWithRetry(() => import('./modules/institute-admin/transport-hostels/TransportAndHostelsViews'), 'transport-hostels-views')
 const LibraryView = lazyWithRetry(() => import('./modules/library/LibraryView'), 'library-view')
+const LibrarySuiteViews = lazyWithRetry(() => import('./modules/library/LibrarySuiteViews'), 'library-suite-views')
 const CertificatesView = lazyWithRetry(() => import('./modules/institute-admin/certificates/CertificatesView'), 'certificates-view')
 const LearningResourcesView = lazyWithRetry(() => import('./modules/institute-admin/learning/LearningResourcesView'), 'learning-resources-view')
 const CampusInventoryView = lazyWithRetry(() => import('./modules/institute-admin/inventory/CampusInventoryView'), 'campus-inventory-view')
@@ -1031,13 +1033,22 @@ const AppContent = () => {
                     initialTab="notes"
                   />
                 )}
-                {safeInstituteRoute === 'inst-transport' && (
-                  <TransportView currentInstitute={activeCampus} />
+                {['inst-transport', 'inst-hostels'].includes(safeInstituteRoute) && (
+                  <TransportAndHostelsViews
+                    mode={safeInstituteRoute === 'inst-hostels' ? 'hostels' : 'transport'}
+                    currentInstitute={activeCampus}
+                    onRouteChange={setInstituteRoute}
+                    onOpenQuickPayment={(sid) => openQuickPayment(sid)}
+                    onOpenSendSms={() => setIsSendSmsOpen(true)}
+                  />
                 )}
                 {['inst-library', 'inst-library-issue'].includes(safeInstituteRoute) && (
-                  <LibraryView
+                  <LibrarySuiteViews
+                    mode={safeInstituteRoute === 'inst-library-issue' ? 'issue' : 'books'}
                     currentInstitute={activeCampus}
-                    initialTab={safeInstituteRoute === 'inst-library-issue' ? 'issued' : 'catalog'}
+                    onRouteChange={setInstituteRoute}
+                    onOpenQuickPayment={(sid) => openQuickPayment(sid)}
+                    onOpenSendSms={() => setIsSendSmsOpen(true)}
                   />
                 )}
                 {['inst-inventory', 'inst-inventory-categories', 'inst-inventory-receive', 'inst-inventory-issue'].includes(safeInstituteRoute) && (
@@ -1102,9 +1113,6 @@ const AppContent = () => {
                     initialTab={safeInstituteRoute === 'inst-communication-sms' ? 'settings' : 'compose'}
                     initialChannel="SMS"
                   />
-                )}
-                {safeInstituteRoute === 'inst-hostels' && (
-                  <HostelsView currentInstitute={activeCampus} />
                 )}
                 {safeInstituteRoute === 'inst-policies' && (
                   <CampusPoliciesView currentInstitute={activeCampus} />
