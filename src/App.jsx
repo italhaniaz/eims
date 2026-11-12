@@ -83,6 +83,7 @@ const CampusAccountsView = lazyWithRetry(() => import('./modules/institute-admin
 const HostelsView = lazyWithRetry(() => import('./modules/institute-admin/hostels/HostelsView'), 'campus-hostels-view')
 const CampusPoliciesView = lazyWithRetry(() => import('./modules/institute-admin/policies/CampusPoliciesView'), 'campus-policies-view')
 const CampusSettingsView = lazyWithRetry(() => import('./modules/institute-admin/settings/CampusSettingsView'), 'campus-settings-view')
+const SettingsSuiteViews = lazyWithRetry(() => import('./modules/institute-admin/settings/SettingsSuiteViews'), 'settings-suite-views')
 const TrainingVideosView = lazyWithRetry(() => import('./modules/institute-admin/training/TrainingVideosView'), 'campus-training-view')
 const MyAccountView = lazyWithRetry(() => import('./modules/institute-admin/account/MyAccountView'), 'campus-account-view')
 const EnrollStudentView = lazyWithRetry(() => import('./modules/institute-admin/students/EnrollStudentView'), 'enroll-student-view')
@@ -1102,15 +1103,18 @@ const AppContent = () => {
                     onRouteChange={setInstituteRoute} 
                   />
                 )}
-                {['inst-settings', 'inst-settings-locations', 'inst-settings-activity'].includes(safeInstituteRoute) && (
-                  <CampusSettingsView
+                {['inst-settings', 'inst-settings-locations', 'inst-policies', 'inst-settings-activity'].includes(safeInstituteRoute) && (
+                  <SettingsSuiteViews
+                    mode={
+                      safeInstituteRoute === 'inst-settings-locations' ? 'locations'
+                        : safeInstituteRoute === 'inst-policies' ? 'policies'
+                          : safeInstituteRoute === 'inst-settings-activity' ? 'activity'
+                            : 'profile'
+                    }
                     currentInstitute={activeCampus}
                     onRouteChange={setInstituteRoute}
-                    initialTab={
-                      safeInstituteRoute === 'inst-settings-locations' ? 'locations'
-                        : safeInstituteRoute === 'inst-settings-activity' ? 'activity'
-                          : 'profile'
-                    }
+                    onOpenQuickPayment={(sid) => openQuickPayment(sid)}
+                    onOpenSendSms={() => setIsSendSmsOpen(true)}
                   />
                 )}
                 {['inst-communication', 'inst-communication-sms'].includes(safeInstituteRoute) && (
@@ -1118,9 +1122,6 @@ const AppContent = () => {
                     initialTab={safeInstituteRoute === 'inst-communication-sms' ? 'settings' : 'compose'}
                     initialChannel="SMS"
                   />
-                )}
-                {safeInstituteRoute === 'inst-policies' && (
-                  <CampusPoliciesView currentInstitute={activeCampus} />
                 )}
                 {safeInstituteRoute === 'inst-training' && (
                   <TrainingVideosView onRouteChange={setInstituteRoute} />

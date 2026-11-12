@@ -279,7 +279,6 @@ const buildMenuItems = (studentsCount) => [
     ]
   },
   { id: 'inst-reports', label: 'Reports', icon: BarChart3 },
-  { id: 'inst-policies', label: 'Policies & Guidelines', icon: FileText },
   {
     id: 'grp-settings',
     label: 'Settings',
@@ -287,6 +286,7 @@ const buildMenuItems = (studentsCount) => [
     children: [
       { id: 'inst-settings', label: 'Institute Profile', icon: Building2 },
       { id: 'inst-settings-locations', label: 'Locations', icon: Boxes },
+      { id: 'inst-policies', label: 'Policies & Guidelines', icon: FileText },
       { id: 'inst-settings-activity', label: 'Activity Log', icon: ClipboardList },
       { id: 'inst-users', label: 'Users & Roles', icon: ShieldCheck }
     ]
