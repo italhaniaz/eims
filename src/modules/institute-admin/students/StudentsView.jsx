@@ -74,6 +74,7 @@ import PrintableExamAdmitCardModal from '../../../components/common/PrintableExa
 import AllStudentsDirectory from './AllStudentsDirectory'
 import ParentsGuardiansView from './ParentsGuardiansView'
 import PromotionStatusViews from './PromotionStatusViews'
+import StudentIdCardsView from './StudentIdCardsView'
 
 export const StudentsView = ({ currentInstitute, initialAction = null, initialClassFilter = 'ALL', onRouteChange, onOpenProfile, onOpenFeeSetup, onOpenBillingHistory, onOpenQuickPayment }) => {
   const tierConfig = getInstituteTierConfig(currentInstitute)
@@ -1359,6 +1360,16 @@ const validatePakistaniPhone = (phone) => {
         currentInstitute={currentInstitute}
         onRouteChange={onRouteChange}
         onOpenProfile={onOpenProfile}
+        onOpenQuickPayment={onOpenQuickPayment}
+      />
+    )
+  }
+
+  if (initialAction === 'idcards') {
+    return (
+      <StudentIdCardsView
+        currentInstitute={currentInstitute}
+        onRouteChange={onRouteChange}
         onOpenQuickPayment={onOpenQuickPayment}
       />
     )

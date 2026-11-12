@@ -67,6 +67,7 @@ const LearningResourcesView = lazyWithRetry(() => import('./modules/institute-ad
 const CampusInventoryView = lazyWithRetry(() => import('./modules/institute-admin/inventory/CampusInventoryView'), 'campus-inventory-view')
 const CampusEventsCalendarView = lazyWithRetry(() => import('./modules/institute-admin/events/CampusEventsCalendarView'), 'campus-events-view')
 const CampusReportsAnalyticsView = lazyWithRetry(() => import('./modules/institute-admin/reports/CampusReportsAnalyticsView'), 'campus-reports-view')
+const StudentPerformanceReportsView = lazyWithRetry(() => import('./modules/institute-admin/students/StudentPerformanceReportsView'), 'student-performance-reports-view')
 
 const CampusAccountsView = lazyWithRetry(() => import('./modules/institute-admin/accounts/CampusAccountsView'), 'campus-accounts-view')
 const HostelsView = lazyWithRetry(() => import('./modules/institute-admin/hostels/HostelsView'), 'campus-hostels-view')
@@ -941,8 +942,16 @@ const AppContent = () => {
                 {safeInstituteRoute === 'inst-events' && (
                   <CampusEventsCalendarView currentInstitute={activeCampus} />
                 )}
-                {['inst-reports', 'inst-reports-students'].includes(safeInstituteRoute) && (
+                {safeInstituteRoute === 'inst-reports' && (
                   <CampusReportsAnalyticsView currentInstitute={activeCampus} />
+                )}
+                {safeInstituteRoute === 'inst-reports-students' && (
+                  <StudentPerformanceReportsView
+                    currentInstitute={activeCampus}
+                    onRouteChange={setInstituteRoute}
+                    onOpenProfile={(sid) => setStudentProfileTargetId(sid)}
+                    onOpenQuickPayment={(sid) => openQuickPayment(sid)}
+                  />
                 )}
                 {safeInstituteRoute === 'inst-users' && (
                   <UsersManagementView 
