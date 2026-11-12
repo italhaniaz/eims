@@ -17,19 +17,21 @@ import {
   Download,
   ChevronDown,
   Info,
-  Printer,
   Edit3,
   Trash2,
   X,
   CheckCircle2,
   Calendar,
   List,
-  Check
+  Check,
+  FileSpreadsheet
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
+import { useAuth } from '../../../context/AuthContext'
 import { useToast } from '../../../context/ToastContext'
 import { PrintableFeeChallanModal } from '../../../components/common/PrintableFeeChallanModal'
 import { resolveStudentFeeSetup } from './StudentFeeSetupView'
+import { downloadSimplePdf } from '../../../utils/pdfExport'
 import {
   getDistinctInstituteClassNames,
   isClassAllowedForTier
@@ -120,7 +122,9 @@ export const InvoicesView = ({
     sendCommunicationBlast,
     logAuditEvent
   } = useAppData()
+  const { user: authUser } = useAuth() || {}
   const { toast } = useToast()
+  const actorName = authUser?.name || currentInstitute?.adminName || 'Admin'
 
   const now = useMemo(() => new Date(), [])
   const todayIso = toIsoDate(now)
@@ -425,38 +429,99 @@ export const InvoicesView = ({
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
+  const buildExportData = () => {
+    const headers = ['#', 'Type', 'Student', 'Class', 'Roll No', 'Invoice Title', 'Fee Head', 'Amount (PKR)', 'Paid (PKR)', 'Remaining (PKR)', 'Status', 'Due Date']
+    const rows = filteredInvoices.map((f, i) => [
+      i + 1,
+      f.invoiceType || 'Individual',
+      f.studentName || '',
+      f.className || '',
+      f.rollNumber || '',
+      f.feeTitle || f.feeHead || 'Tuition Fee',
+      f.feeHead || f.feeType || 'Tuition Fee',
+      getFeeTotal(f),
+      getFeePaid(f),
+      getFeeRemaining(f),
+      f.status || 'Pending',
+      f.dueDate || ''
+    ])
+    return { headers, rows }
+  }
+
+  const triggerDownloadBlob = (blob, filename) => {
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
   const handleExportCsv = () => {
     setExportOpen(false)
     if (filteredInvoices.length === 0) {
       toast('No invoices in the selected filter range to export.', 'warning')
       return
     }
-    const headers = ['#', 'Type', 'Student', 'Class', 'Roll No', 'Invoice Title', 'Fee Head', 'Amount (PKR)', 'Paid (PKR)', 'Remaining (PKR)', 'Status', 'Due Date']
-    const rows = filteredInvoices.map((f, i) => [
-      i + 1,
-      `"${f.invoiceType || 'Individual'}"`,
-      `"${f.studentName || ''}"`,
-      `"${f.className || ''}"`,
-      `"${f.rollNumber || ''}"`,
-      `"${f.feeTitle || f.feeHead || 'Tuition Fee'}"`,
-      `"${f.feeHead || f.feeType || 'Tuition Fee'}"`,
-      getFeeTotal(f),
-      getFeePaid(f),
-      getFeeRemaining(f),
-      `"${f.status || 'Pending'}"`,
-      `"${f.dueDate || ''}"`
-    ])
-    const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n')
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `invoices_${activeRange.startIso}_to_${activeRange.endIso}.csv`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
+    const { headers, rows } = buildExportData()
+    const escCsv = (val) => `"${String(val ?? '').replace(/"/g, '""')}"`
+    const csv = [headers.map(escCsv).join(','), ...rows.map((r) => r.map(escCsv).join(','))].join('\n')
+    triggerDownloadBlob(
+      new Blob([csv], { type: 'text/csv;charset=utf-8;' }),
+      `invoices_${activeRange.startIso}_to_${activeRange.endIso}.csv`
+    )
     toast(`Exported ${filteredInvoices.length} invoice(s) to CSV.`, 'success')
+  }
+
+  const handleExportExcel = () => {
+    setExportOpen(false)
+    if (filteredInvoices.length === 0) {
+      toast('No invoices in the selected filter range to export.', 'warning')
+      return
+    }
+    const { headers, rows } = buildExportData()
+    const escHtml = (val) =>
+      String(val ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+    const thead = `<tr>${headers.map((h) => `<th style="background:#f1f5f9;font-weight:bold;border:1px solid #cbd5e1;padding:6px;">${escHtml(h)}</th>`).join('')}</tr>`
+    const tbody = rows
+      .map((r) => `<tr>${r.map((c) => `<td style="border:1px solid #cbd5e1;padding:6px;">${escHtml(c)}</td>`).join('')}</tr>`)
+      .join('')
+    const html = `<html><head><meta charset="utf-8" /></head><body><table><thead>${thead}</thead><tbody>${tbody}</tbody></table></body></html>`
+    triggerDownloadBlob(
+      new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8;' }),
+      `invoices_${activeRange.startIso}_to_${activeRange.endIso}.xls`
+    )
+    toast(`Exported ${filteredInvoices.length} invoice(s) to Excel.`, 'success')
+  }
+
+  const handleExportPdf = () => {
+    setExportOpen(false)
+    if (filteredInvoices.length === 0) {
+      toast('No invoices in the selected filter range to export.', 'warning')
+      return
+    }
+    const lines = [
+      { text: `${currentInstitute?.name || 'EduDigitize'} - Invoice Register`, bold: true },
+      { text: `Period: ${rangeLabel} | Records: ${filteredInvoices.length} | Total Billed: PKR ${kpis.totalBilled.toLocaleString()}`, gap: -18 },
+      { text: `Paid: PKR ${kpis.totalPaid.toLocaleString()} | Outstanding: PKR ${kpis.totalOutstanding.toLocaleString()} | Waivers: PKR ${kpis.totalWaivers.toLocaleString()}`, gap: -18 },
+      { text: '---------------------------------------------------------------------------------------', gap: -16 }
+    ]
+    filteredInvoices.forEach((f, idx) => {
+      const amt = getFeeTotal(f)
+      const rem = getFeeRemaining(f)
+      lines.push({
+        text: `${idx + 1}. [${f.invoiceType || 'Individual'}] ${f.studentName || ''} (${f.className || ''}) - ${f.feeTitle || f.feeHead || 'Fee'} | Amt: PKR ${amt.toLocaleString()} | Due: PKR ${rem.toLocaleString()} | ${f.status || 'Pending'}`,
+        gap: -15
+      })
+    })
+    downloadSimplePdf(`invoices_${activeRange.startIso}_to_${activeRange.endIso}.pdf`, lines)
+    toast(`Exported ${filteredInvoices.length} invoice(s) to PDF.`, 'success')
   }
 
   // Class Invoice Modal State (Picks 2, 3, 4)
@@ -606,6 +671,7 @@ export const InvoicesView = ({
           notes: classForm.notes.trim(),
           dueDate: classForm.dueDate || `${yrStr}-${moStr}-10`,
           createdAt: new Date().toISOString(),
+          createdBy: actorName,
           status: 'Pending',
           smsSent: classForm.notifySms && hasPhone,
           instituteId: instId
@@ -729,6 +795,7 @@ export const InvoicesView = ({
         paidAt: isPaid ? createdIso : null,
         dueDate: indivForm.dueDate || todayIso,
         createdAt: createdIso,
+        createdBy: actorName,
         status: indivForm.status,
         smsSent: indivForm.notifySms && hasPhone,
         instituteId: instId,
@@ -766,11 +833,12 @@ export const InvoicesView = ({
     }
   }
 
-  // Edit & Delete & Receipt Modals
+  // Edit & Delete & Receipt & Invoice Details Modals
   const [editFee, setEditFee] = useState(null)
   const [editForm, setEditForm] = useState({ feeTitle: '', feeHead: 'Tuition Fee', amount: '', discount: '0', dueDate: '', status: 'Pending' })
   const [deleteFee, setDeleteFee] = useState(null)
   const [receiptFee, setReceiptFee] = useState(null)
+  const [detailFee, setDetailFee] = useState(null)
 
   const openEditModal = (f) => {
     setEditFee(f)
@@ -1201,22 +1269,30 @@ export const InvoicesView = ({
                 <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
               </button>
               {exportOpen && (
-                <div className="absolute right-0 mt-1 w-44 rounded-lg bg-white border border-slate-200 shadow-lg py-1 z-30 text-xs">
+                <div className="absolute right-0 mt-1 w-36 rounded-lg bg-white border border-slate-200 shadow-lg py-1 z-30 text-xs">
                   <button
                     type="button"
-                    onClick={handleExportCsv}
-                    className="w-full px-3.5 py-2 text-left hover:bg-slate-50 font-semibold text-slate-700 cursor-pointer flex items-center gap-2"
+                    onClick={handleExportPdf}
+                    className="w-full px-3.5 py-2 text-left hover:bg-slate-50 font-semibold text-slate-700 cursor-pointer flex items-center gap-2.5"
                   >
-                    <Download className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Export CSV Register</span>
+                    <FileText className="w-3.5 h-3.5 text-rose-500" />
+                    <span>PDF</span>
                   </button>
                   <button
                     type="button"
-                    onClick={() => { setExportOpen(false); window.print() }}
-                    className="w-full px-3.5 py-2 text-left hover:bg-slate-50 font-semibold text-slate-700 cursor-pointer flex items-center gap-2"
+                    onClick={handleExportExcel}
+                    className="w-full px-3.5 py-2 text-left hover:bg-slate-50 font-semibold text-slate-700 cursor-pointer flex items-center gap-2.5"
                   >
-                    <Printer className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Print Current View</span>
+                    <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Excel</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleExportCsv}
+                    className="w-full px-3.5 py-2 text-left hover:bg-slate-50 font-semibold text-slate-700 cursor-pointer flex items-center gap-2.5"
+                  >
+                    <FileText className="w-3.5 h-3.5 text-blue-600" />
+                    <span>CSV</span>
                   </button>
                 </div>
               )}
@@ -1293,9 +1369,14 @@ export const InvoicesView = ({
 
                       <td className="py-3 px-3 text-center">
                         <div className="flex flex-col items-center gap-1">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold text-white ${isClass ? 'bg-teal-600' : 'bg-blue-600'}`}>
+                          <button
+                            type="button"
+                            onClick={() => setDetailFee(f)}
+                            title="View invoice details"
+                            className={`px-2 py-0.5 rounded text-[10px] font-bold text-white cursor-pointer hover:opacity-90 transition-opacity ${isClass ? 'bg-teal-600' : 'bg-blue-600'}`}
+                          >
                             {isClass ? 'Class' : 'Individual'}
-                          </span>
+                          </button>
                           <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 text-[10px] font-medium">
                             {f.className || std?.className || 'Class'}
                           </span>
@@ -2032,6 +2113,104 @@ export const InvoicesView = ({
           defaultClass={receiptFee?.className || ''}
         />
       )}
+
+      {/* Modal 6: Invoice Details Summary (Pick 4) */}
+      {detailFee && (() => {
+        const detailStd = detailFee.studentId
+          ? studentById.get(detailFee.studentId)
+          : instStudents.find((s) => (s.fullName || s.name) === detailFee.studentName)
+        const invType = detailFee.invoiceType || 'Individual'
+        const clsName = detailFee.className || detailStd?.className || 'Class'
+        const billedAmt = getFeeTotal(detailFee)
+        const balanceDue = getFeeRemaining(detailFee)
+        const refNum = detailFee.referenceNo || detailFee.receiptNo || detailFee.invoiceNo || `IP-${String(detailFee.id).slice(-3)}`
+
+        const formatLongDue = (iso) => {
+          if (!iso) return '—'
+          const dt = new Date(iso)
+          if (Number.isNaN(dt.getTime())) return String(iso).slice(0, 10)
+          return `Due ${dt.getDate()} ${MONTHS[dt.getMonth()]} ${dt.getFullYear()}`
+        }
+        const formatAuditStamp = (iso) => {
+          if (!iso) return '—'
+          const dt = new Date(iso)
+          if (Number.isNaN(dt.getTime())) return String(iso)
+          const timePart = dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+          return `${timePart} ${dt.getDate()} ${MONTHS[dt.getMonth()]}, ${dt.getFullYear()}`
+        }
+
+        const detailRows = [
+          ['TYPE', `${invType} · ${clsName}`],
+          ['INVOICE', detailFee.feeTitle || detailFee.feeHead || detailFee.feeType || 'Tuition Fee'],
+          ['FEE CATEGORY', detailFee.feeHead || detailFee.feeType || 'Tuition Fee'],
+          ['STUDENT', detailFee.studentName || detailStd?.fullName || detailStd?.name || '—'],
+          ['PARENT', detailFee.fatherName || detailStd?.fatherName || detailStd?.guardianName || '—'],
+          ['LINE STATUS', detailFee.status || 'Pending'],
+          ['AMOUNT (BILLED)', formatPkrDec(billedAmt)],
+          ['BALANCE DUE', formatPkrDec(balanceDue)],
+          ['BILLING PERIOD', detailFee.feeMonth || '—'],
+          ['DUE DATE', formatLongDue(detailFee.dueDate)],
+          ['CREATED', `${detailFee.createdBy || actorName} at ${formatAuditStamp(detailFee.createdAt || detailFee.dueDate)}`],
+          ['UPDATED AT', formatAuditStamp(detailFee.updatedAt || detailFee.paidAt || detailFee.createdAt || detailFee.dueDate)],
+          ['NOTES', detailFee.notes || detailFee.feeTitle || detailFee.feeHead || '—'],
+          ['REFERENCE', refNum]
+        ]
+
+        return (
+          <div className="fixed inset-0 z-[110] bg-slate-900/50 backdrop-blur-[1px] flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200">
+              <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
+                    <FileText className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-bold text-slate-900">Invoice details</h2>
+                    <p className="text-[11px] text-slate-500">Full summary for this invoice record.</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setDetailFee(null)}
+                  className="text-slate-400 hover:text-slate-700 p-1 rounded-lg cursor-pointer"
+                  aria-label="Close invoice details"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-3 text-xs">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-1.5">
+                  RECORD
+                </p>
+
+                <div className="space-y-2.5">
+                  {detailRows.map(([label, val]) => (
+                    <div key={label} className="grid grid-cols-[135px_1fr] items-start gap-3">
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 pt-0.5">
+                        {label}
+                      </span>
+                      <span className="text-xs font-medium text-slate-800 break-words">
+                        {val}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex justify-end pt-3 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setDetailFee(null)}
+                    className="px-4 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold cursor-pointer"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }
