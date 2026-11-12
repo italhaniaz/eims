@@ -766,13 +766,13 @@ const AppContent = () => {
                     onOpenSendSms={() => setIsSendSmsOpen(true)}
                   />
                 )}
-                {['inst-attendance-student-report', 'inst-attendance-staff-report', 'inst-attendance-consecutive', 'inst-attendance-low'].includes(safeInstituteRoute) && (
+                {['inst-attendance-staff-report', 'inst-attendance-consecutive', 'inst-attendance-low', 'inst-attendance-unmarked'].includes(safeInstituteRoute) && (
                   <AttendanceReportsViews
                     mode={
                       safeInstituteRoute === 'inst-attendance-staff-report' ? 'staff'
                         : safeInstituteRoute === 'inst-attendance-consecutive' ? 'consecutive'
-                          : safeInstituteRoute === 'inst-attendance-low' ? 'low'
-                            : 'student'
+                          : safeInstituteRoute === 'inst-attendance-unmarked' ? 'unmarked'
+                            : 'low'
                     }
                     currentInstitute={activeCampus}
                     onRouteChange={setInstituteRoute}
@@ -780,13 +780,13 @@ const AppContent = () => {
                     onOpenQuickPayment={(sid) => openQuickPayment(sid)}
                   />
                 )}
-                {['inst-attendance', 'inst-attendance-unmarked', 'inst-attendance-settings'].includes(safeInstituteRoute) && (
+                {['inst-attendance', 'inst-attendance-settings'].includes(safeInstituteRoute) && (
                   <AttendanceView
                     currentInstitute={activeCampus}
                     onRouteChange={setInstituteRoute}
                     onOpenProfile={(sid) => setStudentProfileTargetId(sid)}
                     onOpenQuickPayment={(sid) => openQuickPayment(sid)}
-                    initialTab={safeInstituteRoute === 'inst-attendance-unmarked' ? 'analytics' : 'daily'}
+                    initialTab="daily"
                     initialAction={safeInstituteRoute === 'inst-attendance-settings' ? 'settings' : null}
                   />
                 )}

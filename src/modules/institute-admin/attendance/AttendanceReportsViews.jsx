@@ -17,7 +17,15 @@ import {
   AlertTriangle,
   Settings,
   ExternalLink,
-  Send
+  Send,
+  Search,
+  Download,
+  Plus,
+  Minus,
+  ChevronDown,
+  ChevronUp,
+  Pencil,
+  User
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
@@ -88,18 +96,24 @@ const QuickHeader = ({ title, onBack, onRouteChange, onOpenQuickPayment }) => (
 )
 
 export const AttendanceReportsViews = ({
-  mode = 'staff', // 'staff' | 'consecutive' | 'low'
+  mode = 'staff', // 'staff' | 'consecutive' | 'low' | 'unmarked'
   currentInstitute,
   onRouteChange,
   onOpenProfile,
   onOpenQuickPayment
 }) => {
-  const { teachers = [], students = [], classes = [], attendance = {} } = useAppData()
+  const { teachers = [], students = [], classes = [], subjects = [], timetable = {}, attendance = {} } = useAppData()
   const { toast } = useToast()
 
   const instId = currentInstitute?.id || 'default'
   const todayIso = useMemo(() => new Date().toISOString().slice(0, 10), [])
   const currentMonthIso = useMemo(() => todayIso.slice(0, 7), [todayIso])
+  const monthStartIso = `${currentMonthIso}-01`
+  const monthEndIso = useMemo(() => {
+    const [y, m] = currentMonthIso.split('-').map(Number)
+    const lastDay = new Date(y, m, 0).getDate()
+    return `${currentMonthIso}-${String(lastDay).padStart(2, '0')}`
+  }, [currentMonthIso])
 
   const instStaff = useMemo(
     () =>
@@ -743,6 +757,370 @@ export const AttendanceReportsViews = ({
               </table>
             </div>
           )}
+        </div>
+      </div>
+    )
+  }
+
+  // ============================================================================
+  // 4. UNMARKED CLASSES STATE
+  // ============================================================================
+  const [unmarkedFrom, setUnmarkedFrom] = useState(monthStartIso)
+  const [unmarkedTo, setUnmarkedTo] = useState(monthEndIso)
+  const [unmarkedTeacher, setUnmarkedTeacher] = useState('ALL')
+  const [unmarkedClass, setUnmarkedClass] = useState('ALL')
+  const [unmarkedApplied, setUnmarkedApplied] = useState({
+    from: monthStartIso,
+    to: monthEndIso,
+    teacher: 'ALL',
+    className: 'ALL'
+  })
+  const [collapsedTeachers, setCollapsedTeachers] = useState({})
+
+  const unmarkedGroups = useMemo(() => {
+    const startStr = unmarkedApplied.from || monthStartIso
+    const rawEnd = unmarkedApplied.to || todayIso
+    const endStr = rawEnd > todayIso ? todayIso : rawEnd
+
+    // Build weekday dates between startStr and endStr (max 92 days)
+    const dates = []
+    const cur = new Date(`${startStr}T12:00:00`)
+    const endDt = new Date(`${endStr}T12:00:00`)
+    const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+    const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+    let guard = 0
+    while (cur <= endDt && guard < 92) {
+      guard += 1
+      const dow = cur.getDay()
+      if (dow !== 0 && dow !== 6) {
+        const iso = cur.toISOString().slice(0, 10)
+        dates.push({
+          iso,
+          shortDate: `${String(cur.getDate()).padStart(2, '0')}-${MONTHS[cur.getMonth()]}`,
+          dayName: WEEKDAYS[dow]
+        })
+      }
+      cur.setDate(cur.getDate() + 1)
+    }
+
+    // Build subject-period definitions from timetable or subjects
+    const periodDefs = []
+    const instSubjects = subjects.filter(
+      (sub) => !currentInstitute?.id || !sub.instituteId || sub.instituteId === currentInstitute.id
+    )
+    if (instSubjects.length > 0) {
+      instSubjects.forEach((sub, idx) => {
+        const tObj = instStaff.find((t) => t.id === sub.teacherId || t.name === sub.teacherName)
+        const teacherName = tObj?.name || sub.teacherName || 'Unassigned'
+        const clsName = sub.className || availableClasses[idx % Math.max(1, availableClasses.length)] || 'Class One'
+        const startHr = 8 + (idx % 5)
+        const periodTime = sub.periodTime || `${startHr}:00 AM - ${startHr}:30 AM`
+        periodDefs.push({
+          teacherName,
+          className: clsName,
+          subjectName: sub.name || sub.subjectName || 'Subject',
+          periodTime
+        })
+      })
+    } else if (availableClasses.length > 0) {
+      availableClasses.slice(0, 3).forEach((clsName, idx) => {
+        const tObj = instStaff[idx]
+        periodDefs.push({
+          teacherName: tObj?.name || 'Unassigned',
+          className: clsName,
+          subjectName: idx === 0 ? 'English' : idx === 1 ? 'Mathematics' : 'General Science',
+          periodTime: `${8 + idx}:00 AM - ${8 + idx}:30 AM`
+        })
+      })
+    }
+
+    // Check which dates already have Subject attendance marked
+    const grouped = {}
+    dates.forEach((d) => {
+      let markedSubject = false
+      try {
+        const raw = localStorage.getItem(`eims_daily_mark_att_${instId}_${d.iso}_Subject`)
+        if (raw && Object.keys(JSON.parse(raw) || {}).length > 0) {
+          markedSubject = true
+        }
+      } catch {
+        // ignore
+      }
+      if (markedSubject) return
+
+      periodDefs.forEach((pd) => {
+        if (unmarkedApplied.teacher !== 'ALL' && pd.teacherName !== unmarkedApplied.teacher) return
+        if (unmarkedApplied.className !== 'ALL' && pd.className !== unmarkedApplied.className) return
+        if (!grouped[pd.teacherName]) grouped[pd.teacherName] = []
+        grouped[pd.teacherName].push({
+          id: `${d.iso}_${pd.teacherName}_${pd.className}_${pd.subjectName}`,
+          iso: d.iso,
+          shortDate: d.shortDate,
+          dayName: d.dayName,
+          className: pd.className,
+          subjectName: pd.subjectName,
+          periodTime: pd.periodTime
+        })
+      })
+    })
+
+    return Object.entries(grouped).map(([teacherName, items]) => ({
+      teacherName,
+      items
+    }))
+  }, [unmarkedApplied, subjects, instStaff, availableClasses, currentInstitute, instId, monthStartIso, todayIso])
+
+  const totalUnmarkedPeriods = useMemo(
+    () => unmarkedGroups.reduce((sum, g) => sum + g.items.length, 0),
+    [unmarkedGroups]
+  )
+
+  const handleExportUnmarkedCsv = () => {
+    const lines = [
+      'Teacher,Date,Day,Class,Subject,Period Time',
+      ...unmarkedGroups.flatMap((g) =>
+        g.items.map(
+          (it) => `"${g.teacherName}","${it.iso}","${it.dayName}","${it.className}","${it.subjectName}","${it.periodTime}"`
+        )
+      )
+    ]
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `unmarked-classes-${unmarkedApplied.from}-to-${unmarkedApplied.to}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+    toast.success(`Exported ${totalUnmarkedPeriods} unmarked class period(s)`)
+  }
+
+  if (mode === 'unmarked') {
+    return (
+      <div className="p-4 sm:p-6 space-y-5 max-w-[1440px] mx-auto">
+        <QuickHeader
+          title="Unmarked Classes"
+          onBack={() => onRouteChange?.('inst-attendance')}
+          onRouteChange={onRouteChange}
+          onOpenQuickPayment={onOpenQuickPayment}
+        />
+
+        {/* 2 KPI Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-lg bg-orange-500 text-white flex items-center justify-center shrink-0">
+              <Users className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-slate-500">Teachers with Unmarked</p>
+              <p className="text-xl font-bold text-slate-900 leading-tight">{unmarkedGroups.length}</p>
+              <p className="text-[11px] text-slate-400">
+                {unmarkedApplied.from} to {unmarkedApplied.to}
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-lg bg-rose-600 text-white flex items-center justify-center shrink-0">
+              <Calendar className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-slate-500">Total Unmarked Classes</p>
+              <p className="text-xl font-bold text-slate-900 leading-tight">{totalUnmarkedPeriods}</p>
+              <p className="text-[11px] text-slate-400">Subject-wise periods</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Unmarked Classes Card */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
+          <div className="flex items-center gap-2 text-sm font-bold text-slate-800">
+            <Calendar className="w-4 h-4 text-slate-600" />
+            Unmarked Classes
+          </div>
+
+          {/* Filter Row */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1.4fr_1.2fr_auto] gap-3 items-end">
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-600 mb-1">Date From</label>
+              <input
+                type="date"
+                value={unmarkedFrom}
+                onChange={(e) => setUnmarkedFrom(e.target.value)}
+                className="w-full px-3 py-2 text-xs rounded-md border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-600 mb-1">Date To</label>
+              <input
+                type="date"
+                value={unmarkedTo}
+                onChange={(e) => setUnmarkedTo(e.target.value)}
+                className="w-full px-3 py-2 text-xs rounded-md border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-600 mb-1">Teacher / Instructor</label>
+              <select
+                value={unmarkedTeacher}
+                onChange={(e) => setUnmarkedTeacher(e.target.value)}
+                className="w-full px-3 py-2 text-xs rounded-md border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="ALL">All Teachers</option>
+                {instStaff.map((t) => (
+                  <option key={t.id} value={t.name}>
+                    {t.name}
+                  </option>
+                ))}
+                <option value="Unassigned">Unassigned</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-600 mb-1">Class</label>
+              <select
+                value={unmarkedClass}
+                onChange={(e) => setUnmarkedClass(e.target.value)}
+                className="w-full px-3 py-2 text-xs rounded-md border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="ALL">All Classes</option>
+                {availableClasses.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button
+              type="button"
+              onClick={() =>
+                setUnmarkedApplied({
+                  from: unmarkedFrom,
+                  to: unmarkedTo,
+                  teacher: unmarkedTeacher,
+                  className: unmarkedClass
+                })
+              }
+              className="px-6 py-2 rounded-md bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold inline-flex items-center justify-center gap-1.5 transition-colors"
+            >
+              <Search className="w-3.5 h-3.5" />
+              Search
+            </button>
+          </div>
+
+          {/* Export & Expand/Collapse Toolbar */}
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            <button
+              type="button"
+              onClick={handleExportUnmarkedCsv}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-colors"
+            >
+              <Download className="w-3.5 h-3.5" />
+              Export CSV
+            </button>
+            <button
+              type="button"
+              onClick={() => setCollapsedTeachers({})}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Expand all
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const next = {}
+                unmarkedGroups.forEach((g) => {
+                  next[g.teacherName] = true
+                })
+                setCollapsedTeachers(next)
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-colors"
+            >
+              <Minus className="w-3.5 h-3.5" />
+              Collapse all
+            </button>
+            <span className="text-[11px] text-slate-400">
+              Lists timetable periods with no subject-wise attendance marked (up to today). Max range: 3 months.
+            </span>
+          </div>
+
+          {/* Teacher Accordion Cards */}
+          <div className="space-y-4">
+            {unmarkedGroups.length === 0 ? (
+              <div className="py-12 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-xl">
+                No unmarked subject-wise periods found for the selected range.
+              </div>
+            ) : (
+              unmarkedGroups.map((grp) => {
+                const isCollapsed = Boolean(collapsedTeachers[grp.teacherName])
+                return (
+                  <div
+                    key={grp.teacherName}
+                    className="border border-slate-200 rounded-xl overflow-hidden bg-white"
+                  >
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCollapsedTeachers((p) => ({ ...p, [grp.teacherName]: !p[grp.teacherName] }))
+                      }
+                      className="w-full px-4 py-3 bg-slate-50/70 hover:bg-slate-100/70 flex items-center justify-between text-left transition-colors"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <User className="w-4 h-4 text-slate-500" />
+                        <span className="text-xs font-bold text-slate-800">{grp.teacherName}</span>
+                        <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px] font-bold">
+                          {grp.items.length} Unmarked
+                        </span>
+                      </div>
+                      {isCollapsed ? (
+                        <ChevronDown className="w-4 h-4 text-slate-400" />
+                      ) : (
+                        <ChevronUp className="w-4 h-4 text-slate-400" />
+                      )}
+                    </button>
+
+                    {!isCollapsed && (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse text-xs">
+                          <thead>
+                            <tr className="border-y border-slate-200 bg-white text-[11px] font-semibold text-slate-600">
+                              <th className="py-2.5 px-4">Date</th>
+                              <th className="py-2.5 px-4">Day</th>
+                              <th className="py-2.5 px-4">Class</th>
+                              <th className="py-2.5 px-4">Subject</th>
+                              <th className="py-2.5 px-4">Period Time</th>
+                              <th className="py-2.5 px-4 text-right">Action</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {grp.items.map((item) => (
+                              <tr key={item.id} className="hover:bg-slate-50/70">
+                                <td className="py-2.5 px-4 font-medium text-slate-700">{item.shortDate}</td>
+                                <td className="py-2.5 px-4 text-slate-400">{item.dayName}</td>
+                                <td className="py-2.5 px-4 text-slate-700">{item.className}</td>
+                                <td className="py-2.5 px-4 text-slate-700">{item.subjectName}</td>
+                                <td className="py-2.5 px-4 text-slate-700">{item.periodTime}</td>
+                                <td className="py-2.5 px-4 text-right">
+                                  <button
+                                    type="button"
+                                    onClick={() => onRouteChange?.('inst-attendance')}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded border border-blue-200 bg-white hover:bg-blue-50 text-blue-600 text-[11px] font-semibold transition-colors"
+                                  >
+                                    <Pencil className="w-3 h-3" />
+                                    Mark
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                )
+              })
+            )}
+          </div>
         </div>
       </div>
     )
