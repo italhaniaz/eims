@@ -49,6 +49,7 @@ const SuperadminPlatformSettingsView = lazyWithRetry(() => import('./modules/pla
 const InstituteDashboard = lazyWithRetry(() => import('./modules/dashboard/InstituteDashboard'), 'institute-dashboard')
 const StudentsView = lazyWithRetry(() => import('./modules/institute-admin/students/StudentsView'), 'students-view')
 const TeachersView = lazyWithRetry(() => import('./modules/institute-admin/teachers/TeachersView'), 'teachers-view')
+const StaffAndPayrollViews = lazyWithRetry(() => import('./modules/institute-admin/teachers/StaffAndPayrollViews'), 'staff-payroll-views')
 const ClassesView = lazyWithRetry(() => import('./modules/institute-admin/classes/ClassesView'), 'classes-view')
 const TimetableView = lazyWithRetry(() => import('./modules/institute-admin/timetable/TimetableView'), 'timetable-view')
 const AttendanceView = lazyWithRetry(() => import('./modules/institute-admin/attendance/AttendanceView'), 'attendance-view')
@@ -168,7 +169,7 @@ const AppContent = () => {
     'inst-exams', 'inst-exams-schedule', 'inst-exams-assessments', 'inst-exams-marks',
     'inst-exams-result-summary', 'inst-exams-report-cards', 'inst-exams-grades', 'inst-exams-settings',
     'inst-accounts', 'inst-accounts-collection', 'inst-accounts-income', 'inst-accounts-expenses', 'inst-accounts-categories',
-    'inst-teachers', 'inst-payroll', 'inst-staff-loans', 'inst-staff-fines',
+    'inst-teachers', 'inst-payroll', 'inst-salary-setup', 'inst-staff-loans', 'inst-staff-fines',
     'inst-staff-docs', 'inst-staff-letters', 'inst-staff-idcards', 'inst-staff-reports',
     'inst-communication', 'inst-communication-inbox', 'inst-notices', 'inst-communication-notifications',
     'inst-communication-whatsapp', 'inst-communication-sms',
@@ -746,16 +747,27 @@ const AppContent = () => {
                     onOpenQuickPayment={(sid) => openQuickPayment(sid)}
                   />
                 )}
-                {['inst-teachers', 'inst-payroll', 'inst-staff-loans', 'inst-staff-fines', 'inst-staff-docs', 'inst-staff-letters', 'inst-staff-idcards', 'inst-staff-reports'].includes(safeInstituteRoute) && (
+                {['inst-teachers', 'inst-payroll', 'inst-salary-setup'].includes(safeInstituteRoute) && (
+                  <StaffAndPayrollViews
+                    mode={
+                      safeInstituteRoute === 'inst-payroll' ? 'payroll'
+                        : safeInstituteRoute === 'inst-salary-setup' ? 'salary-setup'
+                          : 'staff'
+                    }
+                    currentInstitute={activeCampus}
+                    onRouteChange={setInstituteRoute}
+                    onOpenQuickPayment={(sid) => openQuickPayment(sid)}
+                    onOpenSendSms={() => setIsSendSmsOpen(true)}
+                  />
+                )}
+                {['inst-staff-loans', 'inst-staff-fines', 'inst-staff-docs', 'inst-staff-letters', 'inst-staff-idcards', 'inst-staff-reports'].includes(safeInstituteRoute) && (
                   <TeachersView
                     currentInstitute={activeCampus}
                     initialTab={
-                      safeInstituteRoute === 'inst-payroll' ? 'payroll'
-                        : safeInstituteRoute === 'inst-staff-loans' ? 'loans'
-                          : safeInstituteRoute === 'inst-staff-fines' ? 'fines'
-                            : ['inst-staff-docs', 'inst-staff-letters', 'inst-staff-idcards'].includes(safeInstituteRoute) ? 'documents'
-                              : safeInstituteRoute === 'inst-staff-reports' ? 'workload'
-                                : 'directory'
+                      safeInstituteRoute === 'inst-staff-loans' ? 'loans'
+                        : safeInstituteRoute === 'inst-staff-fines' ? 'fines'
+                          : ['inst-staff-docs', 'inst-staff-letters', 'inst-staff-idcards'].includes(safeInstituteRoute) ? 'documents'
+                            : 'workload'
                     }
                   />
                 )}

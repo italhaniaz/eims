@@ -45,6 +45,7 @@ export const COMMON_ROUTES = [
   'inst-students',
   'inst-teachers',
   'inst-payroll',
+  'inst-salary-setup',
   'inst-classes',
   'inst-subjects',
   'inst-timetable',

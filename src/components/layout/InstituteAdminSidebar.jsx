@@ -212,7 +212,15 @@ const buildMenuItems = (studentsCount) => [
     icon: Users,
     children: [
       { id: 'inst-teachers', label: 'All Staff', icon: Users },
-      { id: 'inst-payroll', label: 'Payroll', icon: CreditCard },
+      {
+        id: 'grp-staff-payroll',
+        label: 'Payroll',
+        icon: CreditCard,
+        children: [
+          { id: 'inst-payroll', label: 'Salary Payments', icon: CreditCard },
+          { id: 'inst-salary-setup', label: 'Salary Setup', icon: Settings }
+        ]
+      },
       { id: 'inst-staff-loans', label: 'Loans & Advances', icon: Wallet },
       { id: 'inst-staff-fines', label: 'Staff Fines', icon: AlertTriangle },
       {
