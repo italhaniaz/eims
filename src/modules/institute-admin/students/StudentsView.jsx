@@ -72,6 +72,7 @@ import { compressImageFile } from '../../../utils/securityUtils'
 import PrintableStudentIdCardModal from '../../../components/common/PrintableStudentIdCardModal'
 import PrintableExamAdmitCardModal from '../../../components/common/PrintableExamAdmitCardModal'
 import AllStudentsDirectory from './AllStudentsDirectory'
+import ParentsGuardiansView from './ParentsGuardiansView'
 
 export const StudentsView = ({ currentInstitute, initialAction = null, initialClassFilter = 'ALL', onRouteChange, onOpenProfile, onOpenFeeSetup, onOpenBillingHistory, onOpenQuickPayment }) => {
   const tierConfig = getInstituteTierConfig(currentInstitute)
@@ -1334,6 +1335,17 @@ const validatePakistaniPhone = (phone) => {
         onOpenProfile={onOpenProfile}
         onOpenFeeSetup={onOpenFeeSetup}
         onOpenBillingHistory={onOpenBillingHistory}
+        onOpenQuickPayment={onOpenQuickPayment}
+      />
+    )
+  }
+
+  if (initialAction === 'guardians') {
+    return (
+      <ParentsGuardiansView
+        currentInstitute={currentInstitute}
+        onRouteChange={onRouteChange}
+        onOpenProfile={onOpenProfile}
         onOpenQuickPayment={onOpenQuickPayment}
       />
     )
