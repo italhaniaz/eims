@@ -76,6 +76,7 @@ const InventorySuiteViews = lazyWithRetry(() => import('./modules/institute-admi
 const InventoryReportsView = lazyWithRetry(() => import('./modules/institute-admin/inventory/InventoryReportsView'), 'inventory-reports-view')
 const CampusEventsCalendarView = lazyWithRetry(() => import('./modules/institute-admin/events/CampusEventsCalendarView'), 'campus-events-view')
 const CampusReportsAnalyticsView = lazyWithRetry(() => import('./modules/institute-admin/reports/CampusReportsAnalyticsView'), 'campus-reports-view')
+const ReportsHubView = lazyWithRetry(() => import('./modules/institute-admin/reports/ReportsHubView'), 'reports-hub-view')
 const StudentPerformanceReportsView = lazyWithRetry(() => import('./modules/institute-admin/students/StudentPerformanceReportsView'), 'student-performance-reports-view')
 
 const CampusAccountsView = lazyWithRetry(() => import('./modules/institute-admin/accounts/CampusAccountsView'), 'campus-accounts-view')
@@ -1080,7 +1081,11 @@ const AppContent = () => {
                   <CampusEventsCalendarView currentInstitute={activeCampus} />
                 )}
                 {safeInstituteRoute === 'inst-reports' && (
-                  <CampusReportsAnalyticsView currentInstitute={activeCampus} />
+                  <ReportsHubView
+                    onRouteChange={setInstituteRoute}
+                    onOpenQuickPayment={(sid) => openQuickPayment(sid)}
+                    onOpenSendSms={() => setIsSendSmsOpen(true)}
+                  />
                 )}
                 {safeInstituteRoute === 'inst-reports-students' && (
                   <StudentPerformanceReportsView
