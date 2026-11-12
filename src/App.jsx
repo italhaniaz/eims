@@ -716,6 +716,18 @@ const AppContent = () => {
                             : safeInstituteRoute === 'inst-students-idcards' ? 'idcards'
                               : null
                     }
+                    onRouteChange={setInstituteRoute}
+                    onOpenProfile={(sid) => setStudentProfileTargetId(sid)}
+                    onOpenFeeSetup={(sid, mode = 'edit') => {
+                      setFeeSetupTargetStudentId(sid)
+                      setFeeSetupInitialMode(mode)
+                      setInstituteRoute('inst-fees-setup', { preserveFeeSetupStudent: true })
+                    }}
+                    onOpenBillingHistory={(sid) => {
+                      setBillingHistoryStudentId(sid)
+                      setInstituteRoute('inst-fees-history')
+                    }}
+                    onOpenQuickPayment={(sid) => openQuickPayment(sid)}
                   />
                 )}
                 {['inst-teachers', 'inst-payroll', 'inst-staff-loans', 'inst-staff-fines', 'inst-staff-docs', 'inst-staff-letters', 'inst-staff-idcards', 'inst-staff-reports'].includes(safeInstituteRoute) && (

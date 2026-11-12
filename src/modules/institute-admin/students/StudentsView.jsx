@@ -71,8 +71,9 @@ import {
 import { compressImageFile } from '../../../utils/securityUtils'
 import PrintableStudentIdCardModal from '../../../components/common/PrintableStudentIdCardModal'
 import PrintableExamAdmitCardModal from '../../../components/common/PrintableExamAdmitCardModal'
+import AllStudentsDirectory from './AllStudentsDirectory'
 
-export const StudentsView = ({ currentInstitute, initialAction = null, initialClassFilter = 'ALL' }) => {
+export const StudentsView = ({ currentInstitute, initialAction = null, initialClassFilter = 'ALL', onRouteChange, onOpenProfile, onOpenFeeSetup, onOpenBillingHistory, onOpenQuickPayment }) => {
   const tierConfig = getInstituteTierConfig(currentInstitute)
   const { user } = useAuth()
   const isSuperOrInstituteAdmin = ['superadmin', 'admin', 'institute_admin', 'registrar', 'principal'].includes(user?.role) || !user?.role
@@ -1323,6 +1324,20 @@ const validatePakistaniPhone = (phone) => {
     { id: 5, title: 'Medical', subtitle: 'Sentinel Record', icon: HeartPulse },
     { id: 6, title: 'Documents', subtitle: 'Uploads & Verification', icon: FileCheck }
   ]
+
+  if (!initialAction) {
+    return (
+      <AllStudentsDirectory
+        currentInstitute={currentInstitute}
+        initialClassFilter={initialClassFilter}
+        onRouteChange={onRouteChange}
+        onOpenProfile={onOpenProfile}
+        onOpenFeeSetup={onOpenFeeSetup}
+        onOpenBillingHistory={onOpenBillingHistory}
+        onOpenQuickPayment={onOpenQuickPayment}
+      />
+    )
+  }
 
   return (
     <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
