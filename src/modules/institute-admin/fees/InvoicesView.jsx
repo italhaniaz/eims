@@ -29,6 +29,7 @@ import {
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
 import { PrintableFeeChallanModal } from '../../../components/common/PrintableFeeChallanModal'
+import { resolveStudentFeeSetup } from './StudentFeeSetupView'
 import {
   getDistinctInstituteClassNames,
   isClassAllowedForTier
@@ -572,7 +573,8 @@ export const InvoicesView = ({
           skipped += 1
           continue
         }
-        const amt = enteredAmt > 0 ? enteredAmt : Number(st.monthlyFee || st.tuitionFee || 0)
+        const resolved = enteredAmt > 0 ? null : resolveStudentFeeSetup(st, classes, fees)
+        const amt = enteredAmt > 0 ? enteredAmt : Number(resolved?.finalFee || st.monthlyFee || st.tuitionFee || 0)
         const receiptNo = String(Math.floor(1000000 + Math.random() * 8999999))
         const hasPhone = String(st.parentPhone || st.phone || st.guardianPhone || '').replace(/[^0-9]/g, '').length >= 7
         if (hasPhone) smsEligible += 1
@@ -1522,10 +1524,13 @@ export const InvoicesView = ({
                       Due date <span className="font-normal text-slate-400">(optional)</span>
                     </label>
                     <input
-                      type="date"
+                      type={classForm.dueDate ? 'date' : 'text'}
+                      onFocus={(e) => { e.target.type = 'date' }}
+                      onBlur={(e) => { if (!e.target.value) e.target.type = 'text' }}
+                      placeholder="Pick date"
                       value={classForm.dueDate}
                       onChange={(e) => setClassForm((p) => ({ ...p, dueDate: e.target.value }))}
-                      className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                     />
                   </div>
 

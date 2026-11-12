@@ -756,7 +756,10 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange, onOpenQuic
           </div>
         </div>
 
-        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5 shadow-soft flex flex-col justify-between gap-3">
+        <div
+          onClick={() => onRouteChange?.('inst-fees')}
+          className="bg-[var(--surface)] border border-[var(--border)] hover:border-indigo-300 rounded-2xl p-5 shadow-soft flex flex-col justify-between gap-3 cursor-pointer transition-colors"
+        >
           <div className="flex items-start gap-3.5">
             <StylizedKpiMedallion
               icon={Percent}
@@ -774,9 +777,12 @@ export const InstituteDashboard = ({ currentInstitute, onRouteChange, onOpenQuic
             <p className="text-[11px] text-[var(--text-muted)]">Waivers applied in selected period</p>
             <button
               type="button"
-              onClick={() => onRouteChange?.('inst-fees-history')}
-              title="View Waivers & Student Billing"
-              aria-label="View Waivers & Student Billing"
+              onClick={(e) => {
+                e.stopPropagation()
+                onRouteChange?.('inst-fees')
+              }}
+              title="View Waivers & Invoices"
+              aria-label="View Waivers & Invoices"
               className="p-1.5 rounded-xl bg-slate-50 hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 border border-slate-200/80 hover:border-indigo-300 transition-all cursor-pointer shadow-2xs flex items-center justify-center shrink-0 group/eye"
             >
               <Eye className="w-4 h-4 transition-transform group-hover/eye:scale-110" />
