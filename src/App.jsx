@@ -71,6 +71,7 @@ const CertificatesView = lazyWithRetry(() => import('./modules/institute-admin/c
 const LearningResourcesView = lazyWithRetry(() => import('./modules/institute-admin/learning/LearningResourcesView'), 'learning-resources-view')
 const CampusInventoryView = lazyWithRetry(() => import('./modules/institute-admin/inventory/CampusInventoryView'), 'campus-inventory-view')
 const InventorySuiteViews = lazyWithRetry(() => import('./modules/institute-admin/inventory/InventorySuiteViews'), 'inventory-suite-views')
+const InventoryReportsView = lazyWithRetry(() => import('./modules/institute-admin/inventory/InventoryReportsView'), 'inventory-reports-view')
 const CampusEventsCalendarView = lazyWithRetry(() => import('./modules/institute-admin/events/CampusEventsCalendarView'), 'campus-events-view')
 const CampusReportsAnalyticsView = lazyWithRetry(() => import('./modules/institute-admin/reports/CampusReportsAnalyticsView'), 'campus-reports-view')
 const StudentPerformanceReportsView = lazyWithRetry(() => import('./modules/institute-admin/students/StudentPerformanceReportsView'), 'student-performance-reports-view')
@@ -1054,9 +1055,11 @@ const AppContent = () => {
                   />
                 )}
                 {safeInstituteRoute === 'inst-inventory-reports' && (
-                  <CampusInventoryView
+                  <InventoryReportsView
                     currentInstitute={activeCampus}
-                    initialTab="reports"
+                    onRouteChange={setInstituteRoute}
+                    onOpenQuickPayment={(sid) => openQuickPayment(sid)}
+                    onOpenSendSms={() => setIsSendSmsOpen(true)}
                   />
                 )}
                 {safeInstituteRoute === 'inst-certificates' && (
