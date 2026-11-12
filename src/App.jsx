@@ -50,6 +50,7 @@ const InstituteDashboard = lazyWithRetry(() => import('./modules/dashboard/Insti
 const StudentsView = lazyWithRetry(() => import('./modules/institute-admin/students/StudentsView'), 'students-view')
 const TeachersView = lazyWithRetry(() => import('./modules/institute-admin/teachers/TeachersView'), 'teachers-view')
 const StaffAndPayrollViews = lazyWithRetry(() => import('./modules/institute-admin/teachers/StaffAndPayrollViews'), 'staff-payroll-views')
+const StaffLoansAndFinesViews = lazyWithRetry(() => import('./modules/institute-admin/teachers/StaffLoansAndFinesViews'), 'staff-loans-fines-views')
 const ClassesView = lazyWithRetry(() => import('./modules/institute-admin/classes/ClassesView'), 'classes-view')
 const TimetableView = lazyWithRetry(() => import('./modules/institute-admin/timetable/TimetableView'), 'timetable-view')
 const AttendanceView = lazyWithRetry(() => import('./modules/institute-admin/attendance/AttendanceView'), 'attendance-view')
@@ -760,14 +761,21 @@ const AppContent = () => {
                     onOpenSendSms={() => setIsSendSmsOpen(true)}
                   />
                 )}
-                {['inst-staff-loans', 'inst-staff-fines', 'inst-staff-docs', 'inst-staff-letters', 'inst-staff-idcards', 'inst-staff-reports'].includes(safeInstituteRoute) && (
+                {['inst-staff-loans', 'inst-staff-fines'].includes(safeInstituteRoute) && (
+                  <StaffLoansAndFinesViews
+                    mode={safeInstituteRoute === 'inst-staff-fines' ? 'fines' : 'loans'}
+                    currentInstitute={activeCampus}
+                    onRouteChange={setInstituteRoute}
+                    onOpenQuickPayment={(sid) => openQuickPayment(sid)}
+                    onOpenSendSms={() => setIsSendSmsOpen(true)}
+                  />
+                )}
+                {['inst-staff-docs', 'inst-staff-letters', 'inst-staff-idcards', 'inst-staff-reports'].includes(safeInstituteRoute) && (
                   <TeachersView
                     currentInstitute={activeCampus}
                     initialTab={
-                      safeInstituteRoute === 'inst-staff-loans' ? 'loans'
-                        : safeInstituteRoute === 'inst-staff-fines' ? 'fines'
-                          : ['inst-staff-docs', 'inst-staff-letters', 'inst-staff-idcards'].includes(safeInstituteRoute) ? 'documents'
-                            : 'workload'
+                      ['inst-staff-docs', 'inst-staff-letters', 'inst-staff-idcards'].includes(safeInstituteRoute) ? 'documents'
+                        : 'workload'
                     }
                   />
                 )}
