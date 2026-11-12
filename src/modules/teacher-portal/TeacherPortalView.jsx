@@ -547,7 +547,7 @@ export default function TeacherPortalView() {
                     onClick={() => setIsResultsMenuOpen(!isResultsMenuOpen)}
                     className={`w-full flex items-center justify-between text-left py-1.5 px-2.5 rounded-lg transition-colors cursor-pointer ${
                       activeRoute === 'report-cards'
-                        ? 'text-sky-300 font-bold'
+                        ? 'bg-sky-600/20 text-sky-200 font-bold border border-sky-500/30'
                         : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
                     }`}
                   >

@@ -17,7 +17,8 @@ import {
   X,
   CheckCircle2,
   Sparkles,
-  BarChart3
+  BarChart3,
+  ArrowLeft
 } from 'lucide-react'
 import { useAppData } from '../../context/AppDataContext'
 import { useToast } from '../../context/ToastContext'
@@ -113,9 +114,10 @@ export default function TeacherReportCardsView({
           </div>
           <button
             onClick={onBack}
-            className="text-xs font-semibold text-slate-500 hover:text-sky-600 dark:text-slate-400 dark:hover:text-sky-400 flex items-center gap-1 transition-colors mt-0.5 cursor-pointer text-left w-fit"
+            className="text-xs font-semibold text-slate-500 hover:text-sky-600 dark:text-slate-400 dark:hover:text-sky-400 flex items-center gap-1.5 transition-colors mt-0.5 cursor-pointer text-left w-fit"
           >
-            <span>+ Back</span>
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Back</span>
           </button>
         </div>
 
@@ -175,7 +177,7 @@ export default function TeacherReportCardsView({
           {/* Card 1: Exams (2026) */}
           <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-xs flex items-center gap-4">
             <div className="w-12 h-12 rounded-2xl bg-sky-500 text-white flex items-center justify-center font-bold shadow-sm shadow-sky-500/30">
-              <Award className="w-6 h-6" />
+              <FileText className="w-6 h-6" />
             </div>
             <div>
               <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
