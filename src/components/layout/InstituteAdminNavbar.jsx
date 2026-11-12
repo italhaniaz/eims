@@ -187,7 +187,6 @@ export const InstituteAdminNavbar = ({
       case 'inst-settings': return 'Institute Profile'
       case 'inst-settings-locations': return 'Campus Locations'
       case 'inst-settings-activity': return 'Activity Log'
-      case 'inst-training': return 'Training Videos'
       case 'inst-my-account': return 'My Account & Security'
       default: return tierConfig?.portalTitle || 'School Portal'
     }

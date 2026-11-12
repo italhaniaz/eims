@@ -291,7 +291,6 @@ const buildMenuItems = (studentsCount) => [
       { id: 'inst-users', label: 'Users & Roles', icon: ShieldCheck }
     ]
   },
-  { id: 'inst-training', label: 'Training Videos', icon: PlayCircle },
   { id: 'inst-my-account', label: 'My Account', icon: User }
 ]
 

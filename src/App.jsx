@@ -84,7 +84,6 @@ const HostelsView = lazyWithRetry(() => import('./modules/institute-admin/hostel
 const CampusPoliciesView = lazyWithRetry(() => import('./modules/institute-admin/policies/CampusPoliciesView'), 'campus-policies-view')
 const CampusSettingsView = lazyWithRetry(() => import('./modules/institute-admin/settings/CampusSettingsView'), 'campus-settings-view')
 const SettingsSuiteViews = lazyWithRetry(() => import('./modules/institute-admin/settings/SettingsSuiteViews'), 'settings-suite-views')
-const TrainingVideosView = lazyWithRetry(() => import('./modules/institute-admin/training/TrainingVideosView'), 'campus-training-view')
 const MyAccountView = lazyWithRetry(() => import('./modules/institute-admin/account/MyAccountView'), 'campus-account-view')
 const EnrollStudentView = lazyWithRetry(() => import('./modules/institute-admin/students/EnrollStudentView'), 'enroll-student-view')
 const QuickPaymentModal = lazyWithRetry(() => import('./components/common/QuickPaymentModal'), 'quick-payment-modal')
@@ -188,7 +187,7 @@ const AppContent = () => {
     'inst-transport', 'inst-hostels',
     'inst-reports', 'inst-policies',
     'inst-users', 'inst-settings', 'inst-settings-locations', 'inst-settings-activity',
-    'inst-training', 'inst-my-account'
+    'inst-my-account'
   ]
 
   // Helpers to safely extract valid initial routes per portal role
@@ -1122,9 +1121,6 @@ const AppContent = () => {
                     initialTab={safeInstituteRoute === 'inst-communication-sms' ? 'settings' : 'compose'}
                     initialChannel="SMS"
                   />
-                )}
-                {safeInstituteRoute === 'inst-training' && (
-                  <TrainingVideosView onRouteChange={setInstituteRoute} />
                 )}
                 {safeInstituteRoute === 'inst-my-account' && (
                   <MyAccountView currentInstitute={activeCampus} />
