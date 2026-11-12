@@ -39,7 +39,8 @@ import {
   FolderPlus,
   Download,
   Check,
-  Upload
+  Upload,
+  Inbox
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useAppData } from '../../context/AppDataContext'
@@ -60,6 +61,9 @@ import TeacherMakeupSessionsView from './TeacherMakeupSessionsView'
 import TeacherAssignmentsView from './TeacherAssignmentsView'
 import TeacherClassResourcesView from './TeacherClassResourcesView'
 import TeacherAnnouncementsView from './TeacherAnnouncementsView'
+import TeacherNotificationsView from './TeacherNotificationsView'
+import TeacherInboxView from './TeacherInboxView'
+import TeacherTransactionsView from './TeacherTransactionsView'
 
 export default function TeacherPortalView() {
   const { user, logout } = useAuth()
@@ -84,6 +88,8 @@ export default function TeacherPortalView() {
       }
     } else if (activeRoute === 'handouts' || activeRoute === 'recorded-lectures') {
       setOpenSidebarGroups((prev) => ({ ...prev, resources: true }))
+    } else if (activeRoute === 'notifications' || activeRoute === 'inbox') {
+      setOpenSidebarGroups((prev) => ({ ...prev, communication: true }))
     }
   }, [activeRoute])
 
@@ -124,7 +130,8 @@ export default function TeacherPortalView() {
     students: false,
     attendance: false,
     exams: false,
-    resources: false
+    resources: false,
+    communication: false
   })
 
   // Attendance Punch State
@@ -724,26 +731,79 @@ export default function TeacherPortalView() {
           </button>
 
           {/* 10. Communication */}
-          <button
-            onClick={() => {
-              showToast('Communication Gateway: 0 unread parent messages.')
-              setIsMobileMenuOpen(false)
-            }}
-            className="w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer group"
-          >
-            <MessageSquare className="w-4 h-4 text-slate-400 group-hover:text-purple-400 shrink-0" />
-            {!isSidebarCollapsed && <span className="truncate">Communication</span>}
-          </button>
+          <div>
+            <button
+              onClick={() => toggleGroup('communication')}
+              className={`w-full flex items-center justify-between px-3.5 py-2 rounded-xl transition-colors cursor-pointer group ${
+                activeRoute === 'notifications' || activeRoute === 'inbox'
+                  ? 'bg-blue-600/10 text-white border border-blue-500/30'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+              }`}
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <MessageSquare className={`w-4 h-4 shrink-0 ${
+                  activeRoute === 'notifications' || activeRoute === 'inbox'
+                    ? 'text-sky-400'
+                    : 'text-slate-400 group-hover:text-purple-400'
+                }`} />
+                {!isSidebarCollapsed && <span className="truncate">Communication</span>}
+              </div>
+              {!isSidebarCollapsed && (
+                openSidebarGroups.communication ? <ChevronDown className="w-3.5 h-3.5 text-slate-400" /> : <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+              )}
+            </button>
+            {openSidebarGroups.communication && !isSidebarCollapsed && (
+              <div className="mt-1 pl-3 space-y-1 border-l border-slate-800 ml-5 text-xs">
+                {/* 10.1 Notifications */}
+                <button
+                  onClick={() => {
+                    setActiveRoute('notifications')
+                    setIsMobileMenuOpen(false)
+                  }}
+                  className={`w-full flex items-center gap-2 py-1.5 px-2.5 rounded-lg transition-colors cursor-pointer ${
+                    activeRoute === 'notifications'
+                      ? 'bg-gradient-to-r from-sky-600/30 to-blue-600/30 text-sky-200 font-bold border border-sky-500/40 shadow-xs'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                  }`}
+                >
+                  <Bell className="w-3.5 h-3.5 text-sky-400" />
+                  <span>Notifications</span>
+                </button>
+
+                {/* 10.2 Inbox */}
+                <button
+                  onClick={() => {
+                    setActiveRoute('inbox')
+                    setIsMobileMenuOpen(false)
+                  }}
+                  className={`w-full flex items-center gap-2 py-1.5 px-2.5 rounded-lg transition-colors cursor-pointer ${
+                    activeRoute === 'inbox'
+                      ? 'bg-gradient-to-r from-sky-600/30 to-blue-600/30 text-sky-200 font-bold border border-sky-500/40 shadow-xs'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                  }`}
+                >
+                  <Inbox className="w-3.5 h-3.5 text-sky-400" />
+                  <span>Inbox</span>
+                </button>
+              </div>
+            )}
+          </div>
 
           {/* 11. My Transactions */}
           <button
             onClick={() => {
-              setActiveModal('salary')
+              setActiveRoute('my-transactions')
               setIsMobileMenuOpen(false)
             }}
-            className="w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer group"
+            className={`w-full flex items-center gap-3 px-3.5 py-2 rounded-xl transition-colors cursor-pointer group ${
+              activeRoute === 'my-transactions'
+                ? 'bg-gradient-to-r from-sky-600/30 to-blue-600/30 text-sky-200 font-bold border border-sky-500/40 shadow-xs'
+                : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+            }`}
           >
-            <Receipt className="w-4 h-4 text-slate-400 group-hover:text-purple-400 shrink-0" />
+            <Receipt className={`w-4 h-4 shrink-0 ${
+              activeRoute === 'my-transactions' ? 'text-sky-400' : 'text-slate-400 group-hover:text-purple-400'
+            }`} />
             {!isSidebarCollapsed && <span className="truncate">My Transactions</span>}
           </button>
 
@@ -818,8 +878,11 @@ export default function TeacherPortalView() {
           <div className="flex items-center gap-2 sm:gap-3">
             {/* Bell Notifications */}
             <button
-              onClick={() => setActiveModal('announcements')}
-              title="Announcements"
+              onClick={() => {
+                setOpenSidebarGroups((prev) => ({ ...prev, communication: true }))
+                setActiveRoute('notifications')
+              }}
+              title="Notifications"
               className="relative p-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             >
               <Bell className="w-4 h-4" />
@@ -830,11 +893,14 @@ export default function TeacherPortalView() {
 
             {/* Messages Icon */}
             <button
-              onClick={() => showToast('Inbox: 0 new messages')}
-              title="Messages"
+              onClick={() => {
+                setOpenSidebarGroups((prev) => ({ ...prev, communication: true }))
+                setActiveRoute('inbox')
+              }}
+              title="Inbox"
               className="p-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             >
-              <MessageSquare className="w-4 h-4" />
+              <Inbox className="w-4 h-4" />
             </button>
 
             {/* Dark Mode Toggle */}
@@ -1082,6 +1148,108 @@ export default function TeacherPortalView() {
             }}
             teacherName={teacherName}
           />
+        ) : activeRoute === 'notifications' ? (
+          <TeacherNotificationsView
+            onBack={() => setActiveRoute('dashboard')}
+            onNavigate={(route) => {
+              if (route === 'mark-attendance' || route === 'my-attendance' || route === 'attendance-reports') {
+                setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
+              } else if (route === 'marks-entry' || route === 'report-cards') {
+                setOpenSidebarGroups((prev) => ({ ...prev, exams: true }))
+              } else if (route === 'notifications' || route === 'inbox') {
+                setOpenSidebarGroups((prev) => ({ ...prev, communication: true }))
+              }
+              setActiveRoute(route)
+            }}
+            onOpenModal={(modalName) => {
+              if (modalName === 'mark-attendance') {
+                setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
+                setActiveRoute('mark-attendance')
+              } else if (modalName === 'marks-entry') {
+                setOpenSidebarGroups((prev) => ({ ...prev, exams: true }))
+                setActiveRoute('marks-entry')
+              } else if (modalName === 'assignments') {
+                setActiveRoute('assignments')
+              } else if (modalName === 'timetable') {
+                setActiveRoute('timetable')
+              } else if (modalName === 'announcements') {
+                setActiveRoute('announcements')
+              } else if (modalName === 'salary') {
+                setActiveRoute('my-transactions')
+              } else {
+                setActiveModal(modalName)
+              }
+            }}
+            teacherName={teacherName}
+          />
+        ) : activeRoute === 'inbox' ? (
+          <TeacherInboxView
+            onBack={() => setActiveRoute('dashboard')}
+            onNavigate={(route) => {
+              if (route === 'mark-attendance' || route === 'my-attendance' || route === 'attendance-reports') {
+                setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
+              } else if (route === 'marks-entry' || route === 'report-cards') {
+                setOpenSidebarGroups((prev) => ({ ...prev, exams: true }))
+              } else if (route === 'notifications' || route === 'inbox') {
+                setOpenSidebarGroups((prev) => ({ ...prev, communication: true }))
+              }
+              setActiveRoute(route)
+            }}
+            onOpenModal={(modalName) => {
+              if (modalName === 'mark-attendance') {
+                setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
+                setActiveRoute('mark-attendance')
+              } else if (modalName === 'marks-entry') {
+                setOpenSidebarGroups((prev) => ({ ...prev, exams: true }))
+                setActiveRoute('marks-entry')
+              } else if (modalName === 'assignments') {
+                setActiveRoute('assignments')
+              } else if (modalName === 'timetable') {
+                setActiveRoute('timetable')
+              } else if (modalName === 'announcements') {
+                setActiveRoute('announcements')
+              } else if (modalName === 'salary') {
+                setActiveRoute('my-transactions')
+              } else {
+                setActiveModal(modalName)
+              }
+            }}
+            teacherName={teacherName}
+          />
+        ) : activeRoute === 'my-transactions' ? (
+          <TeacherTransactionsView
+            onBack={() => setActiveRoute('dashboard')}
+            onNavigate={(route) => {
+              if (route === 'mark-attendance' || route === 'my-attendance' || route === 'attendance-reports') {
+                setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
+              } else if (route === 'marks-entry' || route === 'report-cards') {
+                setOpenSidebarGroups((prev) => ({ ...prev, exams: true }))
+              } else if (route === 'notifications' || route === 'inbox') {
+                setOpenSidebarGroups((prev) => ({ ...prev, communication: true }))
+              }
+              setActiveRoute(route)
+            }}
+            onOpenModal={(modalName) => {
+              if (modalName === 'mark-attendance') {
+                setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
+                setActiveRoute('mark-attendance')
+              } else if (modalName === 'marks-entry') {
+                setOpenSidebarGroups((prev) => ({ ...prev, exams: true }))
+                setActiveRoute('marks-entry')
+              } else if (modalName === 'assignments') {
+                setActiveRoute('assignments')
+              } else if (modalName === 'timetable') {
+                setActiveRoute('timetable')
+              } else if (modalName === 'announcements') {
+                setActiveRoute('announcements')
+              } else if (modalName === 'salary') {
+                setActiveRoute('my-transactions')
+              } else {
+                setActiveModal(modalName)
+              }
+            }}
+            teacherName={teacherName}
+          />
         ) : (
           <>
             {/* Sub-Header / Quick Action Bar matching screenshot */}
@@ -1135,7 +1303,7 @@ export default function TeacherPortalView() {
                   <span>Timetables & Exam Schedules</span>
                 </button>
                 <button
-                  onClick={() => setActiveModal('salary')}
+                  onClick={() => setActiveRoute('my-transactions')}
                   className="flex items-center gap-1.5 hover:text-purple-600 dark:hover:text-purple-400 transition-colors cursor-pointer"
                 >
                   <Wallet className="w-3.5 h-3.5" />
