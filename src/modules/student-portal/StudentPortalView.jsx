@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo } from 'react'
 import {
   Home,
   BookOpen,
@@ -8,7 +8,6 @@ import {
   Clock,
   LogOut,
   ChevronRight,
-  ChevronDown,
   Menu,
   X,
   Bell,
@@ -45,7 +44,9 @@ import {
   Hourglass,
   HelpCircle,
   CheckSquare,
-  Share2
+  Share2,
+  ArrowLeft,
+  List
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useAppData } from '../../context/AppDataContext'
@@ -80,10 +81,21 @@ export default function StudentPortalView() {
     return 'Nursery'
   })
 
+  // Student Section State (Default 'Super' as shown in screenshot)
+  const [studentSection, setStudentSection] = useState(() => {
+    try {
+      const stored = localStorage.getItem('sms_student_custom_section')
+      if (stored) return stored
+      return user?.section || 'Super'
+    } catch {}
+    return 'Super'
+  })
+
   // Modal to enter/edit student name
   const [isEditNameModalOpen, setIsEditNameModalOpen] = useState(false)
   const [editNameInput, setEditNameInput] = useState('')
   const [editClassInput, setEditClassInput] = useState('')
+  const [editSectionInput, setEditSectionInput] = useState('')
 
   // Navigation Tabs:
   // 'dashboard' | 'timetable' | 'attendance' | 'assignments' | 'resources' |
@@ -91,18 +103,17 @@ export default function StudentPortalView() {
   const [activeTab, setActiveTab] = useState('dashboard')
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isNotifOpen, setIsNotifOpen] = useState(false)
-  const [isMailOpen, setIsMailOpen] = useState(false)
+
+  // Timetable sub-tabs: 'weekly' | 'exam'
+  const [timetableSubTab, setTimetableSubTab] = useState('weekly')
 
   // Sub-feature states
-  const [selectedTimetableDay, setSelectedTimetableDay] = useState('Friday')
   const [selectedChallanForPrint, setSelectedChallanForPrint] = useState(null)
-  const [selectedChallanForPayment, setSelectedChallanForPayment] = useState(null)
   const [isReportCardModalOpen, setIsReportCardModalOpen] = useState(false)
-  const [isIdCardModalOpen, setIsIdCardModalOpen] = useState(false)
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false)
   const [viewingNotice, setViewingNotice] = useState(null)
 
-  // Quick link highlight state (Default 'Fee Records' as seen active in screenshot)
+  // Quick link highlight state
   const [activeQuickLink, setActiveQuickLink] = useState('fee-records')
 
   // Save updated name to state and localStorage
@@ -117,23 +128,29 @@ export default function StudentPortalView() {
         setStudentClass(editClassInput.trim())
         localStorage.setItem('sms_student_custom_class', editClassInput.trim())
       }
+      if (editSectionInput.trim()) {
+        setStudentSection(editSectionInput.trim())
+        localStorage.setItem('sms_student_custom_section', editSectionInput.trim())
+      }
       // Update session storage user payload
       const sessionUser = sessionStorage.getItem('sms_auth_user')
       if (sessionUser) {
         const parsed = JSON.parse(sessionUser)
         parsed.name = cleanName
         if (editClassInput.trim()) parsed.className = editClassInput.trim()
+        if (editSectionInput.trim()) parsed.section = editSectionInput.trim()
         sessionStorage.setItem('sms_auth_user', JSON.stringify(parsed))
       }
     } catch {}
     setIsEditNameModalOpen(false)
-    toast?.success?.('Profile name updated successfully!') || alert('Name updated!')
+    toast?.success?.('Profile details updated successfully!') || alert('Details updated!')
   }
 
   // Pre-fill edit modal when opening
   const openEditModal = () => {
     setEditNameInput(studentName === 'Unknown' ? '' : studentName)
     setEditClassInput(studentClass)
+    setEditSectionInput(studentSection)
     setIsEditNameModalOpen(true)
   }
 
@@ -142,14 +159,65 @@ export default function StudentPortalView() {
     return 'Friday, 13 Nov 2026'
   }, [])
 
-  // Class Schedule data
+  // Class Schedule data for today's card
   const todaySchedule = [
     { time: '1:00 PM - 1:30 PM', subject: 'English', teacher: 'Ma\'am Ayesha', room: 'Room 2' },
     { time: '1:30 PM - 2:00 PM', subject: 'Math', teacher: 'Sir Tariq', room: 'Room 2' },
     { time: '3:30 PM - 4:00 PM', subject: 'Play Activity', teacher: 'Activity Supervisor', room: 'Activity Hall' }
   ]
 
-  // Announcements list (from screenshots 1 & 2)
+  // Weekly Timetable Grid Data (Matching Screenshot 1, 2 & 3)
+  const weeklyTimetableDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+  const weeklyPeriodSlots = [
+    { start: '8:00 AM', end: '8:30 AM', subject: 'English' },
+    { start: '8:30 AM', end: '9:00 AM', subject: 'Math' },
+    { start: '10:30 AM', end: '11:00 AM', subject: 'Play Activity' }
+  ]
+
+  // Flattened "Your week at a glance" schedule (Matching Screenshot 3)
+  const weekAtAGlanceItems = useMemo(() => {
+    const list = []
+    weeklyTimetableDays.forEach(day => {
+      weeklyPeriodSlots.forEach(slot => {
+        list.push({
+          time: `${slot.start} - ${slot.end}`,
+          subject: slot.subject,
+          day: day
+        })
+      })
+    })
+    return list
+  }, [])
+
+  // Exam Datesheet Data
+  const examDatesheet = [
+    {
+      date: '01 Dec 2026',
+      day: 'Monday',
+      time: '09:00 AM - 11:00 AM',
+      subject: 'English',
+      syllabus: 'Alphabets A-Z, Phonics & Object Identification',
+      room: 'Room 2'
+    },
+    {
+      date: '03 Dec 2026',
+      day: 'Wednesday',
+      time: '09:00 AM - 11:00 AM',
+      subject: 'Math',
+      syllabus: 'Numbers 1-50, Shapes & Counting',
+      room: 'Room 2'
+    },
+    {
+      date: '05 Dec 2026',
+      day: 'Friday',
+      time: '09:00 AM - 11:00 AM',
+      subject: 'Play Activity',
+      syllabus: 'Color Identification & Social Activities',
+      room: 'Activity Hall'
+    }
+  ]
+
+  // Announcements list (from screenshots)
   const announcementsList = [
     {
       id: 'ann-1',
@@ -322,7 +390,7 @@ export default function StudentPortalView() {
 
       {/* BODY WORKSPACE */}
       <div className="flex flex-1 overflow-hidden">
-        {/* SIDEBAR NAVIGATION (Matching Screenshot 1 & 2) */}
+        {/* SIDEBAR NAVIGATION (Matching Screenshot 1, 2 & 3) */}
         <aside
           className={`fixed lg:static inset-y-16 left-0 z-20 w-60 flex-col border-r transition-transform duration-200 ${
             isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
@@ -379,7 +447,7 @@ export default function StudentPortalView() {
               <button
                 type="button"
                 onClick={openEditModal}
-                className="w-full py-1 px-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold transition-colors shadow-xs"
+                className="w-full py-1 px-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold transition-colors shadow-xs cursor-pointer"
               >
                 Enter Your Name
               </button>
@@ -397,7 +465,7 @@ export default function StudentPortalView() {
 
         {/* MAIN DASHBOARD CONTENT */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-7 max-w-7xl mx-auto w-full">
-          {/* TAB: DASHBOARD (Matching Screenshot 1 & 2 exactly) */}
+          {/* TAB 1: DASHBOARD */}
           {activeTab === 'dashboard' && (
             <div className="space-y-5">
               {/* Top Subheader: "My Dashboard" + Right Action Shortcut Icons */}
@@ -456,7 +524,7 @@ export default function StudentPortalView() {
                 </div>
               </div>
 
-              {/* WELCOME BANNER (White Rounded Card from Screenshot 1 & 2) */}
+              {/* WELCOME BANNER */}
               <div className={`p-6 rounded-2xl border transition-all ${
                 isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200/80 shadow-xs'
               }`}>
@@ -496,7 +564,7 @@ export default function StudentPortalView() {
                 </div>
               </div>
 
-              {/* TODAY'S CLASSES BANNER (Light Mint Green Card from Screenshot 1 & 2) */}
+              {/* TODAY'S CLASSES BANNER */}
               <div className="p-5 rounded-2xl border border-emerald-100 dark:border-emerald-900/40 bg-gradient-to-r from-[#eefbf4] to-[#f4fdf8] dark:from-emerald-950/20 dark:to-teal-950/20 shadow-xs">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-400">
@@ -538,7 +606,7 @@ export default function StudentPortalView() {
                 </div>
               </div>
 
-              {/* TWO SUMMARY KPI CARDS (Pending Fees & This Month) */}
+              {/* TWO SUMMARY KPI CARDS */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* 1. Pending Fees */}
                 <div className={`p-5 rounded-2xl border transition-all ${
@@ -589,7 +657,7 @@ export default function StudentPortalView() {
                 </div>
               </div>
 
-              {/* QUICK LINKS SECTION (Matching Screenshot 1 & 2) */}
+              {/* QUICK LINKS SECTION */}
               <div>
                 <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-3">
                   Quick Links
@@ -631,7 +699,7 @@ export default function StudentPortalView() {
                 </div>
               </div>
 
-              {/* TWO BOTTOM COLUMNS (Latest Announcements & Recent Assignments) */}
+              {/* TWO BOTTOM COLUMNS */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* Left Column: Latest Announcements */}
                 <div className={`p-5 rounded-2xl border ${
@@ -703,49 +771,386 @@ export default function StudentPortalView() {
             </div>
           )}
 
-          {/* TAB: MY TIMETABLE */}
+          {/* TAB 2: MY TIMETABLE (Matching Screenshot 1, 2 & 3 Exactly) */}
           {activeTab === 'timetable' && (
-            <div className="space-y-5">
-              <div className="flex items-center justify-between">
+            <div className="space-y-4">
+              {/* Header Title & Back Button */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
                 <div>
-                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-                    Class Timetable - {studentClass}
-                  </h2>
-                  <p className="text-xs text-slate-500">Weekly period allocations</p>
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-md bg-blue-100 text-blue-600 flex items-center justify-center">
+                      <FileText className="w-4 h-4" />
+                    </div>
+                    <h1 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                      My Timetable
+                    </h1>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('dashboard')}
+                    className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-800 dark:hover:text-white font-medium mt-1 cursor-pointer"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" /> Back
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={triggerBrowserPrint}
-                  className="px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold flex items-center gap-1.5"
-                >
-                  <Printer className="w-3.5 h-3.5 text-blue-600" />
-                  Print Timetable
-                </button>
+
+                {/* Right Top Action Icons */}
+                <div className="flex items-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 overflow-x-auto pb-1">
+                  <button
+                    type="button"
+                    onClick={() => setIsReportCardModalOpen(true)}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <BookOpen className="w-4 h-4 text-slate-500" />
+                    <span>Report Card</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('attendance')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <Calendar className="w-4 h-4 text-slate-500" />
+                    <span>My Attendance</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('assignments')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <BookMarked className="w-4 h-4 text-slate-500" />
+                    <span>Assignments</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('announcements')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <Megaphone className="w-4 h-4 text-slate-500" />
+                    <span>Announcements</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('fees')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <CreditCard className="w-4 h-4 text-slate-500" />
+                    <span>Fee Records</span>
+                  </button>
+                </div>
               </div>
 
-              <div className="p-6 rounded-2xl border bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
-                <h3 className="text-sm font-bold text-slate-800 dark:text-white">Friday Schedule</h3>
-                <div className="space-y-2.5">
-                  {todaySchedule.map((slot, i) => (
-                    <div key={i} className="p-3.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-3">
-                        <div className="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-xs">
-                          {i + 1}
-                        </div>
-                        <div>
-                          <p className="font-bold text-slate-900 dark:text-white">{slot.subject}</p>
-                          <p className="text-[11px] text-slate-400">{slot.teacher} · {slot.room}</p>
-                        </div>
-                      </div>
-                      <span className="font-semibold text-slate-700 dark:text-slate-300">{slot.time}</span>
+              {/* SECTION: My class timetable Header */}
+              <div className="pt-1">
+                <div className="flex items-center gap-2">
+                  <CalendarDays className="w-4 h-4 text-blue-600" />
+                  <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                    My class timetable
+                  </h2>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  View your weekly schedule and exam dates in one place.
+                </p>
+              </div>
+
+              {/* Student Details Pill Card */}
+              <div className={`px-4 py-3 rounded-2xl border transition-all ${
+                isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200/80 shadow-xs'
+              } flex items-center gap-3 text-xs`}>
+                <div className="flex items-center gap-1.5 font-bold text-slate-800 dark:text-white">
+                  <GraduationCap className="w-4 h-4 text-slate-700 dark:text-slate-300" />
+                  <span>{studentName}</span>
+                </div>
+                <span className="text-slate-300 dark:text-slate-600">&bull;</span>
+                <div className="text-slate-600 dark:text-slate-300">
+                  Class: <span className="font-bold text-slate-900 dark:text-white">{studentClass}</span>
+                </div>
+                <span className="text-slate-300 dark:text-slate-600">&bull;</span>
+                <div className="text-slate-600 dark:text-slate-300">
+                  Section: <span className="font-bold text-slate-900 dark:text-white">{studentSection}</span>
+                </div>
+              </div>
+
+              {/* TODAY'S CLASSES MINT GREEN CARD */}
+              <div className="p-5 rounded-2xl border border-emerald-100 dark:border-emerald-900/40 bg-gradient-to-r from-[#eefbf4] to-[#f4fdf8] dark:from-emerald-950/20 dark:to-teal-950/20 shadow-xs">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-400">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+                    <span>Today · Friday, 13 Nov</span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById('timetable-grid-section')
+                      el?.scrollIntoView({ behavior: 'smooth' })
+                    }}
+                    className="flex items-center gap-1 px-3 py-1 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-medium hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer"
+                  >
+                    <CalendarDays className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Full timetable</span>
+                  </button>
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Today's classes
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    3 periods scheduled
+                  </p>
+                </div>
+
+                {/* Period Chips */}
+                <div className="mt-4 flex flex-wrap items-center gap-3">
+                  {todaySchedule.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-200 shadow-2xs"
+                    >
+                      <Clock className="w-3.5 h-3.5 text-slate-400" />
+                      <span className="font-medium">{item.time}</span>
+                      <span className="font-semibold text-slate-900 dark:text-white">{item.subject}</span>
                     </div>
                   ))}
                 </div>
               </div>
+
+              {/* SUB-TABS: Weekly Schedule (1) vs Exam Datesheet (1) */}
+              <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pt-2 pb-0">
+                <button
+                  type="button"
+                  onClick={() => setTimetableSubTab('weekly')}
+                  className={`pb-3 px-3 text-xs font-bold flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${
+                    timetableSubTab === 'weekly'
+                      ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+                      : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-white'
+                  }`}
+                >
+                  <Calendar className="w-4 h-4" />
+                  <span>Weekly schedule</span>
+                  <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                    1
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setTimetableSubTab('exam')}
+                  className={`pb-3 px-3 text-xs font-bold flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${
+                    timetableSubTab === 'exam'
+                      ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+                      : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-white'
+                  }`}
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>Exam datesheet</span>
+                  <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-500 text-white">
+                    1
+                  </span>
+                </button>
+              </div>
+
+              {/* SUB-TAB CONTENT: WEEKLY SCHEDULE */}
+              {timetableSubTab === 'weekly' && (
+                <div id="timetable-grid-section" className="space-y-4 pt-1">
+                  {/* Top Header of Table: Class Schedule Title + Legend + Print Button */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <span className="font-bold text-slate-900 dark:text-white">
+                        {studentClass} Class Schedule &bull; 2026-2027
+                      </span>
+
+                      {/* Legend */}
+                      <div className="flex items-center gap-3 text-[11px] text-slate-500">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-3 h-3 rounded-xs border border-blue-200 bg-white inline-block" />
+                          <span>Class period</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-3 h-3 rounded-xs border border-amber-300 bg-[#fff5d6] inline-block" />
+                          <span>Today (Friday)</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={triggerBrowserPrint}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-white dark:bg-slate-900 text-rose-600 dark:text-rose-400 font-semibold hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors shadow-2xs cursor-pointer w-fit"
+                    >
+                      <Printer className="w-3.5 h-3.5" />
+                      <span>Print</span>
+                    </button>
+                  </div>
+
+                  {/* TWO-COLUMN LAYOUT: TIMETABLE GRID (LEFT) + YOUR WEEK AT A GLANCE (RIGHT) */}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    {/* LEFT 2 COLUMNS: WEEKLY TIMETABLE TABLE */}
+                    <div className={`lg:col-span-2 rounded-2xl border ${
+                      isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                    } overflow-hidden shadow-xs`}>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-xs text-left border-collapse">
+                          <thead>
+                            <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300">
+                              <th className="py-3 px-4 font-bold border-r border-slate-200 dark:border-slate-800 w-28">
+                                Day
+                              </th>
+                              <th className="py-2.5 px-4 font-bold border-r border-slate-200 dark:border-slate-800 text-center">
+                                <div>8:00 AM</div>
+                                <div className="text-[10px] text-slate-400 font-normal">8:30 AM</div>
+                              </th>
+                              <th className="py-2.5 px-4 font-bold border-r border-slate-200 dark:border-slate-800 text-center">
+                                <div>8:30 AM</div>
+                                <div className="text-[10px] text-slate-400 font-normal">9:00 AM</div>
+                              </th>
+                              <th className="py-2.5 px-4 font-bold text-center">
+                                <div>10:30 AM</div>
+                                <div className="text-[10px] text-slate-400 font-normal">11:00 AM</div>
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                            {weeklyTimetableDays.map(day => {
+                              const isToday = day === 'Friday'
+                              return (
+                                <tr key={day} className="transition-colors">
+                                  {/* Day Column (Friday highlighted in yellow as today) */}
+                                  <td className={`py-3.5 px-4 font-semibold border-r border-slate-200 dark:border-slate-800 ${
+                                    isToday
+                                      ? 'bg-[#fff5d6] text-amber-950 font-bold border-l-4 border-l-amber-400'
+                                      : 'text-slate-700 dark:text-slate-300'
+                                  }`}>
+                                    {day}
+                                  </td>
+
+                                  {/* Period 1: English */}
+                                  <td className="py-3.5 px-4 border-r border-slate-200 dark:border-slate-800 text-center">
+                                    <div className="px-3 py-1.5 rounded-lg bg-[#eaf4fb] dark:bg-blue-950/40 text-slate-800 dark:text-blue-200 font-semibold border border-blue-100 dark:border-blue-900/60 inline-block w-full">
+                                      English
+                                    </div>
+                                  </td>
+
+                                  {/* Period 2: Math */}
+                                  <td className="py-3.5 px-4 border-r border-slate-200 dark:border-slate-800 text-center">
+                                    <div className="px-3 py-1.5 rounded-lg bg-[#eaf4fb] dark:bg-blue-950/40 text-slate-800 dark:text-blue-200 font-semibold border border-blue-100 dark:border-blue-900/60 inline-block w-full">
+                                      Math
+                                    </div>
+                                  </td>
+
+                                  {/* Period 3: Play Activity */}
+                                  <td className="py-3.5 px-4 text-center">
+                                    <div className="px-3 py-1.5 rounded-lg bg-[#eaf4fb] dark:bg-blue-950/40 text-slate-800 dark:text-blue-200 font-semibold border border-blue-100 dark:border-blue-900/60 inline-block w-full">
+                                      Play Activity
+                                    </div>
+                                  </td>
+                                </tr>
+                              )
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* RIGHT COLUMN: "YOUR WEEK AT A GLANCE" (Red Box in Screenshot 3) */}
+                    <div className={`rounded-2xl border ${
+                      isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                    } p-4 shadow-xs flex flex-col justify-between`}>
+                      <div>
+                        {/* Header with Green List Icon */}
+                        <div className="flex items-center gap-2 pb-3 mb-2 border-b border-slate-100 dark:border-slate-800">
+                          <List className="w-4 h-4 text-emerald-600 stroke-[2.5]" />
+                          <h3 className="text-xs font-bold text-slate-900 dark:text-white">
+                            Your week at a glance
+                          </h3>
+                        </div>
+
+                        {/* Chronological List of Classes */}
+                        <div className="max-h-[380px] overflow-y-auto space-y-3.5 pr-1 divide-y divide-slate-100 dark:divide-slate-800">
+                          {weekAtAGlanceItems.map((item, index) => (
+                            <div key={index} className={`pt-2.5 first:pt-0 flex items-start justify-between text-xs`}>
+                              {/* Left: Green Bold Time */}
+                              <span className="font-bold text-emerald-600 dark:text-emerald-400 text-xs w-36 shrink-0">
+                                {item.time}
+                              </span>
+
+                              {/* Right: Subject Name & Day Subtext */}
+                              <div className="text-right">
+                                <span className="font-bold text-slate-800 dark:text-white block">
+                                  {item.subject}
+                                </span>
+                                <span className="text-[10px] text-slate-400 block mt-0.5">
+                                  {item.day}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-800 text-center">
+                        <span className="text-[11px] text-slate-400">
+                          Showing full weekly scheduled periods
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* SUB-TAB CONTENT: EXAM DATESHEET */}
+              {timetableSubTab === 'exam' && (
+                <div className="space-y-4 pt-1">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                        Mid-Term Examinations Datesheet · 2026-2027
+                      </h3>
+                      <p className="text-xs text-slate-500">Official schedule of assessments</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={triggerBrowserPrint}
+                      className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-rose-200 bg-white text-rose-600 text-xs font-semibold hover:bg-rose-50"
+                    >
+                      <Printer className="w-3.5 h-3.5" /> Print Datesheet
+                    </button>
+                  </div>
+
+                  <div className={`rounded-2xl border ${
+                    isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                  } overflow-hidden shadow-xs`}>
+                    <table className="w-full text-xs text-left">
+                      <thead>
+                        <tr className="border-b bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 font-bold uppercase text-[10px]">
+                          <th className="py-3 px-4">Date & Day</th>
+                          <th className="py-3 px-4">Exam Time</th>
+                          <th className="py-3 px-4">Subject</th>
+                          <th className="py-3 px-4">Syllabus / Topics</th>
+                          <th className="py-3 px-4">Room</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+                        {examDatesheet.map((row, idx) => (
+                          <tr key={idx} className="hover:bg-slate-50/50">
+                            <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-white">
+                              {row.date} ({row.day})
+                            </td>
+                            <td className="py-3.5 px-4 font-semibold text-emerald-600">{row.time}</td>
+                            <td className="py-3.5 px-4 font-bold">{row.subject}</td>
+                            <td className="py-3.5 px-4 text-slate-500">{row.syllabus}</td>
+                            <td className="py-3.5 px-4">{row.room}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
-          {/* TAB: MY ATTENDANCE */}
+          {/* TAB 3: MY ATTENDANCE */}
           {activeTab === 'attendance' && (
             <div className="space-y-5">
               <div className="flex items-center justify-between">
@@ -785,7 +1190,7 @@ export default function StudentPortalView() {
             </div>
           )}
 
-          {/* TAB: ASSIGNMENTS */}
+          {/* TAB 4: ASSIGNMENTS */}
           {activeTab === 'assignments' && (
             <div className="space-y-5">
               <h2 className="text-lg font-bold text-slate-900 dark:text-white">
@@ -799,7 +1204,7 @@ export default function StudentPortalView() {
             </div>
           )}
 
-          {/* TAB: CLASS RESOURCES */}
+          {/* TAB 5: CLASS RESOURCES */}
           {activeTab === 'resources' && (
             <div className="space-y-5">
               <h2 className="text-lg font-bold text-slate-900 dark:text-white">
@@ -822,7 +1227,7 @@ export default function StudentPortalView() {
             </div>
           )}
 
-          {/* TAB: REPORT CARDS */}
+          {/* TAB 6: REPORT CARDS */}
           {activeTab === 'report-cards' && (
             <div className="space-y-5">
               <div className="flex items-center justify-between">
@@ -845,7 +1250,7 @@ export default function StudentPortalView() {
             </div>
           )}
 
-          {/* TAB: ANNOUNCEMENTS */}
+          {/* TAB 7: ANNOUNCEMENTS */}
           {activeTab === 'announcements' && (
             <div className="space-y-5">
               <h2 className="text-lg font-bold text-slate-900 dark:text-white">
@@ -863,7 +1268,7 @@ export default function StudentPortalView() {
             </div>
           )}
 
-          {/* TAB: COMMUNICATION */}
+          {/* TAB 8: COMMUNICATION */}
           {activeTab === 'communication' && (
             <div className="space-y-5">
               <h2 className="text-lg font-bold text-slate-900 dark:text-white">
@@ -875,7 +1280,7 @@ export default function StudentPortalView() {
             </div>
           )}
 
-          {/* TAB: FEE RECORDS */}
+          {/* TAB 9: FEE RECORDS */}
           {activeTab === 'fees' && (
             <div className="space-y-5">
               <div className="flex items-center justify-between">
@@ -932,7 +1337,7 @@ export default function StudentPortalView() {
             </div>
           )}
 
-          {/* TAB: DOWNLOAD APP */}
+          {/* TAB 10: DOWNLOAD APP */}
           {activeTab === 'download-app' && (
             <div className="space-y-5">
               <h2 className="text-lg font-bold text-slate-900 dark:text-white">
@@ -949,7 +1354,7 @@ export default function StudentPortalView() {
             </div>
           )}
 
-          {/* TAB: MY ACCOUNT */}
+          {/* TAB 11: MY ACCOUNT */}
           {activeTab === 'account' && (
             <div className="space-y-5">
               <div className="flex items-center justify-between">
@@ -977,7 +1382,7 @@ export default function StudentPortalView() {
                   </div>
                   <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50">
                     <span className="text-[10px] uppercase font-bold text-slate-400">Class & Section</span>
-                    <p className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">{studentClass} - Section A</p>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">{studentClass} - Section {studentSection}</p>
                   </div>
                   <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50">
                     <span className="text-[10px] uppercase font-bold text-slate-400">Roll Number</span>
@@ -994,7 +1399,7 @@ export default function StudentPortalView() {
         </main>
       </div>
 
-      {/* MODAL: ENTER / EDIT STUDENT NAME (Fulfilling: "Muhammad ali ki jaga pr unknown kr oo user khud enter kre ga") */}
+      {/* MODAL: ENTER / EDIT STUDENT NAME */}
       {isEditNameModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
           <div className="w-full max-w-md bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-3xl shadow-2xl p-6 border border-slate-200 dark:border-slate-800">
@@ -1005,7 +1410,7 @@ export default function StudentPortalView() {
               <button
                 type="button"
                 onClick={() => setIsEditNameModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-400 hover:text-slate-600 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1013,7 +1418,7 @@ export default function StudentPortalView() {
 
             <form onSubmit={handleSaveName} className="mt-4 space-y-4 text-xs">
               <p className="text-slate-500">
-                Enter your student name and class details below:
+                Enter your student name, class, and section details below:
               </p>
 
               <div>
@@ -1044,17 +1449,30 @@ export default function StudentPortalView() {
                 />
               </div>
 
+              <div>
+                <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">
+                  Section
+                </label>
+                <input
+                  type="text"
+                  value={editSectionInput}
+                  onChange={(e) => setEditSectionInput(e.target.value)}
+                  placeholder="e.g. Super, A, B..."
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                />
+              </div>
+
               <div className="pt-2 flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsEditNameModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 font-semibold"
+                  className="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 font-semibold cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold"
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold cursor-pointer"
                 >
                   Save Details
                 </button>
@@ -1079,14 +1497,14 @@ export default function StudentPortalView() {
                 <button
                   type="button"
                   onClick={triggerBrowserPrint}
-                  className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors flex items-center gap-1.5 shadow-xs"
+                  className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
                 >
                   <Printer className="w-3.5 h-3.5" /> Print Challan
                 </button>
                 <button
                   type="button"
                   onClick={() => setSelectedChallanForPrint(null)}
-                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -1153,7 +1571,7 @@ export default function StudentPortalView() {
               <button
                 type="button"
                 onClick={() => setSelectedChallanForPrint(null)}
-                className="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold"
+                className="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold cursor-pointer"
               >
                 Done
               </button>
@@ -1168,7 +1586,7 @@ export default function StudentPortalView() {
           <div className="w-full max-w-2xl bg-white text-slate-900 rounded-3xl shadow-2xl p-6 border border-slate-200">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <h3 className="font-bold text-sm">Student Academic Progress Report</h3>
-              <button onClick={() => setIsReportCardModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+              <button onClick={() => setIsReportCardModalOpen(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1190,7 +1608,7 @@ export default function StudentPortalView() {
           <div className="w-full max-w-md bg-white text-slate-900 rounded-3xl shadow-2xl p-6 border border-slate-200">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <h3 className="font-bold text-sm">{viewingNotice.title}</h3>
-              <button onClick={() => setViewingNotice(null)} className="text-slate-400 hover:text-slate-600">
+              <button onClick={() => setViewingNotice(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1202,7 +1620,7 @@ export default function StudentPortalView() {
               <button
                 type="button"
                 onClick={() => setViewingNotice(null)}
-                className="px-4 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-semibold"
+                className="px-4 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-semibold cursor-pointer"
               >
                 Close
               </button>
@@ -1217,7 +1635,7 @@ export default function StudentPortalView() {
           <div className="w-full max-w-md bg-white text-slate-900 rounded-3xl shadow-2xl p-6 border border-slate-200">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <h3 className="font-bold text-sm">Apply for Student Leave</h3>
-              <button onClick={() => setIsLeaveModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+              <button onClick={() => setIsLeaveModalOpen(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1231,8 +1649,8 @@ export default function StudentPortalView() {
                 <input type="date" required className="w-full px-3 py-2 rounded-xl border border-slate-200" />
               </div>
               <div className="pt-2 flex justify-end gap-2">
-                <button type="button" onClick={() => setIsLeaveModalOpen(false)} className="px-4 py-2 rounded-xl text-slate-600">Cancel</button>
-                <button type="submit" className="px-4 py-2 rounded-xl bg-blue-600 text-white font-bold">Submit</button>
+                <button type="button" onClick={() => setIsLeaveModalOpen(false)} className="px-4 py-2 rounded-xl text-slate-600 cursor-pointer">Cancel</button>
+                <button type="submit" className="px-4 py-2 rounded-xl bg-blue-600 text-white font-bold cursor-pointer">Submit</button>
               </div>
             </form>
           </div>
