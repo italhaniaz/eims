@@ -46,7 +46,10 @@ import {
   CheckSquare,
   Share2,
   ArrowLeft,
-  List
+  List,
+  Eye,
+  Image,
+  MapPin
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useAppData } from '../../context/AppDataContext'
@@ -124,6 +127,65 @@ export default function StudentPortalView() {
   const [isReportCardModalOpen, setIsReportCardModalOpen] = useState(false)
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false)
   const [viewingNotice, setViewingNotice] = useState(null)
+
+  // Assignments Filter and Modal states (matching screenshot media_1794575634893_bd2533fd.png)
+  const [assignmentSubjectFilter, setAssignmentSubjectFilter] = useState('All subjects')
+  const [assignmentDateFilter, setAssignmentDateFilter] = useState('')
+  const [selectedAssignmentModal, setSelectedAssignmentModal] = useState(null)
+
+  // Default assignments data matching the exact screenshot:
+  const defaultAssignments = useMemo(() => [
+    {
+      id: 1,
+      title: 'module intro',
+      description: '',
+      hasAttachment: true,
+      attachmentType: 'Image',
+      attachmentName: 'module-intro-worksheet.png',
+      attachmentUrl: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&auto=format&fit=crop&q=80',
+      subject: 'English',
+      date: '21 May 2026',
+      isoDate: '2026-05-21',
+      teacher: 'Sana Kosar',
+      instructions: 'Please review the module introduction slides and complete the attached drawing activity.'
+    },
+    {
+      id: 2,
+      title: 'First Assignment',
+      description: 'This is you first assignment, check image and draw same like that',
+      hasAttachment: true,
+      attachmentType: 'Image',
+      attachmentName: 'assignment1-drawing-task.png',
+      attachmentUrl: 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=800&auto=format&fit=crop&q=80',
+      subject: 'English',
+      date: '19 May 2026',
+      isoDate: '2026-05-19',
+      teacher: 'Sana Kosar',
+      instructions: 'This is you first assignment, check image and draw same like that. Practice tracing and submit during the morning class.'
+    },
+    {
+      id: 3,
+      title: 'Daily HomeWork',
+      description: 'Demo Home Work',
+      hasAttachment: false,
+      attachmentType: null,
+      attachmentName: null,
+      attachmentUrl: null,
+      subject: 'English',
+      date: '15 Jan 2026',
+      isoDate: '2026-01-15',
+      teacher: 'Sana Kosar',
+      instructions: 'Demo Home Work. Read pages 12 to 14 of the English Phonics booklet and practice writing letters.'
+    }
+  ], [])
+
+  const filteredAssignments = useMemo(() => {
+    return defaultAssignments.filter(item => {
+      const matchSubject = assignmentSubjectFilter === 'All subjects' || item.subject.toLowerCase() === assignmentSubjectFilter.toLowerCase()
+      const matchDate = !assignmentDateFilter || item.isoDate === assignmentDateFilter
+      return matchSubject && matchDate
+    })
+  }, [defaultAssignments, assignmentSubjectFilter, assignmentDateFilter])
 
   // Quick link highlight state
   const [activeQuickLink, setActiveQuickLink] = useState('fee-records')
@@ -1694,16 +1756,259 @@ export default function StudentPortalView() {
             </div>
           )}
 
-          {/* TAB 4: ASSIGNMENTS */}
+          {/* TAB 4: ASSIGNMENTS (Matching Screenshot media_1794575634893_bd2533fd.png Exactly) */}
           {activeTab === 'assignments' && (
-            <div className="space-y-5">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-                Coursework & Homework
-              </h2>
-              <div className="p-12 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
-                <BookOpen className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-                <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">No active homework right now</p>
-                <p className="text-xs text-slate-400 mt-1">You are all caught up with your assignments.</p>
+            <div className="space-y-4">
+              {/* Top Subheader: "Assignments" + Back Button */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-md bg-blue-100 text-blue-600 flex items-center justify-center">
+                      <FileText className="w-4 h-4" />
+                    </div>
+                    <h1 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                      Assignments
+                    </h1>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('dashboard')}
+                    className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-800 dark:hover:text-white font-medium mt-1 cursor-pointer"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" /> Back
+                  </button>
+                </div>
+
+                {/* Right Top Action Icons */}
+                <div className="flex items-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 overflow-x-auto pb-1">
+                  <button
+                    type="button"
+                    onClick={() => setIsReportCardModalOpen(true)}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <BookOpen className="w-4 h-4 text-slate-500" />
+                    <span>Report Card</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('attendance')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <Calendar className="w-4 h-4 text-slate-500" />
+                    <span>My Attendance</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('assignments')}
+                    className="flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl bg-[#eef4ff] text-[#2563eb] font-semibold dark:bg-blue-950/50 dark:text-blue-300 transition-colors cursor-pointer"
+                  >
+                    <BookMarked className="w-4 h-4 text-[#2563eb] dark:text-blue-300" />
+                    <span>Assignments</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('announcements')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <Megaphone className="w-4 h-4 text-slate-500" />
+                    <span>Announcements</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('fees')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <CreditCard className="w-4 h-4 text-slate-500" />
+                    <span>Fee Records</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* MAIN CONTENT CARD */}
+              <div className={`p-5 rounded-2xl border transition-all ${
+                isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+              } shadow-xs space-y-4`}>
+
+                {/* Section Header */}
+                <div>
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="w-4 h-4 text-blue-600" />
+                    <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                      Assignments
+                    </h2>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    View classwork, notes and study material posted by your teachers
+                  </p>
+                </div>
+
+                {/* Cyan/Blue Tinted Student Info Bar */}
+                <div className="p-3 rounded-2xl bg-[#eefbfd] dark:bg-cyan-950/30 border border-cyan-200/70 dark:border-cyan-800/60 flex flex-wrap items-center gap-2.5 text-xs">
+                  <div className="flex items-center gap-1.5 font-bold text-slate-800 dark:text-slate-100">
+                    <User className="w-4 h-4 text-slate-700 dark:text-slate-300" />
+                    <span>{studentName}</span>
+                  </div>
+                  <span className="px-2.5 py-0.5 rounded-md bg-[#2563eb] text-white font-bold text-xs shadow-2xs">
+                    Roll: NU1
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-md bg-[#06b6d4] text-white font-bold text-xs shadow-2xs">
+                    {studentClass} - {studentSection}
+                  </span>
+                </div>
+
+                {/* FILTERS ROW (Subject and Date matching Screenshot) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1 pb-1">
+                  {/* Subject Filter */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                      <span className="inline-flex items-center gap-1">
+                        <MapPin className="w-3.5 h-3.5 text-slate-500" />
+                        Subject
+                      </span>
+                    </label>
+                    <select
+                      value={assignmentSubjectFilter}
+                      onChange={(e) => setAssignmentSubjectFilter(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all cursor-pointer"
+                    >
+                      <option value="All subjects">All subjects</option>
+                      <option value="English">English</option>
+                      <option value="Math">Math</option>
+                      <option value="Play Activity">Play Activity</option>
+                      <option value="Urdu">Urdu</option>
+                      <option value="General Science">General Science</option>
+                    </select>
+                  </div>
+
+                  {/* Date Filter */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                      <span className="inline-flex items-center gap-1">
+                        <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                        Date
+                      </span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="date"
+                        value={assignmentDateFilter}
+                        onChange={(e) => setAssignmentDateFilter(e.target.value)}
+                        placeholder="mm/dd/yyyy"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                      />
+                      {assignmentDateFilter && (
+                        <button
+                          type="button"
+                          onClick={() => setAssignmentDateFilter('')}
+                          className="absolute right-8 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs cursor-pointer"
+                          title="Clear date filter"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* ASSIGNMENTS TABLE (Exact match to screenshot) */}
+                <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl">
+                  <table className="w-full text-xs text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-semibold bg-slate-50/70 dark:bg-slate-800/60">
+                        <th className="py-3 px-4 w-12 text-center">#</th>
+                        <th className="py-3 px-4 min-w-[280px]">Title</th>
+                        <th className="py-3 px-4 min-w-[120px]">Subject</th>
+                        <th className="py-3 px-4 min-w-[130px]">Date</th>
+                        <th className="py-3 px-4 min-w-[160px]">Teacher / Instructor</th>
+                        <th className="py-3 px-4 w-20 text-center">View</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {filteredAssignments.length > 0 ? (
+                        filteredAssignments.map((assignment, index) => (
+                          <tr
+                            key={assignment.id}
+                            className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
+                          >
+                            {/* # */}
+                            <td className="py-4 px-4 text-center font-medium text-slate-500 dark:text-slate-400">
+                              {index + 1}
+                            </td>
+
+                            {/* Title + Subtitle + Image Tag */}
+                            <td className="py-4 px-4 align-top">
+                              <div className="space-y-1">
+                                <span className="font-bold text-slate-900 dark:text-white block text-sm">
+                                  {assignment.title}
+                                </span>
+                                {assignment.description && (
+                                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                                    {assignment.description}
+                                  </p>
+                                )}
+                                {assignment.hasAttachment && (
+                                  <div className="pt-0.5">
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-[#06b6d4] text-white font-semibold text-[11px] shadow-2xs">
+                                      <Image className="w-3 h-3" />
+                                      {assignment.attachmentType || 'Image'}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+
+                            {/* Subject */}
+                            <td className="py-4 px-4 text-slate-700 dark:text-slate-300 font-medium">
+                              {assignment.subject}
+                            </td>
+
+                            {/* Date */}
+                            <td className="py-4 px-4 text-slate-700 dark:text-slate-300">
+                              {assignment.date}
+                            </td>
+
+                            {/* Teacher / Instructor */}
+                            <td className="py-4 px-4 text-slate-700 dark:text-slate-300 font-medium">
+                              {assignment.teacher}
+                            </td>
+
+                            {/* View Action */}
+                            <td className="py-4 px-4 text-center">
+                              <button
+                                type="button"
+                                onClick={() => setSelectedAssignmentModal(assignment)}
+                                className="w-8 h-8 mx-auto rounded-lg bg-[#2563eb] hover:bg-blue-700 text-white flex items-center justify-center transition-all shadow-xs hover:shadow cursor-pointer"
+                                title="View assignment"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={6} className="py-12 text-center text-slate-400">
+                            <BookOpen className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                            <p className="font-medium text-sm text-slate-600 dark:text-slate-300">No assignments found</p>
+                            <p className="text-xs text-slate-400 mt-1">Try resetting the subject or date filter</p>
+                            {(assignmentSubjectFilter !== 'All subjects' || assignmentDateFilter) && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setAssignmentSubjectFilter('All subjects')
+                                  setAssignmentDateFilter('')
+                                }}
+                                className="mt-3 px-3 py-1 text-xs rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-300 font-semibold cursor-pointer"
+                              >
+                                Reset Filters
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
@@ -2157,6 +2462,104 @@ export default function StudentPortalView() {
                 <button type="submit" className="px-4 py-2 rounded-xl bg-blue-600 text-white font-bold cursor-pointer">Submit</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: VIEW ASSIGNMENT DETAILS (Interactive eye button view) */}
+      {selectedAssignmentModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="w-full max-w-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-3xl shadow-2xl p-6 border border-slate-200 dark:border-slate-800 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                  <BookOpen className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+                    {selectedAssignmentModal.title}
+                  </h3>
+                  <span className="text-[11px] text-slate-400">Assignment Details</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedAssignmentModal(null)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Badges & Meta info */}
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                <span className="text-slate-400 block text-[10px] font-semibold uppercase">Subject</span>
+                <span className="font-bold text-slate-800 dark:text-white mt-0.5 block">{selectedAssignmentModal.subject}</span>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                <span className="text-slate-400 block text-[10px] font-semibold uppercase">Date Assigned</span>
+                <span className="font-bold text-slate-800 dark:text-white mt-0.5 block">{selectedAssignmentModal.date}</span>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                <span className="text-slate-400 block text-[10px] font-semibold uppercase">Instructor / Teacher</span>
+                <span className="font-bold text-slate-800 dark:text-white mt-0.5 block">{selectedAssignmentModal.teacher}</span>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                <span className="text-slate-400 block text-[10px] font-semibold uppercase">Class & Section</span>
+                <span className="font-bold text-slate-800 dark:text-white mt-0.5 block">{studentClass} - {studentSection}</span>
+              </div>
+            </div>
+
+            {/* Description & Instructions */}
+            <div className="space-y-1.5 text-xs">
+              <label className="font-bold text-slate-800 dark:text-slate-200 block">
+                Instructions / Homework Task:
+              </label>
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-300 leading-relaxed">
+                {selectedAssignmentModal.description || selectedAssignmentModal.instructions || 'Please complete the assigned homework in your notebook.'}
+              </div>
+            </div>
+
+            {/* Attached file/image preview */}
+            {selectedAssignmentModal.hasAttachment && (
+              <div className="space-y-1.5 text-xs">
+                <label className="font-bold text-slate-800 dark:text-slate-200 block">
+                  Attachment Material:
+                </label>
+                <div className="p-3 rounded-xl border border-cyan-200 dark:border-cyan-800/60 bg-cyan-50/50 dark:bg-cyan-950/20 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-cyan-500 text-white flex items-center justify-center">
+                      <Image className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-slate-900 dark:text-white">{selectedAssignmentModal.attachmentName || 'assignment-material.png'}</p>
+                      <p className="text-[10px] text-slate-400">Attached image · Click download or preview</p>
+                    </div>
+                  </div>
+                  <a
+                    href={selectedAssignmentModal.attachmentUrl || '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs transition-colors flex items-center gap-1 shadow-xs"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    Open Image
+                  </a>
+                </div>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setSelectedAssignmentModal(null)}
+                className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-colors cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
