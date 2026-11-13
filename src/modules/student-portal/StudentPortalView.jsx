@@ -55,7 +55,9 @@ import {
   PlaySquare,
   Paperclip,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  AlertTriangle,
+  Percent
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useAppData } from '../../context/AppDataContext'
@@ -288,6 +290,129 @@ export default function StudentPortalView() {
       timestamp: '31 Jul 2026, 11:40 AM'
     }
   ])
+
+  // Pick 1 & 2: Fee Records State (media_1794578519476_239e30d9.png & media_1794578566056_0fd6a2d7.png)
+  const [feeRecordsActiveTab, setFeeRecordsActiveTab] = useState('pending') // 'pending' | 'completed' | 'waivers'
+  const [selectedFeeForPayment, setSelectedFeeForPayment] = useState(null)
+  const [selectedFeeForReceipt, setSelectedFeeForReceipt] = useState(null)
+  const [paymentGateway, setPaymentGateway] = useState('1Link / Online Banking')
+  const [isPayingNow, setIsPayingNow] = useState(false)
+
+  // Fee Data matching screenshots
+  const [pendingFeeList, setPendingFeeList] = useState([
+    {
+      id: 'v1',
+      title: 'Apr 407 Fee',
+      badge: 'Monthly',
+      refNo: '2026/886812',
+      receiptNo: '11495289',
+      progress: 0.0,
+      total: 2475,
+      paid: 0,
+      remaining: 2475,
+      type: 'monthly',
+      accentColor: 'border-l-red-500'
+    },
+    {
+      id: 'v2',
+      title: 'paper fund',
+      badge: 'One-Time',
+      refNo: '2026/100540',
+      receiptNo: '35904307',
+      progress: 0.0,
+      total: 800,
+      paid: 0,
+      remaining: 800,
+      type: 'monthly',
+      accentColor: 'border-l-red-500'
+    },
+    {
+      id: 'v3',
+      title: 'Apr 1122',
+      badge: 'Monthly',
+      refNo: '2026/91581',
+      receiptNo: '80833916',
+      progress: 0.0,
+      total: 2475,
+      paid: 0,
+      remaining: 2475,
+      type: 'monthly',
+      accentColor: 'border-l-red-500'
+    },
+    {
+      id: 'v4',
+      title: 'Anuall Fund Nursary',
+      badge: 'One-Time',
+      refNo: '2026/096642',
+      receiptNo: '33815784',
+      progress: 45.5,
+      total: 2000,
+      paid: 910,
+      remaining: 1090,
+      type: 'monthly',
+      accentColor: 'border-l-red-500'
+    },
+    {
+      id: 'v5',
+      title: 'Oct 2026',
+      badge: 'Monthly',
+      secondaryBadge: 'Oct 2026',
+      refNo: '2026/259289',
+      receiptNo: '72666804',
+      progress: 0.0,
+      total: 2475,
+      paid: 0,
+      remaining: 2485,
+      type: 'monthly',
+      accentColor: 'border-l-red-500'
+    },
+    {
+      id: 'v6',
+      title: 'Fine',
+      badge: 'Individual Payment',
+      secondaryBadge: 'Due: 08 Jun 2026',
+      refNo: 'IP-000217',
+      subTitle: 'Attendance Defaulter Fine',
+      session: '2026-2027',
+      remaining: 50,
+      total: 50,
+      paid: 0,
+      type: 'charge',
+      accentColor: 'border-l-amber-500'
+    }
+  ])
+
+  const completedFeeList = useMemo(() => [
+    { id: 'c1', title: 'Sep 2026 Monthly Tuition', refNo: '2026/718290', receiptNo: '64839211', total: 2475, paid: 2475, date: '01 Sep 2026', status: 'Paid' },
+    { id: 'c2', title: 'Individual Fee June', refNo: '2026/651092', receiptNo: '55198203', total: 2475, paid: 2475, date: '23 Aug 2026', status: 'Paid' },
+    { id: 'c3', title: 'Jul 2026 Monthly Tuition', refNo: '2026/519382', receiptNo: '48291048', total: 2475, paid: 2475, date: '31 Jul 2026', status: 'Paid' },
+    { id: 'c4', title: 'Jun 2026 Monthly Tuition', refNo: '2026/410294', receiptNo: '39102948', total: 2475, paid: 2475, date: '10 Jun 2026', status: 'Paid' },
+    { id: 'c5', title: 'May 2026 Monthly Tuition', refNo: '2026/301928', receiptNo: '28190394', total: 2475, paid: 2475, date: '05 May 2026', status: 'Paid' },
+    { id: 'c6', title: 'Uniform & Accessories Pack', refNo: '2026/184920', receiptNo: '19203948', total: 1200, paid: 1200, date: '15 Apr 2026', status: 'Paid' },
+    { id: 'c7', title: 'Book Pack Nursery Vol 1', refNo: '2026/110293', receiptNo: '10293847', total: 900, paid: 900, date: '10 Apr 2026', status: 'Paid' },
+    { id: 'c8', title: 'Term 1 Exam Fee', refNo: '2026/091283', receiptNo: '08192837', total: 500, paid: 500, date: '01 Apr 2026', status: 'Paid' },
+    { id: 'c9', title: 'Annual Lab & Activity Fee', refNo: '2026/082736', receiptNo: '07192836', total: 800, paid: 800, date: '20 Mar 2026', status: 'Paid' },
+    { id: 'c10', title: 'ID Card & Registration Charge', refNo: '2026/054839', receiptNo: '04829103', total: 500, paid: 500, date: '15 Feb 2026', status: 'Paid' },
+    { id: 'c11', title: 'Prospectus & Admission Application', refNo: '2026/019283', receiptNo: '01829384', total: 190, paid: 190, date: '10 Jan 2026', status: 'Paid' }
+  ], [])
+
+  const waiversFeeList = useMemo(() => [
+    {
+      id: 'w1',
+      title: 'Sibling Concession & Special Waiver',
+      voucherRef: '2026/DISC-001',
+      amount: 2350,
+      appliedBy: 'Institute Administration (Ahmad Ali)',
+      date: '10 Jan 2026',
+      notes: '1 line with a discount approved for session 2025-2026'
+    }
+  ], [])
+
+  // Pick 3: My Account State (media_1794578607569_2caa20b4.png)
+  const [accountActiveSubtab, setAccountActiveSubtab] = useState('profile') // 'profile' | 'password'
+  const [accountNameValue, setAccountNameValue] = useState(() => studentName)
+  const [accountPhotoSelected, setAccountPhotoSelected] = useState(null)
+  const [passwordFormData, setPasswordFormData] = useState({ current: '', newPass: '', confirmPass: '' })
 
   // Quick link highlight state
   const [activeQuickLink, setActiveQuickLink] = useState('fee-records')
@@ -797,23 +922,7 @@ export default function StudentPortalView() {
               </div>
             </button>
 
-            {/* 10. Download App */}
-            <button
-              type="button"
-              onClick={() => { setActiveTab('download-app'); setIsMobileMenuOpen(false); }}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium transition-colors cursor-pointer ${
-                activeTab === 'download-app'
-                  ? 'bg-[#eef4ff] text-[#2563eb] font-semibold dark:bg-blue-950/50 dark:text-blue-300'
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <Smartphone className={`w-4 h-4 ${activeTab === 'download-app' ? 'text-[#2563eb] dark:text-blue-300' : 'text-slate-400'}`} />
-                <span>Download App</span>
-              </div>
-            </button>
-
-            {/* 11. My Account */}
+            {/* 10. My Account */}
             <button
               type="button"
               onClick={() => { setActiveTab('account'); setIsMobileMenuOpen(false); }}
@@ -3567,119 +3676,739 @@ export default function StudentPortalView() {
             </div>
           )}
 
-          {/* TAB 9: FEE RECORDS */}
+          {/* TAB 9: FEE RECORDS (Pick 1 & 2 - media_1794578519476_239e30d9.png & media_1794578566056_0fd6a2d7.png) */}
           {activeTab === 'fees' && (
-            <div className="space-y-5">
-              <div className="flex items-center justify-between">
+            <div className="space-y-4">
+              {/* Top Subheader: "Fee Records" + Back Button */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
                 <div>
-                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-                    Fee Records & Challans
-                  </h2>
-                  <p className="text-xs text-slate-500">Total Pending: PKR 9,375</p>
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-md bg-blue-100 text-blue-600 flex items-center justify-center">
+                      <FileText className="w-4 h-4" />
+                    </div>
+                    <h1 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                      Fee Records
+                    </h1>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('dashboard')}
+                    className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-800 dark:hover:text-white font-medium mt-1 cursor-pointer"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" /> Back
+                  </button>
+                </div>
+
+                {/* Right Top Action Icons (with Fee Records active blue pill) */}
+                <div className="flex items-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 overflow-x-auto pb-1">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('report-cards')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <BookOpen className="w-4 h-4 text-slate-500" />
+                    <span>Report Card</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('attendance')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <Calendar className="w-4 h-4 text-slate-500" />
+                    <span>My Attendance</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('assignments')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <BookMarked className="w-4 h-4 text-slate-500" />
+                    <span>Assignments</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('announcements')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <Megaphone className="w-4 h-4 text-slate-500" />
+                    <span>Announcements</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('fees')}
+                    className="flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl bg-[#eef4ff] text-[#2563eb] font-semibold dark:bg-blue-950/50 dark:text-blue-300 transition-colors cursor-pointer"
+                  >
+                    <CreditCard className="w-4 h-4 text-[#2563eb] dark:text-blue-300" />
+                    <span>Fee Records</span>
+                  </button>
                 </div>
               </div>
 
-              <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-                <table className="w-full text-left text-xs">
-                  <thead>
-                    <tr className="border-b text-slate-400 uppercase text-[10px] font-bold">
-                      <th className="py-2.5">Challan #</th>
-                      <th className="py-2.5">Month</th>
-                      <th className="py-2.5">Due Date</th>
-                      <th className="py-2.5">Amount</th>
-                      <th className="py-2.5">Status</th>
-                      <th className="py-2.5 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y text-slate-700 dark:text-slate-300">
-                    {feeRecords.map(f => (
-                      <tr key={f.id} className="py-3">
-                        <td className="py-3 font-bold text-slate-900 dark:text-white">{f.challanNo}</td>
-                        <td className="py-3">{f.month}</td>
-                        <td className="py-3">{f.dueDate}</td>
-                        <td className="py-3 font-bold">PKR {f.amount.toLocaleString()}</td>
-                        <td className="py-3">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                            f.status === 'Paid'
-                              ? 'bg-emerald-100 text-emerald-800'
-                              : 'bg-amber-100 text-amber-800'
-                          }`}>
-                            {f.status}
-                          </span>
-                        </td>
-                        <td className="py-3 text-right">
+              {/* SOLID BLUE STUDENT FEE BANNER (Matching Screenshot 1) */}
+              <div className="bg-[#2563eb] text-white px-5 py-3 rounded-2xl flex flex-wrap items-center gap-3 text-xs font-semibold shadow-xs">
+                <div className="flex items-center gap-1.5 font-bold">
+                  <FolderOpen className="w-4 h-4" />
+                  <span>Fee Records</span>
+                </div>
+                <span>&bull;</span>
+                <div className="flex items-center gap-1">
+                  <User className="w-3.5 h-3.5" />
+                  <span>{studentName}</span>
+                </div>
+                <span>&bull;</span>
+                <span># Roll: NU1</span>
+                <span>&bull;</span>
+                <span># ADM: ED/N/2025/16862</span>
+                <span>&bull;</span>
+                <span>{studentClass} - {studentSection}</span>
+              </div>
+
+              {/* 5 SUMMARY KPI CARDS (Matching Screenshot 1 Exactly) */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3.5">
+                {/* 1. Total Invoices */}
+                <div className={`p-4 rounded-2xl border transition-all ${
+                  isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                } shadow-xs flex items-center justify-between`}>
+                  <div>
+                    <span className="text-[11px] text-slate-400 font-medium block">Total Invoices</span>
+                    <span className="text-xl sm:text-2xl font-bold text-[#2563eb] block mt-1">17</span>
+                  </div>
+                  <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 flex items-center justify-center">
+                    <FileText className="w-4 h-4" />
+                  </div>
+                </div>
+
+                {/* 2. Pending Balance */}
+                <div className={`p-4 rounded-2xl border transition-all ${
+                  isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                } shadow-xs flex items-center justify-between`}>
+                  <div>
+                    <span className="text-[11px] text-slate-400 font-medium block">Pending Balance</span>
+                    <span className="text-xl sm:text-2xl font-bold text-[#ef4444] block mt-1">PKR 9,375</span>
+                  </div>
+                  <div className="w-9 h-9 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-500 flex items-center justify-center">
+                    <AlertTriangle className="w-4 h-4" />
+                  </div>
+                </div>
+
+                {/* 3. Total Paid */}
+                <div className={`p-4 rounded-2xl border transition-all ${
+                  isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                } shadow-xs flex items-center justify-between`}>
+                  <div>
+                    <span className="text-[11px] text-slate-400 font-medium block">Total Paid</span>
+                    <span className="text-xl sm:text-2xl font-bold text-[#10b981] block mt-1">PKR 14,485</span>
+                  </div>
+                  <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 flex items-center justify-center">
+                    <Check className="w-4 h-4 stroke-[2.5]" />
+                  </div>
+                </div>
+
+                {/* 4. Completed */}
+                <div className={`p-4 rounded-2xl border transition-all ${
+                  isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                } shadow-xs flex items-center justify-between`}>
+                  <div>
+                    <span className="text-[11px] text-slate-400 font-medium block">Completed</span>
+                    <span className="text-xl sm:text-2xl font-bold text-[#f97316] block mt-1">11</span>
+                  </div>
+                  <div className="w-9 h-9 rounded-xl bg-orange-50 dark:bg-orange-950/40 text-orange-500 flex items-center justify-center">
+                    <CheckCircle2 className="w-4 h-4" />
+                  </div>
+                </div>
+
+                {/* 5. Waivers / Discounts */}
+                <div className={`col-span-2 sm:col-span-4 lg:col-span-1 p-4 rounded-2xl border transition-all ${
+                  isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                } shadow-xs flex items-center justify-between`}>
+                  <div>
+                    <span className="text-[11px] text-slate-400 font-medium block">Waivers / Discounts</span>
+                    <span className="text-xl sm:text-2xl font-bold text-[#06b6d4] block mt-1">PKR 2,350</span>
+                    <span className="text-[9px] text-slate-400 block mt-0.5">1 line with a discount</span>
+                  </div>
+                  <div className="w-9 h-9 rounded-xl bg-cyan-50 dark:bg-cyan-950/40 text-cyan-600 flex items-center justify-center">
+                    <Percent className="w-4 h-4" />
+                  </div>
+                </div>
+              </div>
+
+              {/* TABS SELECTOR (Pending Payments [6], Completed Payments [11], Waiver/Discount [1]) */}
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pt-2 text-xs">
+                <div className="flex items-center gap-2 sm:gap-6 overflow-x-auto">
+                  {/* Tab 1: Pending */}
+                  <button
+                    type="button"
+                    onClick={() => setFeeRecordsActiveTab('pending')}
+                    className={`pb-2.5 font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                      feeRecordsActiveTab === 'pending'
+                        ? 'text-[#2563eb] border-b-2 border-[#2563eb]'
+                        : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                    }`}
+                  >
+                    <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                    <span>Pending Payments</span>
+                    <span className="px-1.5 py-0.2 rounded-md bg-[#ef4444] text-white font-bold text-[10px]">
+                      {pendingFeeList.length}
+                    </span>
+                  </button>
+
+                  {/* Tab 2: Completed */}
+                  <button
+                    type="button"
+                    onClick={() => setFeeRecordsActiveTab('completed')}
+                    className={`pb-2.5 font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                      feeRecordsActiveTab === 'completed'
+                        ? 'text-[#2563eb] border-b-2 border-[#2563eb]'
+                        : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                    }`}
+                  >
+                    <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2.5]" />
+                    <span>Completed Payments</span>
+                    <span className="px-1.5 py-0.2 rounded-md bg-[#10b981] text-white font-bold text-[10px]">
+                      {completedFeeList.length}
+                    </span>
+                  </button>
+
+                  {/* Tab 3: Waiver / Discount */}
+                  <button
+                    type="button"
+                    onClick={() => setFeeRecordsActiveTab('waivers')}
+                    className={`pb-2.5 font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                      feeRecordsActiveTab === 'waivers'
+                        ? 'text-[#2563eb] border-b-2 border-[#2563eb]'
+                        : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                    }`}
+                  >
+                    <Percent className="w-3.5 h-3.5 text-cyan-600" />
+                    <span>Waiver / Discount</span>
+                    <span className="px-1.5 py-0.2 rounded-md bg-[#06b6d4] text-white font-bold text-[10px]">
+                      {waiversFeeList.length}
+                    </span>
+                  </button>
+                </div>
+
+                <div className="flex items-center text-slate-400 text-xs pb-2">
+                  <span className="cursor-pointer hover:text-slate-600">▲▼</span>
+                </div>
+              </div>
+
+              {/* TAB CONTENT: PENDING PAYMENTS (Matching Screenshot 1 & 2) */}
+              {feeRecordsActiveTab === 'pending' && (
+                <div className="space-y-6">
+                  {/* Section 1: Monthly Fee Vouchers */}
+                  <div className="space-y-3">
+                    <span className="block text-xs text-slate-400 font-medium">
+                      Class / monthly fee vouchers (one card per month)
+                    </span>
+
+                    {pendingFeeList.filter(v => v.type === 'monthly').map((voucher) => (
+                      <div
+                        key={voucher.id}
+                        className={`border-l-4 border-l-red-500 rounded-2xl p-4 sm:p-5 border ${
+                          isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                        } shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4`}
+                      >
+                        {/* Left Details */}
+                        <div className="space-y-1.5 min-w-[200px]">
+                          <div className="flex items-center gap-2">
+                            <FileText className="w-4 h-4 text-slate-400" />
+                            <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+                              {voucher.title}
+                            </h3>
+                          </div>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold text-[10px]">
+                              {voucher.badge}
+                            </span>
+                            {voucher.secondaryBadge && (
+                              <span className="px-2 py-0.5 rounded bg-[#06b6d4] text-white font-semibold text-[10px]">
+                                {voucher.secondaryBadge}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[11px] text-slate-400 leading-tight">
+                            <p># Ref: {voucher.refNo}</p>
+                            <p>Receipt: {voucher.receiptNo}</p>
+                          </div>
+                        </div>
+
+                        {/* Middle: Progress Bar & Financial Breakdown */}
+                        <div className="flex-1 max-w-md space-y-2">
+                          <div className="flex items-center justify-between text-xs text-slate-500">
+                            <span>Payment Progress</span>
+                            <span className="font-bold">{voucher.progress.toFixed(1)}%</span>
+                          </div>
+                          <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                            <div
+                              className="h-full bg-red-500 rounded-full"
+                              style={{ width: `${voucher.progress}%` }}
+                            />
+                          </div>
+                          <div className="grid grid-cols-3 text-center text-xs pt-1">
+                            <div>
+                              <span className="text-[10px] text-slate-400 block">Total</span>
+                              <span className="font-bold text-slate-800 dark:text-slate-200">
+                                PKR {voucher.total.toLocaleString()}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-[10px] text-slate-400 block">Paid</span>
+                              <span className="font-bold text-emerald-600">
+                                PKR {voucher.paid.toLocaleString()}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-[10px] text-slate-400 block">Remaining balance</span>
+                              <span className="font-bold text-red-600">
+                                PKR {voucher.remaining.toLocaleString()}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Right: Action Buttons */}
+                        <div className="flex flex-col sm:flex-row lg:flex-col gap-2 min-w-[150px]">
                           <button
                             type="button"
-                            onClick={() => setSelectedChallanForPrint(f)}
-                            className="px-3 py-1 rounded-lg bg-blue-50 text-blue-600 font-bold hover:bg-blue-100 cursor-pointer"
+                            onClick={() => setSelectedFeeForPayment(voucher)}
+                            className="w-full py-2 px-4 rounded-xl bg-[#16a34a] hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs cursor-pointer transition-colors"
                           >
-                            Print Challan
+                            <CreditCard className="w-3.5 h-3.5" />
+                            Pay Online
                           </button>
-                        </td>
-                      </tr>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedFeeForReceipt(voucher)}
+                            className="w-full py-2 px-4 rounded-xl bg-[#0284c7] hover:bg-sky-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs cursor-pointer transition-colors"
+                          >
+                            <Receipt className="w-3.5 h-3.5" />
+                            Receipt
+                          </button>
+                        </div>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
-              </div>
+                  </div>
+
+                  {/* Section 2: One-time & Individual Charges */}
+                  <div className="space-y-3 pt-2">
+                    <span className="block text-xs text-slate-400 font-medium">
+                      One-time & individual charges (admission, stock, fines, etc.)
+                    </span>
+
+                    {pendingFeeList.filter(v => v.type === 'charge').map((charge) => (
+                      <div
+                        key={charge.id}
+                        className={`border-l-4 border-l-amber-500 rounded-2xl p-4 sm:p-5 border ${
+                          isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                        } shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4`}
+                      >
+                        {/* Left Details */}
+                        <div className="space-y-1.5 min-w-[200px]">
+                          <div className="flex items-center gap-2">
+                            <FileText className="w-4 h-4 text-amber-500" />
+                            <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+                              {charge.title}
+                            </h3>
+                          </div>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="px-2 py-0.5 rounded bg-orange-500 text-white font-semibold text-[10px]">
+                              {charge.badge}
+                            </span>
+                            {charge.secondaryBadge && (
+                              <span className="px-2 py-0.5 rounded bg-[#06b6d4] text-white font-semibold text-[10px]">
+                                {charge.secondaryBadge}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[11px] text-slate-400 leading-tight">
+                            <p># ID: {charge.refNo}</p>
+                            <p>{charge.subTitle}</p>
+                          </div>
+                        </div>
+
+                        {/* Middle: Due remaining & Year */}
+                        <div className="flex-1 max-w-md flex items-center justify-around text-center text-xs">
+                          <div>
+                            <span className="text-[10px] text-slate-400 block">Due (remaining)</span>
+                            <span className="font-bold text-base text-red-600 block mt-0.5">
+                              PKR {charge.remaining}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-slate-400 block">Year/Session</span>
+                            <span className="font-bold text-slate-800 dark:text-slate-200 block mt-0.5">
+                              {charge.session}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Right: Action Buttons */}
+                        <div className="flex flex-col sm:flex-row lg:flex-col gap-2 min-w-[150px]">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedFeeForPayment(charge)}
+                            className="w-full py-2 px-4 rounded-xl bg-[#16a34a] hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs cursor-pointer transition-colors"
+                          >
+                            <CreditCard className="w-3.5 h-3.5" />
+                            Pay Online
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedFeeForReceipt(charge)}
+                            className="w-full py-2 px-4 rounded-xl bg-[#0284c7] hover:bg-sky-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs cursor-pointer transition-colors"
+                          >
+                            <Receipt className="w-3.5 h-3.5" />
+                            Receipt
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB CONTENT: COMPLETED PAYMENTS (11 Records totaling PKR 14,485) */}
+              {feeRecordsActiveTab === 'completed' && (
+                <div className="space-y-3">
+                  <span className="block text-xs text-slate-400 font-medium">
+                    Fully cleared fee invoices and historical payments
+                  </span>
+
+                  <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-2xl">
+                    <table className="w-full text-xs text-left">
+                      <thead>
+                        <tr className="border-b bg-slate-50 dark:bg-slate-800/60 font-semibold text-slate-600 dark:text-slate-300">
+                          <th className="py-3 px-4">Invoice Description</th>
+                          <th className="py-3 px-4">Reference No</th>
+                          <th className="py-3 px-4">Receipt No</th>
+                          <th className="py-3 px-4 text-right">Amount Paid</th>
+                          <th className="py-3 px-4">Payment Date</th>
+                          <th className="py-3 px-4 text-center">Status</th>
+                          <th className="py-3 px-4 text-right">Receipt</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        {completedFeeList.map((item) => (
+                          <tr key={item.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
+                            <td className="py-3 px-4 font-bold text-slate-900 dark:text-white">{item.title}</td>
+                            <td className="py-3 px-4 text-slate-500">{item.refNo}</td>
+                            <td className="py-3 px-4 text-slate-500">{item.receiptNo}</td>
+                            <td className="py-3 px-4 text-right font-bold text-emerald-600">PKR {item.paid.toLocaleString()}</td>
+                            <td className="py-3 px-4 text-slate-600 dark:text-slate-400">{item.date}</td>
+                            <td className="py-3 px-4 text-center">
+                              <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 text-[10px] font-bold">
+                                {item.status}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-right">
+                              <button
+                                type="button"
+                                onClick={() => setSelectedFeeForReceipt(item)}
+                                className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-950/40 dark:text-blue-300 font-semibold text-xs cursor-pointer"
+                              >
+                                View
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB CONTENT: WAIVER / DISCOUNT */}
+              {feeRecordsActiveTab === 'waivers' && (
+                <div className="space-y-3">
+                  <span className="block text-xs text-slate-400 font-medium">
+                    Approved fee concessions and special scholarships
+                  </span>
+
+                  {waiversFeeList.map((w) => (
+                    <div
+                      key={w.id}
+                      className={`border-l-4 border-l-cyan-500 rounded-2xl p-5 border ${
+                        isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                      } shadow-xs space-y-2`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-bold text-sm text-slate-900 dark:text-white">{w.title}</h3>
+                        <span className="font-bold text-base text-[#06b6d4]">PKR {w.amount.toLocaleString()}</span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
+                        <span># Voucher: {w.voucherRef}</span>
+                        <span>&bull;</span>
+                        <span>Authorized by: {w.appliedBy}</span>
+                        <span>&bull;</span>
+                        <span>Date: {w.date}</span>
+                      </div>
+                      <p className="text-xs text-slate-600 dark:text-slate-300 pt-1">{w.notes}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
-          {/* TAB 10: DOWNLOAD APP */}
-          {activeTab === 'download-app' && (
-            <div className="space-y-5">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-                Download Apex Mobile App
-              </h2>
-              <div className="p-8 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center max-w-lg mx-auto">
-                <Smartphone className="w-12 h-12 text-blue-600 mx-auto mb-3" />
-                <h3 className="font-bold text-base text-slate-900 dark:text-white">Apex Student & Parent Portal App</h3>
-                <p className="text-xs text-slate-500 mt-2">Available for Android & iOS. Access timetables, announcements, and fee payment on the go.</p>
-                <button className="mt-5 px-6 py-2.5 rounded-xl bg-blue-600 text-white font-bold text-xs hover:bg-blue-700 shadow-xs">
-                  Download Android APK
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 11: MY ACCOUNT */}
+          {/* TAB 10: MY ACCOUNT (Pick 3 - media_1794578607569_2caa20b4.png) */}
           {activeTab === 'account' && (
-            <div className="space-y-5">
-              <div className="flex items-center justify-between">
+            <div className="space-y-4">
+              {/* Top Subheader: "My Account" + Back Button */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
                 <div>
-                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-                    My Account Profile
-                  </h2>
-                  <p className="text-xs text-slate-500">Manage registered student particulars</p>
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-md bg-blue-100 text-blue-600 flex items-center justify-center">
+                      <FileText className="w-4 h-4" />
+                    </div>
+                    <h1 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                      My Account
+                    </h1>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('dashboard')}
+                    className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-800 dark:hover:text-white font-medium mt-1 cursor-pointer"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" /> Back
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={openEditModal}
-                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs cursor-pointer flex items-center gap-1.5"
-                >
-                  <Pencil className="w-3.5 h-3.5" />
-                  Edit Profile
-                </button>
+
+                {/* Right Top Action Icons */}
+                <div className="flex items-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 overflow-x-auto pb-1">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('report-cards')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <BookOpen className="w-4 h-4 text-slate-500" />
+                    <span>Report Card</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('attendance')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <Calendar className="w-4 h-4 text-slate-500" />
+                    <span>My Attendance</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('assignments')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <BookMarked className="w-4 h-4 text-slate-500" />
+                    <span>Assignments</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('announcements')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <Megaphone className="w-4 h-4 text-slate-500" />
+                    <span>Announcements</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('fees')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <CreditCard className="w-4 h-4 text-slate-500" />
+                    <span>Fee Records</span>
+                  </button>
+                </div>
               </div>
 
-              <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 text-xs">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-                    <span className="text-[10px] uppercase font-bold text-slate-400">Student Name</span>
-                    <p className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">{studentName}</p>
-                  </div>
-                  <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-                    <span className="text-[10px] uppercase font-bold text-slate-400">Class & Section</span>
-                    <p className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">{studentClass} - Section {studentSection}</p>
-                  </div>
-                  <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-                    <span className="text-[10px] uppercase font-bold text-slate-400">Roll Number</span>
-                    <p className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">CSM-2026-042</p>
-                  </div>
-                  <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-                    <span className="text-[10px] uppercase font-bold text-slate-400">Institute</span>
-                    <p className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">Apex School System</p>
-                  </div>
+              {/* MAIN MY ACCOUNT CARD (Matching Screenshot 3 Exactly) */}
+              <div className={`rounded-2xl border ${
+                isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+              } shadow-xs p-6 sm:p-8 space-y-6`}>
+                <h2 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
+                  My Account
+                </h2>
+
+                {/* Subtabs: Manage Profile & Change Password */}
+                <div className="flex items-center gap-6 border-b border-slate-100 dark:border-slate-800 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setAccountActiveSubtab('profile')}
+                    className={`pb-2.5 font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                      accountActiveSubtab === 'profile'
+                        ? 'text-[#2563eb] border-b-2 border-[#2563eb]'
+                        : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                    }`}
+                  >
+                    <User className="w-3.5 h-3.5" />
+                    <span>Manage Profile</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setAccountActiveSubtab('password')}
+                    className={`pb-2.5 font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                      accountActiveSubtab === 'password'
+                        ? 'text-[#2563eb] border-b-2 border-[#2563eb]'
+                        : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                    }`}
+                  >
+                    <span>Change Password</span>
+                  </button>
                 </div>
+
+                {/* SUBTAB 1: MANAGE PROFILE (Matching Screenshot 3) */}
+                {accountActiveSubtab === 'profile' && (
+                  <div className="space-y-6 max-w-2xl">
+                    {/* Official Apex Emblem / Avatar */}
+                    <div className="w-24 h-24 rounded-full border-2 border-slate-200 dark:border-slate-700 bg-amber-50/20 flex items-center justify-center p-2 overflow-hidden shadow-xs">
+                      <div className="w-full h-full rounded-full border-2 border-[#800000] flex flex-col items-center justify-center text-[#800000] text-center p-1">
+                        <GraduationCap className="w-5 h-5" />
+                        <span className="text-[7px] font-bold uppercase leading-tight mt-0.5">APEX SCHOOL</span>
+                      </div>
+                    </div>
+
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault()
+                        if (accountNameValue.trim()) {
+                          setStudentName(accountNameValue.trim())
+                          try {
+                            localStorage.setItem('sms_student_custom_name', accountNameValue.trim())
+                          } catch {}
+                          alert('Profile photo and student details saved successfully!')
+                        }
+                      }}
+                      className="space-y-4 text-xs"
+                    >
+                      {/* Name Field */}
+                      <div>
+                        <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">
+                          Name
+                        </label>
+                        <input
+                          type="text"
+                          value={accountNameValue}
+                          onChange={(e) => setAccountNameValue(e.target.value)}
+                          className="w-full max-w-md px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-blue-500/20"
+                        />
+                      </div>
+
+                      {/* Username Field (Read-only registration ID) */}
+                      <div>
+                        <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">
+                          Username
+                        </label>
+                        <input
+                          type="text"
+                          value="ED/N/2025/16862"
+                          readOnly
+                          disabled
+                          className="w-full max-w-md px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-xs text-slate-500 cursor-not-allowed"
+                        />
+                      </div>
+
+                      {/* Profile Photo Upload */}
+                      <div>
+                        <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">
+                          Profile photo
+                        </label>
+                        <div className="flex items-center gap-3 max-w-md">
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            onChange={(e) => {
+                              if (e.target.files?.[0]) {
+                                setAccountPhotoSelected(e.target.files[0].name)
+                              }
+                            }}
+                            id="student-photo-upload"
+                            className="hidden"
+                          />
+                          <div className="flex-1 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-500 flex items-center justify-between">
+                            <span>{accountPhotoSelected || 'No file selected'}</span>
+                            <label
+                              htmlFor="student-photo-upload"
+                              className="px-3 py-1 rounded-lg bg-[#0284c7] hover:bg-sky-700 text-white font-semibold text-xs cursor-pointer"
+                            >
+                              Choose File
+                            </label>
+                          </div>
+                        </div>
+                        <p className="text-[11px] text-slate-400 mt-1">
+                          Accepted: jpeg, png, webp — max 2 MB
+                        </p>
+                      </div>
+
+                      {/* Upload Photo Button (Matching Coral Red button in screenshot 3) */}
+                      <div className="pt-2">
+                        <button
+                          type="submit"
+                          className="px-5 py-2.5 rounded-xl bg-[#ef4444] hover:bg-red-600 text-white font-bold text-xs flex items-center gap-2 shadow-xs cursor-pointer transition-colors"
+                        >
+                          <Send className="w-3.5 h-3.5" />
+                          Upload photo
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+
+                {/* SUBTAB 2: CHANGE PASSWORD */}
+                {accountActiveSubtab === 'password' && (
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault()
+                      if (!passwordFormData.newPass || passwordFormData.newPass !== passwordFormData.confirmPass) {
+                        alert('New passwords do not match!')
+                        return
+                      }
+                      alert('Student portal password updated successfully!')
+                      setPasswordFormData({ current: '', newPass: '', confirmPass: '' })
+                    }}
+                    className="space-y-4 max-w-md text-xs"
+                  >
+                    <div>
+                      <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">
+                        Current Password
+                      </label>
+                      <input
+                        type="password"
+                        required
+                        value={passwordFormData.current}
+                        onChange={(e) => setPasswordFormData(prev => ({ ...prev, current: e.target.value }))}
+                        className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">
+                        New Password
+                      </label>
+                      <input
+                        type="password"
+                        required
+                        value={passwordFormData.newPass}
+                        onChange={(e) => setPasswordFormData(prev => ({ ...prev, newPass: e.target.value }))}
+                        className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">
+                        Confirm New Password
+                      </label>
+                      <input
+                        type="password"
+                        required
+                        value={passwordFormData.confirmPass}
+                        onChange={(e) => setPasswordFormData(prev => ({ ...prev, confirmPass: e.target.value }))}
+                        className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      className="px-5 py-2.5 rounded-xl bg-[#2563eb] hover:bg-blue-700 text-white font-bold text-xs cursor-pointer shadow-xs transition-colors"
+                    >
+                      Update Password
+                    </button>
+                  </form>
+                )}
               </div>
             </div>
           )}
@@ -4105,6 +4834,158 @@ export default function StudentPortalView() {
                 type="button"
                 onClick={() => setSelectedAssignmentModal(null)}
                 className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-colors cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: PAY FEE ONLINE */}
+      {selectedFeeForPayment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="w-full max-w-md bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-3xl shadow-2xl p-6 border border-slate-200 dark:border-slate-800 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2">
+                <CreditCard className="w-4 h-4 text-emerald-600" />
+                <h3 className="font-bold text-sm">Pay Fee Online</h3>
+              </div>
+              <button onClick={() => setSelectedFeeForPayment(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/60 text-xs">
+              <span className="text-slate-400 block text-[10px] uppercase font-bold">Voucher</span>
+              <p className="font-bold text-slate-900 dark:text-white text-sm">{selectedFeeForPayment.title}</p>
+              <div className="mt-2 flex items-baseline justify-between">
+                <span className="text-slate-500">Amount Due:</span>
+                <span className="text-lg font-bold text-emerald-600">PKR {selectedFeeForPayment.remaining.toLocaleString()}</span>
+              </div>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">
+                  Payment Method
+                </label>
+                <select
+                  value={paymentGateway}
+                  onChange={(e) => setPaymentGateway(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
+                >
+                  <option value="1Link / Online Banking">1Link / Online Banking Bill Payment</option>
+                  <option value="JazzCash">JazzCash Mobile Account / Voucher</option>
+                  <option value="EasyPaisa">EasyPaisa Mobile Wallet</option>
+                  <option value="Credit / Debit Card">Credit / Debit Card (Visa / Mastercard)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">
+                  Reference Voucher No
+                </label>
+                <input
+                  type="text"
+                  readOnly
+                  value={selectedFeeForPayment.refNo}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-xs text-slate-500"
+                />
+              </div>
+            </div>
+
+            <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setSelectedFeeForPayment(null)}
+                className="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 text-xs font-semibold cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isPayingNow}
+                onClick={() => {
+                  setIsPayingNow(true)
+                  setTimeout(() => {
+                    setIsPayingNow(false)
+                    setPendingFeeList(prev => prev.filter(v => v.id !== selectedFeeForPayment.id))
+                    setSelectedFeeForPayment(null)
+                    alert(`Payment of PKR ${selectedFeeForPayment.remaining} for ${selectedFeeForPayment.title} processed successfully via ${paymentGateway}!`)
+                  }, 800)
+                }}
+                className="px-5 py-2 rounded-xl bg-[#16a34a] hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs cursor-pointer"
+              >
+                {isPayingNow ? 'Processing...' : 'Confirm & Pay'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: OFFICIAL PRINTABLE RECEIPT */}
+      {selectedFeeForReceipt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="w-full max-w-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-3xl shadow-2xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+              <div className="flex items-center gap-2">
+                <Receipt className="w-4 h-4 text-blue-600" />
+                <h3 className="font-bold text-sm">Official Fee Receipt</h3>
+              </div>
+              <button onClick={() => setSelectedFeeForReceipt(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* School Receipt Header */}
+            <div className="text-center space-y-1 pb-2">
+              <h2 className="text-base font-bold text-[#0b2447] dark:text-white">Apex School System</h2>
+              <p className="text-[11px] text-slate-500">Student Fee Voucher & Payment Slip</p>
+              <span className="text-[10px] text-slate-400">Receipt #: {selectedFeeForReceipt.receiptNo || 'RCP-2026-991'} &bull; Ref: {selectedFeeForReceipt.refNo}</span>
+            </div>
+
+            {/* Receipt Particulars Table */}
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
+              <div className="flex justify-between py-1 border-b border-slate-200 dark:border-slate-700">
+                <span className="text-slate-500">Student Name:</span>
+                <span className="font-bold">{studentName}</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-slate-200 dark:border-slate-700">
+                <span className="text-slate-500">Roll / Admission:</span>
+                <span className="font-bold">Roll: NU1 &bull; ADM: ED/N/2025/16862</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-slate-200 dark:border-slate-700">
+                <span className="text-slate-500">Class & Section:</span>
+                <span className="font-bold">{studentClass} - {studentSection}</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-slate-200 dark:border-slate-700">
+                <span className="text-slate-500">Fee Particular:</span>
+                <span className="font-bold">{selectedFeeForReceipt.title}</span>
+              </div>
+              <div className="flex justify-between py-1 text-sm font-bold pt-1">
+                <span className="text-slate-700 dark:text-slate-200">Amount:</span>
+                <span className="text-emerald-600">PKR {(selectedFeeForReceipt.paid || selectedFeeForReceipt.total || selectedFeeForReceipt.remaining).toLocaleString()}</span>
+              </div>
+            </div>
+
+            <div className="text-[10px] text-slate-400 text-center">
+              Computer-generated official receipt verified by Apex Finance Desk.
+            </div>
+
+            <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="px-4 py-2 rounded-xl bg-[#0284c7] hover:bg-sky-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                Print Receipt
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedFeeForReceipt(null)}
+                className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-xs cursor-pointer"
               >
                 Close
               </button>
