@@ -107,6 +107,18 @@ export default function StudentPortalView() {
   // Timetable sub-tabs: 'weekly' | 'exam'
   const [timetableSubTab, setTimetableSubTab] = useState('weekly')
 
+  // Attendance filter states (matching screenshots)
+  const [attendanceViewMode, setAttendanceViewMode] = useState('Month calendar')
+  const [attendanceCategory, setAttendanceCategory] = useState('General (daily)')
+  const [attendanceSelectedMonth, setAttendanceSelectedMonth] = useState('November')
+  const [attendanceSelectedYear, setAttendanceSelectedYear] = useState('2026')
+  const [attendanceStats, setAttendanceStats] = useState({
+    present: 0,
+    absent: 0,
+    percentage: '0.0',
+    workingDays: 21
+  })
+
   // Sub-feature states
   const [selectedChallanForPrint, setSelectedChallanForPrint] = useState(null)
   const [isReportCardModalOpen, setIsReportCardModalOpen] = useState(false)
@@ -1150,41 +1162,533 @@ export default function StudentPortalView() {
             </div>
           )}
 
-          {/* TAB 3: MY ATTENDANCE */}
+          {/* TAB 3: MY ATTENDANCE REPORT (Matching Screenshot 1 & 2 Exactly) */}
           {activeTab === 'attendance' && (
-            <div className="space-y-5">
-              <div className="flex items-center justify-between">
+            <div className="space-y-4">
+              {/* Top Subheader: "My Attendance Report" + Back Button */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
                 <div>
-                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-                    Attendance History & Leaves
-                  </h2>
-                  <p className="text-xs text-slate-500">Student daily attendance logs</p>
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-md bg-blue-100 text-blue-600 flex items-center justify-center">
+                      <FileText className="w-4 h-4" />
+                    </div>
+                    <h1 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                      My Attendance Report
+                    </h1>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('dashboard')}
+                    className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-800 dark:hover:text-white font-medium mt-1 cursor-pointer"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" /> Back
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setIsLeaveModalOpen(true)}
-                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs cursor-pointer"
-                >
-                  Apply Leave
-                </button>
+
+                {/* Right Top Action Icons */}
+                <div className="flex items-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 overflow-x-auto pb-1">
+                  <button
+                    type="button"
+                    onClick={() => setIsReportCardModalOpen(true)}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <BookOpen className="w-4 h-4 text-slate-500" />
+                    <span>Report Card</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('attendance')}
+                    className="flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl bg-[#eef4ff] text-[#2563eb] font-semibold dark:bg-blue-950/50 dark:text-blue-300 transition-colors cursor-pointer"
+                  >
+                    <Calendar className="w-4 h-4 text-[#2563eb] dark:text-blue-300" />
+                    <span>My Attendance</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('assignments')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <BookMarked className="w-4 h-4 text-slate-500" />
+                    <span>Assignments</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('announcements')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <Megaphone className="w-4 h-4 text-slate-500" />
+                    <span>Announcements</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('fees')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <CreditCard className="w-4 h-4 text-slate-500" />
+                    <span>Fee Records</span>
+                  </button>
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-                  <span className="text-[11px] text-slate-400 uppercase font-bold">Total Days</span>
-                  <p className="text-xl font-bold mt-1">21</p>
+              {/* Section Header Card */}
+              <div className="pt-1">
+                <div className="flex items-center gap-2">
+                  <CalendarDays className="w-4 h-4 text-blue-600" />
+                  <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                    My Attendance Report
+                  </h2>
                 </div>
-                <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-                  <span className="text-[11px] text-slate-400 uppercase font-bold">Present</span>
-                  <p className="text-xl font-bold text-emerald-600 mt-1">0</p>
+
+                {/* Cyan/Blue Tinted Student Info Bar */}
+                <div className="mt-3 p-3 rounded-2xl bg-[#eefbfd] dark:bg-cyan-950/30 border border-cyan-200/70 dark:border-cyan-800/60 flex flex-wrap items-center gap-3 text-xs">
+                  <div className="flex items-center gap-1.5 font-bold text-slate-800 dark:text-slate-100">
+                    <User className="w-4 h-4 text-slate-700 dark:text-slate-300" />
+                    <span>{studentName}</span>
+                  </div>
+                  <span className="px-2.5 py-0.5 rounded-md bg-[#2563eb] text-white font-bold text-xs shadow-2xs">
+                    Roll: NU1
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-md bg-[#06b6d4] text-white font-bold text-xs shadow-2xs">
+                    {studentClass} - {studentSection}
+                  </span>
                 </div>
-                <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-                  <span className="text-[11px] text-slate-400 uppercase font-bold">Absent</span>
-                  <p className="text-xl font-bold text-rose-600 mt-1">0</p>
+              </div>
+
+              {/* FILTERS ROW (4 Select Dropdowns matching Screenshot 1 & 2) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                {/* 1. View Filter */}
+                <div>
+                  <label className="block text-slate-600 dark:text-slate-300 font-semibold mb-1">
+                    👁 View
+                  </label>
+                  <select
+                    value={attendanceViewMode}
+                    onChange={(e) => setAttendanceViewMode(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs focus:ring-2 focus:ring-blue-500/20"
+                  >
+                    <option value="Month calendar">Month calendar</option>
+                    <option value="Daily log list">Daily log list</option>
+                    <option value="Subject-wise">Subject-wise</option>
+                  </select>
                 </div>
-                <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-                  <span className="text-[11px] text-slate-400 uppercase font-bold">Percentage</span>
-                  <p className="text-xl font-bold text-blue-600 mt-1">0%</p>
+
+                {/* 2. Attendance Type */}
+                <div>
+                  <label className="block text-slate-600 dark:text-slate-300 font-semibold mb-1">
+                    ≡ Attendance type
+                  </label>
+                  <select
+                    value={attendanceCategory}
+                    onChange={(e) => setAttendanceCategory(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs focus:ring-2 focus:ring-blue-500/20"
+                  >
+                    <option value="General (daily)">General (daily)</option>
+                    <option value="Subject-wise">Subject-wise</option>
+                  </select>
+                </div>
+
+                {/* 3. Month */}
+                <div>
+                  <label className="block text-slate-600 dark:text-slate-300 font-semibold mb-1">
+                    Month
+                  </label>
+                  <select
+                    value={attendanceSelectedMonth}
+                    onChange={(e) => setAttendanceSelectedMonth(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs focus:ring-2 focus:ring-blue-500/20"
+                  >
+                    {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map(m => (
+                      <option key={m} value={m}>{m}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* 4. Year */}
+                <div>
+                  <label className="block text-slate-600 dark:text-slate-300 font-semibold mb-1">
+                    Year
+                  </label>
+                  <select
+                    value={attendanceSelectedYear}
+                    onChange={(e) => setAttendanceSelectedYear(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs focus:ring-2 focus:ring-blue-500/20"
+                  >
+                    <option value="2025">2025</option>
+                    <option value="2026">2026</option>
+                    <option value="2027">2027</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* 4 METRIC KPI CARDS (Present, Absent, Attendance %, Working days) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* 1. Present */}
+                <div className={`p-4 rounded-2xl border transition-all ${
+                  isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                } shadow-xs flex items-center gap-3.5`}>
+                  <div className="w-10 h-10 rounded-xl bg-[#10b981] text-white flex items-center justify-center shadow-xs">
+                    <Check className="w-5 h-5 stroke-[2.5]" />
+                  </div>
+                  <div>
+                    <span className="text-[11px] text-slate-400 font-medium block">Present</span>
+                    <span className="text-2xl font-bold text-slate-900 dark:text-white block mt-0.5">{attendanceStats.present}</span>
+                  </div>
+                </div>
+
+                {/* 2. Absent */}
+                <div className={`p-4 rounded-2xl border transition-all ${
+                  isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                } shadow-xs flex items-center gap-3.5`}>
+                  <div className="w-10 h-10 rounded-xl bg-[#ef4444] text-white flex items-center justify-center shadow-xs">
+                    <X className="w-5 h-5 stroke-[2.5]" />
+                  </div>
+                  <div>
+                    <span className="text-[11px] text-slate-400 font-medium block">Absent</span>
+                    <span className="text-2xl font-bold text-slate-900 dark:text-white block mt-0.5">{attendanceStats.absent}</span>
+                  </div>
+                </div>
+
+                {/* 3. Attendance % */}
+                <div className={`p-4 rounded-2xl border transition-all ${
+                  isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                } shadow-xs flex items-center gap-3.5`}>
+                  <div className="w-10 h-10 rounded-xl bg-[#2563eb] text-white flex items-center justify-center shadow-xs">
+                    <FileCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-[11px] text-slate-400 font-medium block">Attendance %</span>
+                    <span className="text-2xl font-bold text-slate-900 dark:text-white block mt-0.5">{attendanceStats.percentage}%</span>
+                    <span className="text-[9px] text-slate-400 block mt-0.5">(Present + Late + Leave) / marked days</span>
+                  </div>
+                </div>
+
+                {/* 4. Working days */}
+                <div className={`p-4 rounded-2xl border transition-all ${
+                  isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                } shadow-xs flex items-center gap-3.5`}>
+                  <div className="w-10 h-10 rounded-xl bg-[#f97316] text-white flex items-center justify-center shadow-xs">
+                    <Calendar className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-[11px] text-slate-400 font-medium block">Working days</span>
+                    <span className="text-2xl font-bold text-slate-900 dark:text-white block mt-0.5">{attendanceStats.workingDays}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* MONTHLY CALENDAR GRID (November 2026 - Exact Match) */}
+              <div className={`rounded-2xl border ${
+                isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+              } p-5 shadow-xs space-y-4`}>
+                {/* Calendar Title */}
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-slate-600 dark:text-slate-300" />
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                    {attendanceSelectedMonth} {attendanceSelectedYear}
+                  </h3>
+                </div>
+
+                {/* Month Calendar Table Grid */}
+                <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl">
+                  <table className="w-full text-xs text-center border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-bold">
+                        <th className="py-2.5 px-2 border-r border-slate-200 dark:border-slate-800 bg-[#f8fafc] dark:bg-slate-800/60 w-1/7">Sun</th>
+                        <th className="py-2.5 px-2 border-r border-slate-200 dark:border-slate-800 w-1/7">Mon</th>
+                        <th className="py-2.5 px-2 border-r border-slate-200 dark:border-slate-800 w-1/7">Tue</th>
+                        <th className="py-2.5 px-2 border-r border-slate-200 dark:border-slate-800 w-1/7">Wed</th>
+                        <th className="py-2.5 px-2 border-r border-slate-200 dark:border-slate-800 w-1/7">Thu</th>
+                        <th className="py-2.5 px-2 border-r border-slate-200 dark:border-slate-800 w-1/7">Fri</th>
+                        <th className="py-2.5 px-2 bg-[#f0f6fc] dark:bg-blue-950/20 w-1/7">Sat</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                      {/* Week 1: 1 (Sun) to 7 (Sat) */}
+                      <tr className="h-20">
+                        {/* Sun 1 */}
+                        <td className="p-2 border-r border-slate-200 dark:border-slate-800 bg-[#fafcff] dark:bg-slate-900/40 align-top">
+                          <span className="font-bold text-slate-700 dark:text-slate-300 block mb-1.5">1</span>
+                          <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold text-[10px] uppercase">
+                            OFF
+                          </span>
+                          <span className="text-[9px] text-slate-400 block mt-1">Weekly off</span>
+                        </td>
+                        {/* Mon 2 */}
+                        <td className="p-2 border-r border-slate-200 dark:border-slate-800 align-top">
+                          <span className="font-bold text-slate-700 dark:text-slate-300 block mb-2">2</span>
+                          <div className="w-6 h-6 rounded bg-[#6b7280] text-white flex items-center justify-center font-bold text-xs mx-auto shadow-2xs">
+                            -
+                          </div>
+                        </td>
+                        {/* Tue 3 */}
+                        <td className="p-2 border-r border-slate-200 dark:border-slate-800 align-top">
+                          <span className="font-bold text-slate-700 dark:text-slate-300 block mb-2">3</span>
+                          <div className="w-6 h-6 rounded bg-[#6b7280] text-white flex items-center justify-center font-bold text-xs mx-auto shadow-2xs">
+                            -
+                          </div>
+                        </td>
+                        {/* Wed 4 */}
+                        <td className="p-2 border-r border-slate-200 dark:border-slate-800 align-top">
+                          <span className="font-bold text-slate-700 dark:text-slate-300 block mb-2">4</span>
+                          <div className="w-6 h-6 rounded bg-[#6b7280] text-white flex items-center justify-center font-bold text-xs mx-auto shadow-2xs">
+                            -
+                          </div>
+                        </td>
+                        {/* Thu 5 */}
+                        <td className="p-2 border-r border-slate-200 dark:border-slate-800 align-top">
+                          <span className="font-bold text-slate-700 dark:text-slate-300 block mb-2">5</span>
+                          <div className="w-6 h-6 rounded bg-[#6b7280] text-white flex items-center justify-center font-bold text-xs mx-auto shadow-2xs">
+                            -
+                          </div>
+                        </td>
+                        {/* Fri 6 */}
+                        <td className="p-2 border-r border-slate-200 dark:border-slate-800 align-top">
+                          <span className="font-bold text-slate-700 dark:text-slate-300 block mb-2">6</span>
+                          <div className="w-6 h-6 rounded bg-[#6b7280] text-white flex items-center justify-center font-bold text-xs mx-auto shadow-2xs">
+                            -
+                          </div>
+                        </td>
+                        {/* Sat 7 */}
+                        <td className="p-2 bg-[#f0f6fc] dark:bg-blue-950/20 align-top">
+                          <span className="font-bold text-slate-700 dark:text-slate-300 block mb-1.5">7</span>
+                          <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold text-[10px] uppercase">
+                            OFF
+                          </span>
+                          <span className="text-[9px] text-slate-400 block mt-1">Weekly off</span>
+                        </td>
+                      </tr>
+
+                      {/* Week 2: 8 to 14 */}
+                      <tr className="h-20">
+                        {/* Sun 8 */}
+                        <td className="p-2 border-r border-slate-200 dark:border-slate-800 bg-[#fafcff] dark:bg-slate-900/40 align-top">
+                          <span className="font-bold text-slate-700 dark:text-slate-300 block mb-1.5">8</span>
+                          <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold text-[10px] uppercase">
+                            OFF
+                          </span>
+                          <span className="text-[9px] text-slate-400 block mt-1">Weekly off</span>
+                        </td>
+                        {/* Mon 9 */}
+                        <td className="p-2 border-r border-slate-200 dark:border-slate-800 align-top">
+                          <span className="font-bold text-slate-700 dark:text-slate-300 block mb-2">9</span>
+                          <div className="w-6 h-6 rounded bg-[#6b7280] text-white flex items-center justify-center font-bold text-xs mx-auto shadow-2xs">
+                            -
+                          </div>
+                        </td>
+                        {/* Tue 10 */}
+                        <td className="p-2 border-r border-slate-200 dark:border-slate-800 align-top">
+                          <span className="font-bold text-slate-700 dark:text-slate-300 block mb-2">10</span>
+                          <div className="w-6 h-6 rounded bg-[#6b7280] text-white flex items-center justify-center font-bold text-xs mx-auto shadow-2xs">
+                            -
+                          </div>
+                        </td>
+                        {/* Wed 11 */}
+                        <td className="p-2 border-r border-slate-200 dark:border-slate-800 align-top">
+                          <span className="font-bold text-slate-700 dark:text-slate-300 block mb-2">11</span>
+                          <div className="w-6 h-6 rounded bg-[#6b7280] text-white flex items-center justify-center font-bold text-xs mx-auto shadow-2xs">
+                            -
+                          </div>
+                        </td>
+                        {/* Thu 12 */}
+                        <td className="p-2 border-r border-slate-200 dark:border-slate-800 align-top">
+                          <span className="font-bold text-slate-700 dark:text-slate-300 block mb-2">12</span>
+                          <div className="w-6 h-6 rounded bg-[#6b7280] text-white flex items-center justify-center font-bold text-xs mx-auto shadow-2xs">
+                            -
+                          </div>
+                        </td>
+                        {/* Fri 13 */}
+                        <td className="p-2 border-r border-slate-200 dark:border-slate-800 align-top">
+                          <span className="font-bold text-slate-700 dark:text-slate-300 block mb-2">13</span>
+                          <div className="w-6 h-6 rounded bg-[#6b7280] text-white flex items-center justify-center font-bold text-xs mx-auto shadow-2xs">
+                            -
+                          </div>
+                        </td>
+                        {/* Sat 14 */}
+                        <td className="p-2 bg-[#f0f6fc] dark:bg-blue-950/20 align-top">
+                          <span className="font-bold text-slate-700 dark:text-slate-300 block mb-1.5">14</span>
+                          <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold text-[10px] uppercase">
+                            OFF
+                          </span>
+                          <span className="text-[9px] text-slate-400 block mt-1">Weekly off</span>
+                        </td>
+                      </tr>
+
+                      {/* Week 3: 15 to 21 */}
+                      <tr className="h-20">
+                        {/* Sun 15 */}
+                        <td className="p-2 border-r border-slate-200 dark:border-slate-800 bg-[#fafcff] dark:bg-slate-900/40 align-top">
+                          <span className="font-bold text-slate-700 dark:text-slate-300 block mb-1.5">15</span>
+                          <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold text-[10px] uppercase">
+                            OFF
+                          </span>
+                          <span className="text-[9px] text-slate-400 block mt-1">Weekly off</span>
+                        </td>
+                        {/* Mon 16 */}
+                        <td className="p-2 border-r border-slate-200 dark:border-slate-800 align-top">
+                          <span className="font-bold text-slate-700 dark:text-slate-300 block mb-2">16</span>
+                          <div className="w-6 h-6 rounded bg-[#6b7280] text-white flex items-center justify-center font-bold text-xs mx-auto shadow-2xs">
+                            -
+                          </div>
+                        </td>
+                        {/* Tue 17 */}
+                        <td className="p-2 border-r border-slate-200 dark:border-slate-800 align-top">
+                          <span className="font-bold text-slate-700 dark:text-slate-300 block mb-2">17</span>
+                          <div className="w-6 h-6 rounded bg-[#6b7280] text-white flex items-center justify-center font-bold text-xs mx-auto shadow-2xs">
+                            -
+                          </div>
+                        </td>
+                        {/* Wed 18 */}
+                        <td className="p-2 border-r border-slate-200 dark:border-slate-800 align-top">
+                          <span className="font-bold text-slate-700 dark:text-slate-300 block mb-2">18</span>
+                          <div className="w-6 h-6 rounded bg-[#6b7280] text-white flex items-center justify-center font-bold text-xs mx-auto shadow-2xs">
+                            -
+                          </div>
+                        </td>
+                        {/* Thu 19 */}
+                        <td className="p-2 border-r border-slate-200 dark:border-slate-800 align-top">
+                          <span className="font-bold text-slate-700 dark:text-slate-300 block mb-2">19</span>
+                          <div className="w-6 h-6 rounded bg-[#6b7280] text-white flex items-center justify-center font-bold text-xs mx-auto shadow-2xs">
+                            -
+                          </div>
+                        </td>
+                        {/* Fri 20 */}
+                        <td className="p-2 border-r border-slate-200 dark:border-slate-800 align-top">
+                          <span className="font-bold text-slate-700 dark:text-slate-300 block mb-2">20</span>
+                          <div className="w-6 h-6 rounded bg-[#6b7280] text-white flex items-center justify-center font-bold text-xs mx-auto shadow-2xs">
+                            -
+                          </div>
+                        </td>
+                        {/* Sat 21 */}
+                        <td className="p-2 bg-[#f0f6fc] dark:bg-blue-950/20 align-top">
+                          <span className="font-bold text-slate-700 dark:text-slate-300 block mb-1.5">21</span>
+                          <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold text-[10px] uppercase">
+                            OFF
+                          </span>
+                          <span className="text-[9px] text-slate-400 block mt-1">Weekly off</span>
+                        </td>
+                      </tr>
+
+                      {/* Week 4: 22 to 28 */}
+                      <tr className="h-20">
+                        {/* Sun 22 */}
+                        <td className="p-2 border-r border-slate-200 dark:border-slate-800 bg-[#fafcff] dark:bg-slate-900/40 align-top">
+                          <span className="font-bold text-slate-700 dark:text-slate-300 block mb-1.5">22</span>
+                          <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold text-[10px] uppercase">
+                            OFF
+                          </span>
+                          <span className="text-[9px] text-slate-400 block mt-1">Weekly off</span>
+                        </td>
+                        {/* Mon 23 */}
+                        <td className="p-2 border-r border-slate-200 dark:border-slate-800 align-top">
+                          <span className="font-bold text-slate-700 dark:text-slate-300 block mb-2">23</span>
+                          <div className="w-6 h-6 rounded bg-[#6b7280] text-white flex items-center justify-center font-bold text-xs mx-auto shadow-2xs">
+                            -
+                          </div>
+                        </td>
+                        {/* Tue 24 */}
+                        <td className="p-2 border-r border-slate-200 dark:border-slate-800 align-top">
+                          <span className="font-bold text-slate-700 dark:text-slate-300 block mb-2">24</span>
+                          <div className="w-6 h-6 rounded bg-[#6b7280] text-white flex items-center justify-center font-bold text-xs mx-auto shadow-2xs">
+                            -
+                          </div>
+                        </td>
+                        {/* Wed 25 */}
+                        <td className="p-2 border-r border-slate-200 dark:border-slate-800 align-top">
+                          <span className="font-bold text-slate-700 dark:text-slate-300 block mb-2">25</span>
+                          <div className="w-6 h-6 rounded bg-[#6b7280] text-white flex items-center justify-center font-bold text-xs mx-auto shadow-2xs">
+                            -
+                          </div>
+                        </td>
+                        {/* Thu 26 */}
+                        <td className="p-2 border-r border-slate-200 dark:border-slate-800 align-top">
+                          <span className="font-bold text-slate-700 dark:text-slate-300 block mb-2">26</span>
+                          <div className="w-6 h-6 rounded bg-[#6b7280] text-white flex items-center justify-center font-bold text-xs mx-auto shadow-2xs">
+                            -
+                          </div>
+                        </td>
+                        {/* Fri 27 */}
+                        <td className="p-2 border-r border-slate-200 dark:border-slate-800 align-top">
+                          <span className="font-bold text-slate-700 dark:text-slate-300 block mb-2">27</span>
+                          <div className="w-6 h-6 rounded bg-[#6b7280] text-white flex items-center justify-center font-bold text-xs mx-auto shadow-2xs">
+                            -
+                          </div>
+                        </td>
+                        {/* Sat 28 */}
+                        <td className="p-2 bg-[#f0f6fc] dark:bg-blue-950/20 align-top">
+                          <span className="font-bold text-slate-700 dark:text-slate-300 block mb-1.5">28</span>
+                          <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold text-[10px] uppercase">
+                            OFF
+                          </span>
+                          <span className="text-[9px] text-slate-400 block mt-1">Weekly off</span>
+                        </td>
+                      </tr>
+
+                      {/* Week 5: 29 & 30 */}
+                      <tr className="h-20">
+                        {/* Sun 29 */}
+                        <td className="p-2 border-r border-slate-200 dark:border-slate-800 bg-[#fafcff] dark:bg-slate-900/40 align-top">
+                          <span className="font-bold text-slate-700 dark:text-slate-300 block mb-1.5">29</span>
+                          <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold text-[10px] uppercase">
+                            OFF
+                          </span>
+                          <span className="text-[9px] text-slate-400 block mt-1">Weekly off</span>
+                        </td>
+                        {/* Mon 30 */}
+                        <td className="p-2 border-r border-slate-200 dark:border-slate-800 align-top">
+                          <span className="font-bold text-slate-700 dark:text-slate-300 block mb-2">30</span>
+                          <div className="w-6 h-6 rounded bg-[#6b7280] text-white flex items-center justify-center font-bold text-xs mx-auto shadow-2xs">
+                            -
+                          </div>
+                        </td>
+                        {/* Remaining empty cells */}
+                        <td className="p-2 border-r border-slate-100 dark:border-slate-800/40 bg-slate-50/50 dark:bg-slate-900/20" />
+                        <td className="p-2 border-r border-slate-100 dark:border-slate-800/40 bg-slate-50/50 dark:bg-slate-900/20" />
+                        <td className="p-2 border-r border-slate-100 dark:border-slate-800/40 bg-slate-50/50 dark:bg-slate-900/20" />
+                        <td className="p-2 border-r border-slate-100 dark:border-slate-800/40 bg-slate-50/50 dark:bg-slate-900/20" />
+                        <td className="p-2 bg-slate-50/50 dark:bg-slate-900/20" />
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* BOTTOM LEGEND BAR (All 7 Status Chips matching Screenshot 1 & 2) */}
+                <div className="pt-2 flex flex-wrap items-center gap-3 text-xs text-slate-600 dark:text-slate-400">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-4 h-4 rounded bg-[#10b981] text-white font-bold text-[10px] flex items-center justify-center">P</span>
+                    <span className="text-[11px] font-medium">Present</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-4 h-4 rounded bg-[#f97316] text-white font-bold text-[10px] flex items-center justify-center">L</span>
+                    <span className="text-[11px] font-medium">Late</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-4 h-4 rounded bg-[#ef4444] text-white font-bold text-[10px] flex items-center justify-center">A</span>
+                    <span className="text-[11px] font-medium">Absent</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-5 h-4 rounded bg-[#06b6d4] text-white font-bold text-[9px] flex items-center justify-center">LV</span>
+                    <span className="text-[11px] font-medium">Leave</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-4 h-4 rounded bg-[#f59e0b] text-white font-bold text-[10px] flex items-center justify-center">H</span>
+                    <span className="text-[11px] font-medium">Holiday</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="px-1 py-0.2 rounded bg-slate-200 text-slate-700 font-bold text-[9px]">OFF</span>
+                    <span className="text-[11px] font-medium">Weekly off</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-4 h-4 rounded bg-[#6b7280] text-white font-bold text-[10px] flex items-center justify-center">-</span>
+                    <span className="text-[11px] font-medium">Not marked</span>
+                  </div>
+                </div>
+
+                {/* BOTTOM INFO / DISCLAIMER BANNER */}
+                <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs flex items-center gap-2">
+                  <span className="w-4 h-4 rounded-full bg-slate-800 text-white flex items-center justify-center text-[10px] font-bold shrink-0">i</span>
+                  <span>
+                    No general attendance records found for this month. Try switching to <strong>Subject-wise</strong> if your institution marks attendance per subject.
+                  </span>
                 </div>
               </div>
             </div>
