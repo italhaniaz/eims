@@ -37,6 +37,7 @@ const SupportApprovalsView = lazyWithRetry(() => import('./modules/platform/supp
 const UsersManagementView = lazyWithRetry(() => import('./modules/users-management/UsersManagementView'), 'users-management')
 const PersonnelManagementView = lazyWithRetry(() => import('./modules/personnel/PersonnelManagementView'), 'personnel-management')
 const TeacherPortalView = lazyWithRetry(() => import('./modules/teacher-portal/TeacherPortalView'), 'teacher-portal')
+const StudentPortalView = lazyWithRetry(() => import('./modules/student-portal/StudentPortalView'), 'student-portal-view')
 const NoticeBroadcasterView = lazyWithRetry(() => import('./modules/announcements/NoticeBroadcasterView'), 'notice-broadcaster')
 const CommunicationGatewayView = lazyWithRetry(() => import('./modules/communication/CommunicationGatewayView'), 'communication-gateway')
 const AuditLogsView = lazyWithRetry(() => import('./modules/audit-logs/AuditLogsView'), 'audit-logs')
@@ -590,7 +591,16 @@ const AppContent = () => {
     )
   }
 
-  // 3. SCHOOL ADMIN PORTAL (Dedicated School Management)
+  // 3. STUDENT PORTAL (Student Academic Console)
+  if (user.role === 'student') {
+    return (
+      <Suspense fallback={<ModuleSkeletonLoader />}>
+        <StudentPortalView />
+      </Suspense>
+    )
+  }
+
+  // 4. SCHOOL ADMIN PORTAL (Dedicated School Management)
   const allKnownInstitutes = [...(institutes || []), ...(sampleTemplateData?.institutes || [])]
   const matchedInst = allKnownInstitutes.find(i => i.id === user?.instituteId)
 

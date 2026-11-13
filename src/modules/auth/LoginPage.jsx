@@ -161,6 +161,16 @@ export const LoginPage = ({ onBackToLanding }) => {
             >
               Teacher
             </button>
+            <button
+              type="button"
+              onClick={() => {
+                setEmail('student@schoolms.com')
+                setPassword('password123')
+              }}
+              className="px-2 py-1.5 rounded-lg border border-amber-200 bg-amber-50/70 hover:bg-amber-100 text-amber-700 text-xs font-semibold transition-colors text-center cursor-pointer"
+            >
+              Student
+            </button>
           </div>
         </div>
 

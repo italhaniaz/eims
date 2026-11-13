@@ -31,8 +31,8 @@ export const AuthProvider = ({ children }) => {
       if (sessionSaved) {
         const parsed = JSON.parse(sessionSaved)
         if (parsed && parsed.email && parsed.isExplicitLogin) {
-          // Allow superadmin, institute_admin (School Admin), and teacher
-          if (parsed.role === 'superadmin' || parsed.role === 'institute_admin' || parsed.role === 'teacher') {
+          // Allow superadmin, institute_admin (School Admin), teacher, and student
+          if (parsed.role === 'superadmin' || parsed.role === 'institute_admin' || parsed.role === 'teacher' || parsed.role === 'student') {
             delete parsed.password
             return parsed
           }
@@ -43,7 +43,7 @@ export const AuthProvider = ({ children }) => {
       if (localSaved) {
         const parsed = JSON.parse(localSaved)
         if (parsed && parsed.email && parsed.isExplicitLogin) {
-          if (parsed.role === 'superadmin' || parsed.role === 'institute_admin' || parsed.role === 'teacher') {
+          if (parsed.role === 'superadmin' || parsed.role === 'institute_admin' || parsed.role === 'teacher' || parsed.role === 'student') {
             delete parsed.password
             return parsed
           }
@@ -157,6 +157,13 @@ export const AuthProvider = ({ children }) => {
       mail.includes('teacher') ||
       matchedDbUser?.role === 'teacher'
 
+    const isStudentLogin =
+      role === 'student' ||
+      mail === 'student@schoolms.com' ||
+      mail === 'student@apexed.io' ||
+      mail.includes('student') ||
+      matchedDbUser?.role === 'student'
+
     if (isSuperadminLogin) {
       userPayload = {
         id: matchedDbUser?.id || 'usr-1',
@@ -185,6 +192,28 @@ export const AuthProvider = ({ children }) => {
         tier: 'school',
         enabledTiers: ['school'],
         scope: 'Teacher Academic Portal',
+        isExplicitLogin: true,
+        loginTimestamp: new Date().toISOString()
+      }
+    } else if (isStudentLogin) {
+      userPayload = {
+        id: matchedDbUser?.id || 'usr-student-1',
+        name: matchedDbUser?.name || 'Saleem Ahmed',
+        roleTitle: 'Student',
+        role: 'student',
+        email: customEmail || mail || 'student@schoolms.com',
+        avatar: null,
+        studentId: 'std-demo-1',
+        rollNumber: 'CSM-2026-042',
+        admissionNumber: 'ADM-2026-108',
+        className: 'Class 10',
+        section: 'A',
+        instituteId: matchedInst?.id || 'inst-2',
+        instituteName: matchedInst?.name || 'City School Model Town Campus',
+        instituteType: 'School',
+        tier: 'school',
+        enabledTiers: ['school'],
+        scope: 'Student Academic Portal',
         isExplicitLogin: true,
         loginTimestamp: new Date().toISOString()
       }
@@ -316,26 +345,31 @@ export const AuthProvider = ({ children }) => {
         )
         const targetRole = matchedDbUser.role === 'superadmin' 
           ? 'superadmin' 
-          : (matchedDbUser.role === 'teacher' ? 'teacher' : 'institute_admin')
+          : (matchedDbUser.role === 'teacher' ? 'teacher' : matchedDbUser.role === 'student' ? 'student' : 'institute_admin')
         const roleTitle = targetRole === 'superadmin' 
           ? 'Superadmin' 
-          : (targetRole === 'teacher' ? 'Faculty / Subject Teacher' : 'School Principal / Admin')
+          : (targetRole === 'teacher' ? 'Faculty / Subject Teacher' : targetRole === 'student' ? 'Student' : 'School Principal / Admin')
         return {
           matched: true,
           success: true,
           user: {
             id: matchedDbUser.id,
-            name: matchedDbUser.name || (targetRole === 'superadmin' ? 'Super Administrator' : targetRole === 'teacher' ? 'Faculty Teacher' : 'School Principal'),
+            name: matchedDbUser.name || (targetRole === 'superadmin' ? 'Super Administrator' : targetRole === 'teacher' ? 'Faculty Teacher' : targetRole === 'student' ? 'Student' : 'School Principal'),
             roleTitle: roleTitle,
             role: targetRole,
             email: matchedDbUser.email || mail,
             avatar: null,
+            studentId: matchedDbUser.studentId || (targetRole === 'student' ? 'std-demo-1' : undefined),
+            rollNumber: matchedDbUser.rollNumber || (targetRole === 'student' ? 'CSM-2026-042' : undefined),
+            admissionNumber: matchedDbUser.admissionNumber || (targetRole === 'student' ? 'ADM-2026-108' : undefined),
+            className: matchedDbUser.className || (targetRole === 'student' ? 'Class 10' : undefined),
+            section: matchedDbUser.section || (targetRole === 'student' ? 'A' : undefined),
             instituteId: targetRole === 'superadmin' ? null : (matchedInst?.id || matchedDbUser.instituteId || matchedDbUser.institute || 'inst-2'),
             instituteName: targetRole === 'superadmin' ? 'Central Headquarters' : (matchedInst?.name || matchedDbUser.instituteName || matchedDbUser.institute || 'City School Model Town Campus'),
             instituteType: targetRole === 'superadmin' ? undefined : 'School',
             tier: targetRole === 'superadmin' ? undefined : 'school',
             enabledTiers: targetRole === 'superadmin' ? undefined : ['school'],
-            scope: targetRole === 'superadmin' ? 'Schools Platform Administration' : targetRole === 'teacher' ? 'Teacher Academic Portal' : 'School Administration (K-10)',
+            scope: targetRole === 'superadmin' ? 'Schools Platform Administration' : targetRole === 'teacher' ? 'Teacher Academic Portal' : targetRole === 'student' ? 'Student Academic Portal' : 'School Administration (K-10)',
             loginTimestamp: new Date().toISOString()
           }
         }
@@ -499,6 +533,42 @@ export const AuthProvider = ({ children }) => {
         tier: 'school',
         enabledTiers: ['school'],
         scope: 'Teacher Academic Portal'
+      },
+      'student@schoolms.com': {
+        id: 'usr-student-1',
+        name: 'Saleem Ahmed',
+        roleTitle: 'Student',
+        role: 'student',
+        email: 'student@schoolms.com',
+        studentId: 'std-demo-1',
+        rollNumber: 'CSM-2026-042',
+        admissionNumber: 'ADM-2026-108',
+        className: 'Class 10',
+        section: 'A',
+        instituteId: 'inst-2',
+        instituteName: 'City School Model Town Campus',
+        instituteType: 'School',
+        tier: 'school',
+        enabledTiers: ['school'],
+        scope: 'Student Academic Portal'
+      },
+      'student@apexed.io': {
+        id: 'usr-student-2',
+        name: 'Saleem Ahmed',
+        roleTitle: 'Student',
+        role: 'student',
+        email: 'student@apexed.io',
+        studentId: 'std-demo-1',
+        rollNumber: 'CSM-2026-042',
+        admissionNumber: 'ADM-2026-108',
+        className: 'Class 10',
+        section: 'A',
+        instituteId: 'inst-2',
+        instituteName: 'City School Model Town Campus',
+        instituteType: 'School',
+        tier: 'school',
+        enabledTiers: ['school'],
+        scope: 'Student Academic Portal'
       }
     }
 
