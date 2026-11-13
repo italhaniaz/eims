@@ -49,7 +49,13 @@ import {
   List,
   Eye,
   Image,
-  MapPin
+  MapPin,
+  Video,
+  Play,
+  PlaySquare,
+  Paperclip,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useAppData } from '../../context/AppDataContext'
@@ -186,6 +192,102 @@ export default function StudentPortalView() {
       return matchSubject && matchDate
     })
   }, [defaultAssignments, assignmentSubjectFilter, assignmentDateFilter])
+
+  // Sidebar Submenu Accordion states
+  const [isResourcesOpen, setIsResourcesOpen] = useState(true)
+  const [isCommunicationOpen, setIsCommunicationOpen] = useState(true)
+
+  // Pick 1: Handouts state (media_1794575732921_b8b0357e.png)
+  const [handoutSearchInput, setHandoutSearchInput] = useState('')
+  const [handoutSubjectInput, setHandoutSubjectInput] = useState('All')
+  const [handoutAppliedFilters, setHandoutAppliedFilters] = useState({ search: '', subject: 'All' })
+  const [handoutsList, setHandoutsList] = useState([
+    // Empty by default to match screenshot "No handouts found.", but structure prepared
+  ])
+
+  // Pick 2: Recorded Lectures state (media_1794575827803_05220938.png)
+  const [lectureSearchInput, setLectureSearchInput] = useState('')
+  const [lectureSubjectInput, setLectureSubjectInput] = useState('All')
+  const [lectureAppliedFilters, setLectureAppliedFilters] = useState({ search: '', subject: 'All' })
+  const [lecturesList, setLecturesList] = useState([])
+  const [selectedLectureVideo, setSelectedLectureVideo] = useState(null)
+
+  // Pick 3: Report Cards state (media_1794575863429_6166311b.png)
+  const [reportCardSelectedYear, setReportCardSelectedYear] = useState('2026')
+  const [showDetailedReportCard, setShowDetailedReportCard] = useState(false)
+
+  // Pick 4: Announcements state (media_1794575902541_cbada2e1.png)
+  const [announcementSearchTerm, setAnnouncementSearchTerm] = useState('')
+  const [announcementTypeFilter, setAnnouncementTypeFilter] = useState('All Types')
+  const [announcementsDataList, setAnnouncementsDataList] = useState([
+    {
+      id: 1,
+      title: 'Summer Holidays',
+      isNew: true,
+      author: 'Ahmad Ali',
+      date: '15 Jun 2026, 08:20 AM',
+      scope: 'Institute-wide',
+      hasAttachment: false,
+      type: 'Holiday',
+      content: 'Summer Holidays for all classes Event date: 06 Jun 2026 – 19 Jun 2026'
+    },
+    {
+      id: 2,
+      title: '25 December Holiday!',
+      isNew: true,
+      author: 'Superadmin Mirza',
+      date: '15 Dec 2025, 09:14 AM',
+      scope: 'Institute-wide',
+      hasAttachment: true,
+      attachmentName: '25_Dec_Holiday_Circular.pdf',
+      type: 'Holiday',
+      content: '25 December Holiday!'
+    }
+  ])
+  const [appliedAnnouncementFilters, setAppliedAnnouncementFilters] = useState({ search: '', type: 'All Types' })
+
+  // Pick 5 & 6: Notifications state (media_1794576296067_9544c674.png & media_1794576333271_67484292.png)
+  const [notificationPage, setNotificationPage] = useState(1)
+  const fullNotificationsList = useMemo(() => [
+    { id: 1, title: 'Marks updated', date: '21 Oct 2026, 11:51 AM', message: 'Marks have been saved for Math — First term.' },
+    { id: 2, title: 'Fee invoice generated', date: '16 Oct 2026, 10:48 AM', message: 'A new fee invoice has been generated: Oct 2026 (Monthly).' },
+    { id: 3, title: 'Attendance marked', date: '04 Oct 2026, 08:11 AM', message: 'Attendance marked as Present for 2026-10-04.' },
+    { id: 4, title: 'Marks updated', date: '20 Sep 2026, 09:34 PM', message: 'Marks have been saved for Math — First term.' },
+    { id: 5, title: 'Payment received', date: '01 Sep 2026, 10:56 PM', message: 'Payment of PKR 2,475 received for Apr fee 4072.' },
+    { id: 6, title: 'Payment received', date: '23 Aug 2026, 07:14 PM', message: 'Payment of PKR 2,475 received for Individual fee June.' },
+    { id: 7, title: 'Attendance marked', date: '22 Aug 2026, 11:04 AM', message: 'Attendance marked as Present for 2026-08-03.' },
+    { id: 8, title: 'Payment received', date: '31 Jul 2026, 11:43 AM', message: 'Payment of PKR 5 received for Fee.' },
+    { id: 9, title: 'Payment received', date: '31 Jul 2026, 09:35 AM', message: 'Payment of PKR 4 received for Fee.' },
+    { id: 10, title: 'Payment received', date: '31 Jul 2026, 08:37 AM', message: 'Payment of PKR 5 received for Fee.' },
+    { id: 11, title: 'Payment received', date: '31 Jul 2026, 01:11 AM', message: 'Payment of PKR 0 received for Fee.' },
+    { id: 12, title: 'Attendance marked', date: '31 Jul 2026, 01:09 AM', message: 'Attendance marked as Late for 2026-07-31.' },
+    { id: 13, title: 'Attendance marked', date: '31 Jul 2026, 01:09 AM', message: 'Attendance marked as Absent for 2026-07-31.' },
+    { id: 14, title: 'Attendance marked', date: '31 Jul 2026, 01:09 AM', message: 'Attendance marked as Present for 2026-07-31.' },
+    { id: 15, title: 'Attendance marked', date: '31 Jul 2026, 01:08 AM', message: 'Attendance marked as Absent for 2026-07-31.' }
+  ], [])
+
+  // Pick 7: Inbox state (media_1794576401447_67f88411.png)
+  // Security constraint: "students superadmin ko message na kr sake bs admin ko hi kre"
+  const [inboxSearchText, setInboxSearchText] = useState('')
+  const [selectedConversation, setSelectedConversation] = useState(null)
+  const [chatMessageText, setChatMessageText] = useState('')
+  const [showBlockedSuperadminAlert, setShowBlockedSuperadminAlert] = useState(false)
+  const [adminChatMessages, setAdminChatMessages] = useState([
+    {
+      id: 1,
+      sender: 'admin',
+      senderName: 'Ahmad Ali (School Admin)',
+      text: 'Assalam-o-Alaikum! Welcome to the student support desk. Please let us know if you need assistance with classes, fee challans, or attendance.',
+      timestamp: '31 Jul 2026, 10:15 AM'
+    },
+    {
+      id: 2,
+      sender: 'student',
+      senderName: studentName,
+      text: 'this is test message',
+      timestamp: '31 Jul 2026, 11:40 AM'
+    }
+  ])
 
   // Quick link highlight state
   const [activeQuickLink, setActiveQuickLink] = useState('fee-records')
@@ -471,45 +573,261 @@ export default function StudentPortalView() {
           } ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} flex`}
         >
           <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto text-xs">
-            {[
-              { id: 'dashboard', label: 'Dashboard', icon: Home },
-              { id: 'timetable', label: 'My Timetable', icon: CalendarDays },
-              { id: 'attendance', label: 'My Attendance', icon: UserCheck },
-              { id: 'assignments', label: 'Assignments', icon: BookOpen },
-              { id: 'resources', label: 'Class Resources', icon: FolderOpen, hasChevron: true },
-              { id: 'report-cards', label: 'Report Cards', icon: FileText },
-              { id: 'announcements', label: 'Announcements', icon: Megaphone },
-              { id: 'communication', label: 'Communication', icon: MessageSquare, hasChevron: true },
-              { id: 'fees', label: 'Fee Records', icon: CreditCard },
-              { id: 'download-app', label: 'Download App', icon: Smartphone },
-              { id: 'account', label: 'My Account', icon: User }
-            ].map(item => {
-              const Icon = item.icon
-              const isActive = activeTab === item.id
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => {
-                    setActiveTab(item.id)
-                    setIsMobileMenuOpen(false)
-                  }}
-                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium transition-colors cursor-pointer ${
-                    isActive
-                      ? 'bg-[#eef4ff] text-[#2563eb] font-semibold dark:bg-blue-950/50 dark:text-blue-300'
-                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <Icon className={`w-4 h-4 ${isActive ? 'text-[#2563eb] dark:text-blue-300' : 'text-slate-400'}`} />
-                    <span>{item.label}</span>
-                  </div>
-                  {item.hasChevron && (
-                    <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
-                  )}
-                </button>
-              )
-            })}
+            {/* 1. Dashboard */}
+            <button
+              type="button"
+              onClick={() => { setActiveTab('dashboard'); setIsMobileMenuOpen(false); }}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium transition-colors cursor-pointer ${
+                activeTab === 'dashboard'
+                  ? 'bg-[#eef4ff] text-[#2563eb] font-semibold dark:bg-blue-950/50 dark:text-blue-300'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Home className={`w-4 h-4 ${activeTab === 'dashboard' ? 'text-[#2563eb] dark:text-blue-300' : 'text-slate-400'}`} />
+                <span>Dashboard</span>
+              </div>
+            </button>
+
+            {/* 2. My Timetable */}
+            <button
+              type="button"
+              onClick={() => { setActiveTab('timetable'); setIsMobileMenuOpen(false); }}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium transition-colors cursor-pointer ${
+                activeTab === 'timetable'
+                  ? 'bg-[#eef4ff] text-[#2563eb] font-semibold dark:bg-blue-950/50 dark:text-blue-300'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <CalendarDays className={`w-4 h-4 ${activeTab === 'timetable' ? 'text-[#2563eb] dark:text-blue-300' : 'text-slate-400'}`} />
+                <span>My Timetable</span>
+              </div>
+            </button>
+
+            {/* 3. My Attendance */}
+            <button
+              type="button"
+              onClick={() => { setActiveTab('attendance'); setIsMobileMenuOpen(false); }}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium transition-colors cursor-pointer ${
+                activeTab === 'attendance'
+                  ? 'bg-[#eef4ff] text-[#2563eb] font-semibold dark:bg-blue-950/50 dark:text-blue-300'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <UserCheck className={`w-4 h-4 ${activeTab === 'attendance' ? 'text-[#2563eb] dark:text-blue-300' : 'text-slate-400'}`} />
+                <span>My Attendance</span>
+              </div>
+            </button>
+
+            {/* 4. Assignments */}
+            <button
+              type="button"
+              onClick={() => { setActiveTab('assignments'); setIsMobileMenuOpen(false); }}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium transition-colors cursor-pointer ${
+                activeTab === 'assignments'
+                  ? 'bg-[#eef4ff] text-[#2563eb] font-semibold dark:bg-blue-950/50 dark:text-blue-300'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <BookOpen className={`w-4 h-4 ${activeTab === 'assignments' ? 'text-[#2563eb] dark:text-blue-300' : 'text-slate-400'}`} />
+                <span>Assignments</span>
+              </div>
+            </button>
+
+            {/* 5. Class Resources (Accordion Group matching pick 1 & pick 2) */}
+            <div className="space-y-0.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsResourcesOpen(prev => !prev)
+                  if (!['handouts', 'lectures'].includes(activeTab)) {
+                    setActiveTab('handouts')
+                  }
+                }}
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium transition-colors cursor-pointer ${
+                  activeTab === 'handouts' || activeTab === 'lectures' || activeTab === 'resources'
+                    ? 'text-[#2563eb] font-semibold dark:text-blue-300'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <FolderOpen className={`w-4 h-4 ${['handouts', 'lectures', 'resources'].includes(activeTab) ? 'text-[#2563eb] dark:text-blue-300' : 'text-slate-400'}`} />
+                  <span>Class Resources</span>
+                </div>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isResourcesOpen ? 'rotate-0' : '-rotate-90'} text-slate-400`} />
+              </button>
+
+              {isResourcesOpen && (
+                <div className="pl-6 pr-1 space-y-0.5">
+                  {/* Subitem: Handouts */}
+                  <button
+                    type="button"
+                    onClick={() => { setActiveTab('handouts'); setIsMobileMenuOpen(false); }}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl transition-colors cursor-pointer ${
+                      activeTab === 'handouts' || activeTab === 'resources'
+                        ? 'bg-[#eef4ff] text-[#2563eb] font-semibold dark:bg-blue-950/50 dark:text-blue-300'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900'
+                    }`}
+                  >
+                    <FileText className={`w-3.5 h-3.5 ${activeTab === 'handouts' || activeTab === 'resources' ? 'text-[#2563eb]' : 'text-slate-400'}`} />
+                    <span>Handouts</span>
+                  </button>
+
+                  {/* Subitem: Recorded Lectures */}
+                  <button
+                    type="button"
+                    onClick={() => { setActiveTab('lectures'); setIsMobileMenuOpen(false); }}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl transition-colors cursor-pointer ${
+                      activeTab === 'lectures'
+                        ? 'bg-[#eef4ff] text-[#2563eb] font-semibold dark:bg-blue-950/50 dark:text-blue-300'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900'
+                    }`}
+                  >
+                    <PlaySquare className={`w-3.5 h-3.5 ${activeTab === 'lectures' ? 'text-[#2563eb]' : 'text-slate-400'}`} />
+                    <span>Recorded Lectures</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* 6. Report Cards (Pick 3) */}
+            <button
+              type="button"
+              onClick={() => { setActiveTab('report-cards'); setIsMobileMenuOpen(false); }}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium transition-colors cursor-pointer ${
+                activeTab === 'report-cards'
+                  ? 'bg-[#eef4ff] text-[#2563eb] font-semibold dark:bg-blue-950/50 dark:text-blue-300'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <FileText className={`w-4 h-4 ${activeTab === 'report-cards' ? 'text-[#2563eb] dark:text-blue-300' : 'text-slate-400'}`} />
+                <span>Report Cards</span>
+              </div>
+            </button>
+
+            {/* 7. Announcements (Pick 4) */}
+            <button
+              type="button"
+              onClick={() => { setActiveTab('announcements'); setIsMobileMenuOpen(false); }}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium transition-colors cursor-pointer ${
+                activeTab === 'announcements'
+                  ? 'bg-[#eef4ff] text-[#2563eb] font-semibold dark:bg-blue-950/50 dark:text-blue-300'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Megaphone className={`w-4 h-4 ${activeTab === 'announcements' ? 'text-[#2563eb] dark:text-blue-300' : 'text-slate-400'}`} />
+                <span>Announcements</span>
+              </div>
+            </button>
+
+            {/* 8. Communication (Accordion Group matching pick 5, 6 & 7) */}
+            <div className="space-y-0.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsCommunicationOpen(prev => !prev)
+                  if (!['notifications', 'inbox'].includes(activeTab)) {
+                    setActiveTab('notifications')
+                  }
+                }}
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium transition-colors cursor-pointer ${
+                  activeTab === 'notifications' || activeTab === 'inbox' || activeTab === 'communication'
+                    ? 'text-[#2563eb] font-semibold dark:text-blue-300'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <MessageSquare className={`w-4 h-4 ${['notifications', 'inbox', 'communication'].includes(activeTab) ? 'text-[#2563eb] dark:text-blue-300' : 'text-slate-400'}`} />
+                  <span>Communication</span>
+                </div>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isCommunicationOpen ? 'rotate-0' : '-rotate-90'} text-slate-400`} />
+              </button>
+
+              {isCommunicationOpen && (
+                <div className="pl-6 pr-1 space-y-0.5">
+                  {/* Subitem: Notifications (Pick 5 & 6) */}
+                  <button
+                    type="button"
+                    onClick={() => { setActiveTab('notifications'); setIsMobileMenuOpen(false); }}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl transition-colors cursor-pointer ${
+                      activeTab === 'notifications' || activeTab === 'communication'
+                        ? 'bg-[#eef4ff] text-[#2563eb] font-semibold dark:bg-blue-950/50 dark:text-blue-300'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900'
+                    }`}
+                  >
+                    <Bell className={`w-3.5 h-3.5 ${activeTab === 'notifications' || activeTab === 'communication' ? 'text-[#2563eb]' : 'text-slate-400'}`} />
+                    <span>Notifications</span>
+                  </button>
+
+                  {/* Subitem: Inbox (Pick 7) */}
+                  <button
+                    type="button"
+                    onClick={() => { setActiveTab('inbox'); setIsMobileMenuOpen(false); }}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl transition-colors cursor-pointer ${
+                      activeTab === 'inbox'
+                        ? 'bg-[#eef4ff] text-[#2563eb] font-semibold dark:bg-blue-950/50 dark:text-blue-300'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900'
+                    }`}
+                  >
+                    <Mail className={`w-3.5 h-3.5 ${activeTab === 'inbox' ? 'text-[#2563eb]' : 'text-slate-400'}`} />
+                    <span>Inbox</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* 9. Fee Records */}
+            <button
+              type="button"
+              onClick={() => { setActiveTab('fees'); setIsMobileMenuOpen(false); }}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium transition-colors cursor-pointer ${
+                activeTab === 'fees'
+                  ? 'bg-[#eef4ff] text-[#2563eb] font-semibold dark:bg-blue-950/50 dark:text-blue-300'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <CreditCard className={`w-4 h-4 ${activeTab === 'fees' ? 'text-[#2563eb] dark:text-blue-300' : 'text-slate-400'}`} />
+                <span>Fee Records</span>
+              </div>
+            </button>
+
+            {/* 10. Download App */}
+            <button
+              type="button"
+              onClick={() => { setActiveTab('download-app'); setIsMobileMenuOpen(false); }}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium transition-colors cursor-pointer ${
+                activeTab === 'download-app'
+                  ? 'bg-[#eef4ff] text-[#2563eb] font-semibold dark:bg-blue-950/50 dark:text-blue-300'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Smartphone className={`w-4 h-4 ${activeTab === 'download-app' ? 'text-[#2563eb] dark:text-blue-300' : 'text-slate-400'}`} />
+                <span>Download App</span>
+              </div>
+            </button>
+
+            {/* 11. My Account */}
+            <button
+              type="button"
+              onClick={() => { setActiveTab('account'); setIsMobileMenuOpen(false); }}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium transition-colors cursor-pointer ${
+                activeTab === 'account'
+                  ? 'bg-[#eef4ff] text-[#2563eb] font-semibold dark:bg-blue-950/50 dark:text-blue-300'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <User className={`w-4 h-4 ${activeTab === 'account' ? 'text-[#2563eb] dark:text-blue-300' : 'text-slate-400'}`} />
+                <span>My Account</span>
+              </div>
+            </button>
           </nav>
 
           {/* Quick Edit Name Prompt in Sidebar if Unknown */}
@@ -2013,78 +2331,1238 @@ export default function StudentPortalView() {
             </div>
           )}
 
-          {/* TAB 5: CLASS RESOURCES */}
-          {activeTab === 'resources' && (
-            <div className="space-y-5">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-                Class Learning Resources & Handouts
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <FileText className="w-6 h-6 text-blue-600" />
-                    <div>
-                      <p className="font-bold text-slate-900 dark:text-white">Nursery Alphabets & Phonics Guide</p>
-                      <p className="text-slate-400 text-[11px]">PDF · 2.4 MB</p>
+          {/* TAB 5: CLASS RESOURCES - HANDOUTS (Pick 1 - media_1794575732921_b8b0357e.png) */}
+          {(activeTab === 'handouts' || activeTab === 'resources') && (
+            <div className="space-y-4">
+              {/* Top Subheader: "Handouts" + Back Button */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-md bg-blue-100 text-blue-600 flex items-center justify-center">
+                      <FileText className="w-4 h-4" />
                     </div>
+                    <h1 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                      Handouts
+                    </h1>
                   </div>
-                  <button className="px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 font-bold hover:bg-blue-100">
-                    Download
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('dashboard')}
+                    className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-800 dark:hover:text-white font-medium mt-1 cursor-pointer"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" /> Back
                   </button>
+                </div>
+
+                {/* Right Top Action Icons */}
+                <div className="flex items-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 overflow-x-auto pb-1">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('report-cards')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <BookOpen className="w-4 h-4 text-slate-500" />
+                    <span>Report Card</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('attendance')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <Calendar className="w-4 h-4 text-slate-500" />
+                    <span>My Attendance</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('assignments')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <BookMarked className="w-4 h-4 text-slate-500" />
+                    <span>Assignments</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('announcements')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <Megaphone className="w-4 h-4 text-slate-500" />
+                    <span>Announcements</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('fees')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <CreditCard className="w-4 h-4 text-slate-500" />
+                    <span>Fee Records</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* MAIN CONTENT CARD */}
+              <div className={`p-5 rounded-2xl border transition-all ${
+                isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+              } shadow-xs space-y-4`}>
+                {/* Header */}
+                <div>
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-slate-700 dark:text-slate-300" />
+                    <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                      Handouts
+                    </h2>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Learning handouts for your classes
+                  </p>
+                </div>
+
+                {/* Filter Row (Search, Subject, Apply, Reset) */}
+                <div className="flex flex-wrap items-end gap-3 text-xs pt-1">
+                  <div className="w-full sm:w-64">
+                    <label className="block text-slate-600 dark:text-slate-300 font-semibold mb-1">
+                      Search
+                    </label>
+                    <input
+                      type="text"
+                      value={handoutSearchInput}
+                      onChange={(e) => setHandoutSearchInput(e.target.value)}
+                      placeholder="Title, description or lecturer"
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-blue-500/20"
+                    />
+                  </div>
+
+                  <div className="w-full sm:w-48">
+                    <label className="block text-slate-600 dark:text-slate-300 font-semibold mb-1">
+                      Subject
+                    </label>
+                    <select
+                      value={handoutSubjectInput}
+                      onChange={(e) => setHandoutSubjectInput(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+                    >
+                      <option value="All">All</option>
+                      <option value="English">English</option>
+                      <option value="Math">Math</option>
+                      <option value="Play Activity">Play Activity</option>
+                      <option value="Urdu">Urdu</option>
+                      <option value="General Science">General Science</option>
+                    </select>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setHandoutAppliedFilters({ search: handoutSearchInput, subject: handoutSubjectInput })}
+                    className="px-4 py-2 rounded-xl bg-[#2563eb] hover:bg-blue-700 text-white font-semibold text-xs flex items-center gap-1.5 shadow-xs cursor-pointer"
+                  >
+                    <Filter className="w-3.5 h-3.5" />
+                    Apply
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setHandoutSearchInput('')
+                      setHandoutSubjectInput('All')
+                      setHandoutAppliedFilters({ search: '', subject: 'All' })
+                    }}
+                    className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-semibold cursor-pointer"
+                  >
+                    Reset
+                  </button>
+                </div>
+
+                {/* Table matching screenshot media_1794575732921_b8b0357e.png */}
+                <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl">
+                  <table className="w-full text-xs text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-semibold bg-slate-50/70 dark:bg-slate-800/60">
+                        <th className="py-3 px-4">Title</th>
+                        <th className="py-3 px-4">Class</th>
+                        <th className="py-3 px-4">Subject</th>
+                        <th className="py-3 px-4">Lecturer</th>
+                        <th className="py-3 px-4">Attachment</th>
+                        <th className="py-3 px-4">Updated</th>
+                        <th className="py-3 px-4 text-center">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {handoutsList.filter(item => {
+                        const mSearch = !handoutAppliedFilters.search || item.title.toLowerCase().includes(handoutAppliedFilters.search.toLowerCase())
+                        const mSub = handoutAppliedFilters.subject === 'All' || item.subject === handoutAppliedFilters.subject
+                        return mSearch && mSub
+                      }).length > 0 ? (
+                        handoutsList.map(item => (
+                          <tr key={item.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
+                            <td className="py-3 px-4 font-bold text-slate-900 dark:text-white">{item.title}</td>
+                            <td className="py-3 px-4">{item.class}</td>
+                            <td className="py-3 px-4">{item.subject}</td>
+                            <td className="py-3 px-4">{item.lecturer}</td>
+                            <td className="py-3 px-4">
+                              <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-600 text-[10px] font-semibold">{item.attachment}</span>
+                            </td>
+                            <td className="py-3 px-4 text-slate-500">{item.updated}</td>
+                            <td className="py-3 px-4 text-center">
+                              <button className="px-2.5 py-1 rounded-lg bg-blue-600 text-white font-medium text-xs">Download</button>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={7} className="py-14 text-center text-slate-400">
+                            No handouts found.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
           )}
 
-          {/* TAB 6: REPORT CARDS */}
-          {activeTab === 'report-cards' && (
-            <div className="space-y-5">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-                  Academic Report Cards
-                </h2>
-                <button
-                  type="button"
-                  onClick={() => setIsReportCardModalOpen(true)}
-                  className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-xs cursor-pointer"
-                >
-                  View Full Report Card
-                </button>
+          {/* TAB 5B: CLASS RESOURCES - RECORDED LECTURES (Pick 2 - media_1794575827803_05220938.png) */}
+          {activeTab === 'lectures' && (
+            <div className="space-y-4">
+              {/* Top Subheader: "Recorded Lectures" + Back Button */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-md bg-blue-100 text-blue-600 flex items-center justify-center">
+                      <FileText className="w-4 h-4" />
+                    </div>
+                    <h1 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                      Recorded Lectures
+                    </h1>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('dashboard')}
+                    className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-800 dark:hover:text-white font-medium mt-1 cursor-pointer"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" /> Back
+                  </button>
+                </div>
+
+                {/* Right Top Action Icons */}
+                <div className="flex items-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 overflow-x-auto pb-1">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('report-cards')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <BookOpen className="w-4 h-4 text-slate-500" />
+                    <span>Report Card</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('attendance')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <Calendar className="w-4 h-4 text-slate-500" />
+                    <span>My Attendance</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('assignments')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <BookMarked className="w-4 h-4 text-slate-500" />
+                    <span>Assignments</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('announcements')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <Megaphone className="w-4 h-4 text-slate-500" />
+                    <span>Announcements</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('fees')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <CreditCard className="w-4 h-4 text-slate-500" />
+                    <span>Fee Records</span>
+                  </button>
+                </div>
               </div>
 
-              <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs">
-                <p className="font-bold text-sm text-slate-900 dark:text-white">Mid-Term Assessment 2025-2026</p>
-                <p className="text-slate-400 mt-1">Student: {studentName} &bull; Class: {studentClass}</p>
+              {/* MAIN CONTENT CARD */}
+              <div className={`p-5 rounded-2xl border transition-all ${
+                isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+              } shadow-xs space-y-4`}>
+                {/* Header */}
+                <div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded bg-slate-900 text-white flex items-center justify-center text-[9px]">
+                      <Play className="w-2.5 h-2.5 fill-current" />
+                    </div>
+                    <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                      Recorded Lectures
+                    </h2>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Recorded lectures for your classes
+                  </p>
+                </div>
+
+                {/* Filter Row (Search, Subject, Apply, Reset) */}
+                <div className="flex flex-wrap items-end gap-3 text-xs pt-1">
+                  <div className="w-full sm:w-64">
+                    <label className="block text-slate-600 dark:text-slate-300 font-semibold mb-1">
+                      Search
+                    </label>
+                    <input
+                      type="text"
+                      value={lectureSearchInput}
+                      onChange={(e) => setLectureSearchInput(e.target.value)}
+                      placeholder="Title, notes or lecturer"
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-blue-500/20"
+                    />
+                  </div>
+
+                  <div className="w-full sm:w-48">
+                    <label className="block text-slate-600 dark:text-slate-300 font-semibold mb-1">
+                      Subject
+                    </label>
+                    <select
+                      value={lectureSubjectInput}
+                      onChange={(e) => setLectureSubjectInput(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+                    >
+                      <option value="All">All</option>
+                      <option value="English">English</option>
+                      <option value="Math">Math</option>
+                      <option value="Play Activity">Play Activity</option>
+                      <option value="Urdu">Urdu</option>
+                      <option value="General Science">General Science</option>
+                    </select>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setLectureAppliedFilters({ search: lectureSearchInput, subject: lectureSubjectInput })}
+                    className="px-4 py-2 rounded-xl bg-[#2563eb] hover:bg-blue-700 text-white font-semibold text-xs flex items-center gap-1.5 shadow-xs cursor-pointer"
+                  >
+                    <Filter className="w-3.5 h-3.5" />
+                    Apply
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLectureSearchInput('')
+                      setLectureSubjectInput('All')
+                      setLectureAppliedFilters({ search: '', subject: 'All' })
+                    }}
+                    className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-semibold cursor-pointer"
+                  >
+                    Reset
+                  </button>
+                </div>
+
+                {/* Table matching screenshot media_1794575827803_05220938.png */}
+                <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl">
+                  <table className="w-full text-xs text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-semibold bg-slate-50/70 dark:bg-slate-800/60">
+                        <th className="py-3 px-4">Title</th>
+                        <th className="py-3 px-4">Class</th>
+                        <th className="py-3 px-4">Subject</th>
+                        <th className="py-3 px-4">Lecturer</th>
+                        <th className="py-3 px-4">Updated</th>
+                        <th className="py-3 px-4 text-center">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {lecturesList.length > 0 ? (
+                        lecturesList.map(item => (
+                          <tr key={item.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
+                            <td className="py-3 px-4 font-bold text-slate-900 dark:text-white">{item.title}</td>
+                            <td className="py-3 px-4">{item.class}</td>
+                            <td className="py-3 px-4">{item.subject}</td>
+                            <td className="py-3 px-4">{item.lecturer}</td>
+                            <td className="py-3 px-4 text-slate-500">{item.updated}</td>
+                            <td className="py-3 px-4 text-center">
+                              <button
+                                onClick={() => setSelectedLectureVideo(item)}
+                                className="px-2.5 py-1 rounded-lg bg-blue-600 text-white font-medium text-xs flex items-center gap-1 mx-auto"
+                              >
+                                <Play className="w-3 h-3 fill-current" /> Watch
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={6} className="py-14 text-center text-slate-400">
+                            No recorded lectures found.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
 
-          {/* TAB 7: ANNOUNCEMENTS */}
+          {/* TAB 6: REPORT CARDS (Pick 3 - media_1794575863429_6166311b.png) */}
+          {activeTab === 'report-cards' && (
+            <div className="space-y-4">
+              {/* Top Subheader: "Select Exam Year" + Back Button */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-md bg-blue-100 text-blue-600 flex items-center justify-center">
+                      <FileText className="w-4 h-4" />
+                    </div>
+                    <h1 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                      Select Exam Year
+                    </h1>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (showDetailedReportCard) {
+                        setShowDetailedReportCard(false)
+                      } else {
+                        setActiveTab('dashboard')
+                      }
+                    }}
+                    className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-800 dark:hover:text-white font-medium mt-1 cursor-pointer"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" /> Back
+                  </button>
+                </div>
+
+                {/* Right Top Action Icons (with Report Card active pill) */}
+                <div className="flex items-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 overflow-x-auto pb-1">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('report-cards')}
+                    className="flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl bg-[#eef4ff] text-[#2563eb] font-semibold dark:bg-blue-950/50 dark:text-blue-300 transition-colors cursor-pointer"
+                  >
+                    <BookOpen className="w-4 h-4 text-[#2563eb] dark:text-blue-300" />
+                    <span>Report Card</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('attendance')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <Calendar className="w-4 h-4 text-slate-500" />
+                    <span>My Attendance</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('assignments')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <BookMarked className="w-4 h-4 text-slate-500" />
+                    <span>Assignments</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('announcements')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <Megaphone className="w-4 h-4 text-slate-500" />
+                    <span>Announcements</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('fees')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <CreditCard className="w-4 h-4 text-slate-500" />
+                    <span>Fee Records</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* CARD SELECTION VIEW (Exact match to screenshot 3) */}
+              {!showDetailedReportCard ? (
+                <div className="max-w-md mx-auto my-12">
+                  <div className="bg-[#1e293b] text-white px-6 py-4 rounded-t-2xl flex items-center gap-2.5 font-bold text-sm shadow-xs">
+                    <Clock className="w-4 h-4 text-slate-300" />
+                    <span>Select Result Year</span>
+                  </div>
+
+                  <div className={`p-6 rounded-b-2xl border border-t-0 ${
+                    isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                  } space-y-5 text-xs shadow-md`}>
+                    <p className="text-slate-500 dark:text-slate-400 text-center">
+                      Choose the year to view the student's report card.
+                    </p>
+
+                    <div>
+                      <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1.5">
+                        Academic Year:
+                      </label>
+                      <select
+                        value={reportCardSelectedYear}
+                        onChange={(e) => setReportCardSelectedYear(e.target.value)}
+                        className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+                      >
+                        <option value="2026">2026</option>
+                        <option value="2025">2025</option>
+                        <option value="2024">2024</option>
+                      </select>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowDetailedReportCard(true)}
+                      className="w-full py-2.5 px-4 rounded-xl bg-[#2563eb] hover:bg-blue-700 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-xs cursor-pointer transition-colors"
+                    >
+                      <FileText className="w-4 h-4" />
+                      View Report Card
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('dashboard')}
+                      className="text-xs text-slate-500 hover:text-slate-800 dark:hover:text-slate-300 text-center block w-full mt-2 cursor-pointer"
+                    >
+                      Go back
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* DETAILED OFFICIAL ACADEMIC REPORT CARD */
+                <div className={`p-6 sm:p-8 rounded-3xl border ${
+                  isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                } shadow-sm space-y-6 max-w-3xl mx-auto`}>
+                  {/* Report Card Header */}
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800 text-center sm:text-left">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-2xl bg-[#0b2447] text-white flex items-center justify-center font-bold text-lg shadow-sm">
+                        A
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-bold text-slate-900 dark:text-white">Apex School System</h2>
+                        <p className="text-xs text-slate-500">Official Terminal Academic Progress Report · Year {reportCardSelectedYear}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => window.print()}
+                        className="px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Printer className="w-3.5 h-3.5" /> Print
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowDetailedReportCard(false)}
+                        className="px-3.5 py-1.5 rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-300 text-xs font-semibold cursor-pointer"
+                      >
+                        Change Year
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Student Details Grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 text-xs">
+                    <div>
+                      <span className="text-slate-400 block text-[10px] uppercase font-bold">Student Name</span>
+                      <span className="font-bold text-slate-800 dark:text-white mt-0.5 block">{studentName}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block text-[10px] uppercase font-bold">Roll Number</span>
+                      <span className="font-bold text-blue-600 dark:text-blue-400 mt-0.5 block">NU1</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block text-[10px] uppercase font-bold">Class & Section</span>
+                      <span className="font-bold text-slate-800 dark:text-white mt-0.5 block">{studentClass} - {studentSection}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block text-[10px] uppercase font-bold">Result Status</span>
+                      <span className="font-bold text-emerald-600 mt-0.5 block">PASSED (Grade A+)</span>
+                    </div>
+                  </div>
+
+                  {/* Marks Breakdown Table */}
+                  <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl text-xs">
+                    <table className="w-full text-left">
+                      <thead>
+                        <tr className="border-b bg-slate-50 dark:bg-slate-800/60 font-semibold text-slate-600 dark:text-slate-300">
+                          <th className="py-2.5 px-4">Subject</th>
+                          <th className="py-2.5 px-4 text-center">Total Marks</th>
+                          <th className="py-2.5 px-4 text-center">Obtained Marks</th>
+                          <th className="py-2.5 px-4 text-center">Percentage</th>
+                          <th className="py-2.5 px-4 text-center">Grade</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        {[
+                          { subject: 'English (Phonics & Reading)', total: 100, obtained: 92, grade: 'A+' },
+                          { subject: 'Mathematics (Numbers & Shapes)', total: 100, obtained: 88, grade: 'A' },
+                          { subject: 'Urdu (Huroof & Words)', total: 100, obtained: 90, grade: 'A+' },
+                          { subject: 'General Knowledge & Science', total: 100, obtained: 95, grade: 'A+' },
+                          { subject: 'Arts & Creative Activity', total: 100, obtained: 96, grade: 'A+' }
+                        ].map((sub, i) => (
+                          <tr key={i} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                            <td className="py-3 px-4 font-semibold text-slate-800 dark:text-slate-200">{sub.subject}</td>
+                            <td className="py-3 px-4 text-center text-slate-500">{sub.total}</td>
+                            <td className="py-3 px-4 text-center font-bold text-blue-600 dark:text-blue-400">{sub.obtained}</td>
+                            <td className="py-3 px-4 text-center">{((sub.obtained / sub.total) * 100).toFixed(0)}%</td>
+                            <td className="py-3 px-4 text-center">
+                              <span className="px-2 py-0.5 rounded font-bold text-[10px] bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                                {sub.grade}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                        <tr className="bg-slate-50/70 dark:bg-slate-800/70 font-bold border-t-2 border-slate-300 dark:border-slate-700">
+                          <td className="py-3 px-4 text-slate-900 dark:text-white">Overall Total</td>
+                          <td className="py-3 px-4 text-center">500</td>
+                          <td className="py-3 px-4 text-center text-blue-600 dark:text-blue-400">461</td>
+                          <td className="py-3 px-4 text-center">92.2%</td>
+                          <td className="py-3 px-4 text-center text-emerald-600">A+</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Teacher Remarks & Signatures */}
+                  <div className="p-4 rounded-2xl bg-blue-50/50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/60 text-xs space-y-1">
+                    <span className="font-bold text-blue-900 dark:text-blue-200 block">Class Teacher Remarks:</span>
+                    <p className="text-slate-600 dark:text-slate-300">
+                      "{studentName} shows keen curiosity, exemplary discipline, and excellent handwriting in all exercises. Recommended for the upcoming academic session."
+                    </p>
+                    <div className="pt-4 flex items-center justify-between text-slate-400 text-[11px]">
+                      <span>Instructor: Sana Kosar</span>
+                      <span>Principal: Apex School System</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 7: ANNOUNCEMENTS (Pick 4 - media_1794575902541_cbada2e1.png) */}
           {activeTab === 'announcements' && (
-            <div className="space-y-5">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-                All Announcements & Notices
-              </h2>
-              <div className="space-y-3">
-                {announcementsList.map(item => (
-                  <div key={item.id} className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs">
-                    <span className="text-[10px] text-slate-400">{item.date}</span>
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white mt-1">{item.title}</h3>
-                    <p className="text-slate-600 dark:text-slate-300 mt-2">{item.content}</p>
+            <div className="space-y-4">
+              {/* Top Subheader: "Announcements" + Back Button */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-md bg-blue-100 text-blue-600 flex items-center justify-center">
+                      <FileText className="w-4 h-4" />
+                    </div>
+                    <h1 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                      Announcements
+                    </h1>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('dashboard')}
+                    className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-800 dark:hover:text-white font-medium mt-1 cursor-pointer"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" /> Back
+                  </button>
+                </div>
+
+                {/* Right Top Action Icons (with Announcements active pill) */}
+                <div className="flex items-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 overflow-x-auto pb-1">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('report-cards')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <BookOpen className="w-4 h-4 text-slate-500" />
+                    <span>Report Card</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('attendance')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <Calendar className="w-4 h-4 text-slate-500" />
+                    <span>My Attendance</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('assignments')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <BookMarked className="w-4 h-4 text-slate-500" />
+                    <span>Assignments</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('announcements')}
+                    className="flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl bg-[#eef4ff] text-[#2563eb] font-semibold dark:bg-blue-950/50 dark:text-blue-300 transition-colors cursor-pointer"
+                  >
+                    <Megaphone className="w-4 h-4 text-[#2563eb] dark:text-blue-300" />
+                    <span>Announcements</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('fees')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <CreditCard className="w-4 h-4 text-slate-500" />
+                    <span>Fee Records</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* SOLID BLUE ANNOUNCEMENTS BANNER (Matching screenshot 4) */}
+              <div className="bg-[#2563eb] text-white px-5 py-3.5 rounded-2xl flex items-center gap-2 font-bold text-sm shadow-xs">
+                <Megaphone className="w-4 h-4" />
+                <span>Announcements</span>
+              </div>
+
+              {/* Filter Bar */}
+              <div className={`p-4 rounded-2xl border ${
+                isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+              } flex flex-wrap items-center gap-3 text-xs shadow-xs`}>
+                <div className="flex-1 min-w-[220px]">
+                  <input
+                    type="text"
+                    value={announcementSearchTerm}
+                    onChange={(e) => setAnnouncementSearchTerm(e.target.value)}
+                    placeholder="Search by title or description..."
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs focus:ring-2 focus:ring-blue-500/20"
+                  />
+                </div>
+
+                <div className="w-44">
+                  <select
+                    value={announcementTypeFilter}
+                    onChange={(e) => setAnnouncementTypeFilter(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs cursor-pointer"
+                  >
+                    <option value="All Types">All Types</option>
+                    <option value="Holiday">Holiday</option>
+                    <option value="Academic">Academic</option>
+                    <option value="General">General</option>
+                    <option value="Fee">Fee Notice</option>
+                  </select>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setAppliedAnnouncementFilters({ search: announcementSearchTerm, type: announcementTypeFilter })}
+                  className="px-4 py-2 rounded-xl bg-[#0284c7] hover:bg-sky-700 text-white font-semibold text-xs flex items-center gap-1.5 shadow-xs cursor-pointer"
+                >
+                  <Filter className="w-3.5 h-3.5" />
+                  Filter
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAnnouncementSearchTerm('')
+                    setAnnouncementTypeFilter('All Types')
+                    setAppliedAnnouncementFilters({ search: '', type: 'All Types' })
+                  }}
+                  className="px-4 py-2 rounded-xl bg-[#475569] hover:bg-slate-700 text-white font-semibold text-xs flex items-center gap-1.5 shadow-xs cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  Clear
+                </button>
+              </div>
+
+              {/* ANNOUNCEMENT CARDS (Matching Screenshot 4 Exactly) */}
+              <div className="space-y-3.5">
+                {announcementsDataList.filter(item => {
+                  const mSearch = !appliedAnnouncementFilters.search ||
+                    item.title.toLowerCase().includes(appliedAnnouncementFilters.search.toLowerCase()) ||
+                    item.content.toLowerCase().includes(appliedAnnouncementFilters.search.toLowerCase())
+                  const mType = appliedAnnouncementFilters.type === 'All Types' || item.type === appliedAnnouncementFilters.type
+                  return mSearch && mType
+                }).map(item => (
+                  <div
+                    key={item.id}
+                    className={`border-l-4 border-l-blue-600 rounded-xl p-5 border ${
+                      isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                    } shadow-xs space-y-2.5 transition-all`}
+                  >
+                    {/* Title + NEW Badge */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
+                        {item.title}
+                      </h3>
+                      {item.isNew && (
+                        <span className="px-2 py-0.5 rounded-full bg-[#ef4444] text-white font-bold text-[10px] uppercase tracking-wide">
+                          NEW
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Metadata Row */}
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+                      <div className="flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300">
+                        <User className="w-3.5 h-3.5 text-slate-500" />
+                        <span>{item.author}</span>
+                      </div>
+                      <span>&bull;</span>
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                        <span>{item.date}</span>
+                      </div>
+                      <span>&bull;</span>
+                      <span className="px-2 py-0.5 rounded bg-[#0284c7] text-white font-semibold text-[10px]">
+                        {item.scope}
+                      </span>
+                      {item.hasAttachment && (
+                        <>
+                          <span>&bull;</span>
+                          <span className="inline-flex items-center gap-1 text-slate-500 text-xs">
+                            <Paperclip className="w-3.5 h-3.5" />
+                            Has attachment
+                          </span>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Content Text */}
+                    <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed pt-1">
+                      {item.content}
+                    </p>
+
+                    {/* Action Button */}
+                    <div className="pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setViewingNotice(item)}
+                        className="px-3.5 py-1.5 rounded-lg bg-[#2563eb] hover:bg-blue-700 text-white font-semibold text-xs flex items-center gap-1.5 shadow-xs cursor-pointer transition-colors"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        Read More
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* TAB 8: COMMUNICATION */}
-          {activeTab === 'communication' && (
-            <div className="space-y-5">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-                Student Communication & Teacher Messages
-              </h2>
-              <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs">
-                <p className="text-slate-500">Inbox is empty. No new unread messages from faculty.</p>
+          {/* TAB 8: COMMUNICATION - NOTIFICATIONS (Pick 5 & 6 - media_1794576296067_9544c674.png & media_1794576333271_67484292.png) */}
+          {(activeTab === 'notifications' || activeTab === 'communication') && (
+            <div className="space-y-4">
+              {/* Top Subheader: "Notifications" + Back Button */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-md bg-blue-100 text-blue-600 flex items-center justify-center">
+                      <FileText className="w-4 h-4" />
+                    </div>
+                    <h1 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                      Notifications
+                    </h1>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('dashboard')}
+                    className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-800 dark:hover:text-white font-medium mt-1 cursor-pointer"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" /> Back
+                  </button>
+                </div>
+
+                {/* Right Top Action Icons */}
+                <div className="flex items-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 overflow-x-auto pb-1">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('report-cards')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <BookOpen className="w-4 h-4 text-slate-500" />
+                    <span>Report Card</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('attendance')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <Calendar className="w-4 h-4 text-slate-500" />
+                    <span>My Attendance</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('assignments')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <BookMarked className="w-4 h-4 text-slate-500" />
+                    <span>Assignments</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('announcements')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <Megaphone className="w-4 h-4 text-slate-500" />
+                    <span>Announcements</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('fees')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <CreditCard className="w-4 h-4 text-slate-500" />
+                    <span>Fee Records</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* MAIN NOTIFICATION CENTER CARD (Matching Screenshot 5 & 6) */}
+              <div className={`p-5 sm:p-6 rounded-2xl border ${
+                isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+              } shadow-xs space-y-4`}>
+                {/* Header with Notification Center & Inbox shortcut button */}
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-2 font-bold text-sm text-slate-900 dark:text-white">
+                    <Bell className="w-4 h-4 text-slate-700 dark:text-slate-300" />
+                    <span>Notification Center</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('inbox')}
+                    className="px-3.5 py-1.5 rounded-xl border border-blue-400 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 text-xs font-semibold cursor-pointer transition-colors"
+                  >
+                    Inbox
+                  </button>
+                </div>
+
+                {/* EARLIER Section Header */}
+                <span className="block text-[11px] font-bold text-slate-400 tracking-wider uppercase">
+                  EARLIER
+                </span>
+
+                {/* Notifications List (10 on page 1, 5 on page 2) */}
+                <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {fullNotificationsList.slice((notificationPage - 1) * 10, notificationPage * 10).map(item => (
+                    <div key={item.id} className="py-3 flex items-start gap-3 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 px-2 rounded-xl transition-colors">
+                      <div className="w-7 h-7 rounded-full bg-blue-50 dark:bg-blue-950/50 text-[#2563eb] flex items-center justify-center shrink-0 mt-0.5">
+                        <Bell className="w-3.5 h-3.5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-baseline gap-2">
+                          <span className="font-bold text-xs text-slate-900 dark:text-white">
+                            {item.title}
+                          </span>
+                          <span className="text-[11px] text-slate-400">
+                            {item.date}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
+                          {item.message}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* PAGINATION CONTROLS (Matching Screenshot 6) */}
+                <div className="pt-4 flex items-center gap-1.5 text-xs">
+                  <button
+                    type="button"
+                    disabled={notificationPage === 1}
+                    onClick={() => setNotificationPage(prev => Math.max(1, prev - 1))}
+                    className="w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+                  >
+                    &lt;
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNotificationPage(1)}
+                    className={`w-8 h-8 rounded-lg font-bold flex items-center justify-center cursor-pointer transition-colors ${
+                      notificationPage === 1
+                        ? 'bg-[#2563eb] text-white shadow-2xs'
+                        : 'border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    1
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNotificationPage(2)}
+                    className={`w-8 h-8 rounded-lg font-bold flex items-center justify-center cursor-pointer transition-colors ${
+                      notificationPage === 2
+                        ? 'bg-[#2563eb] text-white shadow-2xs'
+                        : 'border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    2
+                  </button>
+                  <button
+                    type="button"
+                    disabled={notificationPage === 2}
+                    onClick={() => setNotificationPage(prev => Math.min(2, prev + 1))}
+                    className="w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+                  >
+                    &gt;
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 8B: COMMUNICATION - INBOX (Pick 7 - media_1794576401447_67f88411.png) */}
+          {/* USER INSTRUCTION CONSTRAINT: "students superadmin ko message na kr sake bs admin ko hi kre" */}
+          {activeTab === 'inbox' && (
+            <div className="space-y-4">
+              {/* Top Subheader: "Inbox" + Back Button */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-md bg-blue-100 text-blue-600 flex items-center justify-center">
+                      <FileText className="w-4 h-4" />
+                    </div>
+                    <h1 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                      Inbox
+                    </h1>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('dashboard')}
+                    className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-800 dark:hover:text-white font-medium mt-1 cursor-pointer"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" /> Back
+                  </button>
+                </div>
+
+                {/* Right Top Action Icons */}
+                <div className="flex items-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 overflow-x-auto pb-1">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('report-cards')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <BookOpen className="w-4 h-4 text-slate-500" />
+                    <span>Report Card</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('attendance')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <Calendar className="w-4 h-4 text-slate-500" />
+                    <span>My Attendance</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('assignments')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <BookMarked className="w-4 h-4 text-slate-500" />
+                    <span>Assignments</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('announcements')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <Megaphone className="w-4 h-4 text-slate-500" />
+                    <span>Announcements</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('fees')}
+                    className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <CreditCard className="w-4 h-4 text-slate-500" />
+                    <span>Fee Records</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* MAIN INBOX 2-COLUMN CARD (Matching Screenshot 7 Exactly) */}
+              <div className={`rounded-2xl border ${
+                isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+              } shadow-xs overflow-hidden`}>
+                {/* Header */}
+                <div className="p-4 sm:p-5 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-2 font-bold text-sm text-slate-900 dark:text-white">
+                    <Mail className="w-4 h-4 text-slate-700 dark:text-slate-300" />
+                    <span>Inbox</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('notifications')}
+                    className="px-3.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold cursor-pointer transition-colors"
+                  >
+                    Notifications
+                  </button>
+                </div>
+
+                {/* 2-Column Split: Conversations on Left, Chat on Right */}
+                <div className="grid grid-cols-1 md:grid-cols-12 min-h-[460px]">
+                  {/* LEFT COLUMN: CONVERSATIONS (w-full md:col-span-4) */}
+                  <div className="md:col-span-4 border-r border-slate-100 dark:border-slate-800 p-4 space-y-3">
+                    <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      CONVERSATIONS
+                    </span>
+
+                    {/* Search Bar */}
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={inboxSearchText}
+                        onChange={(e) => {
+                          const val = e.target.value
+                          setInboxSearchText(val)
+                          if (val.toLowerCase().includes('superadmin')) {
+                            setShowBlockedSuperadminAlert(true)
+                          } else {
+                            setShowBlockedSuperadminAlert(false)
+                          }
+                        }}
+                        placeholder="Search name..."
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs focus:ring-2 focus:ring-blue-500/20"
+                      />
+                    </div>
+
+                    {/* SECURITY NOTICE (Superadmin Blocked) */}
+                    {showBlockedSuperadminAlert && (
+                      <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 text-amber-800 dark:text-amber-300 text-[11px] leading-tight flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 shrink-0 text-amber-600" />
+                        <span>Students cannot message Superadmin. You can only communicate directly with your School Admin.</span>
+                      </div>
+                    )}
+
+                    {/* School Admin Conversation Item (Matching Screenshot with Admin constraint) */}
+                    <div
+                      onClick={() => setSelectedConversation('admin')}
+                      className={`p-3 rounded-2xl border transition-all cursor-pointer ${
+                        selectedConversation === 'admin'
+                          ? 'bg-[#eef4ff] border-blue-200 dark:bg-blue-950/40 dark:border-blue-900'
+                          : 'hover:bg-slate-50 dark:hover:bg-slate-800/60 border-transparent'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-xs text-slate-900 dark:text-white">
+                          Ahmad Ali
+                        </span>
+                        <span className="px-2 py-0.5 rounded bg-slate-900 text-white font-bold text-[9px] uppercase tracking-wider">
+                          ADMIN
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-1">
+                        this is test message
+                      </p>
+                      <span className="text-[10px] text-slate-400 block mt-1">
+                        31 Jul 2026, 11:40 AM
+                      </span>
+                    </div>
+
+                    {/* Security policy pill */}
+                    <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-[11px] text-slate-500 dark:text-slate-400">
+                      <span className="font-semibold text-slate-700 dark:text-slate-300 block mb-0.5">🔒 Verified Contact Policy:</span>
+                      Students are authorized to message School Administration only.
+                    </div>
+                  </div>
+
+                  {/* RIGHT COLUMN: ACTIVE CHAT OR PLACEHOLDER (md:col-span-8) */}
+                  <div className="md:col-span-8 p-6 flex flex-col justify-between">
+                    {selectedConversation === 'admin' ? (
+                      /* ACTIVE CONVERSATION THREAD */
+                      <div className="flex flex-col h-full space-y-4">
+                        {/* Conversation Top Header */}
+                        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+                                Ahmad Ali (School Admin)
+                              </h3>
+                              <span className="px-2 py-0.5 rounded bg-slate-900 text-white font-bold text-[9px]">
+                                ADMIN
+                              </span>
+                            </div>
+                            <span className="text-[11px] text-emerald-600 font-medium">● Online · Direct Helpdesk</span>
+                          </div>
+                          <span className="text-[11px] text-slate-400">
+                            Apex School System
+                          </span>
+                        </div>
+
+                        {/* Messages Stream */}
+                        <div className="flex-1 space-y-3 overflow-y-auto max-h-[300px] pr-2">
+                          {adminChatMessages.map((msg) => (
+                            <div
+                              key={msg.id}
+                              className={`flex flex-col ${msg.sender === 'student' ? 'items-end' : 'items-start'}`}
+                            >
+                              <div
+                                className={`p-3.5 rounded-2xl max-w-sm text-xs leading-relaxed ${
+                                  msg.sender === 'student'
+                                    ? 'bg-[#2563eb] text-white rounded-br-xs'
+                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded-bl-xs'
+                                }`}
+                              >
+                                {msg.text}
+                              </div>
+                              <span className="text-[10px] text-slate-400 mt-1 px-1">
+                                {msg.timestamp}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Message Input Box */}
+                        <form
+                          onSubmit={(e) => {
+                            e.preventDefault()
+                            if (!chatMessageText.trim()) return
+                            setAdminChatMessages(prev => [
+                              ...prev,
+                              {
+                                id: Date.now(),
+                                sender: 'student',
+                                senderName: studentName,
+                                text: chatMessageText.trim(),
+                                timestamp: 'Just now'
+                              }
+                            ])
+                            setChatMessageText('')
+                          }}
+                          className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2"
+                        >
+                          <input
+                            type="text"
+                            value={chatMessageText}
+                            onChange={(e) => setChatMessageText(e.target.value)}
+                            placeholder="Type your message to School Admin..."
+                            className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs focus:ring-2 focus:ring-blue-500/20"
+                          />
+                          <button
+                            type="submit"
+                            className="px-4 py-2.5 rounded-xl bg-[#2563eb] hover:bg-blue-700 text-white font-semibold text-xs flex items-center gap-1.5 shadow-xs cursor-pointer transition-colors"
+                          >
+                            <Send className="w-3.5 h-3.5" />
+                            Send
+                          </button>
+                        </form>
+                      </div>
+                    ) : (
+                      /* EMPTY CONVERSATION PLACEHOLDER (Exact match to screenshot 7) */
+                      <div className="flex-1 flex flex-col items-center justify-center text-center p-8 space-y-3">
+                        <h3 className="font-bold text-sm text-slate-800 dark:text-slate-200">
+                          Select a conversation
+                        </h3>
+                        <p className="text-xs text-slate-400">
+                          Choose a chat on the left, or send a new message.
+                        </p>
+                        <p className="text-[11px] text-slate-400 pt-8">
+                          Select a conversation or click Send Message.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedConversation('admin')}
+                          className="px-4 py-2 rounded-xl bg-[#2563eb] hover:bg-blue-700 text-white font-semibold text-xs shadow-xs cursor-pointer transition-colors mt-2"
+                        >
+                          Message School Admin
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -2411,25 +3889,96 @@ export default function StudentPortalView() {
         </div>
       )}
 
-      {/* MODAL: VIEW NOTICE */}
+      {/* MODAL: VIEW NOTICE / ANNOUNCEMENT */}
       {viewingNotice && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="w-full max-w-md bg-white text-slate-900 rounded-3xl shadow-2xl p-6 border border-slate-200">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
-              <h3 className="font-bold text-sm">{viewingNotice.title}</h3>
-              <button onClick={() => setViewingNotice(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+          <div className="w-full max-w-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-3xl shadow-2xl p-6 border border-slate-200 dark:border-slate-800 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-950/60 text-blue-600 flex items-center justify-center">
+                  <Megaphone className="w-4 h-4" />
+                </div>
+                <h3 className="font-bold text-sm text-slate-900 dark:text-white">{viewingNotice.title}</h3>
+              </div>
+              <button onClick={() => setViewingNotice(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="mt-4 text-xs text-slate-600 leading-relaxed">
-              <span className="text-[10px] text-slate-400 block mb-2">{viewingNotice.date}</span>
+
+            <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+              {viewingNotice.author && (
+                <div className="flex items-center gap-1 font-medium text-slate-700 dark:text-slate-300">
+                  <User className="w-3.5 h-3.5" />
+                  <span>{viewingNotice.author}</span>
+                </div>
+              )}
+              {viewingNotice.date && (
+                <div className="flex items-center gap-1">
+                  <Calendar className="w-3.5 h-3.5" />
+                  <span>{viewingNotice.date}</span>
+                </div>
+              )}
+              {viewingNotice.scope && (
+                <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-600 text-[10px] font-semibold">
+                  {viewingNotice.scope}
+                </span>
+              )}
+            </div>
+
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
               {viewingNotice.content}
             </div>
-            <div className="mt-6 flex justify-end">
+
+            {viewingNotice.hasAttachment && (
+              <div className="p-3 rounded-xl border border-blue-200 dark:border-blue-900 bg-blue-50/50 dark:bg-blue-950/30 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <Paperclip className="w-4 h-4 text-blue-600" />
+                  <span className="font-semibold text-slate-800 dark:text-slate-200">{viewingNotice.attachmentName || 'circular.pdf'}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => alert('Downloading official circular...')}
+                  className="px-3 py-1 rounded-lg bg-blue-600 text-white font-semibold text-xs flex items-center gap-1 cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" /> Download
+                </button>
+              </div>
+            )}
+
+            <div className="pt-2 flex justify-end">
               <button
                 type="button"
                 onClick={() => setViewingNotice(null)}
-                className="px-4 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-semibold cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: RECORDED LECTURE PLAYER */}
+      {selectedLectureVideo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="w-full max-w-2xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-3xl shadow-2xl p-6 border border-slate-200 dark:border-slate-800 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+              <div>
+                <h3 className="font-bold text-sm">{selectedLectureVideo.title}</h3>
+                <p className="text-[11px] text-slate-400">{selectedLectureVideo.subject} · {selectedLectureVideo.lecturer}</p>
+              </div>
+              <button onClick={() => setSelectedLectureVideo(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="aspect-video bg-black rounded-2xl overflow-hidden flex items-center justify-center">
+              <p className="text-xs text-white">Video stream loading for {selectedLectureVideo.title}...</p>
+            </div>
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setSelectedLectureVideo(null)}
+                className="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-semibold cursor-pointer"
               >
                 Close
               </button>
