@@ -31,8 +31,8 @@ export const AuthProvider = ({ children }) => {
       if (sessionSaved) {
         const parsed = JSON.parse(sessionSaved)
         if (parsed && parsed.email && parsed.isExplicitLogin) {
-          // Allow superadmin, institute_admin (School Admin), teacher, and student
-          if (parsed.role === 'superadmin' || parsed.role === 'institute_admin' || parsed.role === 'teacher' || parsed.role === 'student') {
+          // Allow superadmin, institute_admin (School Admin), teacher, student, and parent
+          if (parsed.role === 'superadmin' || parsed.role === 'institute_admin' || parsed.role === 'teacher' || parsed.role === 'student' || parsed.role === 'parent') {
             delete parsed.password
             return parsed
           }
@@ -43,7 +43,7 @@ export const AuthProvider = ({ children }) => {
       if (localSaved) {
         const parsed = JSON.parse(localSaved)
         if (parsed && parsed.email && parsed.isExplicitLogin) {
-          if (parsed.role === 'superadmin' || parsed.role === 'institute_admin' || parsed.role === 'teacher' || parsed.role === 'student') {
+          if (parsed.role === 'superadmin' || parsed.role === 'institute_admin' || parsed.role === 'teacher' || parsed.role === 'student' || parsed.role === 'parent') {
             delete parsed.password
             return parsed
           }
@@ -164,6 +164,13 @@ export const AuthProvider = ({ children }) => {
       mail.includes('student') ||
       matchedDbUser?.role === 'student'
 
+    const isParentLogin =
+      role === 'parent' ||
+      mail === 'parent@schoolms.com' ||
+      mail === 'parent@apexed.io' ||
+      mail.includes('parent') ||
+      matchedDbUser?.role === 'parent'
+
     if (isSuperadminLogin) {
       userPayload = {
         id: matchedDbUser?.id || 'usr-1',
@@ -214,6 +221,28 @@ export const AuthProvider = ({ children }) => {
         tier: 'school',
         enabledTiers: ['school'],
         scope: 'Student Academic Portal',
+        isExplicitLogin: true,
+        loginTimestamp: new Date().toISOString()
+      }
+    } else if (isParentLogin) {
+      userPayload = {
+        id: matchedDbUser?.id || 'usr-parent-1',
+        name: matchedDbUser?.name || 'Parent / Guardian',
+        roleTitle: 'Parent',
+        role: 'parent',
+        email: customEmail || mail || 'parent@schoolms.com',
+        avatar: null,
+        studentName: 'Muhammad Ali',
+        studentClass: 'Nursery',
+        studentSection: 'Super',
+        studentRoll: 'NU1',
+        studentAdmissionNo: 'ED/N/2025/16862',
+        instituteId: matchedInst?.id || 'inst-2',
+        instituteName: matchedInst?.name || 'Apex School System',
+        instituteType: 'School',
+        tier: 'school',
+        enabledTiers: ['school'],
+        scope: 'Parent Monitoring & Engagement Portal',
         isExplicitLogin: true,
         loginTimestamp: new Date().toISOString()
       }
@@ -569,6 +598,42 @@ export const AuthProvider = ({ children }) => {
         tier: 'school',
         enabledTiers: ['school'],
         scope: 'Student Academic Portal'
+      },
+      'parent@schoolms.com': {
+        id: 'usr-parent-1',
+        name: 'Parent / Guardian',
+        roleTitle: 'Parent',
+        role: 'parent',
+        email: 'parent@schoolms.com',
+        studentName: 'Muhammad Ali',
+        studentClass: 'Nursery',
+        studentSection: 'Super',
+        studentRoll: 'NU1',
+        studentAdmissionNo: 'ED/N/2025/16862',
+        instituteId: 'inst-2',
+        instituteName: 'Apex School System',
+        instituteType: 'School',
+        tier: 'school',
+        enabledTiers: ['school'],
+        scope: 'Parent Monitoring & Engagement Portal'
+      },
+      'parent@apexed.io': {
+        id: 'usr-parent-2',
+        name: 'Parent / Guardian',
+        roleTitle: 'Parent',
+        role: 'parent',
+        email: 'parent@apexed.io',
+        studentName: 'Muhammad Ali',
+        studentClass: 'Nursery',
+        studentSection: 'Super',
+        studentRoll: 'NU1',
+        studentAdmissionNo: 'ED/N/2025/16862',
+        instituteId: 'inst-2',
+        instituteName: 'Apex School System',
+        instituteType: 'School',
+        tier: 'school',
+        enabledTiers: ['school'],
+        scope: 'Parent Monitoring & Engagement Portal'
       }
     }
 

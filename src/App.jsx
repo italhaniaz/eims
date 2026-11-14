@@ -38,6 +38,7 @@ const UsersManagementView = lazyWithRetry(() => import('./modules/users-manageme
 const PersonnelManagementView = lazyWithRetry(() => import('./modules/personnel/PersonnelManagementView'), 'personnel-management')
 const TeacherPortalView = lazyWithRetry(() => import('./modules/teacher-portal/TeacherPortalView'), 'teacher-portal')
 const StudentPortalView = lazyWithRetry(() => import('./modules/student-portal/StudentPortalView'), 'student-portal-view')
+const ParentPortalView = lazyWithRetry(() => import('./modules/parent-portal/ParentPortalView'), 'parent-portal-view')
 const NoticeBroadcasterView = lazyWithRetry(() => import('./modules/announcements/NoticeBroadcasterView'), 'notice-broadcaster')
 const CommunicationGatewayView = lazyWithRetry(() => import('./modules/communication/CommunicationGatewayView'), 'communication-gateway')
 const AuditLogsView = lazyWithRetry(() => import('./modules/audit-logs/AuditLogsView'), 'audit-logs')
@@ -596,6 +597,15 @@ const AppContent = () => {
     return (
       <Suspense fallback={<ModuleSkeletonLoader />}>
         <StudentPortalView />
+      </Suspense>
+    )
+  }
+
+  // 4. PARENT PORTAL (Parent Guardian Console)
+  if (user.role === 'parent') {
+    return (
+      <Suspense fallback={<ModuleSkeletonLoader />}>
+        <ParentPortalView />
       </Suspense>
     )
   }
