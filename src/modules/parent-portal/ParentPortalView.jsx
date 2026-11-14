@@ -36,7 +36,6 @@ import {
   Send,
   Upload,
   ArrowRight,
-  Smartphone,
   User,
   Pencil,
   FolderOpen,
@@ -287,7 +286,7 @@ export default function ParentPortalView() {
   const [editNameInput, setEditNameInput] = useState('')
 
   // Navigation State
-  // Tabs: 'dashboard' | 'fees' | 'my-children' | 'attendance' | 'timetable' | 'assignments' | 'announcements' | 'communication' | 'download-app' | 'account'
+  // Tabs: 'dashboard' | 'fees' | 'my-children' | 'attendance' | 'timetable' | 'assignments' | 'announcements' | 'communication' | 'account'
   const [activeTab, setActiveTab] = useState('dashboard')
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isNotifOpen, setIsNotifOpen] = useState(false)
@@ -758,23 +757,6 @@ export default function ParentPortalView() {
                 </span>
               </button>
 
-              {/* Download App */}
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab('download-app')
-                  setIsMobileMenuOpen(false)
-                }}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
-                  activeTab === 'download-app'
-                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900'
-                }`}
-              >
-                <Smartphone className="w-4 h-4" />
-                <span>Download App</span>
-              </button>
-
               {/* My Account */}
               <button
                 type="button"
@@ -821,7 +803,6 @@ export default function ParentPortalView() {
                 {activeTab === 'assignments' && 'Assignments & Homework'}
                 {activeTab === 'announcements' && 'School Announcements'}
                 {activeTab === 'communication' && 'School Helpdesk & Communication'}
-                {activeTab === 'download-app' && 'Download Mobile App'}
                 {activeTab === 'account' && 'My Account & Preferences'}
               </h1>
             </div>
@@ -2065,30 +2046,7 @@ export default function ParentPortalView() {
             </div>
           )}
 
-          {/* ---------------- TAB 9: DOWNLOAD APP ---------------- */}
-          {activeTab === 'download-app' && (
-            <div className={`p-8 rounded-2xl border text-center ${
-              isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
-            } space-y-4 max-w-xl mx-auto`}>
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center mx-auto shadow-md">
-                <Smartphone className="w-8 h-8" />
-              </div>
-              <h3 className="text-xl font-bold">Apex Parent Mobile App</h3>
-              <p className="text-xs text-slate-500">
-                Receive instant push notifications for attendance, fee vouchers, and exam results directly on your smartphone.
-              </p>
-              <div className="flex items-center justify-center gap-3 pt-2">
-                <div className="px-4 py-2.5 rounded-xl bg-black text-white text-xs font-semibold flex items-center gap-2 cursor-pointer hover:bg-slate-800">
-                  <span>Google Play</span>
-                </div>
-                <div className="px-4 py-2.5 rounded-xl bg-black text-white text-xs font-semibold flex items-center gap-2 cursor-pointer hover:bg-slate-800">
-                  <span>App Store</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ---------------- TAB 10: MY ACCOUNT ---------------- */}
+          {/* ---------------- TAB 9: MY ACCOUNT ---------------- */}
           {activeTab === 'account' && (
             <div className={`p-6 sm:p-8 rounded-2xl border ${
               isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
