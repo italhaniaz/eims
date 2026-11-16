@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>School invoice and receipt reference templates</title>
+  <link rel="stylesheet" href="reference.css">
+</head>
+<body>
+  <div class="sms-toolbar sms-no-print">
+    <button type="button" class="sms-button sms-button--primary" onclick="window.print()">Print sample documents</button>
+    <p>Fictional examples. Each document prints on a separate page. Choose A4 or Letter at 100% scale.</p>
+  </div>
+  <main>
+    <article class="sms-slip" aria-labelledby="invoice-title">
+      <header class="sms-slip__brand">
+        <strong>Example School · Demonstration Campus</strong>
+        <p>Sample address · accounts@example.invalid</p>
+      </header>
+      <h1 id="invoice-title">Fee invoice / challan — unpaid</h1>
+      <p><strong>SAMPLE — NOT VALID FOR PAYMENT</strong></p>
+      <div class="sms-slip__meta">
+        <div>Invoice: SAMPLE-INV-001<br>Issued: 16 November 2026</div>
+        <div>Due: 30 November 2026<br>Currency: PKR</div>
+        <div>Student: Example Student<br>Student reference: SAMPLE-S-001</div>
+        <div>Class: Grade 6 · Section A<br>Academic year: 2026–2027</div>
+      </div>
+      <table>
+        <caption>Invoice charges in PKR</caption>
+        <thead><tr><th scope="col">Description</th><th scope="col" class="amount">Amount</th></tr></thead>
+        <tbody>
+          <tr><td>November tuition</td><td class="amount">5,000.00</td></tr>
+          <tr><td>Learning materials</td><td class="amount">500.00</td></tr>
+          <tr><td>Approved concession</td><td class="amount">−500.00</td></tr>
+        </tbody>
+      </table>
+      <p class="sms-slip__total amount">Total due: PKR 5,000.00</p>
+      <h2>Payment instructions</h2>
+      <p>Production documents must use the school's verified payment destination and this invoice reference. No bank details are supplied in this sample.</p>
+      <footer><p>This invoice is not proof of payment. Template: invoice-v1.</p></footer>
+    </article>
+    <article class="sms-slip" aria-labelledby="receipt-title">
+      <header class="sms-slip__brand">
+        <strong>Example School · Demonstration Campus</strong>
+        <p>Sample address · accounts@example.invalid</p>
+      </header>
+      <h1 id="receipt-title">Payment receipt — settled</h1>
+      <p><strong>SAMPLE — NOT PROOF OF PAYMENT</strong></p>
+      <div class="sms-slip__meta">
+        <div>Receipt: SAMPLE-RCP-001<br>Invoice: SAMPLE-INV-001</div>
+        <div>Posted: 16 November 2026, 10:00<br>Timezone: Asia/Karachi</div>
+        <div>Student: Example Student<br>Student reference: SAMPLE-S-001</div>
+        <div>Method: Cash (sample)<br>Issuer: Example Cashier</div>
+      </div>
+      <table>
+        <caption>Payment allocation in PKR</caption>
+        <thead><tr><th scope="col">Allocation</th><th scope="col" class="amount">Amount</th></tr></thead>
+        <tbody><tr><td>SAMPLE-INV-001</td><td class="amount">5,000.00</td></tr></tbody>
+      </table>
+      <p class="sms-slip__total amount">Received: PKR 5,000.00<br>Remaining invoice balance: PKR 0.00</p>
+      <p>Verification reference: SAMPLE-ONLY. Production receipts require an issued immutable reference; no simulated QR code is shown.</p>
+      <footer><p>Retain this document for your records. Refunds must reference the original payment. Template: receipt-v1.</p></footer>
+    </article>
+  </main>
+</body>
+</html>
