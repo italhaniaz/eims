@@ -1,136 +1,126 @@
-# 🏫 Professional Multi-Campus School Management System (SMS)
+# School Management System (SMS)
 
-A complete, enterprise-grade School Management System web application built with **React (Vite) + Tailwind CSS + Node.js Backend**, powered by **Supabase Database**.
+A school management application with landing, superadmin, institute admin, teacher, student and parent portals. The current implementation uses React, Vite, Tailwind CSS, an Express API and Supabase integration.
 
-Designed specifically to match modern executive administration standards with a pixel-accurate **Superadmin Portal** and dedicated **Institute Admin Portal**.
+## Implementation status
 
----
+Portal screens and supporting services exist, but some workflows still use sample data, browser storage or simulated success responses. A screen's presence does not mean its workflow is persisted or verified across accounts.
 
-## 🌟 Key Features
+The [portal audit](docs/portal-audit/README.md) documents source findings, priorities and acceptance criteria. It covers this repository, not a completed audit of 50 separate systems.
 
-### 👑 1. Superadmin Portal (Platform-Wide Administration)
-- **Executive Metric Cards**: Total Users (231), Total Institutes (3), Active Sessions (2,341 with +23.1% trend), Growth Rate (34.2% with +5.4% trend).
-- **Recent Platform Activity**: 30-day chronological audit stream with status dots.
-- **Quick Action Bar**:
-  - Create New System User Modal
-  - Generate Audit Report
-  - View & Filter All Users
-  - System & Supabase Settings Modal
-- **Institute Management Module**:
-  - `Divisions`: State & provincial educational zones
-  - `Districts` (Districs): Regional administrative districts linked to divisions
-  - `Institutes`: Full directory of schools, colleges, and campuses with 1-click login delegation
-  - `Departments`: Academic faculties, heads of departments, and student headcounts
-  - `Examination Bodies`: Provincial boards (BISE Lahore, Rawalpindi), Cambridge CAIE, FBISE
-- **Academics Module**:
-  - `Academic Years`: Active academic sessions (2025-2026, 2026-2027)
-  - `Program Types`: Degree tiers (Matriculation, Intermediate, O/A Levels)
-  - `Programs`: Academic curricula (Pre-Medical, Pre-Engineering, ICS Computer Science)
-  - `Subjects`: Courses catalog with credit hours
-  - `Study Schemes`: Syllabus structures & semester roadmaps
-- **Users Management**:
-  - Role-based directory for Superadmins, Institute Admins, and Teachers.
+## Portals
 
-### 🏫 2. Institute Admin Portal (Campus-Specific Operations)
-- **Campus Dashboard**: Total Students (1,240), Teaching Staff (68), Monthly Fee Recovery (94%), Daily Attendance (96.4%).
-- **Student Admissions & Roster**: Student enrollment, roll numbers, grade/section assignment, guardian contacts.
-- **Faculty & Teaching Staff**: Teacher profiles, employee IDs, department assignments.
-- **Classes & Sections**: Classrooms, max seating capacities, class teachers.
-- **Daily Attendance Register**: Interactive roll-call sheet (Present / Absent / Leave).
-- **Fee Management & Challans**: Tuition fee billing vouchers, payment status tracking, receipts.
+| Portal | Areas represented in the source |
+|---|---|
+| Landing | Product information, plans, trial/inquiry flows and login entry |
+| Superadmin | Institutes, users, subscriptions, modules, security, audit, support, templates and backup views |
+| Institute admin | Enrollment, guardians, academics, attendance, exams, fees, staff, reports and communication |
+| Teacher | Timetable, students, attendance, assignments, resources, marks and messages |
+| Student | Learning, timetable, attendance, results, fees and account screens |
+| Parent | Child selection, attendance, assignments, report cards, fees and communication |
 
-### 🔐 3. Ultra-Smooth Authentication & Role Switching
-- Modern glassmorphic login interface.
-- 1-Click Fast Demo Login for instant evaluation:
-  - **Superadmin**: `admin@schoolms.com` (admin / admin)
-  - **Institute Admin**: `admin.beacon@sms.edu` (Beaconhouse Central High School)
-- Seamless portal switching directly from sidebar and top navbar.
+## Latest audit deliverables
 
----
+The audit package adds documentation and standalone reference assets. It does **not** change application behavior or apply the proposed styles to existing portals.
 
-## 📁 Modular Folder Structure
+| File | Contents |
+|---|---|
+| [Audit and implementation plan](docs/portal-audit/README.md) | Per-portal Must-Have, Nice-to-Have and Remove lists; evidence; shared design system; data models; delivery sequence; QA runbook |
+| [Reference CSS](docs/portal-audit/reference.css) | Light/dark tokens, button variants, form controls, keyboard focus and print rules |
+| [Slip templates](docs/portal-audit/slip-templates.html) | Fictional unpaid invoice/challan and settled receipt examples |
 
-Following strict modular separation of concerns:
+### How to review the changes
 
-```
-src/
-├── api/ or services/
-│   ├── supabaseClient.js          # Supabase client with auto environment detection
-│   └── dataService.js             # High-resilience CRUD service with offline fallback
-├── context/
-│   ├── AuthContext.jsx            # Authentication state & role switching
-│   └── AppDataContext.jsx         # Reactive global data store & actions
-├── components/
-│   ├── common/
-│   │   ├── StatCard.jsx           # Metric card matching screenshot style
-│   │   ├── Modal.jsx              # Reusable dialogue modals
-│   │   └── SettingsModal.jsx      # Supabase connection & live database configuration
-│   └── layout/
-│       ├── SuperadminSidebar.jsx  # Dark Navy accordion sidebar matching screenshot
-│       ├── SuperadminNavbar.jsx   # Topbar with red "3" badge, settings, profile
-│       ├── InstituteAdminSidebar.jsx # Campus-level sidebar navigation
-│       └── InstituteAdminNavbar.jsx  # Campus switcher & breadcrumbs
-├── modules/
-│   ├── auth/
-│   │   └── LoginPage.jsx          # Smooth animated login view
-│   ├── dashboard/
-│   │   ├── SuperadminDashboard.jsx # Pixel-perfect match of screenshot
-│   │   └── InstituteDashboard.jsx  # School KPI dashboard
-│   ├── institute-management/
-│   │   ├── divisions/             # DivisionsView.jsx
-│   │   ├── districts/             # DistrictsView.jsx
-│   │   ├── institutes/            # InstitutesView.jsx
-│   │   ├── departments/           # DepartmentsView.jsx
-│   │   └── examination-bodies/    # ExaminationBodiesView.jsx
-│   ├── academics/
-│   │   ├── academic-years/        # AcademicYearsView.jsx
-│   │   ├── program-types/         # ProgramTypesView.jsx
-│   │   ├── programs/              # ProgramsView.jsx
-│   │   ├── subjects/              # SubjectsView.jsx
-│   │   └── study-schemes/         # StudySchemesView.jsx
-│   ├── users-management/
-│   │   └── UsersManagementView.jsx # 231 users directory & filters
-│   └── institute-admin/
-│       ├── students/              # StudentsView.jsx
-│       ├── teachers/              # TeachersView.jsx
-│       ├── classes/               # ClassesView.jsx
-│       ├── attendance/            # AttendanceView.jsx
-│       └── fees/                  # FeesView.jsx
-├── server/
-│   └── server.js                  # Node.js Express backend API
-├── supabase-schema.sql            # Supabase PostgreSQL database tables & seed data
-├── App.jsx
-├── main.jsx
-└── index.css
+1. Read the audit for findings and acceptance gates.
+2. Open `docs/portal-audit/slip-templates.html` directly in a browser. Keep `reference.css` beside it so the styling loads.
+3. Select **Print sample documents** to open print preview. Check A4 and Letter at 100% scale, margins, totals and separate document pages.
+4. Review the CSS for reusable `.sms-button`, `.sms-button--primary`, `.sms-button--secondary`, `.sms-button--danger`, `.sms-field` and `.sms-slip` classes.
+5. Use the audit's QA runbook to verify actual portal workflows in separate authenticated sessions.
+
+The sample documents contain fictional values and are not valid invoices or proof of payment. Browser layout, print output and accessibility still require manual verification.
+
+## Priority work remaining
+
+- Enforce authentication and role/tenant authorization on private API endpoints.
+- Replace production authentication fallback paths with a verified account/session lifecycle.
+- Extend campus-level database policies with student, guardian and assigned-teacher access rules.
+- Replace hard-coded parent records and simulated student actions with shared persistent workflows.
+- Make payment settlement authoritative and idempotent before issuing receipts.
+- Replace decorative QR patterns with valid, independently scannable encoding.
+- Consolidate navigation, terminology, accessible dialogs and shared design tokens.
+
+These are audit findings and proposed changes, not completed fixes. See the audit for evidence and testable completion definitions.
+
+## Local development
+
+Run commands from the repository root with Node.js and npm installed.
+
+```bash
+npm ci
 ```
 
----
+If database integration is needed, copy `.env.example` to `.env` and configure the development project's values. Do not overwrite an existing local configuration.
 
-## ⚡ Quick Start
+Start the frontend:
 
-### 1. Start the React Frontend Application
 ```bash
 npm run dev
 ```
-Open your browser at `http://localhost:5173`.
 
-### 2. (Optional) Start the Node.js API Server
+Open [localhost:3000](http://localhost:3000). Vite is configured to use port **3000** and proxies `/api` requests to port **5000**.
+
+For API-backed workflows, start the Express server in a separate terminal:
+
 ```bash
 npm run server
 ```
-Server runs at `http://localhost:5000/api/health`.
 
----
+The default health endpoint is [localhost:5000/api/health](http://localhost:5000/api/health). UI rendering alone does not verify API or database connectivity.
 
-## 🗄️ Connecting with Supabase
+### Build and preview
 
-1. Open your [Supabase Dashboard](https://supabase.com).
-2. Go to **SQL Editor** -> Click **New Query**.
-3. Copy the entire contents of `supabase-schema.sql` and click **Run**.
-   - This sets up all 16 relational tables and seeds initial data matching the screenshot!
-4. In your `.env` file, enter your credentials:
-   ```env
-   VITE_SUPABASE_URL=https://your-project-id.supabase.co
-   VITE_SUPABASE_ANON_KEY=your-anon-key-here
-   ```
-5. Alternatively, you can click the **Settings Cog icon** or **Database Status Pill** in the top navbar while running the app and paste your keys directly into the UI!
+```bash
+npm run build
+npm run preview
+```
+
+Preview also uses port 3000 by default; stop the development server first. Preview serves the built frontend and is not a replacement for the backend or production API routing.
+
+## Supabase configuration
+
+The example environment file provides:
+
+```env
+VITE_SUPABASE_URL=https://your-project-id.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key-here
+VITE_API_URL=http://localhost:5000/api
+```
+
+Values prefixed with `VITE_` are client configuration. Keep privileged service credentials server-side and do not commit local secrets.
+
+Review `supabase-schema.sql` against the intended development database before applying it. The audit identified schema/consumer differences, including `user_profiles` in the checked-in schema and `users` queried by authentication. The schema should not be treated as a complete, verified production migration set.
+
+## Repository layout
+
+```text
+api/                         Serverless API handlers
+server/                      Express server and authentication helpers
+public/                      Favicon, manifest and public assets
+src/
+  components/common/         Shared dialogs, cards and document components
+  components/layout/         Administrative navigation and headers
+  context/                   Authentication, theme, data and toast state
+  modules/                   Portal and domain views
+  services/                  API, storage and domain services
+  App.jsx                    Application composition and portal routing
+  index.css                  Existing application styles and tokens
+docs/portal-audit/           Audit, reference CSS and slip examples
+supabase-schema.sql         Checked-in database schema
+vite.config.js              Development, proxy and build configuration
+```
+
+## Verification
+
+`npm run build` passed during the 16 November 2026 audit. This verifies bundling, not authorization, persistence or cross-portal correctness. No automated test script is currently declared in the root `package.json`.
+
+Before accepting a workflow, test it with separate users and browser sessions: teacher to student assignment delivery, guardian-child isolation, attendance updates, draft/result publication, invoice/payment reconciliation, logout and session revocation. Run keyboard, responsive and print checks using the [QA runbook](docs/portal-audit/README.md).
