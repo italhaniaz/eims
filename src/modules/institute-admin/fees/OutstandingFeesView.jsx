@@ -148,7 +148,7 @@ export const OutstandingFeesView = ({
       // ignore
     }
     logAuditEvent?.('OUTSTANDING_SMS_SENT', `Sent fee reminder SMS to ${label} (${phone})`)
-    toast.success(`Fee reminder SMS sent to ${label} (${phone})`)
+    toast.info(`Reminder for ${label} saved in this browser (${phone}). No SMS was sent — a gateway is not connected.`)
   }
 
   // Enrich students with dues & active/dropped status

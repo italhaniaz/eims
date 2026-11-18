@@ -26,6 +26,14 @@ import {
 } from 'lucide-react'
 import { useToast } from '../../context/ToastContext'
 
+const appendTeacherMessage = (record) => {
+  try {
+    const prev = JSON.parse(localStorage.getItem('sms_teacher_messages') || '[]')
+    const next = Array.isArray(prev) ? [record, ...prev].slice(0, 200) : [record]
+    localStorage.setItem('sms_teacher_messages', JSON.stringify(next))
+  } catch {}
+}
+
 export default function TeacherAssignmentsView({
   onBack,
   onOpenModal,
@@ -144,7 +152,7 @@ export default function TeacherAssignmentsView({
       try {
         localStorage.setItem('teacher_portal_assignments', JSON.stringify(updated))
       } catch {}
-      toast?.success?.('Assignment updated successfully!')
+      toast?.success?.('Assignment saved locally.')
       setEditingAssignment(null)
     } else {
       const newEntry = {
@@ -156,14 +164,29 @@ export default function TeacherAssignmentsView({
         className: formData.className,
         date: formData.date,
         description: formData.description || 'Complete the assigned exercises in class notebook.',
-        smsStatus: formData.sendSms ? 'Sent' : 'Never'
+        smsStatus: formData.sendSms ? 'Saved locally' : 'Never'
       }
       const updated = [newEntry, ...assignments]
       setAssignments(updated)
       try {
         localStorage.setItem('teacher_portal_assignments', JSON.stringify(updated))
       } catch {}
-      toast?.success?.('New assignment posted successfully!')
+      if (formData.sendSms) {
+        appendTeacherMessage({
+          id: `asg-sms-${Date.now()}`,
+          kind: 'assignment',
+          title: newEntry.title,
+          className: newEntry.className,
+          text: `Assignment draft for ${newEntry.className}: ${newEntry.title}`,
+          at: new Date().toISOString(),
+          delivered: false
+        })
+      }
+      toast?.info?.(
+        formData.sendSms
+          ? 'Assignment saved locally. School delivery requires future messaging integration.'
+          : 'Assignment saved locally and added to this list.'
+      )
       setIsCreateModalOpen(false)
     }
 
@@ -208,13 +231,22 @@ export default function TeacherAssignmentsView({
     e.preventDefault()
     if (!smsModalAssignment) return
     const updated = assignments.map((a) =>
-      a.id === smsModalAssignment.id ? { ...a, smsStatus: 'Sent' } : a
+      a.id === smsModalAssignment.id ? { ...a, smsStatus: 'Saved locally' } : a
     )
     setAssignments(updated)
     try {
       localStorage.setItem('teacher_portal_assignments', JSON.stringify(updated))
     } catch {}
-    toast?.success?.(`SMS dispatched to ${smsModalAssignment.className} parents!`)
+    appendTeacherMessage({
+      id: `asg-sms-${Date.now()}`,
+      kind: 'assignment',
+      title: smsModalAssignment.title,
+      className: smsModalAssignment.className,
+      text: `Dear Parent, a new ${smsModalAssignment.subject} assignment '${smsModalAssignment.title}' is listed for ${smsModalAssignment.className}.`,
+      at: new Date().toISOString(),
+      delivered: false
+    })
+    toast?.info?.('Message saved locally. School delivery requires future messaging integration.')
     setSmsModalAssignment(null)
   }
 
@@ -626,7 +658,7 @@ export default function TeacherAssignmentsView({
                       className="w-4 h-4 rounded text-sky-600 focus:ring-sky-500 cursor-pointer"
                     />
                     <label htmlFor="sms-notif" className="text-xs text-slate-700 dark:text-slate-300 font-semibold cursor-pointer select-none">
-                      Send SMS to parents
+                      Save an SMS draft locally (not sent)
                     </label>
                   </div>
                 )}
@@ -732,7 +764,7 @@ export default function TeacherAssignmentsView({
               <div className="flex items-center gap-2">
                 <MessageSquare className="w-4 h-4 text-emerald-600" />
                 <span className="font-extrabold text-sm text-slate-900 dark:text-white">
-                  Send Assignment SMS Alert
+                  Save assignment SMS draft
                 </span>
               </div>
               <button
@@ -746,7 +778,7 @@ export default function TeacherAssignmentsView({
 
             <form onSubmit={handleSendSms} className="p-6 space-y-4">
               <p className="text-xs text-slate-600 dark:text-slate-300">
-                Broadcast an instant SMS alert to all registered parents of <strong>{smsModalAssignment.className}</strong> for <strong>"{smsModalAssignment.title}"</strong>.
+                Save a local draft for <strong>{smsModalAssignment.className}</strong> about <strong>"{smsModalAssignment.title}"</strong>. This does not send an SMS.
               </p>
 
               <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300 space-y-1">
@@ -769,7 +801,7 @@ export default function TeacherAssignmentsView({
                   className="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
                 >
                   <Send className="w-3.5 h-3.5" />
-                  <span>Send SMS Now</span>
+                  <span>Save draft locally</span>
                 </button>
               </div>
             </form>

@@ -57,9 +57,35 @@ import {
   Users
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
-import { useAppData } from '../../context/AppDataContext'
 import { useTheme } from '../../context/ThemeContext'
 import { useToast } from '../../context/ToastContext'
+import { downloadSimplePdf } from '../../utils/pdfExport'
+
+const PARENT_MESSAGES_KEY = 'sms_parent_messages'
+const PARENT_LEAVE_KEY = 'sms_parent_leave_requests'
+const PARENT_LEDGER_KEY = 'sms_parent_children_ledger'
+
+const PARENT_MESSAGE_SEED = [
+  { id: 1, sender: 'School Administration (Apex School)', text: 'Dear Parent, fee vouchers for November 2026 have been generated. Kindly ensure payment before the due date.', timestamp: '12 Nov 2026, 10:15 AM', isIncoming: true },
+  { id: 2, sender: 'Class Teacher (Ms. Sana Kosar)', text: 'Parent-Teacher Meeting is scheduled for Saturday, 28th November. We look forward to meeting you.', timestamp: '13 Nov 2026, 02:40 PM', isIncoming: true },
+  { id: 3, sender: 'School Administration (Apex School)', text: 'Winter break circular has been updated on the announcements bulletin.', timestamp: '14 Nov 2026, 09:00 AM', isIncoming: true }
+]
+
+const PARENT_ASSIGNMENTS = [
+  { id: 'pa-1', subject: 'English', subjectClass: 'bg-blue-50 text-blue-700', title: 'First Assignment & Handwriting Practice', instructor: 'Sana Kosar', due: '20 Nov 2026', status: 'Completed', statusClass: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40', className: 'Class One' },
+  { id: 'pa-2', subject: 'Mathematics', subjectClass: 'bg-amber-50 text-amber-700', title: 'Number Counting & Shapes Worksheet', instructor: 'Tariq Mehmood', due: '22 Nov 2026', status: 'Pending', statusClass: 'text-amber-600 bg-amber-50 dark:bg-amber-950/40', className: 'Nursery' }
+]
+
+const readJson = (key, fallback) => {
+  try {
+    const saved = localStorage.getItem(key)
+    if (!saved) return fallback
+    const parsed = JSON.parse(saved)
+    return parsed ?? fallback
+  } catch {
+    return fallback
+  }
+}
 
 // --- INITIAL 7 CHILDREN DATA (MATCHING EXACT USER SCREENSHOTS) ---
 const INITIAL_CHILDREN = [
@@ -291,8 +317,12 @@ export default function ParentPortalView() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isNotifOpen, setIsNotifOpen] = useState(false)
 
-  // Children Database
-  const [childrenList, setChildrenList] = useState(INITIAL_CHILDREN)
+  // Children Database (fee ledger overlays persist locally)
+  const [childrenList, setChildrenList] = useState(() => {
+    const saved = readJson(PARENT_LEDGER_KEY, null)
+    if (Array.isArray(saved) && saved.length) return saved
+    return INITIAL_CHILDREN
+  })
 
   // Active child for detailed fee view (null = show all 7 cards as in pick 3 & 4)
   const [selectedChildForFees, setSelectedChildForFees] = useState(null)
@@ -318,24 +348,28 @@ export default function ParentPortalView() {
   const [leaveStartDate, setLeaveStartDate] = useState('2026-11-16')
   const [leaveEndDate, setLeaveEndDate] = useState('2026-11-17')
   const [leaveNotes, setLeaveNotes] = useState('')
+  const [leaveRequests, setLeaveRequests] = useState(() => {
+    const saved = readJson(PARENT_LEAVE_KEY, [])
+    return Array.isArray(saved) ? saved : []
+  })
+  const [assignmentChildId, setAssignmentChildId] = useState('')
 
   // Pay Online Modal state
   const [payingVoucher, setPayingVoucher] = useState(null)
   const [payingChild, setPayingChild] = useState(null)
   const [paymentMethod, setPaymentMethod] = useState('JazzCash')
   const [paymentPhone, setPaymentPhone] = useState('0300-1234567')
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false)
   const [receiptModalData, setReceiptModalData] = useState(null)
 
   // Quick Timetable Modal
   const [timetableModalChild, setTimetableModalChild] = useState(null)
 
-  // Communication / Chat State
-  const [chatMessages, setChatMessages] = useState([
-    { id: 1, sender: 'School Administration (Smart Management System)', text: 'Dear Parent, fee vouchers for November 2026 have been generated. Kindly ensure payment before the due date.', timestamp: '12 Nov 2026, 10:15 AM', isIncoming: true },
-    { id: 2, sender: 'Class Teacher (Ms. Sana Kosar)', text: 'Parent-Teacher Meeting is scheduled for Saturday, 28th November. We look forward to meeting you.', timestamp: '13 Nov 2026, 02:40 PM', isIncoming: true },
-    { id: 3, sender: 'School Administration (Smart Management System)', text: 'Winter break circular has been updated on the announcements bulletin.', timestamp: '14 Nov 2026, 09:00 AM', isIncoming: true }
-  ])
+  // Communication / Chat State (local only — not delivered to the school)
+  const [chatMessages, setChatMessages] = useState(() => {
+    const saved = readJson(PARENT_MESSAGES_KEY, null)
+    if (Array.isArray(saved) && saved.length) return saved
+    return PARENT_MESSAGE_SEED
+  })
   const [chatInputText, setChatInputText] = useState('')
 
   // Notifications List
@@ -366,114 +400,169 @@ export default function ParentPortalView() {
     toast?.success?.('Parent name updated successfully!')
   }
 
-  // Handle Pay Online Submit
-  const handleConfirmPayment = () => {
-    if (!payingVoucher || !payingChild) return
-    setIsProcessingPayment(true)
-
-    setTimeout(() => {
-      setIsProcessingPayment(false)
-
-      // Move voucher from pending to completed for this child
-      setChildrenList(prev => prev.map(ch => {
-        if (ch.id !== payingChild.id) return ch
-        const updatedPending = ch.feeVouchers.filter(v => v.id !== payingVoucher.id)
-        const newCompleted = {
-          ...payingVoucher,
-          id: 'cv-' + Date.now(),
-          status: 'paid',
-          paid: payingVoucher.total,
-          paidDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-          paymentMode: `Online ${paymentMethod} (${paymentPhone})`
-        }
-        return {
-          ...ch,
-          pendingFees: Math.max(0, ch.pendingFees - payingVoucher.total),
-          feeVouchers: updatedPending,
-          completedVouchers: [newCompleted, ...(ch.completedVouchers || [])]
-        }
-      }))
-
-      // Prepare receipt data
-      const receipt = {
-        childName: payingChild.name,
-        admissionNo: payingChild.admissionNo,
-        className: payingChild.className,
-        section: payingChild.section,
-        voucherTitle: payingVoucher.title,
-        receiptNo: payingVoucher.receiptNo || 'RCP-' + Math.floor(100000 + Math.random() * 900000),
-        refNo: payingVoucher.refNo,
-        amount: payingVoucher.total,
-        paymentDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-        paymentMethod: paymentMethod,
-        transactionId: 'TXN-' + Math.random().toString(36).substring(2, 9).toUpperCase()
-      }
-
-      setPayingVoucher(null)
-      setReceiptModalData(receipt)
-      toast?.success?.(`Payment of PKR ${payingVoucher.total.toLocaleString()} confirmed via ${paymentMethod}!`)
-    }, 1000)
-  }
-
-  // Handle Leave Submission
-  const handleApplyLeaveSubmit = (e) => {
-    e.preventDefault()
-    setIsLeaveModalOpen(false)
-    toast?.success?.(`Leave application for ${leaveReason} submitted to Smart Management System Principal desk.`)
-    setLeaveNotes('')
-  }
-
-  // Handle Send Message
-  const handleSendMessage = (e) => {
-    e.preventDefault()
-    if (!chatInputText.trim()) return
-
-    const newMsg = {
-      id: Date.now(),
-      sender: `${parentName} (Parent)`,
-      text: chatInputText.trim(),
-      timestamp: 'Just now',
-      isIncoming: false
-    }
-
-    setChatMessages(prev => [...prev, newMsg])
-    setChatInputText('')
-
-    // Simulated automated acknowledgment from School Helpdesk
-    setTimeout(() => {
-      setChatMessages(prev => [
-        ...prev,
-        {
-          id: Date.now() + 1,
-          sender: 'School Administration Desk',
-          text: `Thank you for your message, ${parentName}. An administrator will review your query and respond shortly.`,
-          timestamp: 'Just now',
-          isIncoming: true
-        }
-      ])
-    }, 1200)
-  }
-
-  // Currently selected child for attendance
   const currentAttendanceChild = useMemo(() => {
     if (!attendanceSelectedChildId) return null
     return childrenList.find(c => c.id === attendanceSelectedChildId) || null
   }, [childrenList, attendanceSelectedChildId])
 
+  const visibleAssignments = useMemo(() => {
+    if (!assignmentChildId) return PARENT_ASSIGNMENTS
+    const child = childrenList.find(c => c.id === assignmentChildId)
+    if (!child) return PARENT_ASSIGNMENTS
+    return PARENT_ASSIGNMENTS.filter(item => item.className === child.className)
+  }, [assignmentChildId, childrenList])
+
+  const persistChildren = (next) => {
+    setChildrenList(next)
+    try {
+      localStorage.setItem(PARENT_LEDGER_KEY, JSON.stringify(next))
+    } catch {}
+  }
+
+  // Record a local payment request. This does not collect money or contact a gateway.
+  const handleConfirmPayment = () => {
+    if (!payingVoucher || !payingChild) return
+    const phone = paymentPhone.trim()
+    if (phone.replace(/\D/g, '').length < 7) {
+      toast?.error?.('Enter a valid account or mobile number.')
+      return
+    }
+
+    const savedAt = new Date().toISOString()
+    const paidDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+    const request = {
+      id: `pay-${Date.now()}`,
+      childId: payingChild.id,
+      childName: payingChild.name,
+      voucherId: payingVoucher.id,
+      voucherTitle: payingVoucher.title,
+      refNo: payingVoucher.refNo,
+      amount: payingVoucher.total,
+      method: paymentMethod,
+      phone,
+      savedAt,
+      status: 'local-request'
+    }
+    try {
+      const prev = readJson('sms_parent_payment_requests', [])
+      const nextReqs = [request, ...(Array.isArray(prev) ? prev : [])]
+      localStorage.setItem('sms_parent_payment_requests', JSON.stringify(nextReqs))
+    } catch {}
+
+    const nextChildren = childrenList.map(ch => {
+      if (ch.id !== payingChild.id) return ch
+      return {
+        ...ch,
+        feeVouchers: (ch.feeVouchers || []).map(v => (
+          v.id === payingVoucher.id
+            ? { ...v, localRequest: { method: paymentMethod, phone, savedAt } }
+            : v
+        ))
+      }
+    })
+    persistChildren(nextChildren)
+
+    setPayingVoucher(null)
+    setReceiptModalData({
+      childName: payingChild.name,
+      admissionNo: payingChild.admissionNo,
+      className: payingChild.className,
+      section: payingChild.section,
+      voucherTitle: payingVoucher.title,
+      receiptNo: payingVoucher.receiptNo || 'LOCAL-' + Date.now(),
+      refNo: payingVoucher.refNo,
+      amount: payingVoucher.total,
+      paymentDate: paidDate,
+      paymentMethod: `${paymentMethod} (local record only)`,
+      isLocalRecord: true
+    })
+    toast?.info?.('Payment request saved locally. School collection requires future payment integration.')
+  }
+
+  // Handle Leave Submission
+  const handleApplyLeaveSubmit = (e) => {
+    e.preventDefault()
+    if (!currentAttendanceChild) {
+      toast?.error?.('Select a child before applying for leave.')
+      return
+    }
+    if (!leaveStartDate || !leaveEndDate) {
+      toast?.error?.('Choose a start date and an end date.')
+      return
+    }
+    if (leaveEndDate < leaveStartDate) {
+      toast?.error?.('End date cannot be before the start date.')
+      return
+    }
+    if (!leaveNotes.trim()) {
+      toast?.error?.('Add a short explanation for this leave request.')
+      return
+    }
+
+    const entry = {
+      id: `leave-${Date.now()}`,
+      childId: currentAttendanceChild.id,
+      childName: currentAttendanceChild.name,
+      className: currentAttendanceChild.className,
+      reason: leaveReason,
+      startDate: leaveStartDate,
+      endDate: leaveEndDate,
+      notes: leaveNotes.trim(),
+      savedAt: new Date().toISOString(),
+      status: 'saved-locally'
+    }
+    const next = [entry, ...leaveRequests]
+    setLeaveRequests(next)
+    try {
+      localStorage.setItem(PARENT_LEAVE_KEY, JSON.stringify(next))
+    } catch {}
+    setIsLeaveModalOpen(false)
+    setLeaveNotes('')
+    toast?.info?.('Leave request saved locally. School review requires future integration.')
+  }
+
+  // Handle Send Message — stored on this device only. No school auto-reply.
+  const handleSendMessage = (e) => {
+    e.preventDefault()
+    if (!chatInputText.trim()) {
+      toast?.error?.('Please enter a message.')
+      return
+    }
+
+    const newMsg = {
+      id: Date.now(),
+      sender: `${parentName} (Parent)`,
+      text: chatInputText.trim(),
+      timestamp: new Date().toLocaleString('en-GB', {
+        day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+      }),
+      isIncoming: false,
+      delivery: 'local-only'
+    }
+
+    const next = [...chatMessages, newMsg]
+    setChatMessages(next)
+    try {
+      localStorage.setItem(PARENT_MESSAGES_KEY, JSON.stringify(next))
+    } catch {}
+    setChatInputText('')
+    toast?.info?.('Message saved locally. School delivery requires future messaging integration.')
+  }
+
   return (
-    <div className={`min-h-screen flex flex-col font-sans transition-colors duration-200 ${
+    <div className={`min-h-screen flex flex-col font-sans overflow-x-hidden transition-colors duration-200 ${
       isDark ? 'bg-slate-950 text-slate-100 dark' : 'bg-[#f4f7fb] text-slate-800'
     }`}>
       {/* ---------------- TOP NAVBAR (SMART MANAGEMENT SYSTEM BRANDING) ---------------- */}
       <header className={`sticky top-0 z-40 h-16 border-b transition-colors duration-200 ${
         isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
-      } px-4 sm:px-6 flex items-center justify-between shadow-xs`}>
+      } px-3 sm:px-6 flex items-center justify-between gap-2 shadow-xs min-w-0`}>
         {/* Left: Smart Management System Logo & Title + Hamburger */}
-        <div className="flex items-center gap-3 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
           <button
             type="button"
             onClick={() => setIsMobileMenuOpen(prev => !prev)}
-            className="p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors lg:hidden"
+            className="p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors lg:hidden shrink-0"
             aria-label="Toggle navigation menu"
           >
             {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -481,25 +570,25 @@ export default function ParentPortalView() {
 
           {/* SMART MANAGEMENT SYSTEM BRANDING */}
           <div
-            className="flex items-center gap-2.5 cursor-pointer select-none"
+            className="flex items-center gap-2.5 cursor-pointer select-none min-w-0"
             onClick={() => {
               setActiveTab('dashboard')
               setSelectedChildForFees(null)
             }}
           >
             {/* Custom Modern Logo Emblem */}
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-md shadow-blue-500/25">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-md shadow-blue-500/25 shrink-0">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
                 <path d="M12 2L2 19h20L12 2z" />
                 <path d="M12 9v4" />
                 <path d="M12 17h.01" />
               </svg>
             </div>
-            <div className="flex flex-col">
-              <span className="font-bold text-sm sm:text-base leading-tight tracking-tight text-slate-900 dark:text-white">
+            <div className="flex flex-col min-w-0">
+              <span className="font-bold text-sm sm:text-base leading-tight tracking-tight text-slate-900 dark:text-white truncate">
                 Smart Management System
               </span>
-              <span className="text-[10px] text-slate-400 font-medium tracking-wide">
+              <span className="hidden sm:block text-[10px] text-slate-400 font-medium tracking-wide truncate">
                 Parent Portal
               </span>
             </div>
@@ -507,7 +596,7 @@ export default function ParentPortalView() {
         </div>
 
         {/* Right: Notifications, Messages, Dark Mode, Profile (Unknown) */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           {/* Notification Bell */}
           <div className="relative">
             <button
@@ -523,7 +612,7 @@ export default function ParentPortalView() {
             </button>
 
             {isNotifOpen && (
-              <div className={`absolute right-0 mt-2 w-80 rounded-2xl shadow-xl border p-3 z-50 transition-all ${
+              <div className={`fixed left-3 right-3 top-16 w-auto sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-80 rounded-2xl shadow-xl border p-3 z-50 transition-all ${
                 isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-800'
               }`}>
                 <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
@@ -607,12 +696,19 @@ export default function ParentPortalView() {
       </header>
 
       {/* ---------------- MAIN LAYOUT ---------------- */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden min-w-0">
+        {isMobileMenuOpen && (
+          <div
+            className="fixed inset-0 z-20 bg-slate-900/40 backdrop-blur-xs lg:hidden"
+            onClick={() => setIsMobileMenuOpen(false)}
+            aria-hidden="true"
+          />
+        )}
         {/* ---------------- SIDEBAR ---------------- */}
-        <aside className={`fixed inset-y-0 left-0 z-30 w-60 pt-16 lg:pt-0 transform lg:static lg:translate-x-0 transition-transform duration-200 ease-in-out border-r ${
+        <aside className={`fixed inset-y-0 left-0 z-30 w-60 max-w-[85vw] lg:max-w-none pt-16 lg:pt-0 transform lg:static lg:translate-x-0 transition-transform duration-200 ease-in-out border-r overflow-x-hidden shadow-2xl lg:shadow-none ${
           isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
         } ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-          <div className="h-full flex flex-col justify-between py-4 px-3 overflow-y-auto">
+          <div className="h-full flex flex-col justify-between py-4 px-3 overflow-y-auto overflow-x-hidden">
             <div className="space-y-1">
               {/* Dashboard */}
               <button
@@ -789,9 +885,9 @@ export default function ParentPortalView() {
         </aside>
 
         {/* ---------------- CONTENT CONTAINER ---------------- */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        <main className="flex-1 min-w-0 overflow-x-hidden overflow-y-auto p-3 sm:p-6 lg:p-8">
           {/* Top Quick Shortcut Pills (Present on inner pages) */}
-          <div className="flex items-center justify-between flex-wrap gap-2 mb-6">
+          <div className="flex items-center justify-between flex-wrap gap-2 mb-6 min-w-0">
             <div className="flex items-center gap-2">
               <FileText className="w-5 h-5 text-blue-600" />
               <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
@@ -808,7 +904,7 @@ export default function ParentPortalView() {
             </div>
 
             {/* Quick Navigation Buttons (Pick 1, 3, 5, 6) */}
-            <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto py-1">
+            <div className="scroll-row flex items-center gap-1.5 sm:gap-2 overflow-x-auto py-1 w-full sm:w-auto">
               <button
                 type="button"
                 onClick={() => setActiveTab('my-children')}
@@ -1382,6 +1478,11 @@ export default function ParentPortalView() {
                                 <span className="text-rose-600 font-semibold">Remaining: PKR {voucher.total.toLocaleString()}</span>
                                 <span className="text-slate-400">Due: {voucher.dueDate}</span>
                               </div>
+                              {voucher.localRequest && (
+                                <p className="text-[11px] text-amber-700 dark:text-amber-300 pt-1">
+                                  Local request saved ({voucher.localRequest.method}). The balance is still unpaid.
+                                </p>
+                              )}
                             </div>
 
                             {/* Action Buttons */}
@@ -1395,7 +1496,7 @@ export default function ParentPortalView() {
                                 className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
                               >
                                 <CreditCard className="w-3.5 h-3.5" />
-                                <span>Pay Online</span>
+                                <span>{voucher.localRequest ? 'Update local record' : 'Save local record'}</span>
                               </button>
 
                               <button
@@ -1448,8 +1549,12 @@ export default function ParentPortalView() {
                                 <h4 className="text-sm font-bold text-slate-900 dark:text-white">
                                   {cv.title}
                                 </h4>
-                                <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                  PAID
+                                <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded border ${
+                                  cv.status === 'local-record'
+                                    ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                    : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                }`}>
+                                  {cv.status === 'local-record' ? 'LOCAL RECORD' : 'PAID'}
                                 </span>
                               </div>
                               <p className="text-xs text-slate-400 font-mono">
@@ -1475,7 +1580,8 @@ export default function ParentPortalView() {
                                   refNo: cv.refNo,
                                   amount: cv.paid,
                                   paymentDate: cv.paidDate,
-                                  paymentMethod: cv.paymentMode
+                                  paymentMethod: cv.paymentMode,
+                                  isLocalRecord: cv.status === 'local-record'
                                 })
                               }}
                               className="px-4 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 font-semibold text-xs flex items-center gap-1.5 transition-colors self-end md:self-auto cursor-pointer"
@@ -1529,7 +1635,7 @@ export default function ParentPortalView() {
                 </div>
 
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
+                  <table className="w-full text-left text-xs min-w-[640px]">
                     <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 uppercase tracking-wider font-semibold border-b border-slate-100 dark:border-slate-800">
                       <tr>
                         <th className="py-3 px-4">S/N</th>
@@ -1811,9 +1917,11 @@ export default function ParentPortalView() {
                   <div className={`p-5 rounded-2xl border ${
                     isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
                   } shadow-xs space-y-4`}>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
                       <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                        {attendanceMonth} {attendanceYear} Calendar
+                        {attendanceViewMode === 'Summary list'
+                          ? `${attendanceMonth} ${attendanceYear} Summary`
+                          : `${attendanceMonth} ${attendanceYear} Calendar`}
                       </span>
                       <div className="flex items-center gap-3 text-[11px]">
                         <span className="flex items-center gap-1">
@@ -1828,7 +1936,38 @@ export default function ParentPortalView() {
                       </div>
                     </div>
 
-                    {/* 7 Days Grid */}
+                    {attendanceType === 'Subject wise' && (
+                      <p className="text-[11px] text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-xl px-3 py-2">
+                        Subject-wise attendance is not stored on this device. Figures below are the general daily totals.
+                      </p>
+                    )}
+
+                    {attendanceViewMode === 'Summary list' ? (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs min-w-[520px]">
+                          <thead className="text-slate-500 uppercase tracking-wider">
+                            <tr>
+                              <th className="py-2 pr-3">Child</th>
+                              <th className="py-2 pr-3">Present</th>
+                              <th className="py-2 pr-3">Absent</th>
+                              <th className="py-2 pr-3">Leave</th>
+                              <th className="py-2 pr-3">Working days</th>
+                              <th className="py-2">Percent</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr className="font-semibold">
+                              <td className="py-2 pr-3">{currentAttendanceChild.name}</td>
+                              <td className="py-2 pr-3 text-emerald-600">{currentAttendanceChild.attendanceStats.present}</td>
+                              <td className="py-2 pr-3 text-rose-600">{currentAttendanceChild.attendanceStats.absent}</td>
+                              <td className="py-2 pr-3">{currentAttendanceChild.attendanceStats.leave}</td>
+                              <td className="py-2 pr-3">{currentAttendanceChild.attendanceStats.workingDays}</td>
+                              <td className="py-2">{currentAttendanceChild.attendancePercent}%</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
                     <div className="grid grid-cols-7 gap-1.5 text-center text-xs">
                       {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
                         <div key={d} className="font-bold py-2 bg-slate-50 dark:bg-slate-800 rounded-lg text-slate-500">
@@ -1869,7 +2008,28 @@ export default function ParentPortalView() {
                         )
                       })}
                     </div>
+                    )}
                   </div>
+
+                  {leaveRequests.filter(r => r.childId === currentAttendanceChild.id).length > 0 && (
+                    <div className={`p-5 rounded-2xl border ${
+                      isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                    } space-y-3`}>
+                      <h4 className="text-xs font-bold">Saved leave requests (this device only)</h4>
+                      {leaveRequests.filter(r => r.childId === currentAttendanceChild.id).map(req => (
+                        <div key={req.id} className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 text-xs space-y-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-bold">{req.reason}</span>
+                            <span className="text-[10px] font-bold uppercase text-amber-700 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded">
+                              Saved locally
+                            </span>
+                          </div>
+                          <p className="text-slate-500">{req.startDate} to {req.endDate}</p>
+                          <p className="text-slate-600 dark:text-slate-300">{req.notes}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -1918,39 +2078,42 @@ export default function ParentPortalView() {
             <div className={`p-6 rounded-2xl border ${
               isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
             } space-y-6`}>
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 flex-wrap gap-3">
                 <div>
                   <h3 className="text-base font-bold">Assignments & Study Coursework</h3>
                   <p className="text-xs text-slate-500">Review homework posted by faculty teachers.</p>
                 </div>
+                <select
+                  value={assignmentChildId}
+                  onChange={(e) => setAssignmentChildId(e.target.value)}
+                  className="text-xs p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-medium"
+                >
+                  <option value="">All children</option>
+                  {childrenList.map(c => (
+                    <option key={c.id} value={c.id}>{c.name} ({c.className})</option>
+                  ))}
+                </select>
               </div>
 
               <div className="space-y-3">
-                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between flex-wrap gap-2">
-                  <div>
-                    <span className="text-[10px] font-bold uppercase bg-blue-50 text-blue-700 px-2 py-0.5 rounded">
-                      English
+                {visibleAssignments.length === 0 ? (
+                  <p className="text-xs text-slate-500 p-4 rounded-xl border border-dashed border-slate-300 dark:border-slate-700">
+                    No assignments are stored for this child's class on this device.
+                  </p>
+                ) : visibleAssignments.map(item => (
+                  <div key={item.id} className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between flex-wrap gap-2">
+                    <div>
+                      <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${item.subjectClass}`}>
+                        {item.subject}
+                      </span>
+                      <h4 className="text-xs font-bold mt-1">{item.title}</h4>
+                      <p className="text-[11px] text-slate-400">Instructor: {item.instructor} · Due: {item.due} · {item.className}</p>
+                    </div>
+                    <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${item.statusClass}`}>
+                      {item.status}
                     </span>
-                    <h4 className="text-xs font-bold mt-1">First Assignment & Handwriting Practice</h4>
-                    <p className="text-[11px] text-slate-400">Instructor: Sana Kosar · Due: 20 Nov 2026</p>
                   </div>
-                  <span className="text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-lg">
-                    Completed
-                  </span>
-                </div>
-
-                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between flex-wrap gap-2">
-                  <div>
-                    <span className="text-[10px] font-bold uppercase bg-amber-50 text-amber-700 px-2 py-0.5 rounded">
-                      Mathematics
-                    </span>
-                    <h4 className="text-xs font-bold mt-1">Number Counting & Shapes Worksheet</h4>
-                    <p className="text-[11px] text-slate-400">Instructor: Tariq Mehmood · Due: 22 Nov 2026</p>
-                  </div>
-                  <span className="text-xs font-bold text-amber-600 bg-amber-50 dark:bg-amber-950/40 px-2.5 py-1 rounded-lg">
-                    Pending
-                  </span>
-                </div>
+                ))}
               </div>
             </div>
           )}
@@ -2002,10 +2165,10 @@ export default function ParentPortalView() {
                   </div>
                   <div>
                     <h3 className="text-xs font-bold">Smart Management System Administration & Teachers</h3>
-                    <span className="text-[10px] text-emerald-600 font-medium">● Verified Helpdesk</span>
+                    <span className="text-[10px] text-amber-600 font-medium">Saved on this device only</span>
                   </div>
                 </div>
-                <span className="text-[11px] text-slate-400">Direct In-App Messenger</span>
+                <span className="text-[11px] text-slate-400">Not delivered to the school</span>
               </div>
 
               {/* Chat Messages */}
@@ -2269,7 +2432,7 @@ export default function ParentPortalView() {
 
             {/* Marks Table */}
             <div className="overflow-x-auto text-xs">
-              <table className="w-full text-left">
+              <table className="w-full text-left min-w-[480px]">
                 <thead className="bg-slate-50 dark:bg-slate-800/60 font-semibold text-slate-500">
                   <tr>
                     <th className="py-2.5 px-3">Subject</th>
@@ -2337,6 +2500,27 @@ export default function ParentPortalView() {
               <button
                 type="button"
                 onClick={() => {
+                  const child = selectedChildForReportCard
+                  downloadSimplePdf(`report-card-${child.admissionNo}.pdf`, [
+                    { text: `Report card - ${child.name}`, bold: true },
+                    `${child.className} - ${child.section} · Year ${reportCardYear}`,
+                    `Admission: ${child.admissionNo}`,
+                    'English Language: 94/100 (A+)',
+                    'Mathematics: 92/100 (A+)',
+                    'Urdu Literature: 89/100 (A)',
+                    'General Knowledge / Science: 95/100 (A+)',
+                    'Arts & Physical Activity: 91/100 (A+)',
+                    'Grand total: 461/500 (92.2%, A+)'
+                  ])
+                }}
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-bold flex items-center gap-1.5"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Download PDF</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
                   window.print()
                 }}
                 className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs"
@@ -2365,7 +2549,7 @@ export default function ParentPortalView() {
             <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2">
                 <CreditCard className="w-5 h-5 text-emerald-600" />
-                <h3 className="text-base font-bold">Online Fee Payment</h3>
+                <h3 className="text-base font-bold">Save a local fee record</h3>
               </div>
               <button
                 type="button"
@@ -2420,6 +2604,10 @@ export default function ParentPortalView() {
               </div>
             </div>
 
+            <p className="text-[11px] text-amber-700 dark:text-amber-300">
+              This saves a record on this device. It does not charge JazzCash, EasyPaisa, or a card.
+            </p>
+
             <div>
               <label className="block text-xs font-semibold text-slate-500 mb-1">
                 Account / Mobile Number
@@ -2442,21 +2630,11 @@ export default function ParentPortalView() {
               </button>
               <button
                 type="button"
-                disabled={isProcessingPayment}
                 onClick={handleConfirmPayment}
                 className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-2 shadow-xs cursor-pointer"
               >
-                {isProcessingPayment ? (
-                  <>
-                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Processing...</span>
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Confirm PKR {payingVoucher.total.toLocaleString()}</span>
-                  </>
-                )}
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>Save local record · PKR {payingVoucher.total.toLocaleString()}</span>
               </button>
             </div>
           </div>
@@ -2470,7 +2648,7 @@ export default function ParentPortalView() {
             isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-800'
           }`}>
             <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-              <h3 className="text-base font-bold">Official Payment Receipt</h3>
+              <h3 className="text-base font-bold">{receiptModalData.isLocalRecord ? 'Local fee record' : receiptModalData.isUnpaid ? 'Unpaid voucher slip' : 'Payment receipt'}</h3>
               <button
                 type="button"
                 onClick={() => setReceiptModalData(null)}
@@ -2511,15 +2689,45 @@ export default function ParentPortalView() {
               </div>
               <div className="flex justify-between text-[11px]">
                 <span className="text-slate-400">Payment Status:</span>
-                <span className="font-bold text-emerald-600">{receiptModalData.isUnpaid ? 'PENDING' : 'PAID & VERIFIED'}</span>
+                <span className={`font-bold ${receiptModalData.isLocalRecord ? 'text-amber-600' : receiptModalData.isUnpaid ? 'text-amber-600' : 'text-emerald-600'}`}>
+                  {receiptModalData.isLocalRecord ? 'SAVED LOCALLY — not collected by the school' : receiptModalData.isUnpaid ? 'PENDING' : 'PAID'}
+                </span>
               </div>
             </div>
 
             <div className="pt-3 border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-400 text-center">
-              Computer-generated official receipt verified by Smart Management System Finance Desk.
+              {receiptModalData.isLocalRecord
+                ? 'This slip is stored on this device only. School collection requires future payment integration.'
+                : receiptModalData.isUnpaid
+                ? 'This voucher has not been paid.'
+                : 'Recorded payment slip for this student.'}
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  downloadSimplePdf(`fee-slip-${receiptModalData.receiptNo}.pdf`, [
+                    { text: receiptModalData.isLocalRecord ? 'Local fee record' : 'Fee slip', bold: true },
+                    `Student: ${receiptModalData.childName}`,
+                    `Admission: ${receiptModalData.admissionNo}`,
+                    `Class: ${receiptModalData.className} - ${receiptModalData.section}`,
+                    `Voucher: ${receiptModalData.voucherTitle}`,
+                    `Receipt: ${receiptModalData.receiptNo}`,
+                    `Ref: ${receiptModalData.refNo}`,
+                    `Amount: PKR ${Number(receiptModalData.amount || 0).toLocaleString()}`,
+                    receiptModalData.isLocalRecord
+                      ? 'Status: Saved locally. Not collected by the school.'
+                      : receiptModalData.isUnpaid
+                      ? 'Status: Pending'
+                      : `Status: Paid via ${receiptModalData.paymentMethod || 'recorded method'}`
+                  ])
+                }}
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-bold flex items-center gap-1.5"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Download PDF</span>
+              </button>
               <button
                 type="button"
                 onClick={() => window.print()}
@@ -2618,7 +2826,7 @@ export default function ParentPortalView() {
                   type="submit"
                   className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs cursor-pointer"
                 >
-                  Submit Application
+                  Save request locally
                 </button>
               </div>
             </form>

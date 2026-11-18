@@ -13,6 +13,7 @@ import {
   Wallet,
   CreditCard,
   Printer,
+  Download,
   Trash2,
   Eye,
   EyeOff,
@@ -47,6 +48,7 @@ import {
   applyPaymentDistributionToInvoices
 } from '../../../components/common/QuickPaymentModal'
 import { recordCampusLedgerTransaction } from '../accounts/CampusAccountsView'
+import { downloadSimplePdf } from '../../../utils/pdfExport'
 
 const normalizeCnic = (val = '') => String(val).replace(/[^0-9]/g, '')
 
@@ -264,6 +266,35 @@ export const StudentBillingHistoryView = ({
     return { rows, grandTotal, activeBank }
   }, [familySiblings, activeStudent, fees, currentInstitute?.id, familyVoucherBankId])
 
+  const downloadFamilyVoucherPdf = () => {
+    if (!activeStudent) return
+    const lines = [
+      { text: currentInstitute?.name || 'Institute', bold: true },
+      { text: 'COMBINED FAMILY FEE VOUCHER', bold: true },
+      { text: currentInstitute?.address || 'Campus billing office' },
+      { text: `Bank: ${familyVoucherData.activeBank?.name || '—'}  A/C: ${familyVoucherData.activeBank?.accountNumber || 'Ask accounts'}` },
+      { text: `Guardian: ${parentName}  CNIC: ${parentCnic || 'N/A'}  Phone: ${parentPhone || '—'}` },
+      { text: `Due date: ${familyVoucherDueDate}` },
+      { text: ' ' }
+    ]
+    familyVoucherData.rows.forEach(({ student: st, pendingInvoices: stPending, subtotal }) => {
+      lines.push({
+        text: `${st.fullName || st.name} | ${st.className || ''} | Roll ${st.rollNumber || '—'} | Subtotal ${formatMoney(subtotal)}`,
+        bold: true
+      })
+      if (!stPending.length) lines.push({ text: '  No pending invoices' })
+      stPending.forEach((inv) => {
+        lines.push({
+          text: `  ${inv.feeMonth || inv.title || 'Fee'}  remaining ${formatMoney(getInvoiceRemaining(inv))}`
+        })
+      })
+    })
+    lines.push({ text: ' ' })
+    lines.push({ text: `Combined payable: ${formatMoney(familyVoucherData.grandTotal)}`, bold: true })
+    lines.push({ text: 'Generated in this browser. Not a bank-cleared instrument.' })
+    downloadSimplePdf(`family-voucher-${String(activeStudent.id).slice(-6)}.pdf`, lines)
+  }
+
   // Generate Full Invoice category totals & printable invoice lines
   const fullInvoiceSummary = useMemo(() => {
     const totals = { tuition: 0, individual: 0, store: 0, fines: 0 }
@@ -321,6 +352,28 @@ export const StudentBillingHistoryView = ({
       latestDueDate
     }
   }, [pendingInvoices, fiCategories, summary.cashCollected, summary.paidCount])
+
+  const downloadFullInvoicePdf = () => {
+    if (!activeStudent) return
+    const lines = [
+      { text: currentInstitute?.name || 'Institute', bold: true },
+      { text: 'FEE INVOICE', bold: true },
+      { text: `${activeStudent.fullName || activeStudent.name} · ${activeStudent.className || ''} · Roll ${activeStudent.rollNumber || '—'}` },
+      { text: `Guardian: ${parentName} · ${parentPhone || ''}` },
+      { text: ' ' }
+    ]
+    ;(fullInvoiceSummary.lines || []).forEach((line, i) => {
+      const title = line.fee?.feeMonth || line.fee?.title || line.fee?.feeName || 'Fee'
+      lines.push({
+        text: `${i + 1}. ${title} — due ${formatMoney(line.amountDue)}${line.isOverdue ? ' (overdue)' : ''}`
+      })
+    })
+    if (!fullInvoiceSummary.lines?.length) lines.push({ text: 'No outstanding lines in the current selection.' })
+    lines.push({ text: ' ' })
+    lines.push({ text: `Selected outstanding: ${formatMoney(fullInvoiceSummary.selectedOutstanding)}`, bold: true })
+    lines.push({ text: 'Generated in this browser.' })
+    downloadSimplePdf(`invoice-${String(activeStudent.id).slice(-6)}.pdf`, lines)
+  }
 
   const openFullInvoiceModal = () => {
     setFiCategories({ tuition: true, individual: true, store: true, fines: true })
@@ -1850,11 +1903,38 @@ export const StudentBillingHistoryView = ({
 
         return (
           <div className="fixed inset-0 z-[115] bg-slate-900/60 backdrop-blur-[1px] overflow-y-auto p-4 sm:p-6 flex items-center justify-center print:p-0 print:bg-white">
+            <style>{`
+              @media print {
+                body * { visibility: hidden !important; }
+                #billing-receipt-slip, #billing-receipt-slip * { visibility: visible !important; }
+                #billing-receipt-slip { position: absolute !important; left: 0 !important; top: 0 !important; width: auto !important; background: #fff !important; }
+              }
+            `}</style>
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-5 sm:p-6 space-y-4 border border-neutral-300 print:shadow-none print:border-0 print:p-0 print:max-w-none print:w-auto">
               {/* Top Non-Print Action Controls */}
               <div className="flex items-center justify-between border-b border-neutral-200 pb-3 print:hidden">
                 <span className="text-xs font-bold text-neutral-700 uppercase tracking-wider">Receipt Slip Preview</span>
                 <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      downloadSimplePdf(`receipt-slip-${refCode}.pdf`, [
+                        { text: currentInstitute?.name || 'Institute', bold: true },
+                        { text: 'CASH RECEIPT SLIP', bold: true },
+                        { text: `Ref: ${refCode}    ${dateTimeStr}` },
+                        { text: `Student: ${activeStudent?.fullName || activeStudent?.name || 'Student'}` },
+                        { text: `Class: ${classLabel}` },
+                        { text: feeDesc },
+                        { text: `Paid: ${formatMoney(slipPaid)}    Remaining: ${formatMoney(slipRemaining)}` },
+                        { text: isFullyPaid ? 'Account status: settled in this browser register.' : 'Balance remains on this invoice.' },
+                        { text: 'Generated in this browser.' }
+                      ])
+                    }}
+                    className="px-3.5 py-1.5 rounded-lg border border-neutral-300 text-neutral-800 text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>PDF</span>
+                  </button>
                   <button
                     type="button"
                     onClick={() => window.print()}
@@ -1874,7 +1954,7 @@ export const StudentBillingHistoryView = ({
               </div>
 
               {/* Strictly Centered Black & White Receipt Slip Sheet */}
-              <div className="mx-auto w-full max-w-[340px] border border-black bg-white text-black p-5 print:mx-auto">
+              <div id="billing-receipt-slip" className="mx-auto w-full max-w-[340px] border border-black bg-white text-black p-5 print:mx-auto">
                 {/* Top Logo Placeholder & Institute Title */}
                 <div className="text-center space-y-1.5">
                   <div className="w-14 h-14 mx-auto border border-neutral-400 flex items-center justify-center text-xs font-bold tracking-wider uppercase text-black">
@@ -2273,6 +2353,13 @@ export const StudentBillingHistoryView = ({
       {/* Combined Family Fee Voucher Modal */}
       {familyVoucherOpen && activeStudent && (
         <div className="fixed inset-0 z-[115] bg-slate-900/55 backdrop-blur-[1px] flex items-center justify-center p-4 overflow-y-auto print:bg-white print:p-0 print:static">
+          <style>{`
+            @media print {
+              body * { visibility: hidden !important; }
+              #family-fee-voucher, #family-fee-voucher * { visibility: visible !important; }
+              #family-fee-voucher { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; background: #fff !important; }
+            }
+          `}</style>
           <div className="w-full max-w-3xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-auto print:shadow-none print:border-0">
             {/* Modal Control Header (Hidden on Print) */}
             <div className="bg-indigo-600 text-white px-5 py-3.5 flex flex-wrap items-center justify-between gap-2 print:hidden">
@@ -2300,6 +2387,14 @@ export const StudentBillingHistoryView = ({
                 />
                 <button
                   type="button"
+                  onClick={downloadFamilyVoucherPdf}
+                  className="px-3.5 py-1.5 rounded-lg bg-white/15 border border-white/30 text-white hover:bg-white/25 text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>PDF</span>
+                </button>
+                <button
+                  type="button"
                   onClick={() => window.print()}
                   className="px-3.5 py-1.5 rounded-lg bg-white text-indigo-700 hover:bg-indigo-50 text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
                 >
@@ -2318,7 +2413,7 @@ export const StudentBillingHistoryView = ({
             </div>
 
             {/* Printable Family Voucher Content */}
-            <div className="p-6 space-y-5 text-xs text-slate-800 max-h-[82vh] overflow-y-auto print:max-h-none print:overflow-visible">
+            <div id="family-fee-voucher" className="p-6 space-y-5 text-xs text-slate-800 max-h-[82vh] overflow-y-auto print:max-h-none print:overflow-visible">
               {/* Institute & Bank Banner */}
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-4 border-b-2 border-slate-200">
                 <div>
@@ -2604,6 +2699,13 @@ export const StudentBillingHistoryView = ({
       {/* Full Invoice / Print Receipt Preview Modal (Picks 3 & 4) */}
       {fiReceiptPreviewOpen && activeStudent && (
         <div className="fixed inset-0 z-[120] bg-slate-900/65 backdrop-blur-[1px] flex flex-col items-center p-3 sm:p-6 overflow-y-auto print:bg-white print:p-0 print:static">
+          <style>{`
+            @media print {
+              body * { visibility: hidden !important; }
+              .full-invoice-sheet, .full-invoice-sheet * { visibility: visible !important; }
+              .full-invoice-sheet { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; background: #fff !important; }
+            }
+          `}</style>
           {/* Top Non-Printable Toolbar */}
           <div className="w-full max-w-4xl bg-slate-900 text-white rounded-t-xl px-4 py-3 flex flex-wrap items-center justify-between gap-2 shadow-lg print:hidden">
             <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -2650,6 +2752,14 @@ export const StudentBillingHistoryView = ({
               </button>
               <button
                 type="button"
+                onClick={downloadFullInvoicePdf}
+                className="px-3.5 py-1.5 rounded-lg bg-white text-slate-900 hover:bg-slate-100 font-bold inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>PDF</span>
+              </button>
+              <button
+                type="button"
                 onClick={() => window.print()}
                 className="px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-bold inline-flex items-center gap-1.5 cursor-pointer"
               >
@@ -2668,7 +2778,7 @@ export const StudentBillingHistoryView = ({
 
           {/* Printable Document Container */}
           {fiPrintLayout === 'a4' ? (
-            <div className="w-full max-w-4xl bg-white rounded-b-xl shadow-2xl p-6 sm:p-10 text-slate-900 relative overflow-hidden print:shadow-none print:rounded-none print:max-w-none print:p-6">
+            <div className="full-invoice-sheet w-full max-w-4xl bg-white rounded-b-xl shadow-2xl p-6 sm:p-10 text-slate-900 relative overflow-hidden print:shadow-none print:rounded-none print:max-w-none print:p-6">
               {/* Subtle Centered Watermark Emblem */}
               <div className="pointer-events-none select-none absolute inset-0 flex items-center justify-center opacity-[0.045]">
                 <div className="w-72 h-72 rounded-full border-[14px] border-sky-600 flex flex-col items-center justify-center">
@@ -2909,7 +3019,7 @@ export const StudentBillingHistoryView = ({
           ) : (
             /* Horizontal / Vertical Multi-Copy Challan Strips */
             <div
-              className={`w-full max-w-5xl bg-white rounded-b-xl shadow-2xl p-5 grid gap-4 text-xs text-slate-900 print:shadow-none print:rounded-none ${
+              className={`full-invoice-sheet w-full max-w-5xl bg-white rounded-b-xl shadow-2xl p-5 grid gap-4 text-xs text-slate-900 print:shadow-none print:rounded-none ${
                 fiPrintLayout === 'horizontal'
                   ? fiCopies === 2
                     ? 'grid-cols-1 md:grid-cols-2'

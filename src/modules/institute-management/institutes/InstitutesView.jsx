@@ -221,6 +221,23 @@ export const InstitutesView = () => {
   // Track last viewed institute ID to prevent resetting tab on module toggle updates
   const lastViewedInstituteId = useRef(null)
   useEffect(() => {
+    if (!viewingDetails?.id) return
+    const fresh = institutes.find(inst => inst.id === viewingDetails.id)
+    if (!fresh) return
+    setViewingDetails(prev => {
+      if (!prev || prev.id !== fresh.id) return prev
+      if (
+        prev.status === fresh.status &&
+        prev.lifecycleStatus === fresh.lifecycleStatus &&
+        prev.name === fresh.name &&
+        prev.planTier === fresh.planTier
+      ) {
+        return prev
+      }
+      return fresh
+    })
+  }, [institutes, viewingDetails?.id])
+  useEffect(() => {
     if (viewingDetails?.id && viewingDetails.id !== lastViewedInstituteId.current) {
       lastViewedInstituteId.current = viewingDetails.id
       setDetailsTab('overview')
@@ -1651,11 +1668,18 @@ export const InstitutesView = () => {
 
   const handleApplyRestore = () => {
     if (!selectedBackupPayload) return
-    importData(selectedBackupPayload)
-    toast.success('Campus database restored and verified successfully!')
-    setIsBackupModalOpen(false)
-    setBackupInspectionReport(null)
-    setSelectedBackupPayload(null)
+    try {
+      importData(selectedBackupPayload)
+      const raw = localStorage.getItem('sms_database_v3_enterprise')
+      if (!raw) throw new Error('Local store was not updated.')
+      refreshData?.()
+      toast.success('Local campus snapshot restored into sms_database_v3_enterprise.')
+      setIsBackupModalOpen(false)
+      setBackupInspectionReport(null)
+      setSelectedBackupPayload(null)
+    } catch (err) {
+      toast.error(err.message || 'Restore failed. The local store was not replaced.')
+    }
   }
 
   return (

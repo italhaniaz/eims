@@ -20,6 +20,7 @@ import {
   Lock,
   CheckSquare,
   Settings,
+  Layers,
   ClipboardList
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
@@ -40,7 +41,7 @@ export const SuperadminSidebar = ({
   const isStandardsRoute = ['global-templates', 'compliance-policies', 'sa-policies'].includes(currentRoute) || 
     (typeof currentRoute === 'string' && currentRoute.startsWith('sa-policies-'))
   const isIntelRoute = ['cross-institute-analytics', 'platform-analytics', 'announcements', 'system-broadcasts'].includes(currentRoute)
-  const isGovernanceRoute = ['system-health', 'audit-logs', 'backup-data', 'platform-settings', 'sa-settings'].includes(currentRoute) || 
+  const isGovernanceRoute = ['system-health', 'audit-logs', 'backup-data', 'platform-settings', 'sa-settings', 'platform-modules'].includes(currentRoute) || 
     (typeof currentRoute === 'string' && currentRoute.startsWith('sa-settings-'))
 
   // Real-time dynamic counts
@@ -69,7 +70,9 @@ export const SuperadminSidebar = ({
 
     const updateCampusCount = () => {
       try {
-        const raw = localStorage.getItem('sms_institutes') || localStorage.getItem('app_data')
+        const raw = localStorage.getItem('sms_database_v3_enterprise')
+          || localStorage.getItem('sms_institutes')
+          || localStorage.getItem('app_data')
         if (raw) {
           const parsed = JSON.parse(raw)
           if (Array.isArray(parsed)) {
@@ -185,6 +188,7 @@ export const SuperadminSidebar = ({
         <div 
           onClick={onCloseMobile}
           className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs z-40 lg:hidden"
+          aria-hidden="true"
         />
       )}
 
@@ -192,9 +196,9 @@ export const SuperadminSidebar = ({
         className={`
           fixed lg:static top-0 bottom-0 left-0 z-50
           ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-          ${collapsed ? 'lg:w-20' : 'w-72'} 
+          ${collapsed ? 'w-72 max-w-[85vw] lg:max-w-none lg:w-20' : 'w-72 max-w-[85vw] lg:max-w-none'}
           h-full max-h-screen sidebar-navy bg-[#0B1120] text-slate-300 border-r border-slate-800/80 flex flex-col 
-          transition-all duration-300 shrink-0 select-none shadow-xl
+          transition-all duration-300 shrink-0 select-none overflow-x-hidden shadow-2xl lg:shadow-none
         `}
       >
         {/* Top Brand Header */}
@@ -218,7 +222,9 @@ export const SuperadminSidebar = ({
           {/* Mobile Close Button */}
           <button 
             onClick={onCloseMobile}
-            className="lg:hidden text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800/60 transition-colors ml-auto cursor-pointer"
+            type="button"
+            aria-label="Close menu"
+            className="lg:hidden shrink-0 text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800/60 transition-colors ml-auto cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -712,6 +718,24 @@ export const SuperadminSidebar = ({
                   >
                     <Database className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('backup-data') ? 'text-purple-400' : 'text-slate-400'}`} />
                     <span className="whitespace-nowrap truncate">Backups & Recovery</span>
+                  </button>
+                </div>
+
+                {/* Modules Control */}
+                <div className="relative">
+                  {isRouteActive('platform-modules') && (
+                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-500 rounded-full z-10 shadow-sm shadow-purple-500/50"></div>
+                  )}
+                  <button
+                    onClick={() => handleNavClick('platform-modules')}
+                    className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
+                      isRouteActive('platform-modules')
+                        ? 'bg-purple-600/20 text-purple-300 font-semibold border border-purple-500/30'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <Layers className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('platform-modules') ? 'text-purple-400' : 'text-slate-400'}`} />
+                    <span className="whitespace-nowrap truncate">Modules Control</span>
                   </button>
                 </div>
 

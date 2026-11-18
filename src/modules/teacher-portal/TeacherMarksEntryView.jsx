@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import {
   FileEdit,
   FileText,
@@ -22,8 +22,8 @@ import {
   Users,
   ArrowLeft
 } from 'lucide-react'
-import { useAppData } from '../../context/AppDataContext'
 import { useToast } from '../../context/ToastContext'
+import { downloadSimplePdf } from '../../utils/pdfExport'
 
 export default function TeacherMarksEntryView({
   onBack,
@@ -40,7 +40,7 @@ export default function TeacherMarksEntryView({
   const [selectedSubject, setSelectedSubject] = useState('English')
 
   // Load students from localStorage
-  const students = useMemo(() => {
+  const [students, setStudents] = useState(() => {
     try {
       const saved = localStorage.getItem('teacher_portal_students')
       if (saved) {
@@ -49,7 +49,7 @@ export default function TeacherMarksEntryView({
       }
     } catch {}
     return []
-  }, [])
+  })
 
   // Filter students by selected class
   const classStudents = useMemo(() => {
@@ -85,8 +85,17 @@ export default function TeacherMarksEntryView({
     })()
     setMarksMap(currentMarks)
     setIsDashboardOpen(true)
-    toast?.success?.(`Opened marks dashboard for ${selectedExam} - ${selectedClass}`)
   }
+
+  useEffect(() => {
+    if (!isDashboardOpen) return
+    try {
+      const saved = localStorage.getItem(marksKey)
+      setMarksMap(saved ? JSON.parse(saved) : {})
+    } catch {
+      setMarksMap({})
+    }
+  }, [marksKey, isDashboardOpen])
 
   // Update student mark
   const handleMarkChange = (studentId, marks) => {
@@ -115,7 +124,15 @@ export default function TeacherMarksEntryView({
   const handleSaveMarks = () => {
     try {
       localStorage.setItem(marksKey, JSON.stringify(marksMap))
-      toast?.success?.('Exam marks saved successfully!')
+      let scoped = {}
+      try {
+        const parsed = JSON.parse(localStorage.getItem('sms_teacher_marks') || '{}')
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) scoped = parsed
+      } catch {}
+      const scope = `${teacherName}|${selectedClass}|${selectedSubject}|${selectedExam}|${selectedYear}`
+      scoped[scope] = { teacher: teacherName, className: selectedClass, subject: selectedSubject, exam: selectedExam, year: selectedYear, marks: marksMap, savedAt: new Date().toISOString() }
+      localStorage.setItem('sms_teacher_marks', JSON.stringify(scoped))
+      toast?.success?.('Exam marks saved on this device.')
     } catch {
       toast?.error?.('Failed to save marks.')
     }
@@ -143,11 +160,11 @@ export default function TeacherMarksEntryView({
       { id: 'std-5', name: 'Student Epsilon', rollNo: '005', className: selectedClass || 'Nursery' }
     ]
     const updated = [...students, ...placeholders]
+    setStudents(updated)
     try {
       localStorage.setItem('teacher_portal_students', JSON.stringify(updated))
     } catch {}
-    toast?.success?.(`Added 5 students to ${selectedClass || 'Nursery'}`)
-    window.dispatchEvent(new Event('storage'))
+    toast?.info?.(`Added 5 sample students to ${selectedClass || 'Nursery'} on this device.`)
   }
 
   return (
@@ -385,6 +402,26 @@ export default function TeacherMarksEntryView({
                 >
                   <Save className="w-3.5 h-3.5" />
                   <span>Save Marks</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const lines = [
+                      { text: `Marks - ${selectedExam} - ${selectedClass} - ${selectedSubject}`, bold: true },
+                      `Year: ${selectedYear}`,
+                      ...(classStudents.length
+                        ? classStudents.map((student, idx) => {
+                            const obtained = marksMap[student.id]?.obtainedMarks
+                            return `${idx + 1}. ${student.rollNo || '-'} ${student.name}: ${obtained === '' || obtained === undefined ? 'blank' : obtained}/100`
+                          })
+                        : ['No students in this class.'])
+                    ]
+                    downloadSimplePdf(`marks-${selectedClass}-${selectedSubject}.pdf`, lines)
+                  }}
+                  className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 text-xs font-semibold px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download PDF</span>
                 </button>
                 <button
                   type="button"

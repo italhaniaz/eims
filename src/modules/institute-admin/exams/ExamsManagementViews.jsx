@@ -104,8 +104,9 @@ const loadJson = (key, fallback) => {
 const saveJson = (key, val) => {
   try {
     localStorage.setItem(key, JSON.stringify(val))
+    return true
   } catch {
-    // ignore
+    return false
   }
 }
 
@@ -278,15 +279,33 @@ export const ExamsManagementViews = ({
   useEffect(() => {
     if (!subjectDashOpen || !selectedExamId || !selectedMarksClass || !selectedSubject) return
     const key = `eims_marks_${instId}_${selectedExamId}_${selectedMarksClass}_${selectedSubject}`
-    setMarksGrid(loadJson(key, {}))
+    const stored = loadJson(key, {})
+    const max = Number(stored?.__maxMarks)
+    if (max > 0) setMaxMarks(max)
+    const grid = { ...(stored && typeof stored === 'object' ? stored : {}) }
+    delete grid.__maxMarks
+    delete grid.__savedAt
+    setMarksGrid(grid)
   }, [instId, subjectDashOpen, selectedExamId, selectedMarksClass, selectedSubject])
 
   const handleSaveMarks = () => {
-    if (!selectedExamId || !selectedMarksClass || !selectedSubject) return
+    if (!selectedExamId || !selectedMarksClass || !selectedSubject) {
+      toast.warning('Select an exam, class, and subject before saving marks.')
+      return
+    }
     const key = `eims_marks_${instId}_${selectedExamId}_${selectedMarksClass}_${selectedSubject}`
-    saveJson(key, marksGrid)
-    const enteredCount = Object.values(marksGrid).filter(
-      (v) => v && (v.obtained !== '' || v.absent)
+    const payload = {
+      ...marksGrid,
+      __maxMarks: Number(maxMarks) || 100,
+      __savedAt: new Date().toISOString()
+    }
+    const ok = saveJson(key, payload)
+    if (!ok) {
+      toast.error('Could not save marks in this browser. Free some storage space and try again.')
+      return
+    }
+    const enteredCount = Object.entries(marksGrid).filter(
+      ([id, v]) => id && !String(id).startsWith('__') && v && (v.obtained !== '' || v.absent)
     ).length
     persistExams((prev) =>
       prev.map((ex) =>
@@ -295,7 +314,7 @@ export const ExamsManagementViews = ({
           : ex
       )
     )
-    toast.success(`Saved marks for ${selectedSubject} (${selectedMarksClass})`)
+    toast.success(`Marks for ${selectedSubject} (${selectedMarksClass}) saved in this browser.`)
   }
 
   // ============================================================================

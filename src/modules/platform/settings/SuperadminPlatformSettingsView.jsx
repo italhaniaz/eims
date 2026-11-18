@@ -46,6 +46,39 @@ import { PlatformService } from '../../../services/platformService'
 import { OperationsService } from '../../../services/operationsService'
 import { SchoolInquiryService } from '../../../services/schoolInquiryService'
 
+const PLATFORM_UI_SETTINGS_KEY = 'sms_platform_ui_settings'
+
+const DEFAULT_FEATURE_FLAGS = [
+  { id: 'flag_biometric', name: 'Biometric Hardware Realtime Sync', desc: 'Allow instant webhook sync from gate turnstiles', enabled: false, tier: 'Enterprise' },
+  { id: 'flag_1bill', name: '1Bill National Banking Switch', desc: 'Generate 1Link 1Bill digital consumer IDs', enabled: false, tier: 'Standard' },
+  { id: 'flag_lms_proctoring', name: 'AI LMS Quiz Anti-Cheat Lockout', desc: 'Block multiple tabs during online examinations', enabled: false, tier: 'Premium' },
+  { id: 'flag_whatsapp', name: 'WhatsApp Cloud API Automations', desc: 'Dispatch fee challans & absence alerts via Meta API', enabled: false, tier: 'Standard' }
+]
+
+const DEFAULT_GENERAL_SETTINGS = {
+  platformName: 'EIMS Enterprise Educational Network',
+  defaultLanguage: 'English (US & PK)',
+  currency: 'PKR - Pakistani Rupee (Rs.)',
+  timezone: 'Asia/Karachi (GMT+5)',
+  academicYearFormat: 'YYYY-YYYY (August - June)',
+  supportEmail: 'admin@eims-edu.pk'
+}
+
+const readPlatformUiSettings = () => {
+  try {
+    const raw = localStorage.getItem(PLATFORM_UI_SETTINGS_KEY)
+    return raw ? JSON.parse(raw) : {}
+  } catch {
+    return {}
+  }
+}
+
+const writePlatformUiSettings = (partial) => {
+  const next = { ...readPlatformUiSettings(), ...partial, updatedAt: new Date().toISOString() }
+  localStorage.setItem(PLATFORM_UI_SETTINGS_KEY, JSON.stringify(next))
+  return next
+}
+
 export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabChange = () => {} }) => {
   const { toast } = useToast()
   const { institutes = [] } = useAppData()
@@ -71,14 +104,10 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
   }
 
   // General settings state
-  const [generalForm, setGeneralForm] = useState({
-    platformName: 'EIMS Enterprise Educational Network',
-    defaultLanguage: 'English (US & PK)',
-    currency: 'PKR - Pakistani Rupee (Rs.)',
-    timezone: 'Asia/Karachi (GMT+5)',
-    academicYearFormat: 'YYYY-YYYY (August - June)',
-    supportEmail: 'admin@eims-edu.pk'
-  })
+  const [generalForm, setGeneralForm] = useState(() => ({
+    ...DEFAULT_GENERAL_SETTINGS,
+    ...(readPlatformUiSettings().general || {})
+  }))
 
   // School Inquiries Setting (ON = approval required, OFF = direct registration)
   const [schoolInquiryEnabled, setSchoolInquiryEnabled] = useState(() => {
@@ -97,15 +126,17 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
   }
 
   // Feature flags state
-  const [featureFlags, setFeatureFlags] = useState([
-    { id: 'flag_biometric', name: 'Biometric Hardware Realtime Sync', desc: 'Allow instant webhook sync from gate turnstiles', enabled: true, tier: 'Enterprise' },
-    { id: 'flag_1bill', name: '1Bill National Banking Switch', desc: 'Generate 1Link 1Bill digital consumer IDs', enabled: true, tier: 'Standard' },
-    { id: 'flag_lms_proctoring', name: 'AI LMS Quiz Anti-Cheat Lockout', desc: 'Block multiple tabs during online examinations', enabled: true, tier: 'Premium' },
-    { id: 'flag_whatsapp', name: 'WhatsApp Cloud API Automations', desc: 'Dispatch fee challans & absence alerts via Meta API', enabled: true, tier: 'Standard' }
-  ])
+  const [featureFlags, setFeatureFlags] = useState(() => {
+    const saved = readPlatformUiSettings().featureFlags
+    if (!Array.isArray(saved)) return DEFAULT_FEATURE_FLAGS
+    return DEFAULT_FEATURE_FLAGS.map(flag => {
+      const match = saved.find(item => item.id === flag.id)
+      return match ? { ...flag, enabled: Boolean(match.enabled) } : flag
+    })
+  })
 
-  // Maintenance mode
-  const [maintenanceMode, setMaintenanceMode] = useState(false)
+  // Local maintenance flag. It does not lock student or parent portals.
+  const [maintenanceMode, setMaintenanceMode] = useState(() => Boolean(readPlatformUiSettings().maintenanceMode))
 
   // Pick 2: System & Emergency Session Backups State
   const [sessionBackups, setSessionBackups] = useState(() => {
@@ -159,7 +190,7 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
   const handleRestoreSession = (backup) => {
     try {
       OperationsService.restoreSessionBackup(backup)
-      toast?.success?.(`Session for ${backup.userName} restored back to Active Sessions! User can re-authenticate.`)
+      toast?.success?.(`Session record for ${backup.userName} written back to the local active-sessions list. This does not sign the user in.`)
     } catch (err) {
       toast?.error?.('Failed to restore session')
     }
@@ -172,7 +203,7 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
         const bkps = await OperationsService.getBackups()
         setSystemBackups(bkps)
       }
-      toast?.success?.('New system database snapshot created and verified!')
+      toast?.success?.('Local JSON snapshot downloaded. This is a browser export, not a verified cloud backup.')
     } catch (e) {
       toast?.error?.('Failed to create snapshot')
     }
@@ -203,28 +234,30 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
   ]
 
   const toggleFlag = (id) => {
-    setFeatureFlags(prev => prev.map(f => {
-      if (f.id === id) {
-        const next = !f.enabled
-        toast?.info?.(`Feature Flag "${f.name}" set to ${next ? 'ENABLED' : 'DISABLED'}`)
-        return { ...f, enabled: next }
-      }
-      return f
-    }))
+    setFeatureFlags(prev => {
+      const next = prev.map(f => {
+        if (f.id === id) return { ...f, enabled: !f.enabled }
+        return f
+      })
+      writePlatformUiSettings({ featureFlags: next })
+      const changed = next.find(f => f.id === id)
+      toast?.info?.(`Feature flag "${changed?.name || id}" saved locally as ${changed?.enabled ? 'ON' : 'OFF'}. External vendors are not called.`)
+      return next
+    })
   }
 
   const handleSaveGeneral = async (e) => {
     e.preventDefault()
     try {
+      writePlatformUiSettings({ general: generalForm, featureFlags, maintenanceMode })
       await SchoolInquiryService.setSchoolInquirySetting(schoolInquiryEnabled)
-      toast?.success?.('Platform global settings & security workflow saved successfully.')
+      toast?.success?.('Platform settings saved on this device.')
     } catch (err) {
       toast?.error?.('Failed to save settings: ' + err.message)
     }
   }
 
   
-  const [impersonateSearch, setImpersonateSearch] = useState('')
   const handleRealImpersonation = async (inst) => {
     if (inst.lifecycleStatus === 'Suspended' || inst.status === 'Suspended') {
       toast?.error?.('Cannot impersonate a Suspended campus. Reactivate the campus first.')
@@ -235,14 +268,10 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
         await PlatformService.startImpersonation(inst, user)
       }
       login('institute_admin', inst.adminEmail || `admin@${inst.slug || 'campus'}.edu`)
-      toast?.info?.(`Now impersonating "${inst.name}". A 60-minute delegation session is active.`)
+      toast?.info?.(`Now viewing "${inst.name}" as campus admin. Delegation is stored locally for 60 minutes.`)
     } catch (err) {
       toast?.error?.(err.message || 'Failed to initiate impersonation session')
     }
-  }
-
-  const handleSimulateImpersonation = (campusName) => {
-    toast?.success?.(`Impersonating ${campusName} Administration. Entering campus view...`)
   }
 
   return (
@@ -568,7 +597,7 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
         <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
           <div className="p-5 border-b border-slate-100">
             <h3 className="font-bold text-slate-900">Platform Feature Flags & Tier Capabilities</h3>
-            <p className="text-xs text-slate-500">Dynamically enable or disable advanced capabilities across all active tenants</p>
+            <p className="text-xs text-slate-500">Local switches only. Turning a flag on does not connect biometrics, 1Bill, or WhatsApp.</p>
           </div>
           <div className="divide-y divide-slate-100">
             {featureFlags.map(f => (
@@ -601,19 +630,22 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-bold text-slate-900 text-base">Platform Maintenance Mode</h3>
-              <p className="text-xs text-slate-500">Temporarily halts student and parent portals while preserving Superadmin access</p>
+              <p className="text-xs text-slate-500">Temporarily records a local maintenance flag. Student and parent portals stay available until a server gate reads it.</p>
             </div>
             <button
               onClick={() => {
                 const next = !maintenanceMode
                 setMaintenanceMode(next)
-                toast?.info?.(`Maintenance mode is now ${next ? 'ACTIVATED' : 'DEACTIVATED'}`)
+                writePlatformUiSettings({ maintenanceMode: next })
+                toast?.info?.(next
+                  ? 'Maintenance flag saved locally. Portals are not locked.'
+                  : 'Maintenance flag cleared on this device.')
               }}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 maintenanceMode ? 'bg-rose-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
               }`}
             >
-              {maintenanceMode ? 'Maintenance Mode: ACTIVE' : 'Enable Maintenance'}
+              {maintenanceMode ? 'Local flag: ON' : 'Save maintenance flag'}
             </button>
           </div>
           <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-600">
@@ -626,32 +658,31 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
       {effectiveTab === 'impersonate' && (
         <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6 space-y-4">
           <div>
-            <h3 className="font-bold text-slate-900 text-base">Campus Impersonation & Delegation Switcher</h3>
-            <p className="text-xs text-slate-500">Switch directly into any affiliated campus's institute admin console with full audit trails</p>
+            <h3 className="font-bold text-slate-900 text-base">Campus delegation switcher</h3>
+            <p className="text-xs text-slate-500">Open a real campus from the local directory. Suspended campuses stay blocked.</p>
           </div>
+          {institutes.length === 0 ? (
+            <p className="text-sm text-slate-500">No campuses are stored in the local directory yet.</p>
+          ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-            {[
-              { id: 'inst-1', name: 'Beaconhouse Central High', code: 'BHS-01', city: 'Lahore', students: 1314 },
-              { id: 'inst-2', name: 'The City School Senior Branch', code: 'TCS-02', city: 'Lahore', students: 1211 },
-              { id: 'inst-3', name: 'Lahore Grammar Model Town', code: 'LGS-03', city: 'Lahore', students: 895 },
-              { id: 'inst-4', name: 'Roots Ivy High School', code: 'RIHS-04', city: 'Rawalpindi', students: 940 }
-            ].map(c => (
-              <div key={c.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 flex items-center justify-between">
-                <div>
-                  <span className="font-mono text-[11px] font-bold text-purple-700">{c.code}</span>
-                  <h4 className="font-bold text-slate-900 text-sm mt-0.5">{c.name}</h4>
-                  <p className="text-xs text-slate-500">{c.city} &bull; {c.students} Students</p>
+            {institutes.map(inst => (
+              <div key={inst.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <span className="font-mono text-[11px] font-bold text-purple-700">{inst.code || inst.id}</span>
+                  <h4 className="font-bold text-slate-900 text-sm mt-0.5 truncate">{inst.name}</h4>
+                  <p className="text-xs text-slate-500">{inst.city || 'Campus'} &bull; {inst.lifecycleStatus || inst.status || 'Active'}</p>
                 </div>
                 <button
-                  onClick={() => handleSimulateImpersonation(c.name)}
-                  className="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs flex items-center gap-1 shadow-xs cursor-pointer"
+                  onClick={() => handleRealImpersonation(inst)}
+                  className="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs flex items-center gap-1 shadow-xs cursor-pointer shrink-0"
                 >
                   <UserCheck className="w-3.5 h-3.5" />
-                  <span>Impersonate</span>
+                  <span>Enter campus</span>
                 </button>
               </div>
             ))}
           </div>
+          )}
         </div>
       )}
 

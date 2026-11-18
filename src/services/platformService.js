@@ -389,8 +389,10 @@ export const PlatformService = {
     // LocalStorage update
     const store = getStoredData()
     let instituteName = 'Institute'
+    let matched = false
     store.institutes = (store.institutes || []).map(inst => {
       if (inst.id === instituteId) {
+        matched = true
         instituteName = inst.name || 'Institute'
         return {
           ...inst,
@@ -402,16 +404,25 @@ export const PlatformService = {
       return inst
     })
 
+    if (!matched) {
+      throw new Error('Institute was not found in the local campus directory.')
+    }
+
+    const activityVerb = action === 'Suspend' ? 'suspended' : action === 'Archive' ? 'archived' : action === 'Restore' ? 'restored' : 'activated'
     store.recentActivity = store.recentActivity || []
     store.recentActivity.unshift({
       id: `act-${Date.now()}`,
-      text: `Institute "${instituteName}" ${action.toLowerCase()}d by Superadmin${reason ? ` (${reason})` : ''}`,
+      text: `Institute "${instituteName}" ${activityVerb} by Superadmin${reason ? ` (${reason})` : ''}`,
       time: 'Just now',
       type: 'institute',
       dotColor: action === 'Suspend' ? '#f43f5e' : action === 'Archive' ? '#94a3b8' : '#10b981'
     })
 
     saveStoredData(store)
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('sms_institutes_updated'))
+    }
 
     DataService.logAuditEvent(
       `Institute "${instituteName}" (${instituteId}) set to ${newLifecycleStatus.toUpperCase()}${reason ? ` - Reason: ${reason}` : ''}`,

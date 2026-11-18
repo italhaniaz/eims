@@ -106,6 +106,37 @@ export const AttendanceReportsViews = ({
   const { toast } = useToast()
 
   const instId = currentInstitute?.id || 'default'
+
+  const queueLocalParentAlert = (student, kind) => {
+    const phone = student?.guardianPhone || student?.fatherPhone || student?.parentPhone || student?.phone || ''
+    if (!phone) {
+      toast.warning(`No parent phone on file for ${student?.name || 'this student'}`)
+      return
+    }
+    const key = `eims_local_sms_queue_${instId}`
+    let prev = []
+    try {
+      prev = JSON.parse(localStorage.getItem(key) || '[]')
+    } catch {
+      prev = []
+    }
+    const entry = {
+      id: `sms-${Date.now()}`,
+      kind,
+      studentId: student.id,
+      name: student.name,
+      phone,
+      at: new Date().toISOString(),
+      status: 'logged-locally'
+    }
+    try {
+      localStorage.setItem(key, JSON.stringify([entry, ...(Array.isArray(prev) ? prev : [])].slice(0, 200)))
+    } catch {
+      toast.error('Could not save the reminder in this browser.')
+      return
+    }
+    toast.info(`Reminder for ${student.name} saved in this browser. No SMS was sent — a gateway is not connected.`)
+  }
   const todayIso = useMemo(() => new Date().toISOString().slice(0, 10), [])
   const currentMonthIso = useMemo(() => todayIso.slice(0, 7), [todayIso])
   const monthStartIso = `${currentMonthIso}-01`
@@ -737,7 +768,7 @@ export const AttendanceReportsViews = ({
                       <td className="py-3 px-3 text-right space-x-2">
                         <button
                           type="button"
-                          onClick={() => toast.success(`Alert SMS sent for ${item.student.name}`)}
+                          onClick={() => queueLocalParentAlert(item.student, 'consecutive-absence')}
                           className="inline-flex items-center gap-1 px-2.5 py-1 rounded border border-sky-200 text-sky-600 hover:bg-sky-50 text-[11px] font-semibold"
                         >
                           <Send className="w-3 h-3" />
@@ -1286,7 +1317,7 @@ export const AttendanceReportsViews = ({
                     <td className="py-3 px-3 text-right space-x-2">
                       <button
                         type="button"
-                        onClick={() => toast.success(`Low attendance warning SMS sent for ${item.student.name}`)}
+                        onClick={() => queueLocalParentAlert(item.student, 'low-attendance')}
                         className="inline-flex items-center gap-1 px-2.5 py-1 rounded border border-sky-200 text-sky-600 hover:bg-sky-50 text-[11px] font-semibold"
                       >
                         <Send className="w-3 h-3" />

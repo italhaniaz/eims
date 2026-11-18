@@ -114,7 +114,7 @@ const BackupDataView = ({ initialTab = 'backups' }) => {
   const handleRestoreSession = (backup) => {
     try {
       OperationsService.restoreSessionBackup(backup)
-      showToast(`Session for ${backup.userName} restored back to Active Sessions!`)
+      showToast(`Session record for ${backup.userName} written to the local active-sessions list. This does not sign the user in.`)
     } catch (err) {
       showToast('Failed to restore session.')
     }
@@ -206,9 +206,16 @@ const BackupDataView = ({ initialTab = 'backups' }) => {
     if (!restorePreview?.data) return
     setIsRestoring(true)
     try {
-      await OperationsService.restoreBackup(restorePreview.data)
+      const result = await OperationsService.restoreBackup(restorePreview.data)
+      const raw = localStorage.getItem('sms_database_v3_enterprise')
+      const parsed = raw ? JSON.parse(raw) : null
+      const restoredInstitutes = Array.isArray(parsed?.institutes) ? parsed.institutes.length : 0
+      if (!parsed || !Array.isArray(parsed.institutes)) {
+        showToast('Restore did not write sms_database_v3_enterprise.')
+        return
+      }
       setIsRestoreModalOpen(false)
-      showToast('Database restored successfully from backup snapshot. Reloading state...')
+      showToast(result?.message || `Local snapshot restored into sms_database_v3_enterprise (${restoredInstitutes} campuses). Reloading...`)
       setTimeout(() => window.location.reload(), 1200)
     } catch (err) {
       alert('Restore failed: ' + err.message)
@@ -565,7 +572,7 @@ const BackupDataView = ({ initialTab = 'backups' }) => {
             <Upload className="w-8 h-8 text-purple-600 mx-auto mb-2" />
             <h3 className="text-sm font-bold text-slate-900">Upload Platform Backup Snapshot to Restore</h3>
             <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
-              Select a valid JSON database snapshot file (.json). The system will execute structural validation and prompt for confirmation before restoring.
+              Upload a JSON snapshot. A valid file is written into sms_database_v3_enterprise on this browser. Catalog rows without a file cannot be restored.
             </p>
             <div className="mt-4">
               <label className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-xs transition-colors cursor-pointer shadow-xs">
@@ -584,8 +591,8 @@ const BackupDataView = ({ initialTab = 'backups' }) => {
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
               <div>
-                <h3 className="text-sm sm:text-base font-bold text-slate-800">Available Platform Snapshots</h3>
-                <p className="text-xs text-slate-400 mt-0.5">Historical full backups with SHA-256 integrity verification</p>
+                <h3 className="text-sm sm:text-base font-bold text-slate-800">Snapshot log</h3>
+                <p className="text-xs text-slate-400 mt-0.5">Downloaded exports are listed here. Sample catalog rows have no file to restore.</p>
               </div>
             </div>
 
@@ -602,7 +609,9 @@ const BackupDataView = ({ initialTab = 'backups' }) => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-700">
-                  {backups.map((bkp) => (
+                  {backups.map((bkp) => {
+                    const catalogOnly = Boolean(bkp.catalogOnly) || ['bkp-001', 'bkp-002', 'bkp-003'].includes(bkp.id)
+                    return (
                     <tr key={bkp.id} className="hover:bg-slate-50/70 transition-colors">
                       <td className="py-3.5 px-4 font-medium text-slate-900 flex items-center gap-2">
                         <FileText className="w-4 h-4 text-slate-400 shrink-0" />
@@ -614,22 +623,29 @@ const BackupDataView = ({ initialTab = 'backups' }) => {
                         </span>
                       </td>
                       <td className="py-3.5 px-4 font-mono">
-                        {(bkp.sizeBytes / 1024 / 1024).toFixed(2)} MB
+                        {catalogOnly ? '—' : `${(bkp.sizeBytes / 1024 / 1024).toFixed(2)} MB`}
                       </td>
                       <td className="py-3.5 px-4 font-mono text-[11px] text-slate-500">
-                        {bkp.checksum ? `${bkp.checksum.slice(0, 16)}...` : 'Verified'}
+                        {catalogOnly ? 'Sample catalog — no file stored' : (bkp.checksum ? `${bkp.checksum.slice(0, 16)}...` : 'Local checksum')}
                       </td>
                       <td className="py-3.5 px-4 text-xs text-slate-500">
-                        {new Date(bkp.createdAt).toLocaleDateString()}
+                        {bkp.createdAt ? new Date(bkp.createdAt).toLocaleDateString() : '—'}
                       </td>
                       <td className="py-3.5 px-4 text-center">
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          <Check className="w-3 h-3" />
-                          {bkp.status}
-                        </span>
+                        {catalogOnly ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                            NO PAYLOAD
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <Check className="w-3 h-3" />
+                            {bkp.status || 'DOWNLOADED'}
+                          </span>
+                        )}
                       </td>
                     </tr>
-                  ))}
+                    )
+                  })}
                 </tbody>
               </table>
             </div>

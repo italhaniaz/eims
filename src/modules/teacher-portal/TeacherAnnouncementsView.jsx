@@ -20,6 +20,14 @@ import {
 } from 'lucide-react'
 import { useToast } from '../../context/ToastContext'
 
+const appendTeacherMessage = (record) => {
+  try {
+    const prev = JSON.parse(localStorage.getItem('sms_teacher_messages') || '[]')
+    const next = Array.isArray(prev) ? [record, ...prev].slice(0, 200) : [record]
+    localStorage.setItem('sms_teacher_messages', JSON.stringify(next))
+  } catch {}
+}
+
 export default function TeacherAnnouncementsView({
   onBack,
   onOpenModal,
@@ -152,7 +160,22 @@ export default function TeacherAnnouncementsView({
       localStorage.setItem('teacher_portal_notices', JSON.stringify(updated))
     } catch {}
 
-    toast?.success?.('Announcement published successfully!')
+    if (formData.sendSms) {
+      appendTeacherMessage({
+        id: `notice-sms-${Date.now()}`,
+        kind: 'announcement',
+        title: newNotice.title,
+        className: newNotice.className,
+        text: newNotice.content,
+        at: new Date().toISOString(),
+        delivered: false
+      })
+    }
+    toast?.info?.(
+      formData.sendSms
+        ? 'Announcement saved locally. School delivery requires future messaging integration.'
+        : 'Announcement saved on this device.'
+    )
     setIsNewModalOpen(false)
     setFormData({
       title: '',
@@ -514,7 +537,7 @@ export default function TeacherAnnouncementsView({
                   className="w-4 h-4 rounded text-sky-600 focus:ring-sky-500 cursor-pointer"
                 />
                 <label htmlFor="notice-sms" className="text-xs text-slate-700 dark:text-slate-300 font-semibold cursor-pointer select-none">
-                  Send SMS notification to parents
+                  Save an SMS draft locally (not sent)
                 </label>
               </div>
 

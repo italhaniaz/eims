@@ -518,38 +518,67 @@ export const BillingService = {
     return { success: true, invoice: newInv }
   },
 
-  async markInvoicePaid(id) {
+  async markInvoicePaid(id, transactionRef = '') {
+    const ref = String(transactionRef || '').trim() || `LOCAL-${Date.now()}`
     try {
-      const res = await fetch(`${API_BASE_URL}/api/billing/invoices/${id}/pay`, { method: 'POST' })
-      if (res.ok) {
-        DataService.logActivity('Invoice Payment Recorded', `Marked invoice ${id} as PAID`, 'Super Admin')
-        return await res.json()
-      }
+      await fetch(`${API_BASE_URL}/api/billing/invoices/${id}/pay`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transactionRef: ref })
+      })
     } catch {}
 
-    const invoices = await this.getInvoices()
-    const inv = invoices.find(i => i.id === id)
-    if (inv) {
+    const applyPaid = (list) => {
+      if (!Array.isArray(list)) return null
+      const inv = list.find(i => i.id === id)
+      if (!inv) return null
       inv.status = 'PAID'
       inv.paidDate = new Date().toISOString().slice(0, 10)
-      inv.transactionRef = 'TXN-CONFIRM-' + Math.floor(100000 + Math.random() * 900000)
-      localStorage.setItem('sms_platform_invoices', JSON.stringify(invoices))
-      DataService.logActivity('Invoice Payment Recorded', `Marked invoice ${inv.invoiceNumber} as PAID in PKR`, 'Super Admin')
-      return { success: true, invoice: inv }
+      inv.transactionRef = ref
+      return inv
     }
-    return { success: false }
+
+    let updated = null
+    try {
+      const local = JSON.parse(localStorage.getItem('sms_platform_invoices') || '[]')
+      updated = applyPaid(local)
+      if (updated) localStorage.setItem('sms_platform_invoices', JSON.stringify(local))
+    } catch {}
+
+    if (!updated) {
+      const invoices = await this.getInvoices()
+      updated = applyPaid(invoices)
+      if (updated) localStorage.setItem('sms_platform_invoices', JSON.stringify(invoices))
+    }
+
+    if (!updated) return { success: false }
+
+    DataService.logActivity('Invoice Payment Recorded', `Marked invoice ${updated.invoiceNumber || id} as PAID in the local ledger. Ref: ${ref}`, 'Super Admin')
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('sms_billing_updated'))
+    }
+    return { success: true, invoice: updated }
   },
 
   async sendPaymentReminder(id) {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/billing/invoices/${id}/remind`, { method: 'POST' })
-      if (res.ok) {
-        DataService.logActivity('Payment Reminder Sent', `Dispatched payment reminder for invoice ${id}`, 'Super Admin')
-        return await res.json()
-      }
+      await fetch(`${API_BASE_URL}/api/billing/invoices/${id}/remind`, { method: 'POST' })
     } catch {}
 
-    DataService.logActivity('Payment Reminder Sent', `Dispatched automated notification for invoice ${id}`, 'Super Admin')
-    return { success: true, message: 'Automated payment reminder dispatched successfully.' }
+    const reminder = {
+      id: `rem-${Date.now()}`,
+      invoiceId: id,
+      createdAt: new Date().toISOString(),
+      channel: 'local-log',
+      status: 'LOGGED_ONLY'
+    }
+    try {
+      const existing = JSON.parse(localStorage.getItem('sms_payment_reminders') || '[]')
+      const list = Array.isArray(existing) ? existing : []
+      localStorage.setItem('sms_payment_reminders', JSON.stringify([reminder, ...list].slice(0, 100)))
+    } catch {}
+
+    DataService.logActivity('Payment Reminder Logged', `Reminder for invoice ${id} saved locally. No email or SMS gateway is connected.`, 'Super Admin')
+    return { success: true, delivered: false, message: 'Reminder saved on this device. Email or SMS was not sent.' }
   }
 }

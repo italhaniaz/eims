@@ -1,7 +1,8 @@
 import React from 'react'
-import { Printer, X } from 'lucide-react'
+import { Download, Printer, X } from 'lucide-react'
 import { BANK_PRESETS, QrCodeSvg } from './PrintHelpers'
 import { formatTxnDateTime, getInvoiceTransactions } from './InvoiceTransactionsModal'
+import { downloadSimplePdf } from '../../utils/pdfExport'
 
 const formatDocDate = (val) => {
   if (!val) return '—'
@@ -57,8 +58,41 @@ export const InvoiceReceiptDocumentModal = ({
   const rollNumber = fee.rollNumber || student?.rollNumber || 'N/A'
   const feeTitle = fee.feeTitle || fee.title || fee.feeName || fee.feeHead || 'Tuition Fee'
 
+  const handleDownloadPdf = () => {
+    const lines = [
+      { text: currentInstitute?.name || 'Institute', bold: true },
+      { text: `FEE RECEIPT  #${invRef}`, bold: true },
+      { text: `Phone: ${instPhone}    Email: ${instEmail}` },
+      { text: currentInstitute?.address || 'Campus accounts office' },
+      { text: `Receipt date: ${receiptDateStr}    Status: ${invStatusLabel}` },
+      { text: `Student: ${studentName}    Admission: ${admissionNo}` },
+      { text: `Class: ${className}    Roll: ${rollNumber}` },
+      guardianName ? { text: `Guardian: ${guardianName}${guardianPhone ? ` (${guardianPhone})` : ''}` } : null,
+      { text: ' ' },
+      { text: `1. ${feeTitle}` },
+      { text: `Billed PKR ${fmtDec(invTotal)} | Paid ${fmtDec(invPaid)} | Waived ${fmtDec(invWaived)} | Balance ${fmtDec(invBalanceDue)}` },
+      { text: `Due date: ${fee.dueDate ? formatDocDate(fee.dueDate) : '—'}` },
+      { text: ' ' },
+      { text: 'Generated in this browser. This is not a bank-cleared instrument.' }
+    ].filter(Boolean)
+    downloadSimplePdf(`receipt-${String(invRef).replace(/[^\w.-]+/g, '_')}.pdf`, lines)
+  }
+
   return (
     <div className="fixed inset-0 z-[115] bg-slate-900/65 backdrop-blur-[1px] overflow-y-auto p-3 sm:p-6 print:p-0 print:bg-white">
+      <style>{`
+        @media print {
+          body * { visibility: hidden !important; }
+          #invoice-receipt-sheet, #invoice-receipt-sheet * { visibility: visible !important; }
+          #invoice-receipt-sheet {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            background: #fff !important;
+          }
+        }
+      `}</style>
       {/* Sticky Non-Print Toolbar */}
       <div className="max-w-4xl mx-auto mb-3 bg-slate-900 text-white px-4 py-2.5 rounded-xl flex items-center justify-between shadow-lg print:hidden">
         <span className="text-xs font-bold tracking-wide">
@@ -67,11 +101,19 @@ export const InvoiceReceiptDocumentModal = ({
         <div className="flex items-center gap-2">
           <button
             type="button"
+            onClick={handleDownloadPdf}
+            className="px-3.5 py-1.5 rounded-lg bg-white text-slate-900 hover:bg-slate-100 text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Download PDF</span>
+          </button>
+          <button
+            type="button"
             onClick={() => window.print()}
             className="px-3.5 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
           >
             <Printer className="w-3.5 h-3.5" />
-            <span>Print / Save PDF</span>
+            <span>Print</span>
           </button>
           <button
             type="button"
@@ -85,7 +127,7 @@ export const InvoiceReceiptDocumentModal = ({
       </div>
 
       {/* A4 Printable Receipt Document */}
-      <div className="max-w-4xl mx-auto bg-white shadow-2xl border border-slate-200 p-8 sm:p-10 text-slate-900 relative overflow-hidden print:shadow-none print:border-0">
+      <div id="invoice-receipt-sheet" className="max-w-4xl mx-auto bg-white shadow-2xl border border-slate-200 p-8 sm:p-10 text-slate-900 relative overflow-hidden print:shadow-none print:border-0">
         {/* Centered Subtle Watermark */}
         <div className="pointer-events-none select-none absolute inset-0 flex items-center justify-center opacity-[0.06]">
           <div className="w-80 h-80 rounded-full border-[14px] border-sky-400 flex flex-col items-center justify-center text-sky-500">

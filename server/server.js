@@ -802,7 +802,7 @@ app.post('/api/billing/invoices/:id/pay', (req, res) => {
   if (inv) {
     inv.status = 'PAID'
     inv.paidDate = new Date().toISOString().slice(0, 10)
-    inv.transactionRef = 'TXN-CONFIRM-' + Math.floor(100000 + Math.random() * 900000)
+    inv.transactionRef = String(req.body?.transactionRef || '').trim() || `LOCAL-${Date.now()}`
     return res.json({ success: true, invoice: inv, message: `Invoice ${inv.invoiceNumber} recorded as PAID in PKR.` })
   }
   res.status(404).json({ error: 'Invoice not found' })
@@ -811,7 +811,7 @@ app.post('/api/billing/invoices/:id/pay', (req, res) => {
 app.post('/api/billing/invoices/:id/remind', (req, res) => {
   const inv = platformInvoices.find(i => i.id === req.params.id)
   if (inv) {
-    return res.json({ success: true, message: `Automated payment reminder dispatched to ${inv.instituteName} for ${inv.invoiceNumber}.` })
+    return res.json({ success: true, delivered: false, message: `Reminder for ${inv.invoiceNumber} noted in memory. No email or SMS was sent.` })
   }
   res.status(404).json({ error: 'Invoice not found' })
 })

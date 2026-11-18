@@ -695,7 +695,8 @@ export const InvoicesView = ({
           createdAt: new Date().toISOString(),
           createdBy: actorName,
           status: 'Pending',
-          smsSent: classForm.notifySms && hasPhone,
+          smsSent: false,
+          smsRequested: Boolean(classForm.notifySms && hasPhone),
           instituteId: instId
         })
         created += 1
@@ -720,9 +721,12 @@ export const InvoicesView = ({
         'Success'
       )
       toast(
-        `Created ${created} invoice(s)${skipped > 0 ? ` (${skipped} duplicate skipped)` : ''}.`,
+        `Created ${created} invoice(s) in this browser${skipped > 0 ? ` (${skipped} duplicate skipped)` : ''}.`,
         created > 0 ? 'success' : 'info'
       )
+      if (classForm.notifySms && created > 0) {
+        toast('Parent SMS was not sent. No SMS gateway is connected.', 'info')
+      }
       setClassModalOpen(false)
     } catch (err) {
       toast(err?.message || 'Failed to generate class invoices.', 'error')
@@ -819,7 +823,8 @@ export const InvoicesView = ({
         createdAt: createdIso,
         createdBy: actorName,
         status: indivForm.status,
-        smsSent: indivForm.notifySms && hasPhone,
+        smsSent: false,
+        smsRequested: Boolean(indivForm.notifySms && hasPhone),
         instituteId: instId,
         transactions: isPaid && gross + fineVal > 0
           ? [{
@@ -848,7 +853,10 @@ export const InvoicesView = ({
       }
 
       logAuditEvent?.(`Individual invoice generated for ${st.fullName || st.name}`, currentInstitute?.name || 'Admin', 'Success')
-      toast(`Invoice created for ${st.fullName || st.name}.`, 'success')
+      toast(`Invoice for ${st.fullName || st.name} saved in this browser.`, 'success')
+      if (indivForm.notifySms) {
+        toast('Parent SMS was not sent. No SMS gateway is connected.', 'info')
+      }
       setIndivModalOpen(false)
     } catch (err) {
       toast(err?.message || 'Could not create invoice.', 'error')

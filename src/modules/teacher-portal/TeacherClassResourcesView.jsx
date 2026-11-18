@@ -23,6 +23,7 @@ import {
   FolderOpen
 } from 'lucide-react'
 import { useToast } from '../../context/ToastContext'
+import { downloadSimplePdf } from '../../utils/pdfExport'
 
 export default function TeacherClassResourcesView({
   onBack,
@@ -160,7 +161,7 @@ export default function TeacherClassResourcesView({
       try {
         localStorage.setItem('teacher_portal_handouts', JSON.stringify(updated))
       } catch {}
-      toast?.success?.('Handout uploaded successfully!')
+      toast?.info?.('Handout record saved locally. No file was uploaded to the school.')
     } else {
       const newLecture = {
         id: `lec-${Date.now()}`,
@@ -168,7 +169,7 @@ export default function TeacherClassResourcesView({
         className: formData.className,
         subject: formData.subject,
         lecturer: formData.lecturer || teacherName,
-        videoUrl: formData.videoUrl || 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        videoUrl: (formData.videoUrl || '').trim(),
         updated: todayDate,
         notes: formData.notes
       }
@@ -177,7 +178,7 @@ export default function TeacherClassResourcesView({
       try {
         localStorage.setItem('teacher_portal_lectures', JSON.stringify(updated))
       } catch {}
-      toast?.success?.('Recorded lecture added successfully!')
+      toast?.info?.('Lecture record saved locally.')
     }
 
     setIsAddModalOpen(false)
@@ -659,7 +660,20 @@ export default function TeacherClassResourcesView({
                   </div>
                   <button
                     type="button"
-                    onClick={() => toast?.success?.(`Downloading ${viewingResource.attachment}...`)}
+                    onClick={() => {
+                      downloadSimplePdf(
+                        (viewingResource.attachment || 'handout').replace(/\s+/g, '_'),
+                        [
+                          { text: viewingResource.title || 'Handout', bold: true },
+                          `Class: ${viewingResource.className || ''}`,
+                          `Subject: ${viewingResource.subject || ''}`,
+                          `Lecturer: ${viewingResource.lecturer || ''}`,
+                          `File name: ${viewingResource.attachment || 'handout'}`,
+                          viewingResource.notes || 'Local handout record. No remote file is attached.'
+                        ]
+                      )
+                      toast?.info?.('Downloaded a local PDF of this handout record.')
+                    }}
                     className="px-3 py-1.5 rounded-lg bg-sky-600 text-white font-bold flex items-center gap-1 hover:bg-sky-700 transition-colors"
                   >
                     <Download className="w-3.5 h-3.5" />
@@ -667,12 +681,24 @@ export default function TeacherClassResourcesView({
                   </button>
                 </div>
               ) : (
-                <div className="aspect-video w-full rounded-2xl bg-slate-900 flex items-center justify-center text-slate-400 relative overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const url = (viewingResource.videoUrl || '').trim()
+                    if (/^https?:\/\//i.test(url)) {
+                      window.open(url, '_blank', 'noopener,noreferrer')
+                      toast?.info?.('Opened the saved lecture link. This is not a school-hosted player.')
+                    } else {
+                      toast?.info?.('No lecture link is stored. Add a video URL when saving the lecture.')
+                    }
+                  }}
+                  className="aspect-video w-full rounded-2xl bg-slate-900 flex items-center justify-center text-slate-400 relative overflow-hidden"
+                >
                   <div className="flex flex-col items-center gap-2">
-                    <Play className="w-12 h-12 text-white/80 hover:text-white hover:scale-110 transition-all cursor-pointer" />
-                    <span className="text-xs text-slate-300">Click to Play Video Lecture</span>
+                    <Play className="w-12 h-12 text-white/80" />
+                    <span className="text-xs text-slate-300">Open saved lecture link</span>
                   </div>
-                </div>
+                </button>
               )}
 
               {viewingResource.notes && (

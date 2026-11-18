@@ -15,6 +15,7 @@ import {
   User 
 } from 'lucide-react'
 import Modal from '../../../components/common/Modal'
+import { useToast } from '../../../context/ToastContext'
 import { 
   ACADEMIC_TIERS, 
   TIER_CATEGORIES, 
@@ -30,6 +31,7 @@ export const NoticeModal = ({
   activeTier = 'all'
 }) => {
   const isEditing = Boolean(initialData?.id)
+  const { toast } = useToast()
 
   const [formData, setFormData] = useState({
     title: '',
@@ -90,7 +92,7 @@ export const NoticeModal = ({
   const handleSubmit = (e) => {
     e.preventDefault()
     if (!formData.title.trim() || !formData.content.trim()) {
-      alert('Please fill in both the notice title and description.')
+      toast.warning('Please fill in both the notice title and description.')
       return
     }
 

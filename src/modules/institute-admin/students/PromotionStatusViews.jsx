@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo, useEffect, useRef } from 'react'
 import {
   ArrowLeft,
   ArrowRight,
@@ -149,6 +149,16 @@ export const PromotionStatusViews = ({
   const { students = [], classes = [], fees = [], updateItem, logAuditEvent } = useAppData()
   const { user } = useAuth()
   const { toast } = useToast()
+  const gradResultsRef = useRef(null)
+  const dropResultsRef = useRef(null)
+
+  const showFilteredResults = (resultsRef) => {
+    toast.success('Showing filtered results')
+    const node = resultsRef.current
+    if (!node) return
+    node.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    if (typeof node.focus === 'function') node.focus({ preventScroll: true })
+  }
 
   const instId = currentInstitute?.id || 'default'
   const actorName = user?.name || user?.fullName || 'Admin'
@@ -1276,7 +1286,7 @@ export const PromotionStatusViews = ({
               <div className="flex items-center gap-1.5">
                 <button
                   type="button"
-                  onClick={() => {}}
+                  onClick={() => showFilteredResults(gradResultsRef)}
                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md bg-[#2c3e50] hover:bg-slate-800 text-white text-xs font-semibold transition-colors"
                 >
                   <Search className="w-3.5 h-3.5" />
@@ -1304,6 +1314,7 @@ export const PromotionStatusViews = ({
               Showing graduated students. Clear the dates to see all.
             </div>
 
+            <div ref={gradResultsRef} tabIndex={-1} className="space-y-4 outline-none">
             {/* Class Pills */}
             <div className="flex flex-wrap items-center gap-2">
               <button
@@ -1419,6 +1430,7 @@ export const PromotionStatusViews = ({
                 </table>
               </div>
             )}
+            </div>
           </div>
         </div>
       </div>
@@ -1537,7 +1549,7 @@ export const PromotionStatusViews = ({
             </div>
             <button
               type="button"
-              onClick={() => {}}
+              onClick={() => showFilteredResults(dropResultsRef)}
               aria-label="Search"
               className="px-3.5 py-2 rounded-md bg-[#2c3e50] hover:bg-slate-800 text-white flex items-center justify-center transition-colors"
             >
@@ -1546,7 +1558,7 @@ export const PromotionStatusViews = ({
           </div>
 
           {/* Table */}
-          <div className="overflow-x-auto">
+          <div ref={dropResultsRef} tabIndex={-1} className="overflow-x-auto outline-none">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-200 text-[10px] font-bold uppercase tracking-wider text-slate-500">

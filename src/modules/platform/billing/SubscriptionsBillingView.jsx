@@ -428,7 +428,7 @@ const SubscriptionsBillingView = () => {
     const promptRef = window.prompt(`Enter Bank Deposit Slip # or 1Link Transaction Ref for invoice ${inv?.invoiceNumber || id}:`, `1LINK-TXN-${Date.now().toString().slice(-6)}`)
     if (promptRef === null) return // cancelled
 
-    await BillingService.markInvoicePaid(id)
+    await BillingService.markInvoicePaid(id, promptRef)
     fetchBillingData()
     showToast(`Invoice ${inv?.invoiceNumber || id} recorded as PAID in PKR ledger. Ref: ${promptRef}`)
     if (logAuditEvent) {
@@ -442,7 +442,7 @@ const SubscriptionsBillingView = () => {
 
   const handleSendReminder = async (id) => {
     await BillingService.sendPaymentReminder(id)
-    showToast(`Automated payment collection reminder dispatched to institute administrator.`)
+    showToast(`Automated payment reminder was not sent. A local log entry was saved for invoice ${id}.`)
   }
 
   // --- Subscriptions Filter Popover State with Checkboxes ---

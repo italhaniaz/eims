@@ -111,7 +111,9 @@ export const OperationsService = {
       sizeBytes,
       checksum: computeStringChecksum(payloadString),
       createdBy: 'Super Administrator',
-      status: 'COMPLETED',
+      status: 'DOWNLOADED',
+      storage: 'browser-download',
+      payloadStored: false,
       createdAt: new Date().toISOString()
     }
 
@@ -152,12 +154,29 @@ export const OperationsService = {
       throw new Error('Invalid platform schema: Missing institutes, students, or users rosters.')
     }
 
-    // Replace platform persistent store
-    saveStoredData(parsedData)
+    // Replace the browser store. This does not write a remote database.
+    const restorePayload = { ...parsedData }
+    delete restorePayload.extraStores
+    saveStoredData(restorePayload)
+
+    const written = localStorage.getItem('sms_database_v3_enterprise')
+    if (!written) {
+      throw new Error('Restore did not write sms_database_v3_enterprise.')
+    }
+    let confirmed
+    try {
+      confirmed = JSON.parse(written)
+    } catch {
+      throw new Error('Restore wrote an unreadable local store.')
+    }
+    if (!Array.isArray(confirmed.institutes)) {
+      throw new Error('Restore did not persist an institutes list in local storage.')
+    }
 
     // Atomically restore partitioned tenant stores if present in snapshot
     if (parsedData.extraStores && typeof parsedData.extraStores === 'object') {
       Object.entries(parsedData.extraStores).forEach(([k, v]) => {
+        if (!k || k === 'sms_database_v3_enterprise' || k === 'sms_system_backups') return
         try {
           localStorage.setItem(k, typeof v === 'string' ? v : JSON.stringify(v))
         } catch {}
@@ -173,12 +192,16 @@ export const OperationsService = {
     } catch {}
 
     DataService.logActivity(
-      'Platform State Restored',
-      'Restored system database from uploaded backup snapshot',
+      'Local Snapshot Restored',
+      'Wrote the uploaded JSON snapshot into sms_database_v3_enterprise',
       'Super Admin'
     )
 
-    return { success: true, message: 'Platform state restored successfully.' }
+    return {
+      success: true,
+      message: 'Local snapshot restored into sms_database_v3_enterprise.',
+      institutesCount: confirmed.institutes.length
+    }
   },
 
   // 3. ISOLATED PER-INSTITUTE EXPORT

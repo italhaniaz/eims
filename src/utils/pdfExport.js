@@ -1,8 +1,103 @@
 /**
  * Generates and directly triggers download of a valid single/multi-page PDF 1.4 document
  * without external binary dependencies or opening the browser print dialog.
+ *
+ * Calling styles:
+ *   downloadSimplePdf(filename, lines)
+ *   downloadSimplePdf({ title, subtitle, columns, rows, filename })
  */
+
+const LINE_WIDTH = 90
+
+const truncateCell = (value, maxLen) => {
+  const text = String(value ?? '').replace(/\s+/g, ' ').trim()
+  if (text.length <= maxLen) return text
+  return `${text.slice(0, Math.max(0, maxLen - 3))}...`
+}
+
+const wrapText = (text, width = LINE_WIDTH) => {
+  const source = String(text ?? '')
+  if (source.length <= width) return [source || ' ']
+  const parts = []
+  let rest = source
+  while (rest.length > width && parts.length < 8) {
+    let cut = rest.lastIndexOf(' ', width)
+    if (cut < Math.floor(width * 0.6)) cut = width
+    const piece = rest.slice(0, cut).trimEnd()
+    const next = rest.slice(cut).trimStart()
+    if (piece) parts.push(piece)
+    if (!next || next === rest) {
+      rest = ''
+      break
+    }
+    rest = next
+  }
+  if (rest) {
+    parts.push(rest.length > width ? `${rest.slice(0, Math.max(0, width - 3))}...` : rest)
+  }
+  return parts.length ? parts : [' ']
+}
+
+const pushWrapped = (lines, text, extra = {}) => {
+  wrapText(text).forEach((chunk, index) => {
+    const line = { text: chunk }
+    if (index === 0 && extra.bold) line.bold = true
+    if (index === 0 && extra.gap != null) line.gap = extra.gap
+    lines.push(line)
+  })
+}
+
+const tableOptionsToLines = (options) => {
+  const lines = []
+  const title = String(options?.title ?? '').trim()
+  const subtitle = String(options?.subtitle ?? '').trim()
+  const columns = Array.isArray(options?.columns) ? options.columns : []
+  const rows = Array.isArray(options?.rows) ? options.rows : []
+
+  const widest = Math.max(
+    columns.length,
+    ...rows.map((row) => (Array.isArray(row) ? row.length : 1)),
+    1
+  )
+  const maxCell = widest <= 2 ? 80 : widest <= 4 ? 40 : 24
+
+  if (title) pushWrapped(lines, title, { bold: true })
+  if (subtitle) pushWrapped(lines, subtitle)
+
+  if (columns.length > 0) {
+    pushWrapped(
+      lines,
+      columns.map((col) => truncateCell(col, maxCell)).join(' | '),
+      { bold: true, gap: -20 }
+    )
+  }
+
+  rows.forEach((row) => {
+    const cells = Array.isArray(row) ? row : [row]
+    pushWrapped(lines, cells.map((cell) => truncateCell(cell, maxCell)).join(' | '))
+  })
+
+  if (lines.length === 0) lines.push({ text: 'Empty Document', bold: true })
+  return lines
+}
+
+const resolveDownloadName = (name) => {
+  const base = String(name || 'report.pdf').trim() || 'report.pdf'
+  return base.toLowerCase().endsWith('.pdf') ? base : `${base}.pdf`
+}
+
 export const downloadSimplePdf = (filename, lines = []) => {
+  let downloadName = 'report.pdf'
+  let sourceLines = lines
+
+  if (filename && typeof filename === 'object' && !Array.isArray(filename)) {
+    downloadName = filename.filename || 'report.pdf'
+    sourceLines = tableOptionsToLines(filename)
+  } else {
+    downloadName = filename || 'report.pdf'
+    sourceLines = Array.isArray(lines) ? lines : []
+  }
+
   const escPdfText = (str) =>
     String(str ?? '')
       .replace(/[^\x20-\x7E]/g, ' ')
@@ -12,8 +107,8 @@ export const downloadSimplePdf = (filename, lines = []) => {
 
   const linesPerPage = 44
   const pages = []
-  for (let i = 0; i < lines.length; i += linesPerPage) {
-    pages.push(lines.slice(i, i + linesPerPage))
+  for (let i = 0; i < sourceLines.length; i += linesPerPage) {
+    pages.push(sourceLines.slice(i, i + linesPerPage))
   }
   if (pages.length === 0) pages.push([{ text: 'Empty Document', bold: true }])
 
@@ -28,7 +123,7 @@ export const downloadSimplePdf = (filename, lines = []) => {
 
     const ops = ['BT', '/F2 14 Tf', '48 792 Td', '0 0 0 rg']
     pageLines.forEach((rawLine, idx) => {
-      const line = typeof rawLine === 'string' ? { text: rawLine } : rawLine
+      const line = typeof rawLine === 'string' ? { text: rawLine } : rawLine || { text: '' }
       if (idx === 0) {
         ops.push(`(${escPdfText(line.text)}) Tj`)
       } else {
@@ -69,7 +164,7 @@ export const downloadSimplePdf = (filename, lines = []) => {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = filename.endsWith('.pdf') ? filename : `${filename}.pdf`
+  a.download = resolveDownloadName(downloadName)
   document.body.appendChild(a)
   a.click()
   a.remove()

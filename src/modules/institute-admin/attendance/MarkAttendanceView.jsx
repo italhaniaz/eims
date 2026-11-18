@@ -197,11 +197,33 @@ export const MarkAttendanceView = ({
       toast.warning(`No parent phone number on file for ${student.name}`)
       return
     }
-    logAuditEvent?.('ATTENDANCE_SMS_SENT', `Sent ${status} SMS alert for ${student.name}`, {
+    const queueKey = `eims_local_sms_queue_${instId}`
+    let prev = []
+    try {
+      prev = JSON.parse(localStorage.getItem(queueKey) || '[]')
+    } catch {
+      prev = []
+    }
+    const entry = {
+      id: `sms-${Date.now()}`,
+      kind: `attendance-${status}`,
+      studentId: student.id,
+      name: student.name,
+      phone,
+      at: new Date().toISOString(),
+      status: 'logged-locally'
+    }
+    try {
+      localStorage.setItem(queueKey, JSON.stringify([entry, ...(Array.isArray(prev) ? prev : [])].slice(0, 200)))
+    } catch {
+      toast.error('Could not save the reminder in this browser.')
+      return
+    }
+    logAuditEvent?.('ATTENDANCE_SMS_LOGGED', `Logged ${status} reminder locally for ${student.name}`, {
       studentId: student.id,
       phone
     })
-    toast.success(`Attendance SMS (${status}) queued for ${student.name} (${phone})`)
+    toast.info(`Reminder for ${student.name} saved in this browser. No SMS was sent — a gateway is not connected.`)
   }
 
   const handlePrintBlankSheet = () => {

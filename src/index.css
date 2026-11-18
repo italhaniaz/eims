@@ -735,6 +735,30 @@ textarea:focus {
   background: var(--sidebar-hover);
 }
 
+/* Keep off-canvas navy drawers inside the viewport */
+@media (max-width: 1023px) {
+  aside.sidebar-navy {
+    max-width: 85vw;
+    overflow-x: hidden;
+  }
+}
+
+.overflow-x-auto {
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+.scroll-row {
+  max-width: 100%;
+  min-width: 0;
+  -webkit-overflow-scrolling: touch;
+}
+
+.scroll-row > * {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 /* Official Clean Print Styling Rules */
 @media print {
   nav,
@@ -760,6 +784,12 @@ textarea:focus {
     margin: 0 !important;
     padding: 0 !important;
     width: 100% !important;
+  }
+
+  .overflow-x-auto,
+  .scroll-row {
+    overflow: visible !important;
+    max-width: none !important;
   }
 
   tr, .print-card, .avoid-break {

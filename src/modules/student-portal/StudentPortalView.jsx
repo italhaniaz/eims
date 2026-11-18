@@ -59,10 +59,39 @@ import {
   AlertTriangle,
   Percent
 } from 'lucide-react'
-import { useAuth } from '../../context/AuthContext'
+import { useAuth, hashPassword } from '../../context/AuthContext'
 import { useAppData } from '../../context/AppDataContext'
 import { useTheme } from '../../context/ThemeContext'
 import { useToast } from '../../context/ToastContext'
+import { downloadSimplePdf } from '../../utils/pdfExport'
+
+const readFileAsDataUrl = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '')
+    reader.onerror = () => reject(reader.error || new Error('Could not read photo'))
+    reader.readAsDataURL(file)
+  })
+
+const wrapPdfLines = (text, width = 88) => {
+  const out = []
+  String(text || '').replace(/\r/g, '').split('\n').forEach((paragraph) => {
+    const trimmed = paragraph.trim()
+    if (!trimmed) {
+      out.push('')
+      return
+    }
+    let rest = trimmed
+    while (rest.length > width) {
+      let cut = rest.lastIndexOf(' ', width)
+      if (cut < 24) cut = width
+      out.push(rest.slice(0, cut))
+      rest = rest.slice(cut).trimStart()
+    }
+    if (rest) out.push(rest)
+  })
+  return out
+}
 
 export default function StudentPortalView() {
   const { user, logout } = useAuth()
@@ -299,7 +328,8 @@ export default function StudentPortalView() {
   const [isPayingNow, setIsPayingNow] = useState(false)
 
   // Fee Data matching screenshots
-  const [pendingFeeList, setPendingFeeList] = useState([
+  const [pendingFeeList, setPendingFeeList] = useState(() => {
+    const seed = [
     {
       id: 'v1',
       title: 'Apr 407 Fee',
@@ -380,7 +410,19 @@ export default function StudentPortalView() {
       type: 'charge',
       accentColor: 'border-l-amber-500'
     }
-  ])
+    ]
+    try {
+      const saved = JSON.parse(localStorage.getItem('sms_student_fee_payments') || '[]')
+      const submittedIds = new Set(
+        (Array.isArray(saved) ? saved : [])
+          .filter((item) => item?.status === 'payment_submitted_local' && item.id)
+          .map((item) => item.id)
+      )
+      return submittedIds.size ? seed.filter((voucher) => !submittedIds.has(voucher.id)) : seed
+    } catch {
+      return seed
+    }
+  })
 
   const completedFeeList = useMemo(() => [
     { id: 'c1', title: 'Sep 2026 Monthly Tuition', refNo: '2026/718290', receiptNo: '64839211', total: 2475, paid: 2475, date: '01 Sep 2026', status: 'Paid' },
@@ -412,6 +454,7 @@ export default function StudentPortalView() {
   const [accountActiveSubtab, setAccountActiveSubtab] = useState('profile') // 'profile' | 'password'
   const [accountNameValue, setAccountNameValue] = useState(() => studentName)
   const [accountPhotoSelected, setAccountPhotoSelected] = useState(null)
+  const [accountPhotoFile, setAccountPhotoFile] = useState(null)
   const [passwordFormData, setPasswordFormData] = useState({ current: '', newPass: '', confirmPass: '' })
 
   // Quick link highlight state
@@ -444,7 +487,203 @@ export default function StudentPortalView() {
       }
     } catch {}
     setIsEditNameModalOpen(false)
-    toast?.success?.('Profile details updated successfully!') || alert('Details updated!')
+    toast.success('Profile details updated successfully!')
+  }
+
+  const handleAccountProfileSave = async (e) => {
+    e.preventDefault()
+    const cleanName = accountNameValue.trim()
+    if (!cleanName) {
+      toast.error('Enter a name before saving.')
+      return
+    }
+
+    let photoSessionOnly = false
+    try {
+      localStorage.setItem('sms_student_custom_name', cleanName)
+      const sessionRaw = sessionStorage.getItem('sms_auth_user')
+      if (sessionRaw) {
+        const parsed = JSON.parse(sessionRaw)
+        if (parsed && typeof parsed === 'object') {
+          parsed.name = cleanName
+          sessionStorage.setItem('sms_auth_user', JSON.stringify(parsed))
+        }
+      }
+
+      if (accountPhotoFile) {
+        const filename = accountPhotoFile.name || 'photo'
+        localStorage.setItem(
+          'sms_student_custom_photo_note',
+          `Photo "${filename}" selected for local preview only.`
+        )
+        const maxBytes = 500 * 1024
+        let storedDataUrl = false
+        if (accountPhotoFile.size > 0 && accountPhotoFile.size <= maxBytes) {
+          try {
+            const dataUrl = await readFileAsDataUrl(accountPhotoFile)
+            if (dataUrl.startsWith('data:image/') && dataUrl.length <= 700000) {
+              localStorage.setItem('sms_student_custom_photo', dataUrl)
+              storedDataUrl = true
+            }
+          } catch {
+            storedDataUrl = false
+          }
+        }
+        if (!storedDataUrl) {
+          try {
+            localStorage.removeItem('sms_student_custom_photo')
+          } catch {
+            /* previous preview can stay if removal fails */
+          }
+          localStorage.setItem('sms_student_custom_photo_filename', filename)
+          try {
+            sessionStorage.setItem('sms_student_custom_photo_filename', filename)
+          } catch {
+            /* filename note in localStorage is the durable record */
+          }
+          photoSessionOnly = true
+        }
+      }
+    } catch {
+      toast.error('Could not save the profile on this device.')
+      return
+    }
+
+    setStudentName(cleanName)
+    toast.success('Profile saved locally on this device.')
+    if (photoSessionOnly) {
+      toast.info('Photo is stored locally for this browser session only.')
+    }
+  }
+
+  const handlePasswordUpdate = async (e) => {
+    e.preventDefault()
+    const current = passwordFormData.current
+    const next = passwordFormData.newPass
+    const confirm = passwordFormData.confirmPass
+    if (!current || !current.trim()) {
+      toast.error('Enter your current password.')
+      return
+    }
+    if (!next || next !== confirm) {
+      toast.error('New passwords do not match!')
+      return
+    }
+
+    let email = String(user?.email || '').trim()
+    if (!email) {
+      try {
+        const parsed = JSON.parse(sessionStorage.getItem('sms_auth_user') || 'null')
+        email = String(parsed?.email || '').trim()
+      } catch {
+        email = ''
+      }
+    }
+    const mail = email.toLowerCase()
+    if (!mail) {
+      toast.error('Cannot save a password override without a signed-in account email.')
+      return
+    }
+
+    try {
+      const key = `sms_pwd_hash_${mail}`
+      const rawKey = email !== mail ? `sms_pwd_hash_${email}` : null
+      const storedHash = localStorage.getItem(key) || (rawKey ? localStorage.getItem(rawKey) : null)
+      if (storedHash) {
+        const currentHash = await hashPassword(current)
+        if (currentHash !== storedHash) {
+          toast.error('Current password does not match the local override on this device.')
+          return
+        }
+      }
+      const newHash = await hashPassword(next)
+      localStorage.setItem(key, newHash)
+      if (rawKey) localStorage.setItem(rawKey, newHash)
+      setPasswordFormData({ current: '', newPass: '', confirmPass: '' })
+      toast.success('Password updated for this device (local override).')
+    } catch {
+      toast.error('Could not save the password override on this device.')
+    }
+  }
+
+  const handleDownloadCircular = () => {
+    if (!viewingNotice) return
+    const title = viewingNotice.title || 'Circular'
+    const lines = [
+      title,
+      ...(viewingNotice.author ? [`Author: ${viewingNotice.author}`] : []),
+      ...(viewingNotice.date ? [`Date: ${viewingNotice.date}`] : []),
+      ...(viewingNotice.scope ? [`Scope: ${viewingNotice.scope}`] : []),
+      '',
+      ...wrapPdfLines(viewingNotice.content || 'No circular body was provided.')
+    ]
+    const baseName = String(viewingNotice.attachmentName || 'circular')
+      .replace(/\.pdf$/i, '')
+      .replace(/[^\w.-]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+    downloadSimplePdf(`${baseName || 'circular'}.pdf`, lines)
+    toast.success('Circular PDF downloaded.')
+  }
+
+  const handleLeaveSubmit = (e) => {
+    e.preventDefault()
+    const data = new FormData(e.currentTarget)
+    const reason = String(data.get('reason') || '').trim()
+    const date = String(data.get('date') || '').trim()
+    if (!reason || !date) {
+      toast.error('Reason and date are required.')
+      return
+    }
+    try {
+      const existing = JSON.parse(localStorage.getItem('sms_student_leave_requests') || '[]')
+      const list = Array.isArray(existing) ? existing : []
+      list.push({
+        reason,
+        date,
+        status: 'Pending',
+        createdAt: new Date().toISOString()
+      })
+      localStorage.setItem('sms_student_leave_requests', JSON.stringify(list))
+    } catch {
+      toast.error('Could not save the leave request on this device.')
+      return
+    }
+    toast.success('Leave request saved locally. Pending institute review (requires future sync).')
+    setIsLeaveModalOpen(false)
+  }
+
+  const handleRecordFeePayment = () => {
+    const voucher = selectedFeeForPayment
+    if (!voucher || isPayingNow) return
+    setIsPayingNow(true)
+    window.setTimeout(() => {
+      try {
+        const existing = JSON.parse(localStorage.getItem('sms_student_fee_payments') || '[]')
+        const payments = Array.isArray(existing) ? existing : []
+        const record = {
+          id: voucher.id,
+          title: voucher.title,
+          refNo: voucher.refNo,
+          amount: voucher.remaining,
+          gateway: paymentGateway,
+          status: 'payment_submitted_local',
+          createdAt: new Date().toISOString()
+        }
+        const idx = payments.findIndex(
+          (item) => item && (item.id === voucher.id || (voucher.refNo && item.refNo === voucher.refNo))
+        )
+        if (idx >= 0) payments[idx] = { ...payments[idx], ...record }
+        else payments.push(record)
+        localStorage.setItem('sms_student_fee_payments', JSON.stringify(payments))
+        setPendingFeeList((prev) => prev.filter((item) => item.id !== voucher.id))
+        setSelectedFeeForPayment(null)
+        toast.info('Payment intent recorded locally. Gateway settlement requires future billing integration.')
+      } catch {
+        toast.error('Could not record the payment intent on this device.')
+      } finally {
+        setIsPayingNow(false)
+      }
+    }, 800)
   }
 
   // Pre-fill edit modal when opening
@@ -563,46 +802,46 @@ export default function StudentPortalView() {
   }
 
   return (
-    <div className={`min-h-screen flex flex-col font-sans ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-[#f4f7fb] text-slate-800'}`}>
+    <div className={`min-h-screen flex flex-col font-sans overflow-x-hidden ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-[#f4f7fb] text-slate-800'}`}>
       {/* TOP NAVBAR */}
       <header className={`sticky top-0 z-30 h-16 border-b transition-colors ${
         isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
-      } px-4 sm:px-6 flex items-center justify-between shadow-xs`}>
+      } px-3 sm:px-6 flex items-center justify-between gap-2 shadow-xs min-w-0`}>
         {/* Left: Smart Management System Logo & Title + Hamburger */}
-        <div className="flex items-center gap-3 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+          {/* Hamburger Menu Toggle */}
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="lg:hidden shrink-0 p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            aria-label="Toggle Navigation"
+          >
+            {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+
           {/* SMART MANAGEMENT SYSTEM BRANDING */}
-          <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => setActiveTab('dashboard')}>
+          <div className="flex items-center gap-2.5 cursor-pointer min-w-0" onClick={() => setActiveTab('dashboard')}>
             {/* Custom Modern Logo Emblem */}
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-md shadow-blue-500/25">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-md shadow-blue-500/25 shrink-0">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
                 <path d="M12 3L2 21h20L12 3z" fill="rgba(255,255,255,0.2)" />
                 <path d="M7 16h10" />
                 <path d="M12 7v5" />
               </svg>
             </div>
-            <div className="flex flex-col">
-              <span className="font-bold text-sm sm:text-base leading-tight tracking-tight text-slate-900 dark:text-white">
+            <div className="flex flex-col min-w-0">
+              <span className="font-bold text-sm sm:text-base leading-tight tracking-tight text-slate-900 dark:text-white truncate">
                 Smart Management System
               </span>
-              <span className="text-[10px] text-slate-400 font-medium tracking-wide">
+              <span className="hidden sm:block text-[10px] text-slate-400 font-medium tracking-wide truncate">
                 Student Portal
               </span>
             </div>
           </div>
-
-          {/* Hamburger Menu Toggle */}
-          <button
-            type="button"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors ml-1 cursor-pointer"
-            aria-label="Toggle Navigation"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
         </div>
 
         {/* Right Header Icons & Student Profile */}
-        <div className="flex items-center gap-2.5 sm:gap-4">
+        <div className="flex items-center gap-1 sm:gap-4 shrink-0">
           {/* Bell Icon */}
           <div className="relative">
             <button
@@ -616,7 +855,7 @@ export default function StudentPortalView() {
             </button>
 
             {isNotifOpen && (
-              <div className="absolute right-0 mt-2 w-72 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl p-3 z-50 text-xs">
+              <div className="fixed left-3 right-3 top-16 w-auto sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-72 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl p-3 z-50 text-xs">
                 <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
                   <span className="font-bold text-slate-700 dark:text-slate-200">Alerts</span>
                   <button onClick={() => setIsNotifOpen(false)} className="text-slate-400 hover:text-slate-600">
@@ -664,7 +903,7 @@ export default function StudentPortalView() {
               {studentName === 'Unknown' ? '?' : studentName.charAt(0).toUpperCase()}
             </div>
 
-            <div className="text-left flex flex-col">
+            <div className="text-left hidden sm:flex flex-col">
               <div className="flex items-center gap-1">
                 <span className="text-xs font-bold text-slate-800 dark:text-white group-hover:text-blue-600 transition-colors">
                   {studentName}
@@ -690,14 +929,14 @@ export default function StudentPortalView() {
       </header>
 
       {/* BODY WORKSPACE */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden min-w-0">
         {/* SIDEBAR NAVIGATION (Matching Screenshot 1, 2 & 3) */}
         <aside
-          className={`fixed lg:static inset-y-16 left-0 z-20 w-60 flex-col border-r transition-transform duration-200 ${
+          className={`fixed lg:static inset-y-16 left-0 z-20 w-60 max-w-[85vw] lg:max-w-none overflow-x-hidden flex-col border-r transition-transform duration-200 shadow-2xl lg:shadow-none ${
             isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
           } ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} flex`}
         >
-          <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto text-xs">
+          <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto overflow-x-hidden text-xs">
             {/* 1. Dashboard */}
             <button
               type="button"
@@ -960,12 +1199,13 @@ export default function StudentPortalView() {
         {isMobileMenuOpen && (
           <div
             className="fixed inset-0 z-10 bg-slate-900/40 backdrop-blur-xs lg:hidden"
+            aria-hidden="true"
             onClick={() => setIsMobileMenuOpen(false)}
           />
         )}
 
         {/* MAIN DASHBOARD CONTENT */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-7 max-w-7xl mx-auto w-full">
+        <main className="flex-1 min-w-0 overflow-x-hidden overflow-y-auto p-3 sm:p-6 lg:p-7 max-w-7xl mx-auto w-full">
           {/* TAB 1: DASHBOARD */}
           {activeTab === 'dashboard' && (
             <div className="space-y-5">
@@ -981,7 +1221,7 @@ export default function StudentPortalView() {
                 </div>
 
                 {/* Right Action Icons (Report Card, My Attendance, Assignments, Announcements, Fee Records) */}
-                <div className="flex items-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 overflow-x-auto pb-1">
+                <div className="scroll-row flex items-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 overflow-x-auto pb-1 max-w-full">
                   <button
                     type="button"
                     onClick={() => setIsReportCardModalOpen(true)}
@@ -1296,7 +1536,7 @@ export default function StudentPortalView() {
                 </div>
 
                 {/* Right Top Action Icons */}
-                <div className="flex items-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 overflow-x-auto pb-1">
+                <div className="scroll-row flex items-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 overflow-x-auto pb-1 max-w-full">
                   <button
                     type="button"
                     onClick={() => setIsReportCardModalOpen(true)}
@@ -1417,7 +1657,7 @@ export default function StudentPortalView() {
               </div>
 
               {/* SUB-TABS: Weekly Schedule (1) vs Exam Datesheet (1) */}
-              <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pt-2 pb-0">
+              <div className="scroll-row flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pt-2 pb-0 overflow-x-auto">
                 <button
                   type="button"
                   onClick={() => setTimetableSubTab('weekly')}
@@ -1491,7 +1731,7 @@ export default function StudentPortalView() {
                       isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
                     } overflow-hidden shadow-xs`}>
                       <div className="overflow-x-auto">
-                        <table className="w-full text-xs text-left border-collapse">
+                        <table className="w-full min-w-[520px] text-xs text-left border-collapse">
                           <thead>
                             <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300">
                               <th className="py-3 px-4 font-bold border-r border-slate-200 dark:border-slate-800 w-28">
@@ -1621,7 +1861,8 @@ export default function StudentPortalView() {
                   <div className={`rounded-2xl border ${
                     isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
                   } overflow-hidden shadow-xs`}>
-                    <table className="w-full text-xs text-left">
+                    <div className="overflow-x-auto">
+                    <table className="w-full text-xs text-left min-w-[640px]">
                       <thead>
                         <tr className="border-b bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 font-bold uppercase text-[10px]">
                           <th className="py-3 px-4">Date & Day</th>
@@ -1645,6 +1886,7 @@ export default function StudentPortalView() {
                         ))}
                       </tbody>
                     </table>
+                    </div>
                   </div>
                 </div>
               )}
@@ -1675,7 +1917,7 @@ export default function StudentPortalView() {
                 </div>
 
                 {/* Right Top Action Icons */}
-                <div className="flex items-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 overflow-x-auto pb-1">
+                <div className="scroll-row flex items-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 overflow-x-auto pb-1 max-w-full">
                   <button
                     type="button"
                     onClick={() => setIsReportCardModalOpen(true)}
@@ -1721,11 +1963,21 @@ export default function StudentPortalView() {
 
               {/* Section Header Card */}
               <div className="pt-1">
-                <div className="flex items-center gap-2">
-                  <CalendarDays className="w-4 h-4 text-blue-600" />
-                  <h2 className="text-sm font-bold text-slate-900 dark:text-white">
-                    My Attendance Report
-                  </h2>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <CalendarDays className="w-4 h-4 text-blue-600" />
+                    <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                      My Attendance Report
+                    </h2>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsLeaveModalOpen(true)}
+                    className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs cursor-pointer transition-colors self-start sm:self-auto"
+                  >
+                    <CalendarDays className="w-3.5 h-3.5" />
+                    Apply Leave
+                  </button>
                 </div>
 
                 {/* Cyan/Blue Tinted Student Info Bar */}
@@ -1879,7 +2131,7 @@ export default function StudentPortalView() {
 
                 {/* Month Calendar Table Grid */}
                 <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl">
-                  <table className="w-full text-xs text-center border-collapse">
+                  <table className="w-full min-w-[560px] text-xs text-center border-collapse">
                     <thead>
                       <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-bold">
                         <th className="py-2.5 px-2 border-r border-slate-200 dark:border-slate-800 bg-[#f8fafc] dark:bg-slate-800/60 w-1/7">Sun</th>
@@ -2207,7 +2459,7 @@ export default function StudentPortalView() {
                 </div>
 
                 {/* Right Top Action Icons */}
-                <div className="flex items-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 overflow-x-auto pb-1">
+                <div className="scroll-row flex items-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 overflow-x-auto pb-1 max-w-full">
                   <button
                     type="button"
                     onClick={() => setIsReportCardModalOpen(true)}
@@ -2464,7 +2716,7 @@ export default function StudentPortalView() {
                 </div>
 
                 {/* Right Top Action Icons */}
-                <div className="flex items-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 overflow-x-auto pb-1">
+                <div className="scroll-row flex items-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 overflow-x-auto pb-1 max-w-full">
                   <button
                     type="button"
                     onClick={() => setActiveTab('report-cards')}
@@ -2653,7 +2905,7 @@ export default function StudentPortalView() {
                 </div>
 
                 {/* Right Top Action Icons */}
-                <div className="flex items-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 overflow-x-auto pb-1">
+                <div className="scroll-row flex items-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 overflow-x-auto pb-1 max-w-full">
                   <button
                     type="button"
                     onClick={() => setActiveTab('report-cards')}
@@ -2847,7 +3099,7 @@ export default function StudentPortalView() {
                 </div>
 
                 {/* Right Top Action Icons (with Report Card active pill) */}
-                <div className="flex items-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 overflow-x-auto pb-1">
+                <div className="scroll-row flex items-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 overflow-x-auto pb-1 max-w-full">
                   <button
                     type="button"
                     onClick={() => setActiveTab('report-cards')}
@@ -3076,7 +3328,7 @@ export default function StudentPortalView() {
                 </div>
 
                 {/* Right Top Action Icons (with Announcements active pill) */}
-                <div className="flex items-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 overflow-x-auto pb-1">
+                <div className="scroll-row flex items-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 overflow-x-auto pb-1 max-w-full">
                   <button
                     type="button"
                     onClick={() => setActiveTab('report-cards')}
@@ -3276,7 +3528,7 @@ export default function StudentPortalView() {
                 </div>
 
                 {/* Right Top Action Icons */}
-                <div className="flex items-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 overflow-x-auto pb-1">
+                <div className="scroll-row flex items-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 overflow-x-auto pb-1 max-w-full">
                   <button
                     type="button"
                     onClick={() => setActiveTab('report-cards')}
@@ -3438,7 +3690,7 @@ export default function StudentPortalView() {
                 </div>
 
                 {/* Right Top Action Icons */}
-                <div className="flex items-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 overflow-x-auto pb-1">
+                <div className="scroll-row flex items-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 overflow-x-auto pb-1 max-w-full">
                   <button
                     type="button"
                     onClick={() => setActiveTab('report-cards')}
@@ -3700,7 +3952,7 @@ export default function StudentPortalView() {
                 </div>
 
                 {/* Right Top Action Icons (with Fee Records active blue pill) */}
-                <div className="flex items-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 overflow-x-auto pb-1">
+                <div className="scroll-row flex items-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 overflow-x-auto pb-1 max-w-full">
                   <button
                     type="button"
                     onClick={() => setActiveTab('report-cards')}
@@ -3834,7 +4086,7 @@ export default function StudentPortalView() {
 
               {/* TABS SELECTOR (Pending Payments [6], Completed Payments [11], Waiver/Discount [1]) */}
               <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pt-2 text-xs">
-                <div className="flex items-center gap-2 sm:gap-6 overflow-x-auto">
+                <div className="scroll-row flex items-center gap-2 sm:gap-6 overflow-x-auto min-w-0 w-full">
                   {/* Tab 1: Pending */}
                   <button
                     type="button"
@@ -4174,7 +4426,7 @@ export default function StudentPortalView() {
                 </div>
 
                 {/* Right Top Action Icons */}
-                <div className="flex items-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 overflow-x-auto pb-1">
+                <div className="scroll-row flex items-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 overflow-x-auto pb-1 max-w-full">
                   <button
                     type="button"
                     onClick={() => setActiveTab('report-cards')}
@@ -4227,7 +4479,7 @@ export default function StudentPortalView() {
                 </h2>
 
                 {/* Subtabs: Manage Profile & Change Password */}
-                <div className="flex items-center gap-6 border-b border-slate-100 dark:border-slate-800 text-xs">
+                <div className="scroll-row flex items-center gap-4 sm:gap-6 overflow-x-auto border-b border-slate-100 dark:border-slate-800 text-xs">
                   <button
                     type="button"
                     onClick={() => setAccountActiveSubtab('profile')}
@@ -4266,16 +4518,7 @@ export default function StudentPortalView() {
                     </div>
 
                     <form
-                      onSubmit={(e) => {
-                        e.preventDefault()
-                        if (accountNameValue.trim()) {
-                          setStudentName(accountNameValue.trim())
-                          try {
-                            localStorage.setItem('sms_student_custom_name', accountNameValue.trim())
-                          } catch {}
-                          alert('Profile photo and student details saved successfully!')
-                        }
-                      }}
+                      onSubmit={handleAccountProfileSave}
                       className="space-y-4 text-xs"
                     >
                       {/* Name Field */}
@@ -4315,8 +4558,10 @@ export default function StudentPortalView() {
                             type="file"
                             accept="image/jpeg,image/png,image/webp"
                             onChange={(e) => {
-                              if (e.target.files?.[0]) {
-                                setAccountPhotoSelected(e.target.files[0].name)
+                              const file = e.target.files?.[0]
+                              if (file) {
+                                setAccountPhotoSelected(file.name)
+                                setAccountPhotoFile(file)
                               }
                             }}
                             id="student-photo-upload"
@@ -4354,15 +4599,7 @@ export default function StudentPortalView() {
                 {/* SUBTAB 2: CHANGE PASSWORD */}
                 {accountActiveSubtab === 'password' && (
                   <form
-                    onSubmit={(e) => {
-                      e.preventDefault()
-                      if (!passwordFormData.newPass || passwordFormData.newPass !== passwordFormData.confirmPass) {
-                        alert('New passwords do not match!')
-                        return
-                      }
-                      alert('Student portal password updated successfully!')
-                      setPasswordFormData({ current: '', newPass: '', confirmPass: '' })
-                    }}
+                    onSubmit={handlePasswordUpdate}
                     className="space-y-4 max-w-md text-xs"
                   >
                     <div>
@@ -4666,7 +4903,7 @@ export default function StudentPortalView() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => alert('Downloading official circular...')}
+                  onClick={handleDownloadCircular}
                   className="px-3 py-1 rounded-lg bg-blue-600 text-white font-semibold text-xs flex items-center gap-1 cursor-pointer"
                 >
                   <Download className="w-3.5 h-3.5" /> Download
@@ -4726,14 +4963,14 @@ export default function StudentPortalView() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <form onSubmit={(e) => { e.preventDefault(); alert('Leave submitted!'); setIsLeaveModalOpen(false); }} className="mt-4 space-y-3 text-xs">
+            <form onSubmit={handleLeaveSubmit} className="mt-4 space-y-3 text-xs">
               <div>
                 <label className="block text-slate-600 font-semibold mb-1">Reason</label>
-                <input required placeholder="e.g. Sick Leave, Family Wedding" className="w-full px-3 py-2 rounded-xl border border-slate-200" />
+                <input name="reason" required placeholder="e.g. Sick Leave, Family Wedding" className="w-full px-3 py-2 rounded-xl border border-slate-200" />
               </div>
               <div>
                 <label className="block text-slate-600 font-semibold mb-1">Date</label>
-                <input type="date" required className="w-full px-3 py-2 rounded-xl border border-slate-200" />
+                <input name="date" type="date" required className="w-full px-3 py-2 rounded-xl border border-slate-200" />
               </div>
               <div className="pt-2 flex justify-end gap-2">
                 <button type="button" onClick={() => setIsLeaveModalOpen(false)} className="px-4 py-2 rounded-xl text-slate-600 cursor-pointer">Cancel</button>
@@ -4906,15 +5143,7 @@ export default function StudentPortalView() {
               <button
                 type="button"
                 disabled={isPayingNow}
-                onClick={() => {
-                  setIsPayingNow(true)
-                  setTimeout(() => {
-                    setIsPayingNow(false)
-                    setPendingFeeList(prev => prev.filter(v => v.id !== selectedFeeForPayment.id))
-                    setSelectedFeeForPayment(null)
-                    alert(`Payment of PKR ${selectedFeeForPayment.remaining} for ${selectedFeeForPayment.title} processed successfully via ${paymentGateway}!`)
-                  }, 800)
-                }}
+                onClick={handleRecordFeePayment}
                 className="px-5 py-2 rounded-xl bg-[#16a34a] hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs cursor-pointer"
               >
                 {isPayingNow ? 'Processing...' : 'Confirm & Pay'}

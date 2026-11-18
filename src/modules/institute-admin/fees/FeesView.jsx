@@ -30,6 +30,7 @@ import Modal from '../../../components/common/Modal'
 import { recordCampusLedgerTransaction } from '../accounts/CampusAccountsView'
 import PrintableFeeChallanModal from '../../../components/common/PrintableFeeChallanModal'
 import { getDistinctInstituteClassNames, isClassAllowedForTier } from '../../../utils/tierGating'
+import { downloadSimplePdf } from '../../../utils/pdfExport'
 
 export const FeesView = ({ currentInstitute, initialFilter = 'all', initialAction = null }) => {
   const { fees = [], students = [], classes = [], addItem, updateItem, deleteItem, logAuditEvent } = useAppData()
@@ -49,8 +50,6 @@ export const FeesView = ({ currentInstitute, initialFilter = 'all', initialActio
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isBatchModalOpen, setIsBatchModalOpen] = useState(false)
   const [isPosModalOpen, setIsPosModalOpen] = useState(false)
-  const [isVerifying1Link, setIsVerifying1Link] = useState(false)
-  const [is1LinkVerified, setIs1LinkVerified] = useState(false)
   const [appliedLateFine, setAppliedLateFine] = useState(0)
   const [isSplitModalOpen, setIsSplitModalOpen] = useState(false)
   const [selectedVoucher, setSelectedVoucher] = useState(null)
@@ -598,7 +597,7 @@ export const FeesView = ({ currentInstitute, initialFilter = 'all', initialActio
         audience: `Guardian of ${posData.studentName} (${posData.guardianPhone || 'Phone Registered'})`,
         recipientsCount: 1,
         timestamp: new Date().toLocaleString(),
-        status: 'Delivered',
+        status: 'Logged locally (no SMS gateway)',
         messagePreview: `Official Payment Receipt: Received Rs. ${finalPaid.toLocaleString()} for ${posData.studentName} (${posData.rollNumber}). Slip #${receiptObj.receiptNo}. ${isPartial ? `Remaining Balance: Rs. ${remainingBalance.toLocaleString()}.` : 'Full dues settled.'} Thank you.`
       }
       try {
@@ -1462,26 +1461,20 @@ export const FeesView = ({ currentInstitute, initialFilter = 'all', initialActio
                       value={posData.transactionRef || ''}
                       onChange={(e) => {
                         setPosData({ ...posData, transactionRef: e.target.value });
-                        setIs1LinkVerified(false);
                       }}
                       placeholder="e.g. RRN-982104812"
                       className="w-full px-3 py-1.5 rounded-lg border border-indigo-300 bg-white text-xs font-mono font-semibold focus:ring-1 focus:ring-indigo-500"
                     />
                     <button
                       type="button"
-                      disabled={isVerifying1Link || !posData.transactionRef}
+                      disabled={!posData.transactionRef}
                       onClick={() => {
-                        setIsVerifying1Link(true);
-                        setTimeout(() => {
-                          setIsVerifying1Link(false);
-                          setIs1LinkVerified(true);
-                          toast.success(`1Link Switch: Txn #${posData.transactionRef} verified successfully.`);
-                        }, 500);
+                        toast.info(`Reference ${posData.transactionRef} will be stored with this payment. 1Link was not contacted — there is no live bank switch in this browser.`);
                       }}
                       className="px-2 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded font-bold text-[10px] shrink-0 disabled:opacity-50 transition-colors"
-                      title="Verify with 1Link switch"
+                      title="Record the reference locally. This does not contact 1Link."
                     >
-                      {isVerifying1Link ? 'Checking...' : is1LinkVerified ? '✓ Verified' : 'Verify'}
+                      Note ref
                     </button>
                   </div>
                 </div>
@@ -1673,7 +1666,7 @@ export const FeesView = ({ currentInstitute, initialFilter = 'all', initialActio
                   `\nAmount Paid: Rs. ${posReceipt.finalPaid.toLocaleString()}` +
                   `\nPayment Mode: ${posReceipt.paymentMethod}` +
                   `\nDate: ${posReceipt.date}` +
-                  `\nStatus: Verified & Settled. Thank you!`
+                  `\nStatus: Recorded at the fee counter in this browser. Thank you!`
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -1683,6 +1676,25 @@ export const FeesView = ({ currentInstitute, initialFilter = 'all', initialActio
                 <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
                 <span>Send via WhatsApp</span>
               </a>
+              <button
+                type="button"
+                onClick={() => {
+                  downloadSimplePdf(`pos-slip-${posReceipt.receiptNo || 'receipt'}.pdf`, [
+                    { text: currentInstitute?.name || 'Institute', bold: true },
+                    { text: 'FEE COUNTER RECEIPT', bold: true },
+                    { text: `Receipt: ${posReceipt.receiptNo || '—'}` },
+                    { text: `Student: ${posReceipt.studentName} (${posReceipt.rollNumber || '—'})` },
+                    { text: `Class: ${posReceipt.className || '—'}` },
+                    { text: `Paid: Rs. ${Number(posReceipt.finalPaid || 0).toLocaleString()} via ${posReceipt.paymentMethod || '—'}` },
+                    { text: `Date: ${posReceipt.date || ''}` },
+                    { text: 'Recorded in this browser. Not a bank settlement advice.' }
+                  ])
+                }}
+                className="px-4 py-2 text-xs font-bold text-slate-800 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg flex items-center gap-1.5 shadow cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Download PDF</span>
+              </button>
               <button
                 type="button"
                 onClick={() => window.print()}
@@ -2102,6 +2114,29 @@ export const FeesView = ({ currentInstitute, initialFilter = 'all', initialActio
                 className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
               >
                 Close
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const v = selectedVoucher
+                  downloadSimplePdf(`challan-${String(v.id || 'fee').slice(-8)}.pdf`, [
+                    { text: currentInstitute?.name || 'Institute', bold: true },
+                    { text: 'OFFICIAL FEE CHALLAN — Bank / Institute / Student', bold: true },
+                    { text: `Challan CH-${String(v.id || '').slice(-6)}` },
+                    { text: `Student: ${v.studentName || '—'}    Roll: ${v.rollNumber || '—'}    Class: ${v.className || '—'}` },
+                    { text: `Due date: ${v.dueDate || '—'}` },
+                    { text: `Payable by due date: Rs. ${Number(v.amount || 0).toLocaleString()}` },
+                    { text: `After due date (+ fine): Rs. ${(Number(v.amount || 0) + 500).toLocaleString()}` },
+                    v.installmentInfo?.isInstallment
+                      ? { text: `Installment ${v.installmentInfo.partNo} of ${v.installmentInfo.totalParts}` }
+                      : null,
+                    { text: 'Generated in this browser for the fee counter. Not a bank-cleared instrument.' }
+                  ].filter(Boolean))
+                }}
+                className="px-5 py-2 text-xs font-bold text-slate-800 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg flex items-center gap-1.5 shadow cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Download PDF</span>
               </button>
               <button
                 type="button"

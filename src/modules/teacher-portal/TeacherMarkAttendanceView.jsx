@@ -26,6 +26,15 @@ import {
 } from 'lucide-react'
 import { useAppData } from '../../context/AppDataContext'
 import { useToast } from '../../context/ToastContext'
+import { downloadSimplePdf } from '../../utils/pdfExport'
+
+const appendTeacherMessage = (record) => {
+  try {
+    const prev = JSON.parse(localStorage.getItem('sms_teacher_messages') || '[]')
+    const next = Array.isArray(prev) ? [record, ...prev].slice(0, 200) : [record]
+    localStorage.setItem('sms_teacher_messages', JSON.stringify(next))
+  } catch {}
+}
 
 export default function TeacherMarkAttendanceView({
   onBack,
@@ -78,15 +87,29 @@ export default function TeacherMarkAttendanceView({
 
   // Attendance Records State (studentId -> { status: 'present' | 'absent' | 'late' | 'leave', comment: '' })
   const todayIso = new Date().toISOString().split('T')[0]
-  const attendanceStorageKey = `teacher_student_attendance_${todayIso}`
+  const [selectedClass, setSelectedClass] = useState('all')
+  const [attendanceType, setAttendanceType] = useState('general')
+  const attendanceStorageKey =
+    selectedClass === 'all' && attendanceType === 'general'
+      ? `teacher_student_attendance_${todayIso}`
+      : `teacher_student_attendance_${todayIso}_${selectedClass}_${attendanceType}`
 
   const [attendanceMap, setAttendanceMap] = useState(() => {
     try {
-      const saved = localStorage.getItem(attendanceStorageKey)
+      const saved = localStorage.getItem(`teacher_student_attendance_${new Date().toISOString().split('T')[0]}`)
       if (saved) return JSON.parse(saved)
     } catch {}
     return {}
   })
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(attendanceStorageKey)
+      setAttendanceMap(saved ? JSON.parse(saved) : {})
+    } catch {
+      setAttendanceMap({})
+    }
+  }, [attendanceStorageKey])
 
   // Save changes to localStorage
   const updateAttendanceMap = (newMap) => {
@@ -97,8 +120,6 @@ export default function TeacherMarkAttendanceView({
   }
 
   // Filter States
-  const [selectedClass, setSelectedClass] = useState('all')
-  const [attendanceType, setAttendanceType] = useState('general')
   const [showStatusFilter, setShowStatusFilter] = useState('all') // 'all' | 'present' | 'absent' | 'late' | 'leave'
   const [searchTerm, setSearchTerm] = useState('')
   const [activeSearch, setActiveSearch] = useState('')
@@ -110,6 +131,7 @@ export default function TeacherMarkAttendanceView({
   const [isBlankSheetModalOpen, setIsBlankSheetModalOpen] = useState(false)
   const [isMonthlySheetModalOpen, setIsMonthlySheetModalOpen] = useState(false)
   const [smsModalStudent, setSmsModalStudent] = useState(null)
+  const [smsDraft, setSmsDraft] = useState('')
   const [isQrScannerActive, setIsQrScannerActive] = useState(false)
 
   // Filtered Students
@@ -162,6 +184,42 @@ export default function TeacherMarkAttendanceView({
       }
     }
     updateAttendanceMap(updated)
+  }
+
+  const handleDemoQrScan = () => {
+    if (students.length === 0) {
+      toast?.error?.('Add students before marking a demo scan.')
+      return
+    }
+    const first = students[0]
+    const markedAt = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    const updated = {
+      ...attendanceMap,
+      [first.id]: {
+        ...(attendanceMap[first.id] || {}),
+        status: 'present',
+        markedAt,
+        source: 'demo-scan-local'
+      }
+    }
+    updateAttendanceMap(updated)
+    try {
+      const key = 'sms_teacher_attendance'
+      const saved = JSON.parse(localStorage.getItem(key) || '{}')
+      const scope = `${teacherName}|${selectedClass}|${todayIso}|${attendanceType}`
+      const bucket = saved[scope] && typeof saved[scope] === 'object'
+        ? saved[scope]
+        : { teacher: teacherName, className: selectedClass, date: todayIso, attendanceType, scans: [] }
+      bucket.scans = [
+        ...(bucket.scans || []),
+        { studentId: first.id, name: first.name, at: new Date().toISOString(), source: 'demo-scan-local' }
+      ]
+      saved[scope] = bucket
+      localStorage.setItem(key, JSON.stringify(saved))
+    } catch {}
+    toast?.info?.(`Demo scan saved locally for ${first.name}. This is not a live QR or biometric device.`)
+    setIsQrScannerActive(false)
+    setActiveTab('students')
   }
 
   // Update Comment
@@ -387,7 +445,7 @@ export default function TeacherMarkAttendanceView({
               }`}
             >
               <QrCode className="w-3.5 h-3.5" />
-              <span>QR Scan</span>
+              <span>Demo scan</span>
             </button>
           </div>
 
@@ -816,7 +874,10 @@ export default function TeacherMarkAttendanceView({
                         <td className="py-3 px-4 text-center">
                           <button
                             type="button"
-                            onClick={() => setSmsModalStudent(student)}
+                            onClick={() => {
+                              setSmsModalStudent(student)
+                              setSmsDraft(`Dear Parent, your child ${student.name} is marked ${attendanceMap[student.id]?.status || 'unmarked'} today. This note is saved on this device only.`)
+                            }}
                             className="text-xs font-semibold px-2.5 py-1 rounded-lg text-sky-600 dark:text-sky-400 border border-sky-300 dark:border-sky-800 hover:bg-sky-50 dark:hover:bg-sky-950/60 transition-colors flex items-center justify-center gap-1 mx-auto cursor-pointer"
                           >
                             <Send className="w-3 h-3" />
@@ -843,7 +904,7 @@ export default function TeacherMarkAttendanceView({
               <div className="flex items-center gap-2">
                 <Send className="w-4 h-4 text-sky-600" />
                 <h3 className="font-extrabold text-slate-900 dark:text-white text-sm">
-                  Send Attendance SMS
+                  Save attendance note locally
                 </h3>
               </div>
               <button
@@ -868,7 +929,8 @@ export default function TeacherMarkAttendanceView({
                 </label>
                 <textarea
                   rows="4"
-                  defaultValue={`Dear Parent, your child ${smsModalStudent.name} is marked ${attendanceMap[smsModalStudent.id]?.status || 'Absent'} today at Smart Management System.`}
+                  value={smsDraft}
+                  onChange={(e) => setSmsDraft(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-sky-500"
                 />
               </div>
@@ -883,13 +945,28 @@ export default function TeacherMarkAttendanceView({
               </button>
               <button
                 onClick={() => {
-                  toast?.success?.(`SMS sent to ${smsModalStudent.parentPhone || 'parent'} successfully!`)
+                  if (!smsDraft.trim()) {
+                    toast?.error?.('Enter a message to save.')
+                    return
+                  }
+                  appendTeacherMessage({
+                    id: `att-sms-${Date.now()}`,
+                    kind: 'attendance',
+                    teacher: teacherName,
+                    studentId: smsModalStudent.id,
+                    studentName: smsModalStudent.name,
+                    phone: smsModalStudent.parentPhone || '',
+                    text: smsDraft.trim(),
+                    at: new Date().toISOString(),
+                    delivered: false
+                  })
+                  toast?.info?.('Message saved locally. School delivery requires future messaging integration.')
                   setSmsModalStudent(null)
                 }}
                 className="px-4 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm cursor-pointer"
               >
                 <Send className="w-3.5 h-3.5" />
-                <span>Send SMS Notification</span>
+                <span>Save message locally</span>
               </button>
             </div>
           </div>
@@ -963,6 +1040,24 @@ export default function TeacherMarkAttendanceView({
                 Close
               </button>
               <button
+                onClick={() => {
+                  const lines = [
+                    { text: 'Attendance roll-call sheet', bold: true },
+                    `Class: ${selectedClass === 'all' ? 'All classes' : selectedClass}`,
+                    `Date: ${todayIso}`,
+                    `Type: ${attendanceType}`,
+                    ...(filteredStudents.length
+                      ? filteredStudents.map((s, i) => `${i + 1}. ${s.rollNo || '-'} ${s.name} — ${attendanceMap[s.id]?.status || 'unmarked'}`)
+                      : ['No students on this sheet.'])
+                  ]
+                  downloadSimplePdf(`attendance-sheet-${todayIso}.pdf`, lines)
+                }}
+                className="px-4 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold text-xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Download PDF</span>
+              </button>
+              <button
                 onClick={() => window.print()}
                 className="px-4 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm cursor-pointer"
               >
@@ -1031,7 +1126,7 @@ export default function TeacherMarkAttendanceView({
       )}
 
       {/* ========================================================= */}
-      {/* MODAL 4: QR SCANNER SIMULATION */}
+      {/* MODAL 4: LOCAL DEMO SCAN (NO CAMERA / HARDWARE) */}
       {/* ========================================================= */}
       {activeTab === 'qr_scan' && isQrScannerActive && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
@@ -1040,7 +1135,7 @@ export default function TeacherMarkAttendanceView({
               <div className="flex items-center gap-2">
                 <QrCode className="w-4 h-4 text-sky-600" />
                 <h3 className="font-extrabold text-slate-900 dark:text-white text-sm">
-                  Student QR Code Attendance Scanner
+                  Demo scan (local only)
                 </h3>
               </div>
               <button
@@ -1055,28 +1150,21 @@ export default function TeacherMarkAttendanceView({
             </div>
 
             <div className="p-6 flex flex-col items-center text-center space-y-4 text-xs">
-              <div className="w-48 h-48 rounded-2xl border-2 border-dashed border-sky-500 bg-sky-50/50 dark:bg-sky-950/30 flex flex-col items-center justify-center relative overflow-hidden">
-                <Camera className="w-10 h-10 text-sky-500 animate-pulse" />
-                <span className="text-[11px] font-bold text-sky-600 mt-2">Scanning Student QR Card...</span>
-                <div className="absolute inset-x-0 h-0.5 bg-sky-500 top-1/2 shadow-lg animate-bounce" />
+              <div className="w-48 h-48 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 flex flex-col items-center justify-center">
+                <Camera className="w-10 h-10 text-slate-400" />
+                <span className="text-[11px] font-bold text-slate-500 mt-2 px-3">No camera or QR reader is connected</span>
               </div>
               <p className="text-slate-500 dark:text-slate-400">
-                Hold the student ID card QR code in front of the camera to automatically mark attendance.
+                This marks one student present on this device only. It does not read a card, camera, or biometric device.
               </p>
 
               {students.length > 0 && (
                 <button
                   type="button"
-                  onClick={() => {
-                    const first = students[0]
-                    handleMarkStatus(first.id, 'present')
-                    toast?.success?.(`QR Code Verified: ${first.name} marked Present!`)
-                    setIsQrScannerActive(false)
-                    setActiveTab('students')
-                  }}
+                  onClick={handleDemoQrScan}
                   className="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-sm cursor-pointer"
                 >
-                  Simulate QR Card Scan ({students[0].name})
+                  Mark demo scan (local only) ({students[0].name})
                 </button>
               )}
             </div>

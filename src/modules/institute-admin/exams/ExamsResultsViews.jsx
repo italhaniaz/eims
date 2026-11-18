@@ -26,6 +26,7 @@ import {
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
 import { getDistinctInstituteClassNames, isClassAllowedForTier } from '../../../utils/tierGating'
+import { downloadSimplePdf } from '../../../utils/pdfExport'
 import Modal from '../../../components/common/Modal'
 
 const DEFAULT_GRADES = [
@@ -237,15 +238,16 @@ export const ExamsResultsViews = ({
       activeSubs.forEach((subName) => {
         const key = `eims_marks_${instId}_${resApplied.examId}_${resApplied.className}_${subName}`
         const map = loadJson(key, {})
+        const subjectMax = Number(map?.__maxMarks) > 0 ? Number(map.__maxMarks) : 100
         const rec = map?.[stu.id]
         if (rec && !rec.absent && rec.obtained !== '' && rec.obtained !== undefined) {
           const val = Number(rec.obtained)
           subjectScores[subName] = val
           totalObt += val
-          totalMax += 100
+          totalMax += subjectMax
         } else if (rec?.absent) {
           subjectScores[subName] = 'AB'
-          totalMax += 100
+          totalMax += subjectMax
         } else {
           subjectScores[subName] = '—'
         }
@@ -277,7 +279,26 @@ export const ExamsResultsViews = ({
     if (!targetRows || targetRows.length === 0) return
     const win = window.open('', '_blank', 'width=900,height=750')
     if (!win) {
-      toast.warning('Please allow pop-ups to print report cards')
+      const instName = currentInstitute?.name || 'Institute'
+      const examObj = examsList.find((e) => e.id === resApplied?.examId)
+      const lines = [
+        { text: instName, bold: true },
+        { text: `${examObj?.name || 'Examination'} — Report cards`, bold: true },
+        { text: ' ' }
+      ]
+      targetRows.forEach((r) => {
+        lines.push({ text: `${r.student.name} · ${r.student.className || ''} · Roll ${r.student.rollNumber || '—'}`, bold: true })
+        Object.entries(r.subjectScores || {}).forEach(([sub, sc]) => {
+          lines.push({ text: `  ${sub}: ${sc}` })
+        })
+        lines.push({
+          text: `  Total ${r.totalObt}/${r.totalMax}${examSettings.showPercentage ? ` (${r.pct}%)` : ''} Grade ${r.grade}`
+        })
+        lines.push({ text: ' ' })
+      })
+      lines.push({ text: 'Generated in this browser from saved marks.' })
+      downloadSimplePdf(`report-cards-${resApplied?.className || 'class'}.pdf`.replace(/\s+/g, '-'), lines)
+      toast.info('Pop-up blocked. Report cards were downloaded as a PDF instead.')
       return
     }
     const instName = currentInstitute?.name || 'Institute Management System'

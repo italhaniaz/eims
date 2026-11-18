@@ -256,12 +256,27 @@ export default function TeacherPortalView() {
     }
   }
 
-  // Interactive Mock State for Assignments created by teacher
-  const [assignments, setAssignments] = useState([])
+  const readSavedAssignments = () => {
+    try {
+      const saved = localStorage.getItem('teacher_portal_assignments')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (Array.isArray(parsed)) return parsed
+      }
+    } catch {}
+    return []
+  }
+
+  // Assignments shared with the Assignments page (localStorage)
+  const [assignments, setAssignments] = useState(readSavedAssignments)
   const [newAssignmentTitle, setNewAssignmentTitle] = useState('')
-  const [newAssignmentClass, setNewAssignmentClass] = useState('Grade 10 - Section A')
-  const [newAssignmentSubject, setNewAssignmentSubject] = useState('Mathematics')
+  const [newAssignmentClass, setNewAssignmentClass] = useState('Nursery')
+  const [newAssignmentSubject, setNewAssignmentSubject] = useState('English')
   const [newAssignmentDueDate, setNewAssignmentDueDate] = useState('')
+
+  useEffect(() => {
+    if (activeRoute === 'dashboard') setAssignments(readSavedAssignments())
+  }, [activeRoute])
 
   const handleCreateAssignment = (e) => {
     e.preventDefault()
@@ -269,29 +284,46 @@ export default function TeacherPortalView() {
       showToast('Please enter an assignment title.')
       return
     }
+    if (!newAssignmentDueDate) {
+      showToast('Choose a due date.')
+      return
+    }
+    const existing = readSavedAssignments()
     const item = {
       id: `asg-${Date.now()}`,
+      sn: existing.length + 1,
       title: newAssignmentTitle.trim(),
+      hasImage: false,
       className: newAssignmentClass,
       subject: newAssignmentSubject,
-      dueDate: newAssignmentDueDate || 'Tomorrow',
-      createdAt: new Date().toLocaleDateString('en-GB')
+      date: (() => {
+        const [y, m, d] = newAssignmentDueDate.split('-').map(Number)
+        return new Date(y, m - 1, d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+      })(),
+      dueDate: newAssignmentDueDate,
+      description: 'Saved from the teacher dashboard.',
+      smsStatus: 'Never'
     }
-    setAssignments(prev => [item, ...prev])
+    const next = [item, ...existing]
+    setAssignments(next)
+    try {
+      localStorage.setItem('teacher_portal_assignments', JSON.stringify(next))
+    } catch {}
     setNewAssignmentTitle('')
     setNewAssignmentDueDate('')
     setActiveModal(null)
-    showToast('New assignment posted successfully!')
+    showToast('Assignment saved locally and added to your list.')
   }
 
   // Mock scheduled periods (defaults to 0 as instructed)
   const scheduledPeriodsCount = 0
+  const sidebarExpanded = !isSidebarCollapsed || isMobileMenuOpen
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-[#f8fafc] dark:bg-[#0B1020] text-slate-800 dark:text-slate-100 font-sans">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white text-xs sm:text-sm px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-slate-700 animate-slide-up">
+        <div className="fixed bottom-4 inset-x-4 sm:inset-x-auto sm:right-6 sm:bottom-6 sm:max-w-sm z-50 bg-slate-900 text-white text-xs sm:text-sm px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-slate-700 animate-slide-up">
           <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
           <span>{toastMessage}</span>
         </div>
@@ -302,6 +334,7 @@ export default function TeacherPortalView() {
         <div
           onClick={() => setIsMobileMenuOpen(false)}
           className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs z-40 lg:hidden"
+          aria-hidden="true"
         />
       )}
 
@@ -312,9 +345,9 @@ export default function TeacherPortalView() {
         className={`
           fixed lg:static top-0 bottom-0 left-0 z-50
           ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-          ${isSidebarCollapsed ? 'w-20' : 'w-64 sm:w-72'} 
+          ${isSidebarCollapsed ? 'w-72 max-w-[85vw] lg:max-w-none lg:w-20' : 'w-72 max-w-[85vw] lg:max-w-none'}
           h-full max-h-screen sidebar-navy bg-[#0B1120] text-slate-300 border-r border-slate-800/80 flex flex-col
-          transition-all duration-300 shrink-0 select-none shadow-xl
+          transition-all duration-300 shrink-0 select-none overflow-x-hidden shadow-2xl lg:shadow-none
         `}
       >
         {/* Brand Header */}
@@ -323,7 +356,7 @@ export default function TeacherPortalView() {
             <div className="w-9 h-9 rounded-xl bg-purple-500/15 text-purple-400 border border-purple-500/30 flex items-center justify-center shrink-0 font-bold text-xs shadow-2xs">
               <BookOpen className="w-5 h-5 text-purple-400" />
             </div>
-            {!isSidebarCollapsed && (
+            {sidebarExpanded && (
               <div className="flex flex-col truncate min-w-0">
                 <span className="text-sm font-extrabold text-white tracking-tight font-heading leading-tight truncate">
                   Teacher Portal
@@ -336,8 +369,10 @@ export default function TeacherPortalView() {
           </div>
           
           <button
+            type="button"
             onClick={() => setIsMobileMenuOpen(false)}
-            className="lg:hidden text-slate-400 hover:text-white p-1 rounded-lg"
+            className="lg:hidden shrink-0 text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800/60"
+            aria-label="Close menu"
           >
             <X className="w-5 h-5" />
           </button>
@@ -364,7 +399,7 @@ export default function TeacherPortalView() {
               <Home className={`w-4 h-4 shrink-0 transition-colors ${
                 activeRoute === 'dashboard' ? 'text-white' : 'text-slate-400 group-hover:text-purple-400'
               }`} />
-              {!isSidebarCollapsed && <span className="truncate">Dashboard</span>}
+              {sidebarExpanded && <span className="truncate">Dashboard</span>}
             </button>
           </div>
 
@@ -384,13 +419,13 @@ export default function TeacherPortalView() {
                 <Users className={`w-4 h-4 shrink-0 transition-colors ${
                   activeRoute === 'students' ? 'text-purple-400' : 'text-slate-400 group-hover:text-purple-400'
                 }`} />
-                {!isSidebarCollapsed && <span className="truncate">Students</span>}
+                {sidebarExpanded && <span className="truncate">Students</span>}
               </div>
-              {!isSidebarCollapsed && (
+              {sidebarExpanded && (
                 openSidebarGroups.students ? <ChevronDown className="w-3.5 h-3.5 text-slate-400" /> : <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
               )}
             </button>
-            {openSidebarGroups.students && !isSidebarCollapsed && (
+            {openSidebarGroups.students && sidebarExpanded && (
               <div className="mt-1 pl-3 space-y-1 border-l border-slate-800 ml-5 text-xs">
                 <button
                   onClick={() => {
@@ -435,13 +470,13 @@ export default function TeacherPortalView() {
                     ? 'text-sky-400'
                     : 'text-slate-400 group-hover:text-sky-400'
                 }`} />
-                {!isSidebarCollapsed && <span className="truncate">Attendance</span>}
+                {sidebarExpanded && <span className="truncate">Attendance</span>}
               </div>
-              {!isSidebarCollapsed && (
+              {sidebarExpanded && (
                 openSidebarGroups.attendance ? <ChevronDown className="w-3.5 h-3.5 text-slate-400" /> : <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
               )}
             </button>
-            {openSidebarGroups.attendance && !isSidebarCollapsed && (
+            {openSidebarGroups.attendance && sidebarExpanded && (
               <div className="mt-1 pl-3 space-y-1 border-l border-slate-800 ml-5 text-xs">
                 {/* 3.1 My Attendance */}
                 <button
@@ -564,13 +599,13 @@ export default function TeacherPortalView() {
                     ? 'text-sky-400'
                     : 'text-slate-400 group-hover:text-purple-400'
                 }`} />
-                {!isSidebarCollapsed && <span className="truncate">Exams & Results</span>}
+                {sidebarExpanded && <span className="truncate">Exams & Results</span>}
               </div>
-              {!isSidebarCollapsed && (
+              {sidebarExpanded && (
                 openSidebarGroups.exams ? <ChevronDown className="w-3.5 h-3.5 text-slate-400" /> : <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
               )}
             </button>
-            {openSidebarGroups.exams && !isSidebarCollapsed && (
+            {openSidebarGroups.exams && sidebarExpanded && (
               <div className="mt-1 pl-3 space-y-1 border-l border-slate-800 ml-5 text-xs">
                 {/* 4.1 Marks Entry */}
                 <button
@@ -647,7 +682,7 @@ export default function TeacherPortalView() {
             <Clock className={`w-4 h-4 shrink-0 ${
               activeRoute === 'timetable' ? 'text-sky-400' : 'text-slate-400 group-hover:text-purple-400'
             }`} />
-            {!isSidebarCollapsed && <span className="truncate">My Timetable</span>}
+            {sidebarExpanded && <span className="truncate">My Timetable</span>}
           </button>
 
           {/* 6. Make-up Sessions */}
@@ -665,7 +700,7 @@ export default function TeacherPortalView() {
             <CalendarDays className={`w-4 h-4 shrink-0 ${
               activeRoute === 'make-up-sessions' ? 'text-sky-400' : 'text-slate-400 group-hover:text-purple-400'
             }`} />
-            {!isSidebarCollapsed && <span className="truncate">Make-up Sessions</span>}
+            {sidebarExpanded && <span className="truncate">Make-up Sessions</span>}
           </button>
 
           {/* 7. Assignments */}
@@ -683,7 +718,7 @@ export default function TeacherPortalView() {
             <BookMarked className={`w-4 h-4 shrink-0 ${
               activeRoute === 'assignments' ? 'text-sky-400' : 'text-slate-400 group-hover:text-purple-400'
             }`} />
-            {!isSidebarCollapsed && <span className="truncate">Assignments</span>}
+            {sidebarExpanded && <span className="truncate">Assignments</span>}
           </button>
 
           {/* 8. Class Resources */}
@@ -702,13 +737,13 @@ export default function TeacherPortalView() {
                     ? 'text-sky-400'
                     : 'text-slate-400 group-hover:text-purple-400'
                 }`} />
-                {!isSidebarCollapsed && <span className="truncate">Class Resources</span>}
+                {sidebarExpanded && <span className="truncate">Class Resources</span>}
               </div>
-              {!isSidebarCollapsed && (
+              {sidebarExpanded && (
                 openSidebarGroups.resources ? <ChevronDown className="w-3.5 h-3.5 text-slate-400" /> : <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
               )}
             </button>
-            {openSidebarGroups.resources && !isSidebarCollapsed && (
+            {openSidebarGroups.resources && sidebarExpanded && (
               <div className="mt-1 pl-3 space-y-1 border-l border-slate-800 ml-5 text-xs">
                 {/* 8.1 Handouts */}
                 <button
@@ -760,7 +795,7 @@ export default function TeacherPortalView() {
             <Megaphone className={`w-4 h-4 shrink-0 ${
               activeRoute === 'announcements' ? 'text-sky-400' : 'text-slate-400 group-hover:text-purple-400'
             }`} />
-            {!isSidebarCollapsed && <span className="truncate">Announcements</span>}
+            {sidebarExpanded && <span className="truncate">Announcements</span>}
           </button>
 
           {/* 10. Communication */}
@@ -779,13 +814,13 @@ export default function TeacherPortalView() {
                     ? 'text-sky-400'
                     : 'text-slate-400 group-hover:text-purple-400'
                 }`} />
-                {!isSidebarCollapsed && <span className="truncate">Communication</span>}
+                {sidebarExpanded && <span className="truncate">Communication</span>}
               </div>
-              {!isSidebarCollapsed && (
+              {sidebarExpanded && (
                 openSidebarGroups.communication ? <ChevronDown className="w-3.5 h-3.5 text-slate-400" /> : <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
               )}
             </button>
-            {openSidebarGroups.communication && !isSidebarCollapsed && (
+            {openSidebarGroups.communication && sidebarExpanded && (
               <div className="mt-1 pl-3 space-y-1 border-l border-slate-800 ml-5 text-xs">
                 {/* 10.1 Notifications */}
                 <button
@@ -837,7 +872,7 @@ export default function TeacherPortalView() {
             <Receipt className={`w-4 h-4 shrink-0 ${
               activeRoute === 'my-transactions' ? 'text-sky-400' : 'text-slate-400 group-hover:text-purple-400'
             }`} />
-            {!isSidebarCollapsed && <span className="truncate">My Transactions</span>}
+            {sidebarExpanded && <span className="truncate">My Transactions</span>}
           </button>
 
           {/* 12. My Account */}
@@ -849,7 +884,7 @@ export default function TeacherPortalView() {
             className="w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer group"
           >
             <UserCheck className="w-4 h-4 text-slate-400 group-hover:text-purple-400 shrink-0" />
-            {!isSidebarCollapsed && <span className="truncate">My Account</span>}
+            {sidebarExpanded && <span className="truncate">My Account</span>}
           </button>
         </div>
 
@@ -860,7 +895,7 @@ export default function TeacherPortalView() {
             className="w-full flex items-center gap-2.5 px-3.5 py-2 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 transition-all text-xs font-semibold cursor-pointer group"
           >
             <LogOut className="w-4 h-4 shrink-0 text-slate-400 group-hover:text-rose-400 transition-colors" />
-            {!isSidebarCollapsed && <span>Sign Out</span>}
+            {sidebarExpanded && <span>Sign Out</span>}
           </button>
         </div>
       </aside>
@@ -873,30 +908,32 @@ export default function TeacherPortalView() {
         <div className="h-0.5 w-full bg-gradient-to-r from-orange-500 via-rose-500 to-purple-600 shrink-0"></div>
 
         {/* Top Navbar */}
-        <header className="h-14 sm:h-16 min-h-[56px] sm:min-h-[64px] bg-white dark:bg-slate-900 border-b border-slate-200/90 dark:border-slate-800 px-4 sm:px-6 flex items-center justify-between shrink-0 shadow-2xs z-30">
-          <div className="flex items-center gap-3 flex-1 max-w-lg">
+        <header className="h-14 sm:h-16 min-h-[56px] sm:min-h-[64px] bg-white dark:bg-slate-900 border-b border-slate-200/90 dark:border-slate-800 px-3 sm:px-6 flex items-center justify-between gap-2 shrink-0 shadow-2xs z-30 min-w-0">
+          <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0 max-w-lg">
             <button
+              type="button"
               onClick={() => setIsMobileMenuOpen(true)}
-              className="lg:hidden p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+              className="lg:hidden shrink-0 p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+              aria-label="Open menu"
             >
               <Menu className="w-5 h-5" />
             </button>
 
             {/* Global Search Bar from reference */}
-            <div className="relative w-full max-w-sm sm:max-w-md">
+            <div className="relative w-full min-w-0 max-w-sm sm:max-w-md">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search name, roll, admission, registration no..."
-                className="w-full pl-9 pr-4 py-1.5 text-xs sm:text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 text-slate-800 dark:text-slate-100 placeholder-slate-400"
+                className="w-full min-w-0 pl-9 pr-4 py-1.5 text-xs sm:text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 text-slate-800 dark:text-slate-100 placeholder-slate-400"
               />
             </div>
           </div>
 
           {/* Right Action Icons & User Badge */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1 sm:gap-3 shrink-0">
             {/* Bell Notifications */}
             <button
               onClick={() => {
@@ -1280,7 +1317,7 @@ export default function TeacherPortalView() {
                   {assignments.length}
                 </span>
                 <span className="text-[11px] text-slate-400 dark:text-slate-500">
-                  Posted
+                  Saved locally
                 </span>
               </div>
             </div>
@@ -1526,7 +1563,7 @@ export default function TeacherPortalView() {
       {/* MODAL 1: MY ATTENDANCE HISTORY */}
       {activeModal === 'attendance' && (
         <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-4 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="flex items-center gap-2">
                 <Clock className="w-5 h-5 text-purple-600" />
@@ -1598,12 +1635,12 @@ export default function TeacherPortalView() {
       {/* MODAL 2: ASSIGNMENTS (POST / VIEW) */}
       {activeModal === 'assignments' && (
         <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-4 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="flex items-center gap-2">
                 <BookMarked className="w-5 h-5 text-purple-600" />
                 <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                  Post New Assignment
+                  Save assignment locally
                 </h3>
               </div>
               <button
@@ -1639,9 +1676,10 @@ export default function TeacherPortalView() {
                     onChange={(e) => setNewAssignmentClass(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none"
                   >
-                    <option value="Grade 10 - Section A">Grade 10 - Section A</option>
-                    <option value="Grade 9 - Section B">Grade 9 - Section B</option>
-                    <option value="Grade 8 - Section A">Grade 8 - Section A</option>
+                    <option value="Nursery">Nursery</option>
+                    <option value="Prep">Prep</option>
+                    <option value="Class 1">Class 1</option>
+                    <option value="Class 2">Class 2</option>
                   </select>
                 </div>
 
@@ -1685,7 +1723,7 @@ export default function TeacherPortalView() {
                   type="submit"
                   className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-xs cursor-pointer"
                 >
-                  Post Assignment
+                  Save locally
                 </button>
               </div>
             </form>
@@ -1696,7 +1734,7 @@ export default function TeacherPortalView() {
       {/* MODAL 3: MARK ATTENDANCE */}
       {activeModal === 'mark-attendance' && (
         <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-4 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="flex items-center gap-2">
                 <CheckSquare className="w-5 h-5 text-purple-600" />
@@ -1715,17 +1753,21 @@ export default function TeacherPortalView() {
             <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-center space-y-2">
               <Users className="w-8 h-8 text-slate-400 mx-auto" />
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                0 students assigned to your current active roster. Student enrollments will appear here for one-click Present / Absent roll call.
+                Open the attendance register to mark students. Marks are saved on this device for the selected class and date.
               </p>
             </div>
 
             <div className="pt-2 flex justify-end">
               <button
                 type="button"
-                onClick={() => setActiveModal(null)}
+                onClick={() => {
+                  setActiveModal(null)
+                  setOpenSidebarGroups((prev) => ({ ...prev, attendance: true }))
+                  setActiveRoute('mark-attendance')
+                }}
                 className="px-4 py-2 rounded-xl bg-purple-600 text-white text-xs font-semibold hover:bg-purple-700 cursor-pointer"
               >
-                Done
+                Open mark attendance
               </button>
             </div>
           </div>
@@ -1735,7 +1777,7 @@ export default function TeacherPortalView() {
       {/* MODAL 4: MARKS ENTRY */}
       {activeModal === 'marks-entry' && (
         <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-4 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="flex items-center gap-2">
                 <FileEdit className="w-5 h-5 text-purple-600" />
@@ -1754,17 +1796,21 @@ export default function TeacherPortalView() {
             <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-center space-y-2">
               <FileSpreadsheet className="w-8 h-8 text-slate-400 mx-auto" />
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                0 active examination sheets found for this academic session. Exam schedules created by administration will be editable here.
+                Open marks entry to record scores. They are saved on this device for the exam, class, and subject you choose.
               </p>
             </div>
 
             <div className="pt-2 flex justify-end">
               <button
                 type="button"
-                onClick={() => setActiveModal(null)}
+                onClick={() => {
+                  setActiveModal(null)
+                  setOpenSidebarGroups((prev) => ({ ...prev, exams: true }))
+                  setActiveRoute('marks-entry')
+                }}
                 className="px-4 py-2 rounded-xl bg-purple-600 text-white text-xs font-semibold hover:bg-purple-700 cursor-pointer"
               >
-                Done
+                Open marks entry
               </button>
             </div>
           </div>
@@ -1774,7 +1820,7 @@ export default function TeacherPortalView() {
       {/* MODAL 5: TIMETABLE */}
       {activeModal === 'timetable' && (
         <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-4 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-purple-600" />
@@ -1793,17 +1839,20 @@ export default function TeacherPortalView() {
             <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-center space-y-2">
               <Clock className="w-8 h-8 text-slate-400 mx-auto" />
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                0 period routines currently assigned. Weekly class timetable will synchronize directly from the administration schedule.
+                Open the timetable page to view and print the schedule stored for this portal.
               </p>
             </div>
 
             <div className="pt-2 flex justify-end">
               <button
                 type="button"
-                onClick={() => setActiveModal(null)}
+                onClick={() => {
+                  setActiveModal(null)
+                  setActiveRoute('timetable')
+                }}
                 className="px-4 py-2 rounded-xl bg-purple-600 text-white text-xs font-semibold hover:bg-purple-700 cursor-pointer"
               >
-                Done
+                Open timetable
               </button>
             </div>
           </div>
@@ -1813,7 +1862,7 @@ export default function TeacherPortalView() {
       {/* MODAL 6: MY SALARY */}
       {activeModal === 'salary' && (
         <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-4 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="flex items-center gap-2">
                 <Wallet className="w-5 h-5 text-purple-600" />
@@ -1832,17 +1881,20 @@ export default function TeacherPortalView() {
             <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-center space-y-2">
               <Receipt className="w-8 h-8 text-slate-400 mx-auto" />
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Monthly electronic payslips generated by the campus bursar will appear here for direct review and printing.
+                Open My Transactions to review payslips saved for this portal and print them.
               </p>
             </div>
 
             <div className="pt-2 flex justify-end">
               <button
                 type="button"
-                onClick={() => setActiveModal(null)}
+                onClick={() => {
+                  setActiveModal(null)
+                  setActiveRoute('my-transactions')
+                }}
                 className="px-4 py-2 rounded-xl bg-purple-600 text-white text-xs font-semibold hover:bg-purple-700 cursor-pointer"
               >
-                Done
+                Open transactions
               </button>
             </div>
           </div>
@@ -1852,7 +1904,7 @@ export default function TeacherPortalView() {
       {/* MODAL 7: ANNOUNCEMENTS */}
       {activeModal === 'announcements' && (
         <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-4 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="flex items-center gap-2">
                 <Megaphone className="w-5 h-5 text-purple-600" />
@@ -1884,10 +1936,14 @@ export default function TeacherPortalView() {
             <div className="pt-2 flex justify-end">
               <button
                 type="button"
-                onClick={() => setActiveModal(null)}
+                onClick={() => {
+                  setActiveModal(null)
+                  setOpenSidebarGroups((prev) => ({ ...prev, communication: true }))
+                  setActiveRoute('announcements')
+                }}
                 className="px-4 py-2 rounded-xl bg-purple-600 text-white text-xs font-semibold hover:bg-purple-700 cursor-pointer"
               >
-                Close
+                Open announcements
               </button>
             </div>
           </div>

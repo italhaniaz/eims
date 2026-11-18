@@ -13,11 +13,13 @@ import {
   Search,
   Printer,
   Eye,
-  Settings
+  Settings,
+  Download
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
 import { isClassAllowedForTier } from '../../../utils/tierGating'
+import { downloadSimplePdf } from '../../../utils/pdfExport'
 import Modal from '../../../components/common/Modal'
 
 const normalizeParentKey = (name, phone) => {
@@ -160,11 +162,37 @@ export const FamilyInvoicesView = ({
     displayedFamilies.length > 0 &&
     displayedFamilies.every((f) => selectedFamilyIds.includes(f.id))
 
+  const downloadFamilyInvoicePdf = (targetFamilies) => {
+    if (!targetFamilies || targetFamilies.length === 0) {
+      toast.warning('No family invoices to download.')
+      return
+    }
+    const instName = currentInstitute?.name || 'Institute'
+    const lines = [
+      { text: instName, bold: true },
+      { text: 'CONSOLIDATED FAMILY FEE INVOICES', bold: true },
+      { text: `Families: ${targetFamilies.length}` },
+      { text: ' ' }
+    ]
+    targetFamilies.forEach((fam, idx) => {
+      lines.push({ text: `${idx + 1}. ${fam.parentName}  Phone: ${fam.phone || '—'}  Due PKR ${fmtAmount(fam.totalDue)}`, bold: true })
+      ;(fam.children || []).forEach((c) => {
+        lines.push({
+          text: `   ${c.name} | ${c.className || '—'} | Roll ${c.rollNumber || '—'} | ${c.due > 0 ? `PKR ${fmtAmount(c.due)}` : 'Paid up'}`
+        })
+      })
+    })
+    lines.push({ text: ' ' })
+    lines.push({ text: 'Generated in this browser. Not a bank-cleared instrument.' })
+    downloadSimplePdf(`family-invoices-${new Date().toISOString().slice(0, 10)}.pdf`, lines)
+  }
+
   const handlePrintInvoices = (targetFamilies) => {
     if (!targetFamilies || targetFamilies.length === 0) return
     const win = window.open('', '_blank', 'width=900,height=750')
     if (!win) {
-      toast.warning('Please allow pop-ups to print family invoices')
+      downloadFamilyInvoicePdf(targetFamilies)
+      toast.info('Pop-up blocked. A PDF of these family invoices was downloaded instead.')
       return
     }
     const instName = currentInstitute?.name || 'Institute Management System'
@@ -437,6 +465,15 @@ export const FamilyInvoicesView = ({
               )}
             </div>
 
+            <button
+              type="button"
+              onClick={() => downloadFamilyInvoicePdf(displayedFamilies)}
+              disabled={displayedFamilies.length === 0}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 text-slate-700 text-xs font-semibold transition-colors"
+            >
+              <Download className="w-3.5 h-3.5" />
+              PDF ({displayedFamilies.length})
+            </button>
             <button
               type="button"
               onClick={() => handlePrintInvoices(displayedFamilies)}
@@ -718,6 +755,14 @@ export const FamilyInvoicesView = ({
                 className="px-3.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50"
               >
                 Close
+              </button>
+              <button
+                type="button"
+                onClick={() => downloadFamilyInvoicePdf(previewFamilies)}
+                className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg border border-slate-200 text-slate-700 font-semibold hover:bg-slate-50"
+              >
+                <Download className="w-3.5 h-3.5" />
+                Download PDF
               </button>
               <button
                 type="button"

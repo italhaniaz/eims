@@ -28,6 +28,7 @@ import {
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
 import { getInstituteTierConfig } from '../../../utils/tierGating'
+import { downloadSimplePdf } from '../../../utils/pdfExport'
 
 export const CertificatesView = ({ currentInstitute }) => {
   const tierConfig = getInstituteTierConfig(currentInstitute)
@@ -225,7 +226,7 @@ export const CertificatesView = ({ currentInstitute }) => {
     }
 
     setCertificates(prev => [newCert, ...prev])
-    toast?.success?.(`Certificate ${serial} generated and issued successfully!`)
+    toast?.success?.(`Certificate ${serial} saved in this browser. Download or print it from the preview.`)
     setIsIssueModalOpen(false)
     setFormData({
       studentId: '',
@@ -238,6 +239,33 @@ export const CertificatesView = ({ currentInstitute }) => {
       remarks: ''
     })
     setSelectedCertForPreview(newCert)
+  }
+
+  const buildCertificateLines = (cert) => {
+    const address = currentInstitute?.address || currentInstitute?.city || 'Campus Office'
+    const phone = currentInstitute?.phone ? ` | Phone: ${currentInstitute.phone}` : ''
+    return [
+      { text: campusName, bold: true },
+      { text: String(cert.certType || 'Certificate').toUpperCase(), bold: true },
+      { text: `Campus code: ${campusCode}${phone}` },
+      { text: address },
+      { text: `Serial: ${cert.serialNumber}    Issue date: ${cert.issueDate}` },
+      { text: ' ' },
+      { text: `This is to certify that ${cert.studentName}, child/ward of ${cert.fatherName},` },
+      { text: `roll ${cert.rollNumber}, class ${cert.className}, is on the register of this institute.` },
+      { text: `Conduct: ${cert.conduct}. Purpose: ${cert.purpose || 'Official campus clearance'}.` },
+      { text: `Clearance — dues ${cert.duesCleared ? 'cleared' : 'pending'}, library ${cert.libraryCleared ? 'cleared' : 'pending'}, lab ${cert.labCleared ? 'cleared' : 'pending'}.` },
+      { text: `Verification code: ${cert.qrHash || '—'}` },
+      { text: ' ' },
+      { text: 'Copy stored in this browser. Principal signature and stamp are required on the printed original.' }
+    ]
+  }
+
+  const handleDownloadCertificate = (cert) => {
+    if (!cert) return
+    const safe = String(cert.serialNumber || 'certificate').replace(/[^\w.-]+/g, '_')
+    downloadSimplePdf(`${safe}.pdf`, buildCertificateLines(cert))
+    toast?.info?.(`PDF downloaded for ${cert.serialNumber}. The register entry stays in this browser.`)
   }
 
   const handleDeleteCertificate = (id, serial) => {
@@ -439,6 +467,13 @@ export const CertificatesView = ({ currentInstitute }) => {
                             className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-700 hover:bg-indigo-50 transition-colors cursor-pointer"
                           >
                             <Printer className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDownloadCertificate(cert)}
+                            title="Download PDF"
+                            className="p-1.5 rounded-lg text-slate-500 hover:text-sky-700 hover:bg-sky-50 transition-colors cursor-pointer"
+                          >
+                            <Download className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDeleteCertificate(cert.id, cert.serialNumber)}
@@ -681,6 +716,13 @@ export const CertificatesView = ({ currentInstitute }) => {
                 <span>Certificate Document Preview ({selectedCertForPreview.serialNumber})</span>
               </div>
               <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleDownloadCertificate(selectedCertForPreview)}
+                  className="px-3 py-1 bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold rounded-lg flex items-center gap-1 cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download PDF</span>
+                </button>
                 <button
                   onClick={() => window.print()}
                   className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg flex items-center gap-1 cursor-pointer"

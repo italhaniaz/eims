@@ -85,6 +85,7 @@ export default function TeacherStudentsView({
   const [viewStudentModal, setViewStudentModal] = useState(null)
   const [idCardModalStudent, setIdCardModalStudent] = useState(null)
   const [messageModalStudent, setMessageModalStudent] = useState(null)
+  const [parentNoteDraft, setParentNoteDraft] = useState('')
   const [activeDropdownId, setActiveDropdownId] = useState(null)
 
   // Add Student Form State
@@ -935,6 +936,7 @@ export default function TeacherStudentsView({
                                 <button
                                   onClick={() => {
                                     setMessageModalStudent(student)
+                                    setParentNoteDraft(`Dear Parent, this is an update regarding ${student.name}'s academic progress at Apex International School.`)
                                     setActiveDropdownId(null)
                                   }}
                                   className="w-full text-left px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2"
@@ -1298,7 +1300,7 @@ export default function TeacherStudentsView({
               <div className="flex items-center gap-2">
                 <Send className="w-4 h-4 text-emerald-600" />
                 <h3 className="font-extrabold text-slate-900 dark:text-white text-sm">
-                  Send Parent Notification
+                  Save parent note locally
                 </h3>
               </div>
               <button
@@ -1322,9 +1324,10 @@ export default function TeacherStudentsView({
                 </label>
                 <textarea
                   rows="4"
+                  value={parentNoteDraft}
+                  onChange={(e) => setParentNoteDraft(e.target.value)}
                   placeholder="Enter message for parent (e.g. attendance notice, homework alert, fee reminder)..."
                   className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
-                  defaultValue={`Dear Parent, this is an update regarding ${messageModalStudent.name}'s academic progress at Smart Management System.`}
                 />
               </div>
             </div>
@@ -1338,13 +1341,33 @@ export default function TeacherStudentsView({
               </button>
               <button
                 onClick={() => {
-                  toast?.success?.(`Notification sent to parent of ${messageModalStudent.name}!`)
+                  const text = parentNoteDraft.trim()
+                  if (!text) {
+                    toast?.error?.('Enter a message to save.')
+                    return
+                  }
+                  try {
+                    const prev = JSON.parse(localStorage.getItem('sms_teacher_messages') || '[]')
+                    const record = {
+                      id: `stu-sms-${Date.now()}`,
+                      kind: 'student-note',
+                      studentId: messageModalStudent.id,
+                      studentName: messageModalStudent.name,
+                      phone: messageModalStudent.parentPhone || '',
+                      text,
+                      at: new Date().toISOString(),
+                      delivered: false
+                    }
+                    const next = Array.isArray(prev) ? [record, ...prev].slice(0, 200) : [record]
+                    localStorage.setItem('sms_teacher_messages', JSON.stringify(next))
+                  } catch {}
+                  toast?.info?.('Message saved locally. School delivery requires future messaging integration.')
                   setMessageModalStudent(null)
                 }}
                 className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm cursor-pointer"
               >
                 <Send className="w-3.5 h-3.5" />
-                <span>Send SMS Alert</span>
+                <span>Save alert locally</span>
               </button>
             </div>
           </div>

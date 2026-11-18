@@ -53,6 +53,8 @@ import { useAppData } from '../../context/AppDataContext'
 import { AnalyticsService } from '../../services/analyticsService'
 import { BillingService, FALLBACK_PLANS } from '../../services/billingService'
 import { hashPassword } from '../../context/AuthContext'
+import { API_BASE_URL } from '../../services/apiConfig'
+import AnnouncementService from '../../services/announcementService'
 
 export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
   const { 
@@ -64,7 +66,6 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
     teachers = [],
     fees = [],
     users = [],
-    sendCommunicationBlast,
     activeWing,
     setActiveWing
   } = useAppData()
@@ -498,6 +499,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
         studentsCount: 0,
         teachersCount: 0,
         status: 'Active',
+        lifecycleStatus: 'Active',
         planTier: newInstituteData.planTier || 'School Plan',
         planType: newInstituteData.planType || 'SCHOOL',
         enabledTiers: ['school'],
@@ -519,6 +521,8 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
         status: 'Active',
         lastLogin: 'Never'
       })
+
+      try { window.dispatchEvent(new Event('sms_institutes_updated')) } catch {}
 
       setIsInstituteModalOpen(false)
       setInstituteFormError('')
@@ -554,15 +558,28 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
 
   const handleSendBroadcast = (e) => {
     e.preventDefault()
-    if (!broadcastData.message) return
+    if (!broadcastData.message?.trim()) return
 
-    if (sendCommunicationBlast) {
-      sendCommunicationBlast(broadcastData)
-    } else {
+    const title = broadcastData.title?.trim() || 'Platform announcement'
+    try {
+      AnnouncementService.addAnnouncement({
+        title,
+        message: broadcastData.message.trim(),
+        target: 'institute_admin',
+        targetCampus: broadcastData.recipientGroup || 'All Registered Campuses',
+        category: broadcastData.channel || 'General',
+        priority: 'Normal',
+        isActive: true,
+        showInLandingBanner: false
+      })
       addItem('recentActivity', {
-        text: `Sent ${broadcastData.channel} broadcast to ${broadcastData.recipientGroup}`,
+        text: `Saved announcement "${title}" for ${broadcastData.recipientGroup}`,
         time: 'Just now'
       })
+    } catch (err) {
+      console.error(err)
+      triggerToast('Could not save the announcement on this device.')
+      return
     }
 
     setIsBroadcastModalOpen(false)
@@ -572,7 +589,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
       recipientGroup: 'All Active Users',
       message: ''
     })
-    triggerToast('Broadcast announcement sent to active platform sessions!')
+    triggerToast('Announcement saved on this device. SMS or push delivery is not connected.')
   }
 
   const handleGenerateReport = () => {
@@ -581,12 +598,24 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
     setTimeout(() => setReportSuccess(false), 3500)
   }
 
-  const handleSimulateConnectionTest = () => {
+  const handleSimulateConnectionTest = async () => {
     setIsTestingConnection(true)
-    setTimeout(() => {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 2500)
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/health`, { signal: controller.signal })
+      if (!res.ok) {
+        triggerToast('Simulated connection check (local UI only). API health did not respond OK.')
+        return
+      }
+      const body = await res.json().catch(() => ({}))
+      triggerToast(`API health responded: ${body.status || 'ONLINE'} (${body.database || 'local persistence'}).`)
+    } catch {
+      triggerToast('Simulated connection check (local UI only). No live API at the configured address.')
+    } finally {
+      clearTimeout(timer)
       setIsTestingConnection(false)
-      triggerToast('Service ping successful: 100% Operational (Latency: 28ms)')
-    }, 1200)
+    }
   }
 
   const handleOpenConfigModal = (tab = 'subdomain') => {
@@ -1614,10 +1643,10 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               <div className="space-y-4">
                 <div className="p-3.5 rounded-2xl bg-purple-50/70 dark:bg-purple-950/40 border border-purple-200/80 dark:border-purple-800/60 text-xs">
                   <span className="font-bold text-purple-900 dark:text-purple-200 block mb-1">
-                    Wildcard Subdomain Architecture Active
+                    Subdomain routing is not connected
                   </span>
                   <p className="text-purple-700 dark:text-purple-300/90 leading-relaxed">
-                    Smart Management System automatically routes multi-tenant traffic based on incoming host header (<code className="font-mono bg-purple-200/60 dark:bg-purple-900/60 px-1 py-0.5 rounded">*.smartms.pk</code>) to the respective institute database schema.
+                    Host-based campus routing is a preview in this local app. Campuses are stored in the browser directory, not separate database schemas.
                   </p>
                 </div>
 
@@ -1646,10 +1675,10 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               <div className="space-y-4 text-xs">
                 <div className="p-3.5 rounded-2xl bg-purple-50/70 dark:bg-purple-950/40 border border-purple-200/80 dark:border-purple-800/60">
                   <span className="font-bold text-purple-900 dark:text-purple-200 block mb-1">
-                    Firebase Cloud Messaging Status: Operational
+                    Push notifications are not connected
                   </span>
                   <p className="text-purple-700 dark:text-purple-300/90 leading-relaxed">
-                    Automated push notifications for student roll call alerts, exam admit card publishing, and digital fee vouchers are running through project <code className="font-mono font-bold">smartms-cloud-sms</code>.
+                    No Firebase project is linked. Announcements save on this device. They are not delivered as mobile push.
                   </p>
                 </div>
 
@@ -1666,10 +1695,10 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               <div className="space-y-4 text-xs">
                 <div className="p-3.5 rounded-2xl bg-purple-50/70 dark:bg-purple-950/40 border border-purple-200/80 dark:border-purple-800/60">
                   <span className="font-bold text-purple-900 dark:text-purple-200 block mb-1">
-                    1Link 1Bill Real-time Settlement: Live
+                    1Bill settlement is not connected
                   </span>
                   <p className="text-purple-700 dark:text-purple-300/90 leading-relaxed">
-                    Computerized fee challans print official 1Bill consumer codes. Fees paid via any bank ATM or JazzCash clear into school ledgers within 50 milliseconds.
+                    Bank and wallet settlement is not wired in this local app. Fee records stay in browser storage until a payment gateway is configured.
                   </p>
                 </div>
 
@@ -1690,16 +1719,26 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               <div className="space-y-4 text-xs">
                 <div className="p-3.5 rounded-2xl bg-purple-50/70 dark:bg-purple-950/40 border border-purple-200/80 dark:border-purple-800/60">
                   <span className="font-bold text-purple-900 dark:text-purple-200 block mb-1">
-                    Daily Backup Schedule: Active (02:00 AM PKT)
+                    Cloud backup schedule is not connected
                   </span>
                   <p className="text-purple-700 dark:text-purple-300/90 leading-relaxed">
-                    Automated full PostgreSQL database dumps are encrypted with AES-256 and replicated to dual cloud storage buckets.
+                    There is no remote database dump. Use Backups & Recovery to download a JSON snapshot or restore it into this browser.
                   </p>
                 </div>
 
                 <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
-                  <span className="text-slate-600 dark:text-slate-300">Last Successful Snapshot:</span>
-                  <span className="font-bold text-emerald-600 dark:text-emerald-400">Today, 02:00:14 AM</span>
+                  <span className="text-slate-600 dark:text-slate-300">Last local snapshot:</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-100 text-right">
+                    {(() => {
+                      try {
+                        const list = JSON.parse(localStorage.getItem('sms_system_backups') || '[]')
+                        const real = (Array.isArray(list) ? list : []).find(b => b && !['bkp-001', 'bkp-002', 'bkp-003'].includes(b.id))
+                        return real?.createdAt ? new Date(real.createdAt).toLocaleString() : 'None downloaded yet'
+                      } catch {
+                        return 'None downloaded yet'
+                      }
+                    })()}
+                  </span>
                 </div>
               </div>
             )}

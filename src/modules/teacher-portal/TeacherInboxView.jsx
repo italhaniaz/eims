@@ -108,7 +108,7 @@ export default function TeacherInboxView({
       subject: '',
       message: ''
     })
-    toast?.success?.(`Message sent to ${newChat.contactName}!`)
+    toast?.info?.('Message saved locally. School delivery requires future messaging integration.')
   }
 
   // Send Reply
@@ -141,6 +141,7 @@ export default function TeacherInboxView({
       localStorage.setItem('teacher_portal_inbox', JSON.stringify(updated))
     } catch {}
     setReplyText('')
+    toast?.info?.('Message saved locally. School delivery requires future messaging integration.')
   }
 
   return (

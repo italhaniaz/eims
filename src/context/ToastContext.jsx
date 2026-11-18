@@ -21,13 +21,18 @@ export const ToastProvider = ({ children }) => {
     }
   }, [removeToast])
 
-  const toast = (arg, duration) => {
+  const toast = (arg, durationOrType) => {
     if (typeof arg === 'string') {
-      addToast({ message: arg, type: 'info', duration });
+      const namedTypes = ['success', 'error', 'info', 'warning']
+      if (typeof durationOrType === 'string' && namedTypes.includes(durationOrType)) {
+        addToast({ message: arg, type: durationOrType })
+      } else {
+        addToast({ message: arg, type: 'info', duration: durationOrType })
+      }
     } else if (arg && typeof arg === 'object') {
       const msg = arg.message || arg.title || '';
       const text = arg.title && arg.message ? `${arg.title}: ${arg.message}` : (msg || 'Notification');
-      addToast({ message: text, type: arg.type || 'info', duration: arg.duration || duration });
+      addToast({ message: text, type: arg.type || 'info', duration: arg.duration || durationOrType });
     }
   };
   toast.success = (message, duration) => addToast({ message, type: 'success', duration });

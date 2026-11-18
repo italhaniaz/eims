@@ -456,7 +456,8 @@ export const InstituteAdminSidebar = ({
       {isMobileOpen && (
         <div
           onClick={onCloseMobile}
-          className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-40 lg:hidden"
+          aria-hidden="true"
         />
       )}
 
@@ -464,15 +465,15 @@ export const InstituteAdminSidebar = ({
         className={`
           fixed lg:static top-0 bottom-0 left-0 z-50
           ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-          ${collapsed ? 'lg:w-20' : 'w-64'}
+          ${collapsed ? 'w-64 max-w-[85vw] lg:max-w-none lg:w-20' : 'w-64 max-w-[85vw] lg:max-w-none'}
           h-full max-h-screen sidebar-navy bg-[var(--sidebar-bg)] text-[var(--sidebar-text)] border-r border-[var(--sidebar-border)] flex flex-col
-          transition-all duration-300 shrink-0 select-none
+          transition-all duration-300 shrink-0 select-none overflow-x-hidden shadow-2xl lg:shadow-none
         `}
       >
         {/* Top Brand Header */}
-        <div className="h-14 sm:h-16 min-h-[56px] sm:min-h-[64px] flex items-center justify-between px-4 sm:px-5 border-b border-slate-100 shrink-0">
+        <div className="h-14 sm:h-16 min-h-[56px] sm:min-h-[64px] flex items-center justify-between gap-2 px-4 sm:px-5 border-b border-slate-100 shrink-0">
           {(!collapsed || isMobileOpen) && (
-            <div className="flex items-center gap-2.5 overflow-hidden">
+            <div className="flex items-center gap-2.5 overflow-hidden min-w-0">
               <div className="w-9 h-9 rounded-xl bg-[#ecfdf5] text-emerald-800 border border-emerald-100 flex items-center justify-center shrink-0 font-bold text-xs shadow-2xs">
                 <School className="w-4 h-4 text-emerald-600" />
               </div>
@@ -488,9 +489,11 @@ export const InstituteAdminSidebar = ({
           )}
 
           <button
+            type="button"
             onClick={onCloseMobile}
-            className="lg:hidden text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition-colors ml-auto cursor-pointer"
+            className="lg:hidden shrink-0 text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800/60 transition-colors ml-auto cursor-pointer"
             title="Close Menu"
+            aria-label="Close menu"
           >
             <X className="w-5 h-5" />
           </button>

@@ -56,7 +56,16 @@ export const AuthProvider = ({ children }) => {
     return null
   })
 
-  const [notificationCount, setNotificationCount] = useState(3)
+  const [notificationCount, setNotificationCount] = useState(() => {
+    try {
+      const stored = localStorage.getItem('sms_notification_count')
+      if (stored != null && stored !== '') {
+        const n = Number(stored)
+        if (Number.isFinite(n) && n >= 0) return n
+      }
+    } catch {}
+    return 0
+  })
 
   // Synchronize authenticated session state across storage mechanisms
   useEffect(() => {

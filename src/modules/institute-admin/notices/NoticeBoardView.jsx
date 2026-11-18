@@ -42,6 +42,7 @@ import {
   exportNoticesCSV 
 } from './noticeService'
 import NoticeModal from './NoticeModal'
+import { downloadSimplePdf } from '../../../utils/pdfExport'
 
 export const NoticeBoardView = ({ currentInstitute }) => {
   const { 
@@ -83,10 +84,42 @@ export const NoticeBoardView = ({ currentInstitute }) => {
   const [editingNotice, setEditingNotice] = useState(null)
   const [selectedNoticeForPrint, setSelectedNoticeForPrint] = useState(null)
 
-  // Filter notices by current campus
+  // Campus board reads AppData and the noticeService browser store, merged by id.
   const instNotices = useMemo(() => {
-    return notices.filter(n => !n.instituteId || !currentInstitute?.id || n.instituteId === currentInstitute.id)
+    const fromApp = notices.filter(n => !n.instituteId || !currentInstitute?.id || n.instituteId === currentInstitute.id)
+    let fromStore = []
+    try {
+      fromStore = getStoredNotices(currentInstitute?.id) || []
+    } catch {
+      fromStore = []
+    }
+    const map = new Map()
+    fromStore.forEach((n) => {
+      if (n?.id) map.set(n.id, n)
+    })
+    fromApp.forEach((n) => {
+      if (n?.id) map.set(n.id, { ...(map.get(n.id) || {}), ...n })
+    })
+    return Array.from(map.values())
   }, [notices, currentInstitute])
+
+  const writeNoticeMirror = (campusList) => {
+    try {
+      const all = getStoredNotices() || []
+      const instId = currentInstitute?.id
+      const others = instId ? all.filter((n) => n.instituteId && n.instituteId !== instId) : []
+      const map = new Map()
+      others.forEach((n) => {
+        if (n?.id) map.set(n.id, n)
+      })
+      ;(Array.isArray(campusList) ? campusList : []).forEach((n) => {
+        if (n?.id) map.set(n.id, n)
+      })
+      saveStoredNotices(Array.from(map.values()))
+    } catch (err) {
+      console.error('Failed mirroring notices to local storage', err)
+    }
+  }
 
   // Tier counts
   const tierCounts = useMemo(() => {
@@ -134,36 +167,45 @@ export const NoticeBoardView = ({ currentInstitute }) => {
 
   // Handle Save Notice (Create or Update)
   const handleSaveNotice = async (noticeData) => {
-    if (noticeData.id && updateItem) {
-      // Update existing
-      await updateItem('notices', noticeData.id, noticeData)
-      if (logAuditEvent) {
-        logAuditEvent(`Updated notice circular: "${noticeData.title}"`, 'Notice Board Admin', 'Success')
+    try {
+      if (noticeData.id && updateItem) {
+        await updateItem('notices', noticeData.id, noticeData)
+        writeNoticeMirror(instNotices.map((n) => (n.id === noticeData.id ? { ...n, ...noticeData } : n)))
+        if (logAuditEvent) {
+          logAuditEvent(`Updated notice circular: "${noticeData.title}"`, 'Notice Board Admin', 'Success')
+        }
+        toast.success(`"${noticeData.title}" updated in this browser.`)
+      } else {
+        const newRecord = {
+          ...noticeData,
+          id: noticeData.id || `not-${Date.now()}`,
+          instituteId: currentInstitute?.id || 'inst-1',
+          publishedLocally: true
+        }
+        const created = await addItem('notices', newRecord)
+        const saved = created || newRecord
+        writeNoticeMirror([saved, ...instNotices.filter((n) => n.id !== saved.id)])
+        if (logAuditEvent) {
+          logAuditEvent(`Published notice circular: "${noticeData.title}"`, 'Notice Board Admin', 'Success')
+        }
+        toast.success(`"${noticeData.title}" saved on this browser's campus board. It is not pushed to phones.`)
       }
-      toast.success('Notice circular updated!')
-    } else {
-      // Create new
-      const newRecord = {
-        ...noticeData,
-        instituteId: currentInstitute?.id || 'inst-1'
-      }
-      await addItem('notices', newRecord)
-      if (logAuditEvent) {
-        logAuditEvent(`Published notice circular: "${noticeData.title}"`, 'Notice Board Admin', 'Success')
-      }
-      toast.success('Notice published to campus board!')
+      setEditingNotice(null)
+    } catch (err) {
+      console.error(err)
+      toast.error('Could not save the notice in this browser.')
     }
-    setEditingNotice(null)
   }
 
   // Handle Delete
   const handleDelete = async (id, title) => {
     if (window.confirm(`Are you sure you want to delete notice "${title}"?`)) {
       await deleteItem('notices', id)
+      writeNoticeMirror(instNotices.filter((n) => n.id !== id))
       if (logAuditEvent) {
         logAuditEvent(`Removed notice: "${title}"`, 'Notice Board Admin', 'Success')
       }
-      toast.success('Notice removed.')
+      toast.success('Notice removed from this browser.')
     }
   }
 
@@ -173,10 +215,55 @@ export const NoticeBoardView = ({ currentInstitute }) => {
     if (updateItem) {
       await updateItem('notices', notice.id, { pinned: nextPinned })
     }
+    writeNoticeMirror(instNotices.map((n) => (n.id === notice.id ? { ...n, pinned: nextPinned } : n)))
     if (logAuditEvent) {
       logAuditEvent(`${nextPinned ? 'Pinned' : 'Unpinned'} notice: "${notice.title}"`, 'Notice Board Admin', 'Success')
     }
-    toast.success(nextPinned ? 'Circular pinned to top of notice board!' : 'Circular unpinned.')
+    toast.success(nextPinned ? 'Circular pinned in this browser.' : 'Circular unpinned in this browser.')
+  }
+
+  const downloadNoticePdf = (notice) => {
+    if (!notice) return
+    const inst = currentInstitute?.name || 'Institute'
+    downloadSimplePdf(`circular-${String(notice.id || 'notice').slice(-8)}.pdf`, [
+      { text: inst, bold: true },
+      { text: 'CAMPUS CIRCULAR', bold: true },
+      { text: `Campus: ${currentInstitute?.code || 'CAMPUS-01'}` },
+      { text: `Date: ${formatDateDDMMYYYY(notice.date)}    Tier: ${notice.tier || 'all'}` },
+      { text: `Audience: ${notice.audience || 'All'}` },
+      { text: `Subject: ${notice.title}`, bold: true },
+      { text: ' ' },
+      ...String(notice.content || '')
+        .split(/\n+/)
+        .map((para) => para.trim())
+        .filter(Boolean)
+        .map((para) => ({ text: para })),
+      { text: ' ' },
+      { text: `Issued by: ${notice.author || 'Campus Administration'}` },
+      { text: 'Saved in this browser. Printing this PDF does not send SMS or email.' }
+    ])
+  }
+
+  const openNoticePrint = (notice) => {
+    const win = window.open('', '_blank', 'width=800,height=720')
+    if (!win) {
+      downloadNoticePdf(notice)
+      toast.info('Pop-up blocked. The circular was downloaded as a PDF instead.')
+      return
+    }
+    const esc = (value) => String(value ?? '').replace(/[&<>]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[ch]))
+    win.document.write(`<!doctype html><html><head><title>${esc(notice.title)}</title>
+      <style>body{font-family:Georgia,serif;padding:32px;color:#0f172a}h1{font-size:20px;text-align:center;text-transform:uppercase;margin-bottom:4px}.meta{font-size:12px;color:#475569}h2{font-size:16px}</style>
+      </head><body>
+      <h1>${esc(currentInstitute?.name || 'Institute')}</h1>
+      <p class="meta" style="text-align:center">Office of the Principal · ${esc(currentInstitute?.code || '')}</p>
+      <p class="meta">Date: ${esc(formatDateDDMMYYYY(notice.date))} · Audience: ${esc(notice.audience || 'All')}</p>
+      <h2>Subject: ${esc(notice.title)}</h2>
+      <p>${esc(notice.content).replace(/\n/g, '<br>')}</p>
+      <p class="meta">Author: ${esc(notice.author || 'Campus Administration')}</p>
+      ${'<scr' + 'ipt>window.onload=function(){ window.print(); }</scr' + 'ipt>'}
+      </body></html>`)
+    win.document.close()
   }
 
   // Helper for priority pill styling
@@ -757,11 +844,19 @@ export const NoticeBoardView = ({ currentInstitute }) => {
               </button>
               <button
                 type="button"
-                onClick={() => window.print()}
+                onClick={() => downloadNoticePdf(selectedNoticeForPrint)}
+                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-slate-800 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg shadow-sm cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Download PDF</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => openNoticePrint(selectedNoticeForPrint)}
                 className="flex items-center gap-1.5 px-5 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-black rounded-lg shadow-sm cursor-pointer"
               >
                 <Printer className="w-3.5 h-3.5" />
-                <span>Print Official Circular (PDF)</span>
+                <span>Print Circular</span>
               </button>
             </div>
           </div>

@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
 import { 
   School, 
-  Printer, 
+  Printer,
+  Download, 
   CheckCircle2, 
   AlertTriangle, 
   Calendar, 
@@ -14,6 +15,7 @@ import {
 } from 'lucide-react'
 import Modal from '../../components/common/Modal'
 import { useToast } from '../../context/ToastContext'
+import { downloadSimplePdf } from '../../utils/pdfExport'
 
 export const OfferLetterModal = ({
   isOpen,
@@ -79,7 +81,7 @@ export const OfferLetterModal = ({
         offerExpiryDate: expiryDate,
         feePaidDate: new Date().toISOString().split('T')[0]
       })
-      toast.success(`Fee received for ${applicant.studentName}! Ready for final student enrollment.`)
+      toast.success(`Fee for ${applicant.studentName} marked received in this browser. You can enroll the student next.`)
     }
   }
 
@@ -310,6 +312,26 @@ export const OfferLetterModal = ({
               className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
             >
               Close
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                downloadSimplePdf(`offer-${String(applicant?.studentName || 'candidate').replace(/\s+/g, '-')}.pdf`, [
+                  { text: currentInstitute?.name || 'Institute', bold: true },
+                  { text: 'PROVISIONAL ADMISSION OFFER', bold: true },
+                  { text: `Session: ${activeSession}` },
+                  { text: `Candidate: ${applicant?.studentName || '—'}` },
+                  { text: `Class applied: ${applicant?.gradeApplied || applicant?.className || '—'}` },
+                  { text: `Admission fee: Rs. ${Number(feeAmount || 0).toLocaleString()}` },
+                  { text: `Offer valid until: ${expiryDate || '—'}` },
+                  { text: ' ' },
+                  { text: 'This offer is stored in this browser. It is not a board-issued admission letter.' }
+                ])
+              }}
+              className="px-4 py-2 text-xs font-bold text-slate-800 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg shadow-2xs flex items-center gap-1.5 cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Download PDF</span>
             </button>
             <button
               type="button"

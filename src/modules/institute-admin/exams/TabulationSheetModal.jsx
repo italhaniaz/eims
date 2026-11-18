@@ -14,6 +14,7 @@ import {
   HelpCircle
 } from 'lucide-react'
 import Modal from '../../../components/common/Modal'
+import { useToast } from '../../../context/ToastContext'
 import { calculateGrade } from './examService'
 import { getDistinctInstituteClassNames } from '../../../utils/tierGating'
 
@@ -29,6 +30,7 @@ export const TabulationSheetModal = ({
   gradingSettings = null,
   currentInstitute = null
 }) => {
+  const { toast } = useToast()
   // Class & Section filters
   const [selectedClass, setSelectedClass] = useState('')
   const [selectedSection, setSelectedSection] = useState('')
@@ -182,7 +184,7 @@ export const TabulationSheetModal = ({
   const handleSaveAll = async (e) => {
     e.preventDefault()
     if (!selectedClass || !selectedTerm || !selectedSubject) {
-      alert('Please select Class, Term, and Subject.')
+      toast.warning('Please select Class, Term, and Subject.')
       return
     }
 
@@ -215,11 +217,11 @@ export const TabulationSheetModal = ({
       }
 
       await onBulkSaveMarks(recordsToUpdate)
-      setSaveSuccessMsg(`Tabulation successfully saved for ${enrolledStudents.length} students in "${selectedSubject}"!`)
+      setSaveSuccessMsg(`Tabulation for ${enrolledStudents.length} students in "${selectedSubject}" saved in this browser.`)
       setTimeout(() => setSaveSuccessMsg(''), 4000)
     } catch (err) {
       console.error('Error saving tabulation:', err)
-      alert('Failed saving tabulation sheet. Please check console.')
+      toast.error('Failed saving the tabulation sheet in this browser.')
     } finally {
       setIsSubmitting(false)
     }
