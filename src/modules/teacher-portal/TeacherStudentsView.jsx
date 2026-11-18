@@ -1245,7 +1245,7 @@ export default function TeacherStudentsView({
               {/* ID Card Visual */}
               <div className="w-full bg-gradient-to-b from-indigo-700 via-indigo-800 to-slate-900 text-white rounded-2xl p-5 shadow-xl relative overflow-hidden text-center space-y-3">
                 <div className="text-[10px] font-black uppercase tracking-widest text-indigo-200">
-                  Apex International School
+                  Smart Management System
                 </div>
                 <div className="w-16 h-16 rounded-full bg-white/20 border-2 border-white text-white flex items-center justify-center font-black text-2xl mx-auto shadow-md">
                   {idCardModalStudent.name?.charAt(0).toUpperCase()}
@@ -1324,7 +1324,7 @@ export default function TeacherStudentsView({
                   rows="4"
                   placeholder="Enter message for parent (e.g. attendance notice, homework alert, fee reminder)..."
                   className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
-                  defaultValue={`Dear Parent, this is an update regarding ${messageModalStudent.name}'s academic progress at Apex International School.`}
+                  defaultValue={`Dear Parent, this is an update regarding ${messageModalStudent.name}'s academic progress at Smart Management System.`}
                 />
               </div>
             </div>

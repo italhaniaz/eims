@@ -868,7 +868,7 @@ export default function TeacherMarkAttendanceView({
                 </label>
                 <textarea
                   rows="4"
-                  defaultValue={`Dear Parent, your child ${smsModalStudent.name} is marked ${attendanceMap[smsModalStudent.id]?.status || 'Absent'} today at Apex International School.`}
+                  defaultValue={`Dear Parent, your child ${smsModalStudent.name} is marked ${attendanceMap[smsModalStudent.id]?.status || 'Absent'} today at Smart Management System.`}
                   className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-sky-500"
                 />
               </div>
@@ -919,7 +919,7 @@ export default function TeacherMarkAttendanceView({
 
             <div className="p-6 overflow-y-auto space-y-4 text-xs font-mono">
               <div className="text-center space-y-1 pb-3 border-b border-slate-200 dark:border-slate-800">
-                <h2 className="text-base font-black">Apex International School</h2>
+                <h2 className="text-base font-black">Smart Management System</h2>
                 <p className="text-slate-500 font-sans text-xs">Class: {selectedClass === 'all' ? 'All Classes' : selectedClass} • Date: {todayIso}</p>
               </div>
 

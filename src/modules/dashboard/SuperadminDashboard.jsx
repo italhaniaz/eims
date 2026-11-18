@@ -358,7 +358,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
       {
         id: 'staff-1',
         name: 'Engr. Sammer Abbas',
-        email: 'superadmin@apexed.pk',
+        email: 'superadmin@smartms.pk',
         roleTitle: 'Super Administrator',
         roleType: 'superadmin',
         assignedSchool: 'Global HQ (All Schools)',
@@ -388,7 +388,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
       {
         id: 'staff-4',
         name: 'Farhan Akhtar',
-        email: 'accounts@apexed.pk',
+        email: 'accounts@smartms.pk',
         roleTitle: 'Billing & Audit Lead',
         roleType: 'accounts',
         assignedSchool: 'Central Finance HQ',
@@ -913,7 +913,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 </button>
               </div>
               <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
-                Enables each school to have its own subdomain (e.g., <code className="text-purple-600 dark:text-purple-300 font-mono text-[10.5px]">schoolname.apexed.pk</code>). Needed if schools want their own branded web portal.
+                Enables each school to have its own subdomain (e.g., <code className="text-purple-600 dark:text-purple-300 font-mono text-[10.5px]">schoolname.smartms.pk</code>). Needed if schools want their own branded web portal.
               </p>
             </div>
           </div>
@@ -1617,7 +1617,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                     Wildcard Subdomain Architecture Active
                   </span>
                   <p className="text-purple-700 dark:text-purple-300/90 leading-relaxed">
-                    ApexEd automatically routes multi-tenant traffic based on incoming host header (<code className="font-mono bg-purple-200/60 dark:bg-purple-900/60 px-1 py-0.5 rounded">*.apexed.pk</code>) to the respective institute database schema.
+                    Smart Management System automatically routes multi-tenant traffic based on incoming host header (<code className="font-mono bg-purple-200/60 dark:bg-purple-900/60 px-1 py-0.5 rounded">*.smartms.pk</code>) to the respective institute database schema.
                   </p>
                 </div>
 
@@ -1626,10 +1626,10 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                     DNS CNAME Target:
                   </label>
                   <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-mono flex items-center justify-between text-slate-800 dark:text-slate-200">
-                    <span>cname.apexed-cloud.net</span>
+                    <span>cname.smartms-cloud.net</span>
                     <button 
                       onClick={() => {
-                        navigator.clipboard.writeText('cname.apexed-cloud.net')
+                        navigator.clipboard.writeText('cname.smartms-cloud.net')
                         triggerToast('CNAME target copied to clipboard!')
                       }}
                       className="text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1 cursor-pointer"
@@ -1649,7 +1649,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                     Firebase Cloud Messaging Status: Operational
                   </span>
                   <p className="text-purple-700 dark:text-purple-300/90 leading-relaxed">
-                    Automated push notifications for student roll call alerts, exam admit card publishing, and digital fee vouchers are running through project <code className="font-mono font-bold">apexed-cloud-sms</code>.
+                    Automated push notifications for student roll call alerts, exam admit card publishing, and digital fee vouchers are running through project <code className="font-mono font-bold">smartms-cloud-sms</code>.
                   </p>
                 </div>
 
@@ -1676,7 +1676,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
                     <span className="text-[10px] text-slate-400 uppercase block">1Bill Prefix</span>
-                    <span className="font-mono font-bold text-slate-900 dark:text-white">1001-APEX</span>
+                    <span className="font-mono font-bold text-slate-900 dark:text-white">1001-SMS</span>
                   </div>
                   <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
                     <span className="text-[10px] text-slate-400 uppercase block">Settlement Bank</span>
@@ -1933,7 +1933,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                   required
                   value={newUserData.email}
                   onChange={(e) => setNewUserData({ ...newUserData, email: e.target.value })}
-                  placeholder="staff@apexed.pk"
+                  placeholder="staff@smartms.pk"
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-purple-500"
                 />
               </div>
@@ -2147,7 +2147,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
               <button
                 type="button"
                 onClick={() => {
-                  const txt = `School: ${newlyCreatedCreds.name}\nCode: ${newlyCreatedCreds.code}\nLogin ID: ${newlyCreatedCreds.adminEmail}\nPassword: ${newlyCreatedCreds.password}\nPortal URL: https://app.apexed.pk/login`
+                  const txt = `School: ${newlyCreatedCreds.name}\nCode: ${newlyCreatedCreds.code}\nLogin ID: ${newlyCreatedCreds.adminEmail}\nPassword: ${newlyCreatedCreds.password}\nPortal URL: https://app.smartms.pk/login`
                   navigator.clipboard.writeText(txt)
                   setCopiedCreds(true)
                   setTimeout(() => setCopiedCreds(false), 2500)

@@ -147,6 +147,8 @@ export const AuthProvider = ({ children }) => {
       role === 'superadmin' ||
       mail === 'admin@schoolms.com' ||
       mail === 'admin@apexed.io' ||
+      mail === 'admin@smartms.io' ||
+      mail === 'superadmin@smartms.pk' ||
       mail === 'superadmin' ||
       matchedDbUser?.role === 'superadmin'
 
@@ -154,6 +156,8 @@ export const AuthProvider = ({ children }) => {
       role === 'teacher' ||
       mail === 'teacher@schoolms.com' ||
       mail === 'teacher@apexed.io' ||
+      mail === 'teacher@smartms.io' ||
+      mail === 'teacher@smartms.pk' ||
       mail.includes('teacher') ||
       matchedDbUser?.role === 'teacher'
 
@@ -161,6 +165,8 @@ export const AuthProvider = ({ children }) => {
       role === 'student' ||
       mail === 'student@schoolms.com' ||
       mail === 'student@apexed.io' ||
+      mail === 'student@smartms.io' ||
+      mail === 'student@smartms.pk' ||
       mail.includes('student') ||
       matchedDbUser?.role === 'student'
 
@@ -168,6 +174,8 @@ export const AuthProvider = ({ children }) => {
       role === 'parent' ||
       mail === 'parent@schoolms.com' ||
       mail === 'parent@apexed.io' ||
+      mail === 'parent@smartms.io' ||
+      mail === 'parent@smartms.pk' ||
       mail.includes('parent') ||
       matchedDbUser?.role === 'parent'
 
@@ -216,7 +224,7 @@ export const AuthProvider = ({ children }) => {
         className: 'Nursery',
         section: 'A',
         instituteId: matchedInst?.id || 'inst-2',
-        instituteName: matchedInst?.name || 'Apex School System',
+        instituteName: matchedInst?.name || 'Smart Management System',
         instituteType: 'School',
         tier: 'school',
         enabledTiers: ['school'],
@@ -238,7 +246,7 @@ export const AuthProvider = ({ children }) => {
         studentRoll: 'NU1',
         studentAdmissionNo: 'ED/N/2025/16862',
         instituteId: matchedInst?.id || 'inst-2',
-        instituteName: matchedInst?.name || 'Apex School System',
+        instituteName: matchedInst?.name || 'Smart Management System',
         instituteType: 'School',
         tier: 'school',
         enabledTiers: ['school'],
@@ -366,11 +374,31 @@ export const AuthProvider = ({ children }) => {
         scope: 'Schools Platform Administration'
       },
       'admin@apexed.io': {
-        id: 'usr-1-apex',
+        id: 'usr-1-smartms',
         name: 'Super Administrator',
         roleTitle: 'Superadmin',
         role: 'superadmin',
-        email: 'admin@apexed.io',
+        email: 'admin@smartms.io',
+        instituteId: null,
+        instituteName: 'Central Headquarters',
+        scope: 'Schools Platform Administration'
+      },
+      'admin@smartms.io': {
+        id: 'usr-1-smartms',
+        name: 'Super Administrator',
+        roleTitle: 'Superadmin',
+        role: 'superadmin',
+        email: 'admin@smartms.io',
+        instituteId: null,
+        instituteName: 'Central Headquarters',
+        scope: 'Schools Platform Administration'
+      },
+      'superadmin@smartms.pk': {
+        id: 'usr-1-smartms',
+        name: 'Super Administrator',
+        roleTitle: 'Superadmin',
+        role: 'superadmin',
+        email: 'superadmin@smartms.pk',
         instituteId: null,
         instituteName: 'Central Headquarters',
         scope: 'Schools Platform Administration'
@@ -458,7 +486,20 @@ export const AuthProvider = ({ children }) => {
         name: 'Prof. Tariq Mehmood',
         roleTitle: 'Faculty / Subject Teacher',
         role: 'teacher',
-        email: 'teacher@apexed.io',
+        email: 'teacher@smartms.io',
+        instituteId: 'inst-2',
+        instituteName: 'City School Model Town Campus',
+        instituteType: 'School',
+        tier: 'school',
+        enabledTiers: ['school'],
+        scope: 'Teacher Academic Portal'
+      },
+      'teacher@smartms.io': {
+        id: 'usr-teacher-2',
+        name: 'Prof. Tariq Mehmood',
+        roleTitle: 'Faculty / Subject Teacher',
+        role: 'teacher',
+        email: 'teacher@smartms.io',
         instituteId: 'inst-2',
         instituteName: 'City School Model Town Campus',
         instituteType: 'School',
@@ -489,7 +530,25 @@ export const AuthProvider = ({ children }) => {
         name: 'Muhammad Ali',
         roleTitle: 'Student',
         role: 'student',
-        email: 'student@apexed.io',
+        email: 'student@smartms.io',
+        studentId: 'std-demo-1',
+        rollNumber: 'CSM-2026-042',
+        admissionNumber: 'ADM-2026-108',
+        className: 'Nursery',
+        section: 'A',
+        instituteId: 'inst-2',
+        instituteName: 'City School Model Town Campus',
+        instituteType: 'School',
+        tier: 'school',
+        enabledTiers: ['school'],
+        scope: 'Student Academic Portal'
+      },
+      'student@smartms.io': {
+        id: 'usr-student-2',
+        name: 'Muhammad Ali',
+        roleTitle: 'Student',
+        role: 'student',
+        email: 'student@smartms.io',
         studentId: 'std-demo-1',
         rollNumber: 'CSM-2026-042',
         admissionNumber: 'ADM-2026-108',
@@ -525,7 +584,25 @@ export const AuthProvider = ({ children }) => {
         name: 'Parent / Guardian',
         roleTitle: 'Parent',
         role: 'parent',
-        email: 'parent@apexed.io',
+        email: 'parent@smartms.io',
+        studentName: 'Muhammad Ali',
+        studentClass: 'Nursery',
+        studentSection: 'Super',
+        studentRoll: 'NU1',
+        studentAdmissionNo: 'ED/N/2025/16862',
+        instituteId: 'inst-2',
+        instituteName: 'City School Model Town Campus',
+        instituteType: 'School',
+        tier: 'school',
+        enabledTiers: ['school'],
+        scope: 'Parent Monitoring & Engagement Portal'
+      },
+      'parent@smartms.io': {
+        id: 'usr-parent-2',
+        name: 'Parent / Guardian',
+        roleTitle: 'Parent',
+        role: 'parent',
+        email: 'parent@smartms.io',
         studentName: 'Muhammad Ali',
         studentClass: 'Nursery',
         studentSection: 'Super',

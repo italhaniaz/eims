@@ -29,7 +29,7 @@ export const DemoComingSoonPage = ({ onBackToLanding, onNavigateToLogin, onOpenT
             <div>
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <span className="text-base sm:text-lg font-extrabold font-heading tracking-tight text-slate-900">
-                  Apex<span className="text-emerald-600">Ed</span>
+                  Smart <span className="text-emerald-600">Management System</span>
                 </span>
                 <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#f5eeff] text-emerald-800 border border-emerald-200">
                   ERP v2.4
@@ -162,7 +162,7 @@ export const DemoComingSoonPage = ({ onBackToLanding, onNavigateToLogin, onOpenT
       {/* Footer */}
       <footer className="py-5 border-t border-emerald-100/80 bg-white/70 text-center text-xs text-slate-400">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>© 2026 ApexEd Enterprise Platform. All rights reserved.</span>
+          <span>© 2026 Smart Management System. All rights reserved.</span>
           <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
             <span>Secure Multi-Tenant Cloud Architecture</span>

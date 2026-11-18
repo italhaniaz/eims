@@ -568,11 +568,11 @@ export default function StudentPortalView() {
       <header className={`sticky top-0 z-30 h-16 border-b transition-colors ${
         isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
       } px-4 sm:px-6 flex items-center justify-between shadow-xs`}>
-        {/* Left: Apex Logo & Title + Hamburger */}
+        {/* Left: Smart Management System Logo & Title + Hamburger */}
         <div className="flex items-center gap-3 sm:gap-4">
-          {/* APEX BRANDING (Replacing EduDigitize Demo as requested) */}
+          {/* SMART MANAGEMENT SYSTEM BRANDING */}
           <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => setActiveTab('dashboard')}>
-            {/* Custom Modern Apex Logo Emblem */}
+            {/* Custom Modern Logo Emblem */}
             <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-md shadow-blue-500/25">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
                 <path d="M12 3L2 21h20L12 3z" fill="rgba(255,255,255,0.2)" />
@@ -582,10 +582,10 @@ export default function StudentPortalView() {
             </div>
             <div className="flex flex-col">
               <span className="font-bold text-sm sm:text-base leading-tight tracking-tight text-slate-900 dark:text-white">
-                Apex School System
+                Smart Management System
               </span>
               <span className="text-[10px] text-slate-400 font-medium tracking-wide">
-                Management System
+                Student Portal
               </span>
             </div>
           </div>
@@ -2948,10 +2948,10 @@ export default function StudentPortalView() {
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800 text-center sm:text-left">
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-2xl bg-[#0b2447] text-white flex items-center justify-center font-bold text-lg shadow-sm">
-                        A
+                        SMS
                       </div>
                       <div>
-                        <h2 className="text-lg font-bold text-slate-900 dark:text-white">Apex School System</h2>
+                        <h2 className="text-lg font-bold text-slate-900 dark:text-white">Smart Management System</h2>
                         <p className="text-xs text-slate-500">Official Terminal Academic Progress Report · Year {reportCardSelectedYear}</p>
                       </div>
                     </div>
@@ -3044,7 +3044,7 @@ export default function StudentPortalView() {
                     </p>
                     <div className="pt-4 flex items-center justify-between text-slate-400 text-[11px]">
                       <span>Instructor: Sana Kosar</span>
-                      <span>Principal: Apex School System</span>
+                      <span>Principal: Smart Management System</span>
                     </div>
                   </div>
                 </div>
@@ -3587,7 +3587,7 @@ export default function StudentPortalView() {
                             <span className="text-[11px] text-emerald-600 font-medium">● Online · Direct Helpdesk</span>
                           </div>
                           <span className="text-[11px] text-slate-400">
-                            Apex School System
+                            Smart Management System
                           </span>
                         </div>
 
@@ -4257,11 +4257,11 @@ export default function StudentPortalView() {
                 {/* SUBTAB 1: MANAGE PROFILE (Matching Screenshot 3) */}
                 {accountActiveSubtab === 'profile' && (
                   <div className="space-y-6 max-w-2xl">
-                    {/* Official Apex Emblem / Avatar */}
+                    {/* Official Smart Management System Emblem / Avatar */}
                     <div className="w-24 h-24 rounded-full border-2 border-slate-200 dark:border-slate-700 bg-amber-50/20 flex items-center justify-center p-2 overflow-hidden shadow-xs">
                       <div className="w-full h-full rounded-full border-2 border-[#800000] flex flex-col items-center justify-center text-[#800000] text-center p-1">
                         <GraduationCap className="w-5 h-5" />
-                        <span className="text-[7px] font-bold uppercase leading-tight mt-0.5">APEX SCHOOL</span>
+                        <span className="text-[7px] font-bold uppercase leading-tight mt-0.5">SMART SCHOOL</span>
                       </div>
                     </div>
 
@@ -4506,7 +4506,7 @@ export default function StudentPortalView() {
               <div className="flex items-center gap-2">
                 <Receipt className="w-5 h-5 text-blue-600" />
                 <h3 className="text-base font-bold text-slate-900">
-                  Apex School System - 3-Part Fee Challan
+                  Smart Management System - 3-Part Fee Challan
                 </h3>
               </div>
               <div className="flex items-center gap-2">
@@ -4533,7 +4533,7 @@ export default function StudentPortalView() {
                   <div>
                     <div className="text-center pb-2 border-b border-slate-200">
                       <span className="font-extrabold uppercase text-[10px] text-blue-700 block">
-                        Apex School System
+                        Smart Management System
                       </span>
                       <h4 className="font-bold text-xs mt-0.5">Management System</h4>
                       <span className="inline-block mt-1 px-2 py-0.5 rounded bg-slate-100 font-bold uppercase text-[9px]">
@@ -4607,7 +4607,7 @@ export default function StudentPortalView() {
               </button>
             </div>
             <div className="p-6 text-center">
-              <h2 className="text-xl font-bold">Apex School System</h2>
+              <h2 className="text-xl font-bold">Smart Management System</h2>
               <p className="text-xs text-slate-500">Student: {studentName} &bull; Class: {studentClass}</p>
               <div className="mt-6 p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs">
                 <p className="font-semibold text-emerald-600">Status: Enrolled in Active Session</p>
@@ -4940,7 +4940,7 @@ export default function StudentPortalView() {
 
             {/* School Receipt Header */}
             <div className="text-center space-y-1 pb-2">
-              <h2 className="text-base font-bold text-[#0b2447] dark:text-white">Apex School System</h2>
+              <h2 className="text-base font-bold text-[#0b2447] dark:text-white">Smart Management System</h2>
               <p className="text-[11px] text-slate-500">Student Fee Voucher & Payment Slip</p>
               <span className="text-[10px] text-slate-400">Receipt #: {selectedFeeForReceipt.receiptNo || 'RCP-2026-991'} &bull; Ref: {selectedFeeForReceipt.refNo}</span>
             </div>
@@ -4970,7 +4970,7 @@ export default function StudentPortalView() {
             </div>
 
             <div className="text-[10px] text-slate-400 text-center">
-              Computer-generated official receipt verified by Apex Finance Desk.
+              Computer-generated official receipt verified by Smart Management System Finance Desk.
             </div>
 
             <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100 dark:border-slate-800">

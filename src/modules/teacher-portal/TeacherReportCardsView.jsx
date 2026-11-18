@@ -423,7 +423,7 @@ export default function TeacherReportCardsView({
               {/* School Header */}
               <div className="text-center pb-3 border-b border-slate-200 dark:border-slate-800 space-y-1">
                 <h2 className="text-lg font-black tracking-tight text-slate-900 dark:text-white uppercase">
-                  Apex International School
+                  Smart Management System
                 </h2>
                 <p className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">
                   Academic Progress Report Card • Session {selectedYear}

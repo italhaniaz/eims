@@ -1318,7 +1318,7 @@ const SubscriptionsBillingView = () => {
 
                   <h3 className="text-xl font-extrabold text-slate-900">14-Day Free Trial</h3>
                   <p className="text-xs text-slate-500 mt-1 line-clamp-2 min-h-[32px]">
-                    {trialPlan.description || 'Full evaluation access for schools exploring ApexEd.'}
+                    {trialPlan.description || 'Full evaluation access for schools exploring Smart Management System.'}
                   </p>
 
                   <div className="mt-4 mb-5 p-3 rounded-xl bg-emerald-50/60 border border-emerald-100">
@@ -1459,7 +1459,7 @@ const SubscriptionsBillingView = () => {
                         <Layers className="w-4 h-4" />
                       </div>
                       <span className="text-xs font-bold uppercase text-purple-700 bg-white px-2 py-0.5 rounded-md border border-purple-200">
-                        Apex Enterprise
+                        Smart Enterprise
                       </span>
                     </div>
 

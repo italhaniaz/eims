@@ -3867,7 +3867,7 @@ export const InstitutesView = () => {
                 <div className="p-3 bg-indigo-50/70 border border-indigo-200 rounded-xl flex items-center justify-between">
                   <div>
                     <span className="text-[10px] font-bold text-indigo-600 uppercase">Current Subscription Tier</span>
-                    <h4 className="text-sm font-bold text-indigo-950 mt-0.5">{viewingDetails.planTier || 'Enterprise Apex'}</h4>
+                    <h4 className="text-sm font-bold text-indigo-950 mt-0.5">{viewingDetails.planTier || 'Smart Enterprise'}</h4>
                   </div>
                   <span className="font-bold text-indigo-700 bg-white px-3 py-1 rounded-lg shadow-2xs">Active Plan</span>
                 </div>

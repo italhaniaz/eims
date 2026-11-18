@@ -129,7 +129,7 @@ const serverSecrets = {
 
 // Server-side General System Settings
 let systemGeneralSettings = {
-  platformName: 'Educational Institute Management System',
+  platformName: 'Smart Management System',
   logoUrl: '',
   defaultTimezone: 'Asia/Karachi',
   currency: 'PKR',
@@ -1273,7 +1273,7 @@ let approvalRequests = [
     instituteId: 'c1000000-0000-0000-0000-000000000003',
     instituteName: 'Roots International Academy',
     title: 'Central Fleet & GPS Transport Module Access',
-    details: { module: 'transport', requestedTier: 'Enterprise Apex', vehicleCount: 18 },
+    details: { module: 'transport', requestedTier: 'Smart Enterprise', vehicleCount: 18 },
     status: 'APPROVED',
     reviewerNotes: 'Approved as part of Enterprise annual subscription bundle.',
     createdAt: new Date(Date.now() - 4 * 86400000).toISOString()
@@ -1529,7 +1529,7 @@ const platformContent = {
     updatedAt: new Date().toISOString()
   },
   release_notes: {
-    title: 'Platform Release Notes - v2.4.0 Apex Multi-Campus Edition',
+    title: 'Platform Release Notes - v2.4.0 Smart Management System Multi-Campus Edition',
     content: '# Release Notes v2.4.0 (October 2026)\n\n- **Super Admin Governance**: Complete enterprise lifecycle management, module control matrix, and server-side impersonation security.\n- **Session Governance**: Live active session revocation and enterprise password policy enforcement.\n- **Cross-Institute Analytics**: Real-time comparative matrices, attendance recovery tracking, and multi-sheet CSV/PDF briefings.\n- **Billing Engine**: SaaS tier plans, invoice collection ledger in PKR, and automated payment reminders.\n- **Operations Hub**: Instant JSON snapshots, automated backup verification, system health telemetry, support ticketing, and approval queue.',
     version: '2.4.0',
     updatedAt: new Date().toISOString()

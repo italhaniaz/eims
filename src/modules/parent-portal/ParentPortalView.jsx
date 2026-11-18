@@ -332,9 +332,9 @@ export default function ParentPortalView() {
 
   // Communication / Chat State
   const [chatMessages, setChatMessages] = useState([
-    { id: 1, sender: 'School Administration (Apex School)', text: 'Dear Parent, fee vouchers for November 2026 have been generated. Kindly ensure payment before the due date.', timestamp: '12 Nov 2026, 10:15 AM', isIncoming: true },
+    { id: 1, sender: 'School Administration (Smart Management System)', text: 'Dear Parent, fee vouchers for November 2026 have been generated. Kindly ensure payment before the due date.', timestamp: '12 Nov 2026, 10:15 AM', isIncoming: true },
     { id: 2, sender: 'Class Teacher (Ms. Sana Kosar)', text: 'Parent-Teacher Meeting is scheduled for Saturday, 28th November. We look forward to meeting you.', timestamp: '13 Nov 2026, 02:40 PM', isIncoming: true },
-    { id: 3, sender: 'School Administration (Apex School)', text: 'Winter break circular has been updated on the announcements bulletin.', timestamp: '14 Nov 2026, 09:00 AM', isIncoming: true }
+    { id: 3, sender: 'School Administration (Smart Management System)', text: 'Winter break circular has been updated on the announcements bulletin.', timestamp: '14 Nov 2026, 09:00 AM', isIncoming: true }
   ])
   const [chatInputText, setChatInputText] = useState('')
 
@@ -342,7 +342,7 @@ export default function ParentPortalView() {
   const [notifications, setNotifications] = useState([
     { id: 'n1', title: 'Summer Holidays Circular', desc: 'Summer break schedule announced by school board.', time: '13 Jun 2026', read: false },
     { id: 'n2', title: 'November Fee Due', desc: 'Fee vouchers issued for all enrolled children.', time: '10 Nov 2026', read: false },
-    { id: 'n3', title: 'Parent-Teacher Conference', desc: 'Upcoming PTM scheduled at Apex Campus.', time: '14 Nov 2026', read: false }
+    { id: 'n3', title: 'Parent-Teacher Conference', desc: 'Upcoming PTM scheduled at Smart Management System Campus.', time: '14 Nov 2026', read: false }
   ])
 
   // Calculation helpers
@@ -419,7 +419,7 @@ export default function ParentPortalView() {
   const handleApplyLeaveSubmit = (e) => {
     e.preventDefault()
     setIsLeaveModalOpen(false)
-    toast?.success?.(`Leave application for ${leaveReason} submitted to Apex Principal desk.`)
+    toast?.success?.(`Leave application for ${leaveReason} submitted to Smart Management System Principal desk.`)
     setLeaveNotes('')
   }
 
@@ -464,11 +464,11 @@ export default function ParentPortalView() {
     <div className={`min-h-screen flex flex-col font-sans transition-colors duration-200 ${
       isDark ? 'bg-slate-950 text-slate-100 dark' : 'bg-[#f4f7fb] text-slate-800'
     }`}>
-      {/* ---------------- TOP NAVBAR (APEX BRANDING) ---------------- */}
+      {/* ---------------- TOP NAVBAR (SMART MANAGEMENT SYSTEM BRANDING) ---------------- */}
       <header className={`sticky top-0 z-40 h-16 border-b transition-colors duration-200 ${
         isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
       } px-4 sm:px-6 flex items-center justify-between shadow-xs`}>
-        {/* Left: Apex Logo & Title + Hamburger */}
+        {/* Left: Smart Management System Logo & Title + Hamburger */}
         <div className="flex items-center gap-3 sm:gap-4">
           <button
             type="button"
@@ -479,7 +479,7 @@ export default function ParentPortalView() {
             {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
 
-          {/* APEX BRANDING (Replacing EduDigitize Demo as requested) */}
+          {/* SMART MANAGEMENT SYSTEM BRANDING */}
           <div
             className="flex items-center gap-2.5 cursor-pointer select-none"
             onClick={() => {
@@ -487,7 +487,7 @@ export default function ParentPortalView() {
               setSelectedChildForFees(null)
             }}
           >
-            {/* Custom Modern Apex Logo Emblem */}
+            {/* Custom Modern Logo Emblem */}
             <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-md shadow-blue-500/25">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
                 <path d="M12 2L2 19h20L12 2z" />
@@ -497,10 +497,10 @@ export default function ParentPortalView() {
             </div>
             <div className="flex flex-col">
               <span className="font-bold text-sm sm:text-base leading-tight tracking-tight text-slate-900 dark:text-white">
-                Apex School System
+                Smart Management System
               </span>
               <span className="text-[10px] text-slate-400 font-medium tracking-wide">
-                Management System
+                Parent Portal
               </span>
             </div>
           </div>
@@ -780,7 +780,7 @@ export default function ParentPortalView() {
               <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-[11px] text-slate-500">
                 <div className="font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
                   <Users className="w-3.5 h-3.5 text-blue-600" />
-                  <span>Apex Parent Portal</span>
+                  <span>Smart Management System - Parent Portal</span>
                 </div>
                 <span>7 Wards Registered</span>
               </div>
@@ -1299,7 +1299,7 @@ export default function ParentPortalView() {
                           {selectedChildForFees.name}
                         </h2>
                         <p className="text-xs text-blue-100 mt-0.5">
-                          Apex School System · Session 2026-2027
+                          Smart Management System · Session 2026-2027
                         </p>
                       </div>
 
@@ -1505,7 +1505,7 @@ export default function ParentPortalView() {
                           <span>PKR 2,350 / Term</span>
                         </div>
                         <p className="text-[11px] text-purple-700 dark:text-purple-400">
-                          Granted under Apex School System Family Discount Policy for having multiple wards enrolled.
+                          Granted under Smart Management System Family Discount Policy for having multiple wards enrolled.
                         </p>
                       </div>
                     </div>
@@ -1982,7 +1982,7 @@ export default function ParentPortalView() {
                     <span className="text-xs text-slate-400">16 Dec 2025</span>
                   </div>
                   <p className="text-xs text-slate-500">
-                    Apex School System will remain closed on 25th December on account of Quaid-e-Azam Day & Christmas celebrations. Normal classes resume on the next working day.
+                    Smart Management System will remain closed on 25th December on account of Quaid-e-Azam Day & Christmas celebrations. Normal classes resume on the next working day.
                   </p>
                 </div>
               </div>
@@ -2001,7 +2001,7 @@ export default function ParentPortalView() {
                     <Building2 className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="text-xs font-bold">Apex School Administration & Teachers</h3>
+                    <h3 className="text-xs font-bold">Smart Management System Administration & Teachers</h3>
                     <span className="text-[10px] text-emerald-600 font-medium">● Verified Helpdesk</span>
                   </div>
                 </div>
@@ -2092,7 +2092,7 @@ export default function ParentPortalView() {
                 </div>
                 <div>
                   <span className="text-slate-400 font-semibold block">School Campus</span>
-                  <span className="font-medium text-slate-700 dark:text-slate-300">Apex School System</span>
+                  <span className="font-medium text-slate-700 dark:text-slate-300">Smart Management System</span>
                 </div>
               </div>
             </div>
@@ -2221,7 +2221,7 @@ export default function ParentPortalView() {
               </div>
               <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/50">
                 <span className="text-slate-400 block text-[10px] uppercase font-bold">Institute</span>
-                <span className="font-semibold">Apex School System</span>
+                <span className="font-semibold">Smart Management System</span>
               </div>
             </div>
 
@@ -2260,7 +2260,7 @@ export default function ParentPortalView() {
 
             {/* School Header */}
             <div className="text-center pb-2 border-b border-slate-100 dark:border-slate-800">
-              <h2 className="text-lg font-bold text-blue-700 dark:text-blue-400">Apex School System</h2>
+              <h2 className="text-lg font-bold text-blue-700 dark:text-blue-400">Smart Management System</h2>
               <p className="text-xs text-slate-500">Academic Progress & Marksheet · Session 2026</p>
               <div className="mt-2 text-xs font-semibold">
                 Student: <span className="text-slate-900 dark:text-white font-bold">{selectedChildForReportCard.name}</span> | Adm: {selectedChildForReportCard.admissionNo} | Class: {selectedChildForReportCard.className} - {selectedChildForReportCard.section}
@@ -2481,7 +2481,7 @@ export default function ParentPortalView() {
             </div>
 
             <div className="text-center space-y-1 pb-3 border-b border-dashed border-slate-200 dark:border-slate-700">
-              <h2 className="text-base font-bold text-blue-700 dark:text-blue-400">Apex School System</h2>
+              <h2 className="text-base font-bold text-blue-700 dark:text-blue-400">Smart Management System</h2>
               <p className="text-[11px] text-slate-400">Student Fee Voucher & Payment Slip</p>
               <span className="text-[10px] text-slate-400 font-mono">
                 Receipt #: {receiptModalData.receiptNo} · Ref: {receiptModalData.refNo}
@@ -2516,7 +2516,7 @@ export default function ParentPortalView() {
             </div>
 
             <div className="pt-3 border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-400 text-center">
-              Computer-generated official receipt verified by Apex Finance Desk.
+              Computer-generated official receipt verified by Smart Management System Finance Desk.
             </div>
 
             <div className="flex justify-end gap-2 pt-2">

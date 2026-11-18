@@ -17,6 +17,28 @@ export const serverAuthDirectory = [
     status: 'Active'
   },
   {
+    id: 'usr-1-smartms',
+    name: 'Super Administrator',
+    email: 'admin@smartms.io',
+    passwordHash: hashPasswordServer('password123'),
+    role: 'superadmin',
+    roleTitle: 'Superadmin',
+    instituteId: null,
+    instituteName: 'Central Headquarters',
+    status: 'Active'
+  },
+  {
+    id: 'usr-1-smartms-pk',
+    name: 'Super Administrator',
+    email: 'superadmin@smartms.pk',
+    passwordHash: hashPasswordServer('password123'),
+    role: 'superadmin',
+    roleTitle: 'Superadmin',
+    instituteId: null,
+    instituteName: 'Central Headquarters',
+    status: 'Active'
+  },
+  {
     id: 'usr-1-apex',
     name: 'Super Administrator',
     email: 'admin@apexed.io',
