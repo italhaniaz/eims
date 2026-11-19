@@ -63,12 +63,6 @@ const SupportApprovalsView = () => {
   // Card Eye Button Preview Modal
   const [previewCard, setPreviewCard] = useState(null)
 
-  // CMS Content State
-  const [selectedContentKey, setSelectedContentKey] = useState('terms_of_service')
-  const [contentDoc, setContentDoc] = useState(null)
-  const [isEditingContent, setIsEditingContent] = useState(false)
-  const [contentDraft, setContentDraft] = useState({ title: '', content: '', version: '' })
-
   // Notifications State & Persistence
   const [clearedNotifications, setClearedNotifications] = useState(() => {
     try {
@@ -156,12 +150,6 @@ const SupportApprovalsView = () => {
     }
   }, [])
 
-  useEffect(() => {
-    if (activeTab === 'content') {
-      loadContent(selectedContentKey)
-    }
-  }, [activeTab, selectedContentKey])
-
   const loadAll = async () => {
     setLoading(true)
     try {
@@ -175,14 +163,6 @@ const SupportApprovalsView = () => {
       console.error(e)
     } finally {
       setLoading(false)
-    }
-  }
-
-  const loadContent = async (key) => {
-    const doc = await SupportService.getContent(key)
-    if (doc) {
-      setContentDoc(doc)
-      setContentDraft(doc)
     }
   }
 
@@ -272,14 +252,6 @@ const SupportApprovalsView = () => {
     } finally {
       setIsProcessingApproval(false)
     }
-  }
-
-  // --- CMS Content Actions ---
-  const handleSaveContent = async () => {
-    await SupportService.saveContent(selectedContentKey, contentDraft)
-    setContentDoc(contentDraft)
-    setIsEditingContent(false)
-    showToast('Platform CMS document updated.')
   }
 
   // Memoized computations & counters (Always call hooks at top-level before early returns)
@@ -407,7 +379,7 @@ const SupportApprovalsView = () => {
             Support Desk & Approval Queue
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
-            Resolve institute inquiries, review campus affiliation and quota increase petitions, supervise notifications, and manage platform legal content.
+            Resolve institute inquiries, review campus affiliation and quota increase petitions, and supervise platform notifications.
           </p>
         </div>
       </div>
@@ -518,18 +490,6 @@ const SupportApprovalsView = () => {
                 {dynamicNotifications.length}
               </span>
             )}
-          </button>
-
-          <button
-            onClick={() => setActiveTab('content')}
-            className={`py-3 border-b-2 flex items-center gap-2 transition-colors cursor-pointer shrink-0 ${
-              activeTab === 'content'
-                ? 'border-purple-600 text-purple-600 font-semibold'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            <FileText className="w-4 h-4" />
-            <span>Platform Content & CMS</span>
           </button>
         </nav>
       </div>
@@ -1105,97 +1065,6 @@ const SupportApprovalsView = () => {
                 <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
                   You are all caught up! When campus administrators submit petitions or tickets, they will appear here in real-time.
                 </p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* TAB 4: PLATFORM CONTENT CMS */}
-      {activeTab === 'content' && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {/* Submenu */}
-          <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] shadow-sm p-4 space-y-1 h-fit">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block px-3 py-1">
-              CMS Pages
-            </span>
-            {[
-              { key: 'terms_of_service', label: 'Terms of Service' },
-              { key: 'privacy_policy', label: 'Privacy Policy' },
-              { key: 'faqs', label: 'Platform FAQs' },
-              { key: 'release_notes', label: 'Release Notes (v2.4.0)' }
-            ].map((p) => (
-              <button
-                key={p.key}
-                onClick={() => {
-                  setSelectedContentKey(p.key)
-                  setIsEditingContent(false)
-                }}
-                className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
-                  selectedContentKey === p.key
-                    ? 'bg-[#f5eeff] text-purple-700'
-                    : 'text-slate-600 hover:bg-slate-50'
-                }`}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Content Preview & Editor */}
-          <div className="md:col-span-3 bg-white rounded-3xl border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] shadow-sm p-6 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div>
-                <h3 className="text-base font-bold text-slate-900">{contentDoc?.title || 'CMS Document'}</h3>
-                <span className="text-xs text-slate-400">Version {contentDoc?.version || '1.0.0'}</span>
-              </div>
-              <button
-                onClick={() => setIsEditingContent(!isEditingContent)}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-3xl border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] text-slate-700 text-xs font-semibold hover:bg-slate-50 transition-colors cursor-pointer"
-              >
-                <Edit2 className="w-3.5 h-3.5 text-purple-600" />
-                <span>{isEditingContent ? 'Preview Markdown' : 'Edit Document'}</span>
-              </button>
-            </div>
-
-            {isEditingContent ? (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Page Title</label>
-                  <input
-                    type="text"
-                    value={contentDraft.title}
-                    onChange={(e) => setContentDraft({ ...contentDraft, title: e.target.value })}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Markdown Body</label>
-                  <textarea
-                    rows="12"
-                    value={contentDraft.content}
-                    onChange={(e) => setContentDraft({ ...contentDraft, content: e.target.value })}
-                    className="w-full px-3 py-2 text-xs font-mono border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none"
-                  />
-                </div>
-                <div className="flex justify-end gap-2">
-                  <button
-                    onClick={() => setIsEditingContent(false)}
-                    className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSaveContent}
-                    className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs shadow-sm transition-colors cursor-pointer"
-                  >
-                    Save Changes
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="prose prose-sm max-w-none text-slate-700 space-y-2 whitespace-pre-wrap font-sans text-xs sm:text-sm">
-                {contentDoc?.content}
               </div>
             )}
           </div>
