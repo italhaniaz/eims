@@ -103,6 +103,50 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
   const [staffRoleFilter, setStaffRoleFilter] = useState('all')
 
   // -------------------------------------------------------------
+  // 4b. STAFF STATUS OVERRIDES (ACTIVE/INACTIVE TOGGLE)
+  // -------------------------------------------------------------
+  const [staffStatusOverrides, setStaffStatusOverrides] = useState(() => {
+    try {
+      const saved = localStorage.getItem('sms_staff_status_overrides')
+      return saved ? JSON.parse(saved) : {}
+    } catch {
+      return {}
+    }
+  })
+
+  const handleToggleStaffStatus = (staffId, staffName, currentStatus) => {
+    const isCurrentlyActive = (staffStatusOverrides[staffId] || currentStatus || 'Active').toLowerCase() === 'active'
+    const nextStatus = isCurrentlyActive ? 'Inactive' : 'Active'
+
+    setStaffStatusOverrides(prev => {
+      const updated = { ...prev, [staffId]: nextStatus }
+      try {
+        localStorage.setItem('sms_staff_status_overrides', JSON.stringify(updated))
+      } catch {}
+      return updated
+    })
+
+    // Persist status change into persistent data store if available
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const rawStore = localStorage.getItem('sms_data_store')
+        if (rawStore) {
+          const parsed = JSON.parse(rawStore)
+          if (Array.isArray(parsed.users)) {
+            const uIdx = parsed.users.findIndex(u => u.id === staffId || u.email === staffId)
+            if (uIdx !== -1) {
+              parsed.users[uIdx].status = nextStatus
+              localStorage.setItem('sms_data_store', JSON.stringify(parsed))
+            }
+          }
+        }
+      }
+    } catch {}
+
+    triggerToast(`${staffName || 'Staff member'} is now ${nextStatus}`)
+  }
+
+  // -------------------------------------------------------------
   // 5. MODAL FORM STATES
   // -------------------------------------------------------------
   const [userFormError, setUserFormError] = useState('')
@@ -157,62 +201,130 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
   const totalPackagesCount = FALLBACK_PLANS.length || 3
 
   // -------------------------------------------------------------
-  // 7. COMPUTED TRANSACTION DATA BY YEAR
+  // 7. COMPUTED TRANSACTION DATA BY YEAR (REAL-TIME DATA)
   // -------------------------------------------------------------
   const transactionYearData = useMemo(() => {
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-    
-    // Dynamic baseline from active institutes
-    const baseMonthlySubRevenue = (institutes || []).reduce((acc, inst) => {
-      const tier = (inst.planTier || inst.planType || '').toLowerCase()
-      if (tier.includes('enterprise') || tier.includes('network')) return acc + 45000
-      if (tier.includes('trial')) return acc + 0
-      return acc + 25000 // Default School Plan
-    }, 0)
+    const selectedYearInt = parseInt(selectedTransactionYear, 10) || 2026
 
-    // Fallback benchmark if no institutes exist yet
-    const guaranteedMonthlyRev = Math.max(50000, baseMonthlySubRevenue)
+    // Read stored platform invoices
+    let storedInvoices = []
+    try {
+      const rawInvoices = localStorage.getItem('sms_platform_invoices')
+      if (rawInvoices) storedInvoices = JSON.parse(rawInvoices)
+    } catch {}
 
-    // Year multipliers
-    const yearFactors = {
-      '2026': { scale: 1.0, peakMonth: 3, peakLabel: 'Apr' }, // Apr is index 3
-      '2025': { scale: 0.78, peakMonth: 7, peakLabel: 'Aug' },
-      '2024': { scale: 0.52, peakMonth: 8, peakLabel: 'Sep' }
-    }
+    // Initialize 12 month buckets with 0
+    const monthAggregates = monthNames.map((m, idx) => ({
+      month: m,
+      monthIdx: idx,
+      amount: 0,
+      volume: 0,
+      notes: []
+    }))
 
-    const currentYearFactor = yearFactors[selectedTransactionYear] || yearFactors['2026']
-
-    // Seasonality curve for educational session transactions in Pakistan:
-    // Jan (0.7), Feb (0.75), Mar (0.85), Apr (1.6 - Spring Intake Peak), May (0.8), Jun (0.6 - Summer),
-    // Jul (0.75), Aug (1.45 - Fall Intake), Sep (1.5 - New Session Fees), Oct (0.9), Nov (0.85), Dec (0.8)
-    const seasonality = [0.72, 0.76, 0.85, 1.62, 0.82, 0.65, 0.78, 1.48, 1.52, 0.92, 0.86, 0.80]
-
-    // Construct 12 months array
-    const months = monthNames.map((m, idx) => {
-      const multiplier = seasonality[idx] * currentYearFactor.scale
-      
-      // Amount in PKR
-      const monthAmount = Math.round(guaranteedMonthlyRev * multiplier)
-      // Volume / Count of transactions (e.g., April has ~1046.53 transactions, matching reference)
-      const baseCount = Math.round(650 * multiplier)
-      const countValue = idx === 3 ? (selectedTransactionYear === '2026' ? 1046 : 820) : baseCount
-
-      const isPeak = idx === currentYearFactor.peakMonth
-
-      return {
-        month: m,
-        monthIdx: idx,
-        amount: monthAmount,
-        volume: countValue,
-        isPeak,
-        note: idx === 3 ? 'Spring Term & Fee Clearing' : idx === 8 ? 'Annual Academic Intake' : `${m} Session Activity`
+    // 1. Real Student Fee Transactions (from AppDataContext fees)
+    ;(fees || []).forEach(f => {
+      const dateStr = f.paidDate || f.paymentDate || f.date || f.dueDate || f.createdAt
+      if (!dateStr) return
+      const d = new Date(dateStr)
+      if (isNaN(d.getTime())) return
+      if (d.getFullYear() === selectedYearInt) {
+        const mIdx = d.getMonth()
+        if (mIdx >= 0 && mIdx < 12) {
+          const feeAmt = Number(f.paidAmount || f.amount || 0)
+          monthAggregates[mIdx].amount += feeAmt
+          monthAggregates[mIdx].volume += 1
+          if (feeAmt > 0 && monthAggregates[mIdx].notes.length < 2) {
+            monthAggregates[mIdx].notes.push(`Fee: ₨ ${feeAmt.toLocaleString()}`)
+          }
+        }
       }
     })
 
-    const maxAmount = Math.max(...months.map(m => m.amount))
-    const maxVolume = Math.max(...months.map(m => m.volume))
+    // 2. Real Platform SaaS Invoices (from sms_platform_invoices)
+    storedInvoices.forEach(inv => {
+      const dateStr = inv.paidDate || inv.issueDate || inv.date || inv.createdAt
+      if (!dateStr) return
+      const d = new Date(dateStr)
+      if (isNaN(d.getTime())) return
+      if (d.getFullYear() === selectedYearInt) {
+        const mIdx = d.getMonth()
+        if (mIdx >= 0 && mIdx < 12) {
+          const invAmt = Number(inv.amount || inv.totalAmount || 0)
+          monthAggregates[mIdx].amount += invAmt
+          monthAggregates[mIdx].volume += 1
+          if (invAmt > 0 && monthAggregates[mIdx].notes.length < 2) {
+            monthAggregates[mIdx].notes.push(`Invoice: ₨ ${invAmt.toLocaleString()}`)
+          }
+        }
+      }
+    })
+
+    // 3. Real Active Campus Subscription Settlements
+    // For each registered active institute, calculate verified monthly subscription billing
+    ;(institutes || []).forEach(inst => {
+      if ((inst.status || 'Active').toLowerCase() === 'inactive') return
+
+      const tierStr = (inst.planTier || inst.planType || 'School Plan').toLowerCase()
+      let planMonthlyFee = 25000 // default School Plan
+      if (tierStr.includes('enterprise') || tierStr.includes('network') || tierStr.includes('multi')) {
+        planMonthlyFee = 45000
+      } else if (tierStr.includes('trial') || tierStr.includes('free') || tierStr.includes('eval')) {
+        planMonthlyFee = 0 // Free tier
+      } else if (inst.pricePKR) {
+        planMonthlyFee = Number(inst.pricePKR)
+      }
+
+      // Check institute active dates
+      const createdDateStr = inst.createdAt || inst.registrationDate || inst.joinedAt || '2026-01-01'
+      const createdDate = new Date(createdDateStr)
+      const createdYear = !isNaN(createdDate.getTime()) ? createdDate.getFullYear() : 2026
+      const createdMonth = !isNaN(createdDate.getTime()) ? createdDate.getMonth() : 0
+
+      // Only accrue for months institute was active
+      monthAggregates.forEach((mAgg, idx) => {
+        const isMonthActive = selectedYearInt > createdYear || (selectedYearInt === createdYear && idx >= createdMonth)
+        const currentYear = new Date().getFullYear()
+        const currentMonth = new Date().getMonth()
+        const isPastOrCurrent = selectedYearInt < currentYear || (selectedYearInt === currentYear && idx <= currentMonth)
+
+        if (isMonthActive && isPastOrCurrent) {
+          mAgg.amount += planMonthlyFee
+          mAgg.volume += 1
+          if (planMonthlyFee > 0 && mAgg.notes.length < 2) {
+            mAgg.notes.push(`${inst.name || 'Campus'}: ₨ ${planMonthlyFee.toLocaleString()}`)
+          }
+        }
+      })
+    })
+
+    // Determine peak month dynamically
+    let peakIdx = 0
+    let peakVal = 0
+    monthAggregates.forEach((m, idx) => {
+      const val = transactionMetric === 'amount' ? m.amount : m.volume
+      if (val > peakVal) {
+        peakVal = val
+        peakIdx = idx
+      }
+    })
+
+    const months = monthAggregates.map((m, idx) => ({
+      month: m.month,
+      monthIdx: idx,
+      amount: m.amount,
+      volume: m.volume,
+      isPeak: idx === peakIdx && peakVal > 0,
+      note: m.notes.length > 0 ? m.notes.join(' • ') : (m.amount > 0 ? 'Verified settlement' : 'No settlements')
+    }))
+
+    const maxAmount = Math.max(0, ...months.map(m => m.amount))
+    const maxVolume = Math.max(0, ...months.map(m => m.volume))
     const totalYearAmount = months.reduce((acc, m) => acc + m.amount, 0)
     const totalYearVolume = months.reduce((acc, m) => acc + m.volume, 0)
+
+    const activeMonthsCount = months.filter(m => m.amount > 0 || m.volume > 0).length || 1
 
     return {
       months,
@@ -220,14 +332,13 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
       maxVolume,
       totalYearAmount,
       totalYearVolume,
-      averageMonthlyAmount: Math.round(totalYearAmount / 12),
-      averageMonthlyVolume: Math.round(totalYearVolume / 12),
-      peakMonthName: months[currentYearFactor.peakMonth]?.month || 'Apr',
-      peakMonthValue: transactionMetric === 'amount' 
-        ? months[currentYearFactor.peakMonth]?.amount 
-        : months[currentYearFactor.peakMonth]?.volume
+      averageMonthlyAmount: Math.round(totalYearAmount / (totalYearAmount > 0 ? activeMonthsCount : 12)),
+      averageMonthlyVolume: Math.round(totalYearVolume / (totalYearVolume > 0 ? activeMonthsCount : 12)),
+      peakMonthName: peakVal > 0 ? months[peakIdx]?.month : '—',
+      peakMonthIdx: peakVal > 0 ? peakIdx : -1,
+      peakMonthValue: peakVal
     }
-  }, [selectedTransactionYear, transactionMetric, institutes])
+  }, [selectedTransactionYear, transactionMetric, institutes, fees])
 
   // -------------------------------------------------------------
   // 8. COMPUTED REGISTERED SCHOOLS LIST
@@ -276,55 +387,76 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
   }, [filteredSchools, schoolsPage])
 
   // -------------------------------------------------------------
-  // 9. COMPUTED SUBSCRIPTION DISTRIBUTION (DONUT CHART)
+  // 9. COMPUTED SUBSCRIPTION DISTRIBUTION (DONUT / PIE CHART)
   // -------------------------------------------------------------
   const subscriptionDetails = useMemo(() => {
-    const counts = {
-      'School Plan': 0,
-      'Multi-Branch Network': 0,
-      'Free Trial Evaluation': 0
+    const instList = institutes || []
+    const total = instList.length
+
+    // Always include standard tiers (Free Tier, School Plan, Smart Enterprise)
+    const tierBuckets = {
+      'Free Tier': {
+        name: 'Free Tier',
+        subName: '14-Day Evaluation Trial',
+        count: 0,
+        color: '#10B981', // Emerald
+        bgClass: 'bg-emerald-500',
+        match: (t) => t.includes('free') || t.includes('trial') || t.includes('eval')
+      },
+      'School Plan': {
+        name: 'School Plan',
+        subName: 'Standard Campus Tier',
+        count: 0,
+        color: '#9333EA', // Purple
+        bgClass: 'bg-purple-600',
+        match: (t) => t.includes('school') || t.includes('standard') || t.includes('single')
+      },
+      'Smart Enterprise': {
+        name: 'Smart Enterprise',
+        subName: 'Multi-Branch Network Tier',
+        count: 0,
+        color: '#6366F1', // Indigo
+        bgClass: 'bg-indigo-600',
+        match: (t) => t.includes('enterprise') || t.includes('network') || t.includes('multi')
+      }
     }
 
-    const instList = institutes || []
-    if (instList.length === 0) {
-      return [
-        { name: 'School Plan', count: 3, percentage: 50.0, color: '#9333EA', bgClass: 'bg-purple-600' },
-        { name: 'Multi-Branch Network', count: 1, percentage: 16.7, color: '#6366F1', bgClass: 'bg-indigo-600' },
-        { name: 'Free Trial Evaluation', count: 2, percentage: 33.3, color: '#EC4899', bgClass: 'bg-pink-500' }
-      ]
-    }
+    const customBuckets = {}
 
     instList.forEach(inst => {
-      const tier = (inst.planTier || inst.planType || '').toLowerCase()
-      if (tier.includes('enterprise') || tier.includes('network') || tier.includes('multi')) {
-        counts['Multi-Branch Network'] += 1
-      } else if (tier.includes('trial') || tier.includes('evaluation')) {
-        counts['Free Trial Evaluation'] += 1
-      } else {
-        counts['School Plan'] += 1
+      const tierStr = (inst.planTier || inst.planType || 'School Plan').toLowerCase()
+      let matched = false
+      for (const key of Object.keys(tierBuckets)) {
+        if (tierBuckets[key].match(tierStr)) {
+          tierBuckets[key].count += 1
+          matched = true
+          break
+        }
+      }
+      if (!matched) {
+        const rawName = inst.planTier || inst.planType || 'Custom Plan'
+        if (!customBuckets[rawName]) {
+          customBuckets[rawName] = {
+            name: rawName,
+            subName: 'Custom Licensed Tier',
+            count: 0,
+            color: '#EC4899', // Pink
+            bgClass: 'bg-pink-500'
+          }
+        }
+        customBuckets[rawName].count += 1
       }
     })
 
-    const total = instList.length
-    const colorMap = {
-      'School Plan': { color: '#9333EA', bgClass: 'bg-purple-600' },
-      'Multi-Branch Network': { color: '#6366F1', bgClass: 'bg-indigo-600' },
-      'Free Trial Evaluation': { color: '#EC4899', bgClass: 'bg-pink-500' }
-    }
-
-    const segments = Object.entries(counts)
-      .filter(([_, count]) => count > 0)
-      .map(([name, count]) => ({
-        name,
-        count,
-        percentage: Number(((count / total) * 100).toFixed(1)),
-        color: colorMap[name]?.color || '#9333EA',
-        bgClass: colorMap[name]?.bgClass || 'bg-purple-600'
-      }))
-
-    return segments.length > 0 ? segments : [
-      { name: 'School Plan', count: total, percentage: 100.0, color: '#9333EA', bgClass: 'bg-purple-600' }
+    const allTiers = [
+      ...Object.values(tierBuckets),
+      ...Object.values(customBuckets)
     ]
+
+    return allTiers.map(tier => ({
+      ...tier,
+      percentage: total > 0 ? Number(((tier.count / total) * 100).toFixed(1)) : 0
+    }))
   }, [institutes])
 
   // -------------------------------------------------------------
@@ -948,7 +1080,11 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 </span>
                 <span className="text-base sm:text-lg font-black text-slate-900 dark:text-white font-heading mt-0.5 block">
                   {transactionMetric === 'amount' 
-                    ? `₨ ${(transactionYearData.totalYearAmount / 1000).toFixed(0)}K` 
+                    ? (transactionYearData.totalYearAmount >= 1000000 
+                        ? `₨ ${(transactionYearData.totalYearAmount / 1000000).toFixed(2)}M`
+                        : transactionYearData.totalYearAmount >= 1000
+                          ? `₨ ${(transactionYearData.totalYearAmount / 1000).toFixed(1)}K`
+                          : `₨ ${transactionYearData.totalYearAmount.toLocaleString()}`)
                     : transactionYearData.totalYearVolume.toLocaleString()}
                 </span>
               </div>
@@ -958,17 +1094,21 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 </span>
                 <span className="text-base sm:text-lg font-black text-purple-600 dark:text-purple-400 font-heading mt-0.5 block">
                   {transactionMetric === 'amount' 
-                    ? `₨ ${(transactionYearData.averageMonthlyAmount / 1000).toFixed(1)}K` 
+                    ? (transactionYearData.averageMonthlyAmount >= 1000
+                        ? `₨ ${(transactionYearData.averageMonthlyAmount / 1000).toFixed(1)}K`
+                        : `₨ ${transactionYearData.averageMonthlyAmount.toLocaleString()}`)
                     : transactionYearData.averageMonthlyVolume.toLocaleString()}
                 </span>
               </div>
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                  Peak Month ({transactionYearData.peakMonthName})
+                  Peak Month {transactionYearData.peakMonthName !== '—' ? `(${transactionYearData.peakMonthName})` : ''}
                 </span>
                 <span className="text-base sm:text-lg font-black text-slate-900 dark:text-white font-heading mt-0.5 block">
                   {transactionMetric === 'amount' 
-                    ? `₨ ${(transactionYearData.peakMonthValue / 1000).toFixed(1)}K` 
+                    ? (transactionYearData.peakMonthValue >= 1000
+                        ? `₨ ${(transactionYearData.peakMonthValue / 1000).toFixed(1)}K`
+                        : `₨ ${transactionYearData.peakMonthValue.toLocaleString()}`)
                     : transactionYearData.peakMonthValue.toLocaleString()}
                 </span>
               </div>
@@ -990,7 +1130,9 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                 {transactionYearData.months.map((item, idx) => {
                   const maxMetric = transactionMetric === 'amount' ? transactionYearData.maxAmount : transactionYearData.maxVolume
                   const currentVal = transactionMetric === 'amount' ? item.amount : item.volume
-                  const heightPercent = Math.max(10, Math.round((currentVal / (maxMetric || 1)) * 95))
+                  const heightPercent = maxMetric > 0 && currentVal > 0 
+                    ? Math.max(8, Math.round((currentVal / maxMetric) * 92)) 
+                    : 3
                   const isHovered = hoveredMonthIdx === idx
 
                   return (
@@ -1002,16 +1144,23 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                     >
                       {/* Floating Tooltip */}
                       {isHovered && (
-                        <div className="absolute -top-12 z-30 bg-slate-900 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-xl shadow-lg border border-purple-500/40 whitespace-nowrap animate-in fade-in zoom-in-95 pointer-events-none">
-                          <span className="text-purple-300">{item.month} {selectedTransactionYear}:</span>{' '}
-                          <span>{transactionMetric === 'amount' ? `₨ ${item.amount.toLocaleString()}` : `${item.volume.toLocaleString()} txns`}</span>
+                        <div className="absolute -top-14 z-30 bg-slate-900 text-white text-[11px] font-bold px-3 py-2 rounded-xl shadow-xl border border-purple-500/40 whitespace-nowrap animate-in fade-in zoom-in-95 pointer-events-none">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-purple-300">{item.month} {selectedTransactionYear}:</span>
+                            <span>{transactionMetric === 'amount' ? `₨ ${item.amount.toLocaleString()}` : `${item.volume.toLocaleString()} txns`}</span>
+                          </div>
+                          <span className="text-[10px] text-slate-400 font-normal block mt-0.5 font-sans">
+                            {item.note}
+                          </span>
                         </div>
                       )}
 
-                      {/* Peak indicator on April / peak month */}
-                      {item.isPeak && (
+                      {/* Peak indicator on peak month */}
+                      {item.isPeak && currentVal > 0 && (
                         <span className="text-[9px] font-black text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-950/70 px-1.5 py-0.5 rounded-full mb-1">
-                          {transactionMetric === 'amount' ? `₨ ${(item.amount / 1000).toFixed(0)}K` : item.volume}
+                          {transactionMetric === 'amount' 
+                            ? (item.amount >= 1000 ? `₨ ${(item.amount / 1000).toFixed(0)}K` : `₨ ${item.amount}`) 
+                            : item.volume}
                         </span>
                       )}
 
@@ -1019,17 +1168,19 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                       <div 
                         style={{ height: `${heightPercent}%` }}
                         className={`w-full max-w-[28px] rounded-t-lg transition-all duration-300 ${
-                          item.isPeak 
-                            ? 'bg-gradient-to-t from-purple-700 via-purple-600 to-indigo-500 shadow-md shadow-purple-600/30' 
-                            : isHovered 
-                              ? 'bg-purple-500 shadow-xs' 
-                              : 'bg-purple-600/70 hover:bg-purple-600'
+                          currentVal === 0
+                            ? 'bg-slate-200/80 dark:bg-slate-800/80'
+                            : item.isPeak 
+                              ? 'bg-gradient-to-t from-purple-700 via-purple-600 to-indigo-500 shadow-md shadow-purple-600/30' 
+                              : isHovered 
+                                ? 'bg-purple-500 shadow-xs' 
+                                : 'bg-purple-600/70 hover:bg-purple-600'
                         }`}
                       ></div>
 
                       {/* Month Label */}
                       <span className={`text-[10.5px] mt-2 font-semibold transition-colors ${
-                        item.isPeak 
+                        item.isPeak && currentVal > 0
                           ? 'text-purple-700 dark:text-purple-300 font-extrabold' 
                           : isHovered 
                             ? 'text-slate-900 dark:text-white font-bold' 
@@ -1204,9 +1355,26 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                   {(() => {
                     const radius = 40
                     const circumference = 2 * Math.PI * radius // ~251.33
+                    const activeSegments = subscriptionDetails.filter(s => s.count > 0)
                     let accumulatedPercent = 0
 
-                    return subscriptionDetails.map((seg, sIdx) => {
+                    if (activeSegments.length === 0) return null
+
+                    if (activeSegments.length === 1) {
+                      return (
+                        <circle
+                          cx="50"
+                          cy="50"
+                          r={radius}
+                          fill="transparent"
+                          stroke={activeSegments[0].color}
+                          strokeWidth="10"
+                          className="transition-all duration-500"
+                        />
+                      )
+                    }
+
+                    return activeSegments.map((seg, sIdx) => {
                       const strokeDasharray = `${(seg.percentage / 100) * circumference} ${circumference}`
                       const strokeDashoffset = -((accumulatedPercent / 100) * circumference)
                       accumulatedPercent += seg.percentage
@@ -1235,30 +1403,39 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                     {totalSchoolsCount}
                   </span>
                   <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide max-w-[95px] text-center leading-tight">
-                    Total Subscriptions
+                    Total Campuses
                   </span>
                 </div>
               </div>
 
               {/* Legend List matching reference */}
-              <div className="w-full mt-6 space-y-2.5">
+              <div className="w-full mt-6 space-y-2">
                 {subscriptionDetails.map((seg, idx) => (
-                  <div key={idx} className="flex items-center justify-between text-xs py-1 px-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                    <div className="flex items-center gap-2">
+                  <div key={idx} className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border border-transparent hover:border-slate-100 dark:hover:border-slate-800">
+                    <div className="flex items-center gap-2.5">
                       <span 
                         className="w-3 h-3 rounded-full shrink-0 shadow-2xs" 
                         style={{ backgroundColor: seg.color }}
                       />
-                      <span className="font-semibold text-slate-700 dark:text-slate-200">
-                        {seg.name}
-                      </span>
+                      <div>
+                        <span className="font-bold text-slate-800 dark:text-slate-100 block leading-tight">
+                          {seg.name}
+                        </span>
+                        <span className="text-[10px] text-slate-400 block font-sans">
+                          {seg.subName}
+                        </span>
+                      </div>
                     </div>
 
                     <div className="flex items-center gap-2 font-mono">
                       <span className="font-bold text-slate-900 dark:text-white">
                         {seg.count} {seg.count === 1 ? 'school' : 'schools'}
                       </span>
-                      <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                      <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                        seg.count > 0 
+                          ? 'bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300' 
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500'
+                      }`}>
                         {seg.percentage}%
                       </span>
                     </div>
@@ -1376,12 +1553,32 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                           </span>
                         </td>
 
-                        {/* Status */}
+                        {/* Status Toggle Button */}
                         <td className="py-3 px-3 text-right">
-                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                            <span>{staff.status}</span>
-                          </span>
+                          {(() => {
+                            const effectiveStatus = staffStatusOverrides[staff.id] || staff.status || 'Active'
+                            const isActive = effectiveStatus.toLowerCase() === 'active'
+
+                            return (
+                              <button
+                                type="button"
+                                onClick={() => handleToggleStaffStatus(staff.id, staff.name, effectiveStatus)}
+                                className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full border transition-all cursor-pointer shadow-2xs select-none active:scale-95 ${
+                                  isActive
+                                    ? 'bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200/90 dark:border-emerald-800/60'
+                                    : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700'
+                                }`}
+                                title={isActive ? 'Click to toggle Inactive' : 'Click to toggle Active'}
+                              >
+                                <span className={`w-1.5 h-1.5 rounded-full ${
+                                  isActive
+                                    ? 'bg-emerald-500 animate-pulse'
+                                    : 'bg-slate-400'
+                                }`} />
+                                <span>{effectiveStatus}</span>
+                              </button>
+                            )
+                          })()}
                         </td>
 
                       </tr>
