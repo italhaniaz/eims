@@ -893,6 +893,31 @@ export const InstitutesView = () => {
     }
   }
 
+  // Direct toggle between Active and Inactive (Task 3)
+  const handleToggleCampusStatus = async (inst, e) => {
+    if (e) e.stopPropagation()
+    const currentLifecycle = inst.lifecycleStatus || (inst.status === 'Suspended' ? 'Suspended' : 'Active')
+    const isCurrentlyActive = currentLifecycle === 'Active'
+    const newAction = isCurrentlyActive ? 'Suspend' : 'Activate'
+    const newStatusLabel = isCurrentlyActive ? 'Inactive' : 'Active'
+
+    try {
+      await PlatformService.updateInstituteLifecycle(
+        inst.id,
+        newAction,
+        isCurrentlyActive ? 'Toggled to Inactive by Superadmin' : 'Toggled to Active by Superadmin'
+      )
+      refreshData?.()
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('sms_institutes_updated'))
+      }
+      toast.success(`"${inst.name}" is now ${newStatusLabel}`)
+    } catch (err) {
+      console.error(err)
+      toast.error(err.message || 'Failed to update campus status')
+    }
+  }
+
   // ----------------------------------------------------
   // Impersonation / Direct Delegation
   // ----------------------------------------------------
@@ -1725,15 +1750,6 @@ export const InstitutesView = () => {
             <Download className="w-3.5 h-3.5 text-slate-500 shrink-0" />
             <span>Export CSV</span>
           </button>
-
-          <button
-            onClick={openOnboardingWizard}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-xs transition-all cursor-pointer active:scale-95 whitespace-nowrap"
-            title="Launch Campus Onboarding Wizard"
-          >
-            <Plus className="w-3.5 h-3.5 shrink-0" />
-            <span>Onboard Campus</span>
-          </button>
         </div>
       </div>
 
@@ -1761,14 +1777,14 @@ export const InstitutesView = () => {
             <button
               type="button"
               onClick={() => setShowMainFilterPopover(!showMainFilterPopover)}
-              className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+              className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                 showMainFilterPopover || (selectedStatusFilters.length < 3 || selectedTypeFilters.length < 4 || selectedPlanFilters.length < 4)
                   ? 'bg-[#f5eeff] text-emerald-800 border-emerald-200 shadow-xs'
                   : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'
               }`}
+              title="Filter"
             >
-              <Filter className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Filters</span>
+              <Filter className="w-4 h-4 text-emerald-600" />
               {(selectedStatusFilters.length < 3 || selectedTypeFilters.length < 4 || selectedPlanFilters.length < 4) && (
                 <span className="w-5 h-5 bg-emerald-600 text-white rounded-full text-[10px] flex items-center justify-center font-bold">
                   {(selectedStatusFilters.length < 3 ? 1 : 0) + (selectedTypeFilters.length < 4 ? 1 : 0) + (selectedPlanFilters.length < 4 ? 1 : 0)}
@@ -1935,10 +1951,6 @@ export const InstitutesView = () => {
               <List className="w-4 h-4" />
             </button>
           </div>
-
-          <span className="text-xs font-bold bg-[#f5eeff] text-emerald-800 border border-emerald-100 px-3.5 py-2 rounded-xl whitespace-nowrap">
-            Total: {totalInstitutes}
-          </span>
         </div>
       </div>
 
@@ -2022,13 +2034,19 @@ export const InstitutesView = () => {
                         <span className="font-mono text-xs font-semibold px-2 py-0.5 bg-slate-100 text-slate-600 rounded border border-slate-200">
                           {inst.code}
                         </span>
-                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${
-                          isSuspended ? 'bg-rose-50 text-rose-700 border-rose-200' :
-                          isArchived ? 'bg-slate-100 text-slate-600 border-slate-300' :
-                          'bg-emerald-50 text-emerald-700 border-emerald-200'
-                        }`}>
-                          {instLifecycle}
-                        </span>
+                        <button
+                          type="button"
+                          onClick={(e) => handleToggleCampusStatus(inst, e)}
+                          className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border transition-all cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 flex items-center gap-1.5 ${
+                            isSuspended
+                              ? 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'
+                              : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                          }`}
+                          title={`Currently ${isSuspended ? 'Inactive' : 'Active'} — Click to toggle`}
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full ${isSuspended ? 'bg-rose-500' : 'bg-emerald-500'}`} />
+                          <span>{isSuspended ? 'Inactive' : 'Active'}</span>
+                        </button>
                       </div>
                     </div>
 
@@ -2095,27 +2113,18 @@ export const InstitutesView = () => {
 
                   {/* Actions Bar */}
                   <div className="p-3 bg-slate-50/80 border-t border-slate-100 flex flex-col gap-2">
-                    {/* Primary Row: View Details & Direct Launch */}
-                    <div className="grid grid-cols-2 gap-2">
+                    {/* Primary Row: View Details */}
+                    <div>
                       <button
                         type="button"
                         onClick={() => {
                           setViewingDetails(inst)
                           setDetailsTab('overview')
                         }}
-                        className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all cursor-pointer shadow-2xs"
+                        className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all cursor-pointer shadow-2xs"
                       >
                         <Eye className="w-3.5 h-3.5" />
-                        <span>Details</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleImpersonate(inst)}
-                        className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all cursor-pointer shadow-2xs hover:shadow-xs active:scale-95"
-                        title={`Launch ${inst.name} Admin & Portals`}
-                      >
-                        <ExternalLink className="w-3.5 h-3.5" />
-                        <span>Launch</span>
+                        <span>View Details</span>
                       </button>
                     </div>
 
@@ -2213,7 +2222,14 @@ export const InstitutesView = () => {
                       <th className="py-3.5 px-4">Principal / Head</th>
                       <th className="py-3.5 px-4 text-center">Students / Faculty</th>
                       <th className="py-3.5 px-4 text-center">Status</th>
-                      <th className="py-3.5 px-4 text-right">Actions</th>
+                      <th className="py-3.5 px-4 text-right">
+                        <div className="flex items-center justify-end gap-3">
+                          <span className="normal-case text-xs font-bold bg-[#f5eeff] text-emerald-800 border border-emerald-100 px-3 py-1 rounded-xl whitespace-nowrap shadow-2xs">
+                            Total: {totalInstitutes}
+                          </span>
+                          <span>Actions</span>
+                        </div>
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
@@ -2281,16 +2297,24 @@ export const InstitutesView = () => {
                             <span className="text-[10px] text-slate-400 block">{getInstituteStats(inst).teacherCount} faculty</span>
                           </td>
 
-                          {/* Status */}
-                          <td className="py-4 px-4 text-center">
-                            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border ${
-                              isSuspended ? 'bg-rose-50 text-rose-700 border-rose-200' :
-                              isArchived ? 'bg-slate-100 text-slate-600 border-slate-300' :
-                              'bg-emerald-50 text-emerald-700 border-emerald-200'
-                            }`}>
-                              <span className={`w-1.5 h-1.5 rounded-full ${isSuspended ? 'bg-rose-500' : isArchived ? 'bg-slate-400' : 'bg-emerald-500'}`}></span>
-                              {instLifecycle}
-                            </span>
+                          {/* Status Toggle (Active / Inactive) */}
+                          <td className="py-4 px-4 text-center" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              type="button"
+                              onClick={(e) => handleToggleCampusStatus(inst, e)}
+                              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border transition-all cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 ${
+                                !isSuspended
+                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                                  : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'
+                              }`}
+                              title={`Currently ${!isSuspended ? 'Active' : 'Inactive'} — click to toggle to ${!isSuspended ? 'Inactive' : 'Active'}`}
+                            >
+                              <span className={`w-2 h-2 rounded-full ${!isSuspended ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
+                              <span>{!isSuspended ? 'Active' : 'Inactive'}</span>
+                              <span className={`w-7 h-4 flex items-center rounded-full p-0.5 ml-0.5 transition-colors ${!isSuspended ? 'bg-emerald-500 justify-end' : 'bg-rose-400 justify-start'}`}>
+                                <span className="w-3 h-3 rounded-full bg-white shadow-xs" />
+                              </span>
+                            </button>
                           </td>
 
                           {/* Actions */}
@@ -2315,18 +2339,6 @@ export const InstitutesView = () => {
                               >
                                 <Eye className="w-3.5 h-3.5" />
                                 <span>View Details</span>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleImpersonate(inst)
-                                }}
-                                className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs hover:shadow-xs active:scale-95"
-                                title={`Launch ${inst.name} Admin & Portals`}
-                              >
-                                <ExternalLink className="w-3.5 h-3.5" />
-                                <span>Launch</span>
                               </button>
                             </div>
                           </td>
