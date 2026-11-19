@@ -7,14 +7,12 @@ import {
   LogOut, 
   Key, 
   Search,
-  MessageSquare,
   Megaphone,
   Globe,
   School,
   CheckCircle2,
   Sparkles,
   ArrowRight,
-  Palette,
   Moon,
   Sun
 } from 'lucide-react'
@@ -35,7 +33,7 @@ export const SuperadminNavbar = ({
 }) => {
   const { user, logout } = useAuth()
   const { notices = [], recentActivity = [] } = useAppData()
-  const { isDark, toggleThemeMode, preset, activeThemeConfig } = useTheme()
+  const { isDark, toggleThemeMode } = useTheme()
   const [showNotifications, setShowNotifications] = useState(false)
   const [showProfileMenu, setShowProfileMenu] = useState(false)
   const [showPasswordModal, setShowPasswordModal] = useState(false)
@@ -156,21 +154,6 @@ export const SuperadminNavbar = ({
 
       {/* Right Side Icons & Profile Info */}
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-        {/* Theme Studio & Preset Trigger */}
-        <button
-          type="button"
-          onClick={onOpenThemeModal}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] hover:border-[var(--primary)] shadow-2xs transition-all cursor-pointer"
-          title="Theme Studio: Switch School Preset or Custom Palette"
-        >
-          <Palette className="w-3.5 h-3.5 text-[var(--primary)]" />
-          <span className="hidden sm:inline capitalize font-bold">{preset}</span>
-          <span 
-            className="w-2.5 h-2.5 rounded-full shadow-2xs" 
-            style={{ backgroundColor: activeThemeConfig?.primary || 'var(--primary)' }} 
-          />
-        </button>
-
         {/* Quick Dark / Light Mode Toggle */}
         <button
           type="button"
@@ -407,16 +390,7 @@ export const SuperadminNavbar = ({
           )}
         </div>
 
-        {/* 3. Messages / Gateway Shortcut */}
-        <button 
-          onClick={() => onRouteChange('communication')}
-          className="p-2.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50/50 rounded-full transition-colors cursor-pointer"
-          title="Messages & Communication"
-        >
-          <MessageSquare className="w-5 h-5" />
-        </button>
-
-        {/* 4. User Profile */}
+        {/* User Profile */}
         <div className="relative pl-1 sm:pl-2" ref={profileRef}>
           <button 
             onClick={() => setShowProfileMenu(!showProfileMenu)}

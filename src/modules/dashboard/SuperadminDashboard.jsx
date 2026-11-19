@@ -675,20 +675,11 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
         {/* Action Buttons Toolbar */}
         <div className="flex items-center gap-2 flex-wrap">
           <button
-            onClick={() => setIsInstituteModalOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-98"
-            title="Onboard New School"
-          >
-            <Plus className="w-4 h-4 stroke-[2.5]" />
-            <span>Onboard School</span>
-          </button>
-
-          <button
             onClick={() => setIsUserModalOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-800 font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+            className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-98"
             title="Add Platform Staff"
           >
-            <UserPlus className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+            <UserPlus className="w-4 h-4 stroke-[2.2]" />
             <span>Add Staff</span>
           </button>
 
@@ -890,146 +881,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
       </div>
 
       {/* =========================================================
-          SECTION 2: SERVER CONFIGURATION & SYSTEM STATUS BANNER
-          ========================================================= */}
-      <div className="rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-xs relative overflow-hidden">
-        
-        {/* Banner Top Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-purple-100 dark:bg-purple-950/70 text-purple-700 dark:text-purple-300 flex items-center justify-center shrink-0">
-              <Server className="w-4 h-4" />
-            </div>
-            <div>
-              <h2 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white font-heading">
-                Server Configuration - Required For Full System Functionality
-              </h2>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                Core infrastructure microservices and web gateway components powering student portals.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/50">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span>All Systems Operational (99.98% SLA)</span>
-            </span>
-          </div>
-        </div>
-
-        {/* Configuration Checklist Items (Interactive & Configurable) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
-          
-          {/* Config Item 1: Subdomain Support */}
-          <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800/80 flex items-start gap-3 transition-colors hover:border-purple-300 dark:hover:border-purple-800/50">
-            <div className="mt-0.5">
-              <div className="w-5 h-5 rounded-md bg-purple-600 text-white flex items-center justify-center shadow-2xs">
-                <Check className="w-3.5 h-3.5 stroke-[3]" />
-              </div>
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
-                  Subdomain support
-                </span>
-                <button
-                  type="button"
-                  onClick={() => handleOpenConfigModal('subdomain')}
-                  className="text-xs font-bold text-purple-600 dark:text-purple-400 hover:underline cursor-pointer"
-                >
-                  View setup
-                </button>
-              </div>
-              <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
-                Enables each school to have its own subdomain (e.g., <code className="text-purple-600 dark:text-purple-300 font-mono text-[10.5px]">schoolname.smartms.pk</code>). Needed if schools want their own branded web portal.
-              </p>
-            </div>
-          </div>
-
-          {/* Config Item 2: Push Notifications (FCM) */}
-          <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800/80 flex items-start gap-3 transition-colors hover:border-purple-300 dark:hover:border-purple-800/50">
-            <div className="mt-0.5">
-              <div className="w-5 h-5 rounded-md bg-purple-600 text-white flex items-center justify-center shadow-2xs">
-                <Check className="w-3.5 h-3.5 stroke-[3]" />
-              </div>
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
-                  Push notification (FCM)
-                </span>
-                <button
-                  type="button"
-                  onClick={() => handleOpenConfigModal('fcm')}
-                  className="text-xs font-bold text-purple-600 dark:text-purple-400 hover:underline cursor-pointer"
-                >
-                  View setup
-                </button>
-              </div>
-              <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
-                Enables app push notifications using Firebase Cloud Messaging (FCM) for alerts, attendance updates, and fee reminders.
-              </p>
-            </div>
-          </div>
-
-          {/* Config Item 3: 1Link & 1Bill Payment Gateway */}
-          <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800/80 flex items-start gap-3 transition-colors hover:border-purple-300 dark:hover:border-purple-800/50">
-            <div className="mt-0.5">
-              <div className="w-5 h-5 rounded-md bg-purple-600 text-white flex items-center justify-center shadow-2xs">
-                <Check className="w-3.5 h-3.5 stroke-[3]" />
-              </div>
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
-                  1Link &amp; 1Bill Payment Gateway
-                </span>
-                <button
-                  type="button"
-                  onClick={() => handleOpenConfigModal('gateway')}
-                  className="text-xs font-bold text-purple-600 dark:text-purple-400 hover:underline cursor-pointer"
-                >
-                  View setup
-                </button>
-              </div>
-              <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
-                Real-time computerized 3-copy fee voucher verification, 1Link 1Bill consumer codes, and JazzCash corporate clearing.
-              </p>
-            </div>
-          </div>
-
-          {/* Config Item 4: Automated Cloud Backup & Tenant Isolation */}
-          <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800/80 flex items-start gap-3 transition-colors hover:border-purple-300 dark:hover:border-purple-800/50">
-            <div className="mt-0.5">
-              <div className="w-5 h-5 rounded-md bg-purple-600 text-white flex items-center justify-center shadow-2xs">
-                <Check className="w-3.5 h-3.5 stroke-[3]" />
-              </div>
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
-                  Automated Cloud Backup &amp; Tenant Isolation
-                </span>
-                <button
-                  type="button"
-                  onClick={() => handleOpenConfigModal('backup')}
-                  className="text-xs font-bold text-purple-600 dark:text-purple-400 hover:underline cursor-pointer"
-                >
-                  View setup
-                </button>
-              </div>
-              <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
-                Scheduled daily encrypted backups and cross-campus data isolation for complete multi-tenant security.
-              </p>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      {/* =========================================================
-          SECTION 3: MIDDLE ROW (TRANSACTION CHART & REGISTERED SCHOOLS)
+          SECTION 2: MIDDLE ROW (TRANSACTION CHART & REGISTERED SCHOOLS)
           ========================================================= */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-stretch">
         
