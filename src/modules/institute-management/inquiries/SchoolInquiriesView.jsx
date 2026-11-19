@@ -480,10 +480,10 @@ export const SchoolInquiriesView = ({ onRouteChange }) => {
               <Clock className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400 font-heading mt-2">
+          <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-heading mt-2">
             {counts.pending}
           </div>
-          <span className="text-[11px] text-amber-700/80 dark:text-amber-300/80 mt-1 block font-medium">
+          <span className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 block">
             Requires Super Admin action
           </span>
         </div>
@@ -530,10 +530,10 @@ export const SchoolInquiriesView = ({ onRouteChange }) => {
               <XCircle className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl sm:text-3xl font-black text-rose-600 dark:text-rose-400 font-heading mt-2">
+          <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-heading mt-2">
             {counts.rejected}
           </div>
-          <span className="text-[11px] text-rose-700/80 dark:text-rose-300/80 mt-1 block font-medium">
+          <span className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 block">
             Archived applications
           </span>
         </div>
@@ -565,10 +565,10 @@ export const SchoolInquiriesView = ({ onRouteChange }) => {
                 }`}
               >
                 <span>{tab.label}</span>
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                <span className={`text-[11px] font-bold ${
                   activeFilter === tab.id
-                    ? 'bg-purple-100 dark:bg-purple-950/70 text-purple-700 dark:text-purple-300'
-                    : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+                    ? 'text-purple-700 dark:text-purple-300'
+                    : 'text-slate-500 dark:text-slate-400'
                 }`}>
                   {tab.count}
                 </span>
@@ -626,18 +626,13 @@ export const SchoolInquiriesView = ({ onRouteChange }) => {
                   />
                 </th>
                 <th className="py-3 px-4">School & Prefix</th>
-                <th className="py-3 px-4">Contact Person</th>
-                <th className="py-3 px-4">Contact Details</th>
-                <th className="py-3 px-4">Plan / Tier</th>
-                <th className="py-3 px-4">Submission Date</th>
-                <th className="py-3 px-4">Status</th>
                 <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {filteredInquiries.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-slate-400 dark:text-slate-500">
+                  <td colSpan={3} className="py-12 text-center text-slate-400 dark:text-slate-500">
                     <div className="flex flex-col items-center justify-center space-y-2">
                       <div className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
                         <ClipboardList className="w-5 h-5" />
@@ -686,67 +681,6 @@ export const SchoolInquiriesView = ({ onRouteChange }) => {
                             </span>
                           )}
                         </div>
-                      </td>
-
-                      {/* Contact Person */}
-                      <td className="py-3.5 px-4">
-                        <span className="font-semibold text-slate-800 dark:text-slate-200 block">
-                          {inquiry.contactPerson || 'Principal In-Charge'}
-                        </span>
-                        <span className="text-[11px] text-slate-400 dark:text-slate-500 flex items-center gap-1 mt-0.5">
-                          <MapPin className="w-3 h-3" />
-                          <span>{inquiry.city || 'Lahore'}</span>
-                        </span>
-                      </td>
-
-                      {/* Email & Phone */}
-                      <td className="py-3.5 px-4">
-                        <div className="text-slate-700 dark:text-slate-300 font-mono text-[11px] flex items-center gap-1.5">
-                          <Mail className="w-3 h-3 text-slate-400" />
-                          <span>{inquiry.email}</span>
-                        </div>
-                        <div className="text-slate-500 dark:text-slate-400 font-mono text-[11px] flex items-center gap-1.5 mt-0.5">
-                          <Phone className="w-3 h-3 text-slate-400" />
-                          <span>{inquiry.phone || 'N/A'}</span>
-                        </div>
-                      </td>
-
-                      {/* Plan / Tier */}
-                      <td className="py-3.5 px-4">
-                        <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800/60">
-                          {inquiry.planTier || 'Standard'}
-                        </span>
-                      </td>
-
-                      {/* Submission Date */}
-                      <td className="py-3.5 px-4 text-slate-500 dark:text-slate-400 text-[11px]">
-                        {inquiry.submissionDate ? new Date(inquiry.submissionDate).toLocaleDateString('en-GB', {
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric'
-                        }) : 'N/A'}
-                      </td>
-
-                      {/* Status */}
-                      <td className="py-3.5 px-4">
-                        {statusUpper === 'PENDING' && (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50">
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                            <span>Pending</span>
-                          </span>
-                        )}
-                        {statusUpper === 'APPROVED' && (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                            <span>Approved</span>
-                          </span>
-                        )}
-                        {statusUpper === 'REJECTED' && (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800/50">
-                            <XCircle className="w-3.5 h-3.5 text-rose-600" />
-                            <span>Rejected</span>
-                          </span>
-                        )}
                       </td>
 
                       {/* Actions */}
@@ -819,21 +753,32 @@ export const SchoolInquiriesView = ({ onRouteChange }) => {
           <div className="space-y-5 text-xs sm:text-sm">
             
             {/* Header Status Strip */}
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 flex items-center justify-between">
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
               <div>
                 <span className="text-[11px] font-bold text-slate-400 uppercase block">Inquiry Identifier</span>
                 <span className="font-mono font-bold text-slate-800 dark:text-slate-200 text-sm">{viewingInquiry.id}</span>
               </div>
               <div>
-                <span className="text-[11px] font-bold text-slate-400 uppercase block mb-0.5">Application Status</span>
-                <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold inline-block border ${
-                  viewingInquiry.status === 'Approved'
-                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                    : viewingInquiry.status === 'Rejected'
-                    ? 'bg-rose-50 text-rose-700 border-rose-200'
-                    : 'bg-amber-50 text-amber-700 border-amber-200'
+                <span className="text-[11px] font-bold text-slate-400 uppercase block mb-0.5">Submission Date</span>
+                <span className="font-semibold text-slate-800 dark:text-slate-200 text-xs sm:text-sm flex items-center gap-1.5 mt-0.5">
+                  <Calendar className="w-3.5 h-3.5 text-purple-600" />
+                  {viewingInquiry.submissionDate ? new Date(viewingInquiry.submissionDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
+                </span>
+              </div>
+              <div className="sm:text-right">
+                <span className="text-[11px] font-bold text-slate-400 uppercase block mb-0.5">Status</span>
+                <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold inline-flex items-center gap-1.5 border ${
+                  (viewingInquiry.status || '').toUpperCase() === 'APPROVED'
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800/50'
+                    : (viewingInquiry.status || '').toUpperCase() === 'REJECTED'
+                    ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800/50'
+                    : 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800/50'
                 }`}>
-                  {viewingInquiry.status}
+                  <span className={`w-1.5 h-1.5 rounded-full ${
+                    (viewingInquiry.status || '').toUpperCase() === 'APPROVED' ? 'bg-emerald-500' :
+                    (viewingInquiry.status || '').toUpperCase() === 'REJECTED' ? 'bg-rose-500' : 'bg-amber-500 animate-pulse'
+                  }`} />
+                  {viewingInquiry.status || 'Pending'}
                 </span>
               </div>
             </div>
@@ -880,6 +825,37 @@ export const SchoolInquiriesView = ({ onRouteChange }) => {
                 <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-medium flex items-center justify-between">
                   <span>{viewingInquiry.planTier || 'Standard'}</span>
                   <span className="text-[10px] text-purple-600 font-bold uppercase">SaaS License</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">Submission Date</label>
+                <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-medium flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-purple-600" />
+                  <span>
+                    {viewingInquiry.submissionDate 
+                      ? new Date(viewingInquiry.submissionDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+                      : 'N/A'}
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">Status</label>
+                <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold inline-flex items-center gap-1.5 border ${
+                    (viewingInquiry.status || '').toUpperCase() === 'APPROVED'
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800/50'
+                      : (viewingInquiry.status || '').toUpperCase() === 'REJECTED'
+                      ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800/50'
+                      : 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800/50'
+                  }`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${
+                      (viewingInquiry.status || '').toUpperCase() === 'APPROVED' ? 'bg-emerald-500' :
+                      (viewingInquiry.status || '').toUpperCase() === 'REJECTED' ? 'bg-rose-500' : 'bg-amber-500 animate-pulse'
+                    }`} />
+                    {viewingInquiry.status || 'Pending'}
+                  </span>
                 </div>
               </div>
             </div>
