@@ -1023,86 +1023,34 @@ export const SchoolInquiriesView = ({ onRouteChange }) => {
       )}
 
       {/* =========================================================
-          MODAL 2: CONFIRM APPROVAL & PROVISIONING
+          MODAL 2: CONFIRM APPROVAL POPUP
           ========================================================= */}
       {approvingInquiry && (
         <Modal
           isOpen={Boolean(approvingInquiry)}
           onClose={() => setApprovingInquiry(null)}
-          title="Approve School Application & Provision Campus"
-          maxWidth="max-w-lg"
+          title="Approve School Application"
+          maxWidth="max-w-md"
         >
-          <div className="space-y-4 text-xs sm:text-sm">
-            
-            <div className="p-4 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-950 dark:text-emerald-200 flex items-start gap-3">
-              <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-              <div>
-                <span className="font-bold block text-sm">Transactional Campus Provisioning</span>
-                <p className="text-xs text-emerald-800/90 dark:text-emerald-300/90 mt-0.5">
-                  Approving will automatically create the active institute record, provision its database tenant partition, create the initial administrator login account, and set up the default educational modules.
-                </p>
-              </div>
+          <div className="space-y-4 text-center py-2 text-xs sm:text-sm">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto shadow-sm">
+              <CheckCircle2 className="w-6 h-6 stroke-[2.5]" />
             </div>
 
             <div>
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">School Name</label>
-              <input
-                type="text"
-                readOnly
-                value={approvingInquiry.schoolName}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold"
-              />
+              <h3 className="font-bold text-base text-slate-900 dark:text-white">
+                Approve Application?
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed max-w-sm mx-auto">
+                Are you sure you want to approve the application for <strong className="text-slate-800 dark:text-slate-200">{approvingInquiry.schoolName}</strong>?
+              </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">School Code Prefix</label>
-                <input
-                  type="text"
-                  maxLength={6}
-                  value={approvalCodePrefix}
-                  onChange={e => setApprovalCodePrefix(e.target.value.toUpperCase().replace(/[^A-Za-z0-9]/g, ''))}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 font-mono font-bold uppercase text-purple-700 dark:text-purple-300"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Temporary Admin Password</label>
-                <input
-                  type="text"
-                  value={approvalPassword}
-                  onChange={e => setApprovalPassword(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 font-mono"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Administrator Email (Login ID)</label>
-              <input
-                type="text"
-                readOnly
-                value={approvingInquiry.email}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono text-xs"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Super Admin Approval Notes (Optional)</label>
-              <textarea
-                rows={2}
-                value={approvalNotes}
-                onChange={e => setApprovalNotes(e.target.value)}
-                placeholder="e.g. Verified registration documents and approved for 14-day evaluation."
-                className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
-              />
-            </div>
-
-            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2">
+            <div className="pt-2 flex items-center justify-center gap-2.5">
               <button
                 type="button"
                 onClick={() => setApprovingInquiry(null)}
-                className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs hover:bg-slate-200 cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
               >
                 Cancel
               </button>
@@ -1115,17 +1063,16 @@ export const SchoolInquiriesView = ({ onRouteChange }) => {
                 {isProcessingApproval ? (
                   <>
                     <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    <span>Provisioning Campus...</span>
+                    <span>Approving...</span>
                   </>
                 ) : (
                   <>
                     <Check className="w-4 h-4" />
-                    <span>Confirm &amp; Provision</span>
+                    <span>Approve Application</span>
                   </>
                 )}
               </button>
             </div>
-
           </div>
         </Modal>
       )}
