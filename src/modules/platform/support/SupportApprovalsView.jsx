@@ -28,7 +28,8 @@ import {
   Mail,
   Phone,
   MapPin,
-  Key
+  Key,
+  CheckSquare
 } from 'lucide-react'
 import StatCard from '../../../components/common/StatCard'
 import Modal from '../../../components/common/Modal'
@@ -58,6 +59,9 @@ const SupportApprovalsView = () => {
   const [selectedApproval, setSelectedApproval] = useState(null)
   const [approvalNotes, setApprovalNotes] = useState('')
   const [isProcessingApproval, setIsProcessingApproval] = useState(false)
+
+  // Card Eye Button Preview Modal
+  const [previewCard, setPreviewCard] = useState(null)
 
   // CMS Content State
   const [selectedContentKey, setSelectedContentKey] = useState('terms_of_service')
@@ -420,8 +424,8 @@ const SupportApprovalsView = () => {
           showActions={true}
           showAllText="Show all"
           onShowAll={() => { setActiveTab('tickets'); setTicketStatusFilter('ALL'); }}
-          onView={() => { setActiveTab('tickets'); setTicketStatusFilter('ACTIVE'); }}
-          viewTooltip="View Active Inquiries & Reply"
+          onView={() => setPreviewCard('active-tickets')}
+          viewTooltip="View Active Inquiries Summary"
           onAdd={() => setIsNewTicketModalOpen(true)}
           addTooltip="Create Support Ticket"
         />
@@ -435,8 +439,8 @@ const SupportApprovalsView = () => {
           showActions={true}
           showAllText="Show all"
           onShowAll={() => setActiveTab('approvals')}
-          onView={() => setActiveTab('approvals')}
-          viewTooltip="Review Pending Approvals"
+          onView={() => setPreviewCard('pending-approvals')}
+          viewTooltip="View Pending Approvals Summary"
           onAdd={() => setActiveTab('approvals')}
           addTooltip="Process Approval Queue"
         />
@@ -450,8 +454,8 @@ const SupportApprovalsView = () => {
           showActions={true}
           showAllText="Show all"
           onShowAll={() => { setActiveTab('tickets'); setTicketStatusFilter('RESOLVED'); }}
-          onView={() => { setActiveTab('tickets'); setTicketStatusFilter('RESOLVED'); }}
-          viewTooltip="View Resolved Archive"
+          onView={() => setPreviewCard('resolved-tickets')}
+          viewTooltip="View Resolved Archive Summary"
           onAdd={() => setIsNewTicketModalOpen(true)}
           addTooltip="Open New Ticket"
         />
@@ -465,8 +469,8 @@ const SupportApprovalsView = () => {
           showActions={true}
           showAllText="Show all"
           onShowAll={() => setActiveTab('notifications')}
-          onView={() => setActiveTab('notifications')}
-          viewTooltip="Inspect Notification Stream"
+          onView={() => setPreviewCard('notifications')}
+          viewTooltip="View Notification Stream Summary"
           onAdd={() => setActiveTab('notifications')}
           addTooltip="Configure System Notifications"
         />
@@ -1196,6 +1200,268 @@ const SupportApprovalsView = () => {
             )}
           </div>
         </div>
+      )}
+
+      {/* CARD DETAIL PREVIEW MODAL (EYE BUTTON) */}
+      {previewCard && (
+        <Modal
+          isOpen={Boolean(previewCard)}
+          onClose={() => setPreviewCard(null)}
+          title={
+            previewCard === 'active-tickets'
+              ? 'Active Tickets (Unresolved Inquiries)'
+              : previewCard === 'pending-approvals'
+              ? 'Pending Approval Petitions'
+              : previewCard === 'resolved-tickets'
+              ? 'Resolved Tickets Archive'
+              : 'Platform Notification Stream'
+          }
+          maxWidth="max-w-2xl"
+        >
+          <div className="space-y-4 text-xs sm:text-sm">
+            {/* Active Tickets Content */}
+            {previewCard === 'active-tickets' && (
+              <div className="space-y-3">
+                <div className="p-3 bg-blue-50/70 border border-blue-200/60 rounded-xl flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <LifeBuoy className="w-4 h-4 text-blue-600" />
+                    <span className="font-bold text-blue-950 text-xs">
+                      {openTicketsCount} Active Campus Support Inquiries
+                    </span>
+                  </div>
+                  <span className="text-[11px] font-semibold text-blue-700 bg-blue-100/80 px-2 py-0.5 rounded-full">
+                    Awaiting Superadmin Resolution
+                  </span>
+                </div>
+
+                <div className="max-h-80 overflow-y-auto space-y-2.5 pr-1">
+                  {safeTicketsList.filter(t => t && (t.status === 'OPEN' || t.status === 'IN_PROGRESS')).length === 0 ? (
+                    <div className="py-8 text-center text-slate-400">
+                      No unresolved tickets currently pending.
+                    </div>
+                  ) : (
+                    safeTicketsList
+                      .filter(t => t && (t.status === 'OPEN' || t.status === 'IN_PROGRESS'))
+                      .map(t => (
+                        <div
+                          key={t.id}
+                          className="p-3.5 bg-white border border-slate-200/80 rounded-xl hover:border-slate-300 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                        >
+                          <div className="min-w-0 space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono font-bold text-xs text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200/60">
+                                {t.ticketNumber}
+                              </span>
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                t.priority === 'High' || t.priority === 'Critical'
+                                  ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                                  : 'bg-amber-50 text-amber-700 border border-amber-200'
+                              }`}>
+                                {t.priority}
+                              </span>
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                                {t.status}
+                              </span>
+                            </div>
+                            <h4 className="font-bold text-slate-900 text-xs sm:text-sm truncate">
+                              {t.subject}
+                            </h4>
+                            <p className="text-slate-500 text-[11px] truncate">
+                              {t.instituteName} &bull; {t.requesterName}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPreviewCard(null)
+                              handleOpenTicketThread(t)
+                            }}
+                            className="shrink-0 px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                          >
+                            <MessageSquare className="w-3.5 h-3.5" />
+                            <span>Reply Thread</span>
+                          </button>
+                        </div>
+                      ))
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Pending Approvals Content */}
+            {previewCard === 'pending-approvals' && (
+              <div className="space-y-3">
+                <div className="p-3 bg-amber-50/70 border border-amber-200/60 rounded-xl flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-amber-600" />
+                    <span className="font-bold text-amber-950 text-xs">
+                      {pendingApprovalsCount} Educational Institution Petitions Awaiting Review
+                    </span>
+                  </div>
+                  <span className="text-[11px] font-semibold text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-full">
+                    Action Required
+                  </span>
+                </div>
+
+                <div className="max-h-80 overflow-y-auto space-y-2.5 pr-1">
+                  {safeApprovalsList.filter(a => a && a.status === 'PENDING').length === 0 ? (
+                    <div className="py-8 text-center text-slate-400">
+                      No pending approval petitions at this time.
+                    </div>
+                  ) : (
+                    safeApprovalsList
+                      .filter(a => a && a.status === 'PENDING')
+                      .map(a => (
+                        <div
+                          key={a.id}
+                          className="p-3.5 bg-white border border-slate-200/80 rounded-xl hover:border-slate-300 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                        >
+                          <div className="min-w-0 space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono font-bold text-xs text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200/60">
+                                {a.id}
+                              </span>
+                              <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
+                                {a.requestType?.replace(/_/g, ' ')}
+                              </span>
+                            </div>
+                            <h4 className="font-bold text-slate-900 text-xs sm:text-sm truncate">
+                              {a.title}
+                            </h4>
+                            <p className="text-slate-500 text-[11px] truncate">
+                              Petitioner: <strong className="text-slate-800">{a.instituteName}</strong>
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPreviewCard(null)
+                              setSelectedApproval(a)
+                              setApprovalNotes('')
+                            }}
+                            className="shrink-0 px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                          >
+                            <CheckSquare className="w-3.5 h-3.5" />
+                            <span>Review Petition</span>
+                          </button>
+                        </div>
+                      ))
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Resolved Tickets Content */}
+            {previewCard === 'resolved-tickets' && (
+              <div className="space-y-3">
+                <div className="p-3 bg-emerald-50/70 border border-emerald-200/60 rounded-xl flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-emerald-600" />
+                    <span className="font-bold text-emerald-950 text-xs">
+                      {safeTicketsList.filter(t => t && t.status === 'RESOLVED').length} Resolved Support Tickets
+                    </span>
+                  </div>
+                  <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full">
+                    Archive
+                  </span>
+                </div>
+
+                <div className="max-h-80 overflow-y-auto space-y-2.5 pr-1">
+                  {safeTicketsList.filter(t => t && t.status === 'RESOLVED').length === 0 ? (
+                    <div className="py-8 text-center text-slate-400">
+                      No resolved tickets in the archive.
+                    </div>
+                  ) : (
+                    safeTicketsList
+                      .filter(t => t && t.status === 'RESOLVED')
+                      .map(t => (
+                        <div
+                          key={t.id}
+                          className="p-3.5 bg-white border border-slate-200/80 rounded-xl hover:border-slate-300 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                        >
+                          <div className="min-w-0 space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono font-bold text-xs text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200/60">
+                                {t.ticketNumber}
+                              </span>
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                Resolved
+                              </span>
+                            </div>
+                            <h4 className="font-bold text-slate-900 text-xs sm:text-sm truncate">
+                              {t.subject}
+                            </h4>
+                            <p className="text-slate-500 text-[11px] truncate">
+                              {t.instituteName} &bull; {t.requesterName}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPreviewCard(null)
+                              handleOpenTicketThread(t)
+                            }}
+                            className="shrink-0 px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>View Thread</span>
+                          </button>
+                        </div>
+                      ))
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Notification Stream Content */}
+            {previewCard === 'notifications' && (
+              <div className="space-y-3">
+                <div className="p-3 bg-indigo-50/70 border border-indigo-200/60 rounded-xl flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Bell className="w-4 h-4 text-indigo-600" />
+                    <span className="font-bold text-indigo-950 text-xs">
+                      Platform Notification Stream ({dynamicNotifications.length} Events)
+                    </span>
+                  </div>
+                  <span className="text-[11px] font-semibold text-indigo-700 bg-indigo-100/80 px-2 py-0.5 rounded-full">
+                    Synchronized
+                  </span>
+                </div>
+
+                <div className="max-h-80 overflow-y-auto space-y-2.5 pr-1">
+                  {dynamicNotifications.length === 0 ? (
+                    <div className="py-8 text-center text-slate-400">
+                      No notifications in stream.
+                    </div>
+                  ) : (
+                    dynamicNotifications.map(n => (
+                      <div
+                        key={n.id}
+                        className="p-3.5 bg-white border border-slate-200/80 rounded-xl space-y-1"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-slate-900 text-xs sm:text-sm">{n.title}</span>
+                          <span className="text-[10px] text-slate-400">{n.time}</span>
+                        </div>
+                        <p className="text-xs text-slate-600">{n.desc}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-end">
+              <button
+                type="button"
+                onClick={() => setPreviewCard(null)}
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </Modal>
       )}
 
       {/* TICKET REPLY THREAD MODAL */}
