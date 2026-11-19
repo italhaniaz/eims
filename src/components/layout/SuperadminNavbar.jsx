@@ -170,17 +170,17 @@ export const SuperadminNavbar = ({
             className={`flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs ${
               showAnnouncementsMenu || currentRoute === 'announcements'
                 ? 'bg-emerald-600 text-white shadow-xs'
-                : 'bg-[#f5eeff] hover:bg-[#ede0fe] text-emerald-800 hover:text-purple-900 border border-emerald-200/80'
+                : 'bg-[#f5eeff] dark:bg-purple-950/40 hover:bg-[#ede0fe] dark:hover:bg-purple-900/50 text-emerald-800 dark:text-purple-300 hover:text-purple-900 border border-emerald-200/80 dark:border-purple-800/60'
             }`}
             title="Platform Announcements & Broadcast Control"
           >
-            <Megaphone className={`w-3.5 h-3.5 ${showAnnouncementsMenu || currentRoute === 'announcements' ? 'text-white' : 'text-emerald-600'}`} />
+            <Megaphone className={`w-3.5 h-3.5 ${showAnnouncementsMenu || currentRoute === 'announcements' ? 'text-white' : 'text-emerald-600 dark:text-emerald-400'}`} />
             <span className="hidden xs:inline">Announcements</span>
             {landingBanner?.isActive ? (
               <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-extrabold ${
                 showAnnouncementsMenu || currentRoute === 'announcements'
                   ? 'bg-emerald-700 text-purple-100'
-                  : 'bg-emerald-100 text-emerald-700'
+                  : 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300'
               }`}>
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                 <span className="hidden md:inline">Live</span>
@@ -189,7 +189,7 @@ export const SuperadminNavbar = ({
               <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
                 showAnnouncementsMenu || currentRoute === 'announcements'
                   ? 'bg-emerald-700 text-purple-200'
-                  : 'bg-slate-200 text-slate-600'
+                  : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
               }`}>
                 Off
               </span>
@@ -198,16 +198,16 @@ export const SuperadminNavbar = ({
 
           {/* Quick Dropdown Control Panel */}
           {showAnnouncementsMenu && (
-            <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-xl border border-slate-100 py-3 px-4 z-50 animate-in fade-in zoom-in-95 space-y-3.5">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+            <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 py-3 px-4 z-50 animate-in fade-in zoom-in-95 space-y-3.5">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
                 <div>
                   <div className="flex items-center gap-1.5">
-                    <Megaphone className="w-4 h-4 text-emerald-600" />
-                    <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                    <Megaphone className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
                       Announcements Hub
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
+                  <p className="text-[11px] text-slate-400 dark:text-slate-400 mt-0.5">
                     Landing page banner & campus directives
                   </p>
                 </div>
@@ -216,7 +216,7 @@ export const SuperadminNavbar = ({
                     onRouteChange('announcements')
                     setShowAnnouncementsMenu(false)
                   }}
-                  className="text-xs font-bold text-emerald-600 hover:text-purple-800 cursor-pointer flex items-center gap-0.5"
+                  className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:text-purple-800 dark:hover:text-purple-300 cursor-pointer flex items-center gap-0.5"
                 >
                   <span>Full Hub</span>
                   <ArrowRight className="w-3 h-3" />
@@ -224,10 +224,10 @@ export const SuperadminNavbar = ({
               </div>
 
               {/* Quick Landing Page Banner Switch Card */}
-              <div className="bg-[#fcfaff] rounded-xl p-3 border border-emerald-100 space-y-2">
+              <div className="bg-[#fcfaff] dark:bg-slate-800/60 rounded-xl p-3 border border-emerald-100 dark:border-slate-800 space-y-2">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
-                    <Globe className="w-3.5 h-3.5 text-emerald-600" />
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-100">
+                    <Globe className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                     <span>Landing Page Top Banner</span>
                   </div>
                   <button
@@ -235,8 +235,8 @@ export const SuperadminNavbar = ({
                     onClick={handleToggleLandingBanner}
                     className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
                       landingBanner?.isActive
-                        ? 'bg-emerald-100 hover:bg-emerald-200 text-emerald-800 border border-emerald-300'
-                        : 'bg-slate-200 hover:bg-slate-300 text-slate-700'
+                        ? 'bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-950/80 dark:hover:bg-emerald-900 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700'
+                        : 'bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200'
                     }`}
                   >
                     {landingBanner?.isActive ? '● Live (Turn Off)' : '○ Inactive (Turn On)'}
@@ -244,38 +244,42 @@ export const SuperadminNavbar = ({
                 </div>
 
                 {/* Banner mini preview */}
-                <div className="bg-[#f5eeff] border border-emerald-200/90 rounded-lg p-2 text-[11.5px] text-purple-950 font-medium line-clamp-2">
-                  <span className="font-bold text-emerald-800 mr-1">
+                <div className="bg-[#f5eeff] dark:bg-purple-950/50 border border-emerald-200/90 dark:border-purple-800/60 rounded-lg p-2.5 text-[11.5px] font-medium line-clamp-2">
+                  <span className="font-bold text-purple-700 dark:text-purple-300 mr-1.5">
                     {landingBanner?.badgeText || 'New Release'}:
                   </span>
-                  <span>{landingBanner?.message || '14-Day Free Evaluation Tier is now active for all educational institutions.'}</span>
+                  <span className="text-slate-800 dark:text-slate-200">
+                    {landingBanner?.message || '14-Day Free Evaluation Tier is now active for all educational institutions.'}
+                  </span>
                 </div>
               </div>
 
               {/* Campus Directives Status */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold text-slate-700 flex items-center gap-1">
-                    <School className="w-3.5 h-3.5 text-indigo-600" />
+                  <span className="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1">
+                    <School className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                     <span>Active Campus Directives</span>
                   </span>
-                  <span className="text-[11px] font-bold text-slate-500">
+                  <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
                     {announcementsList.filter(a => a.target === 'institute_admin' || a.target === 'all').length} Active
                   </span>
                 </div>
 
-                <div className="divide-y divide-slate-50 max-h-36 overflow-y-auto pr-1">
+                <div className="divide-y divide-slate-50 dark:divide-slate-800 max-h-36 overflow-y-auto pr-1">
                   {announcementsList
                     .filter(a => a.target === 'institute_admin' || a.target === 'all')
                     .slice(0, 3)
                     .map(item => (
                       <div key={item.id} className="py-1.5 text-xs flex items-center justify-between">
                         <div className="min-w-0 pr-2">
-                          <p className="font-semibold text-slate-800 truncate">{item.title}</p>
-                          <p className="text-[10.5px] text-slate-400 truncate">{item.targetCampus} • {item.priority} Priority</p>
+                          <p className="font-semibold text-slate-800 dark:text-slate-100 truncate">{item.title}</p>
+                          <p className="text-[10.5px] text-slate-400 dark:text-slate-400 truncate">{item.targetCampus} • {item.priority} Priority</p>
                         </div>
                         <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 ${
-                          item.priority === 'Urgent' ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-800'
+                          item.priority === 'Urgent' 
+                            ? 'bg-red-50 dark:bg-rose-950/60 text-red-600 dark:text-rose-300' 
+                            : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
                         }`}>
                           {item.priority}
                         </span>
@@ -285,7 +289,7 @@ export const SuperadminNavbar = ({
               </div>
 
               {/* Action Button */}
-              <div className="pt-1 border-t border-slate-100">
+              <div className="pt-1 border-t border-slate-100 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => {
@@ -306,37 +310,37 @@ export const SuperadminNavbar = ({
         <div className="relative" ref={notifRef}>
           <button 
             onClick={() => setShowNotifications(!showNotifications)}
-            className="relative p-2.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50/50 rounded-full transition-colors cursor-pointer"
+            className="relative p-2.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50/50 dark:hover:bg-slate-800 rounded-full transition-colors cursor-pointer"
             title="Notifications"
           >
             <Bell className="w-5 h-5" />
             {unreadCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-emerald-600 rounded-full ring-2 ring-white"></span>
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-emerald-600 rounded-full ring-2 ring-white dark:ring-slate-900"></span>
             )}
           </button>
 
           {/* Notifications Dropdown */}
           {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50 animate-in fade-in zoom-in-95">
-              <div className="px-4 py-2.5 border-b border-slate-100 flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">Notifications</span>
+            <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 py-2 z-50 animate-in fade-in zoom-in-95">
+              <div className="px-4 py-2.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-800 dark:text-white uppercase tracking-wider">Notifications</span>
                 <button 
                   onClick={() => setClearedNotifications(true)}
-                  className="text-[11px] text-emerald-600 hover:text-emerald-800 font-semibold cursor-pointer"
+                  className="text-[11px] text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 font-semibold cursor-pointer"
                 >
                   Mark all read
                 </button>
               </div>
-              <div className="divide-y divide-slate-50 max-h-72 overflow-y-auto">
+              <div className="divide-y divide-slate-50 dark:divide-slate-800 max-h-72 overflow-y-auto">
                 {/* Pending Institution Onboarding Petitions */}
                 {pendingApprovals && pendingApprovals.length > 0 && (
-                  <div className="bg-emerald-50/60 p-2.5 border-b border-emerald-100">
-                    <div className="px-1.5 py-0.5 text-[10px] font-bold text-purple-900 uppercase tracking-wider flex items-center justify-between">
+                  <div className="bg-emerald-50/60 dark:bg-emerald-950/30 p-2.5 border-b border-emerald-100 dark:border-emerald-900/50">
+                    <div className="px-1.5 py-0.5 text-[10px] font-bold text-purple-900 dark:text-purple-300 uppercase tracking-wider flex items-center justify-between">
                       <span className="flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
                         <span>Pending Registrations ({pendingApprovals.length})</span>
                       </span>
-                      <span className="text-[10px] text-emerald-600 font-semibold">Action Required</span>
+                      <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">Action Required</span>
                     </div>
                     {pendingApprovals.slice(0, 3).map((appr) => (
                       <div
@@ -345,16 +349,16 @@ export const SuperadminNavbar = ({
                           onRouteChange('support-approvals')
                           setShowNotifications(false)
                         }}
-                        className="p-2 rounded-xl hover:bg-white transition-all cursor-pointer border border-transparent hover:border-emerald-200 mt-1.5 shadow-2xs"
+                        className="p-2 rounded-xl hover:bg-white dark:hover:bg-slate-800 transition-all cursor-pointer border border-transparent hover:border-emerald-200 dark:hover:border-emerald-800 mt-1.5 shadow-2xs"
                       >
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.2 rounded">
+                          <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/80 px-1.5 py-0.2 rounded">
                             {appr.details?.planTier || 'New Plan'}
                           </span>
-                          <span className="text-[10px] font-semibold text-emerald-600">Review Petition &rarr;</span>
+                          <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">Review Petition &rarr;</span>
                         </div>
-                        <p className="text-xs font-bold text-slate-900 mt-0.5 line-clamp-1">{appr.instituteName}</p>
-                        <p className="text-[10.5px] text-slate-500 line-clamp-1">
+                        <p className="text-xs font-bold text-slate-900 dark:text-white mt-0.5 line-clamp-1">{appr.instituteName}</p>
+                        <p className="text-[10.5px] text-slate-500 dark:text-slate-400 line-clamp-1">
                           Admin: {appr.details?.contactPerson || 'Principal'} • {appr.details?.city || 'Pakistan'}
                         </p>
                       </div>
@@ -364,24 +368,24 @@ export const SuperadminNavbar = ({
 
                 {recentActivity && recentActivity.length > 0 ? (
                   recentActivity.slice(0, 4).map((act, i) => (
-                    <div key={act.id || i} className="px-4 py-2.5 hover:bg-slate-50 transition-colors">
-                      <p className="text-xs font-medium text-slate-800 line-clamp-1">{act.text}</p>
-                      <span className="text-[10px] text-slate-400 mt-0.5 inline-block">{act.time}</span>
+                    <div key={act.id || i} className="px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                      <p className="text-xs font-medium text-slate-800 dark:text-slate-200 line-clamp-1">{act.text}</p>
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 inline-block">{act.time}</span>
                     </div>
                   ))
                 ) : (!pendingApprovals || pendingApprovals.length === 0) && (
-                  <div className="px-4 py-6 text-center text-xs text-slate-400">
+                  <div className="px-4 py-6 text-center text-xs text-slate-400 dark:text-slate-500">
                     No unread notifications.
                   </div>
                 )}
               </div>
-              <div className="px-4 py-2 border-t border-slate-100 bg-slate-50/50">
+              <div className="px-4 py-2 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
                 <button
                   onClick={() => {
                     onRouteChange('support-approvals')
                     setShowNotifications(false)
                   }}
-                  className="text-xs text-emerald-600 hover:text-purple-800 font-semibold cursor-pointer w-full text-center"
+                  className="text-xs text-emerald-600 dark:text-emerald-400 hover:text-purple-800 dark:hover:text-purple-300 font-semibold cursor-pointer w-full text-center"
                 >
                   View Approvals & Requests →
                 </button>
@@ -394,17 +398,17 @@ export const SuperadminNavbar = ({
         <div className="relative pl-1 sm:pl-2" ref={profileRef}>
           <button 
             onClick={() => setShowProfileMenu(!showProfileMenu)}
-            className="flex items-center gap-2.5 p-1 rounded-full hover:bg-slate-50 transition-all cursor-pointer focus:outline-none group"
+            className="flex items-center gap-2.5 p-1 rounded-full hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer focus:outline-none group"
             title="User Profile & Settings"
           >
-            <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-500 text-white font-bold flex items-center justify-center text-xs ring-2 ring-purple-100 shadow-xs">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-500 text-white font-bold flex items-center justify-center text-xs ring-2 ring-purple-100 dark:ring-purple-900 shadow-xs">
               <span>SA</span>
             </div>
             <div className="hidden sm:flex flex-col text-left pr-1">
-              <span className="text-xs font-bold text-slate-800 leading-tight group-hover:text-emerald-800 transition-colors">
+              <span className="text-xs font-bold text-slate-800 dark:text-slate-200 leading-tight group-hover:text-emerald-800 dark:group-hover:text-purple-300 transition-colors">
                 Super Administrator
               </span>
-              <span className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">
+              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider">
                 Super Admin
               </span>
             </div>
@@ -412,24 +416,24 @@ export const SuperadminNavbar = ({
 
           {/* Profile Popover Menu */}
           {showProfileMenu && (
-            <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50 animate-in fade-in zoom-in-95">
-              <div className="px-4 py-3 border-b border-slate-100">
-                <p className="text-xs font-bold text-slate-900">Super Administrator</p>
-                <p className="text-[11px] text-slate-400 font-mono mt-0.5 truncate">{user?.email || 'admin@schoolms.com'}</p>
-                <span className="inline-block mt-2 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-100">
+            <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 py-2 z-50 animate-in fade-in zoom-in-95">
+              <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800">
+                <p className="text-xs font-bold text-slate-900 dark:text-white">Super Administrator</p>
+                <p className="text-[11px] text-slate-400 dark:text-slate-400 font-mono mt-0.5 truncate">{user?.email || 'admin@schoolms.com'}</p>
+                <span className="inline-block mt-2 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-800">
                   Global Admin
                 </span>
               </div>
 
               <div className="py-1">
-                                <button
+                <button
                   onClick={() => {
                     onRouteChange('cross-institute-analytics')
                     setShowProfileMenu(false)
                   }}
-                  className="w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-emerald-50/50 flex items-center gap-2.5 transition-colors cursor-pointer"
+                  className="w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50/50 dark:hover:bg-slate-800 flex items-center gap-2.5 transition-colors cursor-pointer"
                 >
-                  <User className="w-3.5 h-3.5 text-emerald-600" />
+                  <User className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                   <span>Cross-Campus Analytics</span>
                 </button>
 
@@ -438,20 +442,20 @@ export const SuperadminNavbar = ({
                     onRouteChange('users-all')
                     setShowProfileMenu(false)
                   }}
-                  className="w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-emerald-50/50 flex items-center gap-2.5 transition-colors cursor-pointer"
+                  className="w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50/50 dark:hover:bg-slate-800 flex items-center gap-2.5 transition-colors cursor-pointer"
                 >
-                  <School className="w-3.5 h-3.5 text-emerald-600" />
+                  <School className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                   <span>Platform Users & Roles</span>
                 </button>
 
-<button
+                <button
                   onClick={() => {
                     setShowProfileMenu(false)
                     setShowPasswordModal(true)
                   }}
-                  className="w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-emerald-50/50 flex items-center gap-2.5 transition-colors cursor-pointer"
+                  className="w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50/50 dark:hover:bg-slate-800 flex items-center gap-2.5 transition-colors cursor-pointer"
                 >
-                  <Key className="w-3.5 h-3.5 text-emerald-600" />
+                  <Key className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                   <span>Change Password</span>
                 </button>
 
@@ -460,9 +464,9 @@ export const SuperadminNavbar = ({
                     onOpenSettings()
                     setShowProfileMenu(false)
                   }}
-                  className="w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-emerald-50/50 flex items-center gap-2.5 transition-colors cursor-pointer"
+                  className="w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50/50 dark:hover:bg-slate-800 flex items-center gap-2.5 transition-colors cursor-pointer"
                 >
-                  <Settings className="w-3.5 h-3.5 text-emerald-600" />
+                  <Settings className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                   <span>Cloud Settings</span>
                 </button>
 
@@ -471,17 +475,17 @@ export const SuperadminNavbar = ({
                     onRouteChange('announcements')
                     setShowProfileMenu(false)
                   }}
-                  className="w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-emerald-50/50 flex items-center gap-2.5 transition-colors cursor-pointer"
+                  className="w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50/50 dark:hover:bg-slate-800 flex items-center gap-2.5 transition-colors cursor-pointer"
                 >
-                  <Megaphone className="w-3.5 h-3.5 text-emerald-600" />
+                  <Megaphone className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                   <span>Announcements Hub</span>
                 </button>
               </div>
 
-              <div className="border-t border-slate-100 pt-1 mt-1">
+              <div className="border-t border-slate-100 dark:border-slate-800 pt-1 mt-1">
                 <button
                   onClick={() => logout()}
-                  className="w-full text-left px-4 py-2.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2.5 transition-colors cursor-pointer"
+                  className="w-full text-left px-4 py-2.5 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center gap-2.5 transition-colors cursor-pointer"
                 >
                   <LogOut className="w-3.5 h-3.5 text-rose-500" />
                   <span>Sign Out</span>

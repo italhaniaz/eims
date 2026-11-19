@@ -566,14 +566,14 @@ export const NoticeBroadcasterView = () => {
           <div
             className={`border rounded-xl px-4 py-2.5 text-xs font-medium relative flex items-center justify-center transition-all ${
               bannerForm.theme === 'emerald'
-                ? 'bg-emerald-50 text-emerald-950 border-emerald-300'
+                ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-200 border-emerald-300 dark:border-emerald-800'
                 : bannerForm.theme === 'rose'
-                ? 'bg-rose-50 text-rose-950 border-rose-300'
+                ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-950 dark:text-rose-200 border-rose-300 dark:border-rose-800'
                 : bannerForm.theme === 'amber'
-                ? 'bg-amber-50 text-amber-950 border-amber-300'
+                ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-950 dark:text-amber-200 border-amber-300 dark:border-amber-800'
                 : bannerForm.theme === 'indigo'
-                ? 'bg-indigo-50 text-indigo-950 border-indigo-300'
-                : 'bg-[#f5eeff] text-purple-900 border-purple-300'
+                ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-950 dark:text-indigo-200 border-indigo-300 dark:border-indigo-800'
+                : 'bg-[#f5eeff] dark:bg-purple-950/40 text-purple-900 dark:text-purple-200 border-purple-300 dark:border-purple-800'
             }`}
           >
             <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 text-center">

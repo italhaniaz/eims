@@ -599,14 +599,14 @@ export const LandingPage = ({ onNavigateToLogin, onNavigateToDemo }) => {
         <div
           className={`border-b px-4 py-2 text-xs font-medium relative flex items-center justify-center transition-all ${
             landingBanner.theme === 'emerald'
-              ? 'bg-emerald-50 text-emerald-950 border-emerald-200/80'
+              ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-200 border-emerald-200/80 dark:border-emerald-800'
               : landingBanner.theme === 'rose'
-              ? 'bg-rose-50 text-rose-950 border-rose-200/80'
+              ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-950 dark:text-rose-200 border-rose-200/80 dark:border-rose-800'
               : landingBanner.theme === 'amber'
-              ? 'bg-amber-50 text-amber-950 border-amber-200/80'
+              ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-950 dark:text-amber-200 border-amber-200/80 dark:border-amber-800'
               : landingBanner.theme === 'indigo'
-              ? 'bg-indigo-50 text-indigo-950 border-indigo-200/80'
-              : 'bg-[#f5eeff] text-emerald-950 border-emerald-200/80'
+              ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-950 dark:text-indigo-200 border-indigo-200/80 dark:border-indigo-800'
+              : 'bg-[#f5eeff] dark:bg-purple-950/40 text-purple-900 dark:text-purple-200 border-emerald-200/80 dark:border-purple-800'
           }`}
         >
           <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 text-center pr-8 sm:pr-0">
