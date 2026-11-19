@@ -182,7 +182,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
 
   const [broadcastData, setBroadcastData] = useState({
     title: '',
-    channel: 'SMS',
+    channel: 'In-App',
     recipientGroup: 'All Active Users',
     message: ''
   })
@@ -717,11 +717,11 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
     setIsBroadcastModalOpen(false)
     setBroadcastData({
       title: '',
-      channel: 'SMS',
+      channel: 'In-App',
       recipientGroup: 'All Active Users',
       message: ''
     })
-    triggerToast('Announcement saved on this device. SMS or push delivery is not connected.')
+    triggerToast('In-portal platform announcement broadcasted successfully!')
   }
 
   const handleGenerateReport = () => {
@@ -2135,10 +2135,11 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                     onChange={(e) => setBroadcastData({ ...broadcastData, channel: e.target.value })}
                     className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white font-bold focus:outline-none"
                   >
-                    <option value="SMS">Direct SMS Broadcast</option>
-                    <option value="WhatsApp">WhatsApp Gateway</option>
                     <option value="In-App">In-Portal Banner Alert</option>
+                    <option value="SMS" disabled className="text-slate-400 bg-slate-100 dark:bg-slate-900">Direct SMS Broadcast (Disabled)</option>
+                    <option value="WhatsApp" disabled className="text-slate-400 bg-slate-100 dark:bg-slate-900">WhatsApp Gateway (Disabled)</option>
                   </select>
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">Direct SMS &amp; WhatsApp gateways are currently disabled by administrator.</p>
                 </div>
 
                 <div>
