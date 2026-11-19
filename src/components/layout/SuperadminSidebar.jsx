@@ -36,7 +36,7 @@ export const SuperadminSidebar = ({
   const [collapsed, setCollapsed] = useState(false)
 
   // Route group classifications
-  const isCampusesRoute = ['institutes', 'school-inquiries', 'support-approvals', 'platform-billing'].includes(currentRoute)
+  const isCampusesRoute = ['institutes', 'support-approvals', 'platform-billing'].includes(currentRoute)
   const isAccessRoute = ['users-all', 'users-roles', 'security-center', 'personnel-staff', 'personnel-roles'].includes(currentRoute)
   const isStandardsRoute = ['global-templates', 'compliance-policies', 'sa-policies'].includes(currentRoute) || 
     (typeof currentRoute === 'string' && currentRoute.startsWith('sa-policies-'))
@@ -46,7 +46,6 @@ export const SuperadminSidebar = ({
 
   // Real-time dynamic counts
   const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0)
-  const [pendingInquiriesCount, setPendingInquiriesCount] = useState(0)
   const [campusesCount, setCampusesCount] = useState(0)
   const [usersCount, setUsersCount] = useState(0)
 
@@ -105,44 +104,22 @@ export const SuperadminSidebar = ({
       }
     }
 
-    const updateInquiriesCount = () => {
-      try {
-        const raw = localStorage.getItem('sms_school_inquiries')
-        if (raw) {
-          const list = JSON.parse(raw)
-          if (Array.isArray(list)) {
-            const pending = list.filter(i => (i.status || '').toUpperCase() === 'PENDING')
-            setPendingInquiriesCount(pending.length)
-            return
-          }
-        }
-        setPendingInquiriesCount(0)
-      } catch {
-        setPendingInquiriesCount(0)
-      }
-    }
-
     updateCount()
-    updateInquiriesCount()
     updateCampusCount()
     updateUserCount()
     window.addEventListener('sms_approval_created', updateCount)
     window.addEventListener('sms_approvals_updated', updateCount)
-    window.addEventListener('sms_inquiries_updated', updateInquiriesCount)
     window.addEventListener('sms_institutes_updated', updateCampusCount)
     window.addEventListener('sms_users_updated', updateUserCount)
     window.addEventListener('storage', updateCount)
-    window.addEventListener('storage', updateInquiriesCount)
     window.addEventListener('storage', updateCampusCount)
     window.addEventListener('storage', updateUserCount)
     return () => {
       window.removeEventListener('sms_approval_created', updateCount)
       window.removeEventListener('sms_approvals_updated', updateCount)
-      window.removeEventListener('sms_inquiries_updated', updateInquiriesCount)
       window.removeEventListener('sms_institutes_updated', updateCampusCount)
       window.removeEventListener('sms_users_updated', updateUserCount)
       window.removeEventListener('storage', updateCount)
-      window.removeEventListener('storage', updateInquiriesCount)
       window.removeEventListener('storage', updateCampusCount)
       window.removeEventListener('storage', updateUserCount)
     }
@@ -322,30 +299,7 @@ export const SuperadminSidebar = ({
                   </button>
                 </div>
 
-                {/* School Inquiries */}
-                <div className="relative">
-                  {isRouteActive('school-inquiries') && (
-                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-500 rounded-full z-10 shadow-sm shadow-purple-500/50"></div>
-                  )}
-                  <button
-                    onClick={() => handleNavClick('school-inquiries')}
-                    className={`w-full flex items-center justify-between text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
-                      isRouteActive('school-inquiries')
-                        ? 'bg-purple-600/20 text-purple-300 font-semibold border border-purple-500/30'
-                        : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <ClipboardList className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('school-inquiries') ? 'text-purple-400' : 'text-slate-400'}`} />
-                      <span className="whitespace-nowrap truncate">School Inquiries</span>
-                    </div>
-                    {pendingInquiriesCount > 0 && (
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse">
-                        {pendingInquiriesCount}
-                      </span>
-                    )}
-                  </button>
-                </div>
+
 
                 {/* Pending Approvals */}
                 <div className="relative">

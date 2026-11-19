@@ -25,7 +25,6 @@ import DemoComingSoonPage from './modules/landing/DemoComingSoonPage'
 // Lazy-loaded Views for Bundle Performance & Code Splitting (with resilient auto-retry)
 const SuperadminDashboard = lazyWithRetry(() => import('./modules/dashboard/SuperadminDashboard'), 'superadmin-dashboard')
 const InstitutesView = lazyWithRetry(() => import('./modules/institute-management/institutes/InstitutesView'), 'institutes-view')
-const SchoolInquiriesView = lazyWithRetry(() => import('./modules/institute-management/inquiries/SchoolInquiriesView'), 'school-inquiries-view')
 const ModulesControlView = lazyWithRetry(() => import('./modules/platform/modules/ModulesControlView'), 'modules-control')
 const SecurityCenterView = lazyWithRetry(() => import('./modules/platform/security/SecurityCenterView'), 'security-center')
 const CrossInstituteAnalyticsView = lazyWithRetry(() => import('./modules/platform/analytics/CrossInstituteAnalyticsView'), 'cross-institute-analytics')
@@ -138,7 +137,6 @@ const AppContent = () => {
   const VALID_SUPERADMIN_ROUTES = [
     'dashboard',
     'institutes',
-    'school-inquiries',
     'support-approvals',
     'platform-billing',
     'users-all',
@@ -253,9 +251,10 @@ const AppContent = () => {
 
   // Superadmin Route Aliases to normalize shortcuts and prevent invalid fallback
   const SUPERADMIN_ROUTE_ALIASES = {
-    'inquiries': 'school-inquiries',
-    'school-inquiry': 'school-inquiries',
-    'inquiry': 'school-inquiries',
+    'school-inquiries': 'institutes',
+    'inquiries': 'institutes',
+    'school-inquiry': 'institutes',
+    'inquiry': 'institutes',
     'subscriptions': 'platform-billing',
     'billing': 'platform-billing',
     'packages': 'platform-billing',
@@ -494,9 +493,6 @@ const AppContent = () => {
                   )}
                   {superadminRoute === 'institutes' && (
                     <InstitutesView />
-                  )}
-                  {superadminRoute === 'school-inquiries' && (
-                    <SchoolInquiriesView onRouteChange={setSuperadminRoute} />
                   )}
                   {superadminRoute === 'platform-modules' && (
                     <ModulesControlView />
