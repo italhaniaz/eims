@@ -696,27 +696,25 @@ export const SchoolInquiriesView = ({ onRouteChange }) => {
                             <Eye className="w-4 h-4" />
                           </button>
 
-                          {/* Quick Approve (If not approved) */}
+                          {/* Quick Approve */}
                           {statusUpper !== 'APPROVED' && (
                             <button
                               onClick={() => handleOpenApproveModal(inquiry)}
-                              title="Approve & Provision School"
+                              title="Approve School"
                               className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/60 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 transition-colors cursor-pointer"
                             >
                               <Check className="w-4 h-4" />
                             </button>
                           )}
 
-                          {/* Quick Reject (If Pending) */}
-                          {statusUpper === 'PENDING' && (
-                            <button
-                              onClick={() => handleOpenRejectModal(inquiry)}
-                              title="Reject Application"
-                              className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800/60 text-rose-600 dark:text-rose-400 hover:bg-rose-100 transition-colors cursor-pointer"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          )}
+                          {/* Quick Reject / Cross Button */}
+                          <button
+                            onClick={() => handleOpenRejectModal(inquiry)}
+                            title="Reject Application"
+                            className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800/60 text-rose-600 dark:text-rose-400 hover:bg-rose-100 transition-colors cursor-pointer"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
 
                           {/* Delete Button */}
                           <button
