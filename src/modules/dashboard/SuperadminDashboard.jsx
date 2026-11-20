@@ -807,6 +807,24 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
         {/* Action Buttons Toolbar */}
         <div className="flex items-center gap-2 flex-wrap">
           <button
+            onClick={() => onRouteChange?.('institute-feature-control')}
+            className="px-3 py-2 rounded-xl bg-white dark:bg-slate-900 hover:bg-purple-50 dark:hover:bg-purple-950/40 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-800 font-semibold text-xs transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs hover:border-purple-300 dark:hover:border-purple-700 active:scale-98"
+            title="Institute Feature Matrix & Overrides"
+          >
+            <Sliders className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+            <span className="hidden sm:inline">Feature Matrix</span>
+          </button>
+
+          <button
+            onClick={() => onRouteChange?.('admin-team-control')}
+            className="px-3 py-2 rounded-xl bg-white dark:bg-slate-900 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-800 font-semibold text-xs transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs hover:border-indigo-300 dark:hover:border-indigo-700 active:scale-98"
+            title="Internal Admin & Team Governance"
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+            <span className="hidden sm:inline">Team Control</span>
+          </button>
+
+          <button
             onClick={() => setIsUserModalOpen(true)}
             className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-98"
             title="Add Platform Staff"

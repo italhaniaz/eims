@@ -45,6 +45,8 @@ const AuditLogsView = lazyWithRetry(() => import('./modules/audit-logs/AuditLogs
 // Superadmin Platform Governance Modules
 const SuperadminPoliciesView = lazyWithRetry(() => import('./modules/platform/policies/SuperadminPoliciesView'), 'superadmin-policies')
 const SuperadminPlatformSettingsView = lazyWithRetry(() => import('./modules/platform/settings/SuperadminPlatformSettingsView'), 'superadmin-settings')
+const InstituteFeatureControlView = lazyWithRetry(() => import('./modules/platform/features/InstituteFeatureControlView'), 'institute-feature-control')
+const AdminTeamControlView = lazyWithRetry(() => import('./modules/platform/team/AdminTeamControlView'), 'admin-team-control')
 
 // Institute Admin Operational Modules
 const InstituteDashboard = lazyWithRetry(() => import('./modules/dashboard/InstituteDashboard'), 'institute-dashboard')
@@ -154,6 +156,8 @@ const AppContent = () => {
     'platform-settings',
     'sa-settings',
     'platform-modules',
+    'institute-feature-control',
+    'admin-team-control',
     // Policies sub-tabs
     'sa-policies-academic', 'sa-policies-fees', 'sa-policies-attendance',
     'sa-policies-discipline', 'sa-policies-privacy', 'sa-policies-publish',
@@ -267,6 +271,11 @@ const AppContent = () => {
     'approvals': 'support-approvals',
     'support': 'support-approvals',
     'modules': 'platform-modules',
+    'institute-features': 'institute-feature-control',
+    'campus-features': 'institute-feature-control',
+    'platform-team': 'admin-team-control',
+    'team-control': 'admin-team-control',
+    'personnel-team': 'admin-team-control',
     'settings': 'platform-settings',
     'policies': 'compliance-policies',
     'analytics': 'cross-institute-analytics',
@@ -527,6 +536,12 @@ const AppContent = () => {
                   )}
                   {(superadminRoute === 'users-all' || superadminRoute === 'personnel-staff' || superadminRoute === 'users-roles' || superadminRoute === 'personnel-roles') && (
                     <PersonnelManagementView onRouteChange={setSuperadminRoute} />
+                  )}
+                  {superadminRoute === 'institute-feature-control' && (
+                    <InstituteFeatureControlView onRouteChange={setSuperadminRoute} />
+                  )}
+                  {superadminRoute === 'admin-team-control' && (
+                    <AdminTeamControlView onRouteChange={setSuperadminRoute} />
                   )}
 
                   {/* Compliance & Governance Policies */}

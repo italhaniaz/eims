@@ -66,7 +66,9 @@ const ROUTE_LOADERS = {
   'users-all': () => import('../modules/users-management/UsersManagementView'),
   'users-roles': () => import('../modules/users-management/UsersManagementView'),
   'platform-settings': () => import('../modules/platform/settings/SuperadminPlatformSettingsView'),
-  'sa-settings': () => import('../modules/platform/settings/SuperadminPlatformSettingsView')
+  'sa-settings': () => import('../modules/platform/settings/SuperadminPlatformSettingsView'),
+  'institute-feature-control': () => import('../modules/platform/features/InstituteFeatureControlView'),
+  'admin-team-control': () => import('../modules/platform/team/AdminTeamControlView')
 }
 
 // Prefix loaders for tabbed superadmin sub-modules

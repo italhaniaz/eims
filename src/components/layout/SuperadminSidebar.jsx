@@ -21,7 +21,9 @@ import {
   CheckSquare,
   Settings,
   Layers,
-  ClipboardList
+  ClipboardList,
+  Sliders,
+  UserCheck
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { preloadRoute } from '../../utils/modulePreloader'
@@ -36,8 +38,8 @@ export const SuperadminSidebar = ({
   const [collapsed, setCollapsed] = useState(false)
 
   // Route group classifications
-  const isCampusesRoute = ['institutes', 'support-approvals', 'platform-billing'].includes(currentRoute)
-  const isAccessRoute = ['users-all', 'users-roles', 'security-center', 'personnel-staff', 'personnel-roles'].includes(currentRoute)
+  const isCampusesRoute = ['institutes', 'support-approvals', 'platform-billing', 'institute-feature-control'].includes(currentRoute)
+  const isAccessRoute = ['users-roles', 'security-center', 'personnel-roles', 'admin-team-control'].includes(currentRoute)
   const isStandardsRoute = ['global-templates', 'compliance-policies', 'sa-policies'].includes(currentRoute) || 
     (typeof currentRoute === 'string' && currentRoute.startsWith('sa-policies-'))
   const isIntelRoute = ['cross-institute-analytics', 'platform-analytics', 'announcements', 'system-broadcasts'].includes(currentRoute)
@@ -343,6 +345,24 @@ export const SuperadminSidebar = ({
                     <span className="whitespace-nowrap truncate">Subscriptions & Billing</span>
                   </button>
                 </div>
+
+                {/* Institute Feature Control */}
+                <div className="relative">
+                  {isRouteActive('institute-feature-control') && (
+                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-500 rounded-full z-10 shadow-sm shadow-purple-500/50"></div>
+                  )}
+                  <button
+                    onClick={() => handleNavClick('institute-feature-control')}
+                    className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
+                      isRouteActive('institute-feature-control')
+                        ? 'bg-purple-600/20 text-purple-300 font-semibold border border-purple-500/30'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <Sliders className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('institute-feature-control') ? 'text-purple-400' : 'text-slate-400'}`} />
+                    <span className="whitespace-nowrap truncate">Institute Feature Control</span>
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -395,6 +415,24 @@ export const SuperadminSidebar = ({
                   >
                     <ShieldCheck className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('users-roles') || isRouteActive('personnel-roles') ? 'text-purple-400' : 'text-slate-400'}`} />
                     <span className="whitespace-nowrap truncate">Role & Permission</span>
+                  </button>
+                </div>
+
+                {/* Admin & Team Control */}
+                <div className="relative">
+                  {isRouteActive('admin-team-control') && (
+                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-500 rounded-full z-10 shadow-sm shadow-purple-500/50"></div>
+                  )}
+                  <button
+                    onClick={() => handleNavClick('admin-team-control')}
+                    className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
+                      isRouteActive('admin-team-control')
+                        ? 'bg-purple-600/20 text-purple-300 font-semibold border border-purple-500/30'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <UserCheck className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('admin-team-control') ? 'text-purple-400' : 'text-slate-400'}`} />
+                    <span className="whitespace-nowrap truncate">Admin &amp; Team Control</span>
                   </button>
                 </div>
 

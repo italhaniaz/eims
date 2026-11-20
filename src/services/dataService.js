@@ -512,7 +512,129 @@ export const DataService = {
     return store[collectionName] || []
   },
 
+  getStudentQuota(instituteIdOrInst) {
+    let instId = null
+    let instObj = null
+
+    if (typeof instituteIdOrInst === 'string') {
+      instId = instituteIdOrInst
+    } else if (instituteIdOrInst && typeof instituteIdOrInst === 'object') {
+      instId = instituteIdOrInst.id
+      instObj = instituteIdOrInst
+    }
+
+    const store = getStoredData()
+    const institutes = store?.institutes || []
+    const inst = institutes.find(i => i.id === instId || i.code === instId || (i.name && instObj?.name && i.name.toLowerCase() === instObj.name.toLowerCase())) || instObj || institutes[0]
+    const effectiveInstId = inst?.id || instId || 'inst-1'
+
+    // 1. Subscription lookup from localStorage
+    let sub = null
+    try {
+      const localSubs = localStorage.getItem('sms_institute_subscriptions')
+      if (localSubs) {
+        const parsed = JSON.parse(localSubs)
+        if (Array.isArray(parsed)) {
+          sub = parsed.find(s => s && (s.instituteId === effectiveInstId || (s.instituteName && inst?.name && s.instituteName.toLowerCase() === inst.name.toLowerCase())))
+        }
+      }
+    } catch {}
+
+    // 2. Platform plans lookup from localStorage or fallback
+    let plans = [
+      { id: 'plan-trial', name: 'Free Trial Plan', tier: 'Trial', maxStudents: 250, isTrial: true },
+      { id: 'plan-school', name: 'School Plan', tier: 'School', maxStudents: 1500 },
+      { id: 'plan-enterprise', name: 'Multi-Branch School Network', tier: 'School Network', maxStudents: 5000 }
+    ]
+    try {
+      const localPlans = localStorage.getItem('sms_platform_plans')
+      if (localPlans) {
+        const parsed = JSON.parse(localPlans)
+        if (Array.isArray(parsed) && parsed.length > 0) plans = parsed
+      }
+    } catch {}
+
+    let targetPlan = null
+    if (sub?.planId) {
+      targetPlan = plans.find(p => p.id === sub.planId)
+    }
+
+    const tierKeywords = (sub?.planName || inst?.planTier || inst?.planType || inst?.status || '').toLowerCase()
+    if (!targetPlan && tierKeywords) {
+      targetPlan = plans.find(p => {
+        const pName = (p.name || '').toLowerCase()
+        const pTier = (p.tier || '').toLowerCase()
+        const pCode = (p.planCode || '').toLowerCase()
+        if (tierKeywords.includes('trial') && (p.isTrial || p.id === 'plan-trial' || pName.includes('trial') || pTier.includes('trial'))) return true
+        if (pName && tierKeywords.includes(pName)) return true
+        if (pTier && tierKeywords.includes(pTier)) return true
+        if (pCode && tierKeywords.includes(pCode)) return true
+        return false
+      })
+    }
+
+    if (!targetPlan) {
+      if (tierKeywords.includes('trial')) {
+        targetPlan = plans.find(p => p.id === 'plan-trial' || p.isTrial) || plans[0]
+      } else if (tierKeywords.includes('network') || tierKeywords.includes('enterprise')) {
+        targetPlan = plans.find(p => p.id === 'plan-enterprise') || plans[2]
+      } else {
+        targetPlan = plans.find(p => p.id === 'plan-school') || plans[1]
+      }
+    }
+
+    // Determine max students: explicit institute quota, plan limit, or tier defaults
+    let maxStudents = 1500
+    if (Number(inst?.quotaStudents) > 0) {
+      maxStudents = Number(inst.quotaStudents)
+    } else if (Number(inst?.maxStudents) > 0) {
+      maxStudents = Number(inst.maxStudents)
+    } else if (targetPlan?.maxStudents) {
+      maxStudents = Number(targetPlan.maxStudents)
+    } else if (tierKeywords.includes('trial') || targetPlan?.isTrial) {
+      maxStudents = 250
+    } else if (tierKeywords.includes('enterprise') || tierKeywords.includes('network')) {
+      maxStudents = 5000
+    }
+
+    // 3. Current students enrolled in this institute
+    const students = store?.students || []
+    const currentStudents = students.filter(s => {
+      if (!s) return false
+      if (s.instituteId && s.instituteId === effectiveInstId) return true
+      if (inst?.name && s.institute && s.institute.toLowerCase() === inst.name.toLowerCase()) return true
+      if (inst?.code && s.instituteCode && s.instituteCode === inst.code) return true
+      if (!s.instituteId && effectiveInstId === 'inst-1') return true
+      return false
+    }).length
+
+    const remaining = Math.max(0, maxStudents - currentStudents)
+    const isLimitReached = currentStudents >= maxStudents
+    const isNearLimit = !isLimitReached && (currentStudents >= maxStudents * 0.9 || remaining <= 10)
+    const usagePercentage = maxStudents > 0 ? Math.min(100, Math.round((currentStudents / maxStudents) * 100)) : 100
+
+    return {
+      maxStudents,
+      currentStudents,
+      remaining,
+      isLimitReached,
+      isNearLimit,
+      usagePercentage,
+      planName: targetPlan?.name || sub?.planName || inst?.planTier || 'School Plan',
+      planId: targetPlan?.id || sub?.planId || 'plan-school',
+      isTrial: Boolean(targetPlan?.isTrial || tierKeywords.includes('trial')),
+      instituteName: inst?.name || sub?.instituteName || 'Current Campus'
+    }
+  },
+
   async addItem(collectionName, item) {
+    if (collectionName === 'students') {
+      const quota = this.getStudentQuota(item?.instituteId)
+      if (quota && quota.isLimitReached) {
+        throw new Error(`Subscription Plan Student Limit Reached: Your school has reached the maximum capacity of ${quota.maxStudents} students allowed on the ${quota.planName}. Please upgrade your subscription package to add more students.`)
+      }
+    }
+
     let finalItem = {
       ...item,
       id: item.id || `${collectionName.slice(0, 3)}-${Date.now()}`,
@@ -760,6 +882,15 @@ export const DataService = {
 
   async addItemsBatch(collectionName, items = []) {
     if (!Array.isArray(items) || items.length === 0) return []
+
+    if (collectionName === 'students' && items.length > 0) {
+      const targetInstId = items[0]?.instituteId
+      const quota = this.getStudentQuota(targetInstId)
+      if (quota && quota.currentStudents + items.length > quota.maxStudents) {
+        throw new Error(`Subscription Plan Student Limit Reached: Cannot import ${items.length} students. Only ${quota.remaining} seat(s) remaining on ${quota.planName} (Capacity: ${quota.maxStudents}, Enrolled: ${quota.currentStudents}).`)
+      }
+    }
+
     const store = getStoredData()
     if (!store[collectionName]) store[collectionName] = []
 

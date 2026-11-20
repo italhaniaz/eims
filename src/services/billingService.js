@@ -329,6 +329,10 @@ export const BillingService = {
     }
   },
 
+  getInstituteStudentLimit(instituteIdOrInst) {
+    return DataService.getStudentQuota(instituteIdOrInst)
+  },
+
   async updateSubscription(subData) {
     const subs = await this.getSubscriptions()
     const idx = subs.findIndex(s => s.id === subData.id)

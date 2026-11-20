@@ -14,8 +14,12 @@ import {
   Users,
   Plus,
   X,
-  Camera
+  Camera,
+  AlertTriangle,
+  AlertCircle,
+  ShieldAlert
 } from 'lucide-react'
+import { DataService } from '../../../services/dataService'
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
 import { compressAvatarImage } from '../../../utils/profileUtils'
@@ -63,6 +67,11 @@ export const EnrollStudentView = ({
     [editingStudentId, students]
   )
   const isEditMode = Boolean(editingStudent)
+
+  const studentQuota = useMemo(
+    () => DataService.getStudentQuota(currentInstitute?.id || instId),
+    [currentInstitute, instId, students]
+  )
 
   const [step, setStep] = useState(1)
   const [submitting, setSubmitting] = useState(false)
@@ -428,6 +437,11 @@ export const EnrollStudentView = ({
         return
       }
 
+      if (studentQuota?.isLimitReached) {
+        toast?.error?.(`Student enrollment blocked: Maximum plan limit of ${studentQuota.maxStudents} students reached for ${studentQuota.planName}. Please upgrade your subscription package to enroll more students.`)
+        return
+      }
+
       const newStudent = await addItem('students', {
         ...studentPayload,
         feeStatus: feeSummary.net > 0 ? 'Pending' : 'Paid',
@@ -493,13 +507,44 @@ export const EnrollStudentView = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {/* Quota Indicator Pill */}
+          <div
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all ${
+              studentQuota?.isLimitReached
+                ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-300'
+                : studentQuota?.isNearLimit
+                  ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-300'
+                  : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'
+            }`}
+            title={`Sanctioned Plan Limit: ${studentQuota?.maxStudents} students | Enrolled: ${studentQuota?.currentStudents}`}
+          >
+            <div className={`w-2 h-2 rounded-full ${
+              studentQuota?.isLimitReached ? 'bg-rose-500 animate-pulse' : studentQuota?.isNearLimit ? 'bg-amber-500' : 'bg-emerald-500'
+            }`} />
+            <span>Quota: <strong>{studentQuota?.currentStudents || 0}</strong> / <strong>{studentQuota?.maxStudents || 1500}</strong></span>
+            <span className="text-[10px] font-medium opacity-80">({studentQuota?.planName})</span>
+            {studentQuota?.isLimitReached && (
+              <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase bg-rose-200 dark:bg-rose-900 text-rose-900 dark:text-rose-100">
+                Limit Reached
+              </span>
+            )}
+          </div>
+
           <button
             type="button"
-            onClick={() => setStep(1)}
-            className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs cursor-pointer"
+            onClick={() => {
+              if (studentQuota?.isLimitReached) {
+                toast?.warning?.(`Admissions locked: School has reached the capacity limit of ${studentQuota.maxStudents} students on the ${studentQuota.planName}.`)
+              } else {
+                setStep(1)
+              }
+            }}
+            className={`px-3.5 py-2 rounded-xl text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs cursor-pointer ${
+              studentQuota?.isLimitReached ? 'bg-rose-600 hover:bg-rose-700' : 'bg-emerald-600 hover:bg-emerald-700'
+            }`}
           >
-            <UserPlus className="w-3.5 h-3.5" />
-            <span>New Enrollment</span>
+            {studentQuota?.isLimitReached ? <AlertTriangle className="w-3.5 h-3.5 text-amber-200" /> : <UserPlus className="w-3.5 h-3.5" />}
+            <span>{studentQuota?.isLimitReached ? 'Limit Reached' : 'New Enrollment'}</span>
           </button>
           <button
             type="button"
@@ -535,6 +580,51 @@ export const EnrollStudentView = ({
           </button>
         </div>
       </div>
+
+      {/* Subscription Plan Student Limit Warning Banner */}
+      {!isEditMode && studentQuota?.isLimitReached && (
+        <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-rose-50 via-amber-50 to-rose-50 dark:from-rose-950/40 dark:via-amber-950/30 dark:to-rose-950/40 border-2 border-rose-300 dark:border-rose-700/60 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+              <AlertTriangle className="w-5 h-5" />
+            </div>
+            <div className="space-y-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="text-sm font-bold text-rose-950 dark:text-rose-100">
+                  Student Capacity Limit Reached ({studentQuota.currentStudents} / {studentQuota.maxStudents} Students)
+                </h3>
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-rose-200 dark:bg-rose-900 text-rose-900 dark:text-rose-100">
+                  {studentQuota.planName}
+                </span>
+              </div>
+              <p className="text-xs text-rose-900 dark:text-rose-200 leading-relaxed">
+                Your institution has reached the maximum sanctioned student limit ({studentQuota.maxStudents} students) on the <strong>{studentQuota.planName}</strong>. Further student admissions and enrollments are restricted.
+              </p>
+              <p className="text-[11px] font-semibold text-rose-700 dark:text-rose-300">
+                Please contact your Platform Administrator to upgrade your SaaS subscription tier to allow more students.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => onRouteChange?.('inst-students')}
+            className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shrink-0 transition-all shadow-sm cursor-pointer"
+          >
+            View Enrolled Roster
+          </button>
+        </div>
+      )}
+
+      {!isEditMode && studentQuota?.isNearLimit && !studentQuota?.isLimitReached && (
+        <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>
+              <strong>Subscription Capacity Advisory:</strong> {studentQuota.currentStudents} / {studentQuota.maxStudents} students enrolled ({studentQuota.remaining} seat{studentQuota.remaining === 1 ? '' : 's'} remaining on {studentQuota.planName}).
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Main 5-Step Wizard Container */}
       <form
@@ -1372,10 +1462,22 @@ export const EnrollStudentView = ({
           ) : (
             <button
               type="submit"
-              disabled={submitting}
-              className="px-5 py-2 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-50"
+              disabled={submitting || (!isEditMode && studentQuota?.isLimitReached)}
+              title={!isEditMode && studentQuota?.isLimitReached ? `Limit of ${studentQuota.maxStudents} students reached for ${studentQuota.planName}` : ''}
+              className={`px-5 py-2 rounded-lg text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-all ${
+                !isEditMode && studentQuota?.isLimitReached
+                  ? 'bg-rose-500/70 dark:bg-rose-800/50 cursor-not-allowed opacity-80'
+                  : 'bg-sky-600 hover:bg-sky-700 cursor-pointer disabled:opacity-50'
+              }`}
             >
-              <span>{submitting ? (isEditMode ? 'Updating...' : 'Submitting...') : (isEditMode ? 'Update student' : 'Submit form')}</span>
+              {!isEditMode && studentQuota?.isLimitReached && <AlertTriangle className="w-3.5 h-3.5 text-amber-200" />}
+              <span>
+                {submitting
+                  ? (isEditMode ? 'Updating...' : 'Submitting...')
+                  : (!isEditMode && studentQuota?.isLimitReached)
+                    ? `Enrollment Locked (${studentQuota.maxStudents} Limit)`
+                    : (isEditMode ? 'Update student' : 'Submit form')}
+              </span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           )}
