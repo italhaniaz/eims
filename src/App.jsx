@@ -258,11 +258,11 @@ const AppContent = () => {
     'subscriptions': 'platform-billing',
     'billing': 'platform-billing',
     'packages': 'platform-billing',
-    'users': 'users-all',
+    'users': 'users-roles',
     'roles': 'users-roles',
-    'staff': 'users-all',
-    'personnel': 'users-all',
-    'personnel-staff': 'users-all',
+    'staff': 'users-roles',
+    'personnel': 'users-roles',
+    'personnel-staff': 'users-roles',
     'personnel-roles': 'users-roles',
     'approvals': 'support-approvals',
     'support': 'support-approvals',
@@ -525,11 +525,8 @@ const AppContent = () => {
                   {(superadminRoute === 'cross-institute-analytics' || superadminRoute === 'platform-analytics') && (
                     <CrossInstituteAnalyticsView />
                   )}
-                  {(superadminRoute === 'users-all' || superadminRoute === 'personnel-staff') && (
-                    <PersonnelManagementView defaultTab="staff" onRouteChange={setSuperadminRoute} />
-                  )}
-                  {(superadminRoute === 'users-roles' || superadminRoute === 'personnel-roles') && (
-                    <PersonnelManagementView defaultTab="roles" onRouteChange={setSuperadminRoute} />
+                  {(superadminRoute === 'users-all' || superadminRoute === 'personnel-staff' || superadminRoute === 'users-roles' || superadminRoute === 'personnel-roles') && (
+                    <PersonnelManagementView onRouteChange={setSuperadminRoute} />
                   )}
 
                   {/* Compliance & Governance Policies */}

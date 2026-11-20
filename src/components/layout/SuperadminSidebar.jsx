@@ -380,31 +380,6 @@ export const SuperadminSidebar = ({
 
             {(!collapsed || isMobileOpen) && accessOpen && (
               <div className="mt-1 pl-3.5 space-y-1 border-l border-slate-800 ml-5">
-                {/* Staff (Manage Staff) */}
-                <div className="relative">
-                  {(isRouteActive('users-all') || isRouteActive('personnel-staff')) && (
-                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-500 rounded-full z-10 shadow-sm shadow-purple-500/50"></div>
-                  )}
-                  <button
-                    onClick={() => handleNavClick('users-all')}
-                    className={`w-full flex items-center justify-between text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
-                      isRouteActive('users-all') || isRouteActive('personnel-staff')
-                        ? 'bg-purple-600/20 text-purple-300 font-semibold border border-purple-500/30'
-                        : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <Users className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('users-all') || isRouteActive('personnel-staff') ? 'text-purple-400' : 'text-slate-400'}`} />
-                      <span className="whitespace-nowrap truncate">Staff (Manage Staff)</span>
-                    </div>
-                    {usersCount > 0 && (
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
-                        {usersCount}
-                      </span>
-                    )}
-                  </button>
-                </div>
-
                 {/* Role & Permission */}
                 <div className="relative">
                   {(isRouteActive('users-roles') || isRouteActive('personnel-roles')) && (
