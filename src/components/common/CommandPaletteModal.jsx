@@ -29,7 +29,8 @@ import {
   CreditCard,
   FileSpreadsheet,
   Activity,
-  LifeBuoy
+  LifeBuoy,
+  UserCheck
 } from 'lucide-react'
 import { useAppData } from '../../context/AppDataContext'
 import { useAuth } from '../../context/AuthContext'
@@ -142,20 +143,12 @@ export const CommandPaletteModal = ({ isOpen, onClose, onNavigate, onOpenSetting
           keywords: ['campuses', 'schools', 'branches', 'institutes', 'directory'] 
         },
         { 
-          id: 'nav-users', 
-          title: 'Users Directory & Accounts', 
+          id: 'nav-admin-team', 
+          title: 'Admin Team & Roles Governance', 
           category: 'RBAC Security', 
-          route: 'users-all', 
-          icon: Users, 
-          keywords: ['users', 'admins', 'logins', 'accounts', 'passwords', 'profiles'] 
-        },
-        { 
-          id: 'nav-roles', 
-          title: 'Role Permissions & Access Matrix', 
-          category: 'RBAC Security', 
-          route: 'users-roles', 
-          icon: ShieldCheck, 
-          keywords: ['roles', 'permissions', 'access control', 'superadmin', 'matrix', 'privileges'] 
+          route: 'admin-team-control', 
+          icon: UserCheck, 
+          keywords: ['users', 'admins', 'team', 'roles', 'governance', 'accounts', 'permissions'] 
         },
         { 
           id: 'nav-audit', 

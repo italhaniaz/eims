@@ -141,8 +141,6 @@ const AppContent = () => {
     'institutes',
     'support-approvals',
     'platform-billing',
-    'users-all',
-    'users-roles',
     'security-center',
     'global-templates',
     'compliance-policies',
@@ -262,12 +260,14 @@ const AppContent = () => {
     'subscriptions': 'platform-billing',
     'billing': 'platform-billing',
     'packages': 'platform-billing',
-    'users': 'users-roles',
-    'roles': 'users-roles',
-    'staff': 'users-roles',
-    'personnel': 'users-roles',
-    'personnel-staff': 'users-roles',
-    'personnel-roles': 'users-roles',
+    'users': 'admin-team-control',
+    'roles': 'admin-team-control',
+    'staff': 'admin-team-control',
+    'personnel': 'admin-team-control',
+    'personnel-staff': 'admin-team-control',
+    'personnel-roles': 'admin-team-control',
+    'users-roles': 'admin-team-control',
+    'users-all': 'admin-team-control',
     'approvals': 'support-approvals',
     'support': 'support-approvals',
     'modules': 'platform-modules',
@@ -533,9 +533,6 @@ const AppContent = () => {
                   )}
                   {(superadminRoute === 'cross-institute-analytics' || superadminRoute === 'platform-analytics') && (
                     <CrossInstituteAnalyticsView />
-                  )}
-                  {(superadminRoute === 'users-all' || superadminRoute === 'personnel-staff' || superadminRoute === 'users-roles' || superadminRoute === 'personnel-roles') && (
-                    <PersonnelManagementView onRouteChange={setSuperadminRoute} />
                   )}
                   {superadminRoute === 'institute-feature-control' && (
                     <InstituteFeatureControlView onRouteChange={setSuperadminRoute} />

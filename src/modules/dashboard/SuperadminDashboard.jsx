@@ -1619,10 +1619,10 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
             <span>Granular role-based access control (RBAC) enforced platform-wide.</span>
             <button
-              onClick={() => onRouteChange && onRouteChange('users-all')}
+              onClick={() => onRouteChange && onRouteChange('admin-team-control')}
               className="font-bold text-purple-600 dark:text-purple-400 hover:underline cursor-pointer"
             >
-              Full User Directory →
+              Admin Team & Roles Control →
             </button>
           </div>
         </div>
