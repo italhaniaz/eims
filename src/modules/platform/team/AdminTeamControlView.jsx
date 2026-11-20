@@ -354,9 +354,7 @@ export const AdminTeamControlView = ({ onRouteChange, isEmbedded = false }) => {
                 Platform Console
               </span>
               <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-              <span className="cursor-pointer hover:text-purple-600 dark:hover:text-purple-400 transition-colors" onClick={() => onRouteChange?.('users-roles')}>
-                Personnel Management
-              </span>
+              <span>Personnel Management</span>
               <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
               <span className="text-purple-600 dark:text-purple-400 font-bold">Admin &amp; Team Control</span>
             </div>
