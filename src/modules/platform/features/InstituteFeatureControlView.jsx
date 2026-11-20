@@ -308,7 +308,7 @@ export const InstituteFeatureControlView = ({ onRouteChange }) => {
   }, [institutes])
 
   return (
-    <div className="space-y-6 pb-12 max-w-[1600px] mx-auto text-slate-800 dark:text-slate-100">
+    <div className="p-4 sm:p-6 md:p-8 lg:p-8 pb-16 space-y-6 max-w-[1520px] mx-auto text-slate-800 dark:text-slate-100 transition-colors duration-200">
       {/* 1. TOP HEADER & BREADCRUMBS */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
         <div>

@@ -26,7 +26,7 @@ export default function PersonnelManagementView({ defaultTab = 'roles', onRouteC
   }
 
   return (
-    <div className="space-y-6">
+    <div className="p-4 sm:p-6 md:p-8 lg:p-8 pb-16 space-y-6 max-w-[1520px] mx-auto text-slate-800 dark:text-slate-100 transition-colors duration-200">
       {/* Top Personnel Navigation / Sub-nav Tabs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
         <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
@@ -69,7 +69,7 @@ export default function PersonnelManagementView({ defaultTab = 'roles', onRouteC
       {activeTab === 'roles' ? (
         <RoleManagementView />
       ) : (
-        <AdminTeamControlView onRouteChange={onRouteChange} />
+        <AdminTeamControlView onRouteChange={onRouteChange} isEmbedded={true} />
       )}
     </div>
   )
