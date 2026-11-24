@@ -448,6 +448,19 @@ const SubscriptionsBillingView = () => {
   // --- Subscriptions Filter Popover State with Checkboxes ---
   const [showSubFilterPopover, setShowSubFilterPopover] = useState(false)
   const subFilterPopoverRef = useRef(null)
+  const plansSectionRef = useRef(null)
+
+  const handleNavigateToPlans = () => {
+    setActiveTab('plans')
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        if (plansSectionRef.current) {
+          plansSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+      }, 50)
+    })
+  }
+
   const [selectedSubStatusFilters, setSelectedSubStatusFilters] = useState(['ACTIVE', 'TRIAL', 'OVERDUE'])
   const [selectedPlanTierFilters, setSelectedPlanTierFilters] = useState(['plan-trial', 'plan-school', 'plan-enterprise'])
   const [selectedCycleFilters, setSelectedCycleFilters] = useState(['monthly', 'quarterly', 'yearly', 'annual'])
@@ -665,9 +678,9 @@ const SubscriptionsBillingView = () => {
           color="emerald"
           showActions={true}
           showAllText="Show all"
-          onShowAll={() => setActiveTab('invoices')}
-          onView={() => setActiveTab('invoices')}
-          viewTooltip="View Revenue Ledger & Invoices"
+          onShowAll={handleNavigateToPlans}
+          onView={handleNavigateToPlans}
+          viewTooltip="View Subscription Packages & Tiers"
           onAdd={() => setIsCreateInvoiceModalOpen(true)}
           addTooltip="Create Platform Invoice"
         />
@@ -680,9 +693,9 @@ const SubscriptionsBillingView = () => {
           color="blue"
           showActions={true}
           showAllText="Show all"
-          onShowAll={() => setActiveTab('overview')}
-          onView={() => setActiveTab('overview')}
-          viewTooltip="View Platform Financial Overview"
+          onShowAll={handleNavigateToPlans}
+          onView={handleNavigateToPlans}
+          viewTooltip="View Subscription Packages & Tiers"
           onAdd={handleExportCSV}
           addTooltip="Export Billing CSV Audit"
         />
@@ -1233,7 +1246,7 @@ const SubscriptionsBillingView = () => {
         const enterpriseSubsCount = subscriptions.filter(s => s.planName && (s.planName.toLowerCase().includes('enterprise') || s.planName.toLowerCase().includes('network'))).length
 
         return (
-          <div className="space-y-6">
+          <div ref={plansSectionRef} className="space-y-6">
             {/* Header with Title and Billing Cycle Switcher */}
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
               <div>
