@@ -693,8 +693,7 @@ const SubscriptionsBillingView = () => {
           onShowAll={handleNavigateToPlans}
           onView={handleNavigateToPlans}
           viewTooltip="View Subscription Packages & Tiers"
-          onAdd={() => setIsCreateInvoiceModalOpen(true)}
-          addTooltip="Create Platform Invoice"
+          showAdd={false}
         />
         <StatCard
           icon={TrendingUp}
@@ -722,8 +721,7 @@ const SubscriptionsBillingView = () => {
           onShowAll={() => setActiveTab('subscriptions')}
           onView={() => setActiveTab('subscriptions')}
           viewTooltip="Manage Active Subscriptions"
-          onAdd={() => setIsCreateInvoiceModalOpen(true)}
-          addTooltip="Add Subscription / Invoice"
+          showAdd={false}
         />
         <StatCard
           icon={AlertTriangle}
@@ -737,8 +735,7 @@ const SubscriptionsBillingView = () => {
           onShowAll={() => { setActiveTab('invoices'); setStatusFilter('OVERDUE'); }}
           onView={() => { setActiveTab('invoices'); setStatusFilter('OVERDUE'); }}
           viewTooltip="View Overdue Invoices"
-          onAdd={() => setIsCreateInvoiceModalOpen(true)}
-          addTooltip="Create & Issue Invoice Reminder"
+          showAdd={false}
         />
       </div>
 
