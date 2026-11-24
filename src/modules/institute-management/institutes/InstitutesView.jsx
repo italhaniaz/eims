@@ -1045,47 +1045,8 @@ export const InstitutesView = () => {
   })
   const [editTab, setEditTab] = useState('profile')
   const [isEditCustomCity, setIsEditCustomCity] = useState(false)
-  const editScrollContainerRef = useRef(null)
-  const editProfileRef = useRef(null)
-  const editLocationRef = useRef(null)
-  const editContactRef = useRef(null)
-  const editPlanRef = useRef(null)
-
   const handleScrollToSection = (tabId) => {
     setEditTab(tabId)
-    const targetMap = {
-      profile: editProfileRef.current,
-      location: editLocationRef.current,
-      contact: editContactRef.current,
-      plan: editPlanRef.current
-    }
-    const target = targetMap[tabId]
-    const container = editScrollContainerRef.current
-    if (target && container) {
-      const topOffset = target.offsetTop - container.offsetTop
-      container.scrollTo({ top: Math.max(0, topOffset - 8), behavior: 'smooth' })
-    }
-  }
-
-  const handleEditScroll = (e) => {
-    const container = e.currentTarget
-    const scrollTop = container.scrollTop
-    const sections = [
-      { id: 'profile', ref: editProfileRef },
-      { id: 'location', ref: editLocationRef },
-      { id: 'contact', ref: editContactRef },
-      { id: 'plan', ref: editPlanRef }
-    ]
-    for (let i = sections.length - 1; i >= 0; i--) {
-      const el = sections[i].ref.current
-      if (el) {
-        const offset = el.offsetTop - container.offsetTop
-        if (scrollTop >= offset - 70) {
-          setEditTab(sections[i].id)
-          break
-        }
-      }
-    }
   }
 
   // Geographic calculations for Edit Modal
@@ -1152,9 +1113,6 @@ export const InstitutesView = () => {
     setIsEditCustomCity(Boolean(isCustomCity))
     const resolvedTab = initialTab === 'quotas' ? 'plan' : (initialTab || 'profile')
     setEditTab(resolvedTab)
-    setTimeout(() => {
-      handleScrollToSection(resolvedTab)
-    }, 120)
   }
 
   const handleEditCountryChange = (selectedCountry) => {
@@ -1237,14 +1195,17 @@ export const InstitutesView = () => {
     e.preventDefault()
     if (!editFormData.name?.trim()) {
       toast.error('Institute Official Name is required.')
+      setEditTab('profile')
       return
     }
     if (!editFormData.code?.trim()) {
       toast.error('Institute Code is required.')
+      setEditTab('profile')
       return
     }
     if (!editFormData.principal?.trim()) {
       toast.error('Head / Principal Name is required.')
+      setEditTab('profile')
       return
     }
 
@@ -4207,7 +4168,7 @@ export const InstitutesView = () => {
                       <button
                         key={t.id}
                         type="button"
-                        onClick={() => handleScrollToSection(t.id)}
+                        onClick={() => setEditTab(t.id)}
                         className={`w-full text-left px-3 py-2.5 rounded-xl transition-all cursor-pointer group flex items-start gap-2.5 ${
                           isActive
                             ? 'bg-emerald-600 text-white font-bold shadow-sm'
@@ -4231,14 +4192,11 @@ export const InstitutesView = () => {
                 </div>
               </aside>
 
-              {/* Main Content: All Sections on a Single Scrollable Screen */}
-              <div
-                ref={editScrollContainerRef}
-                onScroll={handleEditScroll}
-                className="flex-1 overflow-y-auto max-h-[64vh] pr-2 space-y-7 scroll-smooth"
-              >
+              {/* Main Content: Only the Selected Section is Displayed */}
+              <div className="flex-1 overflow-y-auto max-h-[64vh] pr-2">
                 {/* SECTION 1: Profile & Tier */}
-                <div ref={editProfileRef} id="section-profile" className="space-y-3.5 pt-1">
+                {editTab === 'profile' && (
+                  <div id="section-profile" className="space-y-3.5 pt-1 animate-in fade-in duration-150">
                   <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
                     <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                       <Building2 className="w-4 h-4" />
@@ -4360,9 +4318,11 @@ export const InstitutesView = () => {
                     </div>
                   </div>
                 </div>
+                )}
 
                 {/* SECTION 2: Location & Campus */}
-                <div ref={editLocationRef} id="section-location" className="space-y-3.5 pt-4 border-t border-slate-100 dark:border-slate-800">
+                {editTab === 'location' && (
+                <div id="section-location" className="space-y-3.5 pt-1 animate-in fade-in duration-150">
                   <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
                     <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                       <MapPin className="w-4 h-4" />
@@ -4468,9 +4428,11 @@ export const InstitutesView = () => {
                     />
                   </div>
                 </div>
+                )}
 
                 {/* SECTION 3: Contact Details */}
-                <div ref={editContactRef} id="section-contact" className="space-y-3.5 pt-4 border-t border-slate-100 dark:border-slate-800">
+                {editTab === 'contact' && (
+                <div id="section-contact" className="space-y-3.5 pt-1 animate-in fade-in duration-150">
                   <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
                     <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                       <Phone className="w-4 h-4" />
@@ -4516,9 +4478,11 @@ export const InstitutesView = () => {
                     />
                   </div>
                 </div>
+                )}
 
                 {/* SECTION 4: Plan & Quotas */}
-                <div ref={editPlanRef} id="section-plan" className="space-y-3.5 pt-4 border-t border-slate-100 dark:border-slate-800">
+                {editTab === 'plan' && (
+                <div id="section-plan" className="space-y-3.5 pt-1 animate-in fade-in duration-150">
                   <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
                     <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                       <Layers className="w-4 h-4" />
@@ -4641,6 +4605,7 @@ export const InstitutesView = () => {
                     </div>
                   </div>
                 </div>
+                )}
               </div>
             </div>
 
@@ -4654,13 +4619,25 @@ export const InstitutesView = () => {
                 Cancel
               </button>
 
-              <button
-                type="submit"
-                className="px-6 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
-              >
-                <Check className="w-3.5 h-3.5" />
-                <span>Save Changes</span>
-              </button>
+              <div className="flex items-center gap-2">
+                {editTab !== 'plan' && (
+                  <button
+                    type="button"
+                    onClick={handleEditNext}
+                    className="px-4 py-2 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/50 border border-emerald-200 dark:border-emerald-800 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <span>Next Option →</span>
+                  </button>
+                )}
+
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Save Changes</span>
+                </button>
+              </div>
             </div>
           </form>
         </Modal>
