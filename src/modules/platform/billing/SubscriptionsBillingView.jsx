@@ -71,6 +71,7 @@ const SubscriptionsBillingView = () => {
 
   // Delete plan confirm modal
   const [planToDelete, setPlanToDelete] = useState(null)
+  const [isManageCustomModalOpen, setIsManageCustomModalOpen] = useState(false)
 
   // Super Admin Overrides Modals
   const [isWaiveModalOpen, setIsWaiveModalOpen] = useState(false)
@@ -110,6 +111,17 @@ const SubscriptionsBillingView = () => {
       return !isNaN(days) && days <= 3 && days >= 0
     })
   }, [subscriptions])
+
+  const customPlans = useMemo(() => {
+    return (plans || []).filter(p =>
+      !['plan-trial', 'plan-primary-middle', 'plan-matric', 'plan-school', 'plan-enterprise'].includes(p.id) &&
+      !['Trial', 'Primary & Middle', 'Matric', 'School', 'Enterprise'].includes(p.tier) &&
+      !p.isTrial &&
+      Number(p.pricePKR) > 0 &&
+      !p.name?.toLowerCase().includes('primary') &&
+      !p.name?.toLowerCase().includes('matric')
+    )
+  }, [plans])
 
   const fetchBillingData = async () => {
     setLoading(true)
@@ -232,14 +244,14 @@ const SubscriptionsBillingView = () => {
     setEditingPlan(null)
     setPlanForm({
       name: '',
-      tier: 'School',
+      tier: 'Custom',
       enabledTiers: ['school'],
-      pricePKR: 25000,
+      pricePKR: 45000,
       billingCycle: 'monthly',
-      maxStudents: 1500,
-      maxCampuses: 2,
-      maxUsers: 50,
-      storageGB: 5,
+      maxStudents: 3000,
+      maxCampuses: 3,
+      maxUsers: 60,
+      storageGB: 10,
       trialDays: 14,
       isTrial: false,
       description: '',
@@ -462,7 +474,7 @@ const SubscriptionsBillingView = () => {
   }
 
   const [selectedSubStatusFilters, setSelectedSubStatusFilters] = useState(['ACTIVE', 'TRIAL', 'OVERDUE'])
-  const [selectedPlanTierFilters, setSelectedPlanTierFilters] = useState(['plan-trial', 'plan-school', 'plan-enterprise'])
+  const [selectedPlanTierFilters, setSelectedPlanTierFilters] = useState(['plan-trial', 'plan-primary-middle', 'plan-matric', 'plan-school', 'plan-enterprise'])
   const [selectedCycleFilters, setSelectedCycleFilters] = useState(['monthly', 'quarterly', 'yearly', 'annual'])
 
   // Multi-select Row Checkboxes State for Subscriptions
@@ -518,7 +530,7 @@ const SubscriptionsBillingView = () => {
 
   const handleResetSubFilters = () => {
     setSelectedSubStatusFilters(['ACTIVE', 'TRIAL', 'OVERDUE'])
-    setSelectedPlanTierFilters(['plan-trial', 'plan-school', 'plan-enterprise'])
+    setSelectedPlanTierFilters(['plan-trial', 'plan-primary-middle', 'plan-matric', 'plan-school', 'plan-enterprise'])
     setSelectedCycleFilters(['monthly', 'quarterly', 'yearly', 'annual'])
     setStatusFilter('ALL')
     setSearchQuery('')
@@ -912,9 +924,9 @@ const SubscriptionsBillingView = () => {
                         </label>
                         <div className="space-y-1.5">
                           {[
-                            { key: 'plan-trial', label: '⚡ Starter Trial (30-Day Evaluation)' },
-                            { key: 'plan-school', label: '🏫 School Standard Plan (K-10 & Matric)' },
-                            { key: 'plan-enterprise', label: '🌐 Multi-Branch School Network' }
+                            { key: 'plan-trial', label: '⚡ Free Trial (14-Day Evaluation)' },
+                            { key: 'plan-primary-middle', label: '🏫 Primary & Middle School Plan' },
+                            { key: 'plan-matric', label: '🎓 Up to Matric & High School Plan' }
                           ].map(item => {
                             const checked = selectedPlanTierFilters.includes(item.key)
                             return (
@@ -1112,7 +1124,7 @@ const SubscriptionsBillingView = () => {
                       <td className="py-3.5 px-4">
                         <span className="font-bold text-slate-800 block">{sub.planName}</span>
                         <span className="text-[11px] text-slate-400 block mt-0.5">
-                          {sub.planId === 'plan-enterprise' ? 'Multi-Branch Network' : sub.planId === 'plan-trial' ? 'Starter Trial' : 'Primary & High School'}
+                          {sub.planId === 'plan-matric' || sub.planId === 'plan-enterprise' ? 'Up to Matric' : sub.planId === 'plan-trial' ? 'Starter Trial' : 'Primary & Middle'}
                         </span>
                       </td>
                       <td className="py-3.5 px-4 font-mono font-medium text-slate-800">
@@ -1229,21 +1241,12 @@ const SubscriptionsBillingView = () => {
       {/* TAB 1: SUBSCRIPTION PLANS & PRICING (3 School SaaS Tiers) */}
       {activeTab === 'plans' && (() => {
         const trialPlan = plans.find(p => p.id === 'plan-trial' || p.tier === 'Trial' || Number(p.pricePKR) === 0) || FALLBACK_PLANS[0]
-        const schoolPlan = plans.find(p => p.id === 'plan-school' || p.tier === 'School') || FALLBACK_PLANS[1]
-        const enterprisePlan = plans.find(p => p.id === 'plan-enterprise' || p.tier === 'Enterprise') || FALLBACK_PLANS[2] || FALLBACK_PLANS[1]
+        const primaryMiddlePlan = plans.find(p => p.id === 'plan-primary-middle' || (p.name && p.name.toLowerCase().includes('primary') && p.name.toLowerCase().includes('middle')) || p.id === 'plan-school' || p.tier === 'Primary & Middle' || p.tier === 'School') || FALLBACK_PLANS[1]
+        const matricPlan = plans.find(p => p.id === 'plan-matric' || (p.name && p.name.toLowerCase().includes('matric')) || p.id === 'plan-enterprise' || p.tier === 'Matric' || p.tier === 'Enterprise') || FALLBACK_PLANS[2]
 
-        const customPlans = plans.filter(p =>
-          p.id !== trialPlan.id &&
-          p.id !== schoolPlan.id &&
-          p.id !== enterprisePlan.id &&
-          p.tier !== 'Trial' &&
-          p.tier !== 'School' &&
-          p.tier !== 'Enterprise'
-        )
-
-        const trialSubsCount = subscriptions.filter(s => s.status === 'TRIAL' || (s.planId && s.planId.includes('trial'))).length
-        const schoolSubsCount = subscriptions.filter(s => s.planName && s.planName.toLowerCase().includes('school') && !s.planName.toLowerCase().includes('enterprise')).length
-        const enterpriseSubsCount = subscriptions.filter(s => s.planName && (s.planName.toLowerCase().includes('enterprise') || s.planName.toLowerCase().includes('network'))).length
+        const trialSubsCount = subscriptions.filter(s => s.status === 'TRIAL' || (s.planId && s.planId.includes('trial')) || (s.planName && s.planName.toLowerCase().includes('trial'))).length
+        const primaryMiddleSubsCount = subscriptions.filter(s => s.planId === 'plan-primary-middle' || s.planId === 'plan-school' || (s.planName && (s.planName.toLowerCase().includes('primary') || s.planName.toLowerCase().includes('middle') || (s.planName.toLowerCase().includes('school') && !s.planName.toLowerCase().includes('matric') && !s.planName.toLowerCase().includes('network') && !s.planName.toLowerCase().includes('enterprise'))))).length
+        const matricSubsCount = subscriptions.filter(s => s.planId === 'plan-matric' || s.planId === 'plan-enterprise' || (s.planName && (s.planName.toLowerCase().includes('matric') || s.planName.toLowerCase().includes('high') || s.planName.toLowerCase().includes('enterprise') || s.planName.toLowerCase().includes('network')))).length
 
         return (
           <div ref={plansSectionRef} className="space-y-6">
@@ -1257,6 +1260,11 @@ const SubscriptionsBillingView = () => {
                   <span className="text-[11px] font-bold text-purple-700 bg-purple-50 px-2.5 py-0.5 rounded-full border border-purple-200">
                     3 School Tiers Active
                   </span>
+                  {customPlans.length > 0 && (
+                    <span className="text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-200">
+                      +{customPlans.length} Custom Tier{customPlans.length > 1 ? 's' : ''}
+                    </span>
+                  )}
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
                   Official institutional tiers configured with specific educational wings, student capacities, and module matrices.
@@ -1264,7 +1272,7 @@ const SubscriptionsBillingView = () => {
               </div>
 
               <div className="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-end flex-wrap">
-                {/* Billing Cycle Switcher (Identical to Landing Page) */}
+                {/* Billing Cycle Switcher */}
                 <div className="inline-flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl border border-slate-200">
                   <button
                     type="button"
@@ -1289,13 +1297,25 @@ const SubscriptionsBillingView = () => {
                   </button>
                 </div>
 
+                {customPlans.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setIsManageCustomModalOpen(true)}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs border border-slate-200 transition-colors cursor-pointer shrink-0"
+                    title="View and configure custom institutional plans"
+                  >
+                    <Sliders className="w-3.5 h-3.5 text-slate-600" />
+                    <span>Manage Custom Plans ({customPlans.length})</span>
+                  </button>
+                )}
+
                 <button
                   type="button"
                   onClick={handleOpenCreatePlan}
                   className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs shadow-xs transition-colors cursor-pointer shrink-0"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Create Custom Tier</span>
+                  <span>+ Add Custom Plan</span>
                 </button>
               </div>
             </div>
@@ -1385,7 +1405,7 @@ const SubscriptionsBillingView = () => {
                 </div>
               </div>
 
-              {/* TIER 1: SCHOOL PLAN */}
+              {/* TIER 1: PRIMARY & MIDDLE */}
               <div className="rounded-3xl border border-purple-200 bg-white p-6 flex flex-col justify-between shadow-xs hover:border-purple-300 transition-all hover:shadow-md">
                 <div>
                   <div className="flex items-center justify-between mb-2">
@@ -1394,12 +1414,12 @@ const SubscriptionsBillingView = () => {
                         <School className="w-4 h-4" />
                       </div>
                       <span className="text-xs font-bold uppercase text-purple-700 bg-[#f5eeff] px-2 py-0.5 rounded-md border border-purple-200">
-                        School Plan
+                        Primary & Middle
                       </span>
                     </div>
 
                     <button
-                      onClick={() => handleOpenEditPlan(schoolPlan)}
+                      onClick={() => handleOpenEditPlan(primaryMiddlePlan)}
                       className="p-1 rounded-md text-slate-400 hover:text-purple-600 hover:bg-purple-50 transition-colors cursor-pointer"
                       title="Edit Plan Settings & Quotas"
                     >
@@ -1407,16 +1427,16 @@ const SubscriptionsBillingView = () => {
                     </button>
                   </div>
 
-                  <h3 className="text-xl font-extrabold text-slate-900">Primary & Matric</h3>
+                  <h3 className="text-xl font-extrabold text-slate-900">Primary & Middle</h3>
                   <p className="text-xs text-slate-500 mt-1 line-clamp-2 min-h-[32px]">
-                    {schoolPlan.description || 'Complete management for growing schools.'}
+                    {primaryMiddlePlan.description || 'Tailored for Playgroup, Nursery, Primary & Middle School campuses (Pre-K to Grade 8).'}
                   </p>
 
                   <div className="mt-4 mb-5 p-3 rounded-xl bg-slate-50 border border-slate-100">
                     <div className="flex items-baseline gap-1 font-heading">
                       <span className="text-lg font-bold text-slate-500">Rs.</span>
                       <span className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-                        {billingCycle === 'annual' ? Math.round((schoolPlan.pricePKR || 25000) * 0.85).toLocaleString() : (schoolPlan.pricePKR || 25000).toLocaleString()}
+                        {billingCycle === 'annual' ? Math.round((primaryMiddlePlan.pricePKR || 20000) * 0.85).toLocaleString() : (primaryMiddlePlan.pricePKR || 20000).toLocaleString()}
                       </span>
                       <span className="text-xs font-medium text-slate-500 ml-1">/ month</span>
                     </div>
@@ -1428,19 +1448,19 @@ const SubscriptionsBillingView = () => {
                   <ul className="space-y-2.5 text-xs text-slate-600">
                     <li className="flex items-center gap-2">
                       <Check className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                      <span>Up to <strong>{(schoolPlan.maxStudents || 1500).toLocaleString()} Students</strong></span>
+                      <span>Up to <strong>{(primaryMiddlePlan.maxStudents || 1000).toLocaleString()} Students</strong></span>
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                      <span><strong>{schoolPlan.maxCampuses || 2} Campuses</strong></span>
+                      <span><strong>{primaryMiddlePlan.maxCampuses || 2} Campuses</strong></span>
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                      <span><strong>{schoolPlan.maxUsers || 50} Staff Accounts</strong></span>
+                      <span><strong>{primaryMiddlePlan.maxUsers || 35} Staff Accounts</strong></span>
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                      <span>1Link Barcode Fee Vouchers</span>
+                      <span>Grade 1–8 Progress Reports & Challans</span>
                     </li>
                   </ul>
                 </div>
@@ -1449,35 +1469,35 @@ const SubscriptionsBillingView = () => {
                   <div className="flex items-center justify-between text-[11px]">
                     <span className="text-slate-400 font-medium">Subscribers:</span>
                     <span className="font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200">
-                      {schoolSubsCount} Campuses
+                      {primaryMiddleSubsCount} Campuses
                     </span>
                   </div>
                   <button
                     type="button"
-                    onClick={() => handleOpenEditPlan(schoolPlan)}
+                    onClick={() => handleOpenEditPlan(primaryMiddlePlan)}
                     className="w-full py-2.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                   >
                     <Sliders className="w-3.5 h-3.5" />
-                    <span>Configure School Plan</span>
+                    <span>Configure Primary & Middle Plan</span>
                   </button>
                 </div>
               </div>
 
-              {/* TIER 2: ENTERPRISE SCHOOL NETWORK */}
+              {/* TIER 2: UP TO MATRIC */}
               <div className="rounded-3xl border border-purple-300 ring-2 ring-purple-500/20 bg-gradient-to-b from-white to-[#f5eeff]/30 p-6 flex flex-col justify-between shadow-xs hover:shadow-md transition-all">
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center">
-                        <Layers className="w-4 h-4" />
+                        <GraduationCap className="w-4 h-4" />
                       </div>
                       <span className="text-xs font-bold uppercase text-purple-700 bg-white px-2 py-0.5 rounded-md border border-purple-200">
-                        Smart Enterprise
+                        Up to Matric
                       </span>
                     </div>
 
                     <button
-                      onClick={() => handleOpenEditPlan(enterprisePlan)}
+                      onClick={() => handleOpenEditPlan(matricPlan)}
                       className="p-1 rounded-md text-slate-400 hover:text-purple-600 hover:bg-purple-50 transition-colors cursor-pointer"
                       title="Edit Plan Settings & Quotas"
                     >
@@ -1485,17 +1505,16 @@ const SubscriptionsBillingView = () => {
                     </button>
                   </div>
 
-                  <h3 className="text-xl font-extrabold text-slate-900">Enterprise Network</h3>
+                  <h3 className="text-xl font-extrabold text-slate-900">Up to Matric</h3>
                   <p className="text-xs text-slate-500 mt-1 line-clamp-2 min-h-[32px]">
-                    {enterprisePlan.description || 'Multi-branch school networks with centralized oversight and unlimited campuses.'}
+                    {matricPlan.description || 'Comprehensive academic, examination & fee management for High Schools & Matric / O-Levels institutions.'}
                   </p>
 
                   <div className="mt-4 mb-5 p-3 rounded-xl bg-white border border-purple-100 shadow-2xs">
                     <div className="flex items-baseline gap-1 font-heading">
                       <span className="text-lg font-bold text-purple-600">Rs.</span>
                       <span className="text-3xl sm:text-4xl font-extrabold text-purple-700 tracking-tight">
-                        {billingCycle === 'annual' ? Math.round((enterprisePlan.pricePKR || 75000) * 0.85).toLocaleString() : (enterprisePlan.pricePKR || 75000).toLocaleString()}
-                        <span className="text-2xl text-purple-500 font-bold">+</span>
+                        {billingCycle === 'annual' ? Math.round((matricPlan.pricePKR || 35000) * 0.85).toLocaleString() : (matricPlan.pricePKR || 35000).toLocaleString()}
                       </span>
                       <span className="text-xs font-medium text-slate-500 ml-1">/ month</span>
                     </div>
@@ -1507,19 +1526,19 @@ const SubscriptionsBillingView = () => {
                   <ul className="space-y-2.5 text-xs text-slate-600">
                     <li className="flex items-center gap-2">
                       <Check className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                      <span><strong>{(enterprisePlan.maxStudents || 15000).toLocaleString()}+ Students</strong></span>
+                      <span>Up to <strong>{(matricPlan.maxStudents || 2500).toLocaleString()} Students</strong></span>
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                      <span><strong>{enterprisePlan.maxCampuses || 15}+ School Campuses</strong></span>
+                      <span><strong>{matricPlan.maxCampuses || 5} Campuses</strong></span>
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                      <span>Multi-Branch School Ledger</span>
+                      <span><strong>{matricPlan.maxUsers || 75} Staff Accounts</strong></span>
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                      <span>Dedicated VIP Support & SLA</span>
+                      <span>1Link Barcode Challans & BISE Matric Assessment</span>
                     </li>
                   </ul>
                 </div>
@@ -1528,146 +1547,21 @@ const SubscriptionsBillingView = () => {
                   <div className="flex items-center justify-between text-[11px]">
                     <span className="text-slate-400 font-medium">Subscribers:</span>
                     <span className="font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200">
-                      {enterpriseSubsCount} Campuses
+                      {matricSubsCount} Campuses
                     </span>
                   </div>
                   <button
                     type="button"
-                    onClick={() => handleOpenEditPlan(enterprisePlan)}
+                    onClick={() => handleOpenEditPlan(matricPlan)}
                     className="w-full py-2.5 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs shadow-sm shadow-purple-700/25 transition-all cursor-pointer flex items-center justify-center gap-1.5"
                   >
                     <Sliders className="w-3.5 h-3.5" />
-                    <span>Configure Enterprise Plan</span>
+                    <span>Configure Matric Plan</span>
                   </button>
                 </div>
               </div>
 
             </div>
-
-            {/* CUSTOM / EXTENDED TIERS (IF ANY) */}
-            {customPlans.length > 0 && (
-              <div className="pt-4 space-y-3">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-200">
-                  <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                    <Sliders className="w-4 h-4 text-purple-600" />
-                    <span>Custom School Plans ({customPlans.length})</span>
-                  </h3>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-                  {customPlans.map((plan) => {
-                    const enrolledCount = subscriptions.filter(s => s.planId === plan.id || s.planName?.toLowerCase().includes(plan.name?.toLowerCase())).length
-
-                    return (
-                      <div
-                        key={plan.id}
-                        className="rounded-3xl border-2 border-purple-200/90 ring-1 ring-purple-500/10 bg-gradient-to-b from-white via-purple-50/15 to-[#fcfaff] p-6 flex flex-col justify-between shadow-xs hover:border-purple-300 hover:shadow-lg transition-all relative overflow-hidden group"
-                      >
-                        <div className="absolute top-0 right-0 left-0 h-1.5 bg-gradient-to-r from-purple-500 via-indigo-500 to-fuchsia-500" />
-
-                        <div>
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-2">
-                              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 text-white flex items-center justify-center shadow-xs">
-                                <Layers className="w-4 h-4" />
-                              </div>
-                              <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-[#f5eeff] text-purple-700 border border-purple-200">
-                                {plan.name || 'Custom School Plan'}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <button
-                                onClick={() => handleOpenEditPlan(plan)}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-purple-600 hover:bg-purple-50 transition-colors cursor-pointer"
-                                title="Edit Plan Settings"
-                              >
-                                <Edit2 className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                onClick={() => setPlanToDelete(plan)}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                                title="Delete Plan"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </div>
-
-                          <h3 className="text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
-                            <span>Custom School Package</span>
-                          </h3>
-
-                          <p className="text-xs text-slate-500 mt-1 line-clamp-2 min-h-[32px]">
-                            {plan.description || 'Tailored school package with configurable student, staff, and campus quotas.'}
-                          </p>
-
-                          <div className="flex flex-wrap items-center gap-1.5 my-3">
-                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                              🏫 School Wing
-                            </span>
-                          </div>
-
-                          <div className="mb-5 p-3.5 rounded-2xl bg-white border border-purple-100 shadow-2xs">
-                            <div className="flex items-baseline gap-1 font-heading">
-                              <span className="text-lg font-bold text-purple-600">Rs.</span>
-                              <span className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-                                {billingCycle === 'annual'
-                                  ? Math.round((Number(plan.pricePKR) || 75000) * 0.85).toLocaleString()
-                                  : (Number(plan.pricePKR) || 75000).toLocaleString()}
-                              </span>
-                              <span className="text-xs font-medium text-slate-500 ml-1">/ month</span>
-                            </div>
-                            <div className="text-xs text-purple-700 font-medium mt-1">
-                              {billingCycle === 'annual' ? 'Billed annually (Save 15%)' : 'Custom School License'}
-                            </div>
-                          </div>
-
-                          <ul className="space-y-2.5 text-xs text-slate-600">
-                            <li className="flex items-center gap-2">
-                              <Check className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                              <span>Up to <strong>{(plan.maxStudents || 15000).toLocaleString()} Enrolled Students</strong></span>
-                            </li>
-                            <li className="flex items-center gap-2">
-                              <Check className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                              <span><strong>{plan.maxCampuses || 15} Campuses</strong> interconnected</span>
-                            </li>
-                            <li className="flex items-center gap-2">
-                              <Check className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                              <span><strong>{plan.maxUsers || 600} Staff Accounts</strong></span>
-                            </li>
-                            <li className="flex items-center gap-2">
-                              <Check className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                              <span><strong>{plan.storageGB || 50} GB</strong> High-Speed Cloud Storage</span>
-                            </li>
-                            <li className="flex items-center gap-2">
-                              <Check className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                              <span>Unified School Portal & Consolidated Ledger</span>
-                            </li>
-                          </ul>
-                        </div>
-
-                        <div className="mt-6 pt-4 border-t border-slate-100 space-y-2.5">
-                          <div className="flex items-center justify-between text-[11px]">
-                            <span className="text-slate-400 font-medium">Subscribers:</span>
-                            <span className="font-bold text-purple-700 bg-purple-50 px-2.5 py-0.5 rounded-md border border-purple-200">
-                              {enrolledCount} Campuses
-                            </span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => handleOpenEditPlan(plan)}
-                            className="w-full py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold text-xs shadow-sm shadow-purple-600/25 transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
-                          >
-                            <Sliders className="w-3.5 h-3.5" />
-                            <span>Configure Plan</span>
-                          </button>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
           </div>
         )
       })()}
@@ -1858,10 +1752,12 @@ const SubscriptionsBillingView = () => {
                   const newEnabledTiers = ['school']
                   if (newTier === 'Trial') {
                     setPlanForm({ ...planForm, tier: newTier, enabledTiers: newEnabledTiers, pricePKR: 0, billingCycle: '14-day trial', isTrial: true })
-                  } else if (newTier === 'School') {
-                    setPlanForm({ ...planForm, tier: newTier, enabledTiers: newEnabledTiers, pricePKR: planForm.pricePKR === 0 ? 25000 : planForm.pricePKR, billingCycle: planForm.billingCycle.includes('trial') ? 'monthly' : planForm.billingCycle, isTrial: false })
-                  } else if (newTier === 'Enterprise') {
-                    setPlanForm({ ...planForm, tier: newTier, enabledTiers: newEnabledTiers, pricePKR: planForm.pricePKR === 0 ? 75000 : planForm.pricePKR, billingCycle: planForm.billingCycle.includes('trial') ? 'monthly' : planForm.billingCycle, isTrial: false })
+                  } else if (newTier === 'Primary & Middle') {
+                    setPlanForm({ ...planForm, tier: newTier, enabledTiers: newEnabledTiers, pricePKR: planForm.pricePKR === 0 ? 20000 : planForm.pricePKR, billingCycle: planForm.billingCycle.includes('trial') ? 'monthly' : planForm.billingCycle, isTrial: false })
+                  } else if (newTier === 'Matric') {
+                    setPlanForm({ ...planForm, tier: newTier, enabledTiers: newEnabledTiers, pricePKR: planForm.pricePKR === 0 ? 35000 : planForm.pricePKR, billingCycle: planForm.billingCycle.includes('trial') ? 'monthly' : planForm.billingCycle, isTrial: false })
+                  } else {
+                    setPlanForm({ ...planForm, tier: newTier, enabledTiers: newEnabledTiers, pricePKR: planForm.pricePKR === 0 ? 45000 : planForm.pricePKR, billingCycle: planForm.billingCycle.includes('trial') ? 'monthly' : planForm.billingCycle, isTrial: false })
                   }
                 }}
                 className={`w-full px-3 py-2 text-sm border rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none ${
@@ -1871,8 +1767,9 @@ const SubscriptionsBillingView = () => {
                 }`}
               >
                 <option value="Trial">Free Trial Tier (Rs. 0 Evaluation)</option>
-                <option value="School">School Standard Tier (K-10 / Matric / O-Levels)</option>
-                <option value="Enterprise">Enterprise School Network (Multi-Branch)</option>
+                <option value="Primary & Middle">Primary & Middle School (Pre-K to Grade 8)</option>
+                <option value="Matric">Up to Matric & High School (Grade 9–10 / Matric)</option>
+                <option value="Custom">Custom Institutional Plan</option>
               </select>
             </div>
           </div>
@@ -2167,6 +2064,110 @@ const SubscriptionsBillingView = () => {
               className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs sm:text-sm transition-colors cursor-pointer"
             >
               Confirm Decommission
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* MODAL: MANAGE CUSTOM PLANS */}
+      <Modal
+        isOpen={isManageCustomModalOpen}
+        onClose={() => setIsManageCustomModalOpen(false)}
+        title={`Custom School Plans (${customPlans.length})`}
+        maxWidth="max-w-2xl"
+      >
+        <div className="space-y-4">
+          <div className="flex items-center justify-between text-xs text-slate-500">
+            <p>Custom tailored packages created for specific school networks or partner agreements.</p>
+            <button
+              type="button"
+              onClick={() => {
+                setIsManageCustomModalOpen(false)
+                handleOpenCreatePlan()
+              }}
+              className="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shrink-0"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Create New</span>
+            </button>
+          </div>
+
+          {customPlans.length > 0 ? (
+            <div className="border border-slate-200 rounded-2xl overflow-hidden divide-y divide-slate-100">
+              {customPlans.map((plan) => {
+                const enrolledCount = subscriptions.filter(s => s.planId === plan.id || s.planName?.toLowerCase().includes(plan.name?.toLowerCase())).length
+                return (
+                  <div key={plan.id} className="p-4 bg-white hover:bg-slate-50/70 transition-colors flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-sm font-bold text-slate-900 truncate">{plan.name}</h4>
+                        <span className="text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200">
+                          {plan.tier || 'Custom'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{plan.description || 'Custom institutional package.'}</p>
+                      <div className="flex items-center gap-3 text-[11px] text-slate-500 mt-2 flex-wrap">
+                        <span>Capacity: <strong>{(plan.maxStudents || 1000).toLocaleString()}</strong> students</span>
+                        <span>•</span>
+                        <span><strong>{plan.maxCampuses || 1}</strong> campus(es)</span>
+                        <span>•</span>
+                        <span><strong>{plan.maxUsers || 20}</strong> staff</span>
+                        <span>•</span>
+                        <span className="font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">
+                          {enrolledCount} active subscriber{enrolledCount === 1 ? '' : 's'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                      <div className="text-right mr-2">
+                        <div className="text-sm font-bold text-slate-900 font-heading">
+                          Rs. {(Number(plan.pricePKR) || 0).toLocaleString()}
+                        </div>
+                        <div className="text-[10px] text-slate-400">per month</div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsManageCustomModalOpen(false)
+                          handleOpenEditPlan(plan)
+                        }}
+                        className="p-2 rounded-xl text-slate-500 hover:text-purple-600 hover:bg-purple-50 border border-slate-200 transition-colors cursor-pointer"
+                        title="Configure Custom Plan"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsManageCustomModalOpen(false)
+                          setPlanToDelete(plan)
+                        }}
+                        className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 transition-colors cursor-pointer"
+                        title="Delete Custom Plan"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-slate-400">
+              <Sliders className="w-8 h-8 mx-auto mb-2 text-slate-300" />
+              <p className="text-xs font-semibold text-slate-600">No custom plans configured yet</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">Click '+ Add Custom Plan' to create a custom institutional package.</p>
+            </div>
+          )}
+
+          <div className="flex justify-end pt-3 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={() => setIsManageCustomModalOpen(false)}
+              className="px-4 py-2 text-xs font-medium text-slate-600 hover:text-slate-800 cursor-pointer"
+            >
+              Close
             </button>
           </div>
         </div>

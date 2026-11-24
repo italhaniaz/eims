@@ -542,7 +542,9 @@ export const DataService = {
 
     // 2. Platform plans lookup from localStorage or fallback
     let plans = [
-      { id: 'plan-trial', name: 'Free Trial Plan', tier: 'Trial', maxStudents: 250, isTrial: true },
+      { id: 'plan-trial', name: '14-Day Free Trial', tier: 'Trial', maxStudents: 250, isTrial: true },
+      { id: 'plan-primary-middle', name: 'Primary & Middle', tier: 'Primary & Middle', maxStudents: 1000 },
+      { id: 'plan-matric', name: 'Up to Matric', tier: 'Matric', maxStudents: 2500 },
       { id: 'plan-school', name: 'School Plan', tier: 'School', maxStudents: 1500 },
       { id: 'plan-enterprise', name: 'Multi-Branch School Network', tier: 'School Network', maxStudents: 5000 }
     ]
@@ -576,15 +578,15 @@ export const DataService = {
     if (!targetPlan) {
       if (tierKeywords.includes('trial')) {
         targetPlan = plans.find(p => p.id === 'plan-trial' || p.isTrial) || plans[0]
-      } else if (tierKeywords.includes('network') || tierKeywords.includes('enterprise')) {
-        targetPlan = plans.find(p => p.id === 'plan-enterprise') || plans[2]
+      } else if (tierKeywords.includes('matric') || tierKeywords.includes('high') || tierKeywords.includes('network') || tierKeywords.includes('enterprise')) {
+        targetPlan = plans.find(p => p.id === 'plan-matric' || p.id === 'plan-enterprise') || plans[2]
       } else {
-        targetPlan = plans.find(p => p.id === 'plan-school') || plans[1]
+        targetPlan = plans.find(p => p.id === 'plan-primary-middle' || p.id === 'plan-school') || plans[1]
       }
     }
 
     // Determine max students: explicit institute quota, plan limit, or tier defaults
-    let maxStudents = 1500
+    let maxStudents = 1000
     if (Number(inst?.quotaStudents) > 0) {
       maxStudents = Number(inst.quotaStudents)
     } else if (Number(inst?.maxStudents) > 0) {
@@ -593,6 +595,8 @@ export const DataService = {
       maxStudents = Number(targetPlan.maxStudents)
     } else if (tierKeywords.includes('trial') || targetPlan?.isTrial) {
       maxStudents = 250
+    } else if (tierKeywords.includes('matric') || tierKeywords.includes('high')) {
+      maxStudents = 2500
     } else if (tierKeywords.includes('enterprise') || tierKeywords.includes('network')) {
       maxStudents = 5000
     }

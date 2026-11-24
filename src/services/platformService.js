@@ -18,32 +18,32 @@ export const PLATFORM_MODULES = [
 
 export const SUBSCRIPTION_PLANS = [
   {
-    id: 'plan-school',
-    name: 'School Plan',
+    id: 'plan-primary-middle',
+    name: 'Primary & Middle',
     type: 'School',
-    planCode: 'SCHOOL',
+    planCode: 'PRIMARY_MIDDLE',
     enabledTiers: ['school'],
-    pricePKR: 25000,
+    pricePKR: 20000,
     interval: 'Monthly',
-    maxStudents: 1500,
-    maxUsers: 50,
+    maxStudents: 1000,
+    maxUsers: 35,
     maxCampuses: 2,
     storageMB: 5120,
-    description: 'Tailored for Primary, Middle & Matric / O-Levels schools'
+    description: 'Tailored for Playgroup, Nursery, Primary & Middle School campuses (Pre-K to Grade 8)'
   },
   {
-    id: 'plan-enterprise',
-    name: 'Multi-Branch School Network',
+    id: 'plan-matric',
+    name: 'Up to Matric',
     type: 'School',
-    planCode: 'SCHOOL_NETWORK',
+    planCode: 'MATRIC',
     enabledTiers: ['school'],
-    pricePKR: 45000,
+    pricePKR: 35000,
     interval: 'Monthly',
-    maxStudents: 5000,
-    maxUsers: 200,
-    maxCampuses: 10,
-    storageMB: 25600,
-    description: 'Multi-branch school network governance under central Super Admin control'
+    maxStudents: 2500,
+    maxUsers: 75,
+    maxCampuses: 5,
+    storageMB: 15360,
+    description: 'Complete academic & administrative management for High Schools & Matric / O-Levels institutions'
   }
 ]
 
@@ -548,16 +548,22 @@ export const PlatformService = {
       let existingSubs = existingSubsRaw ? JSON.parse(existingSubsRaw) : []
       if (!Array.isArray(existingSubs)) existingSubs = []
 
-      const isTrial = (newInstitute.planTier || '').toLowerCase().includes('trial') || (newInstitute.status || '').toLowerCase().includes('trial')
-      let planId = 'plan-school'
-      let planName = 'School Plan'
-      let pricePKR = 25000
+      const planTierLower = (newInstitute.planTier || '').toLowerCase()
+      const isTrial = planTierLower.includes('trial') || (newInstitute.status || '').toLowerCase().includes('trial')
+      let planId = 'plan-primary-middle'
+      let planName = 'Primary & Middle'
+      let pricePKR = 20000
       let enabledTiers = ['school']
 
       if (isTrial) {
         planId = 'plan-trial'
-        planName = 'Free Trial Plan'
+        planName = '14-Day Free Trial'
         pricePKR = 0
+        enabledTiers = ['school']
+      } else if (planTierLower.includes('matric') || planTierLower.includes('high') || planTierLower.includes('network') || planTierLower.includes('enterprise')) {
+        planId = 'plan-matric'
+        planName = 'Up to Matric'
+        pricePKR = 35000
         enabledTiers = ['school']
       }
 

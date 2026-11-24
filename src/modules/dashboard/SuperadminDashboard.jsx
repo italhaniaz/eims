@@ -172,8 +172,8 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
     adminName: '',
     adminEmail: '',
     adminPassword: 'Password123!',
-    planTier: 'School Plan',
-    planType: 'SCHOOL',
+    planTier: 'Primary & Middle',
+    planType: 'PRIMARY_MIDDLE',
     enabledTiers: ['school']
   })
 
@@ -266,10 +266,10 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
     ;(institutes || []).forEach(inst => {
       if ((inst.status || 'Active').toLowerCase() === 'inactive') return
 
-      const tierStr = (inst.planTier || inst.planType || 'School Plan').toLowerCase()
-      let planMonthlyFee = 25000 // default School Plan
-      if (tierStr.includes('enterprise') || tierStr.includes('network') || tierStr.includes('multi')) {
-        planMonthlyFee = 45000
+      const tierStr = (inst.planTier || inst.planType || 'Primary & Middle').toLowerCase()
+      let planMonthlyFee = 20000 // default Primary & Middle
+      if (tierStr.includes('matric') || tierStr.includes('high') || tierStr.includes('enterprise') || tierStr.includes('network') || tierStr.includes('multi')) {
+        planMonthlyFee = 35000
       } else if (tierStr.includes('trial') || tierStr.includes('free') || tierStr.includes('eval')) {
         planMonthlyFee = 0 // Free tier
       } else if (inst.pricePKR) {
@@ -393,7 +393,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
     const instList = institutes || []
     const total = instList.length
 
-    // Always include standard tiers (Free Tier, School Plan, Smart Enterprise)
+    // Always include standard tiers (Free Tier, Primary & Middle, Up to Matric)
     const tierBuckets = {
       'Free Tier': {
         name: 'Free Tier',
@@ -403,21 +403,21 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
         bgClass: 'bg-emerald-500',
         match: (t) => t.includes('free') || t.includes('trial') || t.includes('eval')
       },
-      'School Plan': {
-        name: 'School Plan',
-        subName: 'Standard Campus Tier',
+      'Primary & Middle': {
+        name: 'Primary & Middle',
+        subName: 'Pre-K to Grade 8 Tier',
         count: 0,
         color: '#9333EA', // Purple
         bgClass: 'bg-purple-600',
-        match: (t) => t.includes('school') || t.includes('standard') || t.includes('single')
+        match: (t) => t.includes('primary') || t.includes('middle') || (t.includes('school') && !t.includes('matric') && !t.includes('network') && !t.includes('enterprise'))
       },
-      'Smart Enterprise': {
-        name: 'Smart Enterprise',
-        subName: 'Multi-Branch Network Tier',
+      'Up to Matric': {
+        name: 'Up to Matric',
+        subName: 'High School & Matric Tier',
         count: 0,
         color: '#6366F1', // Indigo
         bgClass: 'bg-indigo-600',
-        match: (t) => t.includes('enterprise') || t.includes('network') || t.includes('multi')
+        match: (t) => t.includes('matric') || t.includes('high') || t.includes('enterprise') || t.includes('network')
       }
     }
 
@@ -632,8 +632,8 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
         teachersCount: 0,
         status: 'Active',
         lifecycleStatus: 'Active',
-        planTier: newInstituteData.planTier || 'School Plan',
-        planType: newInstituteData.planType || 'SCHOOL',
+        planTier: newInstituteData.planTier || 'Primary & Middle',
+        planType: newInstituteData.planType || 'PRIMARY_MIDDLE',
         enabledTiers: ['school'],
         joinedDate: new Date().toISOString().split('T')[0]
       })
@@ -661,7 +661,7 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
       setNewlyCreatedCreds({
         name: newInstituteData.name.trim(),
         code: instCode,
-        planTier: newInstituteData.planTier || 'School Plan',
+        planTier: newInstituteData.planTier || 'Primary & Middle',
         adminName: adminName,
         adminEmail: adminEmail,
         password: adminPassword
@@ -677,8 +677,8 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
         adminName: '',
         adminEmail: '',
         adminPassword: 'Password123!',
-        planTier: 'School Plan',
-        planType: 'SCHOOL',
+        planTier: 'Primary & Middle',
+        planType: 'PRIMARY_MIDDLE',
         enabledTiers: ['school']
       })
       triggerToast(`School "${createdInst?.name || instCode}" onboarded successfully!`)
@@ -1931,8 +1931,8 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
                   onChange={(e) => setNewInstituteData({ ...newInstituteData, planTier: e.target.value })}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-purple-500 font-bold"
                 >
-                  <option value="School Plan">School Plan (₨ 25,000 / month)</option>
-                  <option value="Multi-Branch Network">Multi-Branch School Network (₨ 45,000 / month)</option>
+                  <option value="Primary & Middle">Primary & Middle Plan (₨ 20,000 / month)</option>
+                  <option value="Up to Matric">Up to Matric High School (₨ 35,000 / month)</option>
                   <option value="Free Trial Plan">14-Day Free Evaluation Trial (₨ 0)</option>
                 </select>
               </div>

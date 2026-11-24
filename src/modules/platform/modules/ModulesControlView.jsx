@@ -102,7 +102,7 @@ export const ModulesControlView = () => {
       await PlatformService.updateInstituteWingsAndPlan(wingsTargetInstitute.id, {
         enabledTiers: ['school'],
         planTier: wingsForm.planTier,
-        planType: wingsForm.planTier === 'Enterprise Network' ? 'ENTERPRISE' : wingsForm.planTier === 'Starter Trial' ? 'TRIAL' : 'SCHOOL',
+        planType: wingsForm.planTier === 'Up to Matric' || wingsForm.planTier === 'Enterprise Network' ? 'MATRIC' : wingsForm.planTier === '14-Day Free Trial' || wingsForm.planTier === 'Starter Trial' ? 'TRIAL' : 'PRIMARY_MIDDLE',
         type: 'School'
       })
 
@@ -749,9 +749,9 @@ export const ModulesControlView = () => {
                 onChange={(e) => setWingsForm({ ...wingsForm, planTier: e.target.value })}
                 className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white font-semibold"
               >
-                <option value="School Plan">School Standard Plan (₨ 25,000 / mo)</option>
-                <option value="Enterprise Network">Multi-Branch School Network (₨ 75,000 / mo)</option>
-                <option value="Starter Trial">Starter Trial (30 Days Free)</option>
+                <option value="Primary & Middle">Primary & Middle Plan (₨ 20,000 / mo)</option>
+                <option value="Up to Matric">Up to Matric Plan (₨ 35,000 / mo)</option>
+                <option value="14-Day Free Trial">14-Day Free Trial (₨ 0)</option>
               </select>
             </div>
 

@@ -6,7 +6,7 @@ import { API_BASE_URL } from './apiConfig'
 export const FALLBACK_PLANS = [
   {
     id: 'plan-trial',
-    name: 'Free Trial Plan',
+    name: '14-Day Free Trial',
     tier: 'Trial',
     planCode: 'TRIAL',
     enabledTiers: ['school'],
@@ -23,35 +23,35 @@ export const FALLBACK_PLANS = [
     isActive: true
   },
   {
-    id: 'plan-school',
-    name: 'School Plan',
-    tier: 'School',
-    planCode: 'SCHOOL',
+    id: 'plan-primary-middle',
+    name: 'Primary & Middle',
+    tier: 'Primary & Middle',
+    planCode: 'PRIMARY_MIDDLE',
     enabledTiers: ['school'],
-    pricePKR: 25000,
+    pricePKR: 20000,
     billingCycle: 'monthly',
-    maxStudents: 1500,
+    maxStudents: 1000,
     maxCampuses: 2,
-    maxUsers: 50,
+    maxUsers: 35,
     storageGB: 5,
-    features: ['students', 'fees', 'exams', 'attendance', 'classes', 'curriculum', 'timetable', 'notices'],
-    description: 'Tailored for Primary, Middle & Matric / O-Levels schools',
+    features: ['students', 'attendance', 'classes', 'fees', 'exams', 'curriculum', 'timetable', 'notices'],
+    description: 'Tailored for Playgroup, Nursery, Primary & Middle School campuses (Pre-K to Grade 8)',
     isActive: true
   },
   {
-    id: 'plan-enterprise',
-    name: 'Multi-Branch School Network',
-    tier: 'School Network',
-    planCode: 'SCHOOL_NETWORK',
+    id: 'plan-matric',
+    name: 'Up to Matric',
+    tier: 'Matric',
+    planCode: 'MATRIC',
     enabledTiers: ['school'],
-    pricePKR: 45000,
+    pricePKR: 35000,
     billingCycle: 'monthly',
-    maxStudents: 5000,
-    maxCampuses: 10,
-    maxUsers: 200,
-    storageGB: 25,
-    features: ['students', 'fees', 'exams', 'attendance', 'classes', 'curriculum', 'library', 'transport', 'admissions'],
-    description: 'Multi-branch school networks under central Super Admin governance',
+    maxStudents: 2500,
+    maxCampuses: 5,
+    maxUsers: 75,
+    storageGB: 15,
+    features: ['students', 'attendance', 'classes', 'fees', 'exams', 'curriculum', 'timetable', 'notices', 'bise_reports', 'sms_gateway'],
+    description: 'Comprehensive academic, examination & fee management for High Schools & Matric / O-Levels institutions',
     isActive: true
   }
 ]
@@ -116,7 +116,16 @@ export const BillingService = {
     if (local) {
       try { 
         const parsed = JSON.parse(local)
-        if (parsed && Array.isArray(parsed) && parsed.some(p => p.id === 'plan-school')) {
+        if (parsed && Array.isArray(parsed)) {
+          // If stored plans have legacy plan-school/plan-enterprise, migrate standard plans while keeping custom tiers
+          const hasOld = parsed.some(p => p.id === 'plan-school' || p.id === 'plan-enterprise')
+          const hasNew = parsed.some(p => p.id === 'plan-primary-middle' || p.id === 'plan-matric')
+          if (hasOld && !hasNew) {
+            const customOnly = parsed.filter(p => !['plan-trial', 'plan-school', 'plan-enterprise', 'plan-primary-middle', 'plan-matric'].includes(p.id))
+            const migrated = [...FALLBACK_PLANS, ...customOnly]
+            localStorage.setItem('sms_platform_plans', JSON.stringify(migrated))
+            return migrated
+          }
           if (!parsed.some(p => p.id === 'plan-trial' || p.tier === 'Trial')) {
             const trial = FALLBACK_PLANS.find(p => p.id === 'plan-trial')
             if (trial) {
@@ -197,20 +206,20 @@ export const BillingService = {
     const planTierLower = (inst.planTier || '').toLowerCase()
     const isTrial = planTierLower.includes('trial') || (inst.status || '').toLowerCase().includes('trial')
 
-    let planId = 'plan-school'
-    let planName = 'School Plan'
-    let pricePKR = 25000
+    let planId = 'plan-primary-middle'
+    let planName = 'Primary & Middle'
+    let pricePKR = 20000
     let enabledTiers = ['school']
 
     if (isTrial) {
       planId = 'plan-trial'
-      planName = 'Free Trial Plan'
+      planName = '14-Day Free Trial'
       pricePKR = 0
       enabledTiers = ['school']
-    } else if (planTierLower.includes('network') || planTierLower.includes('enterprise')) {
-      planId = 'plan-enterprise'
-      planName = 'Multi-Branch School Network'
-      pricePKR = 45000
+    } else if (planTierLower.includes('matric') || planTierLower.includes('high') || planTierLower.includes('network') || planTierLower.includes('enterprise')) {
+      planId = 'plan-matric'
+      planName = 'Up to Matric'
+      pricePKR = 35000
       enabledTiers = ['school']
     }
 
