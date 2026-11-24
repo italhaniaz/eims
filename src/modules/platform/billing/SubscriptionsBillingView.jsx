@@ -708,8 +708,7 @@ const SubscriptionsBillingView = () => {
           onShowAll={handleNavigateToPlans}
           onView={handleNavigateToPlans}
           viewTooltip="View Subscription Packages & Tiers"
-          onAdd={handleExportCSV}
-          addTooltip="Export Billing CSV Audit"
+          showAdd={false}
         />
         <StatCard
           icon={CreditCard}

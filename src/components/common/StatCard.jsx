@@ -62,8 +62,10 @@ export const StatCard = ({
   showActions = true,
   showAllText = 'Show all',
   onShowAll,
+  showView = true,
   onView,
   viewTooltip = 'View all details',
+  showAdd = true,
   onAdd,
   addTooltip = 'Quick add entry'
 }) => {
@@ -136,26 +138,30 @@ export const StatCard = ({
           {/* Action Icon Buttons */}
           <div className="flex items-center gap-1.5 shrink-0">
             {/* Eye View Button */}
-            <button
-              type="button"
-              onClick={handleView}
-              title={viewTooltip}
-              aria-label={viewTooltip}
-              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full ${scheme.btnBg} flex items-center justify-center transition-all duration-150 hover:scale-105 active:scale-95 cursor-pointer shadow-xs`}
-            >
-              <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.2]" />
-            </button>
+            {showView !== false && (
+              <button
+                type="button"
+                onClick={handleView}
+                title={viewTooltip}
+                aria-label={viewTooltip}
+                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full ${scheme.btnBg} flex items-center justify-center transition-all duration-150 hover:scale-105 active:scale-95 cursor-pointer shadow-xs`}
+              >
+                <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.2]" />
+              </button>
+            )}
 
             {/* Plus Add Button */}
-            <button
-              type="button"
-              onClick={handleAdd}
-              title={addTooltip}
-              aria-label={addTooltip}
-              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full ${scheme.btnBg} flex items-center justify-center transition-all duration-150 hover:scale-105 active:scale-95 cursor-pointer shadow-xs`}
-            >
-              <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" />
-            </button>
+            {showAdd !== false && Boolean(onAdd) && (
+              <button
+                type="button"
+                onClick={handleAdd}
+                title={addTooltip}
+                aria-label={addTooltip}
+                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full ${scheme.btnBg} flex items-center justify-center transition-all duration-150 hover:scale-105 active:scale-95 cursor-pointer shadow-xs`}
+              >
+                <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" />
+              </button>
+            )}
           </div>
         </div>
       )}
