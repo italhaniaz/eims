@@ -58,6 +58,7 @@ export const StatCard = ({
   color = 'blue',
   iconBg,
   iconColor,
+  onClick,
   // Actions bottom bar matching reference design
   showActions = true,
   showAllText = 'Show all',
@@ -79,23 +80,37 @@ export const StatCard = ({
   const hasActionFooter = showActions !== false
 
   const handleShowAll = (e) => {
+    e.stopPropagation()
     if (onShowAll) onShowAll(e)
     else if (onView) onView(e)
   }
 
   const handleView = (e) => {
+    e.stopPropagation()
     if (onView) onView(e)
     else if (onShowAll) onShowAll(e)
   }
 
   const handleAdd = (e) => {
+    e.stopPropagation()
     if (onAdd) onAdd(e)
     else if (onView) onView(e)
     else if (onShowAll) onShowAll(e)
   }
 
+  const handleCardClick = (e) => {
+    if (onClick) onClick(e)
+    else if (onView) onView(e)
+    else if (onShowAll) onShowAll(e)
+  }
+
+  const isClickable = Boolean(onClick || onView || onShowAll)
+
   return (
-    <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-[0_2px_10px_rgba(0,0,0,0.03)] hover:shadow-md hover:border-slate-300 transition-all duration-200 flex flex-col justify-between group">
+    <div 
+      onClick={isClickable ? handleCardClick : undefined}
+      className={`bg-white rounded-2xl p-5 border border-slate-200/80 shadow-[0_2px_10px_rgba(0,0,0,0.03)] hover:shadow-md hover:border-slate-300 transition-all duration-200 flex flex-col justify-between group ${isClickable ? 'cursor-pointer hover:-translate-y-0.5' : ''}`}
+    >
       <div>
         {/* Top Header: Title & Category Icon */}
         <div className="flex items-center justify-between mb-3">

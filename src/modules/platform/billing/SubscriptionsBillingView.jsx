@@ -461,6 +461,47 @@ const SubscriptionsBillingView = () => {
   const [showSubFilterPopover, setShowSubFilterPopover] = useState(false)
   const subFilterPopoverRef = useRef(null)
   const plansSectionRef = useRef(null)
+  const tabsSectionRef = useRef(null)
+
+  const scrollToTabs = () => {
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        if (tabsSectionRef.current) {
+          tabsSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+      }, 50)
+    })
+  }
+
+  const handleNavigateToMRR = () => {
+    setActiveTab('subscriptions')
+    setStatusFilter('ACTIVE')
+    setSelectedSubStatusFilters(['ACTIVE'])
+    setSearchQuery('')
+    scrollToTabs()
+  }
+
+  const handleNavigateToARR = () => {
+    setActiveTab('invoices')
+    setStatusFilter('ALL')
+    setSearchQuery('')
+    scrollToTabs()
+  }
+
+  const handleNavigateToActiveSubs = () => {
+    setActiveTab('subscriptions')
+    setStatusFilter('ALL')
+    setSelectedSubStatusFilters(['ACTIVE', 'TRIAL', 'OVERDUE'])
+    setSearchQuery('')
+    scrollToTabs()
+  }
+
+  const handleNavigateToOverdueInvoices = () => {
+    setActiveTab('invoices')
+    setStatusFilter('OVERDUE')
+    setSearchQuery('')
+    scrollToTabs()
+  }
 
   const handleNavigateToPlans = () => {
     setActiveTab('plans')
@@ -468,6 +509,8 @@ const SubscriptionsBillingView = () => {
       setTimeout(() => {
         if (plansSectionRef.current) {
           plansSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        } else if (tabsSectionRef.current) {
+          tabsSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
         }
       }, 50)
     })
@@ -667,15 +710,23 @@ const SubscriptionsBillingView = () => {
               </p>
             </div>
           </div>
-          <button
-            onClick={() => {
-              overdueInvoices.forEach(i => BillingService.sendPaymentReminder(i.id))
-              showToast(`Dispatched payment reminders for ${overdueInvoices.length} overdue invoices.`)
-            }}
-            className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs transition-colors cursor-pointer shrink-0"
-          >
-            Dispatch Reminders
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={handleNavigateToOverdueInvoices}
+              className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-rose-50 text-rose-700 font-semibold text-xs border border-rose-200 transition-colors cursor-pointer shrink-0 shadow-2xs"
+            >
+              View Invoices
+            </button>
+            <button
+              onClick={() => {
+                overdueInvoices.forEach(i => BillingService.sendPaymentReminder(i.id))
+                showToast(`Dispatched payment reminders for ${overdueInvoices.length} overdue invoices.`)
+              }}
+              className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs transition-colors cursor-pointer shrink-0"
+            >
+              Dispatch Reminders
+            </button>
+          </div>
         </div>
       )}
 
@@ -689,10 +740,11 @@ const SubscriptionsBillingView = () => {
           badgePositive={true}
           color="emerald"
           showActions={true}
-          showAllText="Show all"
-          onShowAll={handleNavigateToPlans}
-          onView={handleNavigateToPlans}
-          viewTooltip="View Subscription Packages & Tiers"
+          showAllText="View Active Campuses →"
+          onShowAll={handleNavigateToMRR}
+          onView={handleNavigateToMRR}
+          onClick={handleNavigateToMRR}
+          viewTooltip="View active subscriptions contributing to MRR"
           showAdd={false}
         />
         <StatCard
@@ -703,10 +755,11 @@ const SubscriptionsBillingView = () => {
           badgePositive={true}
           color="blue"
           showActions={true}
-          showAllText="Show all"
-          onShowAll={handleNavigateToPlans}
-          onView={handleNavigateToPlans}
-          viewTooltip="View Subscription Packages & Tiers"
+          showAllText="View Billing Ledger →"
+          onShowAll={handleNavigateToARR}
+          onView={handleNavigateToARR}
+          onClick={handleNavigateToARR}
+          viewTooltip="View invoices & annual billing ledger"
           showAdd={false}
         />
         <StatCard
@@ -717,10 +770,11 @@ const SubscriptionsBillingView = () => {
           badgePositive={true}
           color="indigo"
           showActions={true}
-          showAllText="Show all"
-          onShowAll={() => setActiveTab('subscriptions')}
-          onView={() => setActiveTab('subscriptions')}
-          viewTooltip="Manage Active Subscriptions"
+          showAllText="Manage Campuses →"
+          onShowAll={handleNavigateToActiveSubs}
+          onView={handleNavigateToActiveSubs}
+          onClick={handleNavigateToActiveSubs}
+          viewTooltip="View and manage all campus subscriptions"
           showAdd={false}
         />
         <StatCard
@@ -731,10 +785,11 @@ const SubscriptionsBillingView = () => {
           badgePositive={overview?.overdueInvoicesCount === 0}
           color="amber"
           showActions={true}
-          showAllText="Show all"
-          onShowAll={() => { setActiveTab('invoices'); setStatusFilter('OVERDUE'); }}
-          onView={() => { setActiveTab('invoices'); setStatusFilter('OVERDUE'); }}
-          viewTooltip="View Overdue Invoices"
+          showAllText="View Overdue Invoices →"
+          onShowAll={handleNavigateToOverdueInvoices}
+          onView={handleNavigateToOverdueInvoices}
+          onClick={handleNavigateToOverdueInvoices}
+          viewTooltip="Filter invoices pending payment collection"
           showAdd={false}
         />
       </div>
@@ -761,6 +816,8 @@ const SubscriptionsBillingView = () => {
               onClick={() => {
                 setActiveTab('subscriptions')
                 setStatusFilter('TRIAL')
+                setSelectedSubStatusFilters(['TRIAL'])
+                scrollToTabs()
               }}
               className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow-xs transition-colors cursor-pointer"
             >
@@ -771,7 +828,7 @@ const SubscriptionsBillingView = () => {
       )}
 
       {/* Navigation Tabs */}
-      <div className="bg-white p-1.5 rounded-2xl border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
+      <div ref={tabsSectionRef} className="bg-white p-1.5 rounded-2xl border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)] scroll-mt-6">
         <nav className="flex space-x-2 overflow-x-auto text-xs sm:text-sm font-medium">
           <button
             onClick={() => setActiveTab('plans')}
@@ -782,13 +839,14 @@ const SubscriptionsBillingView = () => {
             }`}
           >
             <Layers className="w-4 h-4" />
-            <span>Subscription Packages & Tiers ({Math.max(plans.length, 4)})</span>
+            <span>Subscription Packages (3)</span>
           </button>
 
           <button
             onClick={() => {
               setActiveTab('subscriptions')
               setStatusFilter('ALL')
+              setSelectedSubStatusFilters(['ACTIVE', 'TRIAL', 'OVERDUE'])
             }}
             className={`py-2 px-4 rounded-xl flex items-center gap-2 transition-all cursor-pointer shrink-0 ${
               activeTab === 'subscriptions'
@@ -826,7 +884,14 @@ const SubscriptionsBillingView = () => {
               {['ALL', 'ACTIVE', 'TRIAL', 'OVERDUE'].map((status) => (
                 <button
                   key={status}
-                  onClick={() => setStatusFilter(status)}
+                  onClick={() => {
+                    setStatusFilter(status)
+                    if (status === 'ALL') {
+                      setSelectedSubStatusFilters(['ACTIVE', 'TRIAL', 'OVERDUE'])
+                    } else {
+                      setSelectedSubStatusFilters([status])
+                    }
+                  }}
                   className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
                     statusFilter === status
                       ? 'bg-purple-600 text-white shadow-xs'
@@ -1018,6 +1083,16 @@ const SubscriptionsBillingView = () => {
                   </button>
                 )}
               </div>
+
+              <button
+                type="button"
+                onClick={handleExportCSV}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs border border-slate-200 transition-colors cursor-pointer shrink-0"
+                title="Export active subscriptions roster as CSV"
+              >
+                <Download className="w-3.5 h-3.5 text-slate-500" />
+                <span>Export</span>
+              </button>
             </div>
           </div>
 
@@ -1311,7 +1386,7 @@ const SubscriptionsBillingView = () => {
                   className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs shadow-xs transition-colors cursor-pointer shrink-0"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>+ Add Custom Plan</span>
+                  <span>Add Custom Plan</span>
                 </button>
               </div>
             </div>
@@ -1582,15 +1657,46 @@ const SubscriptionsBillingView = () => {
               ))}
             </div>
 
-            <div className="relative w-full md:w-72">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Search invoice number or institute..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white"
-              />
+            <div className="flex items-center gap-2.5 w-full md:w-auto">
+              <div className="relative w-full md:w-64">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Search invoice number or institute..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-7 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsCreateInvoiceModalOpen(true)}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs shadow-xs transition-colors cursor-pointer shrink-0"
+                title="Create a manual billing invoice for an enrolled campus"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Create Invoice</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleExportCSV}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs border border-slate-200 transition-colors cursor-pointer shrink-0"
+                title="Export invoices and billing ledger as CSV"
+              >
+                <Download className="w-3.5 h-3.5 text-slate-500" />
+                <span>Export</span>
+              </button>
             </div>
           </div>
 
