@@ -73,6 +73,11 @@ export const InstituteFeatureControlView = ({ onRouteChange }) => {
   // Active Main Tab: 'matrix' (Feature Matrix) | 'overrides' (Admin Overrides) | 'audit' (Feature Audit Log)
   const [activeTab, setActiveTab] = useState('matrix')
 
+  // Selected Campus Filter for per-campus control: 'ALL' or institute.id
+  const [selectedCampusId, setSelectedCampusId] = useState('ALL')
+  // Module status filter when campus is selected: 'ALL' | 'ACTIVE' | 'LOCKED'
+  const [moduleStatusFilter, setModuleStatusFilter] = useState('ALL')
+
   // Search & Filter state
   const [searchTerm, setSearchTerm] = useState('')
   const [tierFilter, setTierFilter] = useState('ALL') // ALL, School, Enterprise, Trial
@@ -143,12 +148,6 @@ export const InstituteFeatureControlView = ({ onRouteChange }) => {
     })
   }, [institutes, searchTerm, tierFilter])
 
-  // Filtered Feature Columns
-  const visibleFeatures = useMemo(() => {
-    if (categoryFilter === 'ALL') return INSTITUTE_FEATURES_REGISTRY
-    return INSTITUTE_FEATURES_REGISTRY.filter(f => f.category === categoryFilter)
-  }, [categoryFilter])
-
   // Helper to check if an institute has a feature enabled in current state
   const isFeatureActive = (instituteId, featureKey) => {
     const entry = matrixData.find(
@@ -161,6 +160,38 @@ export const InstituteFeatureControlView = ({ onRouteChange }) => {
     const def = INSTITUTE_FEATURES_REGISTRY.find(f => f.key === featureKey)
     return Boolean(def?.defaultInSchool)
   }
+
+  // Selected single campus object
+  const selectedCampus = useMemo(() => {
+    if (selectedCampusId === 'ALL') return null
+    return (institutes || []).find(i => i.id === selectedCampusId) || null
+  }, [institutes, selectedCampusId])
+
+  // Filtered Feature Columns (accounting for category & per-campus active/locked filter)
+  const visibleFeatures = useMemo(() => {
+    let list = categoryFilter === 'ALL'
+      ? INSTITUTE_FEATURES_REGISTRY
+      : INSTITUTE_FEATURES_REGISTRY.filter(f => f.category === categoryFilter)
+
+    if (selectedCampus && moduleStatusFilter === 'ACTIVE') {
+      list = list.filter(f => isFeatureActive(selectedCampus.id, f.key))
+    } else if (selectedCampus && moduleStatusFilter === 'LOCKED') {
+      list = list.filter(f => !isFeatureActive(selectedCampus.id, f.key))
+    }
+
+    return list
+  }, [categoryFilter, selectedCampus, moduleStatusFilter, matrixData])
+
+  // Filtered Institutes for the matrix table
+  const displayedInstitutes = useMemo(() => {
+    if (selectedCampusId !== 'ALL') {
+      const match = filteredInstitutes.filter(i => i.id === selectedCampusId)
+      if (match.length > 0) return match
+      const fallback = (institutes || []).filter(i => i.id === selectedCampusId)
+      return fallback.length > 0 ? fallback : filteredInstitutes
+    }
+    return filteredInstitutes
+  }, [filteredInstitutes, selectedCampusId, institutes])
 
   // Toggle Single Feature
   const handleToggleFeature = (instituteId, featureKey) => {
@@ -307,6 +338,39 @@ export const InstituteFeatureControlView = ({ onRouteChange }) => {
     return count
   }, [institutes])
 
+  // Selected Campus Isolated Statistics
+  const selectedCampusStats = useMemo(() => {
+    if (!selectedCampus) return null
+    let activeCount = 0
+    let lockedCount = 0
+    const activeFeaturesList = []
+    const lockedFeaturesList = []
+
+    INSTITUTE_FEATURES_REGISTRY.forEach(feat => {
+      const active = isFeatureActive(selectedCampus.id, feat.key)
+      if (active) {
+        activeCount++
+        activeFeaturesList.push(feat)
+      } else {
+        lockedCount++
+        lockedFeaturesList.push(feat)
+      }
+    })
+
+    const { elevatedCount } = AdminControlService.getInstituteAdminOverrides(selectedCampus.id)
+    const planTier = selectedCampus.planTier || selectedCampus.planType || 'School Plan'
+
+    return {
+      activeCount,
+      lockedCount,
+      totalCount: INSTITUTE_FEATURES_REGISTRY.length,
+      activeFeaturesList,
+      lockedFeaturesList,
+      elevatedCount,
+      planTier
+    }
+  }, [selectedCampus, matrixData])
+
   return (
     <div className="p-4 sm:p-6 md:p-8 lg:p-8 pb-16 space-y-6 max-w-[1520px] mx-auto text-slate-800 dark:text-slate-100 transition-colors duration-200">
       {/* 1. TOP HEADER & BREADCRUMBS */}
@@ -375,70 +439,429 @@ export const InstituteFeatureControlView = ({ onRouteChange }) => {
         </div>
       </div>
 
-      {/* 2. STAT SUMMARY CARDS */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Campuses Governed</span>
-            <div className="w-7 h-7 rounded-lg bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 flex items-center justify-center">
-              <Building2 className="w-4 h-4" />
+      {/* 2. CAMPUS SELECTION & SCOPE STRIP */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+            <Building2 className="w-4 h-4" />
+          </div>
+          <div>
+            <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <span>Campus Scope</span>
+              {selectedCampus ? (
+                <span className="text-[10px] font-extrabold text-purple-700 bg-purple-100 dark:bg-purple-950/80 px-2.5 py-0.5 rounded-full border border-purple-200 dark:border-purple-800 flex items-center gap-1">
+                  <span>{selectedCampus.name}</span>
+                  <span className="font-mono text-[9px] opacity-70">({selectedCampus.code || 'SCH'})</span>
+                </span>
+              ) : (
+                <span className="text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
+                  All {institutes.length} Campuses (Network Overview)
+                </span>
+              )}
             </div>
+            <p className="text-[11px] text-slate-400">
+              {selectedCampus 
+                ? `Inspecting isolated active & locked module cards for ${selectedCampus.name}` 
+                : 'Click any specific campus below to view its isolated active & locked module cards'}
+            </p>
           </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-black text-slate-900 dark:text-white font-heading">{totalCampuses}</span>
-            <span className="text-[10px] text-slate-400">campuses</span>
-          </div>
-          <p className="text-[11px] text-slate-400 mt-1">Multi-tenant school entities</p>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Active Modules</span>
-            <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-              <CheckCircle2 className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-black text-slate-900 dark:text-white font-heading">{activeSwitchesCount}</span>
-            <span className="text-[10px] text-slate-400">/ {totalPossibleSwitches} live</span>
-          </div>
-          <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1">
-            {totalPossibleSwitches > 0 ? Math.round((activeSwitchesCount / totalPossibleSwitches) * 100) : 100}% feature adoption
-          </p>
-        </div>
+        {/* Quick Campus Filter Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 dark-scroll">
+          <button
+            type="button"
+            onClick={() => { setSelectedCampusId('ALL'); setModuleStatusFilter('ALL'); }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
+              selectedCampusId === 'ALL'
+                ? 'bg-purple-600 text-white shadow-xs'
+                : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300'
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>All Campuses ({institutes.length})</span>
+          </button>
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Elevated Admins</span>
-            <div className="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-              <ShieldCheck className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-black text-slate-900 dark:text-white font-heading">{elevatedAdminsCount}</span>
-            <span className="text-[10px] text-slate-400">campuses</span>
-          </div>
-          <p className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold mt-1">
-            Custom privilege overrides active
-          </p>
-        </div>
-
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Locked Modules</span>
-            <div className="w-7 h-7 rounded-lg bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 flex items-center justify-center">
-              <Lock className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-black text-slate-900 dark:text-white font-heading">
-              {Math.max(0, totalPossibleSwitches - activeSwitchesCount)}
-            </span>
-            <span className="text-[10px] text-slate-400">restricted</span>
-          </div>
-          <p className="text-[11px] text-slate-400 mt-1">Enforcing SaaS tier boundaries</p>
+          {institutes.map(inst => {
+            const isSelected = selectedCampusId === inst.id
+            return (
+              <button
+                key={inst.id}
+                type="button"
+                onClick={() => { setSelectedCampusId(inst.id); setModuleStatusFilter('ALL'); }}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
+                  isSelected
+                    ? 'bg-purple-600 text-white shadow-xs ring-2 ring-purple-400/50'
+                    : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200'
+                }`}
+              >
+                <Building2 className="w-3.5 h-3.5 opacity-70" />
+                <span className="truncate max-w-[130px]">{inst.name}</span>
+              </button>
+            )
+          })}
         </div>
       </div>
+
+      {/* 3. DYNAMIC STAT CARDS (GLOBAL OVERVIEW VS PER-CAMPUS ISOLATED) */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+        {!selectedCampus ? (
+          <>
+            {/* GLOBAL: Campuses Governed */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Campuses Governed</span>
+                <div className="w-7 h-7 rounded-lg bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+                  <Building2 className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-2xl font-black text-slate-900 dark:text-white font-heading">{totalCampuses}</span>
+                <span className="text-[10px] text-slate-400">campuses</span>
+              </div>
+              <p className="text-[11px] text-slate-400 mt-1">Multi-tenant school entities</p>
+            </div>
+
+            {/* GLOBAL: Active Modules */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Active Modules</span>
+                <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                  <CheckCircle2 className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-2xl font-black text-slate-900 dark:text-white font-heading">{activeSwitchesCount}</span>
+                <span className="text-[10px] text-slate-400">/ {totalPossibleSwitches} live</span>
+              </div>
+              <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1">
+                {totalPossibleSwitches > 0 ? Math.round((activeSwitchesCount / totalPossibleSwitches) * 100) : 100}% feature adoption
+              </p>
+            </div>
+
+            {/* GLOBAL: Elevated Admins */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Elevated Admins</span>
+                <div className="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                  <ShieldCheck className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-2xl font-black text-slate-900 dark:text-white font-heading">{elevatedAdminsCount}</span>
+                <span className="text-[10px] text-slate-400">campuses</span>
+              </div>
+              <p className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold mt-1">
+                Custom privilege overrides active
+              </p>
+            </div>
+
+            {/* GLOBAL: Locked Modules */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Locked Modules</span>
+                <div className="w-7 h-7 rounded-lg bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 flex items-center justify-center">
+                  <Lock className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-2xl font-black text-slate-900 dark:text-white font-heading">
+                  {Math.max(0, totalPossibleSwitches - activeSwitchesCount)}
+                </span>
+                <span className="text-[10px] text-slate-400">restricted</span>
+              </div>
+              <p className="text-[11px] text-slate-400 mt-1">Enforcing SaaS tier boundaries</p>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* PER-CAMPUS: Target Campus Details */}
+            <div className="bg-white dark:bg-slate-900 border-2 border-purple-300 dark:border-purple-800/80 rounded-2xl p-4 shadow-sm relative overflow-hidden flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider">Target Campus</span>
+                  <div className="w-7 h-7 rounded-lg bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 flex items-center justify-center">
+                    <Building2 className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="mt-2">
+                  <div className="text-base sm:text-lg font-black text-slate-900 dark:text-white font-heading truncate" title={selectedCampus.name}>
+                    {selectedCampus.name}
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300">
+                      {selectedCampusStats?.planTier}
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      {selectedCampus.code || 'SCH'}
+                    </span>
+                    <span className="text-[10px] text-slate-400 truncate">
+                      • {selectedCampus.city || 'Punjab'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setSelectedCampusId('ALL'); setModuleStatusFilter('ALL'); }}
+                className="mt-2 text-[11px] font-bold text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                ← Clear &amp; View All Campuses
+              </button>
+            </div>
+
+            {/* PER-CAMPUS: Active Modules for Selected Campus */}
+            <div
+              onClick={() => setModuleStatusFilter(moduleStatusFilter === 'ACTIVE' ? 'ALL' : 'ACTIVE')}
+              className={`bg-white dark:bg-slate-900 border rounded-2xl p-4 shadow-xs cursor-pointer transition-all hover:shadow-md flex flex-col justify-between ${
+                moduleStatusFilter === 'ACTIVE'
+                  ? 'border-emerald-500 ring-2 ring-emerald-500/30 bg-emerald-50/20 dark:bg-emerald-950/20'
+                  : 'border-slate-200 dark:border-slate-800 hover:border-emerald-300'
+              }`}
+              title="Click to filter table to Active Modules only"
+            >
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Active Modules</span>
+                  <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                    <CheckCircle2 className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <span className="text-2xl font-black text-emerald-700 dark:text-emerald-400 font-heading">
+                    {selectedCampusStats?.activeCount}
+                  </span>
+                  <span className="text-[10px] text-slate-400">/ {selectedCampusStats?.totalCount} live</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                  {Math.round(((selectedCampusStats?.activeCount || 0) / (selectedCampusStats?.totalCount || 1)) * 100)}% enabled
+                </p>
+                <span className={`text-[10px] font-bold ${moduleStatusFilter === 'ACTIVE' ? 'text-emerald-700 dark:text-emerald-300 font-extrabold' : 'text-slate-400'}`}>
+                  {moduleStatusFilter === 'ACTIVE' ? 'Filtered ✓' : 'Click to filter'}
+                </span>
+              </div>
+            </div>
+
+            {/* PER-CAMPUS: Elevated Admin Privileges for Selected Campus */}
+            <div
+              onClick={() => handleOpenOverrides(selectedCampus)}
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-amber-300 rounded-2xl p-4 shadow-xs cursor-pointer transition-all hover:shadow-md flex flex-col justify-between"
+              title="Click to configure granular admin overrides for this campus"
+            >
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Admin Privileges</span>
+                  <div className="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                    <ShieldCheck className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <span className="text-2xl font-black text-slate-900 dark:text-white font-heading">
+                    {selectedCampusStats?.elevatedCount}
+                  </span>
+                  <span className="text-[10px] text-slate-400">overrides</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <p className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold truncate">
+                  {selectedCampusStats?.elevatedCount > 0 ? 'Custom overrides' : 'Standard tier rules'}
+                </p>
+                <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400">
+                  Manage →
+                </span>
+              </div>
+            </div>
+
+            {/* PER-CAMPUS: Locked Modules for Selected Campus */}
+            <div
+              onClick={() => setModuleStatusFilter(moduleStatusFilter === 'LOCKED' ? 'ALL' : 'LOCKED')}
+              className={`bg-white dark:bg-slate-900 border rounded-2xl p-4 shadow-xs cursor-pointer transition-all hover:shadow-md flex flex-col justify-between ${
+                moduleStatusFilter === 'LOCKED'
+                  ? 'border-rose-500 ring-2 ring-rose-500/30 bg-rose-50/20 dark:bg-rose-950/20'
+                  : 'border-slate-200 dark:border-slate-800 hover:border-rose-300'
+              }`}
+              title="Click to filter table to Locked Modules only"
+            >
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Locked Modules</span>
+                  <div className="w-7 h-7 rounded-lg bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 flex items-center justify-center">
+                    <Lock className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <span className="text-2xl font-black text-rose-600 dark:text-rose-400 font-heading">
+                    {selectedCampusStats?.lockedCount}
+                  </span>
+                  <span className="text-[10px] text-slate-400">restricted</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <p className="text-[11px] text-slate-400">
+                  {selectedCampusStats?.lockedCount === 0 ? 'All 15 modules unlocked' : 'Enforcing tier gates'}
+                </p>
+                <span className={`text-[10px] font-bold ${moduleStatusFilter === 'LOCKED' ? 'text-rose-700 dark:text-rose-300 font-extrabold' : 'text-slate-400'}`}>
+                  {moduleStatusFilter === 'LOCKED' ? 'Filtered ✓' : 'Click to filter'}
+                </span>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* 4. PER-CAMPUS DEDICATED MODULE CARDS PANEL */}
+      {selectedCampus && selectedCampusStats && (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs space-y-4 animate-in fade-in duration-200">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold text-sm shrink-0">
+                {selectedCampus.code?.slice(0, 3) || 'SCH'}
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                    {selectedCampus.name} — Modules &amp; Feature Licensing
+                  </h3>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300">
+                    {selectedCampusStats.planTier}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Click Lock/Unlock on any module card to immediately activate or restrict it for this specific campus.
+                </p>
+              </div>
+            </div>
+
+            {/* Quick Filter Switcher */}
+            <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-bold shrink-0">
+              <button
+                type="button"
+                onClick={() => setModuleStatusFilter('ALL')}
+                className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                  moduleStatusFilter === 'ALL'
+                    ? 'bg-white dark:bg-slate-900 text-purple-600 dark:text-purple-400 shadow-2xs'
+                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                All Modules ({selectedCampusStats.totalCount})
+              </button>
+              <button
+                type="button"
+                onClick={() => setModuleStatusFilter('ACTIVE')}
+                className={`px-3 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1 ${
+                  moduleStatusFilter === 'ACTIVE'
+                    ? 'bg-emerald-600 text-white shadow-2xs'
+                    : 'text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'
+                }`}
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>Active ({selectedCampusStats.activeCount})</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setModuleStatusFilter('LOCKED')}
+                className={`px-3 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1 ${
+                  moduleStatusFilter === 'LOCKED'
+                    ? 'bg-rose-600 text-white shadow-2xs'
+                    : 'text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40'
+                }`}
+              >
+                <Lock className="w-3.5 h-3.5" />
+                <span>Locked ({selectedCampusStats.lockedCount})</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Module Cards Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            {(moduleStatusFilter === 'ALL'
+              ? INSTITUTE_FEATURES_REGISTRY
+              : moduleStatusFilter === 'ACTIVE'
+                ? selectedCampusStats.activeFeaturesList
+                : selectedCampusStats.lockedFeaturesList
+            ).map(feat => {
+              const isEnabled = isFeatureActive(selectedCampus.id, feat.key)
+              const FeatIcon = FEATURE_ICON_MAP[feat.icon] || Layers
+              return (
+                <div
+                  key={feat.key}
+                  className={`p-3 rounded-2xl border transition-all flex flex-col justify-between gap-3 ${
+                    isEnabled
+                      ? 'bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-200/80 dark:border-emerald-800/60 shadow-2xs'
+                      : 'bg-slate-50/70 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                        isEnabled
+                          ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300'
+                          : 'bg-slate-200 dark:bg-slate-700 text-slate-500'
+                      }`}>
+                        <FeatIcon className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-xs font-bold text-slate-900 dark:text-white truncate" title={feat.name}>
+                          {feat.name}
+                        </div>
+                        <div className="text-[10px] text-slate-400 truncate">
+                          {feat.category}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 line-clamp-2 min-h-[28px]" title={feat.description}>
+                    {feat.description}
+                  </p>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800/80">
+                    <span className={`text-[10px] font-bold flex items-center gap-1 ${
+                      isEnabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
+                    }`}>
+                      {isEnabled ? (
+                        <>
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                          <span>Active</span>
+                        </>
+                      ) : (
+                        <>
+                          <Lock className="w-3 h-3 text-rose-500" />
+                          <span>Locked</span>
+                        </>
+                      )}
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={() => handleToggleFeature(selectedCampus.id, feat.key)}
+                      className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                        isEnabled
+                          ? 'bg-rose-100 hover:bg-rose-200 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300'
+                          : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs'
+                      }`}
+                    >
+                      {isEnabled ? (
+                        <>
+                          <Lock className="w-3 h-3" />
+                          <span>Lock</span>
+                        </>
+                      ) : (
+                        <>
+                          <Unlock className="w-3 h-3" />
+                          <span>Unlock</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* 3. PRIMARY NAVIGATION TABS */}
       <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800">
@@ -512,6 +935,22 @@ export const InstituteFeatureControlView = ({ onRouteChange }) => {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
+              {/* Selected Campus Badge / Reset */}
+              {selectedCampus && (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 text-xs font-bold text-purple-700 dark:text-purple-300">
+                  <Building2 className="w-3.5 h-3.5" />
+                  <span>Scoped: {selectedCampus.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedCampusId('ALL'); setModuleStatusFilter('ALL'); }}
+                    className="ml-1 p-0.5 rounded-full hover:bg-purple-200 dark:hover:bg-purple-900 text-purple-700 dark:text-purple-300 cursor-pointer"
+                    title="Show all campuses"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
+
               {/* Plan Tier Filter */}
               <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-semibold">
                 {['ALL', 'School', 'Enterprise', 'Trial'].map(tier => (
@@ -583,7 +1022,7 @@ export const InstituteFeatureControlView = ({ onRouteChange }) => {
                 </thead>
 
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-medium">
-                  {filteredInstitutes.length === 0 ? (
+                  {displayedInstitutes.length === 0 ? (
                     <tr>
                       <td colSpan={visibleFeatures.length + 2} className="py-12 text-center text-slate-400">
                         <Building2 className="w-8 h-8 mx-auto mb-2 opacity-40 text-purple-400" />
@@ -592,23 +1031,48 @@ export const InstituteFeatureControlView = ({ onRouteChange }) => {
                       </td>
                     </tr>
                   ) : (
-                    filteredInstitutes.map((inst) => {
+                    displayedInstitutes.map((inst) => {
                       const planTier = inst.planTier || inst.planType || 'School Plan'
                       const isTrial = planTier.toLowerCase().includes('trial')
                       const isEnterprise = planTier.toLowerCase().includes('enterprise') || planTier.toLowerCase().includes('network')
                       const { elevatedCount } = AdminControlService.getInstituteAdminOverrides(inst.id)
+                      const isSelected = selectedCampusId === inst.id
 
                       return (
-                        <tr key={inst.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors group">
+                        <tr
+                          key={inst.id}
+                          className={`transition-colors group ${
+                            isSelected
+                              ? 'bg-purple-50/60 dark:bg-purple-950/30'
+                              : 'hover:bg-slate-50/80 dark:hover:bg-slate-800/40'
+                          }`}
+                        >
                           {/* Campus Info Sticky */}
-                          <td className="py-3 px-4 sticky left-0 z-10 bg-white dark:bg-slate-900 group-hover:bg-slate-50/80 dark:group-hover:bg-slate-800/40 border-r border-slate-200 dark:border-slate-800 shadow-xs">
+                          <td
+                            onClick={() => setSelectedCampusId(isSelected ? 'ALL' : inst.id)}
+                            className={`py-3 px-4 sticky left-0 z-10 border-r border-slate-200 dark:border-slate-800 shadow-xs cursor-pointer transition-colors ${
+                              isSelected
+                                ? 'bg-purple-100/90 dark:bg-purple-950 text-purple-950 dark:text-purple-100 ring-2 ring-inset ring-purple-500/80'
+                                : 'bg-white dark:bg-slate-900 group-hover:bg-slate-50/80 dark:group-hover:bg-slate-800/40'
+                            }`}
+                            title="Click to isolate & inspect this campus's module cards"
+                          >
                             <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold text-xs shrink-0">
+                              <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 ${
+                                isSelected
+                                  ? 'bg-purple-600 text-white'
+                                  : 'bg-purple-500/10 text-purple-600 dark:text-purple-400'
+                              }`}>
                                 {inst.code?.slice(0, 3) || 'SCH'}
                               </div>
                               <div className="min-w-0">
-                                <div className="font-bold text-slate-900 dark:text-white truncate" title={inst.name}>
-                                  {inst.name}
+                                <div className="font-bold text-slate-900 dark:text-white truncate flex items-center gap-1.5" title={inst.name}>
+                                  <span>{inst.name}</span>
+                                  {isSelected && (
+                                    <span className="text-[9px] font-extrabold bg-purple-600 text-white px-1.5 py-0.2 rounded">
+                                      Active
+                                    </span>
+                                  )}
                                 </div>
                                 <div className="flex items-center gap-1.5 mt-0.5">
                                   <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
@@ -665,6 +1129,20 @@ export const InstituteFeatureControlView = ({ onRouteChange }) => {
                           {/* Row Actions */}
                           <td className="py-3 px-4 text-right whitespace-nowrap">
                             <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => setSelectedCampusId(isSelected ? 'ALL' : inst.id)}
+                                className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                                  isSelected
+                                    ? 'bg-purple-600 text-white shadow-xs'
+                                    : 'bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800'
+                                }`}
+                                title={isSelected ? 'Clear campus filter & view all' : 'Inspect this campus cards & modules'}
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>{isSelected ? 'Viewing' : 'Inspect'}</span>
+                              </button>
+
                               <button
                                 type="button"
                                 onClick={() => handleOpenOverrides(inst)}
