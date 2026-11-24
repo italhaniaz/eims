@@ -1045,6 +1045,48 @@ export const InstitutesView = () => {
   })
   const [editTab, setEditTab] = useState('profile')
   const [isEditCustomCity, setIsEditCustomCity] = useState(false)
+  const editScrollContainerRef = useRef(null)
+  const editProfileRef = useRef(null)
+  const editLocationRef = useRef(null)
+  const editContactRef = useRef(null)
+  const editPlanRef = useRef(null)
+
+  const handleScrollToSection = (tabId) => {
+    setEditTab(tabId)
+    const targetMap = {
+      profile: editProfileRef.current,
+      location: editLocationRef.current,
+      contact: editContactRef.current,
+      plan: editPlanRef.current
+    }
+    const target = targetMap[tabId]
+    const container = editScrollContainerRef.current
+    if (target && container) {
+      const topOffset = target.offsetTop - container.offsetTop
+      container.scrollTo({ top: Math.max(0, topOffset - 8), behavior: 'smooth' })
+    }
+  }
+
+  const handleEditScroll = (e) => {
+    const container = e.currentTarget
+    const scrollTop = container.scrollTop
+    const sections = [
+      { id: 'profile', ref: editProfileRef },
+      { id: 'location', ref: editLocationRef },
+      { id: 'contact', ref: editContactRef },
+      { id: 'plan', ref: editPlanRef }
+    ]
+    for (let i = sections.length - 1; i >= 0; i--) {
+      const el = sections[i].ref.current
+      if (el) {
+        const offset = el.offsetTop - container.offsetTop
+        if (scrollTop >= offset - 70) {
+          setEditTab(sections[i].id)
+          break
+        }
+      }
+    }
+  }
 
   // Geographic calculations for Edit Modal
   const editCountryConfig = useMemo(() => {
@@ -1060,7 +1102,7 @@ export const InstitutesView = () => {
     return editCountryConfig.provinces?.[prov]?.cities || []
   }, [editCountryConfig, editFormData.province, editProvinces])
 
-  const openEditModal = (inst) => {
+  const openEditModal = (inst, initialTab = 'profile') => {
     setEditingInstitute(inst)
     const country = inst.country || 'Pakistan'
     const countryConfig = GEOGRAPHIC_REGISTRY[country] || GEOGRAPHIC_REGISTRY['Pakistan']
@@ -1108,7 +1150,11 @@ export const InstitutesView = () => {
       customModules: inst.customModules || []
     })
     setIsEditCustomCity(Boolean(isCustomCity))
-    setEditTab('profile')
+    const resolvedTab = initialTab === 'quotas' ? 'plan' : (initialTab || 'profile')
+    setEditTab(resolvedTab)
+    setTimeout(() => {
+      handleScrollToSection(resolvedTab)
+    }, 120)
   }
 
   const handleEditCountryChange = (selectedCountry) => {
@@ -3965,8 +4011,7 @@ export const InstitutesView = () => {
                     onClick={() => {
                       const target = viewingDetails
                       setViewingDetails(null)
-                      openEditModal(target)
-                      setEditTab('quotas')
+                      openEditModal(target, 'plan')
                     }}
                     className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer active:scale-95"
                     title="Open Edit Quotas & Subscription Tier"
@@ -4133,460 +4178,489 @@ export const InstitutesView = () => {
       )}
 
       {/* ---------------------------------------------------- */}
-      {/* 5. EDIT INSTITUTE MODAL (FULL EDITING SUITE) */}
+      {/* 5. EDIT INSTITUTE MODAL (SIDEBAR + SINGLE SCREEN SUITE) */}
       {/* ---------------------------------------------------- */}
       {editingInstitute && (
         <Modal
           isOpen={Boolean(editingInstitute)}
           onClose={() => setEditingInstitute(null)}
           title={`Edit Profile: ${editingInstitute.name}`}
-          maxWidth="max-w-2xl"
+          maxWidth="max-w-4xl"
         >
           <form onSubmit={handleEditSubmit} className="space-y-4">
-            {/* Navigation Tabs */}
-            <div className="flex items-center border-b border-slate-100 pb-2.5 text-xs gap-1.5 overflow-x-auto">
-              {[
-                { id: 'profile', label: '1. Profile & Tier', icon: Building2 },
-                { id: 'location', label: '2. Location & Campus', icon: MapPin },
-                { id: 'contact', label: '3. Contact Details', icon: Phone },
-                { id: 'plan', label: '4. Plan & Quotas', icon: Layers }
-              ].map(t => {
-                const TabIcon = t.icon
-                const isActive = editTab === t.id
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => setEditTab(t.id)}
-                    className={`px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5 transition-all cursor-pointer shrink-0 ${
-                      isActive
-                        ? 'bg-emerald-600 text-white shadow-2xs'
-                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
-                    }`}
-                  >
-                    <TabIcon className="w-3.5 h-3.5" />
-                    <span>{t.label}</span>
-                  </button>
-                )
-              })}
-            </div>
-
-            {/* TAB 1: Demographics & Region */}
-            {editTab === 'profile' && (
-              <div className="space-y-3.5">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
-                    Institute Official Name <span className="text-rose-500 font-bold">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={editFormData.name}
-                    onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-                    className="w-full px-3.5 py-2.5 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                  />
+            <div className="flex flex-col md:flex-row gap-5 -mx-1">
+              {/* Left Sidebar Navigation */}
+              <aside className="w-full md:w-56 shrink-0 border-b md:border-b-0 md:border-r border-slate-100 dark:border-slate-800 md:pr-4 pb-3 md:pb-0">
+                <div className="sticky top-0 space-y-1">
+                  <div className="px-2 pb-1.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                    Profile Navigation
+                  </div>
+                  {[
+                    { id: 'profile', label: '1. Profile & Tier', subtitle: 'Official info & jurisdiction', icon: Building2 },
+                    { id: 'location', label: '2. Location & Campus', subtitle: 'Province, city & address', icon: MapPin },
+                    { id: 'contact', label: '3. Contact Details', subtitle: 'Phone & email channels', icon: Phone },
+                    { id: 'plan', label: '4. Plan & Quotas', subtitle: 'Subscription & limits', icon: Layers }
+                  ].map(t => {
+                    const TabIcon = t.icon
+                    const isActive = editTab === t.id
+                    return (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => handleScrollToSection(t.id)}
+                        className={`w-full text-left px-3 py-2.5 rounded-xl transition-all cursor-pointer group flex items-start gap-2.5 ${
+                          isActive
+                            ? 'bg-emerald-600 text-white font-bold shadow-sm'
+                            : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-slate-800 font-medium'
+                        }`}
+                      >
+                        <TabIcon className={`w-4 h-4 mt-0.5 shrink-0 transition-colors ${
+                          isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200'
+                        }`} />
+                        <div className="min-w-0 flex-1">
+                          <div className="text-xs leading-tight font-semibold truncate">{t.label}</div>
+                          <div className={`text-[10px] mt-0.5 truncate ${
+                            isActive ? 'text-white/80 font-normal' : 'text-slate-400 dark:text-slate-500'
+                          }`}>
+                            {t.subtitle}
+                          </div>
+                        </div>
+                      </button>
+                    )
+                  })}
                 </div>
+              </aside>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Main Content: All Sections on a Single Scrollable Screen */}
+              <div
+                ref={editScrollContainerRef}
+                onScroll={handleEditScroll}
+                className="flex-1 overflow-y-auto max-h-[64vh] pr-2 space-y-7 scroll-smooth"
+              >
+                {/* SECTION 1: Profile & Tier */}
+                <div ref={editProfileRef} id="section-profile" className="space-y-3.5 pt-1">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                      <Building2 className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                        1. Profile &amp; Tier
+                      </h4>
+                      <p className="text-[11px] text-slate-400">Institutional credentials, official code, and academic board.</p>
+                    </div>
+                  </div>
+
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
-                      Unique Code <span className="text-rose-500 font-bold">*</span>
+                      Institute Official Name <span className="text-rose-500 font-bold">*</span>
                     </label>
                     <input
                       type="text"
                       required
-                      value={editFormData.code}
-                      onChange={(e) => setEditFormData({ ...editFormData, code: e.target.value.toUpperCase() })}
-                      className="w-full px-3.5 py-2.5 text-xs rounded-lg border border-slate-200 font-mono uppercase focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                      value={editFormData.name}
+                      onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                      className="w-full px-3.5 py-2.5 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                        Unique Code <span className="text-rose-500 font-bold">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={editFormData.code}
+                        onChange={(e) => setEditFormData({ ...editFormData, code: e.target.value.toUpperCase() })}
+                        className="w-full px-3.5 py-2.5 text-xs rounded-lg border border-slate-200 font-mono uppercase focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                        Educational Tier / Plan Type
+                      </label>
+                      <select
+                        value={editFormData.type}
+                        onChange={(e) => handleEditTierChange(e.target.value)}
+                        className="w-full px-3.5 py-2.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer"
+                      >
+                        <option value="School">School Plan</option>
+                        <option value="Enterprise">Enterprise Network</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 uppercase mb-1 flex items-center gap-1">
+                      <span>Head / Principal Name</span>
+                      <span className="text-rose-500 font-bold">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Dr. Shahida Parveen"
+                      value={editFormData.principal}
+                      onChange={(e) => setEditFormData({ ...editFormData, principal: e.target.value })}
+                      className="w-full px-3.5 py-2.5 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                     />
                   </div>
 
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
-                      Educational Tier / Plan Type
+                      Country / Geographic Jurisdiction
                     </label>
                     <select
-                      value={editFormData.type}
-                      onChange={(e) => handleEditTierChange(e.target.value)}
+                      value={editFormData.country}
+                      onChange={(e) => handleEditCountryChange(e.target.value)}
                       className="w-full px-3.5 py-2.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer"
                     >
-                      <option value="School">School Plan</option>
-                      <option value="Enterprise">Enterprise Network</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1 flex items-center gap-1">
-                    <span>Head / Principal Name</span>
-                    <span className="text-rose-500 font-bold">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Dr. Shahida Parveen"
-                    value={editFormData.principal}
-                    onChange={(e) => setEditFormData({ ...editFormData, principal: e.target.value })}
-                    className="w-full px-3.5 py-2.5 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
-                    Country / Geographic Jurisdiction
-                  </label>
-                  <select
-                    value={editFormData.country}
-                    onChange={(e) => handleEditCountryChange(e.target.value)}
-                    className="w-full px-3.5 py-2.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer"
-                  >
-                    {getAvailableCountries().map(c => (
-                      <option key={c.name} value={c.name}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
-                      Affiliated Examination Board
-                    </label>
-                    <select
-                      value={editFormData.affiliatedBoard}
-                      onChange={(e) => setEditFormData({ ...editFormData, affiliatedBoard: e.target.value })}
-                      className="w-full px-3.5 py-2.5 text-xs font-medium rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer"
-                    >
-                      {getCountryBoards(editFormData.country).map(b => (
-                        <option key={b.id || b.code} value={b.name || b.code}>
-                          {b.name}
+                      {getAvailableCountries().map(c => (
+                        <option key={c.name} value={c.name}>
+                          {c.name}
                         </option>
                       ))}
                     </select>
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
-                      Regional Division
-                    </label>
-                    <select
-                      value={editFormData.divisionId}
-                      onChange={(e) => setEditFormData({ ...editFormData, divisionId: e.target.value })}
-                      className="w-full px-3.5 py-2.5 text-xs font-medium rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer"
-                    >
-                      {getCountryDivisions(editFormData.country).map(d => (
-                        <option key={d.id} value={d.id}>
-                          {d.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* TAB 2: Campus & Location */}
-            {editTab === 'location' && (
-              <div className="space-y-3.5">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <label className="block text-xs font-semibold text-slate-700 uppercase">Province / State</label>
-                      <span className="text-[10px] text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100 font-semibold">
-                        {editFormData.country}
-                      </span>
-                    </div>
-                    <select
-                      value={editFormData.province}
-                      onChange={(e) => handleEditProvinceChange(e.target.value)}
-                      className="w-full px-3.5 py-2.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer"
-                    >
-                      {editProvinces.map(provName => (
-                        <option key={provName} value={provName}>{provName}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <label className="block text-xs font-semibold text-slate-700 uppercase">Primary Campus City</label>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const next = !isEditCustomCity
-                          setIsEditCustomCity(next)
-                          if (!next && !editCities.includes(editFormData.city)) {
-                            handleEditCityChange(editCities[0] || 'Lahore')
-                          }
-                        }}
-                        className="text-[11px] text-emerald-600 hover:text-emerald-900 font-semibold cursor-pointer"
-                      >
-                        {isEditCustomCity ? '← Choose from list' : '+ Custom city'}
-                      </button>
-                    </div>
-
-                    {!isEditCustomCity ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                        Affiliated Examination Board
+                      </label>
                       <select
-                        value={editCities.includes(editFormData.city) ? editFormData.city : '__CUSTOM__'}
-                        onChange={(e) => {
-                          const val = e.target.value
-                          if (val === '__CUSTOM__') {
-                            setIsEditCustomCity(true)
-                          } else {
-                            handleEditCityChange(val)
-                          }
-                        }}
+                        value={editFormData.affiliatedBoard}
+                        onChange={(e) => setEditFormData({ ...editFormData, affiliatedBoard: e.target.value })}
+                        className="w-full px-3.5 py-2.5 text-xs font-medium rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer"
+                      >
+                        {getCountryBoards(editFormData.country).map(b => (
+                          <option key={b.id || b.code} value={b.name || b.code}>
+                            {b.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                        Regional Division
+                      </label>
+                      <select
+                        value={editFormData.divisionId}
+                        onChange={(e) => setEditFormData({ ...editFormData, divisionId: e.target.value })}
+                        className="w-full px-3.5 py-2.5 text-xs font-medium rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer"
+                      >
+                        {getCountryDivisions(editFormData.country).map(d => (
+                          <option key={d.id} value={d.id}>
+                            {d.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* SECTION 2: Location & Campus */}
+                <div ref={editLocationRef} id="section-location" className="space-y-3.5 pt-4 border-t border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                      <MapPin className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                        2. Location &amp; Campus
+                      </h4>
+                      <p className="text-[11px] text-slate-400">Geographic province, primary city jurisdiction, and physical campus location.</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="block text-xs font-semibold text-slate-700 uppercase">Province / State</label>
+                        <span className="text-[10px] text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100 font-semibold">
+                          {editFormData.country}
+                        </span>
+                      </div>
+                      <select
+                        value={editFormData.province}
+                        onChange={(e) => handleEditProvinceChange(e.target.value)}
                         className="w-full px-3.5 py-2.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer"
                       >
-                        {editCities.map(cityName => (
-                          <option key={cityName} value={cityName}>{cityName}</option>
+                        {editProvinces.map(provName => (
+                          <option key={provName} value={provName}>{provName}</option>
                         ))}
-                        <option value="__CUSTOM__">+ Other / Enter Custom City...</option>
                       </select>
-                    ) : (
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          required
-                          value={editFormData.city}
-                          onChange={(e) => handleEditCustomCityChange(e.target.value)}
-                          placeholder="Enter custom city"
-                          className="w-full px-3.5 py-2.5 text-xs font-semibold rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                        />
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="block text-xs font-semibold text-slate-700 uppercase">Primary Campus City</label>
                         <button
                           type="button"
                           onClick={() => {
-                            setIsEditCustomCity(false)
-                            handleEditCityChange(editCities[0] || 'Lahore')
+                            const next = !isEditCustomCity
+                            setIsEditCustomCity(next)
+                            if (!next && !editCities.includes(editFormData.city)) {
+                              handleEditCityChange(editCities[0] || 'Lahore')
+                            }
                           }}
-                          className="px-3 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg shrink-0 cursor-pointer"
+                          className="text-[11px] text-emerald-600 hover:text-emerald-900 font-semibold cursor-pointer"
                         >
-                          List
+                          {isEditCustomCity ? '← Choose from list' : '+ Custom city'}
                         </button>
                       </div>
-                    )}
-                  </div>
-                </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
-                    Head Campus Physical Address
-                  </label>
-                  <input
-                    type="text"
-                    value={editFormData.address}
-                    onChange={(e) => setEditFormData({ ...editFormData, address: e.target.value })}
-                    placeholder="e.g. Main Boulevard, Gulberg III"
-                    className="w-full px-3.5 py-2.5 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* TAB 3: Contact Details */}
-            {editTab === 'contact' && (
-              <div className="space-y-3.5">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
-                    Official Phone
-                  </label>
-                  <div className="flex rounded-lg border border-slate-200 bg-white shadow-2xs focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500">
-                    <div className="shrink-0 px-3.5 py-2.5 bg-slate-50 border-r border-slate-200 rounded-l-lg flex items-center gap-1.5 select-none text-slate-700 font-bold text-xs">
-                      <span className="font-mono text-emerald-800 font-bold">{editFormData.phoneDialCode || '+92'}</span>
-                      <span className="text-[10px] text-slate-400 font-medium">({editFormData.country})</span>
+                      {!isEditCustomCity ? (
+                        <select
+                          value={editCities.includes(editFormData.city) ? editFormData.city : '__CUSTOM__'}
+                          onChange={(e) => {
+                            const val = e.target.value
+                            if (val === '__CUSTOM__') {
+                              setIsEditCustomCity(true)
+                            } else {
+                              handleEditCityChange(val)
+                            }
+                          }}
+                          className="w-full px-3.5 py-2.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer"
+                        >
+                          {editCities.map(cityName => (
+                            <option key={cityName} value={cityName}>{cityName}</option>
+                          ))}
+                          <option value="__CUSTOM__">+ Other / Enter Custom City...</option>
+                        </select>
+                      ) : (
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            required
+                            value={editFormData.city}
+                            onChange={(e) => handleEditCustomCityChange(e.target.value)}
+                            placeholder="Enter custom city"
+                            className="w-full px-3.5 py-2.5 text-xs font-semibold rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsEditCustomCity(false)
+                              handleEditCityChange(editCities[0] || 'Lahore')
+                            }}
+                            className="px-3 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg shrink-0 cursor-pointer"
+                          >
+                            List
+                          </button>
+                        </div>
+                      )}
                     </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                      Head Campus Physical Address
+                    </label>
                     <input
-                      type="tel"
-                      value={editFormData.phoneNumber || ''}
-                      maxLength={(editFormData.phoneNumber || '').startsWith('0') ? 11 : 10}
-                      onChange={(e) => handleEditPhoneChange(e.target.value)}
-                      placeholder="e.g. 3006543298 or 03006543298"
-                      className="w-full px-3.5 py-2.5 text-xs font-semibold text-slate-800 bg-transparent border-none outline-none font-mono"
+                      type="text"
+                      value={editFormData.address}
+                      onChange={(e) => setEditFormData({ ...editFormData, address: e.target.value })}
+                      placeholder="e.g. Main Boulevard, Gulberg III"
+                      className="w-full px-3.5 py-2.5 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                     />
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
-                    Official Email <span className="text-slate-400 font-normal lowercase">(optional)</span>
-                  </label>
-                  <input
-                    type="email"
-                    value={editFormData.email}
-                    onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
-                    placeholder="e.g. info@campus.edu"
-                    className="w-full px-3.5 py-2.5 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* TAB 4: Plan & Quotas */}
-            {editTab === 'plan' && (
-              <div className="space-y-3.5">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
-                      Subscription Plan Tier
-                    </label>
-                    <select
-                      value={editFormData.planTier}
-                      onChange={(e) => setEditFormData({ ...editFormData, planTier: e.target.value })}
-                      className="w-full px-3.5 py-2.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer"
-                    >
-                      {SUBSCRIPTION_PLANS.map(p => (
-                        <option key={p.id} value={p.name}>{p.name} (PKR {p.pricePKR.toLocaleString()}/mo)</option>
-                      ))}
-                    </select>
+                {/* SECTION 3: Contact Details */}
+                <div ref={editContactRef} id="section-contact" className="space-y-3.5 pt-4 border-t border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                      <Phone className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                        3. Contact Details
+                      </h4>
+                      <p className="text-[11px] text-slate-400">Direct telecom lines, phone dialing code, and administrative email.</p>
+                    </div>
                   </div>
 
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
-                      Lifecycle Status
+                      Official Phone
                     </label>
-                    <select
-                      value={editFormData.lifecycleStatus}
-                      onChange={(e) => setEditFormData({ ...editFormData, lifecycleStatus: e.target.value })}
-                      className="w-full px-3.5 py-2.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer"
-                    >
-                      <option value="Active">Active (Operational)</option>
-                      <option value="Suspended">Suspended (Access Revoked)</option>
-                      <option value="Archived">Archived (Locked)</option>
-                    </select>
+                    <div className="flex rounded-lg border border-slate-200 bg-white shadow-2xs focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500">
+                      <div className="shrink-0 px-3.5 py-2.5 bg-slate-50 border-r border-slate-200 rounded-l-lg flex items-center gap-1.5 select-none text-slate-700 font-bold text-xs">
+                        <span className="font-mono text-emerald-800 font-bold">{editFormData.phoneDialCode || '+92'}</span>
+                        <span className="text-[10px] text-slate-400 font-medium">({editFormData.country})</span>
+                      </div>
+                      <input
+                        type="tel"
+                        value={editFormData.phoneNumber || ''}
+                        maxLength={(editFormData.phoneNumber || '').startsWith('0') ? 11 : 10}
+                        onChange={(e) => handleEditPhoneChange(e.target.value)}
+                        placeholder="e.g. 3006543298 or 03006543298"
+                        className="w-full px-3.5 py-2.5 text-xs font-semibold text-slate-800 bg-transparent border-none outline-none font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                      Official Email <span className="text-slate-400 font-normal lowercase">(optional)</span>
+                    </label>
+                    <input
+                      type="email"
+                      value={editFormData.email}
+                      onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                      placeholder="e.g. info@campus.edu"
+                      className="w-full px-3.5 py-2.5 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    />
                   </div>
                 </div>
 
-                {/* Quota Limits Box */}
-                <div className="p-3.5 bg-slate-50/80 rounded-xl border border-slate-200 space-y-3">
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                        <GraduationCap className="w-4 h-4 text-emerald-600" />
-                        <span>Student Enrollment Quota</span>
+                {/* SECTION 4: Plan & Quotas */}
+                <div ref={editPlanRef} id="section-plan" className="space-y-3.5 pt-4 border-t border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                      <Layers className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                        4. Plan &amp; Quotas
+                      </h4>
+                      <p className="text-[11px] text-slate-400">Subscription package, lifecycle status, enrollment caps, and quotas.</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                        Subscription Plan Tier
                       </label>
-                      <input
-                        type="number"
-                        min="1"
-                        step="100"
-                        value={editFormData.quotaStudents}
-                        onChange={(e) => {
-                          const val = e.target.value === '' ? '' : Math.max(parseInt(e.target.value, 10), 0)
-                          setEditFormData({ ...editFormData, quotaStudents: val })
-                        }}
-                        className="w-28 px-2 py-1 text-xs font-extrabold text-slate-900 border border-slate-300 rounded-md text-center focus:outline-none bg-white"
-                      />
+                      <select
+                        value={editFormData.planTier}
+                        onChange={(e) => setEditFormData({ ...editFormData, planTier: e.target.value })}
+                        className="w-full px-3.5 py-2.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer"
+                      >
+                        {SUBSCRIPTION_PLANS.map(p => (
+                          <option key={p.id} value={p.name}>{p.name} (PKR {p.pricePKR.toLocaleString()}/mo)</option>
+                        ))}
+                      </select>
                     </div>
 
-                    {/* Quick Preset Tags */}
-                    <div className="flex items-center gap-1.5 mt-2">
-                      <span className="text-[10px] text-slate-400 font-semibold mr-1">Presets:</span>
-                      {[1500, 2000, 2500, 3000].map(val => (
-                        <button
-                          key={val}
-                          type="button"
-                          onClick={() => setEditFormData({ ...editFormData, quotaStudents: val })}
-                          className={`px-2.5 py-0.5 text-xs font-bold rounded transition-all cursor-pointer ${
-                            Number(editFormData.quotaStudents) === val
-                              ? 'bg-emerald-600 text-white shadow-2xs'
-                              : 'bg-white hover:bg-slate-200 text-slate-700 border border-slate-200'
-                          }`}
-                        >
-                          {val.toLocaleString()} {val === 3000 && '(Max)'}
-                        </button>
-                      ))}
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                        Lifecycle Status
+                      </label>
+                      <select
+                        value={editFormData.lifecycleStatus}
+                        onChange={(e) => setEditFormData({ ...editFormData, lifecycleStatus: e.target.value })}
+                        className="w-full px-3.5 py-2.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer"
+                      >
+                        <option value="Active">Active (Operational)</option>
+                        <option value="Suspended">Suspended (Access Revoked)</option>
+                        <option value="Archived">Archived (Locked)</option>
+                      </select>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-200/80">
+                  {/* Quota Limits Box */}
+                  <div className="p-3.5 bg-slate-50/80 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
                     <div>
-                      <label className="text-[10px] font-bold text-slate-500 block mb-1">Max Staff & Users</label>
-                      <input
-                        type="number"
-                        min="10"
-                        max="500"
-                        value={editFormData.quotaUsers}
-                        onChange={(e) => setEditFormData({ ...editFormData, quotaUsers: parseInt(e.target.value, 10) || 50 })}
-                        className="w-full px-2 py-1 text-xs font-bold text-slate-800 border border-slate-200 rounded-md bg-white text-center focus:outline-none"
-                      />
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                          <GraduationCap className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                          <span>Student Enrollment Quota</span>
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          step="100"
+                          value={editFormData.quotaStudents}
+                          onChange={(e) => {
+                            const val = e.target.value === '' ? '' : Math.max(parseInt(e.target.value, 10), 0)
+                            setEditFormData({ ...editFormData, quotaStudents: val })
+                          }}
+                          className="w-28 px-2 py-1 text-xs font-extrabold text-slate-900 dark:text-white border border-slate-300 dark:border-slate-600 rounded-md text-center focus:outline-none bg-white dark:bg-slate-900"
+                        />
+                      </div>
+
+                      {/* Quick Preset Tags */}
+                      <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                        <span className="text-[10px] text-slate-400 font-semibold mr-1">Presets:</span>
+                        {[1500, 2000, 2500, 3000].map(val => (
+                          <button
+                            key={val}
+                            type="button"
+                            onClick={() => setEditFormData({ ...editFormData, quotaStudents: val })}
+                            className={`px-2.5 py-0.5 text-xs font-bold rounded transition-all cursor-pointer ${
+                              Number(editFormData.quotaStudents) === val
+                                ? 'bg-emerald-600 text-white shadow-2xs'
+                                : 'bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
+                            }`}
+                          >
+                            {val.toLocaleString()} {val === 3000 && '(Max)'}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-500 block mb-1">Branch Campuses</label>
-                      <input
-                        type="number"
-                        min="1"
-                        max="10"
-                        value={editFormData.quotaCampuses}
-                        onChange={(e) => setEditFormData({ ...editFormData, quotaCampuses: parseInt(e.target.value, 10) || 2 })}
-                        className="w-full px-2 py-1 text-xs font-bold text-slate-800 border border-slate-200 rounded-md bg-white text-center focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-500 block mb-1">Cloud Storage (MB)</label>
-                      <input
-                        type="number"
-                        min="512"
-                        step="512"
-                        value={editFormData.quotaStorageMb}
-                        onChange={(e) => setEditFormData({ ...editFormData, quotaStorageMb: parseInt(e.target.value, 10) || 2048 })}
-                        className="w-full px-2 py-1 text-xs font-bold text-slate-800 border border-slate-200 rounded-md bg-white text-center focus:outline-none"
-                      />
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t border-slate-200/80 dark:border-slate-700">
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">Max Staff &amp; Users</label>
+                        <input
+                          type="number"
+                          min="10"
+                          max="500"
+                          value={editFormData.quotaUsers}
+                          onChange={(e) => setEditFormData({ ...editFormData, quotaUsers: parseInt(e.target.value, 10) || 50 })}
+                          className="w-full px-2 py-1 text-xs font-bold text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-slate-900 text-center focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">Branch Campuses</label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="10"
+                          value={editFormData.quotaCampuses}
+                          onChange={(e) => setEditFormData({ ...editFormData, quotaCampuses: parseInt(e.target.value, 10) || 2 })}
+                          className="w-full px-2 py-1 text-xs font-bold text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-slate-900 text-center focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">Cloud Storage (MB)</label>
+                        <input
+                          type="number"
+                          min="512"
+                          step="512"
+                          value={editFormData.quotaStorageMb}
+                          onChange={(e) => setEditFormData({ ...editFormData, quotaStorageMb: parseInt(e.target.value, 10) || 2048 })}
+                          className="w-full px-2 py-1 text-xs font-bold text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-slate-900 text-center focus:outline-none"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            )}
+            </div>
 
-            {/* Modal Footer with Save & Continue Step-by-Step Flow */}
-            <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setEditingInstitute(null)}
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-                {editTab !== 'profile' && (
-                  <button
-                    type="button"
-                    onClick={handleEditPrev}
-                    className="px-3.5 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
-                  >
-                    <ArrowLeft className="w-3.5 h-3.5" />
-                    <span>Back</span>
-                  </button>
-                )}
-              </div>
+            {/* Modal Footer */}
+            <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setEditingInstitute(null)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
 
-              <div className="flex items-center gap-2">
-                {editTab !== 'plan' ? (
-                  <>
-                    <button
-                      type="submit"
-                      className="px-4 py-2 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 rounded-lg transition-all cursor-pointer hidden sm:inline-flex"
-                      title="Save changes and close"
-                    >
-                      Save & Close
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleEditNext}
-                      className="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <span>Save & Continue</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    type="submit"
-                    className="px-6 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Check className="w-3.5 h-3.5" />
-                    <span>Save Changes</span>
-                  </button>
-                )}
-              </div>
+              <button
+                type="submit"
+                className="px-6 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <Check className="w-3.5 h-3.5" />
+                <span>Save Changes</span>
+              </button>
             </div>
           </form>
         </Modal>
