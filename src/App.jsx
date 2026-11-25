@@ -161,9 +161,7 @@ const AppContent = () => {
     'sa-policies-discipline', 'sa-policies-privacy', 'sa-policies-publish',
     'sa-policies-acknowledgment',
     // Settings sub-tabs
-    'sa-settings-general', 'sa-settings-branding', 'sa-settings-flags',
-    'sa-settings-integrations', 'sa-settings-compliance', 'sa-settings-legal',
-    'sa-settings-maintenance', 'sa-settings-impersonate', 'sa-settings-backups'
+    'sa-settings-general', 'sa-settings-compliance', 'sa-settings-maintenance'
   ]
 
   const VALID_INSTITUTE_ROUTES = [

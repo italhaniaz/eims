@@ -1,59 +1,20 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect } from 'react'
 import { 
   Settings, 
-  Globe, 
-  Tag, 
-  Sliders, 
-  Key, 
   ShieldCheck, 
-  FileText, 
   AlertTriangle, 
-  UserCheck, 
-  Check, 
   Save, 
-  RefreshCw, 
-  ExternalLink,
-  Laptop,
-  Database,
-  Download,
-  Upload,
-  Trash2,
+  Server, 
+  Clock, 
   RotateCcw,
-  Eye,
-  Search,
-  Filter,
-  Shield,
-  Clock,
-  HardDrive,
-  FileSpreadsheet,
-  X,
-  Copy,
   CheckCircle,
-  MapPin,
-  Sparkles,
-  Palette,
-  Moon,
-  Sun,
-  Server,
-  ShieldAlert,
-  ClipboardList
+  HardDrive
 } from 'lucide-react'
 import { useToast } from '../../../context/ToastContext'
-import { useAppData } from '../../../context/AppDataContext'
-import { useAuth } from '../../../context/AuthContext'
-import { useTheme } from '../../../context/ThemeContext'
-import { PlatformService } from '../../../services/platformService'
 import { OperationsService } from '../../../services/operationsService'
 import { SchoolInquiryService } from '../../../services/schoolInquiryService'
 
 const PLATFORM_UI_SETTINGS_KEY = 'sms_platform_ui_settings'
-
-const DEFAULT_FEATURE_FLAGS = [
-  { id: 'flag_biometric', name: 'Biometric Hardware Realtime Sync', desc: 'Allow instant webhook sync from gate turnstiles', enabled: false, tier: 'Enterprise' },
-  { id: 'flag_1bill', name: '1Bill National Banking Switch', desc: 'Generate 1Link 1Bill digital consumer IDs', enabled: false, tier: 'Standard' },
-  { id: 'flag_lms_proctoring', name: 'AI LMS Quiz Anti-Cheat Lockout', desc: 'Block multiple tabs during online examinations', enabled: false, tier: 'Premium' },
-  { id: 'flag_whatsapp', name: 'WhatsApp Cloud API Automations', desc: 'Dispatch fee challans & absence alerts via Meta API', enabled: false, tier: 'Standard' }
-]
 
 const DEFAULT_GENERAL_SETTINGS = {
   platformName: 'EIMS Enterprise Educational Network',
@@ -62,6 +23,14 @@ const DEFAULT_GENERAL_SETTINGS = {
   timezone: 'Asia/Karachi (GMT+5)',
   academicYearFormat: 'YYYY-YYYY (August - June)',
   supportEmail: 'admin@eims-edu.pk'
+}
+
+const DEFAULT_RETENTION_POLICY = {
+  auditLogsDays: 90,
+  loginHistoryDays: 180,
+  backupSnapshotsDays: 365,
+  archivedInstitutesDays: 730,
+  autoPurgeEnabled: true
 }
 
 const readPlatformUiSettings = () => {
@@ -81,29 +50,26 @@ const writePlatformUiSettings = (partial) => {
 
 export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabChange = () => {} }) => {
   const { toast } = useToast()
-  const { institutes = [] } = useAppData()
-  const { user, login } = useAuth()
-  const { 
-    isDark, 
-    toggleThemeMode, 
-    preset, 
-    setPreset, 
-    customPrimary, 
-    setCustomPrimary, 
-    dir, 
-    toggleDir,
-    activeThemeConfig,
-    chartPalette 
-  } = useTheme()
-  const [currentTab, setCurrentTab] = useState(activeTab)
-  const effectiveTab = currentTab || activeTab || 'general'
+
+  const validTabs = ['general', 'compliance', 'maintenance']
+  const [currentTab, setCurrentTab] = useState(() => {
+    return validTabs.includes(activeTab) ? activeTab : 'general'
+  })
+
+  useEffect(() => {
+    if (activeTab && validTabs.includes(activeTab)) {
+      setCurrentTab(activeTab)
+    }
+  }, [activeTab])
+
+  const effectiveTab = validTabs.includes(currentTab) ? currentTab : 'general'
 
   const handleTabSwitch = (tabKey) => {
     setCurrentTab(tabKey)
     onTabChange(tabKey)
   }
 
-  // General settings state
+  // 1. General settings state
   const [generalForm, setGeneralForm] = useState(() => ({
     ...DEFAULT_GENERAL_SETTINGS,
     ...(readPlatformUiSettings().general || {})
@@ -125,131 +91,10 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
     }
   }
 
-  // Feature flags state
-  const [featureFlags, setFeatureFlags] = useState(() => {
-    const saved = readPlatformUiSettings().featureFlags
-    if (!Array.isArray(saved)) return DEFAULT_FEATURE_FLAGS
-    return DEFAULT_FEATURE_FLAGS.map(flag => {
-      const match = saved.find(item => item.id === flag.id)
-      return match ? { ...flag, enabled: Boolean(match.enabled) } : flag
-    })
-  })
-
-  // Local maintenance flag. It does not lock student or parent portals.
-  const [maintenanceMode, setMaintenanceMode] = useState(() => Boolean(readPlatformUiSettings().maintenanceMode))
-
-  // Pick 2: System & Emergency Session Backups State
-  const [sessionBackups, setSessionBackups] = useState(() => {
-    try { return OperationsService.getSessionBackups() } catch { return [] }
-  })
-  const [systemBackups, setSystemBackups] = useState([])
-  const [backupSubTab, setBackupSubTab] = useState('session') // 'session' | 'database'
-  const [backupSearch, setBackupSearch] = useState('')
-  const [inspectingBackup, setInspectingBackup] = useState(null)
-  const [copiedText, setCopiedText] = useState(null)
-
-  useEffect(() => {
-    if (OperationsService?.getBackups) {
-      OperationsService.getBackups().then(res => setSystemBackups(res || []))
-    }
-  }, [])
-
-  // Sync session backups whenever tab becomes active
-  useEffect(() => {
-    if (effectiveTab === 'backups' && OperationsService?.getSessionBackups) {
-      setSessionBackups(OperationsService.getSessionBackups())
-    }
-  }, [effectiveTab])
-
-  const handleCopy = (text) => {
-    if (!text) return
-    if (navigator?.clipboard?.writeText) {
-      navigator.clipboard.writeText(text)
-      setCopiedText(text)
-      setTimeout(() => setCopiedText(null), 2000)
-    }
-  }
-
-  const handleDownloadSessionBackup = (backup) => {
-    try {
-      OperationsService.downloadSessionBackupFile(backup)
-      toast?.success?.(`Session backup file downloaded for ${backup.userName}!`)
-    } catch (err) {
-      toast?.error?.('Failed to download backup file')
-    }
-  }
-
-  const handleDeleteSessionBackup = (backupId) => {
-    if (window.confirm('Are you sure you want to delete this emergency session backup archive?')) {
-      const updated = OperationsService.deleteSessionBackup(backupId)
-      setSessionBackups(updated)
-      toast?.success?.('Session backup archive deleted successfully.')
-    }
-  }
-
-  const handleRestoreSession = (backup) => {
-    try {
-      OperationsService.restoreSessionBackup(backup)
-      toast?.success?.(`Session record for ${backup.userName} written back to the local active-sessions list. This does not sign the user in.`)
-    } catch (err) {
-      toast?.error?.('Failed to restore session')
-    }
-  }
-
-  const handleCreateSystemSnapshot = async () => {
-    try {
-      const newBkp = await OperationsService.createManualBackup('MANUAL', null)
-      if (OperationsService?.getBackups) {
-        const bkps = await OperationsService.getBackups()
-        setSystemBackups(bkps)
-      }
-      toast?.success?.('Local JSON snapshot downloaded. This is a browser export, not a verified cloud backup.')
-    } catch (e) {
-      toast?.error?.('Failed to create snapshot')
-    }
-  }
-
-  const filteredSessionBackups = useMemo(() => {
-    const q = (backupSearch || '').toLowerCase().trim()
-    if (!q) return sessionBackups
-    return (sessionBackups || []).filter(b => 
-      (b.userName || '').toLowerCase().includes(q) ||
-      (b.userEmail || '').toLowerCase().includes(q) ||
-      (b.campusName || '').toLowerCase().includes(q) ||
-      (b.ipAddress || '').toLowerCase().includes(q) ||
-      (b.reason || '').toLowerCase().includes(q)
-    )
-  }, [sessionBackups, backupSearch])
-
-  const tabsConfig = [
-    { key: 'general', label: 'General', icon: Settings },
-    { key: 'branding', label: 'Branding & Custom Domains', icon: Globe },
-    { key: 'flags', label: 'Feature Flags (Tier-wise)', icon: Sliders },
-    { key: 'integrations', label: 'Integrations & Webhooks', icon: Key },
-    { key: 'compliance', label: 'Compliance & Data Retention', icon: ShieldCheck },
-    { key: 'legal', label: 'Legal Documents', icon: FileText },
-    { key: 'maintenance', label: 'Maintenance Mode & Releases', icon: AlertTriangle },
-    { key: 'impersonate', label: 'Switch to Campus View', icon: UserCheck },
-    { key: 'backups', label: 'System & Session Backups', icon: Database }
-  ]
-
-  const toggleFlag = (id) => {
-    setFeatureFlags(prev => {
-      const next = prev.map(f => {
-        if (f.id === id) return { ...f, enabled: !f.enabled }
-        return f
-      })
-      writePlatformUiSettings({ featureFlags: next })
-      const changed = next.find(f => f.id === id)
-      toast?.info?.(`Feature flag "${changed?.name || id}" saved locally as ${changed?.enabled ? 'ON' : 'OFF'}. External vendors are not called.`)
-      return next
-    })
-  }
-
   const handleSaveGeneral = async (e) => {
     e.preventDefault()
     try {
-      writePlatformUiSettings({ general: generalForm, featureFlags, maintenanceMode })
+      writePlatformUiSettings({ general: generalForm, maintenanceMode })
       await SchoolInquiryService.setSchoolInquirySetting(schoolInquiryEnabled)
       toast?.success?.('Platform settings saved on this device.')
     } catch (err) {
@@ -257,22 +102,47 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
     }
   }
 
-  
-  const handleRealImpersonation = async (inst) => {
-    if (inst.lifecycleStatus === 'Suspended' || inst.status === 'Suspended') {
-      toast?.error?.('Cannot impersonate a Suspended campus. Reactivate the campus first.')
-      return
-    }
-    try {
-      if (PlatformService?.startImpersonation) {
-        await PlatformService.startImpersonation(inst, user)
+  // 2. Compliance & Data Retention state
+  const [retentionPolicy, setRetentionPolicy] = useState(DEFAULT_RETENTION_POLICY)
+  const [isSavingRetention, setIsSavingRetention] = useState(false)
+
+  useEffect(() => {
+    let isMounted = true
+    OperationsService.getRetentionPolicy().then(policy => {
+      if (isMounted && policy) {
+        setRetentionPolicy({ ...DEFAULT_RETENTION_POLICY, ...policy })
       }
-      login('institute_admin', inst.adminEmail || `admin@${inst.slug || 'campus'}.edu`)
-      toast?.info?.(`Now viewing "${inst.name}" as campus admin. Delegation is stored locally for 60 minutes.`)
+    }).catch(() => {})
+    return () => { isMounted = false }
+  }, [])
+
+  const handleSaveRetention = async (e) => {
+    e.preventDefault()
+    setIsSavingRetention(true)
+    try {
+      await OperationsService.saveRetentionPolicy(retentionPolicy)
+      toast?.success?.('Platform data retention and compliance policies updated successfully.')
     } catch (err) {
-      toast?.error?.(err.message || 'Failed to initiate impersonation session')
+      toast?.error?.('Failed to save retention policy: ' + (err?.message || 'Unknown error'))
+    } finally {
+      setIsSavingRetention(false)
     }
   }
+
+  const handleResetRetention = async () => {
+    setRetentionPolicy(DEFAULT_RETENTION_POLICY)
+    await OperationsService.saveRetentionPolicy(DEFAULT_RETENTION_POLICY)
+    toast?.info?.('Retention policies restored to standard institutional defaults.')
+  }
+
+  // 3. Maintenance mode state
+  const [maintenanceMode, setMaintenanceMode] = useState(() => Boolean(readPlatformUiSettings().maintenanceMode))
+
+  const tabsConfig = [
+    { key: 'general', label: 'General', icon: Settings },
+    { key: 'compliance', label: 'Compliance & Data Retention', icon: ShieldCheck },
+    { key: 'maintenance', label: 'Maintenance Mode & Releases', icon: AlertTriangle }
+  ]
 
   return (
     <div className="p-3 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
@@ -288,13 +158,13 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
               Platform Architecture & System Settings
             </h1>
             <p className="text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
-              Global localization, currency formats, API webhook endpoints, tier feature toggles, and campus impersonation.
+              Global environment parameters, admission inquiry policy, compliance retention rules, and maintenance controls.
             </p>
           </div>
         </div>
       </div>
 
-      {/* Tabs */}
+      {/* Navigation Tabs Bar */}
       <div className="bg-white rounded-2xl p-2 border border-slate-200/80 shadow-2xs overflow-x-auto scrollbar-none">
         <div className="flex items-center gap-1.5 min-w-max">
           {tabsConfig.map(tab => {
@@ -303,6 +173,7 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
             return (
               <button
                 key={tab.key}
+                type="button"
                 onClick={() => handleTabSwitch(tab.key)}
                 className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
                   active 
@@ -373,7 +244,7 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
                     <Server className="w-4 h-4" />
                   </div>
                   <h4 className="font-bold text-slate-900 text-sm sm:text-base">
-                    Security & Server: School Registration & Inquiries Policy
+                    Security &amp; Server: School Registration &amp; Inquiries Policy
                   </h4>
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
@@ -442,7 +313,7 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
           <div className="pt-2 flex justify-end">
             <button 
               type="submit"
-              className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-sm shadow-purple-600/30 cursor-pointer"
+              className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-sm shadow-purple-600/30 cursor-pointer transition-all"
             >
               <Save className="w-4 h-4" />
               <span>Save Configuration</span>
@@ -451,188 +322,147 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
         </form>
       )}
 
-      {/* Tab 2: Branding & Multi-Campus Design Tokens */}
-      {effectiveTab === 'branding' && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6 space-y-6">
+      {/* Tab 2: Compliance & Data Retention */}
+      {effectiveTab === 'compliance' && (
+        <form onSubmit={handleSaveRetention} className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
             <div>
               <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-                <Palette className="w-5 h-5 text-indigo-600" />
-                <span>Multi-Campus Theme Presets & SaaS Design Tokens</span>
+                <ShieldCheck className="w-5 h-5 text-purple-600" />
+                <span>Platform Data Retention &amp; Compliance Policy</span>
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                Universal CSS design tokens for primary, secondary, backgrounds, dark mode and custom hex branding.
+                Configure data lifecycle windows, audit logging retention, and automated purge policies across platform tenants.
               </p>
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={toggleThemeMode}
-                className="px-3.5 py-2 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 transition-colors flex items-center gap-2 cursor-pointer"
-              >
-                {isDark ? <Sun className="w-4 h-4 text-amber-500" /> : <Moon className="w-4 h-4 text-slate-600" />}
-                <span>{isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}</span>
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={handleResetRetention}
+              className="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 border border-slate-200 hover:bg-slate-50 transition-colors flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
+              <span>Restore Defaults</span>
+            </button>
           </div>
 
-          {/* Institutional Presets */}
-          <div>
-            <label className="block text-xs font-bold text-slate-600 uppercase mb-2">
-              System Theme Preset
-            </label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[
-                {
-                  id: 'school',
-                  title: 'School SaaS Default',
-                  primaryHex: '#4F46E5',
-                  secHex: '#14B8A6',
-                  desc: 'Modern Indigo SaaS + Teal for K-10, Matric & O-Levels'
-                },
-                {
-                  id: 'custom',
-                  title: 'Custom Brand Palette',
-                  primaryHex: customPrimary || '#4F46E5',
-                  secHex: '#14B8A6',
-                  desc: 'Auto-generated brand tokens tailored to your school identity'
-                }
-              ].map(p => (
-                <div
-                  key={p.id}
-                  onClick={() => {
-                    setPreset(p.id)
-                    toast.success(`Switched to ${p.title} design tokens!`)
-                  }}
-                  className={`p-4 rounded-xl border-2 transition-all cursor-pointer ${
-                    preset === p.id 
-                      ? 'border-indigo-600 bg-indigo-50/40 shadow-xs' 
-                      : 'border-slate-200 hover:border-slate-300'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-bold text-sm text-slate-900">{p.title}</span>
-                    {preset === p.id && <span className="text-xs font-bold text-indigo-600">✓ Active</span>}
-                  </div>
-                  <p className="text-xs text-slate-500 mb-3">{p.desc}</p>
-                  <div className="flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-md shadow-2xs border border-black/10" style={{ backgroundColor: p.primaryHex }} />
-                    <span className="w-6 h-6 rounded-md shadow-2xs border border-black/10" style={{ backgroundColor: p.secHex }} />
-                    <span className="text-xs font-mono font-bold text-slate-600 ml-auto">{p.primaryHex}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Custom Brand Engine */}
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="text-xs font-bold text-slate-900 block">Custom Brand Palette Generator</span>
-                <span className="text-[11px] text-slate-500">Pick any primary color; all shades, hover states and hero gradients are generated automatically.</span>
-              </div>
-              {preset === 'custom' && (
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700">Custom Active</span>
-              )}
-            </div>
-            <div className="flex items-center gap-3">
-              <input
-                type="color"
-                value={customPrimary}
-                onChange={e => setCustomPrimary(e.target.value)}
-                className="w-10 h-10 rounded-lg cursor-pointer border-0 bg-transparent p-0"
-              />
-              <input
-                type="text"
-                value={customPrimary}
-                onChange={e => setCustomPrimary(e.target.value)}
-                className="w-28 px-3 py-1.5 text-xs font-mono font-bold uppercase rounded-lg border border-slate-300 bg-white"
-                maxLength={7}
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  setCustomPrimary('#4F46E5')
-                  setPreset('school')
-                  toast.info('Reset to School SaaS default tokens.')
-                }}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
-              >
-                Reset Default
-              </button>
-            </div>
-          </div>
-
-          {/* Live Preview Card */}
-          <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-3">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Live UI Element Preview</span>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="p-4 rounded-xl border border-slate-100 shadow-soft space-y-2">
-                <span className="text-xs font-bold text-slate-700">Hero Gradient Button</span>
-                <button
-                  type="button"
-                  className="btn-hero-gradient w-full py-2.5 px-4 text-xs font-bold"
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Interactive Primary Action</span>
-                </button>
-              </div>
-
-              <div className="p-4 rounded-xl border border-slate-100 shadow-soft space-y-2">
-                <span className="text-xs font-bold text-slate-700">Chart Palette Tokens</span>
-                <div className="flex items-center gap-1.5 pt-1">
-                  {chartPalette.map(c => (
-                    <div key={c} className="flex-1 h-6 rounded-md shadow-2xs" style={{ backgroundColor: c }} title={c} />
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Tab 3: Feature Flags */}
-      {effectiveTab === 'flags' && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
-          <div className="p-5 border-b border-slate-100">
-            <h3 className="font-bold text-slate-900">Platform Feature Flags & Tier Capabilities</h3>
-            <p className="text-xs text-slate-500">Local switches only. Turning a flag on does not connect biometrics, 1Bill, or WhatsApp.</p>
-          </div>
-          <div className="divide-y divide-slate-100">
-            {featureFlags.map(f => (
-              <div key={f.id} className="p-4 sm:p-5 flex items-center justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-slate-900 text-sm">{f.name}</span>
-                    <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700">{f.tier}</span>
-                  </div>
-                  <p className="text-xs text-slate-500 mt-0.5">{f.desc}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => toggleFlag(f.id)}
-                  className={`w-12 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors shrink-0 ${
-                    f.enabled ? 'bg-purple-600 justify-end' : 'bg-slate-300 justify-start'
-                  }`}
-                >
-                  <div className="w-4 h-4 rounded-full bg-white shadow-xs"></div>
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Tab 7: Maintenance Mode */}
-      {effectiveTab === 'maintenance' && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6 space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
-              <h3 className="font-bold text-slate-900 text-base">Platform Maintenance Mode</h3>
-              <p className="text-xs text-slate-500">Temporarily records a local maintenance flag. Student and parent portals stay available until a server gate reads it.</p>
+              <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-purple-600" />
+                <span>Audit Logs Retention Threshold (Days)</span>
+              </label>
+              <input 
+                type="number" 
+                min="30"
+                max="3650"
+                value={retentionPolicy.auditLogsDays}
+                onChange={(e) => setRetentionPolicy({ ...retentionPolicy, auditLogsDays: parseInt(e.target.value) || 90 })}
+                className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20" 
+              />
+              <span className="text-[11px] text-slate-400 mt-1 block">
+                Activity trails, permission changes, and security events lifecycle. (Default: 90 days)
+              </span>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-purple-600" />
+                <span>Login History &amp; Session Logs Retention (Days)</span>
+              </label>
+              <input 
+                type="number" 
+                min="30"
+                max="3650"
+                value={retentionPolicy.loginHistoryDays}
+                onChange={(e) => setRetentionPolicy({ ...retentionPolicy, loginHistoryDays: parseInt(e.target.value) || 180 })}
+                className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20" 
+              />
+              <span className="text-[11px] text-slate-400 mt-1 block">
+                IP addresses, device telemetry, and authentication logs window. (Default: 180 days)
+              </span>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
+                <HardDrive className="w-3.5 h-3.5 text-purple-600" />
+                <span>Backup Snapshots Retention (Days)</span>
+              </label>
+              <input 
+                type="number" 
+                min="30"
+                max="3650"
+                value={retentionPolicy.backupSnapshotsDays}
+                onChange={(e) => setRetentionPolicy({ ...retentionPolicy, backupSnapshotsDays: parseInt(e.target.value) || 365 })}
+                className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20" 
+              />
+              <span className="text-[11px] text-slate-400 mt-1 block">
+                Disaster recovery snapshots and local point-in-time archives. (Default: 365 days)
+              </span>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
+                <Server className="w-3.5 h-3.5 text-purple-600" />
+                <span>Archived Institutes Retention (Days)</span>
+              </label>
+              <input 
+                type="number" 
+                min="90"
+                max="3650"
+                value={retentionPolicy.archivedInstitutesDays}
+                onChange={(e) => setRetentionPolicy({ ...retentionPolicy, archivedInstitutesDays: parseInt(e.target.value) || 730 })}
+                className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20" 
+              />
+              <span className="text-[11px] text-slate-400 mt-1 block">
+                Off-boarded campus directories and historical ledger archives. (Default: 730 days)
+              </span>
+            </div>
+          </div>
+
+          {/* Automated Purge Switch */}
+          <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200/80">
+            <div className="space-y-0.5">
+              <span className="font-bold text-slate-900 text-xs sm:text-sm block">Automated Background Purge Policy</span>
+              <span className="text-xs text-slate-500 block">
+                Automatically archive or purge records that exceed the configured retention thresholds during periodic system maintenance.
+              </span>
             </div>
             <button
+              type="button"
+              onClick={() => setRetentionPolicy({ ...retentionPolicy, autoPurgeEnabled: !retentionPolicy.autoPurgeEnabled })}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                retentionPolicy.autoPurgeEnabled
+                  ? 'bg-purple-600 text-white shadow-xs'
+                  : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+              }`}
+            >
+              {retentionPolicy.autoPurgeEnabled ? 'Automated Purge: ACTIVE' : 'Automated Purge: DISABLED'}
+            </button>
+          </div>
+
+          <div className="pt-2 flex justify-end">
+            <button 
+              type="submit"
+              disabled={isSavingRetention}
+              className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-sm shadow-purple-600/30 cursor-pointer transition-all"
+            >
+              <Save className="w-4 h-4" />
+              <span>{isSavingRetention ? 'Saving Policy...' : 'Save Compliance Policy'}</span>
+            </button>
+          </div>
+        </form>
+      )}
+
+      {/* Tab 3: Maintenance Mode */}
+      {effectiveTab === 'maintenance' && (
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="font-bold text-slate-900 text-base">Platform Maintenance Mode</h3>
+              <p className="text-xs text-slate-500 mt-0.5">Temporarily records a local maintenance flag. Student and parent portals stay available until a server gate reads it.</p>
+            </div>
+            <button
+              type="button"
               onClick={() => {
                 const next = !maintenanceMode
                 setMaintenanceMode(next)
@@ -641,8 +471,8 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
                   ? 'Maintenance flag saved locally. Portals are not locked.'
                   : 'Maintenance flag cleared on this device.')
               }}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                maintenanceMode ? 'bg-rose-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer self-start sm:self-auto ${
+                maintenanceMode ? 'bg-rose-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
               }`}
             >
               {maintenanceMode ? 'Local flag: ON' : 'Save maintenance flag'}
@@ -653,361 +483,7 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
           </div>
         </div>
       )}
-
-      {/* Tab 8: Switch to Campus View (Impersonation) */}
-      {effectiveTab === 'impersonate' && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6 space-y-4">
-          <div>
-            <h3 className="font-bold text-slate-900 text-base">Campus delegation switcher</h3>
-            <p className="text-xs text-slate-500">Open a real campus from the local directory. Suspended campuses stay blocked.</p>
-          </div>
-          {institutes.length === 0 ? (
-            <p className="text-sm text-slate-500">No campuses are stored in the local directory yet.</p>
-          ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-            {institutes.map(inst => (
-              <div key={inst.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <span className="font-mono text-[11px] font-bold text-purple-700">{inst.code || inst.id}</span>
-                  <h4 className="font-bold text-slate-900 text-sm mt-0.5 truncate">{inst.name}</h4>
-                  <p className="text-xs text-slate-500">{inst.city || 'Campus'} &bull; {inst.lifecycleStatus || inst.status || 'Active'}</p>
-                </div>
-                <button
-                  onClick={() => handleRealImpersonation(inst)}
-                  className="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs flex items-center gap-1 shadow-xs cursor-pointer shrink-0"
-                >
-                  <UserCheck className="w-3.5 h-3.5" />
-                  <span>Enter campus</span>
-                </button>
-              </div>
-            ))}
-          </div>
-          )}
-        </div>
-      )}
-
-      {/* Tab 9: System & Emergency Session Backups (Pick 2 Core) */}
-      {effectiveTab === 'backups' && (
-        <div className="space-y-6">
-          {/* Header Banner */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-start sm:items-center gap-3.5">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white font-bold flex items-center justify-center shadow-md shadow-purple-600/20 shrink-0">
-                <Database className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="font-bold text-slate-900 text-base sm:text-lg">
-                  System &amp; Session Backups Management Hub
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5 max-w-xl">
-                  Automated emergency session state backups created during force logouts, manual JSON database snapshots, and data recovery archives.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 flex-wrap">
-              <button
-                type="button"
-                onClick={handleCreateSystemSnapshot}
-                className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm shadow-purple-600/30 transition-all cursor-pointer whitespace-nowrap"
-              >
-                <Download className="w-3.5 h-3.5" />
-                <span>Create System Snapshot</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Sub-Tabs: Emergency Session Backups vs System Database Snapshots */}
-          <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
-            <button
-              type="button"
-              onClick={() => setBackupSubTab('session')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
-                backupSubTab === 'session'
-                  ? 'bg-purple-600 text-white shadow-xs'
-                  : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-              }`}
-            >
-              <UserCheck className="w-3.5 h-3.5" />
-              <span>Emergency Session Backups</span>
-              <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${
-                backupSubTab === 'session' ? 'bg-purple-700 text-purple-100' : 'bg-slate-100 text-slate-600'
-              }`}>
-                {sessionBackups.length}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setBackupSubTab('database')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
-                backupSubTab === 'database'
-                  ? 'bg-purple-600 text-white shadow-xs'
-                  : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-              }`}
-            >
-              <HardDrive className="w-3.5 h-3.5" />
-              <span>Database Snapshots</span>
-              <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${
-                backupSubTab === 'database' ? 'bg-purple-700 text-purple-100' : 'bg-slate-100 text-slate-600'
-              }`}>
-                {systemBackups.length}
-              </span>
-            </button>
-          </div>
-
-          {/* Sub-Tab 1: Emergency Session Backups */}
-          {backupSubTab === 'session' && (
-            <div className="space-y-4">
-              {/* Search Bar */}
-              <div className="flex items-center justify-between gap-3 bg-white p-3 rounded-xl border border-slate-200/80">
-                <div className="relative flex-1 max-w-md">
-                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    value={backupSearch}
-                    onChange={(e) => setBackupSearch(e.target.value)}
-                    placeholder="Search session backups by user, campus, IP, or reason..."
-                    className="w-full pl-9 pr-3 py-1.5 rounded-lg border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-purple-500/20"
-                  />
-                </div>
-                <span className="text-[11px] font-semibold text-slate-500 font-mono">
-                  {filteredSessionBackups.length} Archive(s) Found
-                </span>
-              </div>
-
-              {/* Table / List */}
-              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs border-collapse">
-                    <thead>
-                      <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
-                        <th className="py-3.5 px-4">User &amp; Campus</th>
-                        <th className="py-3.5 px-3">IP Address &amp; Device</th>
-                        <th className="py-3.5 px-3">Terminated At</th>
-                        <th className="py-3.5 px-3">Revocation Reason</th>
-                        <th className="py-3.5 px-3">Size</th>
-                        <th className="py-3.5 px-4 text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {filteredSessionBackups.length > 0 ? (
-                        filteredSessionBackups.map((b) => (
-                          <tr key={b.id} className="hover:bg-slate-50/50 transition-colors">
-                            <td className="py-3.5 px-4">
-                              <div className="flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
-                                  {b.userRole === 'superadmin' ? 'SA' : 'IA'}
-                                </div>
-                                <div>
-                                  <span className="font-bold text-slate-900 block">{b.userName}</span>
-                                  <span className="text-[11px] text-slate-400 font-mono block">{b.userEmail}</span>
-                                  {b.campusName && (
-                                    <span className="text-[10px] text-purple-600 font-medium block">{b.campusName}</span>
-                                  )}
-                                </div>
-                              </div>
-                            </td>
-
-                            <td className="py-3.5 px-3">
-                              <span className="font-mono text-slate-700 font-semibold block">{b.ipAddress}</span>
-                              <span className="text-slate-400 text-[11px] truncate block max-w-xs">{b.deviceInfo}</span>
-                            </td>
-
-                            <td className="py-3.5 px-3">
-                              <span className="font-mono text-slate-700 block">
-                                {b.terminatedAt ? new Date(b.terminatedAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent'}
-                              </span>
-                              <span className="text-slate-400 text-[11px] font-mono block">
-                                {b.terminatedAt ? new Date(b.terminatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-                              </span>
-                            </td>
-
-                            <td className="py-3.5 px-3">
-                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                                {b.reason || 'Administrative Revocation'}
-                              </span>
-                            </td>
-
-                            <td className="py-3.5 px-3">
-                              <span className="font-mono text-slate-500 text-[11px]">{b.fileSize || '45 KB'}</span>
-                            </td>
-
-                            <td className="py-3.5 px-4 text-right">
-                              <div className="flex items-center justify-end gap-1.5">
-                                {/* Download File */}
-                                <button
-                                  type="button"
-                                  onClick={() => handleDownloadSessionBackup(b)}
-                                  className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-purple-50 hover:text-purple-700 hover:border-purple-300 text-slate-600 transition-all cursor-pointer shadow-2xs"
-                                  title="Download Session Backup File (.json)"
-                                >
-                                  <Download className="w-3.5 h-3.5" />
-                                </button>
-
-                                {/* View Snapshot */}
-                                <button
-                                  type="button"
-                                  onClick={() => setInspectingBackup(b)}
-                                  className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-300 text-slate-600 transition-all cursor-pointer shadow-2xs"
-                                  title="Inspect Backup Snapshot Payload"
-                                >
-                                  <Eye className="w-3.5 h-3.5" />
-                                </button>
-
-                                {/* Restore Session */}
-                                <button
-                                  type="button"
-                                  onClick={() => handleRestoreSession(b)}
-                                  className="p-1.5 rounded-lg border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition-all cursor-pointer shadow-2xs"
-                                  title="Restore Session Back to Active Sessions"
-                                >
-                                  <RotateCcw className="w-3.5 h-3.5" />
-                                </button>
-
-                                {/* Delete Archive */}
-                                <button
-                                  type="button"
-                                  onClick={() => handleDeleteSessionBackup(b.id)}
-                                  className="p-1.5 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 transition-all cursor-pointer shadow-2xs"
-                                  title="Delete Archive"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan={6} className="py-12 text-center text-slate-400">
-                            <Database className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                            <p className="font-semibold text-slate-600">No emergency session backups found</p>
-                            <p className="text-xs text-slate-400 mt-1">
-                              When a user session is force-logged out, an emergency state backup is automatically archived here.
-                            </p>
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Sub-Tab 2: Platform Database Snapshots */}
-          {backupSubTab === 'database' && (
-            <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-bold text-slate-900 text-sm">Central Database JSON Snapshots</h4>
-                  <p className="text-xs text-slate-500">Global platform database images ready for immediate point-in-time disaster recovery.</p>
-                </div>
-              </div>
-
-              <div className="divide-y divide-slate-100">
-                {systemBackups.map((s) => (
-                  <div key={s.id} className="py-3 flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-xs shrink-0">
-                        <FileSpreadsheet className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <span className="font-mono font-bold text-slate-900 text-xs block">{s.filename}</span>
-                        <span className="text-[11px] text-slate-400 font-mono">
-                          {s.createdAt ? new Date(s.createdAt).toLocaleString() : 'Recent'} &bull; {((s.sizeBytes || 14857600) / 1024 / 1024).toFixed(2)} MB &bull; {s.createdBy}
-                        </span>
-                      </div>
-                    </div>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      {s.status}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Modal: View Snapshot Payload */}
-          {inspectingBackup && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-150">
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-xl w-full overflow-hidden animate-in zoom-in-95 duration-150 max-h-[90vh] flex flex-col">
-                <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-purple-50/70 to-slate-50">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-purple-600 text-white font-bold flex items-center justify-center shadow-sm">
-                      <Database className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-slate-900 text-sm sm:text-base">
-                        Emergency Session Backup Snapshot
-                      </h3>
-                      <p className="text-xs text-slate-500 font-mono">
-                        Archive ID: {inspectingBackup.id}
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setInspectingBackup(null)}
-                    className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-
-                <div className="p-4 sm:p-6 overflow-y-auto space-y-4 text-xs">
-                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-slate-900 text-sm">{inspectingBackup.userName}</span>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-purple-100 text-purple-800 border border-purple-200 uppercase">
-                        {inspectingBackup.userRole}
-                      </span>
-                    </div>
-                    <div className="text-slate-600 space-y-1">
-                      <p><strong>Campus:</strong> {inspectingBackup.campusName}</p>
-                      <p><strong>IP Address:</strong> <span className="font-mono">{inspectingBackup.ipAddress}</span></p>
-                      <p><strong>Device:</strong> {inspectingBackup.deviceInfo}</p>
-                      <p><strong>Terminated:</strong> {new Date(inspectingBackup.terminatedAt).toLocaleString()}</p>
-                      <p><strong>Revocation Reason:</strong> {inspectingBackup.reason}</p>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-slate-700 font-bold text-xs mb-1.5">
-                      Captured State Payload (.json):
-                    </label>
-                    <pre className="p-3.5 rounded-xl bg-slate-900 text-emerald-400 font-mono text-[11px] overflow-x-auto max-h-56 leading-relaxed">
-                      {JSON.stringify(inspectingBackup, null, 2)}
-                    </pre>
-                  </div>
-                </div>
-
-                <div className="p-4 border-t border-slate-100 bg-slate-50/70 flex items-center justify-between gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleDownloadSessionBackup(inspectingBackup)}
-                    className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    <span>Download JSON Backup File</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setInspectingBackup(null)}
-                    className="px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs cursor-pointer transition-colors"
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-          </div>
+    </div>
   )
 }
 
