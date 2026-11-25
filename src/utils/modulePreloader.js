@@ -59,7 +59,6 @@ const ROUTE_LOADERS = {
   'compliance-policies': () => import('../modules/platform/policies/SuperadminPoliciesView'),
   'sa-policies': () => import('../modules/platform/policies/SuperadminPoliciesView'),
   'backup-data': () => import('../modules/platform/backup/BackupDataView'),
-  'system-health': () => import('../modules/platform/health/SystemHealthView'),
   'support-approvals': () => import('../modules/platform/support/SupportApprovalsView'),
   'audit-logs': () => import('../modules/audit-logs/AuditLogsView'),
   'announcements': () => import('../modules/announcements/NoticeBroadcasterView'),
@@ -181,7 +180,6 @@ export const preloadSuperadminCoreModules = () => {
     'compliance-policies',
     'cross-institute-analytics',
     'announcements',
-    'system-health',
     'audit-logs',
     'backup-data',
     'sa-settings'

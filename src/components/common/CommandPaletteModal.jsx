@@ -28,7 +28,6 @@ import {
   BarChart3,
   CreditCard,
   FileSpreadsheet,
-  Activity,
   LifeBuoy,
   UserCheck
 } from 'lucide-react'
@@ -117,14 +116,6 @@ export const CommandPaletteModal = ({ isOpen, onClose, onNavigate, onOpenSetting
           route: 'backup-data', 
           icon: Database, 
           keywords: ['backup', 'restore', 'snapshot', 'export', 'import', 'retention', 'purge'] 
-        },
-        { 
-          id: 'nav-system-health', 
-          title: 'System Health & Diagnostic Monitor', 
-          category: 'Operations & Health', 
-          route: 'system-health', 
-          icon: Activity, 
-          keywords: ['health', 'telemetry', 'uptime', 'latency', 'storage', 'errors', 'logs', 'api'] 
         },
         { 
           id: 'nav-support-approvals', 

@@ -31,7 +31,6 @@ const CrossInstituteAnalyticsView = lazyWithRetry(() => import('./modules/platfo
 const SubscriptionsBillingView = lazyWithRetry(() => import('./modules/platform/billing/SubscriptionsBillingView'), 'subscriptions-billing')
 const GlobalTemplatesView = lazyWithRetry(() => import('./modules/platform/templates/GlobalTemplatesView'), 'global-templates')
 const BackupDataView = lazyWithRetry(() => import('./modules/platform/backup/BackupDataView'), 'backup-data')
-const SystemHealthView = lazyWithRetry(() => import('./modules/platform/health/SystemHealthView'), 'system-health')
 const SupportApprovalsView = lazyWithRetry(() => import('./modules/platform/support/SupportApprovalsView'), 'support-approvals')
 const UsersManagementView = lazyWithRetry(() => import('./modules/users-management/UsersManagementView'), 'users-management')
 const PersonnelManagementView = lazyWithRetry(() => import('./modules/personnel/PersonnelManagementView'), 'personnel-management')
@@ -148,7 +147,6 @@ const AppContent = () => {
     'cross-institute-analytics',
     'platform-analytics',
     'announcements',
-    'system-health',
     'audit-logs',
     'backup-data',
     'platform-settings',
@@ -277,7 +275,6 @@ const AppContent = () => {
     'settings': 'platform-settings',
     'policies': 'compliance-policies',
     'analytics': 'cross-institute-analytics',
-    'health': 'system-health',
     'backup': 'backup-data',
     'logs': 'audit-logs',
     'broadcasts': 'announcements'
@@ -518,9 +515,6 @@ const AppContent = () => {
                   )}
                   {superadminRoute === 'backup-data' && (
                     <BackupDataView />
-                  )}
-                  {superadminRoute === 'system-health' && (
-                    <SystemHealthView />
                   )}
                   {superadminRoute === 'support-approvals' && (
                     <SupportApprovalsView />

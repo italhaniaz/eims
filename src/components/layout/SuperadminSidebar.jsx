@@ -16,7 +16,6 @@ import {
   CreditCard, 
   FileSpreadsheet, 
   Database, 
-  Activity,
   Lock,
   CheckSquare,
   Settings,
@@ -43,7 +42,7 @@ export const SuperadminSidebar = ({
   const isStandardsRoute = ['global-templates', 'compliance-policies', 'sa-policies'].includes(currentRoute) || 
     (typeof currentRoute === 'string' && currentRoute.startsWith('sa-policies-'))
   const isIntelRoute = ['cross-institute-analytics', 'platform-analytics', 'announcements', 'system-broadcasts'].includes(currentRoute)
-  const isGovernanceRoute = ['system-health', 'audit-logs', 'backup-data', 'platform-settings', 'sa-settings', 'platform-modules'].includes(currentRoute) || 
+  const isGovernanceRoute = ['audit-logs', 'backup-data', 'platform-settings', 'sa-settings', 'platform-modules'].includes(currentRoute) || 
     (typeof currentRoute === 'string' && currentRoute.startsWith('sa-settings-'))
 
   // Real-time dynamic counts
@@ -616,24 +615,6 @@ export const SuperadminSidebar = ({
 
             {(!collapsed || isMobileOpen) && governanceOpen && (
               <div className="mt-1 pl-3.5 space-y-1 border-l border-slate-800 ml-5">
-                {/* System Health */}
-                <div className="relative">
-                  {isRouteActive('system-health') && (
-                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-500 rounded-full z-10 shadow-sm shadow-purple-500/50"></div>
-                  )}
-                  <button
-                    onClick={() => handleNavClick('system-health')}
-                    className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
-                      isRouteActive('system-health')
-                        ? 'bg-purple-600/20 text-purple-300 font-semibold border border-purple-500/30'
-                        : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-                    }`}
-                  >
-                    <Activity className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('system-health') ? 'text-purple-400' : 'text-slate-400'}`} />
-                    <span className="whitespace-nowrap truncate">System Health & Telemetry</span>
-                  </button>
-                </div>
-
                 {/* Audit Logs */}
                 <div className="relative">
                   {isRouteActive('audit-logs') && (

@@ -31,7 +31,7 @@ export const SYSTEM_ROLES = [
       'Manage platform-wide academic streams, examination boards, and study schemes',
       'Oversee database backups, Supabase cloud configuration, and data integrity',
       'Configure enterprise Role-Based Access Control (RBAC) permissions',
-      'Audit platform-wide activity logs, system health, and cross-institute analytics'
+      'Audit platform-wide activity logs and cross-institute analytics'
     ],
     privileges: [
       'Unrestricted read and write access across all system modules',
@@ -338,17 +338,6 @@ export const DEFAULT_RBAC_PERMISSIONS = [
     id: 'perm-backup-data',
     category: 'Main Platform Governance',
     label: 'System Backup, Restore & Data Lifecycle Operations',
-    superadmin: true,
-    institute_admin: false,
-    teacher: false,
-    accountant: false,
-    student: false,
-    parent: false
-  },
-  {
-    id: 'perm-system-health',
-    category: 'Main Platform Governance',
-    label: 'System Health, Telemetry & Error Log Stream',
     superadmin: true,
     institute_admin: false,
     teacher: false,

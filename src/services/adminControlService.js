@@ -299,7 +299,6 @@ export const PLATFORM_TEAM_PERMISSIONS_REGISTRY = [
   {
     category: 'Security & Platform Governance',
     permissions: [
-      { id: 'security:health', label: 'View System Health', description: 'Access telemetry, server status, and latency charts' },
       { id: 'security:audit_logs', label: 'Access Audit Logs', description: 'Inspect platform security logs and staff action history' },
       { id: 'security:backups', label: 'Manage Database Backups', description: 'Create and download full database snapshot archives' },
       { id: 'security:policies', label: 'Update Compliance Policies', description: 'Draft and publish system-wide regulatory standards' }
