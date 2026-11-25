@@ -500,9 +500,6 @@ const AppContent = () => {
                   {superadminRoute === 'security-center' && (
                     <SecurityCenterView />
                   )}
-                  {superadminRoute === 'cross-institute-analytics' && (
-                    <CrossInstituteAnalyticsView />
-                  )}
                   {superadminRoute === 'platform-billing' && (
                     <SubscriptionsBillingView />
                   )}
