@@ -10,7 +10,6 @@ import {
   School, 
   LogOut, 
   X, 
-  Megaphone, 
   ShieldCheck, 
   BarChart3, 
   CreditCard, 
@@ -41,7 +40,7 @@ export const SuperadminSidebar = ({
   const isAccessRoute = ['security-center', 'admin-team-control'].includes(currentRoute)
   const isStandardsRoute = ['compliance-policies', 'sa-policies'].includes(currentRoute) || 
     (typeof currentRoute === 'string' && currentRoute.startsWith('sa-policies-'))
-  const isIntelRoute = ['cross-institute-analytics', 'platform-analytics', 'announcements', 'system-broadcasts'].includes(currentRoute)
+  const isIntelRoute = ['cross-institute-analytics', 'platform-analytics'].includes(currentRoute)
   const isGovernanceRoute = ['audit-logs', 'backup-data', 'platform-settings', 'sa-settings', 'platform-modules'].includes(currentRoute) || 
     (typeof currentRoute === 'string' && currentRoute.startsWith('sa-settings-'))
 
@@ -146,7 +145,6 @@ export const SuperadminSidebar = ({
     if (currentRoute === route) return true
     if (route === 'compliance-policies' && (currentRoute === 'sa-policies' || (typeof currentRoute === 'string' && currentRoute.startsWith('sa-policies-')))) return true
     if (route === 'cross-institute-analytics' && currentRoute === 'platform-analytics') return true
-    if (route === 'announcements' && currentRoute === 'system-broadcasts') return true
     if (route === 'sa-settings' && (currentRoute === 'platform-settings' || (typeof currentRoute === 'string' && currentRoute.startsWith('sa-settings-')))) return true
     return false
   }
@@ -492,14 +490,14 @@ export const SuperadminSidebar = ({
             )}
           </div>
 
-          {/* 4. Group: Intelligence & Broadcasts */}
+          {/* 4. Group: Intelligence & Analytics */}
           <div className="pt-1">
             <button
               onClick={() => {
                 if (collapsed) setCollapsed(false)
                 setIntelOpen(!intelOpen)
               }}
-              title={collapsed ? "Intelligence & Broadcasts" : undefined}
+              title={collapsed ? "Intelligence & Analytics" : undefined}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors cursor-pointer group ${
                 isIntelRoute 
                   ? 'text-purple-300 font-semibold bg-purple-500/10 border border-purple-500/20' 
@@ -512,7 +510,7 @@ export const SuperadminSidebar = ({
                 }`} />
                 {(!collapsed || isMobileOpen) && (
                   <span className="font-medium text-slate-200 group-hover:text-white whitespace-nowrap truncate">
-                    Intelligence & Broadcasts
+                    Intelligence & Analytics
                   </span>
                 )}
               </div>
@@ -540,24 +538,6 @@ export const SuperadminSidebar = ({
                   >
                     <BarChart3 className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('cross-institute-analytics') ? 'text-purple-400' : 'text-slate-400'}`} />
                     <span className="whitespace-nowrap truncate">Platform Analytics</span>
-                  </button>
-                </div>
-
-                {/* System Broadcasts */}
-                <div className="relative">
-                  {isRouteActive('announcements') && (
-                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-500 rounded-full z-10 shadow-sm shadow-purple-500/50"></div>
-                  )}
-                  <button
-                    onClick={() => handleNavClick('announcements')}
-                    className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
-                      isRouteActive('announcements')
-                        ? 'bg-purple-600/20 text-purple-300 font-semibold border border-purple-500/30'
-                        : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-                    }`}
-                  >
-                    <Megaphone className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('announcements') ? 'text-purple-400' : 'text-slate-400'}`} />
-                    <span className="whitespace-nowrap truncate">System Broadcasts</span>
                   </button>
                 </div>
               </div>
