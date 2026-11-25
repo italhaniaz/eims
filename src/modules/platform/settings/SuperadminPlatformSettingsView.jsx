@@ -289,11 +289,11 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 shrink-0">
+              <div className="flex items-center gap-3.5 shrink-0">
                 <button
                   type="button"
                   onClick={handleToggleSchoolInquiry}
-                  className={`relative inline-flex h-7 w-13 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-2 ${
+                  className={`relative inline-flex h-7 w-14 shrink-0 cursor-pointer rounded-full p-0.5 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-2 ${
                     schoolInquiryEnabled ? 'bg-purple-600' : 'bg-slate-300'
                   }`}
                   role="switch"
@@ -301,12 +301,14 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
                 >
                   <span
                     aria-hidden="true"
-                    className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                      schoolInquiryEnabled ? 'translate-x-6' : 'translate-x-0'
+                    className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition-transform duration-200 ease-in-out ${
+                      schoolInquiryEnabled ? 'translate-x-7' : 'translate-x-0'
                     }`}
                   />
                 </button>
-                <span className="text-xs font-bold text-slate-700 w-10">
+                <span className={`text-xs font-extrabold select-none min-w-[32px] ${
+                  schoolInquiryEnabled ? 'text-purple-700' : 'text-slate-500'
+                }`}>
                   {schoolInquiryEnabled ? 'ON' : 'OFF'}
                 </span>
               </div>
