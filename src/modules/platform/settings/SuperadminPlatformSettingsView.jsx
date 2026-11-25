@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { 
   Settings, 
   ShieldCheck, 
@@ -8,10 +8,21 @@ import {
   Clock, 
   RotateCcw,
   CheckCircle,
+  CheckCircle2,
   HardDrive,
-  Eye
+  Eye,
+  School,
+  Building2,
+  MapPin,
+  User,
+  Mail,
+  Search,
+  Database,
+  Shield,
+  Layers
 } from 'lucide-react'
 import { useToast } from '../../../context/ToastContext'
+import { useAppData } from '../../../context/AppDataContext'
 import { OperationsService } from '../../../services/operationsService'
 import { SchoolInquiryService } from '../../../services/schoolInquiryService'
 import ReleaseUpdatesModal from './ReleaseUpdatesModal'
@@ -52,7 +63,53 @@ const writePlatformUiSettings = (partial) => {
 
 export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabChange = () => {} }) => {
   const { toast } = useToast()
+  const { institutes = [] } = useAppData() || {}
+  const [inquiries, setInquiries] = useState([])
+  const [schoolSearchQuery, setSchoolSearchQuery] = useState('')
+  const [schoolTabFilter, setSchoolTabFilter] = useState('ALL') // 'ALL' | 'ACTIVE' | 'INQUIRIES'
   const [showReleaseModal, setShowReleaseModal] = useState(false)
+
+  // Fetch inquiries for registration audit cards
+  useEffect(() => {
+    let isMounted = true
+    SchoolInquiryService.getInquiries('ALL').then(list => {
+      if (isMounted && Array.isArray(list)) setInquiries(list)
+    }).catch(() => {})
+    return () => { isMounted = false }
+  }, [])
+
+  const pendingInquiries = useMemo(() => {
+    return (inquiries || []).filter(i => (i.status || '').toUpperCase() === 'PENDING')
+  }, [inquiries])
+
+  const filteredSchoolList = useMemo(() => {
+    const q = (schoolSearchQuery || '').toLowerCase().trim()
+    return (institutes || []).filter(inst => {
+      if (schoolTabFilter === 'ACTIVE' && (inst.status || 'Active').toLowerCase() !== 'active') return false
+      if (!q) return true
+      return (
+        (inst.name || '').toLowerCase().includes(q) ||
+        (inst.code || '').toLowerCase().includes(q) ||
+        (inst.city || '').toLowerCase().includes(q) ||
+        (inst.principal || '').toLowerCase().includes(q) ||
+        (inst.planTier || '').toLowerCase().includes(q)
+      )
+    })
+  }, [institutes, schoolSearchQuery, schoolTabFilter])
+
+  const filteredInquiriesList = useMemo(() => {
+    const q = (schoolSearchQuery || '').toLowerCase().trim()
+    return (inquiries || []).filter(inq => {
+      if (!q) return true
+      return (
+        (inq.schoolName || '').toLowerCase().includes(q) ||
+        (inq.schoolCodePrefix || '').toLowerCase().includes(q) ||
+        (inq.city || '').toLowerCase().includes(q) ||
+        (inq.contactPerson || '').toLowerCase().includes(q) ||
+        (inq.planTier || '').toLowerCase().includes(q)
+      )
+    })
+  }, [inquiries, schoolSearchQuery])
 
   const validTabs = ['general', 'compliance', 'maintenance']
   const [currentTab, setCurrentTab] = useState(() => {
@@ -239,8 +296,9 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
           </div>
 
           {/* Security & Server: School Registration & Inquiries Policy */}
-          <div className="pt-6 border-t border-slate-100">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div className="pt-6 border-t border-slate-100 space-y-5">
+            {/* Header & Mode Badge */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
@@ -251,7 +309,7 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
                   </h4>
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
-                  Configure admission gating policy for public school registrations and self-service campus sign-ups.
+                  Configure admission gating policy for public school registrations and monitor provisioned campus tenants.
                 </p>
               </div>
 
@@ -267,7 +325,8 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
               </div>
             </div>
 
-            <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200/90 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            {/* Card 1: Policy Toggle Control Card */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-purple-50/60 via-slate-50 to-indigo-50/40 border border-slate-200/90 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-2xs">
               <div className="space-y-1.5 max-w-2xl">
                 <div className="flex items-center gap-2 font-bold text-slate-900 text-sm">
                   <ShieldCheck className="w-4 h-4 text-purple-600" />
@@ -289,7 +348,7 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
                 </div>
               </div>
 
-              <div className="flex items-center gap-3.5 shrink-0">
+              <div className="flex items-center gap-3.5 shrink-0 self-start md:self-auto">
                 <button
                   type="button"
                   onClick={handleToggleSchoolInquiry}
@@ -312,6 +371,253 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
                   {schoolInquiryEnabled ? 'ON' : 'OFF'}
                 </span>
               </div>
+            </div>
+
+            {/* Card 2: Security & Server Metrics Summary Row */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="p-3.5 rounded-xl bg-white border border-slate-200/80 shadow-2xs">
+                <div className="flex items-center gap-2 text-slate-500 text-xs mb-1">
+                  <School className="w-3.5 h-3.5 text-purple-600" />
+                  <span className="font-semibold">Governed Schools</span>
+                </div>
+                <div className="font-extrabold text-base sm:text-lg text-slate-900 font-mono">
+                  {institutes.length} <span className="text-xs font-normal text-slate-500">Campuses</span>
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-white border border-slate-200/80 shadow-2xs">
+                <div className="flex items-center gap-2 text-slate-500 text-xs mb-1">
+                  <Clock className="w-3.5 h-3.5 text-amber-500" />
+                  <span className="font-semibold">Inquiries Queue</span>
+                </div>
+                <div className="font-extrabold text-base sm:text-lg text-slate-900 font-mono">
+                  {pendingInquiries.length} <span className="text-xs font-normal text-slate-500">Pending</span>
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-white border border-slate-200/80 shadow-2xs">
+                <div className="flex items-center gap-2 text-slate-500 text-xs mb-1">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  <span className="font-semibold">Gate Policy</span>
+                </div>
+                <div className="font-extrabold text-xs sm:text-sm text-slate-900 truncate">
+                  {schoolInquiryEnabled ? 'Approval Required' : 'Instant Sign-up'}
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-white border border-slate-200/80 shadow-2xs">
+                <div className="flex items-center gap-2 text-slate-500 text-xs mb-1">
+                  <Database className="w-3.5 h-3.5 text-indigo-600" />
+                  <span className="font-semibold">Tenant Isolation</span>
+                </div>
+                <div className="font-extrabold text-xs sm:text-sm text-slate-900 truncate">
+                  100% Isolated DB
+                </div>
+              </div>
+            </div>
+
+            {/* Card 3: School Data Cards Grid */}
+            <div className="space-y-3 pt-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h5 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-purple-600" />
+                    <span>Governed School Campuses (Server Tenant Data)</span>
+                  </h5>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    Live school entities and server database tenant profiles managed under platform registration security.
+                  </p>
+                </div>
+
+                {/* Sub-Tabs & Quick Filter */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-bold">
+                    <button
+                      type="button"
+                      onClick={() => setSchoolTabFilter('ALL')}
+                      className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                        schoolTabFilter === 'ALL'
+                          ? 'bg-white text-purple-700 shadow-2xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      All ({institutes.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSchoolTabFilter('ACTIVE')}
+                      className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                        schoolTabFilter === 'ACTIVE'
+                          ? 'bg-white text-purple-700 shadow-2xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      Active
+                    </button>
+                    {inquiries.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setSchoolTabFilter('INQUIRIES')}
+                        className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1 ${
+                          schoolTabFilter === 'INQUIRIES'
+                            ? 'bg-white text-purple-700 shadow-2xs'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        <span>Inquiries</span>
+                        <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-800">
+                          {pendingInquiries.length}
+                        </span>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Search Input */}
+                  <div className="relative w-full sm:w-48">
+                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      value={schoolSearchQuery}
+                      onChange={(e) => setSchoolSearchQuery(e.target.value)}
+                      placeholder="Search schools..."
+                      className="w-full pl-7 pr-2.5 py-1 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Grid of School Cards */}
+              {schoolTabFilter !== 'INQUIRIES' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                  {filteredSchoolList.length > 0 ? (
+                    filteredSchoolList.map((inst, idx) => {
+                      const code = inst.code || `SCH-00${idx + 1}`
+                      const name = inst.name || 'Unnamed Institution'
+                      const city = inst.city || 'Campus Location'
+                      const province = inst.province || 'Pakistan'
+                      const principal = inst.principal || inst.adminName || 'Campus Principal'
+                      const email = inst.email || inst.adminEmail || `admin@${code.toLowerCase()}.edu.pk`
+                      const planTier = inst.planTier || inst.planType || 'School Plan'
+                      const status = inst.status || 'Active'
+                      const initials = (name || 'SC').replace(/[^a-zA-Z]/g, '').slice(0, 2).toUpperCase() || 'SC'
+
+                      return (
+                        <div 
+                          key={inst.id || idx} 
+                          className="bg-white rounded-2xl border border-slate-200/90 hover:border-purple-300 p-4 space-y-3 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between"
+                        >
+                          {/* Card Top: Avatar, Name & Code */}
+                          <div className="flex items-start gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white font-extrabold text-xs flex items-center justify-center shadow-xs shrink-0">
+                              {initials}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <h5 className="font-extrabold text-slate-900 text-xs sm:text-sm truncate" title={name}>
+                                  {name}
+                                </h5>
+                                <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200 shrink-0">
+                                  {code}
+                                </span>
+                              </div>
+                              <span className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5 truncate">
+                                <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+                                <span>{city}{province ? `, ${province}` : ''}</span>
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Card Data Fields */}
+                          <div className="space-y-1.5 p-2.5 rounded-xl bg-slate-50/80 border border-slate-100 text-xs">
+                            <div className="flex items-center justify-between text-slate-600">
+                              <span className="text-slate-400 text-[11px] flex items-center gap-1">
+                                <User className="w-3 h-3" /> Head:
+                              </span>
+                              <span className="font-semibold text-slate-800 truncate max-w-[150px]">{principal}</span>
+                            </div>
+                            <div className="flex items-center justify-between text-slate-600">
+                              <span className="text-slate-400 text-[11px] flex items-center gap-1">
+                                <Shield className="w-3 h-3" /> Tier:
+                              </span>
+                              <span className="font-bold text-purple-700 text-[11px]">{planTier}</span>
+                            </div>
+                            <div className="flex items-center justify-between text-slate-600">
+                              <span className="text-slate-400 text-[11px] flex items-center gap-1">
+                                <Mail className="w-3 h-3" /> Contact:
+                              </span>
+                              <span className="font-mono text-[11px] text-slate-600 truncate max-w-[150px]">{email}</span>
+                            </div>
+                          </div>
+
+                          {/* Card Footer: Server Security State */}
+                          <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                            <span className="inline-flex items-center gap-1 font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                              <span>Isolated Tenant DB</span>
+                            </span>
+                            <span className="text-slate-400 font-mono text-[10px]">
+                              {schoolInquiryEnabled ? 'Inquiry Gated' : 'Direct Sign-up'}
+                            </span>
+                          </div>
+                        </div>
+                      )
+                    })
+                  ) : (
+                    <div className="col-span-full py-8 text-center text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                      <School className="w-7 h-7 text-slate-300 mx-auto mb-1.5" />
+                      <p className="font-bold text-slate-600 text-xs">No school records found</p>
+                      <p className="text-[11px] text-slate-400">Try adjusting your search criteria</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* Inquiries School Cards */
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                  {filteredInquiriesList.length > 0 ? (
+                    filteredInquiriesList.map((inq, idx) => (
+                      <div 
+                        key={inq.id || idx}
+                        className="bg-white rounded-2xl border border-slate-200/90 p-4 space-y-3 shadow-2xs flex flex-col justify-between"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <h5 className="font-extrabold text-slate-900 text-xs sm:text-sm truncate">{inq.schoolName}</h5>
+                            <span className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
+                              <MapPin className="w-3 h-3 text-slate-400" />
+                              <span>{inq.city}, {inq.province}</span>
+                            </span>
+                          </div>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
+                            inq.status?.toUpperCase() === 'PENDING'
+                              ? 'bg-amber-50 text-amber-800 border-amber-200'
+                              : inq.status?.toUpperCase() === 'APPROVED'
+                              ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                              : 'bg-rose-50 text-rose-800 border-rose-200'
+                          }`}>
+                            {inq.status || 'Pending'}
+                          </span>
+                        </div>
+
+                        <div className="space-y-1.5 p-2.5 rounded-xl bg-slate-50 text-xs">
+                          <p className="text-slate-600"><strong>Contact:</strong> {inq.contactPerson}</p>
+                          <p className="text-slate-600"><strong>Email:</strong> <span className="font-mono text-[11px]">{inq.email}</span></p>
+                          <p className="text-slate-600"><strong>Plan:</strong> <span className="font-bold text-purple-700">{inq.planTier || 'Evaluation Tier'}</span></p>
+                        </div>
+
+                        <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+                          <span>Awaiting Super Admin Review</span>
+                          <span className="font-mono text-[10px]">{inq.submissionDate ? new Date(inq.submissionDate).toLocaleDateString() : 'Recent'}</span>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="col-span-full py-8 text-center text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                      <Clock className="w-7 h-7 text-slate-300 mx-auto mb-1.5" />
+                      <p className="font-bold text-slate-600 text-xs">No pending school inquiries</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
