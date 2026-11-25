@@ -20,7 +20,8 @@ import {
   ChevronDown,
   CheckCircle2,
   ArrowRight,
-  Shield
+  Shield,
+  Eye
 } from 'lucide-react'
 import { useAppData } from '../../../context/AppDataContext'
 import { useToast } from '../../../context/ToastContext'
@@ -520,14 +521,13 @@ export const ModulesControlView = () => {
                             <button
                               type="button"
                               onClick={() => handleToggleWing(inst.id, 'school')}
-                              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-xs ${
+                              className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer inline-flex items-center justify-center text-center shadow-xs min-w-[76px] ${
                                 isSchoolOn
                                   ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-purple-600/20 active:scale-95'
                                   : 'bg-slate-100/90 text-slate-400 hover:bg-slate-200/80 hover:text-slate-600'
                               }`}
                               title={isSchoolOn ? 'School Wing Active (Click to toggle)' : 'School Wing Disabled (Click to activate)'}
                             >
-                              {isSchoolOn ? <Check className="w-3.5 h-3.5 stroke-[2.5]" /> : <X className="w-3.5 h-3.5" />}
                               <span>{isSchoolOn ? 'Active' : 'Disabled'}</span>
                             </button>
                             <span className="block text-[10px] text-slate-400 mt-1 font-medium">K-10 & Matric / O-Levels</span>
@@ -553,9 +553,11 @@ export const ModulesControlView = () => {
                             <button
                               type="button"
                               onClick={() => handleOpenWingsModal(inst)}
-                              className="px-3 py-1.5 bg-[#f5eeff] hover:bg-[#ede0fe] text-purple-700 font-semibold rounded-xl text-xs transition-colors border border-purple-200/50 cursor-pointer shadow-2xs"
+                              className="p-2 bg-[#f5eeff] hover:bg-[#ede0fe] text-purple-700 rounded-xl transition-all border border-purple-200/60 cursor-pointer shadow-2xs hover:scale-105 active:scale-95 inline-flex items-center justify-center"
+                              title={`View & Configure ${inst.name}`}
+                              aria-label={`View & Configure ${inst.name}`}
                             >
-                              Configure
+                              <Eye className="w-4 h-4 text-purple-600" />
                             </button>
                           </td>
                         </tr>

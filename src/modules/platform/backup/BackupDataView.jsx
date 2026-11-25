@@ -10,7 +10,6 @@ import {
   HardDrive,
   ShieldAlert,
   CheckCircle,
-  FileSpreadsheet,
   Clock,
   Building,
   AlertTriangle,
@@ -31,23 +30,17 @@ import { DataService, getStoredData } from '../../../services/dataService'
 const BackupDataView = ({ initialTab = 'backups' }) => {
   const { addItem } = useAppData() || {}
   const [activeTab, setActiveTab] = useState(initialTab)
-  const [isCommitting, setIsCommitting] = useState(false)
   const [inspectingSessionBackup, setInspectingSessionBackup] = useState(null)
   const [sessionBackupSearch, setSessionBackupSearch] = useState('')
   const [sessionBackups, setSessionBackups] = useState(() => {
     try { return OperationsService.getSessionBackups ? OperationsService.getSessionBackups() : [] } catch { return [] }
-  }) // 'backups', 'export-isolated', 'bulk-import', 'retention'
+  }) // 'backups', 'export-isolated'
   const [backups, setBackups] = useState([])
   const [institutes, setInstitutes] = useState([])
   const [loading, setLoading] = useState(true)
 
   // Isolated Export State
   const [selectedInstituteId, setSelectedInstituteId] = useState('')
-
-  // Bulk Import Validator State
-  const [importType, setImportType] = useState('students')
-  const [csvContent, setCsvContent] = useState('')
-  const [validationResult, setValidationResult] = useState(null)
 
   // Retention Policy State
   const [retentionPolicy, setRetentionPolicy] = useState({
@@ -143,40 +136,6 @@ const BackupDataView = ({ initialTab = 'backups' }) => {
     showToast(`Isolated archive for ${inst.name} downloaded successfully.`)
   }
 
-  const handleValidateCSV = () => {
-    if (!csvContent.trim()) return
-    const result = OperationsService.validateBulkImport(csvContent, importType)
-    setValidationResult(result)
-  }
-
-  const handleCommitBulkImport = async () => {
-    if (!validationResult || validationResult.validCount === 0) return
-    const validRows = (validationResult.allRows || []).filter(r => r.isValid)
-    if (validRows.length === 0) return
-
-    setIsCommitting(true)
-    try {
-      const res = await OperationsService.commitBulkImport(
-        validRows,
-        importType,
-        selectedInstituteId || 'inst-1',
-        addItem
-      )
-      if (res.success) {
-        showToast(`Successfully imported and committed ${res.committedCount} ${importType} records!`)
-        setValidationResult(null)
-        setCsvContent('')
-      } else {
-        showToast(res.error || 'Failed to commit bulk import records.')
-      }
-    } catch (err) {
-      console.error(err)
-      showToast('An unexpected error occurred during bulk import execution.')
-    } finally {
-      setIsCommitting(false)
-    }
-  }
-
   const handleFileSelectForRestore = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -224,12 +183,6 @@ const BackupDataView = ({ initialTab = 'backups' }) => {
     }
   }
 
-  const handleSaveRetention = async (e) => {
-    e.preventDefault()
-    await OperationsService.saveRetentionPolicy(retentionPolicy)
-    showToast('Platform data retention policy thresholds updated.')
-  }
-
   if (loading) {
     return (
       <div className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto flex items-center justify-center min-h-[400px]">
@@ -269,7 +222,7 @@ const BackupDataView = ({ initialTab = 'backups' }) => {
             Backup, Restore & Data Operations
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
-            Create system-wide JSON snapshots, validate and restore data state, export isolated campus databases, and establish lifecycle retention policies.
+            Create system-wide JSON snapshots, validate and restore data state, and export isolated campus databases.
           </p>
         </div>
 
@@ -325,8 +278,8 @@ const BackupDataView = ({ initialTab = 'backups' }) => {
           color="indigo"
           showActions={true}
           showAllText="Show all"
-          onShowAll={() => setActiveTab('export')}
-          onView={() => setActiveTab('export')}
+          onShowAll={() => setActiveTab('export-isolated')}
+          onView={() => setActiveTab('export-isolated')}
           viewTooltip="Export Institute Data Archive"
           onAdd={handleExportIsolated}
           addTooltip="Initiate Institute Data Export"
@@ -340,11 +293,11 @@ const BackupDataView = ({ initialTab = 'backups' }) => {
           color="amber"
           showActions={true}
           showAllText="Show all"
-          onShowAll={() => setActiveTab('retention')}
-          onView={() => setActiveTab('retention')}
-          viewTooltip="View Retention Policies"
-          onAdd={() => setActiveTab('retention')}
-          addTooltip="Configure Retention Policy"
+          onShowAll={() => setActiveTab('backups')}
+          onView={() => setActiveTab('backups')}
+          viewTooltip="View Backups"
+          onAdd={handleCreateSnapshot}
+          addTooltip="Create Database Snapshot"
         />
       </div>
 
@@ -373,30 +326,6 @@ const BackupDataView = ({ initialTab = 'backups' }) => {
           >
             <Building className="w-4 h-4" />
             <span>Isolated Campus Export</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('bulk-import')}
-            className={`py-2 px-4 rounded-xl flex items-center gap-2 transition-all cursor-pointer shrink-0 ${
-              activeTab === 'bulk-import'
-                ? 'bg-[#f5eeff] text-purple-700 font-bold shadow-2xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-            }`}
-          >
-            <FileSpreadsheet className="w-4 h-4" />
-            <span>Bulk CSV Validator & Preview</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('retention')}
-            className={`py-2 px-4 rounded-xl flex items-center gap-2 transition-all cursor-pointer shrink-0 ${
-              activeTab === 'retention'
-                ? 'bg-[#f5eeff] text-purple-700 font-bold shadow-2xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-            }`}
-          >
-            <Clock className="w-4 h-4" />
-            <span>Retention Policy</span>
           </button>
         </nav>
       </div>
@@ -703,233 +632,6 @@ const BackupDataView = ({ initialTab = 'backups' }) => {
             </button>
           </div>
         </div>
-      )}
-
-      {/* TAB 3: BULK CSV VALIDATOR & PREVIEW */}
-      {activeTab === 'bulk-import' && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
-          <div>
-            <h3 className="text-base font-bold text-slate-900">Bulk Import Schema Validator & Row Preview</h3>
-            <p className="text-xs text-slate-500 mt-1">
-              Paste raw CSV data to check against platform constraints, identify missing mandatory columns, and preview validation before importing.
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex flex-wrap items-center gap-4">
-              <div className="flex items-center gap-2">
-                <label className="text-xs font-semibold text-slate-700">Entity Type:</label>
-                <select
-                  value={importType}
-                  onChange={(e) => {
-                    setImportType(e.target.value)
-                    setValidationResult(null)
-                  }}
-                  className="px-3 py-1.5 text-xs border border-slate-200 rounded-lg bg-white"
-                >
-                  <option value="students">Students Roster</option>
-                  <option value="teachers">Staff & Faculty Directory</option>
-                  <option value="institutes">Institutes Directory</option>
-                </select>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <label className="text-xs font-semibold text-slate-700">Target Campus:</label>
-                <select
-                  value={selectedInstituteId}
-                  onChange={(e) => setSelectedInstituteId(e.target.value)}
-                  className="px-3 py-1.5 text-xs border border-slate-200 rounded-lg bg-white max-w-xs"
-                >
-                  {institutes.map(inst => (
-                    <option key={inst.id} value={inst.id}>{inst.name} ({inst.code || 'Campus'})</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Paste CSV Data (with headers: name, rollNumber, email, class...)
-              </label>
-              <textarea
-                rows="6"
-                value={csvContent}
-                onChange={(e) => setCsvContent(e.target.value)}
-                placeholder="name,rollNumber,email,gender\nAhmed Khan,STD-1001,ahmed@mail.com,Male\nAyesha Malik,,ayesha@mail.com,Female"
-                className="w-full px-3 py-2 text-xs font-mono border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none"
-              />
-            </div>
-
-            <button
-              onClick={handleValidateCSV}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs shadow-sm transition-colors cursor-pointer"
-            >
-              <FileCheck className="w-4 h-4" />
-              <span>Validate & Preview CSV</span>
-            </button>
-
-            {/* Validation Results Display */}
-            {validationResult && (
-              <div className="space-y-4 pt-4 border-t border-slate-100">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs">
-                    <span className="text-slate-500 block">Total Rows:</span>
-                    <span className="font-bold text-slate-900 text-sm">{validationResult.totalRows}</span>
-                  </div>
-                  <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-xs">
-                    <span className="text-emerald-700 block">Valid Rows:</span>
-                    <span className="font-bold text-emerald-800 text-sm">{validationResult.validCount}</span>
-                  </div>
-                  <div className="p-3 bg-rose-50 rounded-xl border border-rose-200 text-xs">
-                    <span className="text-rose-700 block">Invalid Rows:</span>
-                    <span className="font-bold text-rose-800 text-sm">{validationResult.invalidCount}</span>
-                  </div>
-                </div>
-
-                {/* Preview Table */}
-                <div className="border border-slate-200 rounded-xl overflow-hidden">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
-                      <tr>
-                        <th className="p-2.5">Row</th>
-                        <th className="p-2.5">Data Content</th>
-                        <th className="p-2.5 text-center">Status</th>
-                        <th className="p-2.5">Validation Diagnostics</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {validationResult.preview.map((row) => (
-                        <tr key={row.rowNumber} className={row.isValid ? 'hover:bg-slate-50' : 'bg-rose-50/40'}>
-                          <td className="p-2.5 font-mono text-slate-500">#{row.rowNumber}</td>
-                          <td className="p-2.5 font-mono text-slate-800">
-                            {JSON.stringify(row.data).slice(0, 80)}...
-                          </td>
-                          <td className="p-2.5 text-center">
-                            {row.isValid ? (
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                                VALID
-                              </span>
-                            ) : (
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">
-                                ERROR
-                              </span>
-                            )}
-                          </td>
-                          <td className="p-2.5 text-rose-600 text-xs">
-                            {row.errors.join(', ') || 'No issues found'}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Execute Commit Action Button */}
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 bg-slate-50 border border-slate-200 rounded-xl">
-                  <div className="text-xs text-slate-600">
-                    Target: <strong className="text-slate-900">{institutes.find(i => i.id === selectedInstituteId)?.name || 'Designated Campus'}</strong> • Ready to commit <strong className="text-emerald-700">{validationResult.validCount}</strong> valid {importType} rows.
-                  </div>
-                  <button
-                    type="button"
-                    disabled={isCommitting || validationResult.validCount === 0}
-                    onClick={handleCommitBulkImport}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
-                  >
-                    {isCommitting ? (
-                      <>
-                        <RefreshCw className="w-4 h-4 animate-spin" />
-                        <span>Committing Records...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="w-4 h-4" />
-                        <span>Execute Import (Commit {validationResult.validCount} Valid Records)</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* TAB 4: RETENTION POLICY */}
-      {activeTab === 'retention' && (
-        <form onSubmit={handleSaveRetention} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6 max-w-2xl">
-          <div>
-            <h3 className="text-base font-bold text-slate-900">Platform Data Retention & Automated Purge Policy</h3>
-            <p className="text-xs text-slate-500 mt-1">
-              Configure data lifecycle windows for security audit trails, authentication logs, and backup snapshots.
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Audit Logs Retention (Days)
-              </label>
-              <input
-                type="number"
-                min="30"
-                max="3650"
-                value={retentionPolicy.auditLogsDays}
-                onChange={(e) => setRetentionPolicy({ ...retentionPolicy, auditLogsDays: parseInt(e.target.value) || 90 })}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Login History & Failed Attempts (Days)
-              </label>
-              <input
-                type="number"
-                min="30"
-                max="3650"
-                value={retentionPolicy.loginHistoryDays}
-                onChange={(e) => setRetentionPolicy({ ...retentionPolicy, loginHistoryDays: parseInt(e.target.value) || 180 })}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Backup Snapshots Retention (Days)
-              </label>
-              <input
-                type="number"
-                min="30"
-                max="3650"
-                value={retentionPolicy.backupSnapshotsDays}
-                onChange={(e) => setRetentionPolicy({ ...retentionPolicy, backupSnapshotsDays: parseInt(e.target.value) || 365 })}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none"
-              />
-            </div>
-
-            <div className="flex items-center gap-2 pt-2">
-              <input
-                type="checkbox"
-                id="autoPurge"
-                checked={retentionPolicy.autoPurgeEnabled}
-                onChange={(e) => setRetentionPolicy({ ...retentionPolicy, autoPurgeEnabled: e.target.checked })}
-                className="rounded text-purple-600 focus:ring-purple-500"
-              />
-              <label htmlFor="autoPurge" className="text-xs font-medium text-slate-700">
-                Enable Automated Nightly Purge of Expired Audit Records
-              </label>
-            </div>
-          </div>
-
-          <div className="pt-3 border-t border-slate-100 flex justify-end">
-            <button
-              type="submit"
-              className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs sm:text-sm shadow-sm transition-colors cursor-pointer"
-            >
-              Save Retention Policy
-            </button>
-          </div>
-        </form>
       )}
 
       {/* CONFIRM RESTORE MODAL */}
