@@ -86,14 +86,6 @@ export const CommandPaletteModal = ({ isOpen, onClose, onNavigate, onOpenSetting
           keywords: ['security', 'sessions', 'logout', 'history', 'ip', 'allowlist', '2fa', 'password', 'policy'] 
         },
         { 
-          id: 'nav-global-templates', 
-          title: 'Global Master Data & Templates', 
-          category: 'Platform Control', 
-          route: 'global-templates', 
-          icon: FileSpreadsheet, 
-          keywords: ['templates', 'standards', 'grading', 'fee heads', 'designations', 'subjects', 'curriculum'] 
-        },
-        { 
           id: 'nav-cross-analytics', 
           title: 'Cross-Institute Comparative Analytics', 
           category: 'Analytics & Business', 

@@ -29,7 +29,6 @@ const ModulesControlView = lazyWithRetry(() => import('./modules/platform/module
 const SecurityCenterView = lazyWithRetry(() => import('./modules/platform/security/SecurityCenterView'), 'security-center')
 const CrossInstituteAnalyticsView = lazyWithRetry(() => import('./modules/platform/analytics/CrossInstituteAnalyticsView'), 'cross-institute-analytics')
 const SubscriptionsBillingView = lazyWithRetry(() => import('./modules/platform/billing/SubscriptionsBillingView'), 'subscriptions-billing')
-const GlobalTemplatesView = lazyWithRetry(() => import('./modules/platform/templates/GlobalTemplatesView'), 'global-templates')
 const BackupDataView = lazyWithRetry(() => import('./modules/platform/backup/BackupDataView'), 'backup-data')
 const SupportApprovalsView = lazyWithRetry(() => import('./modules/platform/support/SupportApprovalsView'), 'support-approvals')
 const UsersManagementView = lazyWithRetry(() => import('./modules/users-management/UsersManagementView'), 'users-management')
@@ -141,7 +140,6 @@ const AppContent = () => {
     'support-approvals',
     'platform-billing',
     'security-center',
-    'global-templates',
     'compliance-policies',
     'sa-policies',
     'cross-institute-analytics',
@@ -155,9 +153,7 @@ const AppContent = () => {
     'institute-feature-control',
     'admin-team-control',
     // Policies sub-tabs
-    'sa-policies-academic', 'sa-policies-fees', 'sa-policies-attendance',
-    'sa-policies-discipline', 'sa-policies-privacy', 'sa-policies-publish',
-    'sa-policies-acknowledgment',
+    'sa-policies-academic',
     // Settings sub-tabs
     'sa-settings-general', 'sa-settings-compliance', 'sa-settings-maintenance'
   ]
@@ -509,9 +505,6 @@ const AppContent = () => {
                   )}
                   {superadminRoute === 'platform-billing' && (
                     <SubscriptionsBillingView />
-                  )}
-                  {superadminRoute === 'global-templates' && (
-                    <GlobalTemplatesView />
                   )}
                   {superadminRoute === 'backup-data' && (
                     <BackupDataView />

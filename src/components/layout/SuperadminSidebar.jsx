@@ -39,7 +39,7 @@ export const SuperadminSidebar = ({
   // Route group classifications
   const isCampusesRoute = ['institutes', 'support-approvals', 'platform-billing', 'institute-feature-control'].includes(currentRoute)
   const isAccessRoute = ['security-center', 'admin-team-control'].includes(currentRoute)
-  const isStandardsRoute = ['global-templates', 'compliance-policies', 'sa-policies'].includes(currentRoute) || 
+  const isStandardsRoute = ['compliance-policies', 'sa-policies'].includes(currentRoute) || 
     (typeof currentRoute === 'string' && currentRoute.startsWith('sa-policies-'))
   const isIntelRoute = ['cross-institute-analytics', 'platform-analytics', 'announcements', 'system-broadcasts'].includes(currentRoute)
   const isGovernanceRoute = ['audit-logs', 'backup-data', 'platform-settings', 'sa-settings', 'platform-modules'].includes(currentRoute) || 
@@ -471,24 +471,6 @@ export const SuperadminSidebar = ({
 
             {(!collapsed || isMobileOpen) && standardsOpen && (
               <div className="mt-1 pl-3.5 space-y-1 border-l border-slate-800 ml-5">
-                {/* Global Templates */}
-                <div className="relative">
-                  {isRouteActive('global-templates') && (
-                    <div className="absolute -left-[16px] top-1.5 bottom-1.5 w-1 bg-purple-500 rounded-full z-10 shadow-sm shadow-purple-500/50"></div>
-                  )}
-                  <button
-                    onClick={() => handleNavClick('global-templates')}
-                    className={`w-full flex items-center gap-2.5 text-left py-2 px-2.5 rounded-lg text-[13px] transition-all cursor-pointer ${
-                      isRouteActive('global-templates')
-                        ? 'bg-purple-600/20 text-purple-300 font-semibold border border-purple-500/30'
-                        : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-                    }`}
-                  >
-                    <FileSpreadsheet className={`w-3.5 h-3.5 shrink-0 ${isRouteActive('global-templates') ? 'text-purple-400' : 'text-slate-400'}`} />
-                    <span className="whitespace-nowrap truncate">Global Templates</span>
-                  </button>
-                </div>
-
                 {/* Compliance Policies */}
                 <div className="relative">
                   {isRouteActive('compliance-policies') && (

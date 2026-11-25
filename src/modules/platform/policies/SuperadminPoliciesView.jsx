@@ -2,13 +2,9 @@ import React, { useState } from 'react'
 import {
   ShieldCheck,
   FileText,
-  DollarSign,
-  Clock,
-  AlertTriangle,
-  Lock,
-  Share2,
-  Users,
-  Plus
+  Plus,
+  Eye,
+  Edit3
 } from 'lucide-react'
 import { useToast } from '../../../context/ToastContext'
 import Modal from '../../../components/common/Modal'
@@ -16,11 +12,7 @@ import Modal from '../../../components/common/Modal'
 const STORAGE_KEY = 'sms_platform_policies_v1'
 
 const CATEGORY_OPTIONS = [
-  { key: 'academic', label: 'Academic Policies' },
-  { key: 'fees', label: 'Fee & Refund Policies' },
-  { key: 'attendance', label: 'Attendance & Leave Policies' },
-  { key: 'discipline', label: 'Discipline & Code of Conduct' },
-  { key: 'privacy', label: 'Data Privacy & Child Safety' }
+  { key: 'academic', label: 'Academic Policies' }
 ]
 
 const CATEGORY_KEYS = CATEGORY_OPTIONS.map((item) => item.key)
@@ -240,20 +232,8 @@ export const SuperadminPoliciesView = ({ activeTab = 'academic', onTabChange = (
   const [policies, setPolicies] = useState(() => loadPolicies())
   const [editor, setEditor] = useState(null)
 
-  const acknowledgments = [
-    { group: 'Teaching Faculty & HODs', total: 171, signed: 168, rate: '98.2%', status: 'Compliant' },
-    { group: 'Administrative Staff', total: 64, signed: 62, rate: '96.8%', status: 'Compliant' },
-    { group: 'Enrolled Parents (Digital App Sign-off)', total: 3420, signed: 3180, rate: '93.0%', status: 'In Progress' }
-  ]
-
   const tabsConfig = [
-    { key: 'academic', label: 'Academic Policies', icon: FileText },
-    { key: 'fees', label: 'Fee & Refund Policies', icon: DollarSign },
-    { key: 'attendance', label: 'Attendance & Leave Policies', icon: Clock },
-    { key: 'discipline', label: 'Discipline & Code of Conduct', icon: AlertTriangle },
-    { key: 'privacy', label: 'Data Privacy & Child Safety', icon: Lock },
-    { key: 'publish', label: 'Policy Versions & Publish', icon: Share2 },
-    { key: 'acknowledgment', label: 'Acknowledgment Tracking', icon: Users }
+    { key: 'academic', label: 'Academic Policies', icon: FileText }
   ]
 
   const handleTabSwitch = (tabKey) => {
@@ -386,74 +366,6 @@ export const SuperadminPoliciesView = ({ activeTab = 'academic', onTabChange = (
         </div>
       </div>
 
-      {effectiveTab === 'publish' && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
-          <div className="p-5 border-b border-slate-100">
-            <h3 className="font-bold text-slate-900">Active Policy Registry & Version Control</h3>
-            <p className="text-xs text-slate-500">Saved on this device and merged with the built-in policy seeds</p>
-          </div>
-          <div className="divide-y divide-slate-100">
-            {policies.map(p => (
-              <div key={p.id} className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/50">
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-mono text-xs font-bold text-purple-700">{p.id}</span>
-                    <h4 className="font-bold text-slate-900 text-sm">{p.title}</h4>
-                    <span className="text-xs font-bold px-2 py-0.5 rounded bg-purple-50 text-purple-700">{p.version}</span>
-                  </div>
-                  <p className="text-xs text-slate-600 mt-1">
-                    Category: <b>{categoryLabel(p.category)}</b> &bull; Scope: <b>{p.target || 'All Campuses'}</b>
-                    {p.effectiveDate ? <> &bull; Effective Since: {p.effectiveDate}</> : null}
-                  </p>
-                </div>
-                <div className="flex items-center gap-3 self-start sm:self-auto">
-                  <button
-                    type="button"
-                    onClick={() => openView(p)}
-                    className="text-purple-700 text-xs font-bold hover:underline cursor-pointer"
-                  >
-                    Read
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => openEdit(p)}
-                    className="text-slate-600 text-xs font-bold hover:underline cursor-pointer"
-                  >
-                    Edit
-                  </button>
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${statusBadgeClass(p.status)}`}>
-                    {p.status || 'Draft'}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {effectiveTab === 'acknowledgment' && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6 space-y-4">
-          <h3 className="font-bold text-slate-900">Digital Policy Acknowledgment Index</h3>
-          <p className="text-xs text-slate-500">Tracks digital signatures affirming code of conduct and safety guidelines</p>
-          <div className="rounded-xl border border-purple-200 bg-purple-50 px-4 py-3 text-xs text-purple-900 leading-relaxed">
-            Live acknowledgment sync requires future database integration. The figures on this tab are display data only and do not update from campus sign-offs.
-          </div>
-          <div className="space-y-4 pt-2">
-            {acknowledgments.map((a, i) => (
-              <div key={i} className="p-4 rounded-xl border border-slate-100 bg-slate-50/50">
-                <div className="flex justify-between text-xs sm:text-sm font-bold text-slate-800">
-                  <span>{a.group}</span>
-                  <span className="text-purple-700">{a.rate} ({a.signed} / {a.total} Signed)</span>
-                </div>
-                <div className="w-full bg-slate-200 h-2.5 rounded-full mt-2 overflow-hidden">
-                  <div className="bg-purple-600 h-full rounded-full transition-all" style={{ width: a.rate }}></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {CATEGORY_KEYS.includes(effectiveTab) && (
         <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -483,30 +395,28 @@ export const SuperadminPoliciesView = ({ activeTab = 'academic', onTabChange = (
                     <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-purple-100 text-purple-800">{pol.id}</span>
                     <h4 className="font-bold text-slate-900 text-xs sm:text-sm">{pol.title}</h4>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-700 font-mono">{pol.version}</span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">{pol.target}</span>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${statusBadgeClass(pol.status)}`}>{pol.status || 'Draft'}</span>
-                  </div>
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed">{pol.summary}</p>
                 <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between text-xs text-slate-500">
                   <span>Enforcement: Immediate &bull; Legally Binding</span>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
                     <button
                       type="button"
                       onClick={() => openView(pol)}
-                      className="text-purple-700 font-bold hover:underline cursor-pointer"
+                      className="p-1.5 rounded-lg text-purple-700 bg-purple-50 hover:bg-purple-100 hover:text-purple-900 transition-colors border border-purple-200/60 cursor-pointer shadow-2xs"
+                      title="Read Full Directive"
+                      aria-label="Read Full Directive"
                     >
-                      Read Full Directive
+                      <Eye className="w-3.5 h-3.5" />
                     </button>
-                    &bull;
                     <button
                       type="button"
                       onClick={() => openEdit(pol)}
-                      className="text-slate-600 font-bold hover:underline cursor-pointer"
+                      className="p-1.5 rounded-lg text-slate-600 bg-slate-100 hover:bg-slate-200 hover:text-slate-900 transition-colors border border-slate-200/60 cursor-pointer shadow-2xs"
+                      title="Edit Directive"
+                      aria-label="Edit Directive"
                     >
-                      Edit Directive
+                      <Edit3 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
