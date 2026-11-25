@@ -23,8 +23,7 @@ import {
   X,
   ChevronDown,
   Sliders,
-  Columns,
-  HelpCircle
+  Columns
 } from 'lucide-react'
 import StatCard from '../../../components/common/StatCard'
 import Modal from '../../../components/common/Modal'
@@ -126,10 +125,7 @@ const CrossInstituteAnalyticsView = () => {
     students: true,
     faculty: true,
     ratio: true,
-    attendance: true,
-    fees: true,
-    collected: true,
-    health: true
+    fees: true
   })
 
   // Multi-select Row Checkboxes State
@@ -210,10 +206,7 @@ const CrossInstituteAnalyticsView = () => {
       students: true,
       faculty: true,
       ratio: true,
-      attendance: true,
-      fees: true,
-      collected: true,
-      health: true
+      fees: true
     })
     setTypeFilter('ALL')
     setSearchTerm('')
@@ -567,10 +560,7 @@ const CrossInstituteAnalyticsView = () => {
                         { key: 'students', label: 'Students' },
                         { key: 'faculty', label: 'Faculty' },
                         { key: 'ratio', label: 'Ratio' },
-                        { key: 'attendance', label: 'Attendance' },
-                        { key: 'fees', label: 'Fee Recovery' },
-                        { key: 'collected', label: 'PKR Collected' },
-                        { key: 'health', label: 'Health' }
+                        { key: 'fees', label: 'Fee Recovery' }
                       ].map(col => (
                         <label
                           key={col.key}
@@ -721,33 +711,11 @@ const CrossInstituteAnalyticsView = () => {
                 {visibleColumns.ratio && (
                   <th className="py-3.5 px-4 text-center">Ratio</th>
                 )}
-                {visibleColumns.attendance && (
-                  <th className="py-3.5 px-4 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleSort('attendanceRate')}>
-                    <div className="flex items-center gap-1.5">
-                      <span>Attendance Rate</span>
-                      <ArrowUpDown className="w-3 h-3 text-slate-400" />
-                    </div>
-                  </th>
-                )}
                 {visibleColumns.fees && (
                   <th className="py-3.5 px-4 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleSort('feeRecoveryRate')}>
                     <div className="flex items-center gap-1.5">
                       <span>Fee Recovery</span>
                       <ArrowUpDown className="w-3 h-3 text-slate-400" />
-                    </div>
-                  </th>
-                )}
-                {visibleColumns.collected && (
-                  <th className="py-3.5 px-4 text-right">Collected (PKR)</th>
-                )}
-                {visibleColumns.health && (
-                  <th 
-                    className="py-3.5 px-4 text-center cursor-help"
-                    title="Campus Health Rating Formula: 40% Fee Collection Parity + 30% Verified Attendance + 30% Student-Teacher Ratio"
-                  >
-                    <div className="flex items-center justify-center gap-1">
-                      <span>Health</span>
-                      <HelpCircle className="w-3 h-3 text-slate-400" />
                     </div>
                   </th>
                 )}
@@ -790,23 +758,6 @@ const CrossInstituteAnalyticsView = () => {
                   {visibleColumns.ratio && (
                     <td className="py-3.5 px-4 text-center font-mono text-xs">{inst.studentTeacherRatio}</td>
                   )}
-                  {visibleColumns.attendance && (
-                    <td className="py-3.5 px-4">
-                      <div className="w-32">
-                        <div className="flex items-center justify-between text-xs font-semibold mb-1">
-                          <span>{inst.attendanceRate}%</span>
-                        </div>
-                        <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full ${
-                              inst.attendanceRate >= 90 ? 'bg-emerald-500' : inst.attendanceRate >= 80 ? 'bg-indigo-500' : 'bg-amber-500'
-                            }`}
-                            style={{ width: `${Math.min(100, inst.attendanceRate)}%` }}
-                          />
-                        </div>
-                      </div>
-                    </td>
-                  )}
                   {visibleColumns.fees && (
                     <td className="py-3.5 px-4">
                       <div className="w-32">
@@ -824,34 +775,12 @@ const CrossInstituteAnalyticsView = () => {
                       </div>
                     </td>
                   )}
-                  {visibleColumns.collected && (
-                    <td className="py-3.5 px-4 text-right font-mono font-medium text-slate-800">
-                      Rs. {(inst.totalCollectedPKR || 0).toLocaleString()}
-                    </td>
-                  )}
-                  {visibleColumns.health && (
-                    <td className="py-3.5 px-4 text-center">
-                      <span
-                        className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                          inst.health === 'Excellent'
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                            : inst.health === 'Good'
-                            ? 'bg-[#f5eeff] text-purple-700 border border-purple-200'
-                            : inst.health === 'New Campus'
-                            ? 'bg-slate-100 text-slate-700 border border-slate-200 font-medium'
-                            : 'bg-amber-50 text-amber-700 border border-amber-200'
-                        }`}
-                      >
-                        {inst.health}
-                      </span>
-                    </td>
-                  )}
                 </tr>
                   )
                 })
               ) : (
                 <tr>
-                  <td colSpan="11" className="py-12 text-center text-slate-400">
+                  <td colSpan="8" className="py-12 text-center text-slate-400">
                     <Building className="w-10 h-10 text-slate-300 mx-auto mb-2" />
                     <p className="text-sm font-semibold text-slate-600">No campuses reporting live telemetry</p>
                     <p className="text-xs text-slate-400 mt-0.5">Campuses will appear here once registered on the platform.</p>
@@ -860,85 +789,6 @@ const CrossInstituteAnalyticsView = () => {
               )}
             </tbody>
           </table>
-        </div>
-      </div>
-
-      {/* Visual Analytics Chart Comparisons */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Attendance Bar Chart Representation */}
-        <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-              <Percent className="w-4 h-4 text-purple-600" />
-              Attendance Performance Distribution (%)
-            </h4>
-            <span className="text-xs text-slate-400">Target: ≥ 90%</span>
-          </div>
-
-          <div className="space-y-3 pt-2">
-            {analyticsData.comparisonList.length > 0 ? (
-              analyticsData.comparisonList.map((inst) => (
-              <div key={inst.id} className="space-y-1">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-medium text-slate-700">{inst.name}</span>
-                  <span className="font-semibold text-slate-900">{inst.attendanceRate}%</span>
-                </div>
-                <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all duration-500 ${
-                      inst.attendanceRate >= 90 ? 'bg-gradient-to-r from-blue-500 to-emerald-500' : 'bg-indigo-500'
-                    }`}
-                    style={{ width: `${inst.attendanceRate}%` }}
-                  />
-                </div>
-              </div>
-            ))
-            ) : (
-              <div className="py-8 text-center text-slate-400 text-xs">
-                No attendance telemetry recorded yet.
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Fee Recovery Representation */}
-        <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)] shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-              <DollarSign className="w-4 h-4 text-emerald-600" />
-              Tuition Fee Recovery Ratios (%)
-            </h4>
-            <span className="text-xs text-slate-400">Target: ≥ 85%</span>
-          </div>
-
-          <div className="space-y-3 pt-2">
-            {analyticsData.comparisonList.length > 0 ? (
-              analyticsData.comparisonList.map((inst) => (
-              <div key={inst.id} className="space-y-1">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-medium text-slate-700">{inst.name}</span>
-                  <span className="font-semibold text-emerald-700">{inst.feeRecoveryRate}%</span>
-                </div>
-                <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all duration-500 ${
-                      inst.feeRecoveryRate >= 90
-                        ? 'bg-gradient-to-r from-emerald-500 to-teal-500'
-                        : inst.feeRecoveryRate >= 80
-                        ? 'bg-emerald-500'
-                        : 'bg-rose-500'
-                    }`}
-                    style={{ width: `${inst.feeRecoveryRate}%` }}
-                  />
-                </div>
-              </div>
-            ))
-            ) : (
-              <div className="py-8 text-center text-slate-400 text-xs">
-                No tuition fee recovery telemetry recorded yet.
-              </div>
-            )}
-          </div>
         </div>
       </div>
 
