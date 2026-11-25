@@ -11,7 +11,6 @@ import {
   CheckCircle2,
   Clock,
   Sparkles,
-  Download,
   AlertCircle,
   School,
   Radio,
@@ -20,7 +19,6 @@ import {
   EyeOff,
   Search,
   X,
-  ShieldCheck,
   GraduationCap,
   Copy,
   Check,
@@ -816,15 +814,6 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           </button>
 
           <button
-            onClick={() => onRouteChange?.('admin-team-control')}
-            className="px-3 py-2 rounded-xl bg-white dark:bg-slate-900 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-800 font-semibold text-xs transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs hover:border-indigo-300 dark:hover:border-indigo-700 active:scale-98"
-            title="Internal Admin & Team Governance"
-          >
-            <ShieldCheck className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-            <span className="hidden sm:inline">Team Control</span>
-          </button>
-
-          <button
             onClick={() => setIsUserModalOpen(true)}
             className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-98"
             title="Add Platform Staff"
@@ -840,15 +829,6 @@ export const SuperadminDashboard = ({ onRouteChange, onOpenSettings }) => {
           >
             <Send className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
             <span className="hidden md:inline">Broadcast</span>
-          </button>
-
-          <button
-            onClick={handleGenerateReport}
-            className="p-2 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-800 transition-all cursor-pointer shadow-2xs"
-            title="Download CSV Audit Report"
-            aria-label="Download CSV Audit Report"
-          >
-            <Download className="w-4 h-4 text-slate-500 dark:text-slate-400" />
           </button>
         </div>
       </div>

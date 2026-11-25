@@ -13,13 +13,10 @@ import {
   CheckCircle2,
   Sparkles,
   ArrowRight,
-  Moon,
-  Sun,
   UserCheck
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useAppData } from '../../context/AppDataContext'
-import { useTheme } from '../../context/ThemeContext'
 import ChangePasswordModal from '../common/ChangePasswordModal'
 import CloudSyncBadge from '../common/CloudSyncBadge'
 import AnnouncementService from '../../services/announcementService'
@@ -34,7 +31,6 @@ export const SuperadminNavbar = ({
 }) => {
   const { user, logout } = useAuth()
   const { notices = [], recentActivity = [] } = useAppData()
-  const { isDark, toggleThemeMode } = useTheme()
   const [showNotifications, setShowNotifications] = useState(false)
   const [showProfileMenu, setShowProfileMenu] = useState(false)
   const [showPasswordModal, setShowPasswordModal] = useState(false)
@@ -155,15 +151,6 @@ export const SuperadminNavbar = ({
 
       {/* Right Side Icons & Profile Info */}
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-        {/* Quick Dark / Light Mode Toggle */}
-        <button
-          type="button"
-          onClick={toggleThemeMode}
-          className="p-2 text-[var(--text-muted)] hover:text-[var(--text)] rounded-xl hover:bg-[var(--primary-soft)] transition-colors cursor-pointer"
-          title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
-        >
-          {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-600" />}
-        </button>
         {/* 1. Announcements & Broadcast Navbar Control */}
         <div className="relative" ref={announcementsRef}>
           <button
