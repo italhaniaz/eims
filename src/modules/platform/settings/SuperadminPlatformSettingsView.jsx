@@ -8,11 +8,13 @@ import {
   Clock, 
   RotateCcw,
   CheckCircle,
-  HardDrive
+  HardDrive,
+  Eye
 } from 'lucide-react'
 import { useToast } from '../../../context/ToastContext'
 import { OperationsService } from '../../../services/operationsService'
 import { SchoolInquiryService } from '../../../services/schoolInquiryService'
+import ReleaseUpdatesModal from './ReleaseUpdatesModal'
 
 const PLATFORM_UI_SETTINGS_KEY = 'sms_platform_ui_settings'
 
@@ -50,6 +52,7 @@ const writePlatformUiSettings = (partial) => {
 
 export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabChange = () => {} }) => {
   const { toast } = useToast()
+  const [showReleaseModal, setShowReleaseModal] = useState(false)
 
   const validTabs = ['general', 'compliance', 'maintenance']
   const [currentTab, setCurrentTab] = useState(() => {
@@ -478,11 +481,33 @@ export const SuperadminPlatformSettingsView = ({ activeTab = 'general', onTabCha
               {maintenanceMode ? 'Local flag: ON' : 'Save maintenance flag'}
             </button>
           </div>
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-600">
-            Current Release: <span className="font-bold text-purple-700">v3.4.0 (Enterprise LTS)</span> &bull; Engine build: 2026.10-R3
+          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-600">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>Current Release: <strong className="text-purple-700 font-bold">v3.4.0 (Enterprise LTS)</strong></span>
+              <span className="text-slate-300">•</span>
+              <span>Engine build: <code className="font-mono bg-slate-200/80 px-1.5 py-0.5 rounded text-[11px] text-slate-800 font-bold">2026.10-R3</code></span>
+            </div>
+
+            {/* Eye Button: View Updates (Add, Change, Day/Night Log) */}
+            <button
+              type="button"
+              onClick={() => setShowReleaseModal(true)}
+              className="px-3.5 py-2 rounded-xl bg-white hover:bg-purple-50 border border-slate-200 hover:border-purple-300 text-purple-700 font-bold text-xs flex items-center gap-2 shadow-2xs hover:shadow-xs transition-all cursor-pointer self-start sm:self-auto group active:scale-98"
+              title="View Release Updates (Additions, Changes & Day/Night Changelog)"
+            >
+              <Eye className="w-4 h-4 text-purple-600 group-hover:scale-110 transition-transform" />
+              <span>View Release Updates</span>
+            </button>
           </div>
         </div>
       )}
+
+      {/* Release Updates & Changelog Modal */}
+      <ReleaseUpdatesModal 
+        isOpen={showReleaseModal} 
+        onClose={() => setShowReleaseModal(false)} 
+      />
     </div>
   )
 }
