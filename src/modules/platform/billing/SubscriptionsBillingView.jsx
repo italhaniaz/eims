@@ -462,12 +462,17 @@ const SubscriptionsBillingView = () => {
   const subFilterPopoverRef = useRef(null)
   const plansSectionRef = useRef(null)
   const tabsSectionRef = useRef(null)
+  const [navSource, setNavSource] = useState(null) // 'mrr', 'arr', 'overdue'
 
   const scrollToTabs = () => {
     requestAnimationFrame(() => {
       setTimeout(() => {
         if (tabsSectionRef.current) {
-          tabsSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          const rect = tabsSectionRef.current.getBoundingClientRect()
+          // Only scroll if tabs bar is completely out of the visible screen
+          if (rect.top < 60 || rect.bottom > window.innerHeight) {
+            tabsSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+          }
         }
       }, 50)
     })
@@ -478,6 +483,7 @@ const SubscriptionsBillingView = () => {
     setStatusFilter('ACTIVE')
     setSelectedSubStatusFilters(['ACTIVE'])
     setSearchQuery('')
+    setNavSource('mrr')
     scrollToTabs()
   }
 
@@ -485,6 +491,7 @@ const SubscriptionsBillingView = () => {
     setActiveTab('invoices')
     setStatusFilter('ALL')
     setSearchQuery('')
+    setNavSource('arr')
     scrollToTabs()
   }
 
@@ -493,6 +500,7 @@ const SubscriptionsBillingView = () => {
     setStatusFilter('ALL')
     setSelectedSubStatusFilters(['ACTIVE', 'TRIAL', 'OVERDUE'])
     setSearchQuery('')
+    setNavSource(null)
     scrollToTabs()
   }
 
@@ -500,6 +508,7 @@ const SubscriptionsBillingView = () => {
     setActiveTab('invoices')
     setStatusFilter('OVERDUE')
     setSearchQuery('')
+    setNavSource('overdue')
     scrollToTabs()
   }
 
@@ -739,13 +748,7 @@ const SubscriptionsBillingView = () => {
           badge="Live platform MRR"
           badgePositive={true}
           color="emerald"
-          showActions={true}
-          showAllText="View Active Campuses →"
-          onShowAll={handleNavigateToMRR}
-          onView={handleNavigateToMRR}
-          onClick={handleNavigateToMRR}
-          viewTooltip="View active subscriptions contributing to MRR"
-          showAdd={false}
+          showActions={false}
         />
         <StatCard
           icon={TrendingUp}
@@ -754,13 +757,7 @@ const SubscriptionsBillingView = () => {
           badge="Projected annual"
           badgePositive={true}
           color="blue"
-          showActions={true}
-          showAllText="View Billing Ledger →"
-          onShowAll={handleNavigateToARR}
-          onView={handleNavigateToARR}
-          onClick={handleNavigateToARR}
-          viewTooltip="View invoices & annual billing ledger"
-          showAdd={false}
+          showActions={false}
         />
         <StatCard
           icon={CreditCard}
@@ -769,13 +766,7 @@ const SubscriptionsBillingView = () => {
           badge={`${overview?.trialCount || 0} in trial`}
           badgePositive={true}
           color="indigo"
-          showActions={true}
-          showAllText="Manage Campuses →"
-          onShowAll={handleNavigateToActiveSubs}
-          onView={handleNavigateToActiveSubs}
-          onClick={handleNavigateToActiveSubs}
-          viewTooltip="View and manage all campus subscriptions"
-          showAdd={false}
+          showActions={false}
         />
         <StatCard
           icon={AlertTriangle}
@@ -784,13 +775,7 @@ const SubscriptionsBillingView = () => {
           badge="Pending collection"
           badgePositive={overview?.overdueInvoicesCount === 0}
           color="amber"
-          showActions={true}
-          showAllText="View Overdue Invoices →"
-          onShowAll={handleNavigateToOverdueInvoices}
-          onView={handleNavigateToOverdueInvoices}
-          onClick={handleNavigateToOverdueInvoices}
-          viewTooltip="Filter invoices pending payment collection"
-          showAdd={false}
+          showActions={false}
         />
       </div>
 
@@ -827,57 +812,175 @@ const SubscriptionsBillingView = () => {
         </div>
       )}
 
-      {/* Navigation Tabs */}
-      <div ref={tabsSectionRef} className="bg-white p-1.5 rounded-2xl border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)] scroll-mt-6">
-        <nav className="flex space-x-2 overflow-x-auto text-xs sm:text-sm font-medium">
+      {/* Navigation Tabs Bar */}
+      <div 
+        ref={tabsSectionRef} 
+        className="bg-white rounded-2xl border border-slate-200/90 p-2 sm:p-2.5 shadow-sm flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 scroll-mt-6"
+      >
+        {/* Left: Modern Segmented Pill Tabs */}
+        <nav className="flex items-center gap-1.5 p-1 bg-slate-100/90 rounded-xl border border-slate-200/60 overflow-x-auto">
+          {/* TAB 1: Subscription Packages */}
           <button
-            onClick={() => setActiveTab('plans')}
-            className={`py-2 px-4 rounded-xl flex items-center gap-2 transition-all cursor-pointer shrink-0 ${
+            type="button"
+            onClick={() => {
+              setActiveTab('plans')
+              setNavSource(null)
+            }}
+            className={`px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
               activeTab === 'plans'
-                ? 'bg-[#f5eeff] text-purple-700 font-bold shadow-2xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                ? 'bg-white text-purple-700 shadow-xs border border-purple-200/70 font-extrabold'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
             }`}
           >
-            <Layers className="w-4 h-4" />
-            <span>Subscription Packages (3)</span>
+            <Layers className={`w-4 h-4 ${activeTab === 'plans' ? 'text-purple-600' : 'text-slate-400'}`} />
+            <span>Subscription Packages</span>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
+              activeTab === 'plans'
+                ? 'bg-[#f5eeff] text-purple-700 border border-purple-200/70'
+                : 'bg-slate-200/80 text-slate-600'
+            }`}>
+              3
+            </span>
           </button>
 
+          {/* TAB 2: Campus Subscriptions */}
           <button
+            type="button"
             onClick={() => {
               setActiveTab('subscriptions')
               setStatusFilter('ALL')
               setSelectedSubStatusFilters(['ACTIVE', 'TRIAL', 'OVERDUE'])
+              setNavSource(null)
             }}
-            className={`py-2 px-4 rounded-xl flex items-center gap-2 transition-all cursor-pointer shrink-0 ${
+            className={`px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
               activeTab === 'subscriptions'
-                ? 'bg-[#f5eeff] text-purple-700 font-bold shadow-2xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                ? 'bg-white text-purple-700 shadow-xs border border-purple-200/70 font-extrabold'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
             }`}
           >
-            <CreditCard className="w-4 h-4" />
-            <span>Campus Subscriptions ({subscriptions.length})</span>
+            <CreditCard className={`w-4 h-4 ${activeTab === 'subscriptions' ? 'text-purple-600' : 'text-slate-400'}`} />
+            <span>Campus Subscriptions</span>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
+              activeTab === 'subscriptions'
+                ? 'bg-[#f5eeff] text-purple-700 border border-purple-200/70'
+                : 'bg-slate-200/80 text-slate-600'
+            }`}>
+              {subscriptions.length}
+            </span>
           </button>
 
+          {/* TAB 3: Invoices & Revenue Ledger */}
           <button
+            type="button"
             onClick={() => {
               setActiveTab('invoices')
               setStatusFilter('ALL')
+              setNavSource(null)
             }}
-            className={`py-2 px-4 rounded-xl flex items-center gap-2 transition-all cursor-pointer shrink-0 ${
+            className={`px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
               activeTab === 'invoices'
-                ? 'bg-[#f5eeff] text-purple-700 font-bold shadow-2xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                ? 'bg-white text-purple-700 shadow-xs border border-purple-200/70 font-extrabold'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
             }`}
           >
-            <FileText className="w-4 h-4" />
-            <span>Invoices & Ledger ({invoices.length})</span>
+            <FileText className={`w-4 h-4 ${activeTab === 'invoices' ? 'text-purple-600' : 'text-slate-400'}`} />
+            <span>Invoices & Ledger</span>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
+              activeTab === 'invoices'
+                ? 'bg-[#f5eeff] text-purple-700 border border-purple-200/70'
+                : 'bg-slate-200/80 text-slate-600'
+            }`}>
+              {invoices.length}
+            </span>
           </button>
         </nav>
+
+        {/* Right: Real-time Live Context & Quick Action */}
+        <div className="flex items-center gap-2.5 px-1 self-end lg:self-center text-xs">
+          {activeTab === 'plans' && (
+            <div className="flex items-center gap-2">
+              <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 font-semibold text-xs border border-emerald-200/70">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                <span>3 School Tiers Active</span>
+              </span>
+              {customPlans.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setIsManageCustomModalOpen(true)}
+                  className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold text-xs border border-indigo-200 transition-colors cursor-pointer flex items-center gap-1"
+                >
+                  <Sliders className="w-3 h-3 text-indigo-600" />
+                  <span>Custom Plans ({customPlans.length})</span>
+                </button>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'subscriptions' && (
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 font-semibold text-xs border border-emerald-200/80">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                <span>{overview?.activeCount || 0} Active Campuses</span>
+              </span>
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#f5eeff] text-purple-700 font-semibold text-xs border border-purple-200/80">
+                <span>PKR {(overview?.mrrPKR || 0).toLocaleString()} MRR</span>
+              </span>
+            </div>
+          )}
+
+          {activeTab === 'invoices' && (
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 font-semibold text-xs border border-blue-200/80">
+                <span>PKR {(overview?.arrPKR || 0).toLocaleString()} ARR</span>
+              </span>
+              {overview?.overdueInvoicesCount > 0 ? (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 font-semibold text-xs border border-rose-200">
+                  <AlertTriangle className="w-3 h-3" />
+                  <span>{overview.overdueInvoicesCount} Overdue</span>
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 font-semibold text-xs border border-emerald-200">
+                  <CheckCircle className="w-3 h-3" />
+                  <span>All Invoices Current</span>
+                </span>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* TAB 1: INSTITUTE SUBSCRIPTIONS */}
+      {/* TAB 2: INSTITUTE SUBSCRIPTIONS */}
       {activeTab === 'subscriptions' && (
         <div className="space-y-4">
+          {/* Dynamic Context Banner when arriving from MRR KPI Card */}
+          {navSource === 'mrr' && statusFilter === 'ACTIVE' && (
+            <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-emerald-950 shadow-xs animate-in fade-in">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                  <DollarSign className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-xs sm:text-sm font-bold text-emerald-950">
+                    Active Subscriptions Generating Live MRR (PKR {(overview?.mrrPKR || 0).toLocaleString()})
+                  </h4>
+                  <p className="text-[11px] sm:text-xs text-emerald-700 mt-0.5">
+                    Viewing paying campus accounts contributing directly to platform monthly recurring revenue.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setStatusFilter('ALL')
+                  setSelectedSubStatusFilters(['ACTIVE', 'TRIAL', 'OVERDUE'])
+                  setNavSource(null)
+                }}
+                className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-emerald-100 text-emerald-800 font-bold text-xs border border-emerald-300 transition-colors cursor-pointer shrink-0 shadow-2xs"
+              >
+                Show All Campuses ({subscriptions.length})
+              </button>
+            </div>
+          )}
           {/* Filter Bar with Quick Status Buttons, Filters Popover with Checkboxes, and Search */}
           <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2">
@@ -1640,6 +1743,64 @@ const SubscriptionsBillingView = () => {
       {/* TAB 3: INVOICES & REVENUE LEDGER */}
       {activeTab === 'invoices' && (
         <div className="space-y-4">
+          {/* Dynamic Context Banner when arriving from Overdue Invoices KPI Card */}
+          {navSource === 'overdue' && statusFilter === 'OVERDUE' && (
+            <div className="bg-gradient-to-r from-amber-50 to-rose-50 border border-amber-200 rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-amber-950 shadow-xs animate-in fade-in">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-xs sm:text-sm font-bold text-amber-950">
+                    Overdue Invoices Requiring Payment Collection
+                  </h4>
+                  <p className="text-[11px] sm:text-xs text-amber-800 mt-0.5">
+                    {filteredInvoices.length > 0 
+                      ? `${filteredInvoices.length} invoice(s) currently past due date. Record settlement or send reminders.`
+                      : 'Zero overdue invoices! All campuses are currently paid up.'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setStatusFilter('ALL')
+                  setNavSource(null)
+                }}
+                className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-amber-100 text-amber-900 font-bold text-xs border border-amber-300 transition-colors cursor-pointer shrink-0 shadow-2xs"
+              >
+                Show All Invoices ({invoices.length})
+              </button>
+            </div>
+          )}
+
+          {/* Dynamic Context Banner when arriving from ARR KPI Card */}
+          {navSource === 'arr' && (
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-blue-950 shadow-xs animate-in fade-in">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
+                  <TrendingUp className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-xs sm:text-sm font-bold text-blue-950">
+                    Annual Billing Ledger & Transaction Records (ARR: PKR {(overview?.arrPKR || 0).toLocaleString()})
+                  </h4>
+                  <p className="text-[11px] sm:text-xs text-blue-700 mt-0.5">
+                    Consolidated multi-campus ledger for recurring subscriptions, manual vouchers, and 1Link payments.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setNavSource(null)}
+                className="p-1.5 text-blue-500 hover:text-blue-800 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer shrink-0"
+                title="Dismiss banner"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
           <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2">
               {['ALL', 'PAID', 'PENDING', 'OVERDUE'].map((status) => (
