@@ -826,7 +826,7 @@ const SubscriptionsBillingView = () => {
               setActiveTab('plans')
               setNavSource(null)
             }}
-            className={`px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
+            className={`px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center justify-center gap-2 shrink-0 ${
               activeTab === 'plans'
                 ? 'bg-white text-purple-700 shadow-xs border border-purple-200/70 font-extrabold'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
@@ -834,13 +834,6 @@ const SubscriptionsBillingView = () => {
           >
             <Layers className={`w-4 h-4 ${activeTab === 'plans' ? 'text-purple-600' : 'text-slate-400'}`} />
             <span>Subscription Packages</span>
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
-              activeTab === 'plans'
-                ? 'bg-[#f5eeff] text-purple-700 border border-purple-200/70'
-                : 'bg-slate-200/80 text-slate-600'
-            }`}>
-              3
-            </span>
           </button>
 
           {/* TAB 2: Campus Subscriptions */}
@@ -852,7 +845,7 @@ const SubscriptionsBillingView = () => {
               setSelectedSubStatusFilters(['ACTIVE', 'TRIAL', 'OVERDUE'])
               setNavSource(null)
             }}
-            className={`px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
+            className={`px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center justify-center gap-2 shrink-0 ${
               activeTab === 'subscriptions'
                 ? 'bg-white text-purple-700 shadow-xs border border-purple-200/70 font-extrabold'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
@@ -860,13 +853,6 @@ const SubscriptionsBillingView = () => {
           >
             <CreditCard className={`w-4 h-4 ${activeTab === 'subscriptions' ? 'text-purple-600' : 'text-slate-400'}`} />
             <span>Campus Subscriptions</span>
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
-              activeTab === 'subscriptions'
-                ? 'bg-[#f5eeff] text-purple-700 border border-purple-200/70'
-                : 'bg-slate-200/80 text-slate-600'
-            }`}>
-              {subscriptions.length}
-            </span>
           </button>
 
           {/* TAB 3: Invoices & Revenue Ledger */}
@@ -877,7 +863,7 @@ const SubscriptionsBillingView = () => {
               setStatusFilter('ALL')
               setNavSource(null)
             }}
-            className={`px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
+            className={`px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center justify-center gap-2 shrink-0 ${
               activeTab === 'invoices'
                 ? 'bg-white text-purple-700 shadow-xs border border-purple-200/70 font-extrabold'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
@@ -885,13 +871,6 @@ const SubscriptionsBillingView = () => {
           >
             <FileText className={`w-4 h-4 ${activeTab === 'invoices' ? 'text-purple-600' : 'text-slate-400'}`} />
             <span>Invoices & Ledger</span>
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
-              activeTab === 'invoices'
-                ? 'bg-[#f5eeff] text-purple-700 border border-purple-200/70'
-                : 'bg-slate-200/80 text-slate-600'
-            }`}>
-              {invoices.length}
-            </span>
           </button>
         </nav>
 
@@ -1030,7 +1009,10 @@ const SubscriptionsBillingView = () => {
 
                 {/* Popover Content */}
                 {showSubFilterPopover && (
-                  <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-200 p-4 z-50 animate-in fade-in slide-in-from-top-2">
+                  <div 
+                    className="absolute right-0 top-full mt-2 w-[92vw] sm:w-[540px] max-w-[540px] bg-white rounded-2xl shadow-xl border border-slate-200 p-4 z-50 animate-in fade-in slide-in-from-top-2 overscroll-contain"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                       <div className="flex items-center gap-2">
                         <Sliders className="w-4 h-4 text-purple-600" />
@@ -1045,9 +1027,17 @@ const SubscriptionsBillingView = () => {
                       </button>
                     </div>
 
-                    <div className="py-3 space-y-4 max-h-[380px] overflow-y-auto">
+                    <div 
+                      className="py-3 flex flex-row items-start gap-4 horizontal-filter-scroll overscroll-contain pb-3"
+                      onWheel={(e) => {
+                        e.stopPropagation();
+                        if (e.deltaY !== 0) {
+                          e.currentTarget.scrollLeft += e.deltaY;
+                        }
+                      }}
+                    >
                       {/* Section 1: Subscription Status Checkboxes */}
-                      <div>
+                      <div className="min-w-[210px] w-[210px] shrink-0">
                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
                           Subscription Status (Enable / Disable)
                         </label>
@@ -1082,7 +1072,7 @@ const SubscriptionsBillingView = () => {
                       </div>
 
                       {/* Section 2: Plan Tiers Checkboxes */}
-                      <div>
+                      <div className="min-w-[220px] w-[220px] shrink-0">
                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
                           Plan Tier Filters
                         </label>
@@ -1116,11 +1106,11 @@ const SubscriptionsBillingView = () => {
                       </div>
 
                       {/* Section 3: Billing Cycle */}
-                      <div>
+                      <div className="min-w-[190px] w-[190px] shrink-0">
                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
                           Billing Cycle
                         </label>
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1.5">
                           {[
                             { key: 'monthly', label: 'Monthly' },
                             { key: 'quarterly', label: 'Quarterly' },
@@ -1249,8 +1239,8 @@ const SubscriptionsBillingView = () => {
 
           {/* Subscriptions Table */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs sm:text-sm">
+            <div className="overflow-x-auto overscroll-contain scrollbar-thin scrollbar-thumb-purple-200 scrollbar-track-slate-50">
+              <table className="w-full text-left text-xs sm:text-sm min-w-[720px]">
                 <thead className="bg-slate-50/80 text-slate-600 font-semibold border-b border-slate-100 uppercase text-[11px] tracking-wider">
                   <tr>
                     <th className="py-3.5 px-3 w-10 text-center">

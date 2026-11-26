@@ -674,7 +674,7 @@ const SupportApprovalsView = () => {
               <button
                 type="button"
                 onClick={() => setApprovalFilter('APPROVED')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center text-center ${
                   approvalFilter === 'APPROVED'
                     ? 'bg-emerald-600 text-white shadow-xs'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -686,7 +686,7 @@ const SupportApprovalsView = () => {
               <button
                 type="button"
                 onClick={() => setApprovalFilter('REJECTED')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center text-center ${
                   approvalFilter === 'REJECTED'
                     ? 'bg-rose-600 text-white shadow-xs'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -698,13 +698,13 @@ const SupportApprovalsView = () => {
               <button
                 type="button"
                 onClick={() => setApprovalFilter('ALL')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center text-center ${
                   approvalFilter === 'ALL'
                     ? 'bg-purple-600 text-white shadow-xs'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                All Petitions
+                <span>All Petitions</span>
               </button>
             </div>
 

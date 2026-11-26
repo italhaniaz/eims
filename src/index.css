@@ -821,6 +821,29 @@ textarea:focus {
   background: var(--sidebar-hover);
 }
 
+/* Dedicated horizontal scrollbar for popovers and toolbars */
+.horizontal-filter-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #9333ea #e2e8f0;
+}
+.horizontal-filter-scroll::-webkit-scrollbar {
+  height: 7px;
+}
+.horizontal-filter-scroll::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 9999px;
+}
+.horizontal-filter-scroll::-webkit-scrollbar-thumb {
+  background: #a855f7;
+  border-radius: 9999px;
+}
+.horizontal-filter-scroll::-webkit-scrollbar-thumb:hover {
+  background: #7e22ce;
+}
+
 /* Keep off-canvas navy drawers inside the viewport */
 @media (max-width: 1023px) {
   aside.sidebar-navy {
