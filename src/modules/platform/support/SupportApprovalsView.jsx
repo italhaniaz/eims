@@ -681,11 +681,6 @@ const SupportApprovalsView = () => {
                 }`}
               >
                 <span>Approved</span>
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                  approvalFilter === 'APPROVED' ? 'bg-emerald-700 text-white' : 'bg-slate-200 text-slate-700'
-                }`}>
-                  {approvedApprovalsCount}
-                </span>
               </button>
 
               <button
@@ -698,11 +693,6 @@ const SupportApprovalsView = () => {
                 }`}
               >
                 <span>Declined</span>
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                  approvalFilter === 'REJECTED' ? 'bg-rose-700 text-white' : 'bg-slate-200 text-slate-700'
-                }`}>
-                  {rejectedApprovalsCount}
-                </span>
               </button>
 
               <button
@@ -714,7 +704,7 @@ const SupportApprovalsView = () => {
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                All Petitions ({approvals.length})
+                All Petitions
               </button>
             </div>
 
